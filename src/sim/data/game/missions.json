@@ -13,10 +13,10 @@
     "buildBand": [1, 3],
     "troopsBand": [3, 10],
     "heroLevelBand": [2, 6],
-    "packsBand": [2, 5],
+    "itemsBand": [1, 3],
     "hardKinds": ["RaiseTownhall", "BuildDistricts", "LevelHeroes"],
-    "hardPack": "Yellow",
-    "normalPack": "Green",
+    "hardFragments": 2,
+    "normalFragments": 1,
     "rewardGems": 15,
     "rewardManaFraction": 0.5
   }

@@ -7,7 +7,7 @@
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, sheet } from './kit';
-import { tileArt } from './bagSheet';
+import { tileArt } from './itemArt';
 
 export function renderShortfallSheet(game: Game): HTMLElement {
   const view = game.shortfallScreen();

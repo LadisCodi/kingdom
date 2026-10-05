@@ -31,8 +31,8 @@ describe('the Survey', () => {
     for (let l = 1; l <= surveyLength(); l++) {
       const free = freeSurveyCell(state, l);
       const paid = paidSurveyCell(l);
-      expect(Object.keys(free.wallet).length + (free.pack ? 1 : 0), `free ${l}`).toBeGreaterThan(0);
-      expect(Object.keys(paid.wallet).length + (paid.pack ? 1 : 0), `paid ${l}`).toBeGreaterThan(0);
+      expect(Object.keys(free.wallet).length + (free.fragments > 0 ? 1 : 0) + Object.keys(free.items).length, `free ${l}`).toBeGreaterThan(0);
+      expect(Object.keys(paid.wallet).length + (paid.fragments > 0 ? 1 : 0) + Object.keys(paid.items).length, `paid ${l}`).toBeGreaterThan(0);
     }
   });
 

@@ -917,7 +917,7 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
   const last = roomReward(WORLD_DUNGEON.depths - 1, WORLD_DUNGEON.roomsPerDepth);
   const k = WORLD_DUNGEON.closeRewardMultiplier;
   owe(b, closer, {
-    kind: 'loot', at: t,
+    kind: 'loot', at: t, from: 'boss',
     gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
     heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
     precious: { id: lumpMaterial(boardData(b), closer, 'close', dungeonKey(b, index)), amount: Math.round(last.precious * k) },
@@ -1041,7 +1041,7 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
     progress[a.target] = cleared + 1;
     const { precious, ...pay } = roomReward(next.depth, next.room);
     owe(b, seat, {
-      kind: 'loot', at: t, ...pay,
+      kind: 'loot', at: t, ...pay, from: next.room === WORLD_DUNGEON.roomsPerDepth ? 'boss' : 'room',
       precious: { id: lumpMaterial(boardData(b), seat, 'room', dungeonKey(b, a.target), next.depth, next.room), amount: precious },
     });
   }
@@ -1154,7 +1154,7 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
     }
     const { precious, ...pay } = floorReward(floor);
     owe(b, seat, {
-      kind: 'loot', at: t, ...pay, ...(gems > 0 ? { gems } : {}),
+      kind: 'loot', at: t, ...pay, from: 'portal', ...(gems > 0 ? { gems } : {}),
       ...(precious > 0 ? { precious: { id: lumpMaterial(boardData(b), seat, 'portal', p.event, floor), amount: precious } } : {}),
     });
   }

@@ -21,8 +21,7 @@ import {
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type BoostKind, type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
+  RELIC_RULES, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -46,20 +45,11 @@ import {
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   itemTrainSeconds, lineRushCost, trainCost, trainingCompletesAt, trainingProgress,
 } from './sim/army';
-import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
+import { artifactLevel, nextPassiveValue, passiveValue } from './sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack, buyWildcard,
-  bundleGemValue, bundleOf, bundlesForSale, cardCount,
-  heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
-  placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
-  buyFromVaultMany, canClaimAlbum, claimAlbum, grantPack,
-  wildcardCovers, wildcardOffers, wildcardsHeld,
-  PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
-  type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
-} from './sim/collection';
-import {
-  ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
-} from './sim/data/seasons';
+  canRestore, forgeReplica, isMet, levelCost, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
+  dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
+} from './sim/relics';
 import {
   activeRadius, buildingsIn, cast, castBlock, castState, chargesLeft,
   divinationSaving, reapCells, surveyCells, tapBudget, tapRunSeconds,
@@ -199,7 +189,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
+  | 'relic' | 'heroes' | 'lair' | 'mana' | 'builder'
   // The Bag (Docs/art/ui-inventory.md): items held until they are used.
   | 'bag'
   // The Speed-up picker, opened by a timer's Speed up (ui-inventory.md §3.7).
@@ -235,6 +225,15 @@ export type OverlayName =
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname';
 
+/** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
+export function fragmentWords(drops: readonly FragmentDrop[]): string {
+  if (drops.length === 1) {
+    const d = drops[0];
+    return `${d.slot === 5 ? 'The keystone' : 'A piece'} of the ${ARTIFACTS[d.relic].name} — it is in the Bag`;
+  }
+  return `${formatExact(drops.length)} relic fragments — they are in the Bag`;
+}
+
 /** An item as a sentence says it: "1h Wood chest", "Gold key". */
 export function itemWords(id: ItemId): string {
   const def = ITEMS[id];
@@ -242,6 +241,28 @@ export function itemWords(id: ItemId): string {
     : def.kind === 'tome' ? `${formatExact(def.value)} `
       : def.seconds > 0 ? `${formatDuration(def.seconds)} ` : '';
   return `${size}${def.name}`;
+}
+
+/** A relic as its sheet and its card in the Bag draw it (ui/relicSheet.ts). */
+export interface RelicView {
+  id: ArtifactId; name: string; sprite: string; glyph: string; kind: RelicKind;
+  level: number; restored: boolean; met: boolean;
+  /** Fragments held per slot: five pieces, then the keystone. */
+  slots: number[];
+  /** What the spares are worth in levels. */
+  spares: number;
+  /** Spares the next level asks. */
+  levelCost: number;
+  canRestore: boolean;
+  now: string; next: string;
+  /** Where its fragments drop. */
+  foundIn: string;
+  pending: string | null;
+  cast: { phase: CastPhase; leftMs: number; charges: number };
+  /** The replica offer for its first missing fragment, or null. */
+  forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
+  /** The Restorer's chest, once it is restored. */
+  chest: { gems: number; size: number } | null;
 }
 
 /** The Bag as its screen draws it (ui/bagSheet.ts). */
@@ -274,7 +295,7 @@ export interface SpeedupScreen {
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
-  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics', bag: 'bag',
+  research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
 };
 
@@ -340,21 +361,6 @@ export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number }
   // A card pack, which a room pays and a call never does.
-  | { kind: 'pack'; tier: PackTier }
-  /**
-   * One card turning over in a pack's reveal (Docs/features/09-relics.md
-   * §11.5).
-   *
-   * `copies` is HOW MANY THIS PACK GAVE, never how many the player now holds.
-   * The two are different numbers and the tile is a record of an OPENING: a
-   * fourth copy of a card you already had three of is one card, and saying
-   * "×4" over it claims the pack handed over four.
-   *
-   * `isNew` is likewise about the pack: true when the player held NONE of this
-   * card before it was opened. It is independent of `copies` — a pack can hand
-   * over two of something you had never seen, which is New AND ×2.
-   */
-  | { kind: 'card'; album: AlbumId; slot: number; isNew: boolean; copies: number }
   | { kind: 'currency'; currency: CurrencyId; amount: number };
 
 /**
@@ -506,58 +512,8 @@ export class Game {
    *  here for the reason `openHeroId` is. */
   heroesFilter: UnitId | 'All' = 'All';
   heroesSort: HeroPickSort = 'level';
-  /** The relic whose card is open on the Reliquary screen, or null for the
-   *  grid. Same shape and same reason as `openHeroId`: the two screens are
-   *  one pattern — a collection, and one piece of it opened. */
-  /** The relic whose card is open over the Collection, or null (§11.4). */
+  /** The relic whose sheet is open, from the Bag's Relics tab, or null. */
   openRelicId: ArtifactId | null = null;
-  /** The album page open behind it, or null for the album grid itself. */
-  openAlbumId: AlbumId | null = null;
-  /** The wildcard the next card tap would spend, or null. Select-then-place,
-   *  the same idiom placement and cast modes use. */
-  armedWildcard: Rarity | null = null;
-  /**
-   * Albums whose ninth card has just landed, waiting for their sheet.
-   *
-   * A completed album interrupts nothing (§11.5): the cards finish turning,
-   * and the payout sheet follows the reveal. Transient by design — an album
-   * is already paid and already in `completed`, so a sheet missed at quit
-   * simply does not replay.
-   */
-  pendingPayouts: AlbumPayout[] = [];
-  /** The vault's shelf is open over the Collection. */
-  vaultOpen = false;
-  /** The collection prize, waiting for the screen the pack reveal is using
-   *  (§5). Transient like the payouts beside it. */
-  private pendingPrize: CollectionPrize | null = null;
-  /**
-   * PACKS THAT HAVE ARRIVED AND NOT YET TURNED OVER.
-   *
-   * A pack the player WATCHED land — a pass cell, a bundle, an album — opens
-   * itself. It used to go into the collection's queue and sit there until
-   * somebody walked to the Collection and pressed a button, which made the
-   * reward of a ladder a chore two screens away.
-   *
-   * A COUNT, not a list of packs, because `openPack` takes the head of the
-   * queue and nothing else can: what is owed is an OPENING, and the queue
-   * decides which pouch it turns over.
-   */
-  private pendingPackOpenings = 0;
-  /**
-   * How many packs were in the queue the last time the screen looked.
-   *
-   * WATCHING THE COUNT IS WHAT MAKES THIS GENERAL. Every path that grants a
-   * pack — the pass's two columns, the card bundles, a closed album, the dev
-   * bar, and whatever is added next — goes through `grantPack`, and every
-   * player command ends in `notify()`. So the difference between two notifies
-   * IS the set of packs the player just earned, and no grant site has to
-   * remember to announce itself.
-   *
-   * It also draws the offline line for free: it is seeded from the state the
-   * game LOADS with, so packs that arrived while nobody was looking are not
-   * owed an opening and wait in the Collection as they always did.
-   */
-  private packsSeen = -1;
   readonly floaters = new Floaters();
   /** Lairs just claimed, and the `performance.now()` the claim landed at:
    *  the renderer plays their going-away from it, then forgets them. */
@@ -602,9 +558,6 @@ export class Game {
     public readonly camera: Camera,
   ) {
     this.registerTapHandlers();
-    // Seeded from what the game LOADED with, so a pack earned while nobody
-    // was looking is not owed an opening.
-    this.packsSeen = state.collection.packs.length;
   }
 
   /** The game's clock is the world server's: the device's time moved by
@@ -647,17 +600,6 @@ export class Game {
     // the LIVE tick and `advance()` never proposes a boundary for it. A stamp
     // rather than a cursor, so a long absence issues one window's worth.
     rollMissionsIfDue(this.state, this.now());
-    // A PACK THE PLAYER JUST EARNED OPENS ITSELF. The difference between two
-    // notifies is exactly what they earned since the last one, whatever
-    // granted it; `dealPayouts` then turns one over as soon as the screen is
-    // free, so three claimed cells are three reveals in a row rather than
-    // three pouches filed away somewhere else.
-    const packs = this.state.collection.packs.length;
-    if (this.packsSeen >= 0 && packs > this.packsSeen) {
-      this.pendingPackOpenings += packs - this.packsSeen;
-    }
-    this.packsSeen = packs;
-    this.dealPayouts();
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render. A RESOURCE is
     // never announced: its coin lands on the plank under the player's own
@@ -822,24 +764,6 @@ export class Game {
       this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
     } else if (raided.length > 1) {
       this.toast(`${raided.length} raids on the city while you were away`);
-    }
-    // THE SEASON ROLLED OVER while the player was here or away. It is the one
-    // event that takes something from them — the album is empty and the stars
-    // are gone — so it is a banner rather than a toast, and it names what the
-    // cards melted into (Docs/features/09-relics.md §3).
-    if (result.seasonClosed !== null) {
-      const closed = result.seasonClosed;
-      const opened = seasonDef(closed.to);
-      this.queueBanner({
-        title: 'A new season!',
-        icon: '\u{1F5D3}',
-        name: opened.name,
-        desc: closed.cards > 0
-          ? `${formatExact(closed.cards)} cards melted down for ${formatExact(closed.gold)} gold. `
-            + 'A fresh album, and your relics keep every level.'
-          : 'A fresh album, and your relics keep every level.',
-        tone: 'gold',
-      });
     }
     this.notify();
   }
@@ -1552,156 +1476,75 @@ export class Game {
 
   // ---------------------------------------------------------------- relics
 
-  /** What the pill and the Collection header both read (§11.1, §11.2). */
-  seasonInfo(): {
-    name: string; frame: string; held: number; total: number;
-    leftMs: number; packs: number; stars: number; prizeWon: boolean; lap: number;
-  } {
-    const { collection } = this.state;
-    const def = seasonDef(collection.season);
-    return {
-      name: def.name,
-      frame: def.frame,
-      held: seasonHeld(this.state),
-      total: SEASON_CARDS,
-      leftMs: seasonLeftMs(this.state, this.now()),
-      packs: collection.packs.length,
-      stars: collection.stars,
-      // THE PRIZE, not the eight pages: `completed` empties at the end of
-      // every lap, so it can only answer "how far into THIS lap", while the
-      // prize is won once a season and stays won.
-      prizeWon: collection.prizePaid,
-      lap: collection.cycle,
-    };
-  }
-
   /**
-   * The pill hides behind any sheet and never shows before the first card.
-   *
-   * IT GLOWS FOR A PASS CELL as well as for an unopened pack, because the pill
-   * is the pass's door now: a reward sitting on the ladder with nothing on
-   * screen to say so is the same missed thing an unopened pack would be.
+   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, its spares,
+   * what it does now and next, and the one thing to press — Restore, Level
+   * up, or Forge the missing fragment.
    */
-  seasonPillState(): { showing: boolean; glowing: boolean } | null {
-    const info = this.seasonInfo();
-    if (info.held === 0 && info.packs === 0) return null;
-    return {
-      showing: !this.hasOpenSheet(),
-      glowing: info.packs > 0 || this.passPending(),
-    };
-  }
-
-  /**
-   * ONE ROW PER RELIC — the medallions of §11.2.
-   *
-   * The list is the RELIC ROSTER, in its own fixed order, not the album
-   * ladder: which album a relic draws rotates a season, so ordering the grid
-   * by difficulty would move every relic under the player once a month. A
-   * player learns where their relic sits once.
-   */
-  relicRows(): Array<{
-    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
-    album: AlbumId; albumName: string; held: number; total: number;
-    complete: boolean; claimable: boolean;
-  }> {
-    return ARTIFACT_ORDER.map((id) => {
-      const album = albumOfRelic(id, this.state.collection.season);
-      return {
-        id,
-        name: ARTIFACTS[id].name,
-        sprite: ARTIFACTS[id].sprite,
-        glyph: ARTIFACTS[id].glyph,
-        level: artifactLevel(this.state, id),
-        album,
-        albumName: ALBUMS[album].name,
-        held: albumHeld(this.state, album),
-        total: ALBUMS[album].cards.length,
-        complete: albumIsComplete(this.state, album),
-        // The one thing on this screen worth a badge: a page ready to close.
-        claimable: canClaimAlbum(this.state, album),
-      };
-    });
-  }
-
-  /** The nine slots of one album, for the 3×3 grid (§11.3). */
-  /**
-   * THE ALBUM HALF of a relic's page (§11.3) — the nine slots, what closing
-   * them pays and whether it can be closed right now.
-   *
-   * Keyed by the ALBUM rather than the relic, because a card tap names one and
-   * the wildcard offers aim at one; which relic it raises is the page's other
-   * half.
-   */
-  albumPage(id: AlbumId): {
-    id: AlbumId; name: string; index: number; of: number; complete: boolean;
-    claimable: boolean; held: number; total: number;
-    relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
-    rewards: { hours: number; silverKeys: number; goldKeys: number; gems: number };
-    cards: Array<{
-      slot: number; name: string; rarity: number; gold: boolean;
-      count: number; stars: number;
-    }>;
-  } {
-    const def = ALBUMS[id];
-    const relicId = relicOfAlbum(id, this.state.collection.season);
-    const relic = ARTIFACTS[relicId];
-    return {
-      id,
-      name: def.name,
-      index: ALBUM_ORDER.indexOf(id) + 1,
-      of: ALBUM_ORDER.length,
-      complete: albumIsComplete(this.state, id),
-      claimable: canClaimAlbum(this.state, id),
-      held: albumHeld(this.state, id),
-      total: def.cards.length,
-      relic: relicId,
-      relicName: relic.name,
-      relicLevel: artifactLevel(this.state, relicId),
-      sprite: relic.sprite,
-      glyph: relic.glyph,
-      rewards: albumRewards(id, this.state.collection.cycle),
-      cards: def.cards.map((card, slot) => ({
-        slot,
-        name: card.name,
-        rarity: card.rarity,
-        gold: card.gold === true,
-        count: cardCount(this.state, { album: id, slot }),
-        stars: starsFor({ album: id, slot }),
-      })),
-    };
-  }
-
-  /** The relic's card (§11.4): its level, what it does now and next, and the
-   *  album that raises it. No actions — there is nothing to do to a relic. */
-  relicCard(id: ArtifactId): {
-    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
-    owned: boolean; now: string; next: string; album: AlbumId; albumName: string;
-    held: number; total: number;
-    /** Why the number below it does nothing yet, or null. The card prints the
-     *  effect in muted ink rather than promising what the build cannot pay. */
-    pending: string | null;
-    /** Where the ability is in its ACTIVE → COOLDOWN → READY walk, and how
-     *  long is left of the phase it is in (§2.1). */
-    cast: { phase: CastPhase; leftMs: number; charges: number };
-  } {
+  relicCard(id: ArtifactId): RelicView {
     const def = ARTIFACTS[id];
-    const album = albumOfRelic(id, this.state.collection.season);
+    const level = artifactLevel(this.state, id);
+    const restored = level >= 1;
+    const slots = Array.from({ length: 6 }, (_, s) => slotCount(this.state, id, s));
+    const missing = slots.findIndex((n) => n === 0);
+    const spares = spareWorth(this.state, id);
+    const forge = restored || missing < 0 ? null : (() => {
+      const price = replicaPrice(missing);
+      return {
+        slot: missing, freeSpares: price.freeSpares, spares: price.spares, gems: price.gems,
+        canFree: spares >= price.freeSpares, canGems: spares >= price.spares,
+      };
+    })();
     return {
-      id,
-      name: def.name,
-      sprite: def.sprite,
-      glyph: def.glyph,
-      level: artifactLevel(this.state, id),
-      owned: artifactLevel(this.state, id) >= 1,
+      id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
+      level, restored, met: isMet(this.state, id), slots, spares,
+      levelCost: levelCost(level), canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
-      album,
-      albumName: ALBUMS[album].name,
-      held: albumHeld(this.state, album),
-      total: ALBUMS[album].cards.length,
+      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the pass' : 'the world: dungeons, the Portal, scouting',
       pending: def.pending,
       cast: this.castPhase(id),
+      forge,
+      chest: restored ? { gems: RELIC_RULES.restorerChestGems, size: RELIC_RULES.restorerChestSize } : null,
     };
+  }
+
+  /** The Bag's Relics tab (M72): every relic met, city then world. */
+  relicRows(): RelicView[] {
+    return ARTIFACT_ORDER.filter((id) => isMet(this.state, id)).map((id) => this.relicCard(id))
+      .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'city' ? -1 : 1));
+  }
+
+  doRestoreRelic(id: ArtifactId): void {
+    if (restoreRelic(this.state, id) === 'Restored') {
+      playSfx('questComplete');
+      this.toast(`The ${ARTIFACTS[id].name} is restored`);
+    }
+    this.notify();
+  }
+
+  doLevelRelic(id: ArtifactId): void {
+    if (levelUpRelic(this.state, id) === 'Levelled') playSfx('questComplete');
+    else this.shake([]);
+    this.notify();
+  }
+
+  doForgeReplica(id: ArtifactId, withGems: boolean): void {
+    const view = this.relicCard(id);
+    if (view.forge === null) return;
+    const result = forgeReplica(this.state, id, view.forge.slot, withGems);
+    if (result === 'Forged') playSfx(withGems ? 'gemSpend' : 'click');
+    else this.shake(result === 'NotEnoughGems' ? ['Gems'] : []);
+    this.notify();
+  }
+
+  doRestorerChest(id: ArtifactId): void {
+    const result = openRestorerChest(this.state, id);
+    if (result.kind === 'Opened') {
+      playSfx('gemSpend');
+      this.toast(`${formatExact(result.drops.length)} fragments of the ${ARTIFACTS[id].name}`);
+    } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
   }
 
   /** The three-state walk, as the card reads it. `leftMs` is derived from a
@@ -1726,295 +1569,17 @@ export class Game {
     return boon === null ? null : boonText(boon);
   }
 
-  relicStrip(): ArtifactId[] {
-    return ownedArtifacts(this.state);
-  }
-
-  /**
-   * OPEN THE NEXT PACK BY HAND — the button in the Collection.
-   *
-   * It survives the auto-open because a BACKLOG still exists: packs that
-   * landed while the player was away are not owed an opening, and neither is
-   * one granted by the dev bar. This is how those are turned over.
-   */
-  doOpenPack(): void {
-    if (this.gachaReveal !== null) return; // a reveal is already on screen
-    if (!this.turnOverPack()) return;
-    this.notify();
-  }
-
-  /**
-   * CLOSE AN ALBUM — the button at the bottom of a relic's page (§11.3).
-   *
-   * The player's move, not the ninth card's: the page fills and waits, so
-   * nobody spends nine cards and rolls the lap in the middle of a reveal they
-   * were watching for something else.
-   */
-  doClaimAlbum(album: AlbumId): void {
-    const payout = claimAlbum(this.state, album);
-    if (payout === null) return;
-    playSfx('chainFinished');
-    this.takePayouts([payout]);
-    this.notify();
-  }
-
-  /** Whether that button is live: the nine are in hand and this lap has not
-   *  closed the album yet. */
-  canClaimAlbum(album: AlbumId): boolean {
-    return canClaimAlbum(this.state, album);
-  }
-
-  /**
-   * Bank what a closed album owes and deal whatever the screen is free to
-   * deal.
-   */
-  private takePayouts(payouts: readonly AlbumPayout[]): void {
-    for (const payout of payouts) {
-      this.pendingPayouts.push(payout);
-      if (payout.prize !== null) this.pendingPrize = payout.prize;
-    }
-    this.dealPayouts();
-  }
-
-  /**
-   * WHAT FOLLOWS A REVEAL (§11.5). A completed album interrupts nothing, so
-   * this deals only into a free screen and is called again every time one is
-   * dismissed.
-   *
-   * The order is the order of what things are worth. THE PRIZE TAKES THE
-   * SCREEN first — it is the most exciting screen the game has and the right
-   * place for the forty-fifth card to lead — and the albums' own banners
-   * follow it, so the run of five ends on the hero rather than on a pennant.
-   */
-  private dealPayouts(): void {
-    if (this.gachaReveal !== null) return;
-    if (this.pendingPrize !== null) {
-      const prize = this.pendingPrize;
-      this.pendingPrize = null;
-      this.gachaReveal = {
-        banner: PRIZE_BANNER, calls: 1, caption: 'The collection prize',
-        prizes: prizePrizes(prize),
-      };
-      return;
-    }
-    // Then the packs, one at a time. AFTER the prize, because the prize is the
-    // most exciting screen the game has and the forty-fifth card should lead;
-    // BEFORE the album banners, because a pennant is the quietest thing here
-    // and the run should not end on a pouch.
-    if (this.pendingPackOpenings > 0) {
-      this.pendingPackOpenings -= 1;
-      if (this.turnOverPack()) return;
-      // The queue was empty after all — a wildcard or a season close took the
-      // pack between the grant and the deal. Nothing is owed.
-      this.pendingPackOpenings = 0;
-    }
-    for (const payout of this.pendingPayouts.splice(0)) {
-      const relic = ARTIFACTS[payout.relic];
-      this.queueBanner({
-        title: payout.found ? 'A relic is yours!' : 'Album complete!',
-        icon: relic.glyph,
-        sprite: relic.sprite,
-        name: ALBUMS[payout.album].name,
-        desc: payout.found
-          ? `${relic.name}, at level 1.`
-          : `${relic.name} rises to level ${payout.level}.`,
-        tone: 'gold',
-      });
-    }
-  }
-
-  /**
-   * TURN ONE PACK OVER, and put its cards in the reveal.
-   *
-   * The ONE opener: the button in the Collection and a pack that just landed
-   * both come through here, so a pouch can never be spent by a path that
-   * forgets the sound or the screen. False when the queue is empty.
-   */
-  private turnOverPack(): boolean {
-    const opening = openPack(this.state, this.now());
-    if (opening === null) return false;
-    playSfx('chainFinished');
-    this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
-    // The queue just got shorter by one, and this is not a pack the player
-    // earned — without this the next notify would read the drop and then the
-    // NEXT grant would be counted against a stale number.
-    this.packsSeen = this.state.collection.packs.length;
-    return true;
-  }
-
-  /** What the reveal will deal, asked before it is opened — the album screen
-   *  shows a pack's tier and count without spending it. */
-  peekPack(): { tier: PackTier; cards: number } | null {
-    const pack = this.state.collection.packs[0];
-    if (pack === undefined) return null;
-    return { tier: pack.tier, cards: packCards(this.state.seed, pack).length };
-  }
-
-  /** The Gems the five albums together pay — the prize band's other chip. */
-  prizeGems(): number {
-    return COLLECTION.prizeGems;
-  }
-
-  /**
-   * Open a relic — the ONE level below the list, and the only one
-   * (§11.2 → §11.3). A relic and its album used to be two screens, which made
-   * the thing the nine cards are FOR a screen behind the nine cards; they are
-   * one page now, so `openRelicId` is the whole of the navigation.
-   */
+  /** Open a relic's sheet, over the Bag it was opened from. */
   openRelic(id: ArtifactId): void {
     this.openRelicId = id;
-    this.notify();
+    this.setOverlay('relic');
   }
 
-  /** Reached from an aimed wildcard offer, which names an ALBUM. */
-  openAlbum(id: AlbumId): void {
-    this.openRelic(relicOfAlbum(id, this.state.collection.season));
-  }
-
+  /** Back to the Bag's Relics tab. */
   closeRelic(): void {
-    this.armedWildcard = null;
-    if (this.openRelicId === null) {
-      this.dismiss();
-      return;
-    }
     this.openRelicId = null;
-    this.notify();
-  }
-
-  /** The arrows in the page's bottom corners. Eight is a short walk, and it
-   *  wraps: a player checking what they are close to should not hit a wall at
-   *  either end. */
-  stepRelic(by: number): void {
-    if (this.openRelicId === null) return;
-    const i = ARTIFACT_ORDER.indexOf(this.openRelicId);
-    const n = ARTIFACT_ORDER.length;
-    this.openRelicId = ARTIFACT_ORDER[(((i + by) % n) + n) % n]!;
-    this.notify();
-  }
-
-  /**
-   * A card tapped on an album page.
-   *
-   * A DUPLICATE is a choice the player has to be offered — send it, or leave
-   * it to the vault — and sending needs the social layer (**OQ-89**), so
-   * until that lands the only thing a duplicate can do is say what it is
-   * worth. A MISSING card says what packs it falls from.
-   */
-  tapCard(album: AlbumId, slot: number): void {
-    const card = ALBUMS[album].cards[slot]!;
-    const count = cardCount(this.state, { album, slot });
-    // A WILDCARD IS ARMED: this tap is the placement, and the grid has
-    // already said which slots would take it.
-    if (this.armedWildcard !== null) {
-      const rarity = this.armedWildcard;
-      const result = placeWildcard(this.state, { album, slot }, rarity);
-      if (result.placed) {
-        playSfx('upgradeBought');
-        if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
-      } else if (result.reason === 'GoldSlot') {
-        this.toast('No wildcard covers a gold card — it is earned or sent');
-      } else if (result.reason === 'AlreadyHeld') {
-        this.toast('You already hold that one');
-      } else {
-        this.toast(`A ${rarity}★ wildcard does not reach that card`);
-      }
-      this.notify();
-      return;
-    }
-    if (count === 0) {
-      const held = heldWildcardFor(this.state, { album, slot });
-      if (held !== null) {
-        // The doc's own line: a missing card says what packs it falls from,
-        // AND the wildcard if one covers it (§11.3).
-        this.toast(`${card.name} — your ${held}★ wildcard fills it`);
-        this.armWildcard(held);
-      } else {
-        this.toast(card.gold === true
-          ? `${card.name} — gold, so Star packs only`
-          : `${card.name} — ${PACK_ORDER.filter((tier) => PACKS[tier].weights[card.rarity - 1] > 0)
-            .join(', ')} packs`);
-      }
-    } else if (count > 1) {
-      this.toast(`${count - 1} spare — ${starsFor({ album, slot })} stars each in the vault`);
-    } else {
-      this.toast(`${card.name} — ${'★'.repeat(card.rarity)}`);
-    }
-    this.notify();
-  }
-
-  /** The vault knob opens the shelf rather than buying: with three chests and
-   *  a ten-batch there is a choice to make, and a one-press knob cannot say
-   *  what it is about to spend. */
-  openVault(): void {
-    this.vaultOpen = true;
-    this.notify();
-  }
-
-  closeVault(): void {
-    this.vaultOpen = false;
-    this.notify();
-  }
-
-  /**
-   * TEN AT ONCE. A player finishing a season cashes the vault scores of times
-   * for a card or two each, and the problem is the screens rather than the
-   * chests — the ten-call made this argument first (§6.4 of `10-heroes.md`):
-   * buying in bulk buys TIME, not a better price.
-   */
-  doBuyFromVaultMany(tier: VaultTier, count = 10): void {
-    const many = buyFromVaultMany(this.state, tier, count);
-    if (many.result === 'Opened') {
-      playSfx('upgradeBought');
-      this.toast(`${many.bought} × ${tier} — open them in the Collection`);
-    } else {
-      this.toast(`${formatExact(vaultCost(tier) * count)} stars for ten — not yet`);
-    }
-    this.notify();
-  }
-
-  /** Every chest, what it costs and whether the purse reaches it — the vault
-   *  sheet's whole data. */
-  vaultShelf(): Array<{ tier: VaultTier; cost: number; cards: number;
-    promise: string; affordable: boolean; tenAffordable: boolean; }> {
-    const stars = this.state.collection.stars;
-    return CHEST_ORDER.map((tier) => ({
-      tier,
-      cost: vaultCost(tier),
-      cards: PACKS[tier].cards,
-      promise: packPromise(tier),
-      affordable: stars >= vaultCost(tier),
-      tenAffordable: stars >= vaultCost(tier) * 10,
-    }));
-  }
-
-  /**
-   * The store's Cards shelf (§6): one row per tier the store sells, with its
-   * PUBLISHED ODDS on it.
-   *
-   * The odds are on the shelf rather than behind an info knob because §6 says
-   * "at published odds" and a store is the one place that promise has to be
-   * kept where the money is.
-   */
-  packOffers(): Array<{
-    tier: PackTier; name: string; best: boolean; cost: number; cards: number;
-    sprite: string; promise: string; odds: string;
-  }> {
-    return packsForSale().map((tier) => {
-      const def = PACKS[tier];
-      const forSale = packsForSale();
-      return {
-        tier,
-        name: packName(tier),
-        best: tier === forSale[forSale.length - 1],
-        cost: packGemCost(tier),
-        cards: def.cards,
-        sprite: `pack_${tier.toLowerCase()}`,
-        promise: packPromise(tier),
-        odds: packOdds(tier)
-          .map((o) => `${faceLabel(o.face)} ${o.percent.toFixed(o.percent < 1 ? 2 : 0)}%`)
-          .join(' · '),
-      };
-    });
+    this.bagTab = 'Relics';
+    this.setOverlay('bag');
   }
 
   /**
@@ -2040,149 +1605,14 @@ export class Game {
     });
   }
 
-  cardBundleOffers(): Array<{
-    id: StoreSkuId; name: string; priceCents: number; sprite: string;
-    packs: number; tier: PackTier; wildcards: number; rarity: Rarity;
-    gemValue: number; lines: string[];
-  }> {
-    return bundlesForSale(this.state, this.now()).map((id) => {
-      const sku = STORE[id];
-      const bundle = bundleOf(id)!;
-      return {
-        id,
-        name: sku.name,
-        priceCents: priceCents(id),
-        sprite: sku.sprite,
-        packs: bundle.packs,
-        tier: bundle.tier,
-        wildcards: bundle.wildcards,
-        rarity: bundle.wildcardRarity,
-        gemValue: bundleGemValue(bundle),
-        lines: this.bundleLines(id),
-      };
-    });
-  }
-
   /** What a bundle hands over, one line a thing — the shelf's body and the
-   *  confirmation's grant. A star pack's promise is named rather than implied:
-   *  the gold edition is what the player is buying. */
+   *  confirmation's grant. */
   bundleLines(id: StoreSkuId): string[] {
     if (isItemBundle(id)) {
       return (Object.entries(STORE[id].items) as Array<[ItemId, number]>)
         .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`);
     }
-    const bundle = bundleOf(id);
-    if (bundle === null) return [];
-    const out: string[] = [];
-    if (bundle.packs > 0) {
-      out.push(`${bundle.packs} ${bundle.tier.toLowerCase()} packs — ${packPromise(bundle.tier)}`);
-    }
-    if (bundle.wildcards > 0) {
-      out.push(bundle.wildcards === 1
-        ? `One ${bundle.wildcardRarity}★ wildcard — any slot it covers, your pick`
-        : `${bundle.wildcards} ${bundle.wildcardRarity}★ wildcards — any slots they cover, your pick`);
-    }
-    return out;
-  }
-
-  /**
-   * The store's AIMED offers (§9): one per album the player has nearly
-   * finished. An offer with no rarity — an album down to gold slots alone —
-   * is dropped here rather than shown greyed out: there is nothing to sell,
-   * and a dead row on a shelf is worse than no row.
-   */
-  wildcardOffers(): Array<{
-    album: AlbumId; name: string; short: number; rarity: Rarity; cost: number;
-    sprite: string; relic: ArtifactId;
-  }> {
-    return wildcardOffers(this.state)
-      .filter((o): o is typeof o & { rarity: Rarity } => o.rarity !== null)
-      .map((o) => ({
-        album: o.album,
-        name: ALBUMS[o.album].name,
-        short: o.short,
-        rarity: o.rarity,
-        cost: o.cost,
-        sprite: `album_${o.album.toLowerCase()}`,
-        relic: relicOfAlbum(o.album, this.state.collection.season),
-      }));
-  }
-
-  doBuyWildcard(rarity: Rarity, album?: AlbumId): void {
-    const result = buyWildcard(this.state, rarity);
-    if (result === 'Purchased') {
-      playSfx('gemSpend');
-      // Bought from an aimed offer, the album it was aimed at opens with the
-      // wildcard already in hand: the purchase and the placement are one
-      // intention, and making the player go and find the album again would
-      // be a second errand.
-      if (album !== undefined) {
-        this.openRelicId = relicOfAlbum(album, this.state.collection.season);
-        this.armedWildcard = rarity;
-        this.setOverlay('collection');
-      } else {
-        this.toast(`A ${rarity}★ wildcard — place it on any card it covers`);
-      }
-    } else if (result === 'NotEnoughGems') {
-      this.shake(['Gems']);
-    }
-    this.notify();
-  }
-
-  /** What the player holds, cheapest first — the album page's strip. */
-  wildcardsHeld(): Array<{ rarity: Rarity; count: number }> {
-    return RARITIES
-      .map((rarity) => ({ rarity, count: wildcardsHeld(this.state, rarity) }))
-      .filter((w) => w.count > 0);
-  }
-
-  /**
-   * ARM a wildcard, then tap the slot: the game's own select-then-place
-   * idiom, which placement mode and cast mode both use.
-   *
-   * A confirmation sheet would be the alternative and it is worse here — a
-   * consumable spent by one tap needs the MODE to be visible, not a dialog
-   * after the fact, and the armed grid shows exactly which slots it can fill.
-   */
-  armWildcard(rarity: Rarity | null): void {
-    this.armedWildcard = rarity === null || wildcardsHeld(this.state, rarity) <= 0
-      ? null
-      : rarity;
-    this.notify();
-  }
-
-  /** Whether an armed wildcard could land on this slot — what the grid lights. */
-  wildcardFits(album: AlbumId, slot: number): boolean {
-    if (this.armedWildcard === null) return false;
-    const ref = { album, slot };
-    return !holdsCard(this.state, ref) && wildcardCovers(this.armedWildcard, ref);
-  }
-
-  doBuyPack(tier: PackTier): void {
-    const result = buyPack(this.state, tier);
-    if (result === 'Purchased') {
-      playSfx('gemSpend');
-      const waiting = this.state.collection.packs.length;
-      this.toast(waiting === 1
-        ? `A ${tier} pack — open it in the Collection`
-        : `A ${tier} pack · ${waiting} waiting in the Collection`);
-    } else if (result === 'NotEnoughGems') {
-      this.shake(['Gems']);
-    }
-    this.notify();
-  }
-
-  doBuyFromVault(tier: VaultTier): void {
-    const result = buyFromVault(this.state, tier);
-    if (result === 'Opened') playSfx('upgradeBought');
-    else this.toast(`${formatExact(vaultCost(tier))} stars for a ${tier} pack — not yet`);
-    this.notify();
-  }
-
-  vaultInfo(): { stars: number; next: VaultTier; cost: number; affordable: boolean } {
-    const next = vaultNext(this.state);
-    const cost = vaultCost(next);
-    return { stars: this.state.collection.stars, next, cost, affordable: this.state.collection.stars >= cost };
+    return [];
   }
 
   /** Buy a whole pool at today's rung. The Mana sheet's other button. */
@@ -2356,15 +1786,15 @@ export class Game {
       /** What finishing it pays, resolved to what the player would receive
        *  RIGHT NOW — Mana is a fraction of the pool, so the number moves with
        *  the Sanctum and cannot be stored. */
-      reward: { currency: CurrencyId; amount: number } | { pack: PackTier };
+      reward: { currency: CurrencyId; amount: number } | { fragments: number };
       hard: boolean;
     }>;
     ladder: Array<{
       level: number;
       reached: boolean;
-      free: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      free: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean };
       paid: {
-        reward: Wallet; items: ItemStock; pack: PackTier | null;
+        reward: Wallet; items: ItemStock; fragments: number;
         claimed: boolean; claimable: boolean; locked: boolean;
       };
     }>;
@@ -2394,8 +1824,8 @@ export class Game {
         done: missionProgress(this.state, m),
         target: m.target,
         complete: missionComplete(this.state, m),
-        reward: m.reward.kind === 'Pack'
-          ? { pack: m.reward.tier }
+        reward: m.reward.kind === 'Fragments'
+          ? { fragments: m.reward.n }
           : m.reward.kind === 'Gems'
             ? { currency: 'Gems' as CurrencyId, amount: m.reward.amount }
             : {
@@ -2414,14 +1844,14 @@ export class Game {
           free: {
             reward: free.wallet,
             items: free.items,
-            pack: free.pack,
+            fragments: free.fragments,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
             reward: paid.wallet,
             items: paid.items,
-            pack: paid.pack,
+            fragments: paid.fragments,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
@@ -2435,6 +1865,21 @@ export class Game {
    *  table. The pill decides the glow from this, never the sheet. */
   passPending(): boolean {
     return anyCellPending(this.state, this.now());
+  }
+
+  /** The pass's pill on the map (Docs/features/20-season-pass.md §6): its
+   *  level on the ladder and the time the season has left. It shows once the
+   *  store is open — the pass is sold there — and hides behind any sheet. */
+  passPillState(): { showing: boolean; glowing: boolean; level: number; length: number; leftMs: number } | null {
+    if (!this.doorOpen('store')) return null;
+    const now = this.now();
+    return {
+      showing: !this.hasOpenSheet(),
+      glowing: this.passPending(),
+      level: passLevel(this.state, now),
+      length: passLadderLength(),
+      leftMs: Math.max(0, passEndsAt(now) - now),
+    };
   }
 
   doClaimPassCell(level: number, track: 'free' | 'paid'): void {
@@ -2465,8 +1910,8 @@ export class Game {
       level: number;
       cells: number;
       reached: boolean;
-      free: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean };
-      paid: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
+      free: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean };
+      paid: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean; locked: boolean };
     }>;
   } {
     const level = surveyLevel(this.state);
@@ -2489,12 +1934,12 @@ export class Game {
           cells,
           reached: n <= level,
           free: {
-            reward: free.wallet, items: free.items, pack: free.pack,
+            reward: free.wallet, items: free.items, fragments: free.fragments,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
-            reward: paid.wallet, items: paid.items, pack: paid.pack,
+            reward: paid.wallet, items: paid.items, fragments: paid.fragments,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
@@ -2658,7 +2103,7 @@ export class Game {
       tab: this.bagTab,
       tabs: BAG_TABS.map((tab) => ({
         tab,
-        any: held.some((id) => bagTabOf(id) === tab),
+        any: tab === 'Relics' ? ARTIFACT_ORDER.some((id) => isMet(this.state, id)) : held.some((id) => bagTabOf(id) === tab),
         fresh: held.some((id) => bagTabOf(id) === tab && this.state.bag.fresh[id] === true),
       })),
       items: held.filter((id) => bagTabOf(id) === this.bagTab).map((id) => ({
@@ -3279,16 +2724,13 @@ export class Game {
   confirmIap(): void {
     const id = this.pendingSku;
     if (id === null) return;
-    // Two kinds of SKU do not grant Gems and so do not go through `buySku`
-    // directly. Both still spend the budget through it, inside their own
-    // command: the pass is an unlock plus a back-pay (sim/pass.ts), and a card
-    // bundle is a hand of packs and wildcards (sim/collection.ts).
+    // The SKUs that grant no Gems do not go through `buySku` directly. Each
+    // still spends the budget through it, inside its own command: the pass
+    // and the Survey are an unlock plus a back-pay, a bundle is items.
     const result = id === 'SeasonPass'
       ? buyPass(this.state, this.now())
       : id === 'Survey'
         ? buySurvey(this.state, this.now())
-      : bundleOf(id) !== null
-        ? buyCardBundle(this.state, id, this.now())
       : isItemBundle(id)
         ? buyItemBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
@@ -3298,23 +2740,14 @@ export class Game {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
-      // Only what the player cannot see from where they land is said. A
-      // bundle is opened in the Collection, like every pack that falls: the
-      // store hands over the things, it does not turn them over.
+      // Only what the player cannot see from where they land is said.
       if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
-      else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
       else if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
       this.setOverlay(back);
       if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
-      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null && !isItemBundle(id)) {
+      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && !isItemBundle(id)) {
         this.reward({ Gems: STORE[id].gems });
       }
-    } else if (result === 'SeasonClosing') {
-      // The season turned over while the confirmation was open. Nothing was
-      // charged; say why rather than shake a purse that is not the problem.
-      this.pendingSku = null;
-      this.toast('The season is closing — the bundles are off the shelf');
-      this.setOverlay(this.pendingSkuFrom);
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
       // stays put so the player can read the numbers that said no.
@@ -3493,7 +2926,6 @@ export class Game {
    *  now that the screen is free (§11.5). */
   dismissGachaReveal(): void {
     this.gachaReveal = null;
-    this.dealPayouts();
     this.notify();
   }
 
@@ -3571,11 +3003,11 @@ export class Game {
     }
     if (result === 'Researched') {
       playSfx('researchComplete');
-      // The last card of a chapter pays its pack; the pile opens it like any other.
+      // The last card of a chapter pays its relic fragments.
       if (this.state.research.rewarded.length > paid) {
         const { tome, era } = TECHNOLOGIES[id];
-        const tier = ERA_REWARDS[tome][era];
-        if (tier) this.toast(`Chapter ${formatExact(era)} complete — ${packName(tier).toLowerCase()}`);
+        const n = ERA_REWARDS[tome][era];
+        if (n) this.toast(`Chapter ${formatExact(era)} complete — ${formatExact(n)} relic fragment${n === 1 ? '' : 's'}`);
       }
     } else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
@@ -3806,8 +3238,9 @@ export class Game {
         break;
       }
       case 'OwnArtifacts':
-        this.setUiHint('collection');
-        overlay('collection');
+        this.setUiHint('bag');
+        this.bagTab = 'Relics';
+        overlay('bag');
         break;
       case 'CollectTaps':
         centerCell(this.nearestCell((c) =>
@@ -4653,14 +4086,10 @@ export class Game {
     if (name !== 'heroes') this.openHeroId = null;
     // Anything else taking the screen closes a picker without an answer.
     if (name !== 'heroPicker') this.heroPick = null;
-    if (name !== 'collection') this.vaultOpen = false;
     // Opening the Bag is seeing what came in: the nav's orb clears.
     if (name === 'bag') markBagOpened(this.state);
     if (name !== 'bag') this.bagPicked = null;
-    if (name !== 'collection') {
-      this.openRelicId = null;
-      this.armedWildcard = null;
-    }
+    if (name !== 'relic') this.openRelicId = null;
     this.notify();
   }
 
@@ -5315,7 +4744,14 @@ export class Game {
         addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
         addHeroXp(this.state, e.heroXp);
         if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
-        if (e.pack) grantPack(this.state, e.pack, 'portal');
+        // A world relic's door, then its fragments: a boss's one, a Portal
+        // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
+        const won = e.from ?? (e.pack ? 'portal' : 'room');
+        const found = [
+          ...openRelicDoor(this.state, won),
+          ...dropFragments(this.state, 'world', e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', e.seq ?? e.at]),
+        ];
+        if (found.length > 0) this.toast(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
         if (e.precious) {
           addGood(this.state.city.goods, e.precious.id, e.precious.amount);
@@ -6255,7 +5691,7 @@ const MISSION_ICON: Record<MissionKind, IconName> = {
   BuildDistricts: 'build',
   TrainTroops: 'army',
   LevelHeroes: 'star',
-  OpenPacks: 'pack',
+  UseItems: 'bag',
 };
 
 /**
@@ -6280,93 +5716,6 @@ function missionGoal(m: Mission): string {
 }
 
 /**
- * THE COLLECTION PRIZE, as the reveal deals it (Docs/features/09-relics.md §5).
- *
- * Heroes last, the rule `gachaPrizes` already keeps: the Gems and the Stardust
- * are the wind-up and the season's hero is what the forty-fifth card was for.
- * A hero the player already holds is the Fragments tile instead — showing them
- * as a hero would promise a roster entry that is already there.
- */
-function prizePrizes(prize: CollectionPrize): GachaPrize[] {
-  const out: GachaPrize[] = [];
-  if (prize.gems > 0) out.push({ kind: 'currency', currency: 'Gems', amount: prize.gems });
-  if (prize.stardust > 0) {
-    out.push({ kind: 'currency', currency: 'Stardust', amount: prize.stardust });
-  }
-  out.push(prize.duplicate
-    ? { kind: 'fragments', heroId: prize.hero, amount: prize.fragments }
-    : { kind: 'hero', heroId: prize.hero });
-  return out;
-}
-
-/** A face as a shelf prints it: `4★` or `4★ gold`. */
-const faceLabel = (face: FaceId): string => {
-  const { rarity, gold } = faceOf(face);
-  return `${rarity}★${gold ? ' gold' : ''}`;
-};
-
-/**
- * WHAT A PACK PROMISES, in one line, generated from its guarantees.
- *
- * A pack's identity IS its guarantee, so the sentence is derived rather than
- * authored: a row retuned on the sheet cannot leave a promise behind that the
- * odds no longer keep.
- */
-function packPromise(tier: PackTier): string {
-  const def = PACKS[tier];
-  const cards = `${def.cards} card${def.cards === 1 ? '' : 's'}`;
-  const given = FACE_ORDER
-    .filter((f) => (def.guarantees[f] ?? 0) > 0)
-    .map((f) => `${def.guarantees[f]}× ${faceLabel(f)}`);
-  if (given.length > 0) return `${cards}, ${given.join(' and ')} guaranteed`;
-  // A pack with no guarantee promises its POOL instead: the Golden one is a
-  // single card and every face it can deal is a gold edition, which is a
-  // stronger promise than any guarantee it could carry.
-  const pool = FACE_ORDER.filter((_, i) => (def.weights[i] ?? 0) > 0);
-  if (pool.length === 0) return cards;
-  return `${cards}, always ${pool.map(faceLabel).join(' or ')}`;
-}
-
-/** What a sobre is CALLED: the dearest face it promises, or the dearest it can
- *  deal when it promises nothing. A pack's identity is what it is FOR. */
-function packName(tier: PackTier): string {
-  const def = PACKS[tier];
-  const promised = [...FACE_ORDER].reverse().find((f) => (def.guarantees[f] ?? 0) > 0);
-  const best = promised
-    ?? [...FACE_ORDER].reverse().find((f) => (def.weights[FACE_ORDER.indexOf(f)] ?? 0) > 0);
-  return `A ${best === undefined ? '' : faceLabel(best)} pack`;
-}
-
-/** The cards a pack dealt, worst first: the reveal's own order. */
-/**
- * A PACK'S CARDS AS TILES — one tile per CARD, not per copy.
- *
- * The opening records every copy in the order it was dealt, which is what the
- * sim needs; a screen that mapped it one-for-one drew the same card twice
- * whenever a pack handed over a pair, each tile claiming a different running
- * total. Grouping is the screen's business and this is where it belongs.
- *
- * `isNew` survives the grouping if ANY copy carried it: only the first copy of
- * a card the player did not have is marked, so the pair that introduced a card
- * must still read as new.
- */
-function packPrizes(opening: PackOpening): GachaPrize[] {
-  const tiles = new Map<string, Extract<GachaPrize, { kind: 'card' }>>();
-  for (const c of opening.cards) {
-    const key = `${c.ref.album}:${c.ref.slot}`;
-    const seen = tiles.get(key);
-    if (seen === undefined) {
-      tiles.set(key, {
-        kind: 'card', album: c.ref.album, slot: c.ref.slot, isNew: c.isNew, copies: 1,
-      });
-    } else {
-      seen.copies += 1;
-      seen.isNew = seen.isNew || c.isNew;
-    }
-  }
-  return [...tiles.values()];
-}
-
 /**
  * One relic's effect, said in the player's words at a given value.
  *

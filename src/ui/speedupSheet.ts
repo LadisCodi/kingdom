@@ -12,7 +12,7 @@ import { ITEMS } from '../sim/data/definitions';
 import type { SpeedJob } from '../sim/speedups';
 import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, sheet } from './kit';
-import { tileArt } from './bagSheet';
+import { tileArt } from './itemArt';
 
 /** Auto's face: what it will spend, largest first — "2× 1h, 1× 15m". */
 const planWords = (plan: Array<{ id: keyof typeof ITEMS; n: number }>): string =>

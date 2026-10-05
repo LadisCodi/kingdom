@@ -12,7 +12,7 @@ import {
 import { collectThreshold, storageCapacity, storageSpace, storedOf, storeInto } from './storage';
 import { recordResourceDiscovery } from './discovery';
 import { clearedLairCount, foundLairCount } from './lairs';
-import { grantPack } from './collection';
+import { dropFragments } from './relics';
 import { knowledgeLump, payKnowledge } from './knowledge';
 import { refund } from './wallet';
 import { revealedCellCount } from './research';
@@ -152,10 +152,8 @@ export function claimQuest(state: GameState): ClaimResult {
   // Knowledge too, as a lump. The chain seeds enough for every technology it
   // asks for — tests/quests.test.ts walks it and holds that promise.
   if (quest.rewardKnowledge > 0) payKnowledge(state, knowledgeLump(state, quest.rewardKnowledge));
-  // A pack waits in the pile the collection opens from, like every other.
-  if (quest.rewardPack !== null && quest.rewardPack !== undefined) {
-    grantPack(state, quest.rewardPack, 'quest');
-  }
+  // Relic fragments, of relics already met, rolled on the quest.
+  if ((quest.rewardFragments ?? 0) > 0) dropFragments(state, 'any', quest.rewardFragments, ['quest', quest.id]);
   // Items into the Bag (Docs/plans/relics-and-bag.md, step 4).
   for (const [id, n] of Object.entries(quest.rewardItems ?? {}) as Array<[ItemId, number]>) grantItem(state, id, n);
   track(state, 'quest_done', { index: state.quests.index, id: quest.id });

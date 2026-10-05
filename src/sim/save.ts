@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -20,8 +20,6 @@ import { withoutTallies } from './events';
 import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
-import { ALBUM_ORDER, type AlbumId } from './data/seasons';
-import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
@@ -776,6 +774,59 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v92: RELICS ARE FOUND, NOT COLLECTED (Docs/plans/relics-and-bag.md,
+    // step 5). The card season goes. Each album's cards become fragments of
+    // the relic that album was levelling this season — its first five cards
+    // the five pieces, its last the keystone, the three between more pieces
+    // — and every unopened pack and wildcard becomes pieces, dealt in turn
+    // to the relics the save has met. Relic levels stay where they were:
+    // restored, at the same level. Stars go, as at a season's close.
+    // A pass mission that opened packs now uses items, and one that paid a
+    // pack pays its fragments.
+    to: 92,
+    migrate: (modules) => {
+      const per: Record<string, number> = { Green: 1, Yellow: 1, Rose: 2, Blue: 2, Purple: 3, Golden: 4 };
+      const albums = ['FirstFurrow', 'TheWildWood', 'HandsAtWork', 'MarketDay',
+        'TheKingsCoin', 'UnderTheHill', 'TheLongMarch', 'TheStarRoad'];
+      const relics = ARTIFACT_ORDER as readonly string[];
+      const held: Record<string, { Found: number[]; Bound: number[] }> = {};
+      const slots = (id: string) => (held[id] ??= { Found: [0, 0, 0, 0, 0, 0], Bound: [0, 0, 0, 0, 0, 0] });
+      const col = modules['kingdom.collection'] as {
+        Season?: number; Cards?: Record<string, number[]>; Packs?: Array<{ Tier?: string }>;
+        Wildcards?: Record<string, number>;
+      } | undefined;
+      const season = col?.Season ?? 0;
+      for (const [album, cards] of Object.entries(col?.Cards ?? {})) {
+        const at = albums.indexOf(album);
+        if (at < 0 || !Array.isArray(cards)) continue;
+        const relic = relics[(((at + season) % albums.length) + albums.length) % albums.length] ?? relics[0];
+        cards.forEach((n, i) => {
+          if (!Number.isInteger(n) || n <= 0) return;
+          const slot = i < 5 ? i : i === cards.length - 1 ? 5 : (i - 5) % 5;
+          slots(relic).Found[slot] += n;
+        });
+      }
+      const levels = ((modules['kingdom.artifacts'] as { Levels?: Record<string, number> } | undefined)?.Levels) ?? {};
+      const met = relics.filter((id) => (levels[id] ?? 0) > 0 || (held[id]?.Found.some((n) => n > 0) ?? false));
+      let spare = 0;
+      for (const p of col?.Packs ?? []) spare += per[p.Tier ?? ''] ?? 1;
+      for (const n of Object.values(col?.Wildcards ?? {})) spare += Number.isInteger(n) && n > 0 ? n : 0;
+      for (let i = 0; i < spare && met.length > 0; i++) slots(met[i % met.length]).Found[Math.floor(i / met.length) % 5] += 1;
+      delete modules['kingdom.collection'];
+      if (Object.keys(held).length > 0) modules['kingdom.relics'] = { Held: held, Chests: 0 };
+      const pass = (modules['kingdom.kingdoms'] as { Pass?: { Live?: Array<Record<string, unknown>> } } | undefined)?.Pass;
+      for (const m of pass?.Live ?? []) {
+        if (m.Kind === 'OpenPacks') {
+          m.Kind = 'UseItems';
+          m.Meter = 'items';
+          m.Base = 0;
+        }
+        const reward = m.Reward as { kind?: string; tier?: string } | undefined;
+        if (reward?.kind === 'Pack') m.Reward = { kind: 'Fragments', n: per[reward.tier ?? ''] ?? 1 };
+      }
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -1002,6 +1053,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         Fresh: Object.keys(state.bag.fresh),
         Badge: state.bag.badge,
       },
+      'kingdom.relics': {
+        Held: Object.fromEntries(Object.entries(state.relics.held)
+          .map(([id, f]) => [id, { Found: f!.found, Bound: f!.bound }])),
+        Chests: state.relics.chests,
+      },
       // The playtest's signs (Docs/playtest.md §5): the times; the counts are
       // the tallies'.
       'kingdom.signals': {
@@ -1086,17 +1142,6 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       // The live season's cards. Wiped whole at the close, so this module is
       // the one thing in the file that is deliberately short-lived.
-      'kingdom.collection': {
-        Season: state.collection.season,
-        Cards: state.collection.cards,
-        Completed: state.collection.completed,
-        Stars: state.collection.stars,
-        Wildcards: state.collection.wildcards,
-        Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
-        PacksIssued: state.collection.packsIssued,
-        PrizePaid: state.collection.prizePaid,
-        Cycle: state.collection.cycle,
-      },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
           ID: m.id, Source: m.source, Stat: m.stat, Scope: m.scope,
@@ -1492,6 +1537,19 @@ export function deserialize(
     badge: Number.isInteger(bagDto?.Badge) && bagDto!.Badge! > 0 ? bagDto!.Badge! : 0,
   };
 
+  // v92. Six slots a relic, found and bound; a relic the build no longer
+  // knows, or a malformed slot list, is dropped.
+  const relicsDto = modules['kingdom.relics'] as
+    { Held?: Record<string, { Found?: number[]; Bound?: number[] }>; Chests?: number } | undefined;
+  const six = (v: unknown): number[] => (Array.isArray(v) && v.length === 6 && v.every((n) => Number.isInteger(n) && n >= 0)
+    ? [...v] : [0, 0, 0, 0, 0, 0]);
+  state.relics = {
+    held: Object.fromEntries(Object.entries(relicsDto?.Held ?? {})
+      .filter(([id]) => (ARTIFACT_ORDER as string[]).includes(id))
+      .map(([id, f]) => [id, { found: six(f.Found), bound: six(f.Bound) }])),
+    chests: Number.isInteger(relicsDto?.Chests) ? relicsDto!.Chests! : 0,
+  };
+
   // Additive (v81). A kingdom from before the abandoned buildings may have
   // built where one now stands: that one never appears — it reads as already
   // repaired, and the building there is the kingdom's own.
@@ -1617,32 +1675,6 @@ export function deserialize(
       casts: Object.fromEntries(Object.entries(artifactsDto.Casts ?? {}).map(
         ([id, c]) => [id, { endsAt: ms((c as any).EndsAtUtc), readyAt: ms((c as any).ReadyAtUtc) }],
       )),
-    };
-  }
-
-  const collectionDto = modules['kingdom.collection'];
-  if (collectionDto) {
-    state.collection = {
-      season: collectionDto.Season ?? 0,
-      // An album the build no longer has is dropped rather than migrated: the
-      // ladder was rebuilt from five albums to eight, and the close wipes
-      // cards anyway, so a page of a retired album is worth nothing to carry.
-      cards: Object.fromEntries(Object.entries(collectionDto.Cards ?? {})
-        .filter(([album]) => ALBUM_ORDER.includes(album as AlbumId))) as typeof state.collection.cards,
-      completed: ((collectionDto.Completed ?? []) as AlbumId[])
-        .filter((album) => ALBUM_ORDER.includes(album)),
-      stars: collectionDto.Stars ?? 0,
-      wildcards: { ...(collectionDto.Wildcards ?? {}) },
-      // A pack whose TIER no longer exists is dropped rather than migrated.
-      // The pack ladder was rebuilt whole, and a card is wiped at the close
-      // anyway, so an unopened pack of a retired tier is worth nothing to
-      // carry forward and everything to not crash on.
-      packs: ((collectionDto.Packs ?? []) as any[])
-        .filter((k) => PACK_ORDER.includes(k.Tier as PackTier))
-        .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
-      packsIssued: collectionDto.PacksIssued ?? 0,
-      prizePaid: collectionDto.PrizePaid === true,
-      cycle: collectionDto.Cycle ?? 0,
     };
   }
 

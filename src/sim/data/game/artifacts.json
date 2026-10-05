@@ -1,5 +1,7 @@
 {
   "DowsingRod": {
+    "kind": "city",
+    "door": "Orcs",
     "passiveBase": 1.2,
     "passivePerLevel": 0.2,
     "activeManaCost": 15,
@@ -14,6 +16,8 @@
     "activeChargesPerLevel": 0
   },
   "VerdantSeal": {
+    "kind": "city",
+    "door": "Harpies",
     "passiveBase": 1,
     "passivePerLevel": 1,
     "activeManaCost": 6,
@@ -28,6 +32,8 @@
     "activeChargesPerLevel": 0
   },
   "ForemansSigil": {
+    "kind": "city",
+    "door": "Goblins",
     "passiveBase": 1.1,
     "passivePerLevel": 0.1,
     "activeManaCost": 10,
@@ -42,6 +48,8 @@
     "activeChargesPerLevel": 0
   },
   "GildedLedger": {
+    "kind": "city",
+    "door": "WolfRiders",
     "passiveBase": 1.1,
     "passivePerLevel": 0.1,
     "activeManaCost": 10,
@@ -56,6 +64,8 @@
     "activeChargesPerLevel": 0
   },
   "WanderersCompass": {
+    "kind": "world",
+    "door": "portal",
     "passiveBase": 1.25,
     "passivePerLevel": 0.25,
     "activeManaCost": 25,
@@ -70,6 +80,8 @@
     "activeChargesPerLevel": 0
   },
   "DelversLantern": {
+    "kind": "world",
+    "door": "room",
     "passiveBase": 1.15,
     "passivePerLevel": 0.15,
     "activeManaCost": 20,
@@ -84,6 +96,8 @@
     "activeChargesPerLevel": 1
   },
   "MusterHorn": {
+    "kind": "world",
+    "door": "boss",
     "passiveBase": 1.1,
     "passivePerLevel": 0.1,
     "activeManaCost": 0,
@@ -98,6 +112,8 @@
     "activeChargesPerLevel": 0
   },
   "BailiffsTally": {
+    "kind": "world",
+    "door": "scouting",
     "passiveBase": 1.15,
     "passivePerLevel": 0.15,
     "activeManaCost": 0,

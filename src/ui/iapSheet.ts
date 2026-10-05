@@ -35,7 +35,7 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
 
   const body = el('div', { class: 'iap' },
     el('div', { class: 'iap-head' },
-      iconEl(sku.gems > 0 ? 'Gems' : grants.length > 0 ? 'pack' : 'chest', { size: 'lg' }),
+      iconEl(sku.gems > 0 ? 'Gems' : grants.length > 0 ? 'bag' : 'chest', { size: 'lg' }),
       el('div', {},
         el('div', { class: 'iap-name' }, sku.name),
         // A SKU that grants no Gems on purchase says what it DOES instead:

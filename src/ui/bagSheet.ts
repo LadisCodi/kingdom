@@ -14,9 +14,11 @@
 import type { BagScreen, Game } from '../game';
 import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
 import { ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
-import type { CurrencyId, ItemId, Wallet } from '../sim/state';
+import type { CurrencyId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
-import { btn, currencyIcon, iconEl, knob, sheet, type IconName } from './kit';
+import { btn, currencyIcon, iconEl, knob, sheet } from './kit';
+import { relicTab } from './relicSheet';
+import { BOOST_ICON, tileArt } from './itemArt';
 
 const COLUMNS = 4;
 
@@ -25,6 +27,7 @@ const EMPTY_LINE: Record<BagTab, string> = {
   Resources: 'Chests turn up in the fog and in quests',
   'Speed ups': 'Speed-ups turn up in lairs and quests',
   Boosts: 'Boosts turn up on the season pass',
+  Relics: 'Relic fragments turn up in lairs and in the fog',
   Other: 'Keys and flasks turn up as rewards',
 };
 
@@ -41,43 +44,6 @@ const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
   const entry = (Object.entries(worth) as Array<[CurrencyId, number]>)[0];
   return entry ?? null;
 };
-
-/** A typed speed-up's badge on its tile (§3.5): a hammer for construction,
- *  a helmet for training, a workshop for workshops; General has none. */
-const SPEED_BADGE: Partial<Record<NonNullable<ItemDef['speeds']>, IconName>> = {
-  Construction: 'build', Training: 'helmet', Workshop: 'anvil',
-};
-
-/** A chest's picture, by the coin it pays. */
-const CHEST_ICON: Partial<Record<CurrencyId, IconName>> = {
-  Gold: 'chestGold', Food: 'chestFood', Wood: 'chestWood', Stone: 'chestStone',
-};
-
-/** A boost's picture, by what it raises. */
-const BOOST_ICON: Record<BoostKind, IconName> = { Rent: 'boostRent', Harvest: 'boostHarvest', Mana: 'boostMana' };
-
-/** An item's picture: the chest of its coin, the winged hourglass, the boost
- *  of its kind, the flask, the tome, the key itself. */
-export const itemIcon = (id: ItemId): IconName => {
-  const def = ITEMS[id];
-  switch (def.kind) {
-    case 'key': return id as IconName;
-    case 'chest': return (def.coin !== null ? CHEST_ICON[def.coin] : undefined) ?? 'chest';
-    case 'choice': return 'choiceChest';
-    case 'speedup': return 'speedup';
-    case 'boost': return def.boost !== null ? BOOST_ICON[def.boost] : 'speedup';
-    case 'flask': return 'manaFlask';
-    case 'tome': return 'knowledgeTome';
-  }
-};
-
-/** A tile's picture, with a speed-up's type badge at its lower left. */
-export function tileArt(id: ItemId): Node[] {
-  const def = ITEMS[id];
-  const art = iconEl(itemIcon(id), { size: 'lg' });
-  const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
-  return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
-}
 
 /** What a boost's popover says it raises. */
 const BOOST_WHAT: Record<BoostKind, string> = { Rent: 'Houses pay', Harvest: 'A tap takes', Mana: 'Mana fills' };
@@ -254,11 +220,17 @@ export function bagSignature(game: Game): string {
     const s = Math.ceil((b.endsAt - now) / 1000);
     return [b.kind, b.value, s < 60 ? s : Math.ceil(s / 60)];
   }) : [];
-  return JSON.stringify([view, job, boosts, game.bagChoice]);
+  const relics = view.tab === 'Relics' ? game.relicRows() : [];
+  return JSON.stringify([view, job, boosts, game.bagChoice, relics.map((r) => [r.id, r.level, r.slots, r.canRestore])]);
 }
 
 export function renderBagSheet(game: Game): HTMLElement {
   const view = game.bagScreen();
+  // The Relics tab holds no items: the relics met, and their fragments.
+  if (view.tab === 'Relics') {
+    return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+      tabRow(game, view), ...relicTab(game));
+  }
   const grid = el('div', { class: 'bag-grid' });
   if (view.items.length === 0) {
     grid.classList.add('is-empty');

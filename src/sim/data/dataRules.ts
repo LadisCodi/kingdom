@@ -71,13 +71,12 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },
   { id: 'relics', label: 'Relic rules', domain: 'Magic', view: 'form', noun: 'setting',
-    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps'] },
+    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps', 'fragments'] },
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
   { id: 'missions', label: 'Missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['missions'] },
-  { id: 'collection', label: 'Card collection', domain: 'Progression', view: 'form', noun: 'setting', groups: ['collection'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },
@@ -90,7 +89,6 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'store', label: 'Store', domain: 'Store', view: 'table', noun: 'product', source: 'store' },
   // The Bag (Docs/plans/relics-and-bag.md): what the player holds and uses.
   { id: 'items', label: 'Items', domain: 'Progression', view: 'table', noun: 'item', source: 'items' },
-  { id: 'packs', label: 'Card packs', domain: 'Store', view: 'table', noun: 'pack', source: 'packs' },
   { id: 'banners', label: 'Banners', domain: 'Store', view: 'table', noun: 'banner', source: 'banners' },
   { id: 'monetization', label: 'Ads & payers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer'] },
 ];
@@ -678,12 +676,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
   store: (doc, push) => {
     for (const [id, s] of records(doc.store)) {
       if (!(num(s.priceUsd) > 0)) push(id, ['priceUsd'], 'a product needs a positive price');
-      if ((num(s.packs) > 0) !== (s.packTier !== '' && s.packTier !== undefined)) push(id, ['packTier'], 'a pack count and a pack tier go together');
-      if ((num(s.wildcards) > 0) !== (num(s.wildcardRarity) > 0)) push(id, ['wildcardRarity'], 'a wildcard count and a wildcard rarity go together');
-      if (num(s.wildcardRarity) > 5) push(id, ['wildcardRarity'], '5★ is the dearest wildcard');
-      if (num(s.gems) > 0 && (num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['gems'], 'grants both Gems and cards — a product is one thing');
       const items = Object.values((s.items ?? {}) as Record<string, unknown>).some((n) => num(n) > 0);
-      if (items && (num(s.gems) > 0 || num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['items'], 'grants items and something else — a product is one thing');
+      if (items && num(s.gems) > 0) push(id, ['items'], 'grants items and Gems — a product is one thing');
     }
   },
   banners: (doc, push) => {
@@ -695,11 +689,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
     }
   },
-  packs: (doc, push) => {
-    for (const [id, p] of records(doc.packs)) {
-      const given = Object.values((p.guarantees ?? {}) as Record<string, unknown>).reduce((a: number, x) => a + num(x), 0);
-      if (given > num(p.cards)) push(id, ['guarantees'], `guarantees ${given} cards but the pack holds ${p.cards}`);
-      if (given < num(p.cards) && list(p.weights).every((x) => num(x) <= 0)) push(id, ['weights'], `has ${num(p.cards) - given} slots to roll and every weight is 0`);
+  artifacts: (doc, push) => {
+    // A city relic's door is a lair; a world relic's, a world source.
+    const worldDoors = ['room', 'boss', 'portal', 'scouting'];
+    for (const [id, a] of records(doc.artifacts)) {
+      const ok = a.kind === 'city' ? (STATIC_IDS.lair ?? []).includes(String(a.door)) : worldDoors.includes(String(a.door));
+      if (!ok) push(id, ['door'], a.kind === 'city' ? 'a city relic is found at a lair' : `a world relic is found at ${worldDoors.join(', ')}`);
     }
   },
   exploration: (doc, push) => {

@@ -15,9 +15,10 @@ import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
-import { grantPack, seasonLeftMs } from './sim/collection';
+import { seasonEndsAt, seasonAt } from './sim/seasonClock';
+import { dropFragments, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
-import { PACK_ORDER } from './sim/data/definitions';
+import { LAIR_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
 import { grantBuilder } from './sim/commands';
 import { addGood } from './sim/goods';
@@ -49,7 +50,7 @@ import { landmarkDefAt, standingAbandonedAt, standingLairAt } from './sim/sites'
 import { renderResearchMenu, researchSignature } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
-import { renderCollectionSheet } from './ui/collectionSheet';
+import { renderRelicSheet } from './ui/relicSheet';
 import { bagSignature, renderBagSheet } from './ui/bagSheet';
 import { renderSpeedupSheet } from './ui/speedupSheet';
 import { renderShortfallSheet } from './ui/shortfallSheet';
@@ -289,7 +290,7 @@ async function boot(): Promise<void> {
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
-    collection: renderCollectionSheet,
+    relic: renderRelicSheet,
     bag: renderBagSheet,
     speedup: renderSpeedupSheet,
     shortfall: renderShortfallSheet,
@@ -337,7 +338,7 @@ async function boot(): Promise<void> {
     // so that view IS what it is drawn from.
     purse: () => JSON.stringify(game.state.city.wallet),
     bag: () => bagSignature(game),
-    pass: () => JSON.stringify([game.passScreen(), game.seasonInfo().name]),
+    pass: () => JSON.stringify(game.passScreen()),
     survey: () => JSON.stringify(game.surveyScreen()),
     upgrade: () => {
       const d = game.upgradeDistrict();
@@ -425,7 +426,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
+        'purse', 'relic', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -700,10 +701,9 @@ async function boot(): Promise<void> {
       game.state.research.poured = {};
       runTick();
     };
-    // Relics normally arrive from albums, which is a season of packs away —
-    // this is how the Collection, the relic cards and cast mode get exercised
-    // in one click. Level 2 on every relic, so the card's "now / at the next
-    // level" rows both have something to say.
+    // Relics are restored from fragments a long way into a game — this is
+    // how the relic sheets and cast mode get exercised in one click. Level 2
+    // on every relic, so the sheet's "now → next" has something to say.
     const allRelics = () => {
       for (const id of ARTIFACT_ORDER) {
         grantArtifactLevel(game.state, id);
@@ -712,12 +712,12 @@ async function boot(): Promise<void> {
       addMana(game.state, manaCap(game.state));
       runTick();
     };
-    // One of every tier, so the reveal, the odds and the album grid can all
-    // be seen without delving for an afternoon.
-    const somePacks = () => {
-      for (const tier of PACK_ORDER) {
-        for (let i = 0; i < 3; i++) grantPack(game.state, tier, 'dev');
-      }
+    // Every relic door opened and a handful of fragments each, so the Bag's
+    // Relics tab, Restore and the forge can be seen without the lairs.
+    let devDrops = 0;
+    const someFragments = () => {
+      for (const door of [...LAIR_ORDER, 'room', 'boss', 'portal', 'scouting']) openRelicDoor(game.state, door);
+      dropFragments(game.state, 'any', 24, ['dev', devDrops++]);
       runTick();
     };
     // Three of every item, so the Bag's tiles, popovers and Use ×N can be
@@ -740,7 +740,7 @@ async function boot(): Promise<void> {
     const realNow = game.now.bind(game);
     game.now = () => realNow() + clockOffset;
     const endSeason = () => {
-      clockOffset += seasonLeftMs(game.state, game.now()) + 1_000;
+      clockOffset += Math.max(0, seasonEndsAt(seasonAt(game.now())) - game.now()) + 1_000;
       runTick();
     };
     // "Warp then reload" is the only way to exercise the offline report: the
@@ -810,7 +810,7 @@ async function boot(): Promise<void> {
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
-      button('🃏 packs', somePacks), button('🎒 items', someItems), button('🗓 end season', endSeason),
+      button('🧩 fragments', someFragments), button('🎒 items', someItems), button('🗓 end season', endSeason),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {

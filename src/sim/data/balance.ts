@@ -28,10 +28,8 @@ import quests from './game/quests.json';
 import pass from './game/pass.json';
 import survey from './game/survey.json';
 import missions from './game/missions.json';
-import collection from './game/collection.json';
 import heroLadder from './game/heroLadder.json';
 import store from './game/store.json';
-import packs from './game/packs.json';
 import items from './game/items.json';
 import banners from './game/banners.json';
 import monetization from './game/monetization.json';
@@ -61,10 +59,8 @@ const balance = {
   ...pass,
   ...survey,
   ...missions,
-  ...collection,
   ...heroLadder,
   "store": store,
-  "packs": packs,
   "items": items,
   "banners": banners,
   ...monetization,

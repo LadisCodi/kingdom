@@ -4,7 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import type { SimTrack } from './analytics';
-import { DISTRICTS, type PackTier } from './data/definitions';
+import { DISTRICTS } from './data/definitions';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
@@ -12,8 +12,6 @@ import buildings from './data/game/buildings.json';
 import items from './data/game/items.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
-import type { AlbumId } from './data/seasons';
-import type { PendingPack } from './collection';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
@@ -100,9 +98,6 @@ export type StoreSkuId =
   /** The Survey's paid column, once for the whole province: the same shape
    *  (sim/survey.ts). */
   | 'Survey'
-  /** The collection's three bundles: star packs and wildcards for money
-   *  rather than for Gems (Docs/features/09-relics.md §6.1). */
-  | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet'
   /** The Bag's bundles: items for money (Docs/proposals/inventory.md §5). */
   | 'SpeedupSatchel' | 'SpeedupCrate' | 'SpeedupChest' | 'ResourceSack' | 'ResourceCart' | 'BuildersCrate';
 
@@ -382,7 +377,7 @@ export interface LairState {
 export type MissionKind =
   | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
   | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
-  | 'OpenPacks';
+  | 'UseItems';
 
 /**
  * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
@@ -399,7 +394,7 @@ export type MissionKind =
 export type MissionReward =
   | { kind: 'Gems'; amount: number }
   | { kind: 'Mana'; fraction: number }
-  | { kind: 'Pack'; tier: PackTier };
+  | { kind: 'Fragments'; n: number };
 
 /**
  * ONE ERRAND ON THE BOARD (sim/missions.ts).
@@ -742,32 +737,6 @@ export interface GameState {
    * every field here is a season's worth and none of it crosses the boundary
    * (sim/collection.ts).
    */
-  collection: {
-    /** Which occurrence of the shared calendar the cards below belong to. */
-    season: number;
-    /** Copies held, per album, indexed by slot. A missing row is an album
-     *  with nothing in it. */
-    cards: Partial<Record<AlbumId, number[]>>;
-    /** Albums that have paid this season. THE guard against a second payout. */
-    completed: AlbumId[];
-    /** Duplicate stars: a counter inside the collection, shown nowhere else. */
-    stars: number;
-    /** Wildcards held, by the rarity they cover. Never gold — there is no
-     *  gold wildcard at any price (Docs/features/09-relics.md §9). */
-    wildcards: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
-    /** Packs earned and not yet opened, oldest first. */
-    packs: PendingPack[];
-    /** Monotonic, per season: the ordinal in every pack's id, which is what
-     *  the roll hashes on. */
-    packsIssued: number;
-    /** The collection prize — a golden call and 25,000 Gems — is paid once. */
-    prizePaid: boolean;
-    /** Which lap of the eight albums this is, 0-based. Closing all eight
-     *  resets `completed` and steps this, so the five relic levels stay level
-     *  and the prize and the album Gems can be the first lap's only
-     *  (Docs/proposals/album-cycles.md §4). */
-    cycle: number;
-  };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons
    *  (timed). Kingdom-scoped concepts, so this sits beside `upgrades` at the
@@ -835,6 +804,13 @@ export interface GameState {
    * last opened (the nav's orb).
    */
   bag: { held: Partial<Record<ItemId, number>>; fresh: Partial<Record<ItemId, true>>; badge: number };
+  /**
+   * RELIC FRAGMENTS (Docs/proposals/relic-restoration.md §2, sim/relics.ts):
+   * by relic, six slots — five pieces, the keystone — counted found and
+   * bound apart. A relic's level stays `artifacts.levels`. `chests` numbers
+   * the Restorer's chests opened, so each one's roll is its own.
+   */
+  relics: { held: Partial<Record<ArtifactId, { found: number[]; bound: number[] }>>; chests: number };
   /**
    * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
    * save; nothing in the game reads them. Counts live on `tallies` under

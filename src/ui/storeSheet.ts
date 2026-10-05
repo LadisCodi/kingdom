@@ -78,90 +78,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     }));
   });
 
-  // ---- the AIMED offers, above the shelf they sit on. An offer ANSWERS A
-  // SHORTAGE (14-monetization.md §6), so it only exists while an album is
-  // nearly finished — and it names the album, the gap and the wildcard that
-  // fills any of it, which is the whole of §9's promise.
-  const offers = game.wildcardOffers().map((offer) => {
-    const url = spriteUrl(offer.sprite);
-    const art = url
-      ? spriteImgAt(url, 'store-offer-medal')
-      : el('span', { class: 'store-offer-medal is-fallback' }, iconEl('cards', { size: 'lg' }));
-    return el('div', { class: 'store-offer' },
-      el('span', { class: 'store-offer-ribbon' }, 'For you'),
-      el('span', { class: 'store-offer-ring' }, art),
-      el('div', { class: 'k-body' },
-        el('div', { class: 'k-name' }, offer.name),
-        el('div', { class: 'k-desc' }, offer.short === 1
-          ? 'One card short'
-          : `${offer.short} cards short`),
-        el('div', { class: 'store-odds' }, `A ${offer.rarity}★ wildcard fills any of them`)),
-      btn({
-        label: 'Buy',
-        kind: 'gem',
-        onClick: () => game.doBuyWildcard(offer.rarity, offer.album),
-        cost: { Gems: offer.cost },
-        have: (c) => game.walletValue(c),
-      }));
-  });
-
-  // ---- card packs: one row per tier the store sells, laid out like the
-  // keys below them, because a key and a pack are the same kind of purchase —
-  // a Gem-priced draw at a collection — and should read against each other.
-  const cardPacks = game.packOffers().map((offer) => {
-    const url = spriteUrl(offer.sprite);
-    const art = url
-      ? spriteImgAt(url, 'store-pack-row-art')
-      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
-    return card({
-      art,
-      name: offer.name,
-      desc: offer.promise,
-    },
-      // The odds go INSIDE the card, under the line that sells it: a player
-      // reading "a chance of a gold edition" is owed the number next to it.
-      el('div', { class: 'store-odds' }, offer.odds),
-      btn({
-        label: 'Buy',
-        // The dearest sobre is the gold slab, the way the golden call is: it
-        // is the better draw and the shelf says so before the price does.
-        kind: offer.best ? 'primary' : 'secondary',
-        onClick: () => game.doBuyPack(offer.tier),
-        cost: { Gems: offer.cost },
-        have: (c) => game.walletValue(c),
-      }));
-  });
-
-  // ---- card bundles: the ROW the Cards shelf already uses, not the upright
-  // tile the Gem packs use. A bundle's argument is what lands, and what lands
-  // is two lines of prose — three of those across a phone sheet would be a
-  // column of broken words. So it reads against the Gem-priced packs above it,
-  // which is the comparison the shelf exists to offer, and the `$` on the
-  // button is what says the till changed.
-  const bundles = game.cardBundleOffers().map((bundle) => {
-    const url = spriteUrl(bundle.sprite);
-    const art = url
-      ? spriteImgAt(url, 'store-pack-row-art')
-      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('pack', { size: 'lg' }));
-    return card({
-      art,
-      name: bundle.name,
-      // Priced against the shelf it sits on: every part of a bundle has a Gem
-      // price two rows up, so the sum is a claim the player can check.
-      desc: `${formatExact(bundle.gemValue)} gems' worth, at the prices above`,
-    },
-      el('div', { class: 'store-bundle-lines' },
-        ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },
-          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
-      btn({
-        label: formatUsd(bundle.priceCents),
-        kind: 'primary',
-        finish: 'gem',
-        onClick: () => game.openIap(bundle.id),
-      }));
-  });
-
-  // ---- the Bag's bundles: the card bundles' row, what lands in the Bag
+  // ---- the Bag's bundles: a row each, what lands in the Bag
   // listed, and the speed-ups' Gem worth at the rush price — what the shelf
   // exists to compare.
   const itemBundles = game.itemBundleOffers().map((bundle) => {
@@ -224,20 +141,6 @@ export function renderStoreSheet(game: Game): HTMLElement {
     game.doorOpen('banner') ? bannerPanel(game)
       : el('div', { class: 'store-banner-locked' }, iconEl('padlock'),
         el('span', {}, 'Build a Tavern to call heroes.')),
-    el('div', { class: 'store-section' },
-      el('span', {}, 'Cards'),
-      el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        formatExact(game.walletValue('Gems')))),
-    ...offers,
-    ...cardPacks,
-    el('div', { class: 'store-note' }, 'Green, yellow and rose packs come from the season pass.'),
-    // The bundles keep their own heading under Cards: same shelf, other till.
-    // A player scanning for cards finds every way to get one in one place,
-    // and the `$` on the button is what says the rail changed.
-    ...(bundles.length === 0 ? [] : [
-      el('div', { class: 'store-section' }, el('span', {}, 'Card bundles')),
-      ...bundles,
-    ]),
     // The Bag's own shelf, once the Bag is open.
     ...(itemBundles.length === 0 || !game.doorOpen('bag') ? [] : [
       el('div', { class: 'store-section' }, el('span', {}, 'For the Bag')),

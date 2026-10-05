@@ -13,6 +13,7 @@
 //     lands in the wallet, past any store — the offline replay never sees it.
 
 import { track } from './analytics';
+import { recordEvent } from './events';
 import { BAG, ITEMS, type BoostKind, type ItemDef } from './data/definitions';
 import { payKnowledge } from './knowledge';
 import { accrueMana, addMana, manaCap } from './mana';
@@ -23,9 +24,9 @@ import { addToWallet, type CurrencyId, type GameState, type ItemId, type Wallet 
 
 export const itemDef = (id: ItemId): ItemDef | undefined => ITEMS[id];
 
-/** The Bag's tabs (Docs/art/ui-inventory.md §3.2). Relics joins them when
- *  relics are found rather than collected. */
-export const BAG_TABS = ['Resources', 'Speed ups', 'Boosts', 'Other'] as const;
+/** The Bag's tabs (Docs/art/ui-inventory.md §3.2). Relics holds no items:
+ *  it shows the relics met and their fragments (`state.relics`). */
+export const BAG_TABS = ['Resources', 'Speed ups', 'Boosts', 'Relics', 'Other'] as const;
 export type BagTab = typeof BAG_TABS[number];
 
 const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = {
@@ -149,6 +150,7 @@ export function useItem(state: GameState, id: ItemId, n: number, now: number, ch
     delete state.bag.held[id];
     delete state.bag.fresh[id];
   }
+  recordEvent(state, { kind: 'itemUsed', count: n });
   track(state, 'item_used', { item: id, count: n, ...(choice !== undefined ? { coin: choice } : {}) });
   return 'Used';
 }

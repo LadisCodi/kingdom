@@ -20,7 +20,6 @@ import { recordEvent } from './events';
 import { revealedCellCount } from './research';
 import type { GameState, Wallet } from './state';
 import { buySku, type BuySkuResult } from './store';
-import type { PackTier } from './data/definitions';
 
 /** How long the ladder is — the authored data's, not a constant. */
 export const surveyLength = (): number => SURVEY.cells.length;
@@ -45,11 +44,6 @@ export interface SurveyCell extends Grant {
   level: number;
 }
 
-const packAt = (column: readonly string[], level: number): PackTier | null => {
-  const tier = column[level - 1] ?? '';
-  return tier === '' ? null : (tier as PackTier);
-};
-
 /** A free cell. Its purse is priced NOW, in minutes of the kingdom's own
  *  Gold production, floored — the house rule for every reward. */
 export function freeSurveyCell(state: GameState, level: number): SurveyCell {
@@ -65,7 +59,7 @@ export function freeSurveyCell(state: GameState, level: number): SurveyCell {
   if ((SURVEY.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.freeGoldKeys[i];
   if ((SURVEY.freeGems[i] ?? 0) > 0) wallet.Gems = SURVEY.freeGems[i];
   addItemAt(items, SURVEY.freeItems, level);
-  return { level, wallet, items, pack: packAt(SURVEY.freePacks, level) };
+  return { level, wallet, items, fragments: SURVEY.freeFragments[i] ?? 0 };
 }
 
 export function paidSurveyCell(level: number): SurveyCell {
@@ -76,7 +70,7 @@ export function paidSurveyCell(level: number): SurveyCell {
   if ((SURVEY.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.paidGoldKeys[i];
   if ((SURVEY.paidStardust[i] ?? 0) > 0) wallet.Stardust = SURVEY.paidStardust[i];
   addItemAt(items, SURVEY.paidItems, level);
-  return { level, wallet, items, pack: packAt(SURVEY.paidPacks, level) };
+  return { level, wallet, items, fragments: SURVEY.paidFragments[i] ?? 0 };
 }
 
 /** Is this cell waiting to be tapped? Reached, untaken and — on the paid
@@ -105,7 +99,7 @@ export function claimSurveyCell(state: GameState, level: number, track: 'free' |
   if (level < 1 || level > surveyLevel(state)) return 'NotReached';
   const list = track === 'free' ? state.kingdom.survey.claimedFree : state.kingdom.survey.claimedPaid;
   if (list.includes(level)) return 'AlreadyClaimed';
-  pay(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level));
+  grant(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level), ['survey', track, level]);
   recordEvent(state, { kind: 'signal', key: 'surveyClaimed' });
   trackEvent(state, 'survey_claimed', { level, paid: track === 'paid' });
   list.push(level);
@@ -125,7 +119,4 @@ export function buySurvey(state: GameState, now: number): BuySurveyResult {
   return 'Purchased';
 }
 
-/** Pay a cell through the one reward path (`rewards.ts`). */
-function pay(state: GameState, cell: SurveyCell): void {
-  grant(state, cell, 'survey');
-}
+
