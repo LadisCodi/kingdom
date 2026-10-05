@@ -19,7 +19,9 @@
 > **Built:** camps (§1.1–§1.4, Gold and Hero XP loot) — the spec is now
 > [`19`](../features/19-world-map.md) §5.4. Still proposed: villain-led inner
 > camps (§1.2), the precious-material and pack loot (§1.5) and camp raids
-> (§1.6).
+> (§1.6). Scouting rewards (§2) are built too — spec
+> [`19`](../features/19-world-map.md) §3.2 — without the precious materials,
+> which come with §3.
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);

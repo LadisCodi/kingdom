@@ -1,0 +1,16 @@
+WORLD MONSTER CAMP SPRITE for the game "Kingdom" — the DRAKE. Follow this file exactly.
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style and content references.
+- ref-whex.png = sprites that ALREADY SHIP on the world board. THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same camera, same scale. Your sprite stands on the same board next to these: match them.
+- ref-lairs.png = the game's monster lairs; lair_drake is the CREATURE reference: the same red-and-gold drake.
+
+WHAT THE SPRITE IS
+- The DRAKE'S CAMP on one hex of the world board, standing IN FRONT of the hex's feature; the game draws the ground and the feature. NO ground plate, NO base, NO hex outline, NO drop shadow. Only the camp, on full transparency.
+- The red drake curled on a small broken ring of scorched stones, wings half open, over a modest heap of gold coins and a toppled chest, a thin wisp of smoke. NO tower, NO castle.
+- About HALF the width of a hex sprite of ref-whex.png: compact, wider than tall.
+- Camera: from a little south of overhead, a high three-quarter angle — exactly the camera of ref-whex.png.
+- Draw as if shown about 70 px wide on a phone: big readable shapes, no tiny details.
+
+One landscape image, 1536x1024, the single sprite centred, about 60% of the canvas width.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

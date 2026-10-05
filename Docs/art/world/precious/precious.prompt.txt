@@ -1,0 +1,14 @@
+ICON SHEET for the game "Kingdom" — three PRECIOUS MATERIALS found only on the world map. Follow this file exactly.
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references.
+- ref-currencies.png = the game's CURRENCY ICONS as they ship (gold coin, apple, logs, stone, mana orb, gem, book, stardust, keys, planks, cut stone, iron ingot, runestone, meat). THE STYLE IS LOCKED ON THEM: bold uniform dark-brown outline, flat colour with one shadow tone and one highlight, soft glossy cartoon, no textures, no scratches, few details, seen from slightly above. Your icons sit in the same row as these: match them exactly in outline weight, saturation and size.
+- ref-heroes.png = the game's hero art, the same flat cartoon style.
+
+THE THREE ICONS — each must have a DIFFERENT SILHOUETTE from the others and from every icon in ref-currencies.png, and read at 24 px:
+- STARMETAL: a rough rounded nugget of pale ice-blue meteoric metal with a bright white five-pointed star glint set into its face and two tiny sparkles. NOT an ingot, NOT a bar — the game already has an iron ingot.
+- HEARTWOOD: a short thick log section seen from its cut end: deep amber-red wood with glowing golden growth rings and a small carved rune at the centre, a curl of bark at one side. Warm, glowing from inside. It must not look like the logs icon: one single fat round section, cut face toward the viewer.
+- MOONGLASS: a cluster of three tall pale violet-white crystal shards rising from one point, with a soft moonlight-blue inner glow and a tiny crescent moon highlight on the tallest. Not the purple gem: tall pointed shards, pale, translucent-looking.
+
+One square image, 1254x1254, a 2x2 grid: TL STARMETAL, TR HEARTWOOD, BL MOONGLASS, BR empty. Each icon about 80% of its quadrant, centred in it. Nothing may cross the midlines: keep a clear 60 px band of transparency along both.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

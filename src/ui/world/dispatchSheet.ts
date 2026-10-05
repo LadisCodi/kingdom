@@ -22,7 +22,8 @@ import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
-import { hexActions, hexWork, type HexAction } from './worldActions';
+import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
+import { scoutPay } from '../../sim/world/scouting';
 import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
@@ -241,6 +242,10 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
   } else if (fog === 'Sensed') {
     lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Explore it before anything can be done there.'));
+    // What an explorer sent here brings home (19 §3.2), priced as of now.
+    if (bh.scout !== null) {
+      lines.push(el('p', { class: 'wd-line' }, `Exploring it pays ${scoutWords(scoutPay(state, bh.scout, bh.role))}`));
+    }
   } else if (fog === 'Unknown') {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody has been this way.'));
   }
