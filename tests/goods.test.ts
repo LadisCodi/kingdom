@@ -144,7 +144,7 @@ describe('a building level priced in goods', () => {
     addBuilt(state, 'Sawmill', { x: 3, y: 3 });
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     priced('Sawmill', [{ Planks: 3 }]);
-    expect(upgradeGoodsCost('Sawmill', 2)).toEqual({ Planks: 3 });
+    expect(upgradeGoodsCost(state, 'Sawmill', 2)).toEqual({ Planks: 3 });
 
     // Short of both: the raw resources are asked for first, because that is
     // the errand the player can run right now.

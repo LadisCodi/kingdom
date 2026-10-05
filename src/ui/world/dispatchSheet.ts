@@ -19,7 +19,9 @@ import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
 import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
-import { getWallet, type CurrencyId } from '../../sim/state';
+import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
+import { getGood } from '../../sim/goods';
+import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
@@ -166,6 +168,11 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         return action({
           label: a.level === 1 ? 'Build' : 'Upgrade', kind: 'secondary',
           cost: { Gold: a.gold }, have,
+          // Its precious materials, beside the Gold (19 §7.6).
+          costExtra: asRival ? [] : Object.entries(worldUpgradeGoods(game.state, a.upgrade, a.level)).map(([g, n]) => ({
+            icon: g as GoodId, amount: formatCount(n as number),
+            short: getGood(game.state.city.goods, g as GoodId) < (n as number),
+          })),
           info: `${WORLD_BUILD.upgrades[a.upgrade].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doUpgradeHex(bh.index, a.upgrade, a.level, asRival ? 0 : a.gold),
         });

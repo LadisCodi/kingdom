@@ -59,7 +59,7 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   // The price: the currencies, then the refined goods beside them (they are
   // not wallet rows), then the build time.
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
-  const goods = Object.entries(upgradeGoodsCost(district.definitionId, next)) as Array<[GoodId, number]>;
+  const goods = Object.entries(upgradeGoodsCost(game.state, district.definitionId, next)) as Array<[GoodId, number]>;
   const price = priceLine([
     ...Object.entries(cost).map(([c, n]) => ({
       icon: c as IconName, amount: formatExact(n as number), short: game.walletValue(c as never) < (n as number),
@@ -110,7 +110,7 @@ export function upgradeSignature(game: Game, district: District): string {
     statChanges(game, district, next).map((s) => [s.value, s.delta]),
     requirements(game, district, next).map((r) => r.met),
     Object.entries(cost).map(([c, n]) => game.walletValue(c as never) < (n as number)),
-    Object.entries(upgradeGoodsCost(district.definitionId, next))
+    Object.entries(upgradeGoodsCost(game.state, district.definitionId, next))
       .map(([id, n]) => getGood(game.state.city.goods, id as GoodId) < n),
     upgradeRefusal(game.state, district.uniqueId),
     upgradeDuration(game.state, district.definitionId, district.level),

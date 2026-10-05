@@ -1,0 +1,62 @@
+// What precious materials buy (Docs/features/19-world-map.md §7.6): a few of
+// any at level 5, named and more at levels 8–10 and the Fortress — and never
+// anything while the world is shut.
+import { describe, expect, it } from 'vitest';
+import { DISTRICTS, LANDMARKS, WORLD_BUILD } from '../src/sim/data/definitions';
+import { upgradeGoodsCost } from '../src/sim/districts';
+import { addGood } from '../src/sim/goods';
+import { preciousAsked, resolvePrice, worldUpgradeGoods } from '../src/sim/precious';
+import { PRECIOUS, type GameState } from '../src/sim/state';
+import { freshGame } from './helpers';
+
+const worldOpen = (): GameState => {
+  const state = freshGame();
+  const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+  state.landmarks.claimed[tower.id] = true;
+  return state;
+};
+
+describe('a precious price', () => {
+  it('is never asked while the world is shut', () => {
+    const state = freshGame();
+    expect(preciousAsked(state)).toBe(false);
+    expect(resolvePrice(state, { Planks: 2, Starmetal: 5 }, 10)).toEqual({ Planks: 2 });
+    expect(Object.keys(upgradeGoodsCost(state, 'Townhall', 10)).some((g) => (PRECIOUS as readonly string[]).includes(g))).toBe(false);
+  });
+
+  it('takes "any" from what the player holds most of', () => {
+    const state = worldOpen();
+    addGood(state.city.goods, 'Heartwood', 8);
+    addGood(state.city.goods, 'Moonglass', 3);
+    expect(resolvePrice(state, {}, 5)).toEqual({ Heartwood: 5 });
+    expect(resolvePrice(state, {}, 10)).toEqual({ Heartwood: 8, Moonglass: 2 });
+    // After what the named terms take.
+    // After what the named terms take: Heartwood has 2 to spare, Moonglass 3.
+    expect(resolvePrice(state, { Heartwood: 6 }, 4)).toEqual({ Heartwood: 6 + 1, Moonglass: 3 });
+  });
+
+  it('asks the shortfall of the most-held, so the price shows short', () => {
+    const state = worldOpen();
+    addGood(state.city.goods, 'Starmetal', 2);
+    expect(resolvePrice(state, {}, 5)).toEqual({ Starmetal: 5 });
+  });
+
+  it('asks a few of any at level 5, and each of the three late on', () => {
+    const state = worldOpen();
+    for (const id of ['Sawmill', 'Barracks', 'Townhall'] as const) {
+      const five = upgradeGoodsCost(state, id, 5);
+      expect(PRECIOUS.reduce((s, p) => s + (five[p] ?? 0), 0)).toBe(DISTRICTS[id].costPerLevel[4].anyPrecious);
+      const ten = upgradeGoodsCost(state, id, 10);
+      for (const p of PRECIOUS) expect(ten[p] ?? 0).toBeGreaterThan(0);
+    }
+    expect(PRECIOUS.some((p) => (upgradeGoodsCost(state, 'Housing', 10)[p] ?? 0) > 0)).toBe(false);
+  });
+
+  it('prices the Fortress’s later levels', () => {
+    const state = worldOpen();
+    expect(worldUpgradeGoods(state, 'Fortress', 1)).toEqual({});
+    const two = worldUpgradeGoods(state, 'Fortress', 2);
+    expect(PRECIOUS.reduce((s, p) => s + (two[p] ?? 0), 0)).toBe(WORLD_BUILD.upgrades.Fortress.levels[1].anyPrecious);
+    for (const p of PRECIOUS) expect(worldUpgradeGoods(state, 'Fortress', 3)[p]).toBeGreaterThan(0);
+  });
+});

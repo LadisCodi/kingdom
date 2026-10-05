@@ -125,7 +125,7 @@ function cardFacts(game: Game, id: DistrictId) {
   const def = DISTRICTS[id];
   const count = districtCount(game.state, id);
   const cost = buildCost(id, count + 1);
-  const goods = Object.entries(buildGoodsCost(id)) as Array<[GoodId, number]>;
+  const goods = Object.entries(buildGoodsCost(game.state, id)) as Array<[GoodId, number]>;
   const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
   return {
     count,

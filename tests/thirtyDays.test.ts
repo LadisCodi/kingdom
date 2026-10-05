@@ -156,7 +156,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   // level that asks for one waits on it — the taps would otherwise drain the
   // pool every visit and the Rune Carver would never start.
   const runestoneShort = Math.max(0,
-    (upgradeGoodsCost('Townhall', townhall(state).level + 1).Runestone ?? 0)
+    (upgradeGoodsCost(state, 'Townhall', townhall(state).level + 1).Runestone ?? 0)
     - getGood(state.city.goods, 'Runestone'));
   const manaReserve = state.city.districts.some((d) => d.definitionId === 'RuneCarver' && d.state === 'Built')
     ? runestoneShort * GOODS.Runestone.inputMana : 0;
@@ -203,7 +203,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       needs.harmony = true;
     }
     if (r === 'NotEnoughGoods') {
-      for (const good of Object.keys(upgradeGoodsCost('Townhall', th.level + 1))) needs.goods.add(good);
+      for (const good of Object.keys(upgradeGoodsCost(state, 'Townhall', th.level + 1))) needs.goods.add(good);
     }
   }
   const makerOf = (good: string): DistrictDef | undefined =>
@@ -282,7 +282,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     const gate = requiredTechForLevel('Townhall', next);
     if (gate !== null && !isTechComplete(state, gate)) return false;
     if (state.city.population < requiredPopulation('Townhall', next)) return false;
-    return canAffordGoods(state.city.goods, upgradeGoodsCost('Townhall', next))
+    return canAffordGoods(state.city.goods, upgradeGoodsCost(state, 'Townhall', next))
       && harmonyBlock(state, DISTRICTS.Townhall, next, th) === null
       && state.city.queue.length >= buildQueueCapacity(state);
   };
@@ -299,7 +299,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       && harmonyBlock(state, DISTRICTS.Townhall, th.level + 1, th) !== null
       && buildDecoration()) started = true;
     if (thResult === 'NotEnoughGoods') {
-      for (const good of Object.keys(upgradeGoodsCost('Townhall', th.level + 1))) {
+      for (const good of Object.keys(upgradeGoodsCost(state, 'Townhall', th.level + 1))) {
         const maker = makerOf(good);
         if (!maker || builtCount(state, maker.id) >= maxDistrictCount(state, maker)) continue;
         const cell = cellFor(maker);
@@ -357,7 +357,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   //     Stone and Wood, and a crew that turns every stone into blocks leaves
   //     none for the building that would have used it: this player once sat
   //     on 160 Cut Stone with no Rune Carver, refused for 200 Stone.
-  const nextGoods = upgradeGoodsCost('Townhall', townhall(state).level + 1);
+  const nextGoods = upgradeGoodsCost(state, 'Townhall', townhall(state).level + 1);
   for (const d of state.city.districts) {
     if (d.state !== 'Built' || !isWorkshop(d)) continue;
     const good = DISTRICTS[d.definitionId].produces!;
@@ -419,7 +419,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   // …and the workshops whose goods that level is priced in. The card says
   // "needs Planks"; the build sheet says the Carpenter wants Engineering; a
   // player follows that trail, so the harness does too.
-  for (const good of Object.keys(upgradeGoodsCost('Townhall', nextLevel))) {
+  for (const good of Object.keys(upgradeGoodsCost(state, 'Townhall', nextLevel))) {
     const maker = Object.values(DISTRICTS).find((d) => d.produces === good);
     if (maker?.requiredTech) want(maker.requiredTech);
   }
@@ -688,7 +688,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     expect(deepest, 'the highest level any building reached').toBe(10);
     expect(requiredTownhallLevel('Sawmill', LATE_FROM), 'what the sixth level asks for')
       .toBeLessThanOrEqual(end.townhall);
-    expect(Object.keys(upgradeGoodsCost('Sawmill', LATE_FROM)).length,
+    expect(Object.keys(upgradeGoodsCost(state, 'Sawmill', LATE_FROM)).length,
       'the goods wall is authored, and climbed')
       .toBeGreaterThan(0);
   }, 120_000);

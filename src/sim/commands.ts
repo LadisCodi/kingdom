@@ -154,7 +154,7 @@ function startBuild(
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
   // goods are paid when the build is QUEUED and refunded in full on cancel —
   // the rule a workshop item already follows.
-  const goods = buildGoodsCost(definitionId);
+  const goods = buildGoodsCost(state, definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
@@ -211,7 +211,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
-  if (!canAffordGoods(state.city.goods, buildGoodsCost(site.districtId))) return 'NotEnoughGoods';
+  if (!canAffordGoods(state.city.goods, buildGoodsCost(state, site.districtId))) return 'NotEnoughGoods';
   return null;
 }
 
@@ -415,7 +415,7 @@ export function upgradeRefusal(
   // Two purses, two refusals. Goods are told apart from raw resources because
   // the answer to each is a different errand: one is a trip to the map, the
   // other a queue at a workshop.
-  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
+  const goods = upgradeGoodsCost(state, district.definitionId, district.level + 1);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   // The third errand: the decorations. Asked once, here, and never read
@@ -430,7 +430,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   if (refusal !== null) return refusal;
   const district = districtById(state, districtUniqueId)!;
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
-  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
+  const goods = upgradeGoodsCost(state, district.definitionId, district.level + 1);
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
   state.city.queue.push({

@@ -2,7 +2,8 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { goodsCostForLevel } from './goods';
+import { anyPreciousForLevel, goodsCostForLevel } from './goods';
+import { resolvePrice } from './precious';
 import { cellExists, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
@@ -266,12 +267,13 @@ export const upgradeCost = (
  * multiplier that keeps raw resources honest would price a second workshop's
  * worth of days into one upgrade.
  */
-export const upgradeGoodsCost = (definitionId: DistrictId, targetLevel: number): GoodsStock =>
-  goodsCostForLevel(DISTRICTS[definitionId], targetLevel);
+export const upgradeGoodsCost = (state: GameState, definitionId: DistrictId, targetLevel: number): GoodsStock =>
+  resolvePrice(state, goodsCostForLevel(DISTRICTS[definitionId], targetLevel),
+    anyPreciousForLevel(DISTRICTS[definitionId], targetLevel));
 
 /** What a BUILD costs in refined goods — its level 1 row. */
-export const buildGoodsCost = (definitionId: DistrictId): GoodsStock =>
-  goodsCostForLevel(DISTRICTS[definitionId], 1);
+export const buildGoodsCost = (state: GameState, definitionId: DistrictId): GoodsStock =>
+  resolvePrice(state, goodsCostForLevel(DISTRICTS[definitionId], 1), anyPreciousForLevel(DISTRICTS[definitionId], 1));
 
 /** Build time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const buildDuration = (

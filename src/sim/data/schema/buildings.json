@@ -116,7 +116,13 @@
             "type": "map",
             "of": { "type": "int", "min": 0 },
             "keysRef": "good",
-            "doc": "Refined goods; never multiplied."
+            "doc": "Refined goods and precious materials; never multiplied. Precious materials are never asked while the world is shut."
+          },
+          "anyPrecious": {
+            "type": "int",
+            "min": 0,
+            "nullable": true,
+            "doc": "Precious material of any kind, paid from what the player holds most of (Docs/features/19-world-map.md §7.6). Never asked while the world is shut."
           }
         }
       },

@@ -153,7 +153,7 @@ import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
-import { PRECIOUS, type PreciousId, type WorldBuildWhat } from './sim/state';
+import { PRECIOUS, type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -165,6 +165,7 @@ import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
 import { pay } from './sim/wallet';
 import { addGood, getGood } from './sim/goods';
+import { worldUpgradeGoods } from './sim/precious';
 import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
@@ -4762,8 +4763,11 @@ export class Game {
       return;
     }
     const refused = this.worldBuilderRefusal(gold);
-    if (refused !== null) {
-      this.toast(refused);
+    // A Fortress level may ask for precious materials too (19 §7.6).
+    const goods = isUpgrade(what) ? worldUpgradeGoods(this.state, what, level) : {};
+    const short = Object.entries(goods).find(([g, n]) => getGood(this.state.city.goods, g as GoodId) < (n as number));
+    if (refused !== null || short !== undefined) {
+      this.toast(refused ?? `Not enough ${short![0]}`);
       this.notify();
       return;
     }
@@ -4774,6 +4778,7 @@ export class Game {
       return;
     }
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
+    for (const [g, n] of Object.entries(goods)) addGood(this.state.city.goods, g as GoodId, -(n as number));
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
     playSfx('click');
     // Started from a free builder's row: the sheet was only in the way.
