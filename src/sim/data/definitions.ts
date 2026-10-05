@@ -2125,6 +2125,8 @@ export interface WorldBuildDef {
   upgrades: Record<WorldUpgrade, WorldUpgradeDef>;
   innerRingMultiplier: number;
   sanctuaryManaCap: number;
+  /** One Chapel per this many hexes held, plus one (relic-restoration.md §5.2). */
+  chapelsPerHexes: number;
 }
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
@@ -2481,4 +2483,4 @@ export const GAME_VERSION: string = pkg.version;
 // v93: the Shrine landmarks leave the map; their claims go (a migrator).
 // v94: a Shrine's relic (`Hosts` on a district), a zone's footprint (`W`,
 // `H` on a modifier's area), additive.
-export const SAVE_VERSION = 94;
+export const SAVE_VERSION = 95;

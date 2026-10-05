@@ -654,6 +654,8 @@ describe('Divining wakes the ground and keeps it coming back', () => {
 describe('Survey buys the fog with Mana instead of Gold', () => {
   const compass = (level: number): GameState => {
     const state = freshGame();
+    // A world relic's spell waits for a Chapel (sim/casting.ts).
+    state.world.chapels = ['WanderersCompass', 'DelversLantern'];
     state.lastAdvance = T0;
     state.artifacts.levels.WanderersCompass = level;
     fund(state, { Mana: 999 });
@@ -801,6 +803,8 @@ describe('a faster recovery fills the bar faster, not fuller', () => {
 describe('Lamplight waits in the lantern until it is spent', () => {
   const lit = (level: number): GameState => {
     const state = freshGame();
+    // A world relic's spell waits for a Chapel (sim/casting.ts).
+    state.world.chapels = ['WanderersCompass', 'DelversLantern'];
     state.lastAdvance = T0;
     state.artifacts.levels.DelversLantern = level;
     syncArtifactModifiers(state);

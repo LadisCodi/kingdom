@@ -17,10 +17,11 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
+  ARTIFACTS, LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
+  relicKind,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
-import { PRECIOUS, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
+import { PRECIOUS, type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
@@ -390,7 +391,84 @@ export function upgradeRefusal(b: ServerBoard, seat: number, index: number, upgr
   if (!isHeld(h, t)) return 'NotStanding';
   if (h.work !== null) return 'Busy';
   if (!h.active) return 'Inactive';
-  return h.fortress >= WORLD_BUILD.upgrades[upgrade].levels.length ? 'MaxLevel' : null;
+  if (upgradeLevel(h, upgrade) >= WORLD_BUILD.upgrades[upgrade].levels.length) return 'MaxLevel';
+  if (upgrade === 'Chapel') {
+    // A Shrine district has a Chapel of its own; the rest are counted.
+    if (hasChapel(b, index)) return 'MaxLevel';
+    if (chapelsOf(b, seat) >= chapelsAllowed(b, seat)) return 'TooManyChapels';
+  }
+  return null;
+}
+
+/** An upgrade's level on a hex: 0 for none. */
+export const upgradeLevel = (h: Pick<ServerHex, 'fortress' | 'chapel'>, upgrade: WorldUpgrade): number =>
+  upgrade === 'Fortress' ? h.fortress : h.chapel ?? 0;
+
+function setUpgradeLevel(h: ServerHex, upgrade: WorldUpgrade, level: number): void {
+  if (upgrade === 'Fortress') h.fortress = level;
+  else h.chapel = level;
+}
+
+// ---------------------------------------------------------------- chapels
+
+/** Does a Chapel stand in this hex — built, or its Shrine district's own? */
+export function hasChapel(b: ServerBoard, index: number): boolean {
+  const h = b.hexes[index];
+  if (h === undefined) return false;
+  return (h.chapel ?? 0) > 0 || districtOf(boardData(b).hexes[index]) === 'Shrine';
+}
+
+/** The Chapels a seat has built or is building — a Shrine district's own
+ *  does not count. */
+export const chapelsOf = (b: ServerBoard, seat: number): number => Object.values(b.hexes)
+  .filter((h) => h.owner === seat && ((h.chapel ?? 0) > 0 || h.work?.upgrade === 'Chapel')).length;
+
+/** How many Chapels a seat may build: one, and one more per
+ *  `chapelsPerHexes` hexes it holds. */
+export const chapelsAllowed = (b: ServerBoard, seat: number): number =>
+  1 + Math.floor(hexesOf(b, seat) / Math.max(1, WORLD_BUILD.chapelsPerHexes));
+
+/**
+ * HOST A WORLD RELIC in the Chapel on `seat`'s hex, at the level the client
+ * sends. One relic, one Chapel: hosting it takes it from wherever it was, and
+ * a relic the Chapel held goes home.
+ */
+export function hostRelic(
+  b: ServerBoard, seat: number, index: number, relic: ArtifactId, level: number, t: number,
+): CommandResult {
+  resolveTo(b, t);
+  if (!isBoardIndex(index)) return { ok: false, why: 'NoSuchHex' };
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  if (!isHeld(h, t)) return { ok: false, why: 'NotStanding' };
+  if (!hasChapel(b, index)) return { ok: false, why: 'NoChapel' };
+  if (ARTIFACTS[relic] === undefined || relicKind(relic) !== 'world' || !(level >= 1)) {
+    return { ok: false, why: 'NotAWorldRelic' };
+  }
+  for (const other of Object.values(b.hexes)) {
+    if (other !== h && other.owner === seat && other.relic === relic) other.relic = null;
+  }
+  h.relic = relic;
+  const s = b.seats[seat];
+  if (s) (s.relics ??= {})[relic] = Math.floor(level);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Take a world relic out of its Chapel, home to its owner. */
+export function unhostRelic(b: ServerBoard, seat: number, relic: ArtifactId, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = Object.values(b.hexes).find((x) => x.owner === seat && x.relic === relic);
+  if (h === undefined) return { ok: false, why: 'NothingThere' };
+  h.relic = null;
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** A hex lost — taken or denied: its relic goes home to whoever held it, at
+ *  its level, and the Chapel stands empty (relic-restoration.md §5.3). */
+function relicGoesHome(b: ServerBoard, h: ServerHex, holder: number, t: number): void {
+  if (h.relic === undefined || h.relic === null) return;
+  report(b, holder, t, `${ARTIFACTS[h.relic].name} came home from the ground you lost`, false);
+  h.relic = null;
 }
 
 // ------------------------------------------------------------- resolving
@@ -481,7 +559,7 @@ function applyDue(b: ServerBoard, t: number): void {
   for (const k of keys) {
     const h = b.hexes[k];
     if (h.work !== null && h.work.at <= t) {
-      h.fortress = h.work.toLevel;
+      setUpgradeLevel(h, h.work.upgrade, h.work.toLevel);
       h.work = null;
     }
   }
@@ -532,7 +610,7 @@ function startClaim(b: ServerBoard, seat: number, index: number, t: number): num
 
 function startUpgrade(b: ServerBoard, index: number, upgrade: WorldUpgrade, t: number): number {
   const h = b.hexes[index];
-  const toLevel = h.fortress + 1;
+  const toLevel = upgradeLevel(h, upgrade) + 1;
   const at = t + WORLD_BUILD.upgrades[upgrade].levels[toLevel - 1].buildSeconds * 1000;
   h.work = { upgrade, toLevel, at };
   return at;
@@ -572,7 +650,7 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
     h.standsAt = t;
     h.storeAt = t;
   } else if (h.work !== null) {
-    h.fortress = h.work.toLevel;
+    setUpgradeLevel(h, h.work.upgrade, h.work.toLevel);
     h.work = null;
   } else if (repairing) {
     h.burnt = false;
@@ -792,7 +870,8 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     sendHome(b, g, t);
   }
   // Nobody left standing in the way: taken beside the attacker's ground,
-  // denied anywhere else.
+  // denied anywhere else. Either way its relic goes home.
+  relicGoesHome(b, h, holder, t);
   if (touches(b, a.owner, a.target, t)) {
     h.owner = a.owner;
     report(b, a.owner, t, `Your army took ground from ${seatName(b, holder)}`, true);
@@ -1385,6 +1464,8 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     return {
       index, owner: h.owner, held: isHeld(h, t), standsAt: h.standsAt,
       district: districtOf(bh) ?? 'Rural', fortress: h.fortress, work: h.work, active: h.active,
+      chapel: hasChapel(b, index),
+      relic: h.relic ? { id: h.relic, level: (h.owner === null ? undefined : b.seats[h.owner]?.relics?.[h.relic]) ?? 1 } : null,
       stores: mineHex && rate.currency !== null ? { currency: rate.currency, amount: storedAt(b, index, t), cap: rate.cap } : null,
       precious: mineHex && gems.id !== null ? { id: gems.id, amount: preciousAt(b, index, t), cap: gems.cap } : null,
       garrison: garrisonView(b, h),

@@ -21,7 +21,7 @@ import {
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  RELIC_RULES, SHRINE_RULES, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
+  RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -46,7 +46,7 @@ import {
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   itemTrainSeconds, lineRushCost, trainCost, trainingCompletesAt, trainingProgress,
 } from './sim/army';
-import { artifactLevel, nextPassiveValue, passiveValue } from './sim/artifacts';
+import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
   canRestore, forgeReplica, isMet, levelCost, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
   dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
@@ -1548,7 +1548,17 @@ export class Game {
       cast: this.castPhase(id),
       forge,
       chest: restored ? { gems: RELIC_RULES.restorerChestGems, size: RELIC_RULES.restorerChestSize } : null,
-      host: restored && relicKind(id) === 'city' ? {
+      host: restored && relicKind(id) === 'world' ? {
+        at: (() => {
+          const c = this.myChapels().find((x) => x.relic === id);
+          return c === undefined ? null : `the Chapel of a ${c.name}`;
+        })(),
+        shrines: this.myChapels().filter((c) => c.relic !== id).map((c) => ({
+          shrineId: String(c.index),
+          label: `Chapel · ${c.name}`,
+          holds: c.relic === null ? null : ARTIFACTS[c.relic].name,
+        })),
+      } : restored && relicKind(id) === 'city' ? {
         at: this.hostLabel(id),
         shrines: shrines(this.state).filter((d) => d.hosts !== id).map((d) => ({
           shrineId: d.uniqueId,
@@ -1576,16 +1586,68 @@ export class Game {
     };
   }
 
-  /** Host a city relic in a Shrine (sim/hosts.ts). */
+  /** A relic's level, for a line that names it. */
+  relicLevel(id: ArtifactId): number {
+    return artifactLevel(this.state, id);
+  }
+
+  /** The player's restored world relics: what a Chapel could host. */
+  worldRelicsRestored(): ArtifactId[] {
+    return ARTIFACT_ORDER.filter((id) => relicKind(id) === 'world' && artifactLevel(this.state, id) >= 1);
+  }
+
+  /** The player's own hexes with a Chapel, and the relic in each. */
+  private myChapels(): Array<{ index: number; name: string; relic: ArtifactId | null }> {
+    const snap = this.worldView;
+    if (snap === null) return [];
+    return snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.chapel === true).map((h) => ({
+      index: h.index, name: WORLD_BUILD.districts[h.district].name, relic: h.relic?.id ?? null,
+    }));
+  }
+
+  /** Host a world relic in the Chapel on a hex, at its level: the server
+   *  holds it, and says so in the snapshot (relic-restoration.md §5.2). */
+  async doHostWorldRelic(id: ArtifactId, index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.hostRelic(index, id, artifactLevel(this.state, id));
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    playSfx('buildPlaced');
+    this.track('relic_hosted', { relic: id, world: true });
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  async doUnhostWorldRelic(id: ArtifactId): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.unhostRelic(id);
+    if (r.ok) {
+      playSfx('click');
+      this.applyWorldSnapshot(r.snapshot);
+    } else this.notify();
+  }
+
+  /** Host a city relic in a Shrine (sim/hosts.ts), or a world relic in the
+   *  Chapel on a hex (its `shrineId` is the hex's index). */
   doHostRelic(id: ArtifactId, shrineId: string): void {
+    if (relicKind(id) === 'world') {
+      void this.doHostWorldRelic(id, Number(shrineId));
+      return;
+    }
     if (hostRelic(this.state, id, shrineId, this.now()) === 'Hosted') {
       playSfx('buildPlaced');
     }
     this.notify();
   }
 
-  /** Take a relic out of its Shrine. */
+  /** Take a relic out of its Shrine, or its Chapel. */
   doUnhostRelic(id: ArtifactId): void {
+    if (relicKind(id) === 'world') {
+      void this.doUnhostWorldRelic(id);
+      return;
+    }
     if (unhostRelic(this.state, id, this.now())) playSfx('click');
     this.notify();
   }
@@ -1605,8 +1667,12 @@ export class Game {
   }
 
   doLevelRelic(id: ArtifactId): void {
-    if (levelUpRelic(this.state, id) === 'Levelled') playSfx('questComplete');
-    else this.shake([]);
+    if (levelUpRelic(this.state, id) === 'Levelled') {
+      playSfx('questComplete');
+      // A world relic in a Chapel acts at the level the server holds: send it.
+      const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
+      if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
+    } else this.shake([]);
     this.notify();
   }
 
@@ -4892,6 +4958,18 @@ export class Game {
     const board = snapshotWorld(snap).board();
     this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
       && board.hexes[h.index].features.includes('Sanctuary')).length;
+    // THE WORLD RELICS A CHAPEL HOLDS, as the server says: only they act. A
+    // relic whose ground was lost is simply not here any more — home, at its
+    // level (relic-restoration.md §5.3).
+    if (this.actingSeat === null) {
+      const chapels = snap.hexes
+        .filter((h) => h.owner === snap.board.seat && h.relic !== null && h.relic !== undefined)
+        .map((h) => h.relic!.id).sort();
+      if (chapels.join() !== [...this.state.world.chapels].sort().join()) {
+        this.state.world.chapels = chapels;
+        syncArtifactModifiers(this.state);
+      }
+    }
     this.notify();
   }
 
@@ -4934,6 +5012,8 @@ export class Game {
       TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
+      NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
+      NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
   }

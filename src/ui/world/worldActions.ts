@@ -4,12 +4,12 @@
 // nothing here has to be the final word — only the right offer.
 
 import { WORLD_BUILD, WORLD_CAMPS } from '../../sim/data/definitions';
-import type { Wallet, WorldBuildWhat } from '../../sim/state';
+import type { ArtifactId, Wallet, WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
 import type { HexControl, WorldSource } from '../../sim/world/source';
 import { WORLD_UPGRADES, type WorldDistrict, type WorldUpgrade } from '../../sim/world/types';
-import { claimGold, districtOf } from '../../worldServer/core';
+import { claimGold, districtOf, upgradeLevel } from '../../worldServer/core';
 import { campTribute } from '../../sim/world/camps';
 import type { ScoutPay } from '../../sim/world/scouting';
 import { formatCount } from '../format';
@@ -32,7 +32,11 @@ export type HexAction =
   /** Repair a district a camp burnt (19 §5.5). */
   | { kind: 'repair'; gold: number; seconds: number }
   /** Build an upgrade into the district, or raise it a level (19 §7.2). */
-  | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number }
+  | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number; blocked?: string }
+  /** Host a restored world relic in the Chapel, or take it out
+   *  (relic-restoration.md §5.2). */
+  | { kind: 'host'; relic: ArtifactId }
+  | { kind: 'unhost'; relic: ArtifactId }
   | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency'] | null; amount: number; ready: boolean };
 
 /** Is a world build an upgrade rather than a district's claim? */
@@ -102,10 +106,24 @@ export function hexWork(h: HexControl): { what: string; startedAt: number; endsA
   };
 }
 
+/** The Chapels `seat` has built or is building, and how many it may: one,
+ *  and one more per `chapelsPerHexes` hexes held — a Shrine district's own
+ *  is not counted (worldServer/core.ts `chapelsAllowed`). */
+export function chapelRoom(source: WorldSource, seat: number): { built: number; allowed: number } {
+  const board = source.board();
+  const mine = board.hexes.map((h) => ({ bh: h, h: source.hexOf(h.index) }))
+    .filter(({ h }) => h !== null && h.owner === seat);
+  const built = mine.filter(({ bh, h }) => districtOf(bh) !== 'Shrine' && (h!.chapel === true || h!.work?.upgrade === 'Chapel')).length;
+  return { built, allowed: 1 + Math.floor(mine.length / Math.max(1, WORLD_BUILD.chapelsPerHexes)) };
+}
+
 /** What `seat` can do on this hex now, in the order the sheet shows it.
  *  Nothing is claimed, built on or sent an army until it is Revealed: the
- *  player acts only on ground they have seen (19 §3). */
-export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen: { revealed: boolean }): HexAction[] {
+ *  player acts only on ground they have seen (19 §3). `relics` are the
+ *  player's restored world relics, which a Chapel here could host. */
+export function hexActions(
+  source: WorldSource, seat: number, bh: BoardHex, seen: { revealed: boolean }, relics: readonly ArtifactId[] = [],
+): HexAction[] {
   if (!seen.revealed) return [];
   const h = source.hexOf(bh.index);
   // The Dark Portal: any army may go down while it is open (19 §10.3).
@@ -153,12 +171,24 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
     }
     return out;
   }
+  // A Chapel's relic: host one of the player's world relics, or take it out.
+  if (h.chapel === true) {
+    for (const relic of relics) if (h.relic?.id !== relic) out.push({ kind: 'host', relic });
+    if (h.relic != null) out.push({ kind: 'unhost', relic: h.relic.id });
+  }
   if (h.work !== null || !h.active) return out;
   for (const upgrade of WORLD_UPGRADES) {
     const levels = WORLD_BUILD.upgrades[upgrade].levels;
-    const level = h.fortress + 1;
+    // A Shrine district's Chapel is its own: nothing to build.
+    if (upgrade === 'Chapel' && h.chapel === true) continue;
+    const level = upgradeLevel({ fortress: h.fortress, chapel: h.chapel ? 1 : 0 }, upgrade) + 1;
     if (level > levels.length) continue;
-    out.push({ kind: 'upgrade', upgrade, level, gold: levels[level - 1].gold, seconds: levels[level - 1].buildSeconds });
+    const room = upgrade === 'Chapel' ? chapelRoom(source, seat) : null;
+    out.push({
+      kind: 'upgrade', upgrade, level, gold: levels[level - 1].gold, seconds: levels[level - 1].buildSeconds,
+      ...(room !== null && room.built >= room.allowed
+        ? { blocked: `Hold ${formatCount(room.allowed * WORLD_BUILD.chapelsPerHexes)} hexes to build another Chapel` } : {}),
+    });
   }
   return out;
 }

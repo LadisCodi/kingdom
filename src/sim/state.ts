@@ -475,6 +475,9 @@ export interface WorldState {
   /** Sanctuaries held and on the chain, as the server last said — each
    *  raises the Mana ceiling (Docs/features/19-world-map.md §8). */
   sanctuaries: number;
+  /** The player's world relics hosted in a Chapel, as the server last said
+   *  (relic-restoration.md §5.2): only these act. */
+  chapels: ArtifactId[];
   /** The player's armies out on the board: the client's half — who went and
    *  with what. The army itself is server state (02-map-scopes.md §3.1). */
   armies: WorldArmyOut[];
