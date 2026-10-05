@@ -94,6 +94,7 @@ describe('the scenes, against the game', () => {
     const wallet = game.state.city.wallet;
     const cost = nextBuildCost(game.state, 'Sawmill');
     wallet.Wood = 0;
+    wallet.Gold = 0;
     expect(buildShortfall(game.state, 'Sawmill')).toEqual(cost);
     stockBuild(game.state, 'Sawmill');
     expect(canAfford(wallet, cost)).toBe(true);

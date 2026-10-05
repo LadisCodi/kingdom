@@ -61,7 +61,10 @@
       }
     },
     "worker": { "type": "object", "fields": { "moveSpeedTilesPerSecond": { "type": "int" } } },
-    "training": { "type": "object", "fields": { "seconds": { "type": "int" } } },
+    "training": {
+      "type": "object",
+      "fields": { "seconds": { "type": "int" }, "villagerSecondsGrowth": { "type": "float", "min": 1 } }
+    },
     "rush": { "type": "object", "fields": { "secondsPerGem": { "type": "int" } } }
   }
 }

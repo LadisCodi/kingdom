@@ -12,8 +12,8 @@ import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import { addModifier } from '../src/sim/modifiers';
 import {
-  collectTap, effectiveStock, harvestSourceAt, isExhausted, stockFraction, tapCell,
-  tapYieldAt,
+  collectTap, effectiveStock, harvestSourceAt, isExhausted, isInexhaustible, stockFraction,
+  tapCell, tapYieldAt,
 } from '../src/sim/harvest';
 import {
   coordKey, getWallet, parseCoordKey, type Coord, type TerrainId,
@@ -180,13 +180,11 @@ describe('the ground under a cell', () => {
     void state;
   });
 
-  it('is a DESERT that gives up stone: poor in food and wood, rich in rock', () => {
+  it('is a DESERT: poor in food and wood', () => {
     const sand = cellOf('Desert');
     if (sand === null) return; // no desert painted yet
     expect(effectiveStock(state, map, sand, HARVEST.Forest))
       .toBeLessThan(HARVEST.Forest.stock);
-    expect(effectiveStock(state, map, sand, HARVEST.Stone))
-      .toBeGreaterThan(HARVEST.Stone.stock);
   });
 
   it('is a TUNDRA that pays in materials: hungry, and the best timber there is', () => {
@@ -201,8 +199,6 @@ describe('the ground under a cell', () => {
       expect(effectiveStock(state, map, cold, HARVEST.Forest))
         .toBeGreaterThan(effectiveStock(state, map, grass, HARVEST.Forest));
     }
-    expect(effectiveStock(state, map, cold, HARVEST.Stone))
-      .toBeGreaterThan(HARVEST.Stone.stock);
   });
 
   it('leaves Water alone, because shoals sit on it and pay Food', () => {
@@ -438,35 +434,27 @@ describe('an iron mountain does not answer a pick until Mining', () => {
     expect(mana(state)).toBe(before - TAP.manaCost);
   });
 
-  it('gives out after five strikes and comes back on a timer', () => {
+  it('never gives out, however often it is struck', () => {
     const peak = someMountain();
     expect(peak).not.toBeNull();
     const state = freshGame();
     reveal(state, [peak!]);
     completeTech(state, 'Pickaxes');
 
-    const spec = HARVEST.Stone;
-    for (let i = 0; i < spec.stock; i++) {
+    for (let i = 0; i < 50; i++) {
       expect(tapCell(state, map, peak!, T0), `strike ${i + 1}`).toBe('Harvested');
     }
-    expect(isExhausted(state, map, peak!, T0)).toBe(true);
-    expect(tapCell(state, map, peak!, T0)).toBe('Exhausted');
-    expect(isExhausted(state, map, peak!, T0 + spec.recoverySeconds * 1000)).toBe(false);
+    expect(isExhausted(state, map, peak!, T0)).toBe(false);
   });
 
-  // A rich node is throttled by how long it stays dead, not only by what it
-  // pays: iron and gold recover in five minutes against a bare peak's two.
-  // Written down because the value was silently halved once already, when
-  // MountainIron was created by copying the plain mountain's spec.
-  it('makes the metal mountains slower to come back than a bare one', () => {
-    expect(HARVEST.Stone.recoverySeconds).toBe(120);
-    expect(HARVEST.MountainIron.recoverySeconds).toBe(300);
-    expect(HARVEST.MountainGold.recoverySeconds).toBe(300);
-    // And a metal peak is RICHER as well as slower: more units in the ground,
-    // not merely a bigger number per swing.
-    expect(HARVEST.Stone.stock).toBe(5);
-    expect(HARVEST.MountainIron.stock).toBeGreaterThan(HARVEST.Stone.stock);
-    expect(HARVEST.MountainGold.stock).toBeGreaterThan(HARVEST.Stone.stock);
+  // A mountain is bedrock: picking at it does not use it up. What makes a
+  // metal peak richer is the swing — more units a strike — not a depot.
+  it('makes every mountain inexhaustible, the metal ones included', () => {
+    for (const spec of [HARVEST.Stone, HARVEST.MountainIron, HARVEST.MountainGold]) {
+      expect(isInexhaustible(spec), spec.id).toBe(true);
+    }
+    expect(HARVEST.MountainIron.unitsPerStrike).toBeGreaterThan(HARVEST.Stone.unitsPerStrike);
+    expect(HARVEST.MountainGold.unitsPerStrike).toBeGreaterThan(HARVEST.Stone.unitsPerStrike);
   });
 
   it('is worked by the Quarry — the one building that goes after every peak', () => {

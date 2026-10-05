@@ -162,7 +162,7 @@ function queueLeft(game: Game, district: District, head: ReturnType<typeof lineF
   return head.startedAt === null
     ? (head.kind === 'heal'
       ? game.healWait(head.trainee as UnitId, itemCount(head))
-      : trainSecondsAt(game.state, district.uniqueId, head.trainee))
+      : trainSecondsAt(game.state, district.uniqueId, head.trainee, head))
     : Math.max(0, (trainingCompletesAt(head) - game.now()) / 1000);
 }
 

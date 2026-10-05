@@ -155,18 +155,20 @@ running. Research already worked this way.
 - Capacity is per building, per level, in units: `buildings` ›
   `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
   Stone and Gold in one store.
-- Capacity is authored as about **4 h** of the building at full strength at
-  levels 1–5, rising to about **12 h** at level 10 (OQ-107). Nothing but the
-  building's level raises it (OQ-108).
+- Capacity is authored as **5 minutes** of the building at full strength at
+  level 1, rising by the same factor each level to **6 hours** at level 10
+  (×1.61 a level: 5 · 8 · 13 · 21 · 33 · 54 · 87 · 139 · 224 · 360 min).
+  Full strength is a full house, a full crew, or the Townhall's own income at
+  that level. Nothing but the building's level raises it (OQ-108).
 
 | Building | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Townhall | 2,400 Gold | 250,000 | 2,600,000 |
-| Housing | 15,000 Gold | 350,000 | 4,600,000 |
-| Farm | 4,300 | 14,000 | 250,000 |
-| Sawmill | 3,600 | 11,000 | 170,000 |
-| Quarry | 1,600 | 5,500 | 100,000 |
-| Docks | 3,100 | 12,000 | 120,000 |
+| Townhall | 50 Gold | 35,000 | 1,900,000 |
+| Housing | 300 Gold | 20,000 | 700,000 |
+| Farm | 110 | 2,800 | 180,000 |
+| Sawmill | 90 | 2,200 | 140,000 |
+| Quarry | 35 | 850 | 55,000 |
+| Docks | 90 | 2,200 | 83,000 |
 
 - A data rule requires a store on anything that makes Gold or harvests, and
   forbids one on anything else.
@@ -225,13 +227,17 @@ absence is replayed, and each building stops when its store is full
 - The Townhall trains villagers in a queue.
 - Each press of Train pays its Food cost up front, priced as if everything
   already queued had delivered, and appends one villager.
-- Villagers complete sequentially at `training.seconds` = 20 s each.
+- Villagers complete one at a time. A villager's wait depends on their place
+  in the town (the population plus everyone queued ahead of them):
+  `training.seconds` (20 s) × `training.villagerSecondsGrowth` (×1.07) per
+  place. So the 1st takes 20 s, the 20th about 1 min, the 40th about 5 min
+  and the 70th about 35 min. The wait is stamped when the villager's clock starts.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.05`
-  per villager beyond — the Townhall's levels ask for villagers
-  ([`05-city-and-districts.md`](05-city-and-districts.md) §1), so the curve
-  has to let a city reach seventy of them in a month.
+- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.1`
+  per villager beyond: about 3,500 Food for the 20th, 23,000 for the 40th and
+  405,000 for the 70th. The Townhall's levels ask for villagers
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - No tap hurries the queue.
 - Timers take Gems ([`04-harvest.md`](04-harvest.md) §3.2).
 
@@ -286,10 +292,10 @@ and research**.
 | The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
-| Store capacity per level | about 4 h of the building at levels 1–5, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Store capacity per level | 5 min of the building at level 1, ×1.61 a level to 6 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | 2 · 4 · 6 … 20 — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
-| Villager training | 20 s, cost `5,20,45,100,250,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
+| Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,20,45,100,250,500,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
 | Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `currencies.goldValue` |
 | Adjacency rules | §3.1 | `adjacency` — `district`, `neighbor`, `stat`, `magnitude` |

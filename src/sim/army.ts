@@ -27,7 +27,7 @@ import {
 } from './data/definitions';
 import { isTechComplete } from './research';
 import {
-  maxPopulation, populationCost, repriceTaxAnchorAround,
+  maxPopulation, populationCost, repriceTaxAnchorAround, villagerTrainSeconds,
 } from './population';
 import { adjacencyMultiplier } from './adjacency';
 import {
@@ -270,21 +270,40 @@ export const runsALine = (district: District): boolean =>
   trainableAt(district).length > 0
   || DISTRICTS[district.definitionId].bedsPerLevel.length > 0;
 
-/** Seconds on the clock for one trainee, as authored. Villagers are authored
- *  once in Settings; soldiers carry their own duration. */
+/** Seconds on the clock for one trainee, as authored. A villager's is the
+ *  FIRST villager's (`villagerTrainSeconds` climbs from it); soldiers carry
+ *  their own duration. */
 export const trainSeconds = (trainee: TrainableId): number =>
   trainee === 'Villager' ? TRAINING.seconds : UNITS[trainee].trainDurationSeconds;
 
 /**
+ * Which villager this one will be (0-based): the population plus every
+ * villager queued ahead of `item` — or, with no item, ahead of the next one
+ * the player would queue.
+ */
+export function villagerPlace(state: GameState, item?: TrainingItem): number {
+  let ahead = 0;
+  for (const i of state.city.trainingQueue) {
+    if (i === item) break;
+    if (i.trainee === 'Villager') ahead++;
+  }
+  return state.city.population + ahead;
+}
+
+/**
  * Seconds this trainee will take at THIS building — the authored duration,
  * times what the building's neighbours do to `trainTime` (a military quarter
- * trains faster, `03-economy.md` §3.1).
+ * trains faster, `03-economy.md` §3.1). A villager's duration also climbs
+ * with their place in the town (`villagerPlace`): `item` names which one,
+ * and without it the answer is for the next villager queued.
  *
  * Read once, when the clock starts, and stored on the item. A neighbour that
  * arrives or moves later must not reprice a wait already running, which is the
  * same rule research follows for its own time multiplier.
  */
-export function trainSecondsAt(state: GameState, buildingId: string, trainee: TrainableId): number {
+export function trainSecondsAt(
+  state: GameState, buildingId: string, trainee: TrainableId, item?: TrainingItem,
+): number {
   const building = districtById(state, buildingId);
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
   // The tree's half is a SPEED the time is divided by, so a rank never meets
@@ -292,7 +311,10 @@ export function trainSecondsAt(state: GameState, buildingId: string, trainee: Tr
   const speed = trainee === 'Villager'
     ? techMultiplier(state, 'villagerTrainingSpeed')
     : techMultiplier(state, 'recruitSpeed', { unit: trainee });
-  return Math.max(1, Math.round((trainSeconds(trainee) * mult) / Math.max(1, speed)));
+  const base = trainee === 'Villager'
+    ? villagerTrainSeconds(villagerPlace(state, item))
+    : trainSeconds(trainee);
+  return Math.max(1, Math.round((base * mult) / Math.max(1, speed)));
 }
 
 /** Start one trainee's clock: the moment, and the duration that goes with it.
@@ -303,7 +325,7 @@ function startTrainee(state: GameState, item: TrainingItem, at: number): void {
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
   item.seconds = item.kind === 'heal'
     ? Math.max(1, Math.round(healSeconds(item.trainee as UnitId, itemCount(item)) * mult))
-    : trainSecondsAt(state, item.buildingId, item.trainee);
+    : trainSecondsAt(state, item.buildingId, item.trainee, item);
 }
 
 /** What is on this item's clock: what it was stamped with, or the authored
@@ -514,7 +536,7 @@ export function lineRemainingSeconds(
     } else {
       // Not started, so not stamped: it will be priced by the neighbours
       // standing there when its turn comes.
-      total += trainSecondsAt(state, buildingId, item.trainee);
+      total += trainSecondsAt(state, buildingId, item.trainee, item);
     }
   });
   return total;

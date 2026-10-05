@@ -15,7 +15,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
@@ -39,7 +39,7 @@ import { harmonyBlock } from './sim/harmony';
 import {
   committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
-  trainingCompletesAt,
+  itemTrainSeconds, trainingCompletesAt,
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
@@ -4449,7 +4449,7 @@ export class Game {
     const line = hall ? lineFor(this.state, hall.uniqueId) : [];
     const head = line[0];
     const completesAt = head ? trainingCompletesAt(head) : null;
-    const total = TRAINING.seconds * 1000;
+    const total = head ? itemTrainSeconds(head) * 1000 : 0;
     const queued = line.length;
     return {
       active: completesAt !== null && Number.isFinite(completesAt),
