@@ -17,6 +17,7 @@ import { isTechComplete, pourKnowledge } from '../src/sim/research';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
 import { townhallDistance } from '../src/sim/grid';
+import { explorationGate, fogState, isPayable, isReachable } from '../src/sim/fog';
 import {
   coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
 } from '../src/sim/state';
@@ -1074,5 +1075,49 @@ describe('the hero picker', () => {
     const type = HEROES[all[0]!].unitType;
     game.heroPickFilter(type);
     expect(game.heroPickList().every((h) => HEROES[h].unitType === type)).toBe(true);
+  });
+});
+
+// A refused fog tap shows where the fog CAN be cleared (Docs/plans/ux-pass.md
+// §2.6): the buyable cell nearest the one tapped wears the quest hint's hand.
+describe('a refused fog tap points at the frontier', () => {
+  const chebyshev = (a: Coord, b: Coord) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+  const buyable = (game: Game, c: Coord) =>
+    fogState(game.state, game.map, c) === 'Discovered' && isPayable(game.state, game.map, c)
+    && explorationGate(game.map, c) === null;
+  /** The cell of `fog` farthest from the Townhall — well past the frontier. */
+  const farthest = (game: Game, pred: (c: Coord) => boolean): Coord => {
+    const cells = game.map.cells.filter(pred);
+    expect(cells.length).toBeGreaterThan(0);
+    return cells.reduce((a, b) => (townhallDistance(game.map, b) > townhallDistance(game.map, a) ? b : a));
+  };
+  const expectNearestFrontier = (game: Game, tapped: Coord) => {
+    const hint = game.hintCell();
+    expect(hint).not.toBeNull();
+    expect(buyable(game, hint!)).toBe(true);
+    const best = Math.min(...game.map.cells.filter((c) => buyable(game, c)).map((c) => chebyshev(c, tapped)));
+    expect(chebyshev(hint!, tapped)).toBe(best);
+  };
+
+  it('on a dark cell no path reaches yet', () => {
+    const game = freshPresenter();
+    const far = farthest(game, (c) => fogState(game.state, game.map, c) === 'Discovered'
+      && !isReachable(game.state, game.map, c));
+    game.handleTap(...screenAt(game, far));
+    expectNearestFrontier(game, far);
+  });
+
+  it('on the plain dark past it', () => {
+    const game = freshPresenter();
+    const far = farthest(game, (c) => fogState(game.state, game.map, c) === 'Undiscovered');
+    game.handleTap(...screenAt(game, far));
+    expectNearestFrontier(game, far);
+  });
+
+  it('not on a cell it can clear', () => {
+    const game = freshPresenter();
+    const edge = game.map.cells.find((c) => buyable(game, c))!;
+    game.handleTap(...screenAt(game, edge));
+    expect(game.hintCell()).toBeNull();
   });
 });
