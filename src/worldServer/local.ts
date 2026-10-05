@@ -46,6 +46,9 @@ export interface WorldServerApi {
   withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
   finish(index: number, asSeat?: number): Promise<CommandResult>;
+  /** Take `seconds` off a builder's work on a hex — a speed-up, paid for by
+   *  the client from its Bag. */
+  hurry(index: number, seconds: number): Promise<CommandResult>;
   collect(index: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult>;
   recall(armyId: string, asSeat?: number): Promise<CommandResult>;
@@ -198,6 +201,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async finish(index: number, asSeat?: number): Promise<CommandResult> {
     return this.ask({ kind: 'finish', index }, asSeat);
+  }
+
+  async hurry(index: number, seconds: number): Promise<CommandResult> {
+    return this.ask({ kind: 'hurry', index, seconds });
   }
 
   async collect(index: number, asSeat?: number): Promise<CollectResult> {

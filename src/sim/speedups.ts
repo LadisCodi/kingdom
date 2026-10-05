@@ -19,17 +19,29 @@ import { ITEMS, type SpeedupKind } from './data/definitions';
 import type { MapData } from './grid';
 import { itemCount } from './bag';
 import { districtById, remainingSeconds, type GameState, type ItemId } from './state';
+import { cutExplorer, returnsAt } from './world/explorers';
 import { cutWorkshopItem, isWorkshop, itemRemainingSeconds } from './workshops';
 
-/** A running timer a speed-up can be used on. */
+/** A running timer a speed-up can be used on. A world build (`hex`) is the
+ *  world server's time: the game asks the server to move it
+ *  (`handleWorld`'s `hurry`) and only then spends the items. */
 export type SpeedJob =
   | { kind: 'queue'; itemId: string }
   | { kind: 'training'; buildingId: string }
-  | { kind: 'workshop'; districtId: string };
+  | { kind: 'workshop'; districtId: string }
+  | { kind: 'explorer'; tripId: string }
+  | { kind: 'hex'; index: number };
 
-/** The typed speed-up that fits this job. */
-export const jobKind = (job: SpeedJob): Exclude<SpeedupKind, 'General'> =>
-  job.kind === 'queue' ? 'Construction' : job.kind === 'training' ? 'Training' : 'Workshop';
+/** The typed speed-up that fits this job; null where only General does — an
+ *  explorer's march, whose own March speed-ups are not made yet. */
+export const jobKind = (job: SpeedJob): Exclude<SpeedupKind, 'General'> | null => {
+  switch (job.kind) {
+    case 'queue': case 'hex': return 'Construction';
+    case 'training': return 'Training';
+    case 'workshop': return 'Workshop';
+    case 'explorer': return null;
+  }
+};
 
 /** Does this speed-up fit this job? */
 export const fits = (id: ItemId, job: SpeedJob): boolean => {
@@ -49,6 +61,15 @@ export function jobRemainingSeconds(state: GameState, job: SpeedJob, now: number
   if (job.kind === 'training') {
     return lineFor(state, job.buildingId).length === 0 ? null : lineRemainingSeconds(state, job.buildingId, now);
   }
+  if (job.kind === 'explorer') {
+    const trip = state.world.explorers.find((t) => t.id === job.tripId);
+    return trip === undefined ? null : Math.max(0, (returnsAt(trip) - now) / 1000);
+  }
+  if (job.kind === 'hex') {
+    // The client's mirror of the server's timer (`state.world.builds`).
+    const build = state.world.builds.find((b) => b.index === job.index);
+    return build === undefined ? null : Math.max(0, (build.finishesAt - now) / 1000);
+  }
   const d = districtById(state, job.districtId);
   return d === undefined || !isWorkshop(d) ? null : itemRemainingSeconds(state, d, now);
 }
@@ -61,25 +82,22 @@ export function speedupsFor(state: GameState, job: SpeedJob): ItemId[] {
   return held.sort((a, b) => typed(a) - typed(b) || ITEMS[a].seconds - ITEMS[b].seconds);
 }
 
-export type SpeedupResult = 'Used' | 'NotHeld' | 'DoesNotFit' | 'NothingRunning';
+export type SpeedupResult = 'Used' | 'NotHeld' | 'DoesNotFit' | 'NothingRunning' | 'OnTheServer';
 
-/** Take `seconds` off the job at `now`; the seconds it used. */
-function cut(state: GameState, map: MapData, job: SpeedJob, seconds: number, now: number): number {
-  if (job.kind === 'queue') return cutQueueItem(state, map, job.itemId, seconds * 1000, now) / 1000;
-  if (job.kind === 'training') return cutLine(state, job.buildingId, seconds * 1000, now) / 1000;
-  return cutWorkshopItem(state, job.districtId, seconds, now);
-}
-
-/** Use `n` of a speed-up on a job, at `now`. All `n` are spent, even past
- *  what the job had left — the picker shows the time left, and Auto never
- *  overshoots by more than its smallest item. */
-export function useSpeedup(
-  state: GameState, map: MapData, job: SpeedJob, id: ItemId, n: number, now: number,
-): SpeedupResult {
+/** Why `n` of this speed-up cannot be used on the job now, or null. */
+export function speedupRefusal(
+  state: GameState, job: SpeedJob, id: ItemId, n: number, now: number,
+): Exclude<SpeedupResult, 'Used' | 'OnTheServer'> | null {
   if (!fits(id, job)) return 'DoesNotFit';
   if (!(n >= 1) || !Number.isInteger(n) || itemCount(state, id) < n) return 'NotHeld';
   if (jobRemainingSeconds(state, job, now) === null) return 'NothingRunning';
-  cut(state, map, job, ITEMS[id].seconds * n, now);
+  return null;
+}
+
+/** Take `n` of a speed-up out of the Bag, spent on a job. All `n` go, even
+ *  past what the job had left — the picker shows the time left, and Auto
+ *  never overshoots by more than its smallest item. */
+export function spendSpeedups(state: GameState, job: SpeedJob, id: ItemId, n: number): void {
   const left = itemCount(state, id) - n;
   if (left > 0) state.bag.held[id] = left;
   else {
@@ -87,6 +105,26 @@ export function useSpeedup(
     delete state.bag.fresh[id];
   }
   track(state, 'item_used', { item: id, count: n, job: job.kind });
+}
+
+/** Take `seconds` off a job the client owns, at `now`. */
+function cut(state: GameState, map: MapData, job: SpeedJob, seconds: number, now: number): void {
+  if (job.kind === 'queue') cutQueueItem(state, map, job.itemId, seconds * 1000, now);
+  else if (job.kind === 'training') cutLine(state, job.buildingId, seconds * 1000, now);
+  else if (job.kind === 'workshop') cutWorkshopItem(state, job.districtId, seconds, now);
+  else if (job.kind === 'explorer') cutExplorer(state, job.tripId, seconds * 1000, now);
+}
+
+/** Use `n` of a speed-up on a job the client owns, at `now`. A world build
+ *  is the server's: the caller asks it first (`OnTheServer`). */
+export function useSpeedup(
+  state: GameState, map: MapData, job: SpeedJob, id: ItemId, n: number, now: number,
+): SpeedupResult {
+  const refused = speedupRefusal(state, job, id, n, now);
+  if (refused !== null) return refused;
+  if (job.kind === 'hex') return 'OnTheServer';
+  cut(state, map, job, ITEMS[id].seconds * n, now);
+  spendSpeedups(state, job, id, n);
   return 'Used';
 }
 
@@ -155,6 +193,7 @@ export function autoPlan(state: GameState, job: SpeedJob, now: number): AutoPlan
 export function useAuto(state: GameState, map: MapData, job: SpeedJob, now: number): SpeedupResult {
   const plan = autoPlan(state, job, now);
   if (plan.length === 0) return jobRemainingSeconds(state, job, now) === null ? 'NothingRunning' : 'NotHeld';
+  if (job.kind === 'hex') return 'OnTheServer';
   for (const p of plan) {
     if (jobRemainingSeconds(state, job, now) === null) break;
     useSpeedup(state, map, job, p.id, p.n, now);

@@ -870,3 +870,19 @@ for.
 - **What to know:** one prompt, no corrections; it came back true alpha with
   the four pieces at one stroke width. Asking for straight legs of at least
   150px on the elbow is what lets the script cut them flush at the radius.
+
+---
+
+## UI-I1 — the Bag's items
+
+- **Date:** 2026-10-05
+- **Conversation:** <https://chatgpt.com/c/6ac41428-ba54-83eb-9b25-88a710ed513d>
+  ("Generate Icon Sheet", Codigames workspace), driven from Claude Code
+  through the Chrome extension; `items/ref-atlas.png` (a montage of sixteen
+  shipped atlas icons) attached as the only style anchor.
+- **Files:** `sheets/ui-i1-items.png`, 1254×1254, true alpha first time
+  (corner `srgba(0,0,0,0)`), fetched from the `<img>` as a blob.
+- **Prompt:** `items/prompt.md`, one message.
+- **What to know:** the even 4×4 cut caught a few pixels of the row above at
+  the top of three cells; the sheet's three row boundaries were cleared to
+  alpha 0 in a 24 px band before slicing.

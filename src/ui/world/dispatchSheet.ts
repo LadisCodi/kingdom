@@ -24,6 +24,8 @@ import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
+import { timerButton } from '../speedupSheet';
+import type { SpeedJob } from '../../sim/speedups';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
 import { scoutPay } from '../../sim/world/scouting';
 import { gemsToFinish } from '../../sim/rush';
@@ -346,7 +348,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
  * (sim/rush.ts prices it).
  */
 function waitRow(
-  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void,
+  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void, job: SpeedJob,
 ): HTMLElement {
   const now = game.now();
   const total = endsAt - startedAt;
@@ -358,13 +360,13 @@ function waitRow(
       el('span', { class: 'tr-batch-what' }, what),
       bar.root,
       el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total / 1000))}`)),
-    btn({
+    timerButton(game, job, btn({
       label: 'Finish',
       kind: 'gem',
       onClick: onFinish,
       cost: { Gems: gems },
       have: (c) => game.walletValue(c),
-    }));
+    })));
 }
 
 /** An explorer's trip: there, the work, and home. */
@@ -374,13 +376,13 @@ function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
     : now < revealsAt(trip) ? 'Exploring'
       : 'Coming home';
   return waitRow(game, doing, trip.departedAt, returnsAt(trip), explorerRushCost(trip, now),
-    () => game.doFinishExplorer(trip.id));
+    () => game.doFinishExplorer(trip.id), { kind: 'explorer', tripId: trip.id });
 }
 
 /** A builder's work on one of the player's hexes: its district, or an upgrade's level. */
 function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
   return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
-    () => void game.doFinishHexWork(index));
+    () => void game.doFinishHexWork(index), { kind: 'hex', index });
 }
 
 /** For the explorers chip: how many are out of how many. */

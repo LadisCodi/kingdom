@@ -40,15 +40,19 @@ const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
 /** A typed speed-up's badge on its tile (§3.5): a hammer for construction,
  *  a helmet for training, a workshop for workshops; General has none. */
 const SPEED_BADGE: Partial<Record<NonNullable<ItemDef['speeds']>, IconName>> = {
-  Construction: 'build', Training: 'helmet', Workshop: 'Carpenter',
+  Construction: 'build', Training: 'helmet', Workshop: 'anvil',
 };
 
-/** A tile's picture: the coin a chest pays, an hourglass for a speed-up,
- *  with the speed-up's type badge at its lower left. */
-export function tileArt(def: ItemDef, worth: Wallet): Node[] {
-  const coin = chestCoin(worth);
-  const art = def.kind === 'speedup' ? iconEl('hourglass', { size: 'lg' })
-    : coin !== null ? currencyIcon(coin[0], { size: 'lg' }) : iconEl('chest', { size: 'lg' });
+/** A chest's picture, by the coin it pays. */
+const CHEST_ICON: Partial<Record<CurrencyId, IconName>> = {
+  Gold: 'chestGold', Food: 'chestFood', Wood: 'chestWood', Stone: 'chestStone',
+};
+
+/** A tile's picture: the chest of its coin, the winged hourglass for a
+ *  speed-up, with the speed-up's type badge at its lower left. */
+export function tileArt(def: ItemDef): Node[] {
+  const art = iconEl(def.kind === 'speedup' ? 'speedup'
+    : (def.coin !== null ? CHEST_ICON[def.coin] : undefined) ?? 'chest', { size: 'lg' });
   const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
   return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
 }
@@ -102,7 +106,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     'aria-expanded': picked ? 'true' : 'false',
   },
     el('span', { class: 'bag-tile-size' }, sizeLabel(item.def)),
-    ...tileArt(item.def, item.worth),
+    ...tileArt(item.def),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
     ...(item.fresh ? [el('span', { class: 'bag-tile-new' }, iconEl('sparkle', { size: 'sm' }))] : []),
   );

@@ -15,6 +15,11 @@ import { completesAt, townhall, type GameState, type ItemId } from '../src/sim/s
 import { queueGood } from '../src/sim/workshops';
 import { rand } from '../src/sim/rng';
 import { addBuilt, freshGame, freshPresenter, fund, map, T0 } from './helpers';
+import { SEAT_INDICES } from '../src/sim/world/board';
+import { boardNeighbors, PORTAL_INDEX } from '../src/sim/world/hex';
+import { dispatchExplorer, homeIndex, returnsAt } from '../src/sim/world/explorers';
+import { hasBit } from '../src/sim/world/fogBits';
+import { claim, emptyWorld, hurry, join } from '../src/worldServer/core';
 
 const MIN = 60_000;
 
@@ -241,5 +246,43 @@ describe('the Speed-up picker', () => {
     game.openSpeedup(job);
     game.closeSpeedup();
     expect(game.openOverlay).toBe('bag');
+  });
+});
+
+describe('a speed-up on the world', () => {
+  it('moves a claim on the server, and one that covers it finishes it there', () => {
+    const { board: b, seat } = join(emptyWorld(), { id: 'me', name: 'Me', prefer: { id: 'r', seed: 3, seat: 0 } }, T0);
+    for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
+    const via = boardNeighbors(SEAT_INDICES[0])[0];
+    const claimed = claim(b, seat, via, T0);
+    expect(claimed.ok).toBe(true);
+    const end = claimed.ok ? claimed.finishesAt : 0;
+    const r = hurry(b, seat, via, 600, T0 + 1000);
+    expect(r.ok && r.finishesAt).toBe(end - 600_000);
+    expect(b.hexes[via].standsAt).toBe(end - 600_000);
+    const done = hurry(b, seat, via, 86_400, T0 + 2000);
+    expect(done.ok && done.finishesAt).toBe(T0 + 2000);
+    expect(b.hexes[via].standsAt).toBe(T0 + 2000);
+    expect(hurry(b, seat, via, 60, T0 + 3000)).toEqual({ ok: false, why: 'NothingBuilding' });
+  });
+
+  it('brings an explorer home sooner, and home now when it covers the trip', () => {
+    const state = freshGame();
+    state.research.completed.push('Cartography');
+    fund(state, { Gold: 1e9 });
+    const target = boardNeighbors(homeIndex(state)).find((n) => n !== PORTAL_INDEX)!;
+    const r = dispatchExplorer(state, target, T0);
+    if (r.kind !== 'Sent') throw new Error(r.kind);
+    const job: SpeedJob = { kind: 'explorer', tripId: r.trip.id };
+    const back = returnsAt(r.trip);
+    grantItem(state, 'GeneralSpeedup1m', 1);
+    grantItem(state, 'ConstructionSpeedup1h', 1);
+    expect(useSpeedup(state, map, job, 'ConstructionSpeedup1h', 1, T0)).toBe('DoesNotFit');
+    expect(useSpeedup(state, map, job, 'GeneralSpeedup1m', 1, T0)).toBe('Used');
+    expect(returnsAt(state.world.explorers[0])).toBe(back - MIN);
+    grantItem(state, 'GeneralSpeedup24h', 1);
+    useSpeedup(state, map, job, 'GeneralSpeedup24h', 1, T0);
+    expect(state.world.explorers).toEqual([]);
+    expect(hasBit(state.world.revealed, target)).toBe(true);
   });
 });
