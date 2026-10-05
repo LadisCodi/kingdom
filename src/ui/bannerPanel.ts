@@ -22,7 +22,8 @@ import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
 import { el, formatDuration, formatExact } from './format';
-import { btn } from './kit';
+import { btn, type CostTerm, type IconName } from './kit';
+import type { ItemId } from '../sim/state';
 
 export function bannerPanel(game: Game): HTMLElement {
   return el('div', { class: 'store-banners' },
@@ -76,7 +77,7 @@ const hint = (banner: BannerId): string => (banner === 'advanced'
  *  store card that sells its key. */
 function keyNote(game: Game, banner: BannerId): string {
   const def = BANNERS[banner];
-  const held = game.walletValue(def.key);
+  const held = game.itemHeld(def.key);
   const name = def.key === 'GoldKey' ? 'gold keys' : 'silver keys';
   const left = def.freePerDay > 0 ? game.freePull(banner).left : 0;
   const free = left > 0 ? ` ${left} free call${left === 1 ? '' : 's'} left today.` : '';
@@ -125,8 +126,7 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
         // anybody watches, so it says the day instead of the clock.
         : 'Free tomorrow',
       onClick: () => game.doPull(banner),
-      cost: { [price.currency]: price.amount },
-      have: (c) => game.walletValue(c),
+      costExtra: [keyTerm(game, price.key, price.amount)],
     });
   }
   if (banner === 'basic' && game.uiHint() === 'banner') b.classList.add('hinted');
@@ -143,7 +143,12 @@ function tenCall(game: Game, banner: BannerId): HTMLElement {
     label: 'Call ×10',
     kind: 'gem',
     onClick: () => game.doPullMany(banner, 10),
-    cost: { [price.currency]: total },
-    have: (c) => game.walletValue(c),
+    costExtra: [keyTerm(game, price.key, total)],
   });
+}
+
+/** A key in a call's price: a Bag item, so a term of its own rather than a
+ *  wallet price — red when the Bag holds fewer. */
+function keyTerm(game: Game, key: ItemId, amount: number): CostTerm {
+  return { icon: key as IconName, amount: formatExact(amount), short: game.itemHeld(key) < amount };
 }

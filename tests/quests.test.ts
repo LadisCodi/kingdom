@@ -110,8 +110,8 @@ describe('the quest chain', () => {
     inOrder('FirstSummon', 'Fellowship', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
       'Magistrate', 'Borough', 'SecondLair', 'TheWatchtower');
     expect(QUESTS.at(-1)).toMatchObject({ id: 'DeeperStill', goalType: 'TrainArmy' });
-    // The first pack is the first quest-paid pack, and it is the first fight's.
-    expect(QUESTS.find((q) => q.rewardPack !== null)!.id).toBe('DriveThemOut');
+    // The first quest that pays relic fragments is the first fight's.
+    expect(QUESTS.find((q) => q.rewardFragments > 0)!.id).toBe('DriveThemOut');
     // The Watchtower is asked for by KIND.
     expect(QUESTS.find((q) => q.id === 'TheWatchtower'))
       .toMatchObject({ goalType: 'ClaimLandmarks', goalTarget: 'Watchtower' });
@@ -608,7 +608,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardFragments: 0, rewardItems: {}, autoClaim: false, tutorialRentSeconds: null,
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -680,7 +680,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const quest: QuestDef = {
       id: 'test', name: 'test',
       goalType: 'FindLairs', goalTarget: null, goalAmount: 1, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardFragments: 0, rewardItems: {}, autoClaim: false, tutorialRentSeconds: null,
     };
     const restore = activate(state, quest);
     try {
@@ -699,7 +699,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: cleared, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardPack: null, autoClaim: false, tutorialRentSeconds: null,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0, rewardFragments: 0, rewardItems: {}, autoClaim: false, tutorialRentSeconds: null,
     });
     try {
       // Everything in reach was cleared already: the quest is done on arrival,

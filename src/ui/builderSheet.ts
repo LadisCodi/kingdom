@@ -20,6 +20,8 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress } from './kit';
+import { timerButton } from './speedupSheet';
+import type { SpeedJob } from '../sim/speedups';
 import { sheet } from './kit/surface';
 
 const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
@@ -72,17 +74,19 @@ export function renderBuilderSheet(game: Game): HTMLElement {
         el('div', { class: 'crew-name' }, name),
         el('div', { class: 'crew-task' }, task),
         bar.root),
-      btn({
+      timerButton(game, { kind: 'queue', itemId: item.uniqueId }, btn({
         label: 'Finish',
         kind: 'gem',
         onClick: () => game.doRush(item.uniqueId),
         cost: { Gems: gemRushCost(item, t) },
         have: (c) => game.walletValue(c),
-      })));
+      }))));
   }
 
-  // A builder out on the world board: the server's timer, so no Finish.
+  // A builder out on the world board: the server's timer. No Finish here —
+  // that is on the hex's sheet — but a speed-up from the Bag, when one fits.
   for (const job of worldJobs) {
+    const speed: SpeedJob = { kind: 'hex', index: job.index };
     const bar = progress('blue');
     const leftMs = Math.max(0, job.startedAt + job.durationMs - t);
     bar.run(job.durationMs > 0 ? Math.min(1, Math.max(0, (t - job.startedAt) / job.durationMs)) : 1,
@@ -92,7 +96,10 @@ export function renderBuilderSheet(game: Game): HTMLElement {
       el('div', { class: 'crew-mid' },
         el('div', { class: 'crew-name' }, job.name),
         el('div', { class: 'crew-task' }, job.task),
-        bar.root)));
+        bar.root),
+      ...(game.hasSpeedups(speed)
+        ? [btn({ label: 'Speed up', kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(speed) })]
+        : [])));
   }
 
   // The places still to hire, up to the ceiling: the next one holds the

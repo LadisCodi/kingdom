@@ -3,9 +3,11 @@
   "fields": {
     "priceUsd": { "type": "float", "min": 0 },
     "gems": { "type": "int" },
-    "packs": { "type": "int" },
-    "packTier": { "type": "text", "ref": "pack", "emptyOk": true },
-    "wildcards": { "type": "int" },
-    "wildcardRarity": { "type": "int" }
+    "items": {
+      "type": "map",
+      "of": { "type": "int", "min": 1 },
+      "keysRef": "item",
+      "doc": "An item bundle: what it puts in the Bag. A product is one thing: items, or Gems."
+    }
   }
 }

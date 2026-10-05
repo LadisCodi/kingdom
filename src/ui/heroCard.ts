@@ -14,7 +14,7 @@
 // silhouette, and the fragments it has against the ten that recruit it in
 // place of the level — a signpost, not a locked box.
 
-import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import { heroUnlockCost } from '../sim/heroes';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId } from '../sim/state';
@@ -40,7 +40,7 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
   const tier = game.state.heroes.tiers[heroId] ?? 1;
   const url = spriteUrl(def.sprite);
   const stars = el('span', { class: 'hc-stars' });
-  for (let i = 0; i < COLLECTION.maxTier; i++) {
+  for (let i = 0; i < HERO_LADDER.maxTier; i++) {
     stars.append(iconEl('ascension', { size: 'sm', locked: i >= tier, label: 'ascension' }));
   }
   const card = el(opts.onClick ? 'button' : 'span', {

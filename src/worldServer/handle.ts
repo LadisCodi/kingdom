@@ -13,11 +13,11 @@
 //   answer lost on the way loses nothing.
 
 import type { Board } from '../sim/battle';
-import type { HeroId } from '../sim/state';
+import type { ArtifactId, HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
-  claim, collect, delveRoom, descendPortal, finish, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
-  sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
+  claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
+  sendArmy, setBoost, snapshotOf, takeOffer, tribute, unhostRelic, upgrade, withdrawOffer,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
 import type {
@@ -47,6 +47,8 @@ export interface WorldCommands {
   tribute: { cmd: { index: number }; reply: CommandResult };
   repair: { cmd: { index: number }; reply: CommandResult };
   finish: { cmd: { index: number }; reply: CommandResult };
+  /** A speed-up from the Bag: `seconds` off a builder's work on a hex. */
+  hurry: { cmd: { index: number; seconds: number }; reply: CommandResult };
   collect: { cmd: { index: number }; reply: CollectResult };
   reportSeen: { cmd: { indices: number[] }; reply: CommandResult };
   postOffer: { cmd: { give: Lot; want: Lot }; reply: TradeResult };
@@ -57,6 +59,10 @@ export interface WorldCommands {
   delveRoom: { cmd: { armyId: string }; reply: DelveResult };
   descendPortal: { cmd: { armyId: string }; reply: DelveResult };
   setBoost: { cmd: { boost: SeatBoost }; reply: null };
+  /** Host a world relic, at its level, in the Chapel on a hex — or send its
+   *  new level after a level-up (relic-restoration.md §5.2). */
+  hostRelic: { cmd: { index: number; relic: ArtifactId; level: number }; reply: CommandResult };
+  unhostRelic: { cmd: { relic: ArtifactId }; reply: CommandResult };
 }
 
 export type WorldCommandKind = keyof WorldCommands;
@@ -143,6 +149,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'tribute': return tribute(b, seat, cmd.index, t);
     case 'repair': return repair(b, seat, cmd.index, t);
     case 'finish': return finish(b, seat, cmd.index, t);
+    case 'hurry': return hurry(b, seat, cmd.index, cmd.seconds, t);
     case 'collect': return collect(b, seat, cmd.index, t);
     case 'reportSeen': return reportSeen(b, seat, cmd.indices, t);
     case 'postOffer': return postOffer(b, seat, cmd.give, cmd.want, t);
@@ -153,6 +160,8 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'delveRoom': return delveRoom(b, seat, cmd.armyId, t);
     case 'descendPortal': return descendPortal(b, seat, cmd.armyId, t);
     case 'setBoost': setBoost(b, seat, cmd.boost, t); return null;
+    case 'hostRelic': return hostRelic(b, seat, cmd.index, cmd.relic, cmd.level, t);
+    case 'unhostRelic': return unhostRelic(b, seat, cmd.relic, t);
     case 'join': case 'snapshot': throw new Error(`${cmd.kind} is not a command`);
   }
 }

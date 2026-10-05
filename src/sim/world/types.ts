@@ -13,7 +13,7 @@ export const WORLD_DISTRICTS = ['Rural', 'LoggingCamp', 'Quarry', 'FarmLands', '
 export type WorldDistrict = typeof WORLD_DISTRICTS[number];
 
 /** What can be built into a district that stands (19 §7.2). */
-export const WORLD_UPGRADES = ['Fortress'] as const;
+export const WORLD_UPGRADES = ['Fortress', 'Chapel'] as const;
 export type WorldUpgrade = typeof WORLD_UPGRADES[number];
 
 /** In the order a hex rolls them: the first to roll and fit is the one it

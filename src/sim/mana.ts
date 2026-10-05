@@ -47,7 +47,7 @@
 // anchor — so the offline replay and the live tick land on the same integer.
 // The pool is its only ceiling, away or not.
 
-import { MANA, WORLD_BUILD, levelIndexed } from './data/definitions';
+import { DISTRICTS, MANA, SHRINE_RULES, WORLD_BUILD, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
@@ -105,6 +105,9 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
 export function manaCap(state: GameState): number {
   let cap = MANA.baseCap;
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
+  // Each Shrine standing (relic-restoration.md §5.1).
+  cap += state.city.districts.filter((d) => DISTRICTS[d.definitionId].hostsRelic && d.state === 'Built').length
+    * SHRINE_RULES.manaCap;
   // Each Sanctuary held and on the chain, on the world board (19 §8).
   cap += state.world.sanctuaries * WORLD_BUILD.sanctuaryManaCap;
   for (const d of state.city.districts) {

@@ -30,7 +30,7 @@
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import {
-  BANNERS, COLLECTION, DISTRICTS, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
+  BANNERS, DISTRICTS, HERO_LADDER, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
   type BannerId, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
@@ -40,8 +40,9 @@ import {
 } from './heroLadder';
 import { dayIndex } from './day';
 import { rand } from './rng';
-import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
+import { addToWallet, getWallet, type ItemId, type GameState, type HeroId } from './state';
 import { recordEvent } from './events';
+import { itemCount, takeItem } from './bag';
 
 // ------------------------------------------------------------ the collection
 
@@ -187,7 +188,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
  * two. It is deliberately NOT a tier raise: an unlocked hero still starts at
  * tier 1 with the whole ascension ladder ahead of them.
  */
-export const heroUnlockCost = (): number => COLLECTION.fragmentsPerTierBase;
+export const heroUnlockCost = (): number => HERO_LADDER.fragmentsPerTierBase;
 
 export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
 
@@ -215,7 +216,7 @@ export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
  * a second hero currency — 750 to max one hero against ~3,612 for a relic.
  */
 export const ascensionStardustCost = (tier: number): number => Math.round(
-  COLLECTION.ascensionStardustBase * COLLECTION.ascensionStardustGrowth ** (tier - 1),
+  HERO_LADDER.ascensionStardustBase * HERO_LADDER.ascensionStardustGrowth ** (tier - 1),
 );
 
 export type HeroTierResult =
@@ -333,9 +334,9 @@ export const STANDARD_BANNER: BannerId = 'basic';
  */
 export function pullPrice(
   state: GameState, banner: BannerId = STANDARD_BANNER,
-): { currency: CurrencyId; amount: number } {
+): { key: ItemId; amount: number } {
   const free = banner === STANDARD_BANNER && pullCount(state, banner) === 0;
-  return { currency: BANNERS[banner].key, amount: free ? 0 : 1 };
+  return { key: BANNERS[banner].key, amount: free ? 0 : 1 };
 }
 
 export const pullCount = (state: GameState, banner: string): number =>
@@ -537,10 +538,10 @@ export function pull(
   };
   const price = pullPrice(state, banner);
   const cost = opts.free === true ? 0 : price.amount;
-  if (getWallet(state.player.wallet, price.currency) < cost) return miss;
+  if (itemCount(state, price.key) < cost) return miss;
   if (bannerHeroes(state, banner).length === 0) return { ...miss, result: 'NothingToPull' };
 
-  if (cost > 0) addToWallet(state.player.wallet, price.currency, -cost);
+  if (cost > 0) takeItem(state, price.key, cost);
   const stardust = callStardust(state, banner);
   addToWallet(state.kingdom.wallet, 'Stardust', stardust);
   recordResourceDiscovery(state, 'Stardust');
@@ -667,7 +668,7 @@ export function pullMany(
   // The free first call is free inside a batch too, so the batch costs one
   // less than it looks.
   const owed = price.amount === 0 ? Math.max(0, count - 1) : count;
-  if (getWallet(state.player.wallet, price.currency) < owed) {
+  if (itemCount(state, price.key) < owed) {
     return { result: 'NotEnoughKeys', pulls: [] };
   }
   if (bannerHeroes(state, banner).length === 0) {

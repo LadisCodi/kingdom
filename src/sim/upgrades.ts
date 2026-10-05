@@ -86,14 +86,18 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * one cell simply stack, which is what the `Crops` row of the old
  * `ABUNDANCE_LINES` table said with a list.
  */
-export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
+export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec, at: Coord | null = null): number {
   // The tree's term is a PERCENT (`harvestYield`, +10% a rank): the same
   // share of a Forest's one unit and an iron vein's five. The relic's term is
   // flat and rides on top. One number reaches the thumb (`tapDraw`) and the
   // crew (`effectiveWorkerStrike`) from this one place — a fraction, which
   // both of them carry.
-  return Math.max(0, resolve(state, 'harvestUnitsPerStrike',
-    spec.unitsPerStrike * techMultiplier(state, 'harvestYield', { harvest: spec.id })));
+  // AT THE CELL when there is one: a Verdant Seal's aura is a place
+  // (sim/hosts.ts).
+  const base = spec.unitsPerStrike * techMultiplier(state, 'harvestYield', { harvest: spec.id });
+  return Math.max(0, at === null
+    ? resolve(state, 'harvestUnitsPerStrike', base)
+    : resolveAt(state, 'harvestUnitsPerStrike', base, at));
 }
 
 /**
@@ -116,9 +120,9 @@ export const tapWorkSeconds = (state: GameState): number =>
  *  why `tapCarry` exists. `carry` is the remainder the last tap could not pay.
  *  The caller floors it, floors it at one unit, and caps it at what the cell
  *  actually holds. */
-export const tapDraw = (state: GameState, spec: HarvestSpec, carry: number): number =>
+export const tapDraw = (state: GameState, spec: HarvestSpec, carry: number, at: Coord | null = null): number =>
   (spec.secondsPerStrike <= 0 ? 0
-    : (tapWorkSeconds(state) * effectiveUnitsPerStrike(state, spec)) / spec.secondsPerStrike)
+    : (tapWorkSeconds(state) * effectiveUnitsPerStrike(state, spec, at)) / spec.secondsPerStrike)
   + carry;
 
 /**
@@ -143,7 +147,7 @@ const levelTerm = (
 export function effectiveWorkerStrike(
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number {
-  const base = (effectiveUnitsPerStrike(state, spec)
+  const base = (effectiveUnitsPerStrike(state, spec, building?.location ?? null)
     + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0))
     * techMultiplier(state, 'crewYield');
   return Math.max(0, resolve(state, 'workerYield', base, spec.currencyId));

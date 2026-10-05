@@ -16,7 +16,7 @@ import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ARTIFACTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
@@ -24,6 +24,8 @@ import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
+import { timerButton } from '../speedupSheet';
+import type { SpeedJob } from '../../sim/speedups';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
 import { scoutPay } from '../../sim/world/scouting';
 import { gemsToFinish } from '../../sim/rush';
@@ -89,6 +91,12 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
     h.active ? whose : `${whose} — cut off from its city, it makes nothing`));
   if (h.fortress > 0) {
     lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.upgrades.Fortress.name} · level ${formatCount(h.fortress)}`));
+  }
+  // A Chapel's relic is seen by every player (relic-restoration.md §5.3).
+  if (h.chapel === true) {
+    lines.push(el('p', { class: 'wd-line' }, h.relic != null
+      ? `${WORLD_BUILD.upgrades.Chapel.name} · ${ARTIFACTS[h.relic.id].name}, level ${formatCount(h.relic.level)}`
+      : `${WORLD_BUILD.upgrades.Chapel.name} · empty`));
   }
   // Burnt by raiders (19 §5.5): it makes nothing until it is repaired.
   if (h.burnt) {
@@ -181,7 +189,8 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
   const have = (c: CurrencyId) => (asRival ? Infinity : getWallet(game.state.city.wallet, c));
   // Playing a rival's part, the player's own fog does not bind that seat.
   const revealed = asRival || fogStateOf(game.state, bh.index, game.now()) === 'Revealed';
-  return hexActions(game.worldSource(), seat, bh, { revealed }).map((a: HexAction) => {
+  const relics = asRival ? [] : game.worldRelicsRestored();
+  return hexActions(game.worldSource(), seat, bh, { revealed }, relics).map((a: HexAction) => {
     switch (a.kind) {
       case 'claim':
         return action({
@@ -205,7 +214,19 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
             short: getGood(game.state.city.goods, g as GoodId) < (n as number),
           })),
           info: `${WORLD_BUILD.upgrades[a.upgrade].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
+          disabledReason: a.blocked,
           onClick: () => void game.doUpgradeHex(bh.index, a.upgrade, a.level, asRival ? 0 : a.gold),
+        });
+      case 'host':
+        return action({
+          label: 'Host', kind: 'primary',
+          info: `${ARTIFACTS[a.relic].name}, level ${formatCount(game.relicLevel(a.relic))}`,
+          onClick: () => void game.doHostWorldRelic(a.relic, bh.index),
+        });
+      case 'unhost':
+        return action({
+          label: 'Remove', kind: 'secondary', info: `${ARTIFACTS[a.relic].name} goes back to your Bag`,
+          onClick: () => void game.doUnhostWorldRelic(a.relic),
         });
       case 'army':
         return action({
@@ -346,7 +367,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
  * (sim/rush.ts prices it).
  */
 function waitRow(
-  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void,
+  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void, job: SpeedJob,
 ): HTMLElement {
   const now = game.now();
   const total = endsAt - startedAt;
@@ -358,13 +379,13 @@ function waitRow(
       el('span', { class: 'tr-batch-what' }, what),
       bar.root,
       el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total / 1000))}`)),
-    btn({
+    timerButton(game, job, btn({
       label: 'Finish',
       kind: 'gem',
       onClick: onFinish,
       cost: { Gems: gems },
       have: (c) => game.walletValue(c),
-    }));
+    })));
 }
 
 /** An explorer's trip: there, the work, and home. */
@@ -374,13 +395,13 @@ function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
     : now < revealsAt(trip) ? 'Exploring'
       : 'Coming home';
   return waitRow(game, doing, trip.departedAt, returnsAt(trip), explorerRushCost(trip, now),
-    () => game.doFinishExplorer(trip.id));
+    () => game.doFinishExplorer(trip.id), { kind: 'explorer', tripId: trip.id });
 }
 
 /** A builder's work on one of the player's hexes: its district, or an upgrade's level. */
 function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
   return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
-    () => void game.doFinishHexWork(index));
+    () => void game.doFinishHexWork(index), { kind: 'hex', index });
 }
 
 /** For the explorers chip: how many are out of how many. */

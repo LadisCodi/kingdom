@@ -478,10 +478,10 @@ how many slots it wants (1…n) and what to do with the answer.
 | A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
 | A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`; `passivePerTier` *(not built)* |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
-| What a level costs in XP | §4 | `collection.xpLevelCostBase`, `collection.xpLevelCostGrowth` |
-| How long a hero's ladder is | 10 a tier, 50 in all | `collection.heroLevelsPerTier`, `collection.heroMaxLevel` |
-| What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragmentsPerTierBase` |
-| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragmentsPerTier*`, `collection.ascensionStardustBase`, `collection.ascensionStardustGrowth` |
+| What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
+| How long a hero's ladder is | 10 a tier, 50 in all | `heroLadder.heroLevelsPerTier`, `heroLadder.heroMaxLevel` |
+| What a recruit costs | 10 Fragments — the ladder's base rung | `heroLadder.fragmentsPerTierBase` |
+| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `heroLadder.fragmentsPerTier*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |

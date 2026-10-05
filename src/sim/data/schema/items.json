@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "fields": {
+    "name": { "type": "text", "doc": "What the Bag calls it; the size is drawn on the tile." },
+    "kind": {
+      "type": "text",
+      "options": ["chest", "choice", "speedup", "boost", "flask", "tome", "key"],
+      "doc": "What using it does (Docs/proposals/inventory.md §3). chest: the city's own production of `coin` for `seconds`, read at use. choice: a chest whose coin is picked when it is opened. speedup: takes `seconds` off a running timer of the kind `speeds` names. boost: `boost` +`value`% for `seconds`; a second extends it. flask: `value`% of the Mana pool, what goes over the cap is lost. tome: `value` Knowledge, over the bar's cap like a lump. key: one call on the banner that names it as its key."
+    },
+    "coin": {
+      "type": "text",
+      "nullable": true,
+      "ref": "currency",
+      "doc": "A chest's coin: Gold, Food, Wood or Stone."
+    },
+    "seconds": {
+      "type": "int",
+      "min": 0,
+      "doc": "A chest or a choice chest: seconds of the city's production it pays. A speed-up: seconds it takes off a timer. A boost: how long it lasts. 0 for anything else."
+    },
+    "tier": {
+      "type": "int",
+      "min": 1,
+      "max": 5,
+      "doc": "The tile's plate: 1 cream, 2 green, 3 blue, 4 violet, 5 gold."
+    },
+    "speeds": {
+      "type": "text",
+      "nullable": true,
+      "options": ["General", "Construction", "Training", "Workshop"],
+      "doc": "A speed-up: the timers it shortens. Construction a build or an upgrade, Training a training line, Workshop the item in progress, General any of them."
+    },
+    "boost": {
+      "type": "text",
+      "nullable": true,
+      "options": ["Rent", "Harvest", "Mana"],
+      "doc": "A boost: what it raises. Rent what houses pay, Harvest what a tap takes, Mana how fast the pool fills."
+    },
+    "value": {
+      "type": "int",
+      "min": 0,
+      "doc": "A boost: +% while it runs. A flask: % of the Mana pool. A tome: Knowledge. 0 for anything else."
+    }
+  }
+}

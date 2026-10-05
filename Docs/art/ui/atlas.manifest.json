@@ -265,6 +265,33 @@
     null
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-i1-items.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    "bag",
+    "chestGold",
+    "chestFood",
+    "chestWood",
+    "chestStone",
+    "choiceChest",
+    "speedup",
+    "anvil",
+    "boot",
+    "boostRent",
+    "boostHarvest",
+    "boostMana",
+    "manaFlask",
+    "knowledgeTome",
+    "dowserMap",
+    "shard"
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [

@@ -24,6 +24,7 @@ import {
 import type { District, GoodId } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
 import { action, iconEl, knob, progress, stat, type LiveParts } from './kit';
+import { timerButton } from './speedupSheet';
 
 /** The whole block, or null when this building is not a workshop. `live`
  *  takes the queue and its countdown — the half that moves every second. */
@@ -77,6 +78,7 @@ export function workshopSection(
         ? Math.round((it.workMs / (workSecondsOf(it.good) * 1000)) * 100) : -1]),
       itemRemainingSeconds(game.state, district, now),
       itemRushCost(game.state, district, now),
+      game.hasSpeedups({ kind: 'workshop', districtId: district.uniqueId }),
     ]);
   };
   const queueBlock = () => workshopQueue(game, district);
@@ -151,13 +153,13 @@ function workshopQueue(game: Game, district: District): HTMLElement {
     box.append(el('div', { class: 'dc-ws-eta' },
       iconEl('hourglass', { size: 'sm' }),
       `next in ${formatDuration(remaining)}`,
-      ...(rush === null ? [] : [action({
+      ...(rush === null ? [] : [timerButton(game, { kind: 'workshop', districtId: district.uniqueId }, action({
         label: 'Finish',
         kind: 'secondary',
         onClick: () => game.doRushWorkshopItem(district.uniqueId),
         cost: { Gems: rush },
         have: (c) => game.walletValue(c),
-      })])));
+      }))])));
   }
 
   return box;

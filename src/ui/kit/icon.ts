@@ -79,7 +79,14 @@ export type UiIconName =
   | 'tile'
   // The nav bar's two that were borrowing a picture: the Store's market stall
   // (it wore the Gems) and the Heroes' knight's helmet (it wore the shield).
-  | 'shop' | 'helmet';
+  | 'shop' | 'helmet'
+  // THE BAG (Docs/plans/relics-and-bag.md, sheet UI-I1): the nav's satchel,
+  // a chest per coin and the one whose coin is chosen, the speed-up and the
+  // badges its types wear (the anvil for workshops, the boot for marches),
+  // the boosts, the flask, the tome, the Dowser's map and a relic's shard.
+  | 'bag' | 'SilverKey' | 'GoldKey' | 'chestGold' | 'chestFood' | 'chestWood' | 'chestStone' | 'choiceChest'
+  | 'speedup' | 'anvil' | 'boot' | 'boostRent' | 'boostHarvest' | 'boostMana'
+  | 'manaFlask' | 'knowledgeTome' | 'dowserMap' | 'shard';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -130,6 +137,10 @@ export const ICON_EMOJI: Record<IconName, string> = {
   tile: '⬛',
   // the nav bar
   shop: '🏪', helmet: '⛑️',
+  // the Bag
+  bag: '🎒', chestGold: '🪙', chestFood: '🍎', chestWood: '🪵', chestStone: '🪨', choiceChest: '🎁',
+  speedup: '⏳', anvil: '⚒️', boot: '🥾', boostRent: '💰', boostHarvest: '🌾', boostMana: '🔮',
+  manaFlask: '🧪', knowledgeTome: '📘', dowserMap: '🗺️', shard: '💠',
 };
 
 export interface IconOpts {

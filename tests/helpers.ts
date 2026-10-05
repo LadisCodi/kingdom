@@ -87,10 +87,10 @@ export const fund = (state: GameState, wallet: Record<string, number>): void => 
   if (Knowledge !== undefined) state.kingdom.wallet.Knowledge = Knowledge;
   if (Stardust !== undefined) state.kingdom.wallet.Stardust = Stardust;
   if (Gems !== undefined) state.player.wallet.Gems = Gems;
-  // The gacha keys are the player's too. Named rather than left to the rest
-  // spread, which would have posted them silently to the CITY.
-  if (SilverKey !== undefined) state.player.wallet.SilverKey = SilverKey;
-  if (GoldKey !== undefined) state.player.wallet.GoldKey = GoldKey;
+  // The gacha keys are Bag items. Named rather than left to the rest spread,
+  // which would have posted them silently to the CITY.
+  if (SilverKey !== undefined) state.bag.held.SilverKey = SilverKey;
+  if (GoldKey !== undefined) state.bag.held.GoldKey = GoldKey;
 };
 
 /** The authored resource cells the early game is built around. None of them

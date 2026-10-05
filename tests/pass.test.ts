@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { MISSIONS, PASS } from '../src/sim/data/definitions';
-import { seasonAt, seasonEndsAt } from '../src/sim/collection';
+import { seasonAt, seasonEndsAt } from '../src/sim/seasonClock';
 import { recordEvent } from '../src/sim/events';
 import * as pass from '../src/sim/pass';
 import {
@@ -22,15 +22,21 @@ import { choosePayerProfile } from '../src/sim/store';
 import { advance } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState } from '../src/sim/state';
-import { grantPack } from '../src/sim/collection';
+import { openRelicDoor } from '../src/sim/relics';
 import {
-  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, T0,
+  addAllTrainers, addBuilt, freshGame, fund, map, T0,
 } from './helpers';
 
 const WINDOW = MISSIONS.windowHours * 3_600_000;
 
+/** Every relic fragment held, found and bound. */
+const fragmentsHeld = (state: GameState): number =>
+  Object.values(state.relics.held).reduce((n, f) => n + [...f!.found, ...f!.bound].reduce((a, b) => a + b, 0), 0);
+
 function kingdom(): GameState {
   const state = freshGame();
+  // A relic met, so a drop has something to roll.
+  openRelicDoor(state, 'Orcs');
   addBuilt(state, 'Housing', { x: 3, y: 2 });
   addAllTrainers(state);
   fund(state, { Gold: 100_000, Food: 100_000, Wood: 100_000, Stone: 100_000 });
@@ -45,8 +51,8 @@ function earn(state: GameState, xp: number, now = T0): void {
 
 describe('the ladder', () => {
   it('is as long as the columns are', () => {
-    expect(ladderLength()).toBe(PASS.freePacks.length);
-    expect(ladderLength()).toBe(PASS.paidPacks.length);
+    expect(ladderLength()).toBe(PASS.freeFragments.length);
+    expect(ladderLength()).toBe(PASS.paidFragments.length);
     expect(PASS.freeGems.length).toBe(ladderLength());
     expect(PASS.paidGems.length).toBe(ladderLength());
   });
@@ -148,14 +154,14 @@ describe('the cells', () => {
     earn(state, levelCost(1));
     const gems = getWallet(state.player.wallet, 'Gems');
     const dust = getWallet(state.kingdom.wallet, 'Stardust');
-    const packs = state.collection.packs.length;
+    const fragments = fragmentsHeld(state);
     expect(claimCell(state, 1, 'free', T0)).toBe('Claimed');
     expect(claimCell(state, 1, 'free', T0)).toBe('AlreadyClaimed');
     const cell = freeCell(1);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + (cell.wallet.Gems ?? 0));
     expect(getWallet(state.kingdom.wallet, 'Stardust'))
       .toBe(dust + (cell.wallet.Stardust ?? 0));
-    expect(state.collection.packs.length).toBe(packs + (cell.pack === null ? 0 : 1));
+    expect(fragmentsHeld(state)).toBe(fragments + cell.fragments);
   });
 
   it('refuses a level not reached', () => {
@@ -177,7 +183,7 @@ describe('the cells', () => {
     // in it is a worse advert for the paid one than a thin free track is.
     for (let l = 1; l <= ladderLength(); l++) {
       for (const cell of [freeCell(l), paidCell(l)]) {
-        expect(cell.pack !== null || Object.keys(cell.wallet).length > 0).toBe(true);
+        expect(cell.fragments > 0 || Object.keys(cell.wallet).length > 0 || Object.keys(cell.items).length > 0).toBe(true);
       }
     }
   });
@@ -185,12 +191,7 @@ describe('the cells', () => {
   it('pays the free track all the way to the grand prize', () => {
     // 13-events.md §2.4 binds: the free column reaches the top rung.
     const top = freeCell(ladderLength());
-    expect(top.pack !== null || Object.keys(top.wallet).length > 0).toBe(true);
-    // And the two columns never pay the same pack at the same rung.
-    for (let l = 1; l <= ladderLength(); l++) {
-      const f = freeCell(l); const p = paidCell(l);
-      if (f.pack !== null && p.pack !== null) expect(f.pack).not.toBe(p.pack);
-    }
+    expect(top.fragments > 0 || Object.keys(top.wallet).length > 0).toBe(true);
   });
 });
 
@@ -204,16 +205,16 @@ describe('a mission pays twice', () => {
 
   /** What claiming `m` actually handed over. */
   const paid = (state: GameState, before: {
-    gems: number; mana: number; packs: number;
+    gems: number; mana: number; fragments: number;
   }) => ({
     gems: getWallet(state.player.wallet, 'Gems') - before.gems,
     mana: getWallet(state.city.wallet, 'Mana') - before.mana,
-    packs: state.collection.packs.length - before.packs,
+    fragments: fragmentsHeld(state) - before.fragments,
   });
   const snapshot = (state: GameState) => ({
     gems: getWallet(state.player.wallet, 'Gems'),
     mana: getWallet(state.city.wallet, 'Mana'),
-    packs: state.collection.packs.length,
+    fragments: fragmentsHeld(state),
   });
 
   it('exactly what its row said, and XP onto the ladder', () => {
@@ -225,16 +226,15 @@ describe('a mission pays twice', () => {
     const got = paid(state, before);
     // ONE THING, never a hamper: the row shows one chip and this is it.
     if (m.reward.kind === 'Gems') {
-      expect(got).toEqual({ gems: m.reward.amount, mana: 0, packs: 0 });
+      expect(got).toEqual({ gems: m.reward.amount, mana: 0, fragments: 0 });
     } else if (m.reward.kind === 'Mana') {
       expect(got.gems).toBe(0);
-      expect(got.packs).toBe(0);
+      expect(got.fragments).toBe(0);
       expect(got.mana).toBe(Math.round(manaCap(state) * m.reward.fraction));
     } else {
       expect(got.gems).toBe(0);
       expect(got.mana).toBe(0);
-      expect(got.packs).toBe(1);
-      expect(state.collection.packs.at(-1)!.tier).toBe(m.reward.tier);
+      expect(got.fragments).toBe(m.reward.n);
     }
     expect(passXp(state, T0)).toBe(PASS.missionXp);
   });
@@ -311,89 +311,6 @@ describe('it is not a boundary source', () => {
   });
 });
 
-describe('a pack opens itself', () => {
-  /**
-   * A presenter on a kingdom standing at `level`.
-   *
-   * The XP is stamped against the PRESENTER's own clock, not `T0`: a presenter
-   * reads `Date.now()`, and a pass stamped with a season that is not the
-   * running one reads as empty — correctly, which is what every other test
-   * here relies on.
-   */
-  const presenterAt = (level: number) => {
-    const game = freshPresenter(kingdom());
-    let xp = 0;
-    for (let l = 1; l <= level; l++) xp += levelCost(l);
-    game.state.kingdom.pass.season = seasonAt(game.now());
-    game.state.kingdom.pass.xp = xp;
-    return game;
-  };
-
-  it('turns over a pack the player watched land', () => {
-    // The first rung that pays a pack, so the claim is the only thing that
-    // could have put one in the queue.
-    const level = PASS.freePacks.findIndex((p) => p !== '') + 1;
-    const game = presenterAt(level);
-    expect(game.state.collection.packs).toEqual([]);
-    expect(game.gachaReveal).toBeNull();
-
-    game.doClaimPassCell(level, 'free');
-
-    // It did NOT go into the queue to be fetched from a screen two taps away.
-    expect(game.gachaReveal).not.toBeNull();
-    expect(game.gachaReveal!.caption).toContain('pack');
-    expect(game.gachaReveal!.prizes.length).toBeGreaterThan(0);
-    expect(game.state.collection.packs).toEqual([]);
-  });
-
-  it('deals them one at a time, and only into a free screen', () => {
-    const level = 10;
-    const game = presenterAt(level);
-    let owed = 0;
-    for (let l = 1; l <= level; l++) {
-      if (freeCell(l).pack !== null) owed += 1;
-      game.doClaimPassCell(l, 'free');
-    }
-    expect(owed).toBeGreaterThan(1);
-    // One on screen; the rest are WAITING, not lost and not all dealt at once.
-    expect(game.gachaReveal).not.toBeNull();
-    let seen = 1;
-    while (game.gachaReveal !== null && seen < owed + 2) {
-      game.dismissGachaReveal();
-      if (game.gachaReveal !== null) seen += 1;
-    }
-    expect(seen).toBe(owed);
-    expect(game.state.collection.packs).toEqual([]);
-  });
-
-  it('does not owe an opening for a pack that arrived while nobody looked', () => {
-    // The presenter is seeded from the state it is GIVEN, which is what draws
-    // the offline line: a pack already in the queue at load is not news.
-    const state = kingdom();
-    grantPack(state, 'Green', 'dev');
-    const game = freshPresenter(state);
-    game.notify();
-    expect(game.gachaReveal).toBeNull();
-    expect(game.state.collection.packs).toHaveLength(1);
-    // And the button in the Collection still turns it over.
-    game.doOpenPack();
-    expect(game.gachaReveal).not.toBeNull();
-    expect(game.state.collection.packs).toEqual([]);
-  });
-
-  it('never opens two into the same screen', () => {
-    const state = kingdom();
-    grantPack(state, 'Green', 'dev');
-    grantPack(state, 'Green', 'dev');
-    const game = freshPresenter(state);
-    game.doOpenPack();
-    const first = game.gachaReveal;
-    game.doOpenPack();
-    expect(game.gachaReveal).toBe(first);
-    expect(game.state.collection.packs).toHaveLength(1);
-  });
-});
-
 describe('the save', () => {
   it('carries the board, the bases and the odometer', () => {
     const state = kingdom();
@@ -402,7 +319,7 @@ describe('the save', () => {
     earn(state, levelCost(1));
     buyPass(state, T0);
     claimCell(state, 1, 'free', T0);
-    recordEvent(state, { kind: 'packOpened' });
+    recordEvent(state, { kind: 'itemUsed', count: 1 });
 
     const loaded = deserialize(serialize(state, T0), map, T0)!;
     expect(loaded.tallies).toEqual(state.tallies);

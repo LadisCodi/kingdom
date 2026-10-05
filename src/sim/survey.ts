@@ -14,13 +14,12 @@
 
 import { track as trackEvent } from './analytics';
 import { SURVEY } from './data/definitions';
-import { cityGoldPerSecond, grantPack } from './collection';
+import { cityGoldPerSecond } from './production';
+import { addItemAt, grant, type Grant, type ItemStock } from './rewards';
 import { recordEvent } from './events';
-import { payKnowledge } from './knowledge';
 import { revealedCellCount } from './research';
-import { addToWallet, type GameState, type Wallet } from './state';
+import type { GameState, Wallet } from './state';
 import { buySku, type BuySkuResult } from './store';
-import type { PackTier } from './data/definitions';
 
 /** How long the ladder is — the authored data's, not a constant. */
 export const surveyLength = (): number => SURVEY.cells.length;
@@ -41,16 +40,9 @@ export const nextLevelCells = (state: GameState): number | null =>
 export const surveyOwned = (state: GameState): boolean => state.kingdom.survey.owned;
 
 /** What one cell of one column holds — a wallet and a pack, as the pass's. */
-export interface SurveyCell {
+export interface SurveyCell extends Grant {
   level: number;
-  wallet: Wallet;
-  pack: PackTier | null;
 }
-
-const packAt = (column: readonly string[], level: number): PackTier | null => {
-  const tier = column[level - 1] ?? '';
-  return tier === '' ? null : (tier as PackTier);
-};
 
 /** A free cell. Its purse is priced NOW, in minutes of the kingdom's own
  *  Gold production, floored — the house rule for every reward. */
@@ -62,19 +54,23 @@ export function freeSurveyCell(state: GameState, level: number): SurveyCell {
     wallet.Gold = Math.max(SURVEY.goldFloorPerMinute * minutes, Math.round(cityGoldPerSecond(state) * minutes * 60));
   }
   if ((SURVEY.freeKnowledge[i] ?? 0) > 0) wallet.Knowledge = SURVEY.freeKnowledge[i];
-  if ((SURVEY.freeSilverKeys[i] ?? 0) > 0) wallet.SilverKey = SURVEY.freeSilverKeys[i];
-  if ((SURVEY.freeGoldKeys[i] ?? 0) > 0) wallet.GoldKey = SURVEY.freeGoldKeys[i];
+  const items: ItemStock = {};
+  if ((SURVEY.freeSilverKeys[i] ?? 0) > 0) items.SilverKey = SURVEY.freeSilverKeys[i];
+  if ((SURVEY.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.freeGoldKeys[i];
   if ((SURVEY.freeGems[i] ?? 0) > 0) wallet.Gems = SURVEY.freeGems[i];
-  return { level, wallet, pack: packAt(SURVEY.freePacks, level) };
+  addItemAt(items, SURVEY.freeItems, level);
+  return { level, wallet, items, fragments: SURVEY.freeFragments[i] ?? 0 };
 }
 
 export function paidSurveyCell(level: number): SurveyCell {
   const i = level - 1;
   const wallet: Wallet = {};
+  const items: ItemStock = {};
   if ((SURVEY.paidGems[i] ?? 0) > 0) wallet.Gems = SURVEY.paidGems[i];
-  if ((SURVEY.paidGoldKeys[i] ?? 0) > 0) wallet.GoldKey = SURVEY.paidGoldKeys[i];
+  if ((SURVEY.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.paidGoldKeys[i];
   if ((SURVEY.paidStardust[i] ?? 0) > 0) wallet.Stardust = SURVEY.paidStardust[i];
-  return { level, wallet, pack: packAt(SURVEY.paidPacks, level) };
+  addItemAt(items, SURVEY.paidItems, level);
+  return { level, wallet, items, fragments: SURVEY.paidFragments[i] ?? 0 };
 }
 
 /** Is this cell waiting to be tapped? Reached, untaken and — on the paid
@@ -103,7 +99,7 @@ export function claimSurveyCell(state: GameState, level: number, track: 'free' |
   if (level < 1 || level > surveyLevel(state)) return 'NotReached';
   const list = track === 'free' ? state.kingdom.survey.claimedFree : state.kingdom.survey.claimedPaid;
   if (list.includes(level)) return 'AlreadyClaimed';
-  pay(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level));
+  grant(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level), ['survey', track, level]);
   recordEvent(state, { kind: 'signal', key: 'surveyClaimed' });
   trackEvent(state, 'survey_claimed', { level, paid: track === 'paid' });
   list.push(level);
@@ -123,15 +119,4 @@ export function buySurvey(state: GameState, now: number): BuySurveyResult {
   return 'Purchased';
 }
 
-/** Where each coin of a cell lands — the scopes the wallets already have. */
-function pay(state: GameState, cell: SurveyCell): void {
-  for (const [coin, amount] of Object.entries(cell.wallet) as Array<[keyof Wallet, number]>) {
-    if (!amount) continue;
-    if (coin === 'Gems' || coin === 'GoldKey' || coin === 'SilverKey') addToWallet(state.player.wallet, coin, amount);
-    else if (coin === 'Stardust') addToWallet(state.kingdom.wallet, 'Stardust', amount);
-    else if (coin === 'Knowledge') payKnowledge(state, amount);
-    else addToWallet(state.city.wallet, coin, amount);
-  }
-  // Into the collection's own queue, unopened.
-  if (cell.pack !== null) grantPack(state, cell.pack, 'survey');
-}
+

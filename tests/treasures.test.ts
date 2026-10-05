@@ -63,7 +63,7 @@ describe('the fog\'s treasures', () => {
     const gold = getWallet(state.city.wallet, 'Gold');
     const mana = getWallet(state.city.wallet, 'Mana');
     const picked = pickUpTreasure(state, map, at);
-    expect(picked).toEqual({ kind: 'PickedUp', reward: { [TREASURE.firstCoin]: TREASURE.firstAmount } });
+    expect(picked).toEqual({ kind: 'PickedUp', reward: { [TREASURE.firstCoin]: TREASURE.firstAmount }, item: null, fragments: [] });
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold + TREASURE.firstAmount);
     expect(getWallet(state.city.wallet, 'Mana')).toBe(mana);
     expect(treasureAt(state, at)).toBeUndefined();

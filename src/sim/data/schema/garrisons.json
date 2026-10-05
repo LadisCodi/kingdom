@@ -3,6 +3,12 @@
   "fields": {
     "tier": { "type": "int", "min": 1 },
     "takeSeconds": { "type": "int" },
-    "supplies": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" }
+    "supplies": { "type": "map", "of": { "type": "int" }, "keysRef": "currency" },
+    "rewardItems": {
+      "type": "map",
+      "of": { "type": "int", "min": 1 },
+      "keysRef": "item",
+      "doc": "Items a lair of this tier puts in the Bag when its prize is claimed."
+    }
   }
 }

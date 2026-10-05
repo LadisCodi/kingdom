@@ -272,7 +272,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     siteIds.add(a.id);
     const def = (DISTRICTS as Record<string, (typeof DISTRICTS)[keyof typeof DISTRICTS] | undefined>)[a.district];
     if (def === undefined) { err(`${what} is not a building`, a); continue; }
-    if (!def.buildable) err(`${what} is not a building the player can raise`, a);
+    if (!def.buildable && !def.hostsRelic) err(`${what} is not a building the player can raise`, a);
     if (!isCount(a.sight) || a.sight > MAX_LAIR_SIGHT) err(`${what} needs a sight from 0 to ${MAX_LAIR_SIGHT}`, a);
     if (a.name !== undefined && (typeof a.name !== 'string' || a.name.trim() === '' || a.name.length > MAX_ABANDONED_NAME)) {
       err(`${what}'s name must be 1 to ${MAX_ABANDONED_NAME} characters`, a);

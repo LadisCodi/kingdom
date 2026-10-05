@@ -85,6 +85,9 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.populationCapacityPerLevel.length > 0) {
     add('homes', 'bed', 'Beds', 'Beds', levelIndexed(def.populationCapacityPerLevel, level));
   }
+  if (def.auraRadiusPerLevel.length > 0) {
+    add('aura', 'relics', 'Relic aura', 'Aura', levelIndexed(def.auraRadiusPerLevel, level));
+  }
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
     // The map draws the range around the building while its card is open;

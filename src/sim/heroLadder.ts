@@ -10,7 +10,7 @@
 // half of this file that priced a relic's levels went with it, and what is
 // left is a hero's ladder under a name that says so.
 
-import { COLLECTION } from './data/definitions';
+import { HERO_LADDER } from './data/definitions';
 
 /** What one collectible looks like, whatever KIND of thing it is. */
 export interface CollectionEntry {
@@ -24,20 +24,20 @@ export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments
 /** Hero XP for a HERO's next level — `round(base × growth^level)`, the same
  *  shape the gold upgrades already use, reused rather than reinvented. */
 export const xpLevelCost = (level: number): number =>
-  Math.round(COLLECTION.xpLevelCostBase * COLLECTION.xpLevelCostGrowth ** level);
+  Math.round(HERO_LADDER.xpLevelCostBase * HERO_LADDER.xpLevelCostGrowth ** level);
 
 /** Fragments to raise the tier cap from `tier` to `tier + 1`. */
 export const tierCost = (tier: number): number =>
-  Math.round(COLLECTION.fragmentsPerTierBase * COLLECTION.fragmentsPerTierGrowth ** (tier - 1));
+  Math.round(HERO_LADDER.fragmentsPerTierBase * HERO_LADDER.fragmentsPerTierGrowth ** (tier - 1));
 
 /** The highest level a hero's ascension allows. An ascension is worth TEN
  *  levels, which is what makes it the thing the collection arc is spent on. */
 export const heroLevelCapForTier = (tier: number): number =>
-  Math.min(COLLECTION.heroMaxLevel, tier * COLLECTION.heroLevelsPerTier);
+  Math.min(HERO_LADDER.heroMaxLevel, tier * HERO_LADDER.heroLevelsPerTier);
 
 export const isHeroMaxLevel = (e: CollectionEntry): boolean =>
-  e.level >= COLLECTION.heroMaxLevel;
-export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= COLLECTION.maxTier;
+  e.level >= HERO_LADDER.heroMaxLevel;
+export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= HERO_LADDER.maxTier;
 
 export type TierBlock = 'AtMaxTier' | 'NotEnoughFragments';
 

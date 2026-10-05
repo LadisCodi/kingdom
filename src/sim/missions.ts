@@ -39,7 +39,7 @@ import { isTechComplete } from './research';
 import { rand } from './rng';
 import { tally } from './events';
 import { cityGatherPerSecond } from './upgrades';
-import { cityGoldPerSecond } from './collection';
+import { cityGoldPerSecond, cityMakesPerSecond } from './production';
 import {
   newId,
   type CurrencyId, type DistrictId, type GameState, type Mission, type MissionKind,
@@ -70,7 +70,7 @@ export const weekIndex = (t: number): number => Math.floor((t - WEEK_EPOCH) / WE
 export const MISSION_KINDS: readonly MissionKind[] = [
   'Population', 'UpgradeDistricts', 'RaiseTownhall', 'CollectResource',
   'DiscoverCells', 'BuildDistricts', 'TrainTroops', 'LevelHeroes',
-  'OpenPacks',
+  'UseItems',
 ];
 
 /**
@@ -153,8 +153,9 @@ export function canIssue(state: GameState, kind: MissionKind): boolean {
           .some((u) => trainerFor(state, u) !== undefined);
     case 'LevelHeroes':
       return state.heroes.owned.some((id) => !isHeroMaxLevel(heroEntry(state, id)));
-    case 'OpenPacks':
-      return true;
+    // Something in the Bag to use.
+    case 'UseItems':
+      return Object.keys(state.bag.held).length > 0;
     default:
       return false;
   }
@@ -176,7 +177,7 @@ function meterFor(state: GameState, kind: MissionKind): { meter: string; subject
     case 'BuildDistricts': return { meter: 'built', subject: null };
     case 'TrainTroops': return { meter: 'troops', subject: null };
     case 'LevelHeroes': return { meter: 'heroLevels', subject: null };
-    default: return { meter: 'packs', subject: null };
+    default: return { meter: 'items', subject: null };
   }
 }
 
@@ -209,16 +210,14 @@ function targetFor(
     case 'CollectResource': {
       const minutes = MISSIONS.collectMinutesMin +
         roll * (MISSIONS.collectMinutesMax - MISSIONS.collectMinutesMin);
-      const rate = subject === 'Gold'
-        ? cityGoldPerSecond(state)
-        : cityGatherPerSecond(state, subject ?? 'Gold');
+      const rate = cityMakesPerSecond(state, subject ?? 'Gold');
       return Math.max(MISSIONS.collectFloor, Math.round(rate * minutes * 60));
     }
     case 'DiscoverCells': return inBand(roll, MISSIONS.revealBand);
     case 'BuildDistricts': return inBand(roll, MISSIONS.buildBand);
     case 'TrainTroops': return inBand(roll, MISSIONS.troopsBand);
     case 'LevelHeroes': return inBand(roll, MISSIONS.heroLevelBand);
-    default: return inBand(roll, MISSIONS.packsBand);
+    default: return inBand(roll, MISSIONS.itemsBand);
   }
 }
 
@@ -276,11 +275,11 @@ export const isHardKind = (kind: MissionKind): boolean =>
  * (invariant 4).
  */
 function rewardFor(kind: MissionKind, window: number, slot: number, seed: number): MissionReward {
-  if (isHardKind(kind)) return { kind: 'Pack', tier: MISSIONS.hardPack };
+  if (isHardKind(kind)) return { kind: 'Fragments', n: MISSIONS.hardFragments };
   const roll = rand(seed, 'missionReward', window, slot, kind);
   if (roll < 1 / 3) return { kind: 'Gems', amount: MISSIONS.rewardGems };
   if (roll < 2 / 3) return { kind: 'Mana', fraction: MISSIONS.rewardManaFraction };
-  return { kind: 'Pack', tier: MISSIONS.normalPack };
+  return { kind: 'Fragments', n: MISSIONS.normalFragments };
 }
 
 /** Build one mission of `kind` for `(window, slot)`. */

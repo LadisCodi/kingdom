@@ -8,13 +8,13 @@
 // Gold, Wood, Food and Stone are priced then, in hours of the city's own
 // production (`tap.workSeconds`'s rule), floored at the authored amount.
 
-import { WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/definitions';
-import { cityGoldPerSecond, grantPack } from '../collection';
+import { RELIC_RULES, WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/definitions';
+import { dropFragments, openRelicDoor } from '../relics';
+import { cityMakesPerSecond } from '../production';
 import { addHeroXp } from '../heroes';
 import { payKnowledge } from '../knowledge';
 import { addGood } from '../goods';
 import { addToWallet, type GameState, type GoodsStock, type Wallet } from '../state';
-import { cityGatherPerSecond } from '../upgrades';
 import { lumpMaterial, type BoardHex } from './board';
 import { boardOf } from './source';
 
@@ -32,7 +32,7 @@ export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex
   }
   if (scout.reward === 'Gold' || scout.reward === 'Wood' || scout.reward === 'Food' || scout.reward === 'Stone') {
     const hours = role === 'portal' ? 0 : WORLD_SCOUTING.hoursByRole[role];
-    const rate = scout.reward === 'Gold' ? cityGoldPerSecond(state) : cityGatherPerSecond(state, scout.reward);
+    const rate = cityMakesPerSecond(state, scout.reward);
     return { wallet: { [scout.reward]: Math.round(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
   }
   return { wallet: { [scout.reward]: scout.amount }, goods: {}, pack: null };
@@ -50,6 +50,11 @@ export function payScout(state: GameState, bh: BoardHex): ScoutPay | null {
     else addToWallet(state.city.wallet, c, n);
   }
   for (const [g, n] of Object.entries(pay.goods)) addGood(state.city.goods, g as keyof GoodsStock, n as number);
-  if (pay.pack !== null) grantPack(state, pay.pack, 'scouting');
+  // A pack a hex promised is world relic fragments now: the scout's door
+  // first, then what the pack was worth (Docs/plans/relics-and-bag.md §5).
+  if (pay.pack !== null) {
+    openRelicDoor(state, 'scouting');
+    dropFragments(state, 'world', RELIC_RULES.perPackTier[pay.pack] ?? 1, ['scout', bh.index]);
+  }
   return pay;
 }

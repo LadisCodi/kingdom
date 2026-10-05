@@ -1,0 +1,361 @@
+/* The Bag (Docs/art/ui-inventory.md §3, M69): tabs over a grid of square
+ * plates, four a row, and the popover a tile opens inside the grid. */
+
+/* THE TABS: the Build menu's wooden plates (build.css), four across. */
+.bag-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--px) * 6);
+  padding-top: calc(var(--px) * 8);
+  margin-bottom: calc(var(--px) * 10);
+}
+/* A tab with nothing in it is still there, greyed — the wood gone dull. */
+.bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
+/* Something new in it: a small red wax dot at the plate's corner. */
+.bag-dot {
+  position: absolute;
+  top: calc(var(--px) * -3);
+  right: calc(var(--px) * -2);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
+  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
+}
+
+/* THE GRID: four plates a row; the popover spans the row under its tile. */
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--px) * 8);
+  align-content: start;
+  padding-bottom: var(--space-section);
+}
+.bag-grid.is-empty { display: flex; align-items: center; justify-content: center; min-height: calc(var(--px) * 200); }
+.bag-empty {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* THE TILE: a square plate painted in its tier's colour over wood, lit from
+ * above, the size printed at the top and the count at the bottom right in
+ * cream with a dark outline. */
+.bag-tile {
+  --tier: #e8d6ae;
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: calc(var(--px) * 2) solid rgba(60, 36, 18, 0.75);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%, rgba(40, 22, 10, 0.28)),
+    linear-gradient(var(--tier), var(--tier)),
+    url('../../assets/tex-wood-dark.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128);
+  background-blend-mode: normal, multiply, normal;
+  box-shadow:
+    inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.35),
+    inset 0 calc(var(--px) * -3) 0 rgba(40, 22, 10, 0.35),
+    0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.5);
+  cursor: pointer;
+}
+.bag-tile.is-tier-1 { --tier: #efe0bd; }
+.bag-tile.is-tier-2 { --tier: #8fd06a; }
+.bag-tile.is-tier-3 { --tier: #6fb6e0; }
+.bag-tile.is-tier-4 { --tier: #b38ae6; }
+.bag-tile.is-tier-5 { --tier: #f4c24a; }
+.bag-tile:active { translate: 0 calc(var(--px) * 2); box-shadow: inset 0 calc(var(--px) * 3) calc(var(--px) * 4) rgba(40, 22, 10, 0.45); }
+.bag-tile > .icon { --icon-size: 58%; }
+.bag-tile-size,
+.bag-tile-count {
+  position: absolute;
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 14);
+  font-weight: var(--weight-title);
+  color: var(--ink-inverse);
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    calc(var(--px) * -1) calc(var(--px) * -1) 0 #2b1709, calc(var(--px) * 1) calc(var(--px) * -1) 0 #2b1709,
+    calc(var(--px) * -1) calc(var(--px) * 1) 0 #2b1709, calc(var(--px) * 1) calc(var(--px) * 1) 0 #2b1709;
+}
+.bag-tile-size { top: calc(var(--px) * 3); left: 0; right: 0; text-align: center; }
+.bag-tile-count { bottom: calc(var(--px) * 3); right: calc(var(--px) * 6); }
+.bag-tile-new { position: absolute; top: calc(var(--px) * -4); right: calc(var(--px) * -4); }
+.bag-tile-new > .icon { --icon-size: calc(var(--px) * 18); }
+/* The open one wears the kit's gold corner brackets. */
+.bag-tile.is-picked {
+  outline: calc(var(--px) * 3) solid var(--gold);
+  outline-offset: calc(var(--px) * 2);
+}
+
+/* THE POPOVER: a parchment plate under the tile's row, a notch pointing up
+ * at its column. */
+.bag-pop {
+  --notch-col: 1;
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  margin-top: calc(var(--px) * 6);
+  padding: calc(var(--px) * 12) calc(var(--px) * 14);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
+    url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(40, 22, 10, 0.35);
+}
+.bag-pop::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * -9);
+  left: calc((var(--notch-col) - 0.5) * 25% - var(--px) * 8);
+  width: calc(var(--px) * 16);
+  height: calc(var(--px) * 16);
+  rotate: 45deg;
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  border-left: calc(var(--px) * 2) solid var(--section-line);
+  border-top: calc(var(--px) * 2) solid var(--section-line);
+}
+.bag-pop-name {
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 17);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+}
+.bag-pop-line { font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
+.bag-qty-row { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.bag-qty-row > .k-knob { flex: none; }
+.bag-qty-row > .k-btn:not(.k-knob) { flex: none; min-height: calc(var(--px) * 36); }
+/* The trough: a groove cut in wood, the thumb a brass knob. */
+.bag-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: calc(var(--px) * 12);
+  appearance: none;
+  border-radius: calc(var(--px) * 6);
+  background: url('../../assets/tex-wood-dark.jpg') center / calc(var(--px) * 64) calc(var(--px) * 64);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(0, 0, 0, 0.55);
+}
+.bag-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe39a, var(--gold) 50%, var(--gold-dark));
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-slider::-moz-range-thumb {
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe39a, var(--gold) 50%, var(--gold-dark));
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-qty {
+  min-width: calc(var(--px) * 34);
+  padding: calc(var(--px) * 3) calc(var(--px) * 6);
+  border-radius: var(--radius-sm);
+  background: var(--parchment);
+  box-shadow: inset 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.35);
+  text-align: center;
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.bag-total {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.bag-use { display: flex; justify-content: flex-end; }
+
+/* A speed-up's type badge, at the icon's lower left (§3.5). */
+.bag-tile-badge {
+  position: absolute;
+  left: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 4);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3d0, var(--parchment-shade));
+  box-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.6);
+}
+.bag-tile-badge > .icon { --icon-size: calc(var(--px) * 16); }
+
+/* THE SPEED-UP PICKER (§3.7, M71): the job, Auto, the rows, Finish. */
+.spd-job {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding-bottom: calc(var(--px) * 10);
+  border-bottom: calc(var(--px) * 2) solid var(--section-line);
+}
+.spd-job-icon > .icon { --icon-size: calc(var(--px) * 44); }
+.spd-job-mid { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
+.spd-job-name { font-weight: var(--weight-title); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spd-left {
+  flex: none;
+  font-size: calc(var(--px) * 22);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.spd-auto { display: flex; justify-content: center; padding: calc(var(--px) * 10) 0 calc(var(--px) * 4); }
+.spd-rows { display: flex; flex-direction: column; gap: calc(var(--px) * 8); padding: calc(var(--px) * 8) 0; }
+.spd-row { display: flex; align-items: center; gap: calc(var(--px) * 10); }
+.spd-tile { flex: none; width: calc(var(--px) * 56); cursor: default; }
+.spd-tile .bag-tile-size, .spd-tile .bag-tile-count { font-size: calc(var(--px) * 11); }
+.spd-tile .bag-tile-badge { width: calc(var(--px) * 16); height: calc(var(--px) * 16); left: calc(var(--px) * 2); bottom: calc(var(--px) * 2); }
+.spd-tile .bag-tile-badge > .icon { --icon-size: calc(var(--px) * 12); }
+.spd-row-name { flex: 1 1 auto; min-width: 0; font-weight: var(--weight-strong); color: var(--ink); }
+.spd-none { margin: 0; text-align: center; color: var(--ink-muted); font-weight: var(--weight-body); }
+.spd-finish { display: flex; justify-content: center; padding-top: calc(var(--px) * 8); border-top: calc(var(--px) * 2) solid var(--section-line); }
+
+/* THE CHOICE CHEST (§3.8): four coins, the picked one gold-rimmed. */
+.bag-choice { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--px) * 6); }
+.bag-choice-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 6) 0;
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: var(--radius-sm);
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.3);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  cursor: pointer;
+}
+.bag-choice-plate > .icon { --icon-size: calc(var(--px) * 30); }
+.bag-choice-plate.is-picked { border-color: var(--gold); outline: calc(var(--px) * 2) solid var(--gold); }
+
+/* A RUNNING BOOST (§3.10): a cloth ribbon over the grid, its time left. */
+.bag-ribbon {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 12);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(rgba(63, 138, 46, 0.85), rgba(46, 104, 34, 0.9)),
+    url('../../assets/tex-cloth.jpg') center / calc(var(--px) * 128) calc(var(--px) * 128);
+  box-shadow: inset 0 calc(var(--px) * 1) 0 rgba(255, 255, 255, 0.25), 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.4);
+  color: var(--ink-inverse);
+  font-weight: var(--weight-title);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(20, 40, 10, 0.8);
+}
+.bag-ribbon .icon { --icon-size: calc(var(--px) * 22); }
+.bag-ribbon-left { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* SHORT OF SOMETHING (§3.9). */
+.sf-line { margin: 0 0 calc(var(--px) * 6); text-align: center; color: var(--ink); font-weight: var(--weight-strong); }
+
+/* THE RELICS TAB (§3.6, M72): two cards a row, city then world. */
+.rl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--px) * 10); margin-bottom: var(--space-section); }
+.rl-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 10) calc(var(--px) * 8);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
+    url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.35);
+  cursor: pointer;
+  color: var(--ink);
+}
+.rl-card:active { translate: 0 calc(var(--px) * 2); box-shadow: none; }
+.rl-card.is-world { border-color: rgba(79, 163, 199, 0.6); }
+.rl-card-art { display: grid; place-items: center; width: calc(var(--px) * 72); height: calc(var(--px) * 72); }
+.rl-art, .rl-hero-art { width: 100%; height: 100%; object-fit: contain; }
+.rl-art.is-glyph, .rl-hero-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 40); }
+.rl-card-name { font-weight: var(--weight-title); text-align: center; line-height: 1.1; }
+.rl-card-ready { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--leaf-dark); }
+/* The level: a blue wax seal, cracked grey before the relic is restored. */
+.rl-seal {
+  position: absolute;
+  top: calc(var(--px) * 6);
+  right: calc(var(--px) * 6);
+  min-width: calc(var(--px) * 30);
+  padding: calc(var(--px) * 3) calc(var(--px) * 6);
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #7cc0e6, var(--sky) 55%, #2c6f93);
+  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.5);
+  color: var(--ink-inverse);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(10, 30, 40, 0.7);
+}
+.rl-seal.is-broken { background: radial-gradient(circle at 35% 30%, #c9c0b0, #8f8577 60%, #5d554b); }
+/* Six slots: a shard set where held, a chalk outline where missing; the
+ * keystone last and larger, gold-rimmed. */
+.rl-slots { display: flex; align-items: center; justify-content: center; gap: calc(var(--px) * 4); }
+.rl-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 16);
+  height: calc(var(--px) * 16);
+  border-radius: calc(var(--px) * 4);
+  border: calc(var(--px) * 1.5) dashed rgba(92, 58, 30, 0.45);
+}
+.rl-slot.is-held { border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.6); background: rgba(255, 255, 255, 0.35); }
+.rl-slot.is-keystone { width: calc(var(--px) * 20); height: calc(var(--px) * 20); border-color: var(--gold-dark); }
+.rl-slot .icon { --icon-size: 90%; }
+.rl-slots.is-big .rl-slot { width: calc(var(--px) * 40); height: calc(var(--px) * 40); border-radius: calc(var(--px) * 8); }
+.rl-slots.is-big .rl-slot.is-keystone { width: calc(var(--px) * 50); height: calc(var(--px) * 50); }
+.rl-slot > b {
+  position: absolute;
+  right: calc(var(--px) * 2);
+  bottom: 0;
+  font-size: calc(var(--px) * 11);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE RELIC'S SHEET (ui-relics §2, M67's lower panel). */
+.rl-page { display: flex; flex-direction: column; gap: calc(var(--px) * 12); padding-bottom: var(--space-section); }
+.rl-hero { position: relative; align-self: center; width: calc(var(--px) * 150); height: calc(var(--px) * 150); }
+.rl-hero .rl-seal { top: 0; right: 0; font-size: calc(var(--px) * 14); padding: calc(var(--px) * 4) calc(var(--px) * 10); }
+.rl-lines { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.rl-line { display: flex; align-items: center; gap: calc(var(--px) * 8); font-weight: var(--weight-strong); color: var(--ink); }
+.rl-line.is-muted { font-weight: var(--weight-body); color: var(--ink-muted); }
+.rl-line .icon { flex: none; --icon-size: calc(var(--px) * 20); }
+.rl-forge { display: flex; gap: calc(var(--px) * 8); }
+.rl-forge > .k-btn { flex: 1 1 0; }
+/* Up to five Shrines to choose from: they wrap two to a row. */
+.rl-host .rl-forge { flex-wrap: wrap; }
+.rl-host .rl-forge > .k-btn { flex: 1 1 40%; }
+.rl-spell, .rl-chest, .rl-host {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  padding-top: calc(var(--px) * 10);
+  border-top: calc(var(--px) * 2) solid var(--section-line);
+}
+.rl-shrines { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 10); font-weight: var(--weight-strong); color: var(--ink); }
+.rl-shrines .icon { --icon-size: calc(var(--px) * 24); }
+.rl-shrines > .k-btn { margin-left: auto; }

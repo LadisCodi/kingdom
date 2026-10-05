@@ -202,32 +202,33 @@
 
 ## 11. The found books
 
-- **Outside the pacing**: never required by a chapter or a Townhall level,
-  and paid in Gold alone, so they never draw on a chapter's Knowledge.
+- **Outside the pacing**: never required by a chapter or a Townhall level.
+- **Priced like the tree**: Knowledge and Gold, the Knowledge of a tree card
+  at the same Gold — 3 to 600 G, 4 to 2,500 G, 5 to 4,000 G, 7 above.
 - **Sagas** opens on a Tavern standing; **Atlas** on the Watchtower claimed.
 
 ### 11.1 Sagas
 
 | Card | Opens / moves | Price |
 |---|---|---|
-| **Common Room** | Tavern L2 | 600 G |
-| **Tales I** | +10% heroXp | 400 G |
-| **Warm Welcome I** | +10% summonStardust | 400 G |
-| **Guest Rooms** | Tavern L3 | 1,500 G |
-| **Great Hall** | Tavern L4 | 4,000 G |
-| **Minstrels’ Gallery** | Tavern L5 | 8,000 G |
+| **Common Room** | Tavern L2 | 600 G · 3 K |
+| **Tales I** | +10% heroXp | 400 G · 3 K |
+| **Warm Welcome I** | +10% summonStardust | 400 G · 3 K |
+| **Guest Rooms** | Tavern L3 | 1,500 G · 4 K |
+| **Great Hall** | Tavern L4 | 4,000 G · 5 K |
+| **Minstrels’ Gallery** | Tavern L5 | 8,000 G · 7 K |
 
 ### 11.2 Atlas
 
 | Card | Opens / moves | Price |
 |---|---|---|
-| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G |
-| **Farsight I** | +1 discoverRadius | 800 G |
-| **Scouts I** | +1 explorerSlots | 2,500 G |
-| **Farsight II** | +1 discoverRadius | 1,500 G |
-| **Scouts II** | +1 explorerSlots | 4,000 G |
-| **Pathfinding** | +1 worldRevealRadius | 8,000 G |
-| **Muster** | the War Camp | 9,000 G |
+| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G · 4 K |
+| **Farsight I** | +1 discoverRadius | 800 G · 4 K |
+| **Scouts I** | +1 explorerSlots | 2,500 G · 4 K |
+| **Farsight II** | +1 discoverRadius | 1,500 G · 4 K |
+| **Scouts II** | +1 explorerSlots | 4,000 G · 5 K |
+| **Pathfinding** | +1 worldRevealRadius | 8,000 G · 7 K |
+| **Muster** | the War Camp | 9,000 G · 7 K |
 
 ## 12. What a bonus can move
 

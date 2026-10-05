@@ -220,8 +220,8 @@ its number is computed.
 
 - **Sagas and Atlas stay books found in ruins**, 5–6 cards each.
 - **Outside the pacing**: never required by a chapter or a Townhall level.
-- **Paid outside Knowledge** — Gold, or what ruins pay (Stardust) — so they do
-  not draw on a chapter's budget.
+- **Paid in Knowledge and Gold** like every card
+  ([`../features/tech-tree.md`](../features/tech-tree.md) §11).
 
 ## 7. Work plan
 

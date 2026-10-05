@@ -44,5 +44,8 @@
   },
   "rush": {
     "secondsPerGem": 5
+  },
+  "bag": {
+    "chestFloorPerHour": 60
   }
 }

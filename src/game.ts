@@ -2,11 +2,16 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
+import type { ItemStock } from './sim/rewards';
+import {
+  BAG_TABS, CHEST_COINS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, runningBoosts, useItem,
+  type BagTab,
+} from './sim/bag';
 import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
-  buyKeys, enqueueBuild, finishWithGems, moveDistrict, researchTech, upgradeDistrict,
+  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
   repairAbandoned,
@@ -14,10 +19,9 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
+  GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
-  type FaceId, type PackTier, HELP } from './sim/data/definitions';
+  RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -32,29 +36,21 @@ import {
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
-import { activeZones, type Modifier } from './sim/modifiers';
+import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
+import { auraOf, castHosted, hostOf, hostRelic, shrines, unhostRelic } from './sim/hosts';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
   committedTroops, finishLineWithGems, healCost, healSecondsAt, healWounded, infirmaries, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
-  itemTrainSeconds, trainingCompletesAt,
+  itemTrainSeconds, lineRushCost, trainCost, trainingCompletesAt, trainingProgress,
 } from './sim/army';
-import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
+import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  albumHeld, albumIsComplete, albumRewards, buyCardBundle, buyFromVault, buyPack, buyWildcard,
-  bundleGemValue, bundleOf, bundlesForSale, cardCount,
-  heldWildcardFor, holdsCard, openPack, packCards, packGemCost, packOdds, packsForSale,
-  placeWildcard, seasonDef, seasonHeld, seasonLeftMs, starsFor, vaultCost, vaultNext,
-  buyFromVaultMany, canClaimAlbum, claimAlbum, grantPack,
-  wildcardCovers, wildcardOffers, wildcardsHeld,
-  PRIZE_BANNER, SEASON_CARDS, albumOfRelic, relicOfAlbum,
-  type AlbumPayout, type CollectionPrize, type PackOpening, type VaultTier,
-} from './sim/collection';
-import {
-  ALBUMS, ALBUM_ORDER, RARITIES, type AlbumId, type Rarity,
-} from './sim/data/seasons';
+  canRestore, forgeReplica, isMet, levelCost, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
+  dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
+} from './sim/relics';
 import {
   activeRadius, buildingsIn, cast, castBlock, castState, chargesLeft,
   divinationSaving, reapCells, surveyCells, tapBudget, tapRunSeconds,
@@ -65,7 +61,11 @@ import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
-import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
+import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
+import {
+  autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
+  type SpeedJob,
+} from './sim/speedups';
 import { partyPower, typeMultiplier } from './sim/combat';
 import {
   attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
@@ -106,16 +106,16 @@ import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
+  PROFILE_LABEL, budgetRemainingCents, buyItemBundle, buySku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { addHeroXp, boonText, pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
-  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId, type Mission, type MissionKind,
-  type GameState, type HeroId, type PartySlotState, type LairId, type TechId, type UnitId,
+  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
   type QueueItem, type Wallet,
 } from './sim/state';
 import {
@@ -139,7 +139,10 @@ import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt, type ExplorerHome } from './sim/world/explorers';
+import {
+  arrivesAt, cutExplorer, dispatchExplorer, explorerRushCost, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
+  worldFogAt, type ExplorerHome,
+} from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
@@ -172,7 +175,7 @@ import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null; premium?: true }
   /** Relocating a building that already exists. The same targeting model as
    *  placing — a ghost you move and confirm — with `origin` kept so Cancel
    *  can put it back and so the ghost knows which footprint is its own. */
@@ -187,7 +190,13 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'collection' | 'heroes' | 'lair' | 'mana' | 'builder'
+  | 'relic' | 'heroes' | 'lair' | 'mana' | 'builder'
+  // The Bag (Docs/art/ui-inventory.md): items held until they are used.
+  | 'bag'
+  // The Speed-up picker, opened by a timer's Speed up (ui-inventory.md §3.7).
+  | 'speedup'
+  // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
+  | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
   // The season pass, reached from the Sowing Season pill on the map
   // (Docs/features/20-season-pass.md §6).
@@ -217,10 +226,97 @@ export type OverlayName =
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname';
 
+/** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
+export function fragmentWords(drops: readonly FragmentDrop[]): string {
+  if (drops.length === 1) {
+    const d = drops[0];
+    return `${d.slot === 5 ? 'The keystone' : 'A piece'} of the ${ARTIFACTS[d.relic].name} — it is in the Bag`;
+  }
+  return `${formatExact(drops.length)} relic fragments — they are in the Bag`;
+}
+
+/** An item as a sentence says it: "1h Wood chest", "Gold key". */
+export function itemWords(id: ItemId): string {
+  const def = ITEMS[id];
+  const size = def.kind === 'flask' ? `${formatExact(def.value)}% `
+    : def.kind === 'tome' ? `${formatExact(def.value)} `
+      : def.seconds > 0 ? `${formatDuration(def.seconds)} ` : '';
+  return `${size}${def.name}`;
+}
+
+/** A relic as its sheet and its card in the Bag draw it (ui/relicSheet.ts). */
+export interface RelicView {
+  id: ArtifactId; name: string; sprite: string; glyph: string; kind: RelicKind;
+  level: number; restored: boolean; met: boolean;
+  /** Fragments held per slot: five pieces, then the keystone. */
+  slots: number[];
+  /** What the spares are worth in levels. */
+  spares: number;
+  /** Spares the next level asks. */
+  levelCost: number;
+  canRestore: boolean;
+  now: string; next: string;
+  /** Where its fragments drop. */
+  foundIn: string;
+  pending: string | null;
+  cast: { phase: CastPhase; leftMs: number; charges: number };
+  /** The replica offer for its first missing fragment, or null. */
+  forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
+  /** The Restorer's chest, once it is restored. */
+  chest: { gems: number; size: number } | null;
+  /** A restored city relic's Shrine, and the Shrines it could move to; null
+   *  for a world relic or one not restored (sim/hosts.ts). */
+  host: { at: string | null; shrines: ShrineOption[] } | null;
+}
+
+/** A Shrine a relic could be hosted in. */
+export interface ShrineOption {
+  shrineId: string;
+  label: string;
+  /** The relic it holds now, by name. */
+  holds: string | null;
+}
+
+/** A Shrine's card section: what it holds and what it could. */
+export interface ShrineView {
+  holds: ArtifactId | null;
+  /** How far round its footprint the aura reaches. */
+  radius: number;
+  /** Every restored city relic it could host instead, and where each is now. */
+  candidates: Array<{ id: ArtifactId; name: string; at: string | null }>;
+}
+
+/** The Bag as its screen draws it (ui/bagSheet.ts). */
+export interface BagScreen {
+  tab: BagTab;
+  /** Every tab, whether it holds anything, and whether anything in it is new. */
+  tabs: Array<{ tab: BagTab; any: boolean; fresh: boolean }>;
+  /** The open tab's items, in the Bag's order. */
+  items: Array<{ id: ItemId; def: ItemDef; count: number; fresh: boolean; worth: Wallet }>;
+  /** The tile whose popover is open. */
+  picked: ItemId | null;
+}
+
+/** The Speed-up picker as its screen draws it (ui/speedupSheet.ts). */
+export interface SpeedupScreen {
+  /** What is being sped up: "Sawmill · level 4". */
+  title: string;
+  icon: IconName;
+  progress: number;
+  /** Seconds left. */
+  left: number;
+  /** The speed-ups that fit, typed first, then General, smallest first. */
+  rows: Array<{ id: ItemId; def: ItemDef; count: number }>;
+  /** What Auto would spend; empty when there is nothing to spend. */
+  auto: Array<{ id: ItemId; n: number }>;
+  /** What finishing with Gems costs now. */
+  gems: number;
+}
+
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
-  research: 'research', build: 'build', heroes: 'heroes', collection: 'relics',
+  research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
 };
 
@@ -286,21 +382,6 @@ export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number }
   // A card pack, which a room pays and a call never does.
-  | { kind: 'pack'; tier: PackTier }
-  /**
-   * One card turning over in a pack's reveal (Docs/features/09-relics.md
-   * §11.5).
-   *
-   * `copies` is HOW MANY THIS PACK GAVE, never how many the player now holds.
-   * The two are different numbers and the tile is a record of an OPENING: a
-   * fourth copy of a card you already had three of is one card, and saying
-   * "×4" over it claims the pack handed over four.
-   *
-   * `isNew` is likewise about the pack: true when the player held NONE of this
-   * card before it was opened. It is independent of `copies` — a pack can hand
-   * over two of something you had never seen, which is New AND ×2.
-   */
-  | { kind: 'card'; album: AlbumId; slot: number; isNew: boolean; copies: number }
   | { kind: 'currency'; currency: CurrencyId; amount: number };
 
 /**
@@ -452,58 +533,8 @@ export class Game {
    *  here for the reason `openHeroId` is. */
   heroesFilter: UnitId | 'All' = 'All';
   heroesSort: HeroPickSort = 'level';
-  /** The relic whose card is open on the Reliquary screen, or null for the
-   *  grid. Same shape and same reason as `openHeroId`: the two screens are
-   *  one pattern — a collection, and one piece of it opened. */
-  /** The relic whose card is open over the Collection, or null (§11.4). */
+  /** The relic whose sheet is open, from the Bag's Relics tab, or null. */
   openRelicId: ArtifactId | null = null;
-  /** The album page open behind it, or null for the album grid itself. */
-  openAlbumId: AlbumId | null = null;
-  /** The wildcard the next card tap would spend, or null. Select-then-place,
-   *  the same idiom placement and cast modes use. */
-  armedWildcard: Rarity | null = null;
-  /**
-   * Albums whose ninth card has just landed, waiting for their sheet.
-   *
-   * A completed album interrupts nothing (§11.5): the cards finish turning,
-   * and the payout sheet follows the reveal. Transient by design — an album
-   * is already paid and already in `completed`, so a sheet missed at quit
-   * simply does not replay.
-   */
-  pendingPayouts: AlbumPayout[] = [];
-  /** The vault's shelf is open over the Collection. */
-  vaultOpen = false;
-  /** The collection prize, waiting for the screen the pack reveal is using
-   *  (§5). Transient like the payouts beside it. */
-  private pendingPrize: CollectionPrize | null = null;
-  /**
-   * PACKS THAT HAVE ARRIVED AND NOT YET TURNED OVER.
-   *
-   * A pack the player WATCHED land — a pass cell, a bundle, an album — opens
-   * itself. It used to go into the collection's queue and sit there until
-   * somebody walked to the Collection and pressed a button, which made the
-   * reward of a ladder a chore two screens away.
-   *
-   * A COUNT, not a list of packs, because `openPack` takes the head of the
-   * queue and nothing else can: what is owed is an OPENING, and the queue
-   * decides which pouch it turns over.
-   */
-  private pendingPackOpenings = 0;
-  /**
-   * How many packs were in the queue the last time the screen looked.
-   *
-   * WATCHING THE COUNT IS WHAT MAKES THIS GENERAL. Every path that grants a
-   * pack — the pass's two columns, the card bundles, a closed album, the dev
-   * bar, and whatever is added next — goes through `grantPack`, and every
-   * player command ends in `notify()`. So the difference between two notifies
-   * IS the set of packs the player just earned, and no grant site has to
-   * remember to announce itself.
-   *
-   * It also draws the offline line for free: it is seeded from the state the
-   * game LOADS with, so packs that arrived while nobody was looking are not
-   * owed an opening and wait in the Collection as they always did.
-   */
-  private packsSeen = -1;
   readonly floaters = new Floaters();
   /** Lairs just claimed, and the `performance.now()` the claim landed at:
    *  the renderer plays their going-away from it, then forgets them. */
@@ -548,9 +579,6 @@ export class Game {
     public readonly camera: Camera,
   ) {
     this.registerTapHandlers();
-    // Seeded from what the game LOADED with, so a pack earned while nobody
-    // was looking is not owed an opening.
-    this.packsSeen = state.collection.packs.length;
   }
 
   /** The game's clock is the world server's: the device's time moved by
@@ -593,17 +621,6 @@ export class Game {
     // the LIVE tick and `advance()` never proposes a boundary for it. A stamp
     // rather than a cursor, so a long absence issues one window's worth.
     rollMissionsIfDue(this.state, this.now());
-    // A PACK THE PLAYER JUST EARNED OPENS ITSELF. The difference between two
-    // notifies is exactly what they earned since the last one, whatever
-    // granted it; `dealPayouts` then turns one over as soon as the screen is
-    // free, so three claimed cells are three reveals in a row rather than
-    // three pouches filed away somewhere else.
-    const packs = this.state.collection.packs.length;
-    if (this.packsSeen >= 0 && packs > this.packsSeen) {
-      this.pendingPackOpenings += packs - this.packsSeen;
-    }
-    this.packsSeen = packs;
-    this.dealPayouts();
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render. A RESOURCE is
     // never announced: its coin lands on the plank under the player's own
@@ -769,24 +786,6 @@ export class Game {
     } else if (raided.length > 1) {
       this.toast(`${raided.length} raids on the city while you were away`);
     }
-    // THE SEASON ROLLED OVER while the player was here or away. It is the one
-    // event that takes something from them — the album is empty and the stars
-    // are gone — so it is a banner rather than a toast, and it names what the
-    // cards melted into (Docs/features/09-relics.md §3).
-    if (result.seasonClosed !== null) {
-      const closed = result.seasonClosed;
-      const opened = seasonDef(closed.to);
-      this.queueBanner({
-        title: 'A new season!',
-        icon: '\u{1F5D3}',
-        name: opened.name,
-        desc: closed.cards > 0
-          ? `${formatExact(closed.cards)} cards melted down for ${formatExact(closed.gold)} gold. `
-            + 'A fresh album, and your relics keep every level.'
-          : 'A fresh album, and your relics keep every level.',
-        tone: 'gold',
-      });
-    }
     this.notify();
   }
 
@@ -876,6 +875,7 @@ export class Game {
         const box = this.camera.cellToScreen(cell);
         const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
         queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
+        if (picked.item !== null) this.toast(`Found a ${itemWords(picked.item)} — it is in the Bag`);
         this.notify();
         return true;
       },
@@ -1344,6 +1344,17 @@ export class Game {
       this.notify();
       return;
     }
+    // A CITY RELIC IS CAST WHERE IT IS HOSTED: its Shrine's aura is the
+    // target, so there is no cell to pick (sim/hosts.ts).
+    if (relicKind(artifactId) === 'city') {
+      if (hostOf(this.state, artifactId) === null) {
+        this.toast('Host it in a Shrine first');
+        this.notify();
+        return;
+      }
+      this.doCast(artifactId, null);
+      return;
+    }
     if (!active.targeted) {
       this.doCast(artifactId, null);
       return;
@@ -1381,10 +1392,16 @@ export class Game {
     this.doCast(this.mode.artifactId, this.mode.selected);
   }
 
-  private doCast(artifactId: ArtifactId, target: Coord | null): void {
-    const report = cast(this.state, this.map, artifactId, target, this.now());
+  private doCast(artifactId: ArtifactId, picked: Coord | null): void {
+    const host = hostOf(this.state, artifactId);
+    const report = relicKind(artifactId) === 'city'
+      ? castHosted(this.state, this.map, artifactId, this.now())
+      : cast(this.state, this.map, artifactId, picked, this.now());
+    // Where the floaters rise: the cell picked, or the Shrine cast from.
+    const target = picked ?? host?.location ?? null;
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
+      else if (report.result === 'NotHosted') this.toast('Host it in a Shrine first');
       else this.toast('That cannot be cast there');
       this.notify();
       return;
@@ -1429,13 +1446,17 @@ export class Game {
     }
     return [...byCast.values()].map((m) => {
       const { centre, radius, relic, since } = m.area!;
+      const area = m.area!;
       const ends = m.expiresAt ?? now;
       const span = Math.max(1, ends - since);
       return {
         relic,
         glyph: ARTIFACTS[relic].glyph,
         centre,
-        cells: [centre, ...cellsWithinRadius(this.map, centre, radius)],
+        // A Shrine's aura is its footprint and the ring round it.
+        cells: area.size !== undefined
+          ? this.map.cells.filter((c) => areaCovers(area, c))
+          : [centre, ...cellsWithinRadius(this.map, centre, radius)],
         left: Math.max(0, Math.min(1, (ends - now) / span)),
         leftMs: Math.max(0, ends - now),
       };
@@ -1497,156 +1518,180 @@ export class Game {
 
   // ---------------------------------------------------------------- relics
 
-  /** What the pill and the Collection header both read (§11.1, §11.2). */
-  seasonInfo(): {
-    name: string; frame: string; held: number; total: number;
-    leftMs: number; packs: number; stars: number; prizeWon: boolean; lap: number;
-  } {
-    const { collection } = this.state;
-    const def = seasonDef(collection.season);
-    return {
-      name: def.name,
-      frame: def.frame,
-      held: seasonHeld(this.state),
-      total: SEASON_CARDS,
-      leftMs: seasonLeftMs(this.state, this.now()),
-      packs: collection.packs.length,
-      stars: collection.stars,
-      // THE PRIZE, not the eight pages: `completed` empties at the end of
-      // every lap, so it can only answer "how far into THIS lap", while the
-      // prize is won once a season and stays won.
-      prizeWon: collection.prizePaid,
-      lap: collection.cycle,
-    };
-  }
-
   /**
-   * The pill hides behind any sheet and never shows before the first card.
-   *
-   * IT GLOWS FOR A PASS CELL as well as for an unopened pack, because the pill
-   * is the pass's door now: a reward sitting on the ladder with nothing on
-   * screen to say so is the same missed thing an unopened pack would be.
+   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, its spares,
+   * what it does now and next, and the one thing to press — Restore, Level
+   * up, or Forge the missing fragment.
    */
-  seasonPillState(): { showing: boolean; glowing: boolean } | null {
-    const info = this.seasonInfo();
-    if (info.held === 0 && info.packs === 0) return null;
-    return {
-      showing: !this.hasOpenSheet(),
-      glowing: info.packs > 0 || this.passPending(),
-    };
-  }
-
-  /**
-   * ONE ROW PER RELIC — the medallions of §11.2.
-   *
-   * The list is the RELIC ROSTER, in its own fixed order, not the album
-   * ladder: which album a relic draws rotates a season, so ordering the grid
-   * by difficulty would move every relic under the player once a month. A
-   * player learns where their relic sits once.
-   */
-  relicRows(): Array<{
-    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
-    album: AlbumId; albumName: string; held: number; total: number;
-    complete: boolean; claimable: boolean;
-  }> {
-    return ARTIFACT_ORDER.map((id) => {
-      const album = albumOfRelic(id, this.state.collection.season);
-      return {
-        id,
-        name: ARTIFACTS[id].name,
-        sprite: ARTIFACTS[id].sprite,
-        glyph: ARTIFACTS[id].glyph,
-        level: artifactLevel(this.state, id),
-        album,
-        albumName: ALBUMS[album].name,
-        held: albumHeld(this.state, album),
-        total: ALBUMS[album].cards.length,
-        complete: albumIsComplete(this.state, album),
-        // The one thing on this screen worth a badge: a page ready to close.
-        claimable: canClaimAlbum(this.state, album),
-      };
-    });
-  }
-
-  /** The nine slots of one album, for the 3×3 grid (§11.3). */
-  /**
-   * THE ALBUM HALF of a relic's page (§11.3) — the nine slots, what closing
-   * them pays and whether it can be closed right now.
-   *
-   * Keyed by the ALBUM rather than the relic, because a card tap names one and
-   * the wildcard offers aim at one; which relic it raises is the page's other
-   * half.
-   */
-  albumPage(id: AlbumId): {
-    id: AlbumId; name: string; index: number; of: number; complete: boolean;
-    claimable: boolean; held: number; total: number;
-    relic: ArtifactId; relicName: string; relicLevel: number; sprite: string; glyph: string;
-    rewards: { hours: number; silverKeys: number; goldKeys: number; gems: number };
-    cards: Array<{
-      slot: number; name: string; rarity: number; gold: boolean;
-      count: number; stars: number;
-    }>;
-  } {
-    const def = ALBUMS[id];
-    const relicId = relicOfAlbum(id, this.state.collection.season);
-    const relic = ARTIFACTS[relicId];
-    return {
-      id,
-      name: def.name,
-      index: ALBUM_ORDER.indexOf(id) + 1,
-      of: ALBUM_ORDER.length,
-      complete: albumIsComplete(this.state, id),
-      claimable: canClaimAlbum(this.state, id),
-      held: albumHeld(this.state, id),
-      total: def.cards.length,
-      relic: relicId,
-      relicName: relic.name,
-      relicLevel: artifactLevel(this.state, relicId),
-      sprite: relic.sprite,
-      glyph: relic.glyph,
-      rewards: albumRewards(id, this.state.collection.cycle),
-      cards: def.cards.map((card, slot) => ({
-        slot,
-        name: card.name,
-        rarity: card.rarity,
-        gold: card.gold === true,
-        count: cardCount(this.state, { album: id, slot }),
-        stars: starsFor({ album: id, slot }),
-      })),
-    };
-  }
-
-  /** The relic's card (§11.4): its level, what it does now and next, and the
-   *  album that raises it. No actions — there is nothing to do to a relic. */
-  relicCard(id: ArtifactId): {
-    id: ArtifactId; name: string; sprite: string; glyph: string; level: number;
-    owned: boolean; now: string; next: string; album: AlbumId; albumName: string;
-    held: number; total: number;
-    /** Why the number below it does nothing yet, or null. The card prints the
-     *  effect in muted ink rather than promising what the build cannot pay. */
-    pending: string | null;
-    /** Where the ability is in its ACTIVE → COOLDOWN → READY walk, and how
-     *  long is left of the phase it is in (§2.1). */
-    cast: { phase: CastPhase; leftMs: number; charges: number };
-  } {
+  relicCard(id: ArtifactId): RelicView {
     const def = ARTIFACTS[id];
-    const album = albumOfRelic(id, this.state.collection.season);
+    const level = artifactLevel(this.state, id);
+    const restored = level >= 1;
+    const slots = Array.from({ length: 6 }, (_, s) => slotCount(this.state, id, s));
+    const missing = slots.findIndex((n) => n === 0);
+    const spares = spareWorth(this.state, id);
+    const forge = restored || missing < 0 ? null : (() => {
+      const price = replicaPrice(missing);
+      return {
+        slot: missing, freeSpares: price.freeSpares, spares: price.spares, gems: price.gems,
+        canFree: spares >= price.freeSpares, canGems: spares >= price.spares,
+      };
+    })();
     return {
-      id,
-      name: def.name,
-      sprite: def.sprite,
-      glyph: def.glyph,
-      level: artifactLevel(this.state, id),
-      owned: artifactLevel(this.state, id) >= 1,
+      id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
+      level, restored, met: isMet(this.state, id), slots, spares,
+      levelCost: levelCost(level), canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
-      album,
-      albumName: ALBUMS[album].name,
-      held: albumHeld(this.state, album),
-      total: ALBUMS[album].cards.length,
+      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the pass' : 'the world: dungeons, the Portal, scouting',
       pending: def.pending,
       cast: this.castPhase(id),
+      forge,
+      chest: restored ? { gems: RELIC_RULES.restorerChestGems, size: RELIC_RULES.restorerChestSize } : null,
+      host: restored && relicKind(id) === 'world' ? {
+        at: (() => {
+          const c = this.myChapels().find((x) => x.relic === id);
+          return c === undefined ? null : `the Chapel of a ${c.name}`;
+        })(),
+        shrines: this.myChapels().filter((c) => c.relic !== id).map((c) => ({
+          shrineId: String(c.index),
+          label: `Chapel · ${c.name}`,
+          holds: c.relic === null ? null : ARTIFACTS[c.relic].name,
+        })),
+      } : restored && relicKind(id) === 'city' ? {
+        at: this.hostLabel(id),
+        shrines: shrines(this.state).filter((d) => d.hosts !== id).map((d) => ({
+          shrineId: d.uniqueId,
+          label: districtLabel(this.state, d),
+          holds: d.hosts === undefined ? null : ARTIFACTS[d.hosts].name,
+        })),
+      } : null,
     };
+  }
+
+  /** Which Shrine holds a relic, by name, or null. */
+  private hostLabel(id: ArtifactId): string | null {
+    const host = hostOf(this.state, id);
+    return host === null ? null : districtLabel(this.state, host);
+  }
+
+  /** A Shrine's section of its card. */
+  shrineView(district: District): ShrineView {
+    return {
+      holds: district.hosts ?? null,
+      radius: levelIndexed(DISTRICTS[district.definitionId].auraRadiusPerLevel, district.level),
+      candidates: ARTIFACT_ORDER
+        .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1 && id !== district.hosts)
+        .map((id) => ({ id, name: ARTIFACTS[id].name, at: this.hostLabel(id) })),
+    };
+  }
+
+  /** A relic's level, for a line that names it. */
+  relicLevel(id: ArtifactId): number {
+    return artifactLevel(this.state, id);
+  }
+
+  /** The player's restored world relics: what a Chapel could host. */
+  worldRelicsRestored(): ArtifactId[] {
+    return ARTIFACT_ORDER.filter((id) => relicKind(id) === 'world' && artifactLevel(this.state, id) >= 1);
+  }
+
+  /** The player's own hexes with a Chapel, and the relic in each. */
+  private myChapels(): Array<{ index: number; name: string; relic: ArtifactId | null }> {
+    const snap = this.worldView;
+    if (snap === null) return [];
+    return snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.chapel === true).map((h) => ({
+      index: h.index, name: WORLD_BUILD.districts[h.district].name, relic: h.relic?.id ?? null,
+    }));
+  }
+
+  /** Host a world relic in the Chapel on a hex, at its level: the server
+   *  holds it, and says so in the snapshot (relic-restoration.md §5.2). */
+  async doHostWorldRelic(id: ArtifactId, index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.hostRelic(index, id, artifactLevel(this.state, id));
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    playSfx('buildPlaced');
+    this.track('relic_hosted', { relic: id, world: true });
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  async doUnhostWorldRelic(id: ArtifactId): Promise<void> {
+    if (this.worldServer === null) return;
+    const r = await this.worldServer.unhostRelic(id);
+    if (r.ok) {
+      playSfx('click');
+      this.applyWorldSnapshot(r.snapshot);
+    } else this.notify();
+  }
+
+  /** Host a city relic in a Shrine (sim/hosts.ts), or a world relic in the
+   *  Chapel on a hex (its `shrineId` is the hex's index). */
+  doHostRelic(id: ArtifactId, shrineId: string): void {
+    if (relicKind(id) === 'world') {
+      void this.doHostWorldRelic(id, Number(shrineId));
+      return;
+    }
+    if (hostRelic(this.state, id, shrineId, this.now()) === 'Hosted') {
+      playSfx('buildPlaced');
+    }
+    this.notify();
+  }
+
+  /** Take a relic out of its Shrine, or its Chapel. */
+  doUnhostRelic(id: ArtifactId): void {
+    if (relicKind(id) === 'world') {
+      void this.doUnhostWorldRelic(id);
+      return;
+    }
+    if (unhostRelic(this.state, id, this.now())) playSfx('click');
+    this.notify();
+  }
+
+  /** The Bag's Relics tab (M72): every relic met, city then world. */
+  relicRows(): RelicView[] {
+    return ARTIFACT_ORDER.filter((id) => isMet(this.state, id)).map((id) => this.relicCard(id))
+      .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'city' ? -1 : 1));
+  }
+
+  doRestoreRelic(id: ArtifactId): void {
+    if (restoreRelic(this.state, id) === 'Restored') {
+      playSfx('questComplete');
+      this.toast(`The ${ARTIFACTS[id].name} is restored`);
+    }
+    this.notify();
+  }
+
+  doLevelRelic(id: ArtifactId): void {
+    if (levelUpRelic(this.state, id) === 'Levelled') {
+      playSfx('questComplete');
+      // A world relic in a Chapel acts at the level the server holds: send it.
+      const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
+      if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
+    } else this.shake([]);
+    this.notify();
+  }
+
+  doForgeReplica(id: ArtifactId, withGems: boolean): void {
+    const view = this.relicCard(id);
+    if (view.forge === null) return;
+    const result = forgeReplica(this.state, id, view.forge.slot, withGems);
+    if (result === 'Forged') playSfx(withGems ? 'gemSpend' : 'click');
+    else this.shake(result === 'NotEnoughGems' ? ['Gems'] : []);
+    this.notify();
+  }
+
+  doRestorerChest(id: ArtifactId): void {
+    const result = openRestorerChest(this.state, id);
+    if (result.kind === 'Opened') {
+      playSfx('gemSpend');
+      this.toast(`${formatExact(result.drops.length)} fragments of the ${ARTIFACTS[id].name}`);
+    } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
   }
 
   /** The three-state walk, as the card reads it. `leftMs` is derived from a
@@ -1671,295 +1716,17 @@ export class Game {
     return boon === null ? null : boonText(boon);
   }
 
-  relicStrip(): ArtifactId[] {
-    return ownedArtifacts(this.state);
-  }
-
-  /**
-   * OPEN THE NEXT PACK BY HAND — the button in the Collection.
-   *
-   * It survives the auto-open because a BACKLOG still exists: packs that
-   * landed while the player was away are not owed an opening, and neither is
-   * one granted by the dev bar. This is how those are turned over.
-   */
-  doOpenPack(): void {
-    if (this.gachaReveal !== null) return; // a reveal is already on screen
-    if (!this.turnOverPack()) return;
-    this.notify();
-  }
-
-  /**
-   * CLOSE AN ALBUM — the button at the bottom of a relic's page (§11.3).
-   *
-   * The player's move, not the ninth card's: the page fills and waits, so
-   * nobody spends nine cards and rolls the lap in the middle of a reveal they
-   * were watching for something else.
-   */
-  doClaimAlbum(album: AlbumId): void {
-    const payout = claimAlbum(this.state, album);
-    if (payout === null) return;
-    playSfx('chainFinished');
-    this.takePayouts([payout]);
-    this.notify();
-  }
-
-  /** Whether that button is live: the nine are in hand and this lap has not
-   *  closed the album yet. */
-  canClaimAlbum(album: AlbumId): boolean {
-    return canClaimAlbum(this.state, album);
-  }
-
-  /**
-   * Bank what a closed album owes and deal whatever the screen is free to
-   * deal.
-   */
-  private takePayouts(payouts: readonly AlbumPayout[]): void {
-    for (const payout of payouts) {
-      this.pendingPayouts.push(payout);
-      if (payout.prize !== null) this.pendingPrize = payout.prize;
-    }
-    this.dealPayouts();
-  }
-
-  /**
-   * WHAT FOLLOWS A REVEAL (§11.5). A completed album interrupts nothing, so
-   * this deals only into a free screen and is called again every time one is
-   * dismissed.
-   *
-   * The order is the order of what things are worth. THE PRIZE TAKES THE
-   * SCREEN first — it is the most exciting screen the game has and the right
-   * place for the forty-fifth card to lead — and the albums' own banners
-   * follow it, so the run of five ends on the hero rather than on a pennant.
-   */
-  private dealPayouts(): void {
-    if (this.gachaReveal !== null) return;
-    if (this.pendingPrize !== null) {
-      const prize = this.pendingPrize;
-      this.pendingPrize = null;
-      this.gachaReveal = {
-        banner: PRIZE_BANNER, calls: 1, caption: 'The collection prize',
-        prizes: prizePrizes(prize),
-      };
-      return;
-    }
-    // Then the packs, one at a time. AFTER the prize, because the prize is the
-    // most exciting screen the game has and the forty-fifth card should lead;
-    // BEFORE the album banners, because a pennant is the quietest thing here
-    // and the run should not end on a pouch.
-    if (this.pendingPackOpenings > 0) {
-      this.pendingPackOpenings -= 1;
-      if (this.turnOverPack()) return;
-      // The queue was empty after all — a wildcard or a season close took the
-      // pack between the grant and the deal. Nothing is owed.
-      this.pendingPackOpenings = 0;
-    }
-    for (const payout of this.pendingPayouts.splice(0)) {
-      const relic = ARTIFACTS[payout.relic];
-      this.queueBanner({
-        title: payout.found ? 'A relic is yours!' : 'Album complete!',
-        icon: relic.glyph,
-        sprite: relic.sprite,
-        name: ALBUMS[payout.album].name,
-        desc: payout.found
-          ? `${relic.name}, at level 1.`
-          : `${relic.name} rises to level ${payout.level}.`,
-        tone: 'gold',
-      });
-    }
-  }
-
-  /**
-   * TURN ONE PACK OVER, and put its cards in the reveal.
-   *
-   * The ONE opener: the button in the Collection and a pack that just landed
-   * both come through here, so a pouch can never be spent by a path that
-   * forgets the sound or the screen. False when the queue is empty.
-   */
-  private turnOverPack(): boolean {
-    const opening = openPack(this.state, this.now());
-    if (opening === null) return false;
-    playSfx('chainFinished');
-    this.gachaReveal = { caption: `${opening.pack.tier} pack`, prizes: packPrizes(opening) };
-    // The queue just got shorter by one, and this is not a pack the player
-    // earned — without this the next notify would read the drop and then the
-    // NEXT grant would be counted against a stale number.
-    this.packsSeen = this.state.collection.packs.length;
-    return true;
-  }
-
-  /** What the reveal will deal, asked before it is opened — the album screen
-   *  shows a pack's tier and count without spending it. */
-  peekPack(): { tier: PackTier; cards: number } | null {
-    const pack = this.state.collection.packs[0];
-    if (pack === undefined) return null;
-    return { tier: pack.tier, cards: packCards(this.state.seed, pack).length };
-  }
-
-  /** The Gems the five albums together pay — the prize band's other chip. */
-  prizeGems(): number {
-    return COLLECTION.prizeGems;
-  }
-
-  /**
-   * Open a relic — the ONE level below the list, and the only one
-   * (§11.2 → §11.3). A relic and its album used to be two screens, which made
-   * the thing the nine cards are FOR a screen behind the nine cards; they are
-   * one page now, so `openRelicId` is the whole of the navigation.
-   */
+  /** Open a relic's sheet, over the Bag it was opened from. */
   openRelic(id: ArtifactId): void {
     this.openRelicId = id;
-    this.notify();
+    this.setOverlay('relic');
   }
 
-  /** Reached from an aimed wildcard offer, which names an ALBUM. */
-  openAlbum(id: AlbumId): void {
-    this.openRelic(relicOfAlbum(id, this.state.collection.season));
-  }
-
+  /** Back to the Bag's Relics tab. */
   closeRelic(): void {
-    this.armedWildcard = null;
-    if (this.openRelicId === null) {
-      this.dismiss();
-      return;
-    }
     this.openRelicId = null;
-    this.notify();
-  }
-
-  /** The arrows in the page's bottom corners. Eight is a short walk, and it
-   *  wraps: a player checking what they are close to should not hit a wall at
-   *  either end. */
-  stepRelic(by: number): void {
-    if (this.openRelicId === null) return;
-    const i = ARTIFACT_ORDER.indexOf(this.openRelicId);
-    const n = ARTIFACT_ORDER.length;
-    this.openRelicId = ARTIFACT_ORDER[(((i + by) % n) + n) % n]!;
-    this.notify();
-  }
-
-  /**
-   * A card tapped on an album page.
-   *
-   * A DUPLICATE is a choice the player has to be offered — send it, or leave
-   * it to the vault — and sending needs the social layer (**OQ-89**), so
-   * until that lands the only thing a duplicate can do is say what it is
-   * worth. A MISSING card says what packs it falls from.
-   */
-  tapCard(album: AlbumId, slot: number): void {
-    const card = ALBUMS[album].cards[slot]!;
-    const count = cardCount(this.state, { album, slot });
-    // A WILDCARD IS ARMED: this tap is the placement, and the grid has
-    // already said which slots would take it.
-    if (this.armedWildcard !== null) {
-      const rarity = this.armedWildcard;
-      const result = placeWildcard(this.state, { album, slot }, rarity);
-      if (result.placed) {
-        playSfx('upgradeBought');
-        if (wildcardsHeld(this.state, rarity) <= 0) this.armedWildcard = null;
-      } else if (result.reason === 'GoldSlot') {
-        this.toast('No wildcard covers a gold card — it is earned or sent');
-      } else if (result.reason === 'AlreadyHeld') {
-        this.toast('You already hold that one');
-      } else {
-        this.toast(`A ${rarity}★ wildcard does not reach that card`);
-      }
-      this.notify();
-      return;
-    }
-    if (count === 0) {
-      const held = heldWildcardFor(this.state, { album, slot });
-      if (held !== null) {
-        // The doc's own line: a missing card says what packs it falls from,
-        // AND the wildcard if one covers it (§11.3).
-        this.toast(`${card.name} — your ${held}★ wildcard fills it`);
-        this.armWildcard(held);
-      } else {
-        this.toast(card.gold === true
-          ? `${card.name} — gold, so Star packs only`
-          : `${card.name} — ${PACK_ORDER.filter((tier) => PACKS[tier].weights[card.rarity - 1] > 0)
-            .join(', ')} packs`);
-      }
-    } else if (count > 1) {
-      this.toast(`${count - 1} spare — ${starsFor({ album, slot })} stars each in the vault`);
-    } else {
-      this.toast(`${card.name} — ${'★'.repeat(card.rarity)}`);
-    }
-    this.notify();
-  }
-
-  /** The vault knob opens the shelf rather than buying: with three chests and
-   *  a ten-batch there is a choice to make, and a one-press knob cannot say
-   *  what it is about to spend. */
-  openVault(): void {
-    this.vaultOpen = true;
-    this.notify();
-  }
-
-  closeVault(): void {
-    this.vaultOpen = false;
-    this.notify();
-  }
-
-  /**
-   * TEN AT ONCE. A player finishing a season cashes the vault scores of times
-   * for a card or two each, and the problem is the screens rather than the
-   * chests — the ten-call made this argument first (§6.4 of `10-heroes.md`):
-   * buying in bulk buys TIME, not a better price.
-   */
-  doBuyFromVaultMany(tier: VaultTier, count = 10): void {
-    const many = buyFromVaultMany(this.state, tier, count);
-    if (many.result === 'Opened') {
-      playSfx('upgradeBought');
-      this.toast(`${many.bought} × ${tier} — open them in the Collection`);
-    } else {
-      this.toast(`${formatExact(vaultCost(tier) * count)} stars for ten — not yet`);
-    }
-    this.notify();
-  }
-
-  /** Every chest, what it costs and whether the purse reaches it — the vault
-   *  sheet's whole data. */
-  vaultShelf(): Array<{ tier: VaultTier; cost: number; cards: number;
-    promise: string; affordable: boolean; tenAffordable: boolean; }> {
-    const stars = this.state.collection.stars;
-    return CHEST_ORDER.map((tier) => ({
-      tier,
-      cost: vaultCost(tier),
-      cards: PACKS[tier].cards,
-      promise: packPromise(tier),
-      affordable: stars >= vaultCost(tier),
-      tenAffordable: stars >= vaultCost(tier) * 10,
-    }));
-  }
-
-  /**
-   * The store's Cards shelf (§6): one row per tier the store sells, with its
-   * PUBLISHED ODDS on it.
-   *
-   * The odds are on the shelf rather than behind an info knob because §6 says
-   * "at published odds" and a store is the one place that promise has to be
-   * kept where the money is.
-   */
-  packOffers(): Array<{
-    tier: PackTier; name: string; best: boolean; cost: number; cards: number;
-    sprite: string; promise: string; odds: string;
-  }> {
-    return packsForSale().map((tier) => {
-      const def = PACKS[tier];
-      const forSale = packsForSale();
-      return {
-        tier,
-        name: packName(tier),
-        best: tier === forSale[forSale.length - 1],
-        cost: packGemCost(tier),
-        cards: def.cards,
-        sprite: `pack_${tier.toLowerCase()}`,
-        promise: packPromise(tier),
-        odds: packOdds(tier)
-          .map((o) => `${faceLabel(o.face)} ${o.percent.toFixed(o.percent < 1 ? 2 : 0)}%`)
-          .join(' · '),
-      };
-    });
+    this.bagTab = 'Relics';
+    this.setOverlay('bag');
   }
 
   /**
@@ -1970,145 +1737,29 @@ export class Game {
    * renders no shelf at all rather than a row explaining why, because a
    * withdrawn product is not an offer.
    */
-  cardBundleOffers(): Array<{
-    id: StoreSkuId; name: string; priceCents: number; sprite: string;
-    packs: number; tier: PackTier; wildcards: number; rarity: Rarity;
-    gemValue: number; lines: string[];
-  }> {
-    return bundlesForSale(this.state, this.now()).map((id) => {
+  /** The Bag's bundles, as the store's item shelf draws them: what each
+   *  holds, and — for the speed-ups — what that time would cost in Gems at
+   *  the rush price, the comparison the shelf exists to offer. */
+  itemBundleOffers(): Array<{ id: StoreSkuId; name: string; priceCents: number; sprite: string; lines: string[]; gemValue: number }> {
+    return ITEM_BUNDLE_ORDER.map((id) => {
       const sku = STORE[id];
-      const bundle = bundleOf(id)!;
+      const seconds = (Object.entries(sku.items) as Array<[ItemId, number]>)
+        .reduce((s, [item, n]) => s + (ITEMS[item].kind === 'speedup' ? ITEMS[item].seconds * n : 0), 0);
       return {
-        id,
-        name: sku.name,
-        priceCents: priceCents(id),
-        sprite: sku.sprite,
-        packs: bundle.packs,
-        tier: bundle.tier,
-        wildcards: bundle.wildcards,
-        rarity: bundle.wildcardRarity,
-        gemValue: bundleGemValue(bundle),
-        lines: this.bundleLines(id),
+        id, name: sku.name, priceCents: priceCents(id), sprite: sku.sprite,
+        lines: this.bundleLines(id), gemValue: seconds > 0 ? gemsToFinish(seconds) : 0,
       };
     });
   }
 
   /** What a bundle hands over, one line a thing — the shelf's body and the
-   *  confirmation's grant. A star pack's promise is named rather than implied:
-   *  the gold edition is what the player is buying. */
+   *  confirmation's grant. */
   bundleLines(id: StoreSkuId): string[] {
-    const bundle = bundleOf(id);
-    if (bundle === null) return [];
-    const out: string[] = [];
-    if (bundle.packs > 0) {
-      out.push(`${bundle.packs} ${bundle.tier.toLowerCase()} packs — ${packPromise(bundle.tier)}`);
+    if (isItemBundle(id)) {
+      return (Object.entries(STORE[id].items) as Array<[ItemId, number]>)
+        .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`);
     }
-    if (bundle.wildcards > 0) {
-      out.push(bundle.wildcards === 1
-        ? `One ${bundle.wildcardRarity}★ wildcard — any slot it covers, your pick`
-        : `${bundle.wildcards} ${bundle.wildcardRarity}★ wildcards — any slots they cover, your pick`);
-    }
-    return out;
-  }
-
-  /**
-   * The store's AIMED offers (§9): one per album the player has nearly
-   * finished. An offer with no rarity — an album down to gold slots alone —
-   * is dropped here rather than shown greyed out: there is nothing to sell,
-   * and a dead row on a shelf is worse than no row.
-   */
-  wildcardOffers(): Array<{
-    album: AlbumId; name: string; short: number; rarity: Rarity; cost: number;
-    sprite: string; relic: ArtifactId;
-  }> {
-    return wildcardOffers(this.state)
-      .filter((o): o is typeof o & { rarity: Rarity } => o.rarity !== null)
-      .map((o) => ({
-        album: o.album,
-        name: ALBUMS[o.album].name,
-        short: o.short,
-        rarity: o.rarity,
-        cost: o.cost,
-        sprite: `album_${o.album.toLowerCase()}`,
-        relic: relicOfAlbum(o.album, this.state.collection.season),
-      }));
-  }
-
-  doBuyWildcard(rarity: Rarity, album?: AlbumId): void {
-    const result = buyWildcard(this.state, rarity);
-    if (result === 'Purchased') {
-      playSfx('gemSpend');
-      // Bought from an aimed offer, the album it was aimed at opens with the
-      // wildcard already in hand: the purchase and the placement are one
-      // intention, and making the player go and find the album again would
-      // be a second errand.
-      if (album !== undefined) {
-        this.openRelicId = relicOfAlbum(album, this.state.collection.season);
-        this.armedWildcard = rarity;
-        this.setOverlay('collection');
-      } else {
-        this.toast(`A ${rarity}★ wildcard — place it on any card it covers`);
-      }
-    } else if (result === 'NotEnoughGems') {
-      this.shake(['Gems']);
-    }
-    this.notify();
-  }
-
-  /** What the player holds, cheapest first — the album page's strip. */
-  wildcardsHeld(): Array<{ rarity: Rarity; count: number }> {
-    return RARITIES
-      .map((rarity) => ({ rarity, count: wildcardsHeld(this.state, rarity) }))
-      .filter((w) => w.count > 0);
-  }
-
-  /**
-   * ARM a wildcard, then tap the slot: the game's own select-then-place
-   * idiom, which placement mode and cast mode both use.
-   *
-   * A confirmation sheet would be the alternative and it is worse here — a
-   * consumable spent by one tap needs the MODE to be visible, not a dialog
-   * after the fact, and the armed grid shows exactly which slots it can fill.
-   */
-  armWildcard(rarity: Rarity | null): void {
-    this.armedWildcard = rarity === null || wildcardsHeld(this.state, rarity) <= 0
-      ? null
-      : rarity;
-    this.notify();
-  }
-
-  /** Whether an armed wildcard could land on this slot — what the grid lights. */
-  wildcardFits(album: AlbumId, slot: number): boolean {
-    if (this.armedWildcard === null) return false;
-    const ref = { album, slot };
-    return !holdsCard(this.state, ref) && wildcardCovers(this.armedWildcard, ref);
-  }
-
-  doBuyPack(tier: PackTier): void {
-    const result = buyPack(this.state, tier);
-    if (result === 'Purchased') {
-      playSfx('gemSpend');
-      const waiting = this.state.collection.packs.length;
-      this.toast(waiting === 1
-        ? `A ${tier} pack — open it in the Collection`
-        : `A ${tier} pack · ${waiting} waiting in the Collection`);
-    } else if (result === 'NotEnoughGems') {
-      this.shake(['Gems']);
-    }
-    this.notify();
-  }
-
-  doBuyFromVault(tier: VaultTier): void {
-    const result = buyFromVault(this.state, tier);
-    if (result === 'Opened') playSfx('upgradeBought');
-    else this.toast(`${formatExact(vaultCost(tier))} stars for a ${tier} pack — not yet`);
-    this.notify();
-  }
-
-  vaultInfo(): { stars: number; next: VaultTier; cost: number; affordable: boolean } {
-    const next = vaultNext(this.state);
-    const cost = vaultCost(next);
-    return { stars: this.state.collection.stars, next, cost, affordable: this.state.collection.stars >= cost };
+    return [];
   }
 
   /** Buy a whole pool at today's rung. The Mana sheet's other button. */
@@ -2282,15 +1933,15 @@ export class Game {
       /** What finishing it pays, resolved to what the player would receive
        *  RIGHT NOW — Mana is a fraction of the pool, so the number moves with
        *  the Sanctum and cannot be stored. */
-      reward: { currency: CurrencyId; amount: number } | { pack: PackTier };
+      reward: { currency: CurrencyId; amount: number } | { fragments: number };
       hard: boolean;
     }>;
     ladder: Array<{
       level: number;
       reached: boolean;
-      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
+      free: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean };
       paid: {
-        reward: Wallet; pack: PackTier | null;
+        reward: Wallet; items: ItemStock; fragments: number;
         claimed: boolean; claimable: boolean; locked: boolean;
       };
     }>;
@@ -2320,8 +1971,8 @@ export class Game {
         done: missionProgress(this.state, m),
         target: m.target,
         complete: missionComplete(this.state, m),
-        reward: m.reward.kind === 'Pack'
-          ? { pack: m.reward.tier }
+        reward: m.reward.kind === 'Fragments'
+          ? { fragments: m.reward.n }
           : m.reward.kind === 'Gems'
             ? { currency: 'Gems' as CurrencyId, amount: m.reward.amount }
             : {
@@ -2339,13 +1990,15 @@ export class Game {
           reached: n <= level,
           free: {
             reward: free.wallet,
-            pack: free.pack,
+            items: free.items,
+            fragments: free.fragments,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
             reward: paid.wallet,
-            pack: paid.pack,
+            items: paid.items,
+            fragments: paid.fragments,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
@@ -2359,6 +2012,21 @@ export class Game {
    *  table. The pill decides the glow from this, never the sheet. */
   passPending(): boolean {
     return anyCellPending(this.state, this.now());
+  }
+
+  /** The pass's pill on the map (Docs/features/20-season-pass.md §6): its
+   *  level on the ladder and the time the season has left. It shows once the
+   *  store is open — the pass is sold there — and hides behind any sheet. */
+  passPillState(): { showing: boolean; glowing: boolean; level: number; length: number; leftMs: number } | null {
+    if (!this.doorOpen('store')) return null;
+    const now = this.now();
+    return {
+      showing: !this.hasOpenSheet(),
+      glowing: this.passPending(),
+      level: passLevel(this.state, now),
+      length: passLadderLength(),
+      leftMs: Math.max(0, passEndsAt(now) - now),
+    };
   }
 
   doClaimPassCell(level: number, track: 'free' | 'paid'): void {
@@ -2389,8 +2057,8 @@ export class Game {
       level: number;
       cells: number;
       reached: boolean;
-      free: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean };
-      paid: { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked: boolean };
+      free: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean };
+      paid: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean; locked: boolean };
     }>;
   } {
     const level = surveyLevel(this.state);
@@ -2413,12 +2081,12 @@ export class Game {
           cells,
           reached: n <= level,
           free: {
-            reward: free.wallet, pack: free.pack,
+            reward: free.wallet, items: free.items, fragments: free.fragments,
             claimed: claimedFree.includes(n),
             claimable: n <= level && !claimedFree.includes(n),
           },
           paid: {
-            reward: paid.wallet, pack: paid.pack,
+            reward: paid.wallet, items: paid.items, fragments: paid.fragments,
             claimed: owned && claimedPaid.includes(n),
             claimable: owned && n <= level && !claimedPaid.includes(n),
             locked: !owned,
@@ -2538,9 +2206,37 @@ export class Game {
     this.setOverlay(null);
   }
 
+  /** Place a Shrine anywhere, for Gems (relic-restoration.md §5.1). */
+  startPremiumShrine(): void {
+    if (premiumShrinePrice(this.state) === null) return;
+    this.startPlacement('Shrine');
+    if (this.mode.kind === 'placing') this.mode = { ...this.mode, premium: true };
+    this.notify();
+  }
+
+  /** The next premium Shrine's Gem price, and how many Shrines stand. */
+  shrineOffer(): { gems: number | null; standing: number; max: number } {
+    return {
+      gems: premiumShrinePrice(this.state),
+      standing: districtCount(this.state, 'Shrine'),
+      max: 1 + SHRINE_RULES.premiumGems.length,
+    };
+  }
+
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
+    if (this.mode.premium) {
+      const result = buildPremiumShrine(this.state, this.map, selected);
+      if (result === 'Started') {
+        playSfx('buildPlaced');
+        this.mode = { kind: 'normal' };
+      } else if (result === 'NotEnoughGems') this.shake(['Gems']);
+      else if (result === 'NoBuilderFree') this.offerBuilder();
+      else this.toast(result === 'NoneLeft' ? 'Every Shrine is built' : result === 'CountLimit' ? 'Five Shrines stand already' : 'Not here');
+      this.notify();
+      return;
+    }
     const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
@@ -2549,7 +2245,9 @@ export class Game {
       // Confirmed from a free builder's row: the sheet was only in the way.
       if (this.openOverlay === 'builder') this.openOverlay = null;
     } else if (result === 'NotEnoughResources') {
-      this.shake(Object.keys(cost) as CurrencyId[]);
+      if (!this.offerShortfall(`Build the ${DISTRICTS[definitionId].name}`, cost, () => this.confirmBuild())) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
     } else if (result === 'NoBuilderFree') {
       this.builderAsk = { kind: 'build' };
       this.offerBuilder();
@@ -2564,6 +2262,362 @@ export class Game {
    * §6.3). It is refused the way a build is, and the same walls raise the same
    * answers: the builder offer, the purse that shakes, the words.
    */
+  // ------------------------------------------------------------- the Bag
+
+  /** The Bag's open tab (Docs/art/ui-inventory.md §3.2). */
+  bagTab: BagTab = 'Resources';
+  /** The tile whose popover is open, and how many the slider has chosen. */
+  bagPicked: ItemId | null = null;
+  bagQty = 1;
+
+  /** The Bag, as its screen draws it: every held item of the open tab, in
+   *  file order, with what one is worth now. */
+  bagScreen(): BagScreen {
+    const held = heldItems(this.state);
+    return {
+      tab: this.bagTab,
+      tabs: BAG_TABS.map((tab) => ({
+        tab,
+        any: tab === 'Relics' ? ARTIFACT_ORDER.some((id) => isMet(this.state, id)) : held.some((id) => bagTabOf(id) === tab),
+        fresh: held.some((id) => bagTabOf(id) === tab && this.state.bag.fresh[id] === true),
+      })),
+      items: held.filter((id) => bagTabOf(id) === this.bagTab).map((id) => ({
+        id,
+        def: ITEMS[id],
+        count: itemCount(this.state, id),
+        fresh: this.state.bag.fresh[id] === true,
+        worth: chestValue(this.state, id),
+      })),
+      picked: this.bagPicked,
+    };
+  }
+
+  /** The nav orb on the Bag: what came in since it was last opened. */
+  bagBadge(): number {
+    return this.state.bag.badge;
+  }
+
+  openBagTab(tab: BagTab): void {
+    if (tab === this.bagTab) return;
+    this.bagTab = tab;
+    this.bagPicked = null;
+    this.notify();
+  }
+
+  /** A tap on a tile: open its popover, or close it if it is the open one. */
+  pickBagItem(id: ItemId): void {
+    this.bagPicked = this.bagPicked === id ? null : id;
+    this.bagQty = 1;
+    markItemSeen(this.state, id);
+    this.notify();
+  }
+
+  /** The coin a choice chest's popover has picked. */
+  bagChoice: CurrencyId = 'Gold';
+
+  /** What one choice chest gives of each coin, now. */
+  choiceWorth(id: ItemId): Wallet {
+    const out: Wallet = {};
+    for (const c of CHEST_COINS) Object.assign(out, chestValue(this.state, id, c));
+    return out;
+  }
+
+  pickBagChoice(coin: CurrencyId): void {
+    this.bagChoice = coin;
+    this.notify();
+  }
+
+  /** The boosts running, for the Boosts tab's ribbons. */
+  bagBoosts(): Array<{ kind: BoostKind; value: number; endsAt: number }> {
+    return runningBoosts(this.state);
+  }
+
+  doUseItem(id: ItemId, n: number): void {
+    const choice = ITEMS[id].kind === 'choice' ? this.bagChoice : undefined;
+    const worth = chestValue(this.state, id, choice);
+    const manaBefore = getWallet(this.state.city.wallet, 'Mana');
+    const knowledgeBefore = getWallet(this.state.kingdom.wallet, 'Knowledge');
+    if (useItem(this.state, id, n, this.now(), choice) !== 'Used') return;
+    const haul: Wallet = {};
+    for (const [c, v] of Object.entries(worth) as Array<[CurrencyId, number]>) haul[c] = v * n;
+    const mana = getWallet(this.state.city.wallet, 'Mana') - manaBefore;
+    const knowledge = getWallet(this.state.kingdom.wallet, 'Knowledge') - knowledgeBefore;
+    if (mana > 0) haul.Mana = mana;
+    if (knowledge > 0) haul.Knowledge = knowledge;
+    if (Object.keys(haul).length > 0) this.reward(haul);
+    else playSfx('click');
+    if (itemCount(this.state, id) === 0) this.bagPicked = null;
+    this.bagQty = 1;
+    this.afterShortfallUse();
+    this.notify();
+  }
+
+  // ------------------------------------------------- short of something
+
+  /**
+   * A REFUSAL FOR A COIN THE BAG CAN COVER (Docs/art/ui-inventory.md §3.9):
+   * what the action needs, and the action itself, retried the moment the
+   * chests used in the sheet meet it. Raised only when the Bag holds a chest
+   * of a coin that is short; otherwise the purse shakes as it always has.
+   */
+  shortfallAsk: { title: string; cost: Wallet; retry: () => void } | null = null;
+  private shortfallReturn: OverlayName | null = null;
+
+  /** The chests that pay this coin: its own chests, then the choice chests. */
+  chestsFor(coin: CurrencyId): ItemId[] {
+    return heldItems(this.state).filter((id) => {
+      const def = ITEMS[id];
+      return (def.kind === 'chest' && def.coin === coin) || def.kind === 'choice';
+    }).sort((a, b) => (ITEMS[a].kind === 'choice' ? 1 : 0) - (ITEMS[b].kind === 'choice' ? 1 : 0)
+      || ITEMS[a].seconds - ITEMS[b].seconds);
+  }
+
+  /** Raise the shortfall sheet for `cost`, if the Bag can help with it. */
+  private offerShortfall(title: string, cost: Wallet, retry: () => void): boolean {
+    const short = Object.keys(this.shortfall(cost)) as CurrencyId[];
+    // With no chest of a short coin, the sheet still has somewhere to send
+    // the player once the store sells the Bag's bundles — not before.
+    const anyChest = short.some((c) => this.chestsFor(c).length > 0);
+    const storeHelps = this.doorOpen('bag') && this.doorOpen('store') && ITEM_BUNDLE_ORDER.length > 0
+      && short.some((c) => (['Gold', 'Food', 'Wood', 'Stone'] as CurrencyId[]).includes(c));
+    if (!anyChest && !storeHelps) return false;
+    if (this.openOverlay !== 'shortfall') this.shortfallReturn = this.openOverlay === 'upgrade' ? null : this.openOverlay;
+    this.setOverlay('shortfall');
+    this.shortfallAsk = { title, cost, retry };
+    return true;
+  }
+
+  /** The sheet as it draws: the first coin still short, what is needed and
+   *  held of it, and the chests that pay it. */
+  shortfallScreen(): { title: string; coin: CurrencyId; need: number; have: number; chests: Array<{ id: ItemId; def: ItemDef; count: number; worth: Wallet }> } | null {
+    const ask = this.shortfallAsk;
+    if (ask === null) return null;
+    const short = Object.keys(this.shortfall(ask.cost)) as CurrencyId[];
+    const coin = short.find((c) => this.chestsFor(c).length > 0) ?? short[0];
+    if (coin === undefined) return null;
+    return {
+      title: ask.title, coin, need: ask.cost[coin] ?? 0, have: this.walletValue(coin),
+      chests: this.chestsFor(coin).map((id) => ({
+        id, def: ITEMS[id], count: itemCount(this.state, id), worth: chestValue(this.state, id, coin),
+      })),
+    };
+  }
+
+  /** A chest used from the shortfall sheet: one of its coin. */
+  doShortfallChest(id: ItemId): void {
+    const view = this.shortfallScreen();
+    if (view === null) return;
+    if (ITEMS[id].kind === 'choice') this.bagChoice = view.coin;
+    this.doUseItem(id, 1);
+  }
+
+  /** After a Use: a shortfall met closes the sheet and does what was asked. */
+  private afterShortfallUse(): void {
+    const ask = this.shortfallAsk;
+    if (ask === null || this.openOverlay !== 'shortfall') return;
+    if (Object.keys(this.shortfall(ask.cost)).length > 0) return;
+    this.closeShortfall();
+    ask.retry();
+  }
+
+  closeShortfall(): void {
+    const back = this.shortfallReturn;
+    this.shortfallAsk = null;
+    this.shortfallReturn = null;
+    this.setOverlay(back);
+  }
+
+  // ---------------------------------------------------- the Speed-up picker
+
+  /** The timer the picker is open on, and the overlay it goes back to. */
+  speedJob: SpeedJob | null = null;
+  private speedReturn: OverlayName | null = null;
+
+  /** Does the Bag hold anything that fits this timer — is Speed up worth
+   *  offering over a bare Finish? */
+  hasSpeedups(job: SpeedJob): boolean {
+    return speedupsFor(this.state, job).length > 0;
+  }
+
+  openSpeedup(job: SpeedJob): void {
+    if (jobRemainingSeconds(this.state, job, this.now()) === null) return;
+    if (this.openOverlay !== 'speedup') this.speedReturn = this.openOverlay;
+    this.setOverlay('speedup');
+    this.speedJob = job;
+    this.notify();
+  }
+
+  closeSpeedup(): void {
+    const back = this.speedReturn;
+    this.speedReturn = null;
+    this.speedJob = null;
+    this.setOverlay(back);
+  }
+
+  /** The first running timer a speed-up of this kind fits — where the Bag's
+   *  Speed up a timer goes (ui-inventory.md §3.5). */
+  firstJobFor(id: ItemId): SpeedJob | null {
+    const now = this.now();
+    const jobs: SpeedJob[] = [
+      ...this.state.city.queue.filter((q) => q.startedAt !== null)
+        .map((q): SpeedJob => ({ kind: 'queue', itemId: q.uniqueId })),
+      ...[...new Set(this.state.city.trainingQueue.map((i) => i.buildingId))]
+        .map((b): SpeedJob => ({ kind: 'training', buildingId: b })),
+      ...this.state.city.districts.map((d): SpeedJob => ({ kind: 'workshop', districtId: d.uniqueId })),
+      ...this.state.world.builds.map((b): SpeedJob => ({ kind: 'hex', index: b.index })),
+      ...this.state.world.explorers.map((t): SpeedJob => ({ kind: 'explorer', tripId: t.id })),
+    ];
+    return jobs.find((j) => fits(id, j) && jobRemainingSeconds(this.state, j, now) !== null) ?? null;
+  }
+
+  private jobFacts(job: SpeedJob): { title: string; icon: IconName; progress: number; gems: number } | null {
+    const now = this.now();
+    if (job.kind === 'explorer') {
+      const trip = this.state.world.explorers.find((t) => t.id === job.tripId);
+      if (!trip) return null;
+      const total = returnsAt(trip) - trip.departedAt;
+      return {
+        title: `Explorer · ${now < arrivesAt(trip) ? 'on the way' : now < revealsAt(trip) ? 'exploring' : 'coming home'}`,
+        icon: 'compass', progress: total > 0 ? Math.min(1, (now - trip.departedAt) / total) : 1,
+        gems: explorerRushCost(trip, now),
+      };
+    }
+    if (job.kind === 'hex') {
+      const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
+      const work = h === null ? null : hexWork(h);
+      if (work === null) return null;
+      const total = work.endsAt - work.startedAt;
+      return {
+        title: work.what, icon: 'build',
+        progress: total > 0 ? Math.min(1, (now - work.startedAt) / total) : 1,
+        gems: gemsToFinish((work.endsAt - now) / 1000),
+      };
+    }
+    if (job.kind === 'queue') {
+      const item = this.state.city.queue.find((q) => q.uniqueId === job.itemId);
+      const d = item && districtById(this.state, item.districtUniqueId);
+      if (!item || !d) return null;
+      const name = DISTRICTS[d.definitionId].name;
+      return {
+        title: item.kind === 'upgrade' ? `${name} · level ${formatExact(item.targetLevel ?? d.level + 1)}` : name,
+        icon: d.definitionId, progress: queueProgress(item, now), gems: gemRushCost(item, now),
+      };
+    }
+    if (job.kind === 'training') {
+      const d = districtById(this.state, job.buildingId);
+      const head = lineFor(this.state, job.buildingId)[0];
+      if (!d || !head) return null;
+      const n = lineFor(this.state, job.buildingId).reduce((s, i) => s + (i.count ?? 1), 0);
+      return {
+        title: `${DISTRICTS[d.definitionId].name} · ${formatExact(n)} training`,
+        icon: d.definitionId, progress: trainingProgress(this.state, job.buildingId, now),
+        gems: lineRushCost(this.state, job.buildingId, now),
+      };
+    }
+    const d = districtById(this.state, job.districtId);
+    const line = d && this.state.city.workshops[d.uniqueId];
+    const gems = d ? itemRushCost(this.state, d, now) : null;
+    if (!d || !line || line.items.length === 0 || gems === null) return null;
+    const item = line.items[0];
+    const need = item.needMs ?? 1;
+    return {
+      title: `${GOODS[item.good].name} · ${DISTRICTS[d.definitionId].name}`,
+      icon: d.definitionId, progress: need > 0 ? Math.min(1, item.workMs / need) : 1, gems,
+    };
+  }
+
+  speedupScreen(): SpeedupScreen | null {
+    const job = this.speedJob;
+    if (job === null) return null;
+    const now = this.now();
+    const left = jobRemainingSeconds(this.state, job, now);
+    const facts = this.jobFacts(job);
+    if (left === null || facts === null) return null;
+    return {
+      ...facts,
+      left,
+      rows: speedupsFor(this.state, job).map((id) => ({ id, def: ITEMS[id], count: itemCount(this.state, id) })),
+      auto: autoPlan(this.state, job, now),
+    };
+  }
+
+  /** After a Use: a timer that is done closes the picker, where the player
+   *  can see the job finish. */
+  private afterSpeedup(): void {
+    if (this.speedJob !== null && jobRemainingSeconds(this.state, this.speedJob, this.now()) === null) {
+      this.closeSpeedup();
+    }
+    this.notify();
+  }
+
+  /**
+   * Take `seconds` off a job that is not the city's own: an explorer, whose
+   * return is told as it always is, or a world build, which the server moves
+   * (`hurry`) before anything is spent. True when the time was taken.
+   */
+  private async speedAway(job: SpeedJob, seconds: number): Promise<boolean> {
+    const now = this.now();
+    if (job.kind === 'explorer') {
+      const { home } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
+      if (home !== null) this.explorerHomeToast(home);
+      return true;
+    }
+    if (job.kind !== 'hex' || this.worldServer === null) return false;
+    const r = await this.worldServer.hurry(job.index, seconds);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      return false;
+    }
+    const build = this.state.world.builds.find((b) => b.index === job.index);
+    if (build !== undefined && r.finishesAt <= this.now()) {
+      this.state.world.builds = this.state.world.builds.filter((b) => b !== build);
+      this.toast(worldBuildDone(build.what, build.level));
+    } else if (build !== undefined) build.finishesAt = r.finishesAt;
+    this.applyWorldSnapshot(r.snapshot);
+    return true;
+  }
+
+  async doSpeedup(id: ItemId, n = 1): Promise<void> {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'hex' || job.kind === 'explorer') {
+      if (speedupRefusal(this.state, job, id, n, this.now()) !== null) return;
+      if (await this.speedAway(job, ITEMS[id].seconds * n)) {
+        spendSpeedups(this.state, job, id, n);
+        playSfx('click');
+      }
+    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('click');
+    this.afterSpeedup();
+  }
+
+  async doAutoSpeedup(): Promise<void> {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'hex' || job.kind === 'explorer') {
+      // One move by the whole plan, then the items it took.
+      const plan = autoPlan(this.state, job, this.now());
+      const seconds = plan.reduce((s, p) => s + ITEMS[p.id].seconds * p.n, 0);
+      if (seconds > 0 && await this.speedAway(job, seconds)) {
+        for (const p of plan) spendSpeedups(this.state, job, p.id, p.n);
+      }
+    } else useAuto(this.state, this.map, job, this.now());
+    this.afterSpeedup();
+  }
+
+  /** Finish with Gems — the picker's last row, the same rush as before. */
+  doFinishSpeedJob(): void {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'queue') this.doRush(job.itemId);
+    else if (job.kind === 'training') {
+      const d = districtById(this.state, job.buildingId);
+      if (d) this.doFinishTraining(d);
+    } else if (job.kind === 'workshop') this.doRushWorkshopItem(job.districtId);
+    else if (job.kind === 'explorer') this.doFinishExplorer(job.tripId);
+    else void this.doFinishHexWork(job.index).then(() => this.afterSpeedup());
+    this.afterSpeedup();
+  }
+
   doRepairAbandoned(cell: Coord): void {
     const site = standingAbandonedAt(this.state, cell);
     if (!site) return;
@@ -2582,6 +2636,8 @@ export class Game {
       this.toast(`The Townhall can hold no more ${DISTRICTS[site.districtId].name} — raise it first`);
     } else if (result === 'NotRevealed') {
       this.toast('Clear the fog off it first');
+    } else if (result === 'LairHeld') {
+      this.toast('A lair holds its ground — clear it first');
     } else {
       this.toast(this.refusalWords(result, site.districtId, 1));
     }
@@ -2612,9 +2668,14 @@ export class Game {
 
   /** What a key costs, and what the player holds — the store card's whole
    *  content. One card per banner, because the two keys are two prices. */
-  keyOffer(banner: BannerId): { cost: number; held: number; key: CurrencyId } {
+  keyOffer(banner: BannerId): { cost: number; held: number; key: ItemId } {
     const def = BANNERS[banner];
-    return { cost: def.keyGemCost, held: this.walletValue(def.key), key: def.key };
+    return { cost: def.keyGemCost, held: itemCount(this.state, def.key), key: def.key };
+  }
+
+  /** How many of an item the Bag holds — a key, chiefly. */
+  itemHeld(id: ItemId): number {
+    return itemCount(this.state, id);
   }
 
   doBuyKeys(banner: BannerId, count = 1): void {
@@ -2670,10 +2731,11 @@ export class Game {
   /** The builders out on the world board, one row of the builder sheet
    *  each. A world build is the server's timer: it cannot be rushed, so it
    *  carries no Finish. Its start is its finish less its authored time. */
-  builderWorldJobs(): Array<{ name: string; task: string; startedAt: number; durationMs: number }> {
+  builderWorldJobs(): Array<{ index: number; name: string; task: string; startedAt: number; durationMs: number }> {
     return this.state.world.builds.map((b) => {
       const seconds = worldBuildSeconds(b.what, b.level);
       return {
+        index: b.index,
         name: worldBuildName(b.what),
         task: b.what === 'Repair' ? 'Repairing on the world map'
           : isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
@@ -2770,7 +2832,7 @@ export class Game {
 
   /** What the next call on a banner costs: one key of its own kind, or
    *  nothing at all for the free first call on the basic one. */
-  pullPrice(banner: BannerId = STANDARD_BANNER): { currency: CurrencyId; amount: number } {
+  pullPrice(banner: BannerId = STANDARD_BANNER): { key: ItemId; amount: number } {
     return pullPrice(this.state, banner);
   }
 
@@ -2806,7 +2868,8 @@ export class Game {
 
   closeUpgrade(): void {
     this.upgradeDistrictId = null;
-    this.setOverlay(null);
+    // A refusal the Bag can cover has replaced the popup with its own sheet.
+    if (this.openOverlay === 'upgrade') this.setOverlay(null);
   }
 
   /** The building the popup is about, or null if it went away under it. */
@@ -2838,16 +2901,15 @@ export class Game {
   confirmIap(): void {
     const id = this.pendingSku;
     if (id === null) return;
-    // Two kinds of SKU do not grant Gems and so do not go through `buySku`
-    // directly. Both still spend the budget through it, inside their own
-    // command: the pass is an unlock plus a back-pay (sim/pass.ts), and a card
-    // bundle is a hand of packs and wildcards (sim/collection.ts).
+    // The SKUs that grant no Gems do not go through `buySku` directly. Each
+    // still spends the budget through it, inside its own command: the pass
+    // and the Survey are an unlock plus a back-pay, a bundle is items.
     const result = id === 'SeasonPass'
       ? buyPass(this.state, this.now())
       : id === 'Survey'
         ? buySurvey(this.state, this.now())
-      : bundleOf(id) !== null
-        ? buyCardBundle(this.state, id, this.now())
+      : isItemBundle(id)
+        ? buyItemBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
     if (result === 'Purchased') this.track('purchased', this.skuProps(id));
     if (result === 'NoBudget') this.track('refused_no_credit', this.skuProps(id));
@@ -2855,22 +2917,14 @@ export class Game {
       playSfx('gemSpend');
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
-      // Only what the player cannot see from where they land is said. A
-      // bundle is opened in the Collection, like every pack that falls: the
-      // store hands over the things, it does not turn them over.
+      // Only what the player cannot see from where they land is said.
       if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
-      else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
+      else if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
       this.setOverlay(back);
       if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
-      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null) {
+      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && !isItemBundle(id)) {
         this.reward({ Gems: STORE[id].gems });
       }
-    } else if (result === 'SeasonClosing') {
-      // The season turned over while the confirmation was open. Nothing was
-      // charged; say why rather than shake a purse that is not the problem.
-      this.pendingSku = null;
-      this.toast('The season is closing — the bundles are off the shelf');
-      this.setOverlay(this.pendingSkuFrom);
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
       // stays put so the player can read the numbers that said no.
@@ -2883,7 +2937,10 @@ export class Game {
 
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
-    if (result === 'NotEnoughResources') this.shake(['Food']);
+    if (result === 'NotEnoughResources') {
+      const cost = trainCost(this.state, 'Villager') as Wallet;
+      if (!this.offerShortfall('Train a villager', cost, () => this.doQueueTraining())) this.shake(['Food']);
+    }
     else if (result === 'AtMax') this.toast(this.atMaxWords());
     this.notify();
   }
@@ -2900,7 +2957,11 @@ export class Game {
     const result = upgradeDistrict(this.state, districtId);
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
-      this.shake(Object.keys(upgradeCost(d.definitionId, d.ordinal, d.level)) as CurrencyId[]);
+      const cost = upgradeCost(d.definitionId, d.ordinal, d.level);
+      if (!this.offerShortfall(`${DISTRICTS[d.definitionId].name} to level ${formatExact(d.level + 1)}`, cost,
+        () => { this.doUpgrade(districtId); })) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
     } else if (result === 'NoBuilderFree') {
       // An upgrade occupies a builder exactly as a build does, so it hits the
       // same wall and deserves the same offer rather than a bare refusal.
@@ -3042,7 +3103,6 @@ export class Game {
    *  now that the screen is free (§11.5). */
   dismissGachaReveal(): void {
     this.gachaReveal = null;
-    this.dealPayouts();
     this.notify();
   }
 
@@ -3052,7 +3112,7 @@ export class Game {
   doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
     const batch = pullMany(this.state, banner, count);
     if (batch.result === 'NotEnoughKeys') {
-      this.shake([BANNERS[banner].key]);
+      this.shake([]);
       this.notify();
       return;
     }
@@ -3120,11 +3180,11 @@ export class Game {
     }
     if (result === 'Researched') {
       playSfx('researchComplete');
-      // The last card of a chapter pays its pack; the pile opens it like any other.
+      // The last card of a chapter pays its relic fragments.
       if (this.state.research.rewarded.length > paid) {
         const { tome, era } = TECHNOLOGIES[id];
-        const tier = ERA_REWARDS[tome][era];
-        if (tier) this.toast(`Chapter ${formatExact(era)} complete — ${packName(tier).toLowerCase()}`);
+        const n = ERA_REWARDS[tome][era];
+        if (n) this.toast(`Chapter ${formatExact(era)} complete — ${formatExact(n)} relic fragment${n === 1 ? '' : 's'}`);
       }
     } else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
@@ -3355,8 +3415,9 @@ export class Game {
         break;
       }
       case 'OwnArtifacts':
-        this.setUiHint('collection');
-        overlay('collection');
+        this.setUiHint('bag');
+        this.bagTab = 'Relics';
+        overlay('bag');
         break;
       case 'CollectTaps':
         centerCell(this.nearestCell((c) =>
@@ -3613,6 +3674,8 @@ export class Game {
     this.inspectedSite = null;
     this.vanishingLairs.set(lairId, performance.now());
     playSfx('questComplete');
+    const items = Object.keys(report.items) as ItemId[];
+    if (items.length > 0) this.toast(`In the Bag: ${items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ')}`);
     this.notify();
     queueMicrotask(() => this.reward(haul, from));
   }
@@ -4035,7 +4098,7 @@ export class Game {
   doPull(banner: BannerId = STANDARD_BANNER): void {
     const result = pull(this.state, banner);
     if (result.result === 'NotEnoughKeys') {
-      this.shake([BANNERS[banner].key]);
+      this.shake([]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
       this.openReveal(banner, [result]);
@@ -4117,7 +4180,13 @@ export class Game {
   doTrain(unitId: TrainableId, at?: District): void {
     const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
-    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
+    if (result === 'NotEnoughResources') {
+      const cost = trainCost(this.state, unitId) as Wallet;
+      const name = unitId === 'Villager' ? 'a villager' : `a ${UNITS[unitId].name}`;
+      if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
+        this.shake(Object.keys(cost) as CurrencyId[]);
+      }
+    }
     if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
@@ -4178,10 +4247,14 @@ export class Game {
       return;
     }
     this.openOverlay = name;
-    if (name !== null) {
+    // The picker and the shortfall are sheets over the card they were opened
+    // from: the card stays.
+    if (name !== null && name !== 'speedup' && name !== 'shortfall') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    if (name !== 'speedup') this.speedJob = null;
+    if (name !== 'shortfall') this.shortfallAsk = null;
     // Building happens on the province: the Build menu takes the player home.
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
     if (name !== 'world' && name !== 'army') this.selectedHex = null;
@@ -4190,11 +4263,10 @@ export class Game {
     if (name !== 'heroes') this.openHeroId = null;
     // Anything else taking the screen closes a picker without an answer.
     if (name !== 'heroPicker') this.heroPick = null;
-    if (name !== 'collection') this.vaultOpen = false;
-    if (name !== 'collection') {
-      this.openRelicId = null;
-      this.armedWildcard = null;
-    }
+    // Opening the Bag is seeing what came in: the nav's orb clears.
+    if (name === 'bag') markBagOpened(this.state);
+    if (name !== 'bag') this.bagPicked = null;
+    if (name !== 'relic') this.openRelicId = null;
     this.notify();
   }
 
@@ -4466,7 +4538,12 @@ export class Game {
       // No selection outline: the building pulses white while its card is
       // open (MarkerLayer.inspectedDistrictId), and its area is the ink.
       if (district) {
-        if (district.state === 'Built') {
+        if (district.state === 'Built' && DISTRICTS[district.definitionId].hostsRelic) {
+          // A Shrine's area is its aura, in gold (sim/hosts.ts).
+          const aura = auraOf(district, district.hosts ?? 'GildedLedger');
+          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura, c));
+          layer.influenceIsAura = true;
+        } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
         }
@@ -4521,14 +4598,16 @@ export class Game {
         duration: 0, affordable: false, captured: 0, unmoved: false,
       };
     }
-    const cost = nextBuildCost(this.state, definitionId);
+    // A premium Shrine is paid in Gems, the city's price not at all.
+    const gems = this.mode.premium ? premiumShrinePrice(this.state) ?? 0 : 0;
+    const cost = this.mode.premium ? { Gems: gems } : nextBuildCost(this.state, definitionId);
     return {
       kind: 'build',
       definitionId,
       cell: selected,
       cost,
       duration: buildDurationForCell(this.state, definitionId, selected, this.map),
-      affordable: canAfford(this.state.city.wallet, cost),
+      affordable: this.mode.premium ? getWallet(this.state.player.wallet, 'Gems') >= gems : canAfford(this.state.city.wallet, cost),
       captured: this.capturedCells(definitionId, selected).length,
       unmoved: false,
     };
@@ -4849,7 +4928,14 @@ export class Game {
         addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
         addHeroXp(this.state, e.heroXp);
         if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
-        if (e.pack) grantPack(this.state, e.pack, 'portal');
+        // A world relic's door, then its fragments: a boss's one, a Portal
+        // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
+        const won = e.from ?? (e.pack ? 'portal' : 'room');
+        const found = [
+          ...openRelicDoor(this.state, won),
+          ...dropFragments(this.state, 'world', e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', e.seq ?? e.at]),
+        ];
+        if (found.length > 0) this.toast(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
         if (e.precious) {
           addGood(this.state.city.goods, e.precious.id, e.precious.amount);
@@ -4872,6 +4958,18 @@ export class Game {
     const board = snapshotWorld(snap).board();
     this.state.world.sanctuaries = snap.hexes.filter((h) => h.owner === snap.board.seat && h.held && h.active
       && board.hexes[h.index].features.includes('Sanctuary')).length;
+    // THE WORLD RELICS A CHAPEL HOLDS, as the server says: only they act. A
+    // relic whose ground was lost is simply not here any more — home, at its
+    // level (relic-restoration.md §5.3).
+    if (this.actingSeat === null) {
+      const chapels = snap.hexes
+        .filter((h) => h.owner === snap.board.seat && h.relic !== null && h.relic !== undefined)
+        .map((h) => h.relic!.id).sort();
+      if (chapels.join() !== [...this.state.world.chapels].sort().join()) {
+        this.state.world.chapels = chapels;
+        syncArtifactModifiers(this.state);
+      }
+    }
     this.notify();
   }
 
@@ -4914,6 +5012,8 @@ export class Game {
       TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
+      NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
+      NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
   }
@@ -5761,7 +5861,6 @@ export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
     Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
-    SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];
 }
@@ -5790,7 +5889,7 @@ const MISSION_ICON: Record<MissionKind, IconName> = {
   BuildDistricts: 'build',
   TrainTroops: 'army',
   LevelHeroes: 'star',
-  OpenPacks: 'pack',
+  UseItems: 'bag',
 };
 
 /**
@@ -5815,93 +5914,6 @@ function missionGoal(m: Mission): string {
 }
 
 /**
- * THE COLLECTION PRIZE, as the reveal deals it (Docs/features/09-relics.md §5).
- *
- * Heroes last, the rule `gachaPrizes` already keeps: the Gems and the Stardust
- * are the wind-up and the season's hero is what the forty-fifth card was for.
- * A hero the player already holds is the Fragments tile instead — showing them
- * as a hero would promise a roster entry that is already there.
- */
-function prizePrizes(prize: CollectionPrize): GachaPrize[] {
-  const out: GachaPrize[] = [];
-  if (prize.gems > 0) out.push({ kind: 'currency', currency: 'Gems', amount: prize.gems });
-  if (prize.stardust > 0) {
-    out.push({ kind: 'currency', currency: 'Stardust', amount: prize.stardust });
-  }
-  out.push(prize.duplicate
-    ? { kind: 'fragments', heroId: prize.hero, amount: prize.fragments }
-    : { kind: 'hero', heroId: prize.hero });
-  return out;
-}
-
-/** A face as a shelf prints it: `4★` or `4★ gold`. */
-const faceLabel = (face: FaceId): string => {
-  const { rarity, gold } = faceOf(face);
-  return `${rarity}★${gold ? ' gold' : ''}`;
-};
-
-/**
- * WHAT A PACK PROMISES, in one line, generated from its guarantees.
- *
- * A pack's identity IS its guarantee, so the sentence is derived rather than
- * authored: a row retuned on the sheet cannot leave a promise behind that the
- * odds no longer keep.
- */
-function packPromise(tier: PackTier): string {
-  const def = PACKS[tier];
-  const cards = `${def.cards} card${def.cards === 1 ? '' : 's'}`;
-  const given = FACE_ORDER
-    .filter((f) => (def.guarantees[f] ?? 0) > 0)
-    .map((f) => `${def.guarantees[f]}× ${faceLabel(f)}`);
-  if (given.length > 0) return `${cards}, ${given.join(' and ')} guaranteed`;
-  // A pack with no guarantee promises its POOL instead: the Golden one is a
-  // single card and every face it can deal is a gold edition, which is a
-  // stronger promise than any guarantee it could carry.
-  const pool = FACE_ORDER.filter((_, i) => (def.weights[i] ?? 0) > 0);
-  if (pool.length === 0) return cards;
-  return `${cards}, always ${pool.map(faceLabel).join(' or ')}`;
-}
-
-/** What a sobre is CALLED: the dearest face it promises, or the dearest it can
- *  deal when it promises nothing. A pack's identity is what it is FOR. */
-function packName(tier: PackTier): string {
-  const def = PACKS[tier];
-  const promised = [...FACE_ORDER].reverse().find((f) => (def.guarantees[f] ?? 0) > 0);
-  const best = promised
-    ?? [...FACE_ORDER].reverse().find((f) => (def.weights[FACE_ORDER.indexOf(f)] ?? 0) > 0);
-  return `A ${best === undefined ? '' : faceLabel(best)} pack`;
-}
-
-/** The cards a pack dealt, worst first: the reveal's own order. */
-/**
- * A PACK'S CARDS AS TILES — one tile per CARD, not per copy.
- *
- * The opening records every copy in the order it was dealt, which is what the
- * sim needs; a screen that mapped it one-for-one drew the same card twice
- * whenever a pack handed over a pair, each tile claiming a different running
- * total. Grouping is the screen's business and this is where it belongs.
- *
- * `isNew` survives the grouping if ANY copy carried it: only the first copy of
- * a card the player did not have is marked, so the pair that introduced a card
- * must still read as new.
- */
-function packPrizes(opening: PackOpening): GachaPrize[] {
-  const tiles = new Map<string, Extract<GachaPrize, { kind: 'card' }>>();
-  for (const c of opening.cards) {
-    const key = `${c.ref.album}:${c.ref.slot}`;
-    const seen = tiles.get(key);
-    if (seen === undefined) {
-      tiles.set(key, {
-        kind: 'card', album: c.ref.album, slot: c.ref.slot, isNew: c.isNew, copies: 1,
-      });
-    } else {
-      seen.copies += 1;
-      seen.isNew = seen.isNew || c.isNew;
-    }
-  }
-  return [...tiles.values()];
-}
-
 /**
  * One relic's effect, said in the player's words at a given value.
  *

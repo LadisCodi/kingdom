@@ -70,6 +70,11 @@ Every event is one row:
 | `research` | `tech` |
 | `townhall_level` | `level` |
 | `world_joined` | `board`, `players` (humans on it) |
+| `relic_restored` · `relic_levelled` | `relic`, `level` on a level |
+| `relic_forged` · `relic_chest` | `relic`, `slot` and `gems` on a forge |
+| `premium_shrine` | `n` (which), `gems` |
+| `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
+| `item_used` | `item`, `count` — one Use, ×N counted once; `job` (`queue`, `training`, `workshop`, `explorer`, `hex`) for a speed-up, `coin` for a choice chest |
 
 ### 3.3 The playtest signals
 

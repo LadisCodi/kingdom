@@ -117,11 +117,11 @@ export interface TechTreeDoc {
    */
   eras: Record<string, number[]>;
   /**
-   * The card pack finishing a band pays: `eraRewards.Civics[i]` is what
-   * researching every placed card of era `i + 1` grants, once, or null for
-   * nothing. Parallel to `eras`; absent = no band of that book pays anything.
+   * The relic fragments finishing a band pays: `eraRewards.Civics[i]` is
+   * what researching every placed card of era `i + 1` grants, once, or null
+   * for nothing. Parallel to `eras`; absent = no band of that book pays.
    */
-  eraRewards?: Record<string, Array<string | null>>;
+  eraRewards?: Record<string, Array<number | null>>;
   technologies: Record<string, TechNodeDoc>;
 }
 
@@ -219,7 +219,6 @@ export const UNIT_IDS = Object.keys(balance.units);
 export const HARVEST_IDS = Object.keys(balance.harvest);
 export const TERRAIN_IDS = Object.keys(balance.terrain);
 export const GOOD_IDS = Object.keys(balance.goods);
-export const PACK_TIER_IDS = Object.keys(balance.packs);
 const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxLevel: number }>;
 
 /** A technology that HAS a slot — the same object, with the four fields known
@@ -400,9 +399,9 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       });
       continue;
     }
-    rewards.forEach((tier, i) => {
-      if (tier !== null && !PACK_TIER_IDS.includes(tier)) {
-        errors.push({ message: `${tome} era ${i + 1} pays a "${tier}", which is not a pack` });
+    rewards.forEach((n, i) => {
+      if (n !== null && !(Number.isInteger(n) && n > 0)) {
+        errors.push({ message: `${tome} era ${i + 1} pays "${n}" fragments — a whole number above 0, or nothing` });
       }
     });
   }
@@ -663,6 +662,10 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         message: `${id} costs nothing`,
         tech: id,
       });
+    } else if (knowledge === 0) {
+      // EVERY BOOK DRAWS ON THE BAR, the found ones too: Knowledge is what
+      // research is paid in, and Gold rides beside it (07-research.md §2.3).
+      errors.push({ message: `${id} costs no Knowledge`, tech: id });
     }
   }
 

@@ -117,7 +117,13 @@
           "doc": "What a Knowledge treasure pays, over the bar’s cap like a lump."
         },
         "firstCoin": { "type": "text", "ref": "currency", "doc": "The First Morning's treasure: its coin." },
-        "firstAmount": { "type": "int", "min": 0, "doc": "The First Morning's treasure: what it pays." }
+        "firstAmount": { "type": "int", "min": 0, "doc": "The First Morning's treasure: what it pays." },
+        "itemEvery": {
+          "type": "int",
+          "min": 0,
+          "doc": "Every this many treasures after the first, one item comes with the coin. 0: never."
+        },
+        "items": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "item", "doc": "Which item, by weight." }
       }
     }
   }

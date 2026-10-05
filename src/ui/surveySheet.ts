@@ -9,15 +9,15 @@
 // ladder scrolls. There is no clock: the Survey never resets.
 
 import type { Game } from '../game';
-import type { CurrencyId, Wallet } from '../sim/state';
-import type { PackTier } from '../sim/data/definitions';
-import { spriteUrl } from '../render/sprites';
+import type { CurrencyId, ItemId, Wallet } from '../sim/state';
+import type { ItemStock } from '../sim/rewards';
+import { itemIcon } from './itemArt';
 import { el, formatCount, formatUsd } from './format';
 import { btn, ctaBadge, currencyIcon, iconEl, progress } from './kit';
 import { sheet } from './kit/surface';
 
 type Track = 'free' | 'paid';
-type Cell = { reward: Wallet; pack: PackTier | null; claimed: boolean; claimable: boolean; locked?: boolean };
+type Cell = { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean; locked?: boolean };
 
 /** A wax seal with a number pressed into it (assets/seal-*.png): blue where
  *  the player is, gold reached, green taken, cream ahead. */
@@ -26,17 +26,15 @@ export const surveySeal = (state: 'active' | 'reached' | 'done' | 'ahead', n: nu
 
 /** What one tile pays: each coin at the header coin's size with its amount,
  *  then the pack, if any. The data puts at most two on a level. */
-function prizes(reward: Wallet, pack: PackTier | null): HTMLElement[] {
+function prizes(reward: Wallet, fragments: number, items: ItemStock): HTMLElement[] {
   const out = (Object.entries(reward) as Array<[CurrencyId, number]>)
     .filter(([, n]) => n > 0)
     .map(([c, n]) => el('span', { class: 'rs-prize' }, currencyIcon(c), el('b', {}, formatCount(n))));
-  if (pack !== null) {
-    // The pack's own art, the atlas glyph while it has not landed.
-    const url = spriteUrl(`pack_${pack.toLowerCase()}`);
-    out.push(el('span', { class: 'rs-prize is-pack' }, url === null
-      ? iconEl('pack')
-      : el('img', { class: 'rs-pack', src: url, alt: `${pack} pack`, title: `${pack} pack` })));
+  // Items — the keys — land in the Bag, and wear its pictures.
+  for (const [id, n] of Object.entries(items) as Array<[ItemId, number]>) {
+    if (n > 0) out.push(el('span', { class: 'rs-prize' }, iconEl(itemIcon(id)), el('b', {}, formatCount(n))));
   }
+  if (fragments > 0) out.push(el('span', { class: 'rs-prize' }, iconEl('shard'), el('b', {}, formatCount(fragments))));
   return out;
 }
 
@@ -83,7 +81,7 @@ export function renderSurveySheet(game: Game): HTMLElement {
     const classes = `rs-tile is-${track}${state}${c.locked && !c.claimed ? ' is-locked' : ''}`;
     const marks = c.claimed ? [el('span', { class: 'rs-mark' }, iconEl('tick'))]
       : c.locked ? [el('span', { class: 'rs-mark' }, iconEl('padlock', { size: 'sm' }))] : [];
-    const face = el('span', { class: 'rs-tile-face' }, ...prizes(c.reward, c.pack));
+    const face = el('span', { class: 'rs-tile-face' }, ...prizes(c.reward, c.fragments, c.items));
     if (!c.claimable) return el('div', { class: classes }, face, ...marks);
     const b = el('button', { class: classes, type: 'button', 'aria-label': `Claim level ${level}` },
       face, ctaBadge(1, `survey:${track}:${level}`));

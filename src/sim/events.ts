@@ -48,7 +48,7 @@ export type SimEvent =
   /** A villager was delivered — the one path population grows by. */
   | { kind: 'villager' }
   | { kind: 'heroLevel'; hero: HeroId }
-  | { kind: 'packOpened' }
+  | { kind: 'itemUsed'; count: number }
   /** A playtest signal (Docs/playtest.md §5): counted on `signal:<key>` and
    *  read by nothing in the game — it is for the person reading the save. */
   | { kind: 'signal'; key: string };
@@ -74,7 +74,7 @@ function keysFor(event: SimEvent): string[] {
     case 'unitTrained': return ['troops', `troops:${event.unit}`];
     case 'villager': return ['villagers'];
     case 'heroLevel': return ['heroLevels'];
-    case 'packOpened': return ['packs'];
+    case 'itemUsed': return ['items'];
     case 'signal': return [`signal:${event.key}`];
     default: return [];
   }
@@ -90,7 +90,7 @@ function keysFor(event: SimEvent): string[] {
 export function recordEvent(state: GameState, event: SimEvent): void {
   recordQuestEvent(state, event);
   if (state.replaying) return;
-  const amount = event.kind === 'collect' ? event.amount : 1;
+  const amount = event.kind === 'collect' ? event.amount : event.kind === 'itemUsed' ? event.count : 1;
   if (amount <= 0) return;
   for (const key of keysFor(event)) {
     state.tallies[key] = (state.tallies[key] ?? 0) + amount;

@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 114 suites, keep them all green
+npm test             # vitest run — 121 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -138,6 +138,8 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
+| **a Bag item** — a chest, speed-up, boost, flask, tome or key — = an `items` entry; an item bundle = a `store` row with `items`; which source pays which item = its `rewardItems`, `freeItems`/`paidItems` or `treasure.items` | a new item `kind` (what using it does: `sim/bag.ts`, `sim/speedups.ts`) |
+| a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs, the forge and the Restorer's chest = `relics.fragments` | a new world source that drops fragments |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
@@ -182,7 +184,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 88; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 95; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.

@@ -4,15 +4,14 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import type { SimTrack } from './analytics';
-import { DISTRICTS, type PackTier } from './data/definitions';
+import { DISTRICTS } from './data/definitions';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import buildings from './data/game/buildings.json';
+import items from './data/game/items.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
-import type { AlbumId } from './data/seasons';
-import type { PendingPack } from './collection';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
@@ -24,11 +23,9 @@ export type CurrencyId =
   // (Docs/features/10-heroes.md §4). Not on the plank — it reads on the
   // roster, beside the button that spends it.
   | 'HeroXp'
-  | 'Gems' // player-scoped, premium
-  // The two gacha keys: one banner each, bought with Gems, spent on a pull.
-  // Player-scoped like Gems, and NOT on the plank — the purse is where they
-  // are read (Docs/features/10-heroes.md §5).
-  | 'SilverKey' | 'GoldKey';
+  | 'Gems'; // player-scoped, premium
+// The two gacha keys are Bag items, not currencies (`items.json`, kind
+// `key`): one banner each, bought with Gems, spent on a pull.
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
@@ -44,6 +41,9 @@ export type GoodsStock = Partial<Record<GoodId, number>>;
  *  way `TechId` is the tree's: a building added in `?dev=data` is a type the
  *  moment it is saved, and a typo anywhere still fails to compile. */
 export type DistrictId = keyof typeof buildings;
+/** Every item the Bag can hold — `data/game/items.json`'s keys, like
+ *  `DistrictId` (Docs/plans/relics-and-bag.md). */
+export type ItemId = keyof typeof items;
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -68,7 +68,7 @@ export type HarvestSourceId =
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 /** A landmark's kind decides its art and name — and, for the Watchtower, a
  *  door: claiming it opens the world (Docs/features/22-progression.md §5). */
-export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring' | 'Watchtower';
+export type LandmarkKind = 'StandingStones' | 'Leyspring' | 'Watchtower';
 export type LairId =
   | 'Orcs' | 'Harpies' | 'Goblins' | 'WolfRiders' | 'Drake';
 export type ArtifactId =
@@ -98,9 +98,8 @@ export type StoreSkuId =
   /** The Survey's paid column, once for the whole province: the same shape
    *  (sim/survey.ts). */
   | 'Survey'
-  /** The collection's three bundles: star packs and wildcards for money
-   *  rather than for Gems (Docs/features/09-relics.md §6.1). */
-  | 'CardsSatchel' | 'CardsCase' | 'CardsCabinet';
+  /** The Bag's bundles: items for money (Docs/proposals/inventory.md §5). */
+  | 'SpeedupSatchel' | 'SpeedupCrate' | 'SpeedupChest' | 'ResourceSack' | 'ResourceCart' | 'BuildersCrate';
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */
@@ -173,6 +172,9 @@ export interface District {
    *  into `stored`, the way Mana accrues against `lastManaAt`. Absent on
    *  anything that is not a house. */
   rentAnchor?: number;
+  /** The city relic a Shrine holds (sim/hosts.ts). It moves with the
+   *  building; absent = empty. */
+  hosts?: ArtifactId;
 }
 
 export interface QueueItem {
@@ -182,16 +184,19 @@ export interface QueueItem {
   targetLevel?: number; // upgrades only
   durationSeconds: number;
   startedAt: number | null; // epoch ms; null until it enters the active window
+  /** Milliseconds speed-ups have taken off it (sim/speedups.ts): the end
+   *  moves, the start stays. Absent = none. */
+  cutMs?: number;
 }
 
 export const completesAt = (item: QueueItem): number =>
-  (item.startedAt ?? Infinity) + item.durationSeconds * 1000;
+  (item.startedAt ?? Infinity) + item.durationSeconds * 1000 - (item.cutMs ?? 0);
 export const remainingSeconds = (item: QueueItem, now: number): number =>
   item.startedAt === null ? item.durationSeconds : Math.max(0, (completesAt(item) - now) / 1000);
 export const queueProgress = (item: QueueItem, now: number): number =>
   item.startedAt === null || item.durationSeconds === 0
     ? (item.startedAt === null ? 0 : 1)
-    : Math.min(1, Math.max(0, (now - item.startedAt) / (item.durationSeconds * 1000)));
+    : Math.min(1, Math.max(0, (now - item.startedAt + (item.cutMs ?? 0)) / (item.durationSeconds * 1000)));
 
 export interface City {
   name: string;
@@ -328,6 +333,8 @@ export interface TrainingItem {
    *  (sim/adjacency.ts). Null until it starts; absent in a pre-30 save, where
    *  it falls back to the authored duration. */
   seconds: number | null;
+  /** Milliseconds speed-ups have taken off it (sim/speedups.ts). Absent = none. */
+  cutMs?: number;
 }
 
 /** A committed stack. A party SLOT holds a unit TYPE and every unit of it you
@@ -373,7 +380,7 @@ export interface LairState {
 export type MissionKind =
   | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
   | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
-  | 'OpenPacks';
+  | 'UseItems';
 
 /**
  * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
@@ -390,7 +397,7 @@ export type MissionKind =
 export type MissionReward =
   | { kind: 'Gems'; amount: number }
   | { kind: 'Mana'; fraction: number }
-  | { kind: 'Pack'; tier: PackTier };
+  | { kind: 'Fragments'; n: number };
 
 /**
  * ONE ERRAND ON THE BOARD (sim/missions.ts).
@@ -468,6 +475,9 @@ export interface WorldState {
   /** Sanctuaries held and on the chain, as the server last said — each
    *  raises the Mana ceiling (Docs/features/19-world-map.md §8). */
   sanctuaries: number;
+  /** The player's world relics hosted in a Chapel, as the server last said
+   *  (relic-restoration.md §5.2): only these act. */
+  chapels: ArtifactId[];
   /** The player's armies out on the board: the client's half — who went and
    *  with what. The army itself is server state (02-map-scopes.md §3.1). */
   armies: WorldArmyOut[];
@@ -733,32 +743,6 @@ export interface GameState {
    * every field here is a season's worth and none of it crosses the boundary
    * (sim/collection.ts).
    */
-  collection: {
-    /** Which occurrence of the shared calendar the cards below belong to. */
-    season: number;
-    /** Copies held, per album, indexed by slot. A missing row is an album
-     *  with nothing in it. */
-    cards: Partial<Record<AlbumId, number[]>>;
-    /** Albums that have paid this season. THE guard against a second payout. */
-    completed: AlbumId[];
-    /** Duplicate stars: a counter inside the collection, shown nowhere else. */
-    stars: number;
-    /** Wildcards held, by the rarity they cover. Never gold — there is no
-     *  gold wildcard at any price (Docs/features/09-relics.md §9). */
-    wildcards: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
-    /** Packs earned and not yet opened, oldest first. */
-    packs: PendingPack[];
-    /** Monotonic, per season: the ordinal in every pack's id, which is what
-     *  the roll hashes on. */
-    packsIssued: number;
-    /** The collection prize — a golden call and 25,000 Gems — is paid once. */
-    prizePaid: boolean;
-    /** Which lap of the eight albums this is, 0-based. Closing all eight
-     *  resets `completed` and steps this, so the five relic levels stay level
-     *  and the prize and the album Gems can be the first lap's only
-     *  (Docs/proposals/album-cycles.md §4). */
-    cycle: number;
-  };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons
    *  (timed). Kingdom-scoped concepts, so this sits beside `upgrades` at the
@@ -817,6 +801,23 @@ export interface GameState {
   /** The abandoned buildings whose repair has started, by id — from then on
    *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
   abandoned: { repaired: Record<string, true> };
+  /**
+   * THE BAG (Docs/proposals/inventory.md): what the player holds and has not
+   * used yet. Not a wallet — an item is spent by being USED, never by a
+   * price. `held` absent = none; nothing in it expires or can be raided.
+   * `fresh` is every item gained since its tile was last tapped (the tile's
+   * sparkle, the tab's dot); `badge` counts what was gained since the Bag was
+   * last opened (the nav's orb).
+   */
+  bag: { held: Partial<Record<ItemId, number>>; fresh: Partial<Record<ItemId, true>>; badge: number };
+  /**
+   * RELIC FRAGMENTS (Docs/proposals/relic-restoration.md §2, sim/relics.ts):
+   * by relic, six slots — five pieces, the keystone — counted found and
+   * bound apart. A relic's level stays `artifacts.levels`. `chests` numbers
+   * the Restorer's chests opened, so each one's roll is its own;
+   * `premiumShrines` counts the Shrines bought with Gems, which prices the next.
+   */
+  relics: { held: Partial<Record<ArtifactId, { found: number[]; bound: number[] }>>; chests: number; premiumShrines: number };
   /**
    * THE PLAYTEST'S SIGNS (Docs/playtest.md §5), for the person reading the
    * save; nothing in the game reads them. Counts live on `tallies` under

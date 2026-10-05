@@ -29,6 +29,7 @@ import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration, formatExact, coach } from './format';
 import { action, btn, iconEl, progress, withTooltip, type LiveParts } from './kit';
+import { timerButton } from './speedupSheet';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
 
@@ -104,6 +105,7 @@ export function trainingSection(
         head === undefined ? null : Math.ceil(queueLeft(game, district, head)),
         Math.ceil(lineRemainingSeconds(game.state, district.uniqueId, now)),
         lineRushCost(game.state, district.uniqueId, now),
+        game.hasSpeedups({ kind: 'training', buildingId: district.uniqueId }),
       ]);
     };
     return live ? live.add(sig, row) : row();
@@ -205,13 +207,13 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
         el('span', { class: 'tr-batch-what' }, isWard ? 'Mending' : 'Training'),
         bar.root,
         el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total))}`)),
-      coach(btn({
+      timerButton(game, { kind: 'training', buildingId: district.uniqueId }, coach(btn({
         label: 'Finish',
         kind: 'gem',
         onClick: () => game.doFinishTraining(district),
         cost: { Gems: lineRushCost(game.state, district.uniqueId, now) },
         have: (c) => game.walletValue(c),
-      }), 'card:finish-training')));
+      }), 'card:finish-training'))));
 }
 
 /** The panel for the building's one trainee: portrait, tags, flavour, the

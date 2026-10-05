@@ -16,12 +16,11 @@ import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
-import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrade } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
-  HarvestSourceId, HeroId,
+  HarvestSourceId, HeroId, ItemId,
   LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
   Wallet,
 } from '../state';
@@ -279,8 +278,6 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Stardust: currency('kingdom', balance.currencies.Stardust),
   HeroXp: currency('kingdom', balance.currencies.HeroXp),
   Gems: currency('player', balance.currencies.Gems),
-  SilverKey: currency('player', balance.currencies.SilverKey),
-  GoldKey: currency('player', balance.currencies.GoldKey),
 };
 
 // -------------------------------------------------------------- harvest loop
@@ -381,6 +378,41 @@ export const STORAGE = balance.storage;
 
 // Buying time with Gems: seconds of a build or training line one Gem finishes.
 export const RUSH = balance.rush;
+
+// The Bag's own settings (Docs/plans/relics-and-bag.md).
+export const BAG = balance.bag;
+
+/** What using an item does (Docs/proposals/inventory.md §3). */
+export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
+
+/** What a boost raises. */
+export type BoostKind = 'Rent' | 'Harvest' | 'Mana';
+
+/** The timers a speed-up shortens: one kind of timer, or any of them. */
+export type SpeedupKind = 'General' | 'Construction' | 'Training' | 'Workshop';
+
+/** One item, whole, as `?dev=data` authors it (`data/game/items.json`). */
+export interface ItemDef {
+  name: string;
+  kind: ItemKind;
+  /** A chest's coin. */
+  coin: CurrencyId | null;
+  /** A chest: seconds of the city's production it pays. A speed-up: seconds
+   *  it takes off a timer. */
+  seconds: number;
+  /** The tile's plate, 1 (cream) to 5 (gold). */
+  tier: number;
+  /** A speed-up: the timers it shortens. */
+  speeds: SpeedupKind | null;
+  /** A boost: what it raises. */
+  boost: BoostKind | null;
+  /** A boost: +% while it runs. A flask: % of the Mana pool. A tome: Knowledge. */
+  value: number;
+}
+
+export const ITEMS = balance.items as Record<ItemId, ItemDef>;
+/** File order: the Bag sorts by kind, then by size, from it. */
+export const ITEM_ORDER = Object.keys(ITEMS) as ItemId[];
 
 
 // Villager training at the Townhall. There is no tap that hurries it: a queue
@@ -498,7 +530,10 @@ export interface QuestDef {
   rewardKnowledge: number;
   /** A card pack handed over on the claim, or null. The first one is how the
    *  collection is met (Docs/features/22-progression.md §7). */
-  rewardPack: PackTier | null;
+  /** Relic fragments it pays, of relics already met. */
+  rewardFragments: number;
+  /** Items it puts in the Bag (Docs/plans/relics-and-bag.md, step 4). */
+  rewardItems: Partial<Record<ItemId, number>>;
   /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
   autoClaim: boolean;
   /** Tutorial pacing on a quest that collects Gold: seconds after it becomes
@@ -743,6 +778,12 @@ export interface DistrictDef {
    *  column for both and no prefix summed anywhere. Empty = it demands
    *  nothing (Docs/features/21-harmony.md). */
   harmonyCostPerLevel: readonly number[];
+  /** Holds one city relic, whose passive and spell act over its aura
+   *  (Docs/proposals/relic-restoration.md §5.1): the Shrine. */
+  hostsRelic: boolean;
+  /** A host's aura, by level: cells within this many of its footprint
+   *  (Chebyshev). */
+  auraRadiusPerLevel: readonly number[];
 }
 
 /**
@@ -770,7 +811,7 @@ export const WORKSHOPS: DistrictId[] =
  *  which is cheapest first and so the order their Townhall gates open in. The
  *  build menu shows them as their own section. */
 export const DECORATIONS: DistrictId[] =
-  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].harmonySupply > 0);
+  DISTRICT_IDS_IN_ORDER.filter((id) => balance.districts[id].harmonySupply > 0 && !balance.districts[id].hostsRelic);
 
 /**
  * The districts, with the gates the technologies hand them.
@@ -868,6 +909,10 @@ export const TREASURE = balance.treasure as {
   knowledge: number;
   firstCoin: CurrencyId;
   firstAmount: number;
+  /** Every this many treasures after the first, one item comes too; 0 never. */
+  itemEvery: number;
+  /** Which item, by weight. */
+  items: Partial<Record<ItemId, number>>;
 };
 
 // ----------------------------------------------------------------- city def
@@ -985,16 +1030,16 @@ export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
 })();
 
 /**
- * THE CARD PACK FINISHING A BAND PAYS — `ERA_REWARDS[tome][era]`, indexed by
- * era like `ERA_UNLOCK_CELLS`, so `[0]` is unused. Null = that band pays
- * nothing; a book the file names no rewards for pays nothing in any band.
+ * THE RELIC FRAGMENTS FINISHING A BAND PAYS — `ERA_REWARDS[tome][era]`,
+ * indexed by era like `ERA_UNLOCK_CELLS`, so `[0]` is unused. Null = that
+ * band pays nothing; a book the file names no rewards for pays nothing.
  */
-export const ERA_REWARDS: Record<TomeId, Array<PackTier | null>> = (() => {
+export const ERA_REWARDS: Record<TomeId, Array<number | null>> = (() => {
   const authored = (treeDoc as unknown as TechTreeDoc).eraRewards ?? {};
-  const out = {} as Record<TomeId, Array<PackTier | null>>;
+  const out = {} as Record<TomeId, Array<number | null>>;
   for (const tome of TOME_ORDER) {
     const list = authored[tome] ?? [];
-    out[tome] = [null, ...Array.from({ length: ERA_COUNT[tome] }, (_, i) => (list[i] ?? null) as PackTier | null)];
+    out[tome] = [null, ...Array.from({ length: ERA_COUNT[tome] }, (_, i) => list[i] ?? null)];
   }
   return out;
 })();
@@ -1104,87 +1149,15 @@ export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 export const MANA = balance.mana;
 
 /**
- * The four pack tiers (Docs/features/09-relics.md §6). A tier says how many
- * cards a pack holds and which rarities it can hold, at PUBLISHED odds — the
- * whole faucet, in four rows.
+ * A pack's old names. Packs are gone (Docs/plans/relics-and-bag.md, step 5),
+ * but a world source still names one — a scout's promise, a dungeon's loot —
+ * and an old save's unopened ones do: each is worth `perPackTier` fragments.
  */
-export type PackTier =
-  // The six SOBRES, named for the rarity each guarantees.
-  | 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden'
-  // The three CHESTS. Not a faucet: what duplicates buy, in the vault.
-  | 'BronzeChest' | 'SilverChest' | 'GoldChest';
+export type PackTier = 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden';
 
-export const PACK_ORDER: readonly PackTier[] = [
-  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
-  'BronzeChest', 'SilverChest', 'GoldChest',
-];
-
-/** Sobres only, easiest first — the ladder a player reads. */
-export const SOBRE_ORDER: readonly PackTier[] = [
-  'Green', 'Yellow', 'Rose', 'Blue', 'Purple', 'Golden',
-];
-
-export const CHEST_ORDER: readonly PackTier[] = [
-  'BronzeChest', 'SilverChest', 'GoldChest',
-];
-
-/**
- * THE SEVEN FACES a card can wear: five rarities and the gold editions of the
- * top two. Gold is a FACE rather than a coin flipped after the rarity, which
- * is what stops a pack having a rarity it can never reach — the old shape
- * built hard walls, and an album behind one was impossible rather than dear.
- *
- * The order is the order of every `weights` array and of `starsPerFace`.
- */
-export const FACE_ORDER = [
-  '1star', '2star', '3star', '4star', '5star', '4gold', '5gold',
-] as const;
-export type FaceId = (typeof FACE_ORDER)[number];
-
-/** A face as the collection reads it: a rarity, and whether it is the gold
- *  edition of that rarity. */
-export const faceOf = (id: FaceId): { rarity: number; gold: boolean } => ({
-  rarity: Number(id[0]),
-  gold: id.endsWith('gold'),
-});
-
-export interface PackDef {
-  /** Total cards the pack holds, guarantees included. */
-  cards: number;
-  /** How many of each face the pack ALWAYS holds. */
-  guarantees: Partial<Record<FaceId, number>>;
-  /** What the remaining `cards − Σguarantees` slots roll on, in `FACE_ORDER`.
-   *  Weights rather than percentages so a row can be retuned without
-   *  rebalancing it to 100. */
-  weights: number[];
-  /** What the store charges, or **0 for one the store does not sell** — which
-   *  is how the three free sobres stay the faucet and the chests the vault's. */
-  gemCost: number;
-}
-
-export const PACKS: Record<PackTier, PackDef> = Object.fromEntries(
-  PACK_ORDER.map((id) => {
-    const b = (balance.packs as Record<string, {
-      cards: number; guarantees: Record<string, number>; weights: number[]; gemCost: number;
-    }>)[id];
-    return [id, {
-      cards: b.cards,
-      guarantees: b.guarantees as Partial<Record<FaceId, number>>,
-      weights: b.weights,
-      gemCost: b.gemCost,
-    }];
-  }),
-) as Record<PackTier, PackDef>;
-
-/**
- * The HERO collection substrate: Fragments raise a tier cap and Hero XP buys
- * levels within it.
- *
- * It used to be shared with the relics, and is not any more: a relic is
- * levelled by finishing its album and by nothing else, so it has no tier, no
- * Fragments and no level cap (Docs/features/09-relics.md §13).
- */
-export const COLLECTION = balance.collection;
+/** The hero ladder: Fragments raise a tier cap and Hero XP buys levels within
+ *  it. A relic has no tier, no Fragments and no level cap. */
+export const HERO_LADDER = balance.heroLadder;
 
 /**
  * What a relic waits before its ability can be cast again — counted from the
@@ -1236,7 +1209,6 @@ export interface LandmarkDef {
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
-  Shrine: { name: 'Shrine', glyph: '⛩️', sprite: 'landmark_shrine' },
   StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
   Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
   Watchtower: { name: 'Watchtower', glyph: '🗼', sprite: 'landmark_watchtower' },
@@ -1365,6 +1337,7 @@ export interface ArtifactActive {
 }
 
 type ArtifactBalance = {
+  kind: RelicKind; door: string;
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
   activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
@@ -1565,6 +1538,31 @@ export const ARTIFACT_ORDER: ArtifactId[] = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
   'DelversLantern', 'MusterHorn', 'BailiffsTally',
 ];
+
+/** A city relic is hosted in a Shrine, a world relic in a Chapel; a source
+ *  drops one kind (Docs/proposals/relic-restoration.md §1). */
+export type RelicKind = 'city' | 'world';
+/** The world sources that drop world fragments, and that a world relic's
+ *  first fragment is found at. */
+export type WorldRelicSource = 'room' | 'boss' | 'portal' | 'scouting';
+
+export const relicKind = (id: ArtifactId): RelicKind => ab(id).kind;
+/** Where a relic's first fragment is found by play: a lair (its prize) for a
+ *  city relic, a world source for a world one. */
+export const relicDoor = (id: ArtifactId): string => ab(id).door;
+
+/** The Shrines (`relics.json`'s `shrines`): the Mana each adds, and the
+ *  Gems each premium Shrine costs — as many premium Shrines as prices. */
+export const SHRINE_RULES = balance.shrines as { manaCap: number; premiumGems: number[] };
+
+/** Fragments and restoration (`relics.json`'s `fragments`). */
+export const RELIC_RULES = balance.fragments as {
+  keystoneOneIn: number; keystoneWorth: number; levelCostBase: number; levelCostEvery: number;
+  replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
+  replicaGemsPiece: number; replicaGemsKeystone: number;
+  restorerChestGems: number; restorerChestSize: number;
+  treasureEvery: number; perLairTier: number[]; perPackTier: Record<string, number>;
+};
 
 // ------------------------------------------------------------------- lairs
 
@@ -1986,9 +1984,9 @@ export type BannerId = 'basic' | 'advanced';
 export interface BannerDef {
   id: BannerId;
   name: string;
-  /** The currency one pull costs. One key per banner, and the key is what
+  /** The Bag item one pull costs. One key per banner, and the key is what
    *  tells the two apart before the player has read a single number. */
-  key: CurrencyId;
+  key: ItemId;
   /** What one key costs in Gems, in the store. */
   keyGemCost: number;
   heroChance: number;
@@ -2037,6 +2035,8 @@ export interface GarrisonDef {
   tier: number;
   takeSeconds: number;
   supplies: Wallet;
+  /** Items a lair of this tier puts in the Bag when its prize is claimed. */
+  rewardItems: Partial<Record<ItemId, number>>;
 }
 
 export const GARRISONS = balance.garrisons as GarrisonDef[];
@@ -2125,6 +2125,8 @@ export interface WorldBuildDef {
   upgrades: Record<WorldUpgrade, WorldUpgradeDef>;
   innerRingMultiplier: number;
   sanctuaryManaCap: number;
+  /** One Chapel per this many hexes held, plus one (relic-restoration.md §5.2). */
+  chapelsPerHexes: number;
 }
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
@@ -2262,30 +2264,11 @@ export interface StoreSkuDef {
   /** Dollars, as displayed and as deducted from the monthly budget. */
   priceUsd: number;
   gems: number;
-  /** The hand of cards this SKU hands over, or **null for a SKU that is not a
-   *  bundle** — every Gem pack and the Royal chest. */
-  bundle: CardBundleDef | null;
+  /** An item bundle: what it puts in the Bag. Empty for anything else. */
+  items: Partial<Record<ItemId, number>>;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
-}
-
-/**
- * A CARD BUNDLE (Docs/features/09-relics.md §6.1): the collection's packs and
- * wildcards for money rather than for Gems.
- *
- * It is a `Store` row rather than a Gem price because the BUDGET is the
- * instrument — the purchase log, the refusal and the monthly allowance all
- * have to see it — and it grants no Gems, on the Royal chest's precedent: a
- * bundle hands over the things, not the currency that buys them.
- */
-export interface CardBundleDef {
-  packs: number;
-  tier: PackTier;
-  wildcards: number;
-  /** The rarity the wildcards cover. Never gold: there is no gold wildcard at
-   *  any price, and money does not buy one either (§9). */
-  wildcardRarity: Rarity;
 }
 
 const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
@@ -2297,11 +2280,15 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
   SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
   Survey: { name: 'The Royal Survey', description: 'The Survey\u2019s second column, for the whole province.', sprite: 'season_pass' },
-  // The three bundles, a satchel to a cabinet: the same containment ladder the
-  // Gem packs walk, in a collector's furniture rather than a treasury's.
-  CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
-  CardsCase: { name: "A collector's case", description: 'Star packs and the wildcard that fills any slot.', sprite: 'bundle_case' },
-  CardsCabinet: { name: "A collector's cabinet", description: 'A season of star packs, and three wildcards to aim.', sprite: 'bundle_cabinet' },
+  // The Bag's bundles (Docs/proposals/inventory.md §5): speed-ups in a
+  // satchel, a crate, a chest; choice chests in a sack and a cart; and the
+  // builder's crate.
+  SpeedupSatchel: { name: 'A satchel of speed-ups', description: 'A few hours off whatever you are waiting for.', sprite: 'bundle_speed_s' },
+  SpeedupCrate: { name: 'A crate of speed-ups', description: 'Most of a day off your timers.', sprite: 'bundle_speed_m' },
+  SpeedupChest: { name: 'A chest of speed-ups', description: 'A long build, done tonight.', sprite: 'bundle_speed_l' },
+  ResourceSack: { name: 'A sack of chests', description: 'Eight hours of the coin you pick.', sprite: 'bundle_res_s' },
+  ResourceCart: { name: 'A cart of chests', description: 'A day of the coins you pick.', sprite: 'bundle_res_m' },
+  BuildersCrate: { name: "The builder's crate", description: 'Construction speed-ups and a chest for the materials.', sprite: 'bundle_builder' },
 };
 
 /** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
@@ -2312,31 +2299,20 @@ export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
 
 interface StoreRow {
   priceUsd: number; gems: number;
-  packs: number; packTier: string; wildcards: number; wildcardRarity: number;
+  items?: Partial<Record<ItemId, number>>;
 }
 
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
     const b = (balance.store as Record<string, StoreRow>)[id];
     if (!b) throw new Error(`data/game/store.json is missing the store SKU "${id}"`);
-    // A row is a bundle when it names a hand. The importer already refuses
-    // half a hand, so one column deciding it is enough.
-    const bundle: CardBundleDef | null = b.packs > 0 || b.wildcards > 0
-      ? {
-          packs: b.packs,
-          tier: (b.packTier || 'Star') as PackTier,
-          wildcards: b.wildcards,
-          wildcardRarity: (b.wildcardRarity || 1) as Rarity,
-        }
-      : null;
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle }];
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, items: { ...(b.items ?? {}) } }];
   }),
 ) as Record<StoreSkuId, StoreSkuDef>;
 
-/** The card bundles, cheapest first — the store's own bundle shelf
- *  (Docs/features/09-relics.md §6.1). Workbook row order, like every shelf. */
-export const CARD_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
-  .filter((id) => STORE[id]?.bundle !== null);
+/** The Bag's bundles, in row order — the store's item shelf. */
+export const ITEM_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => Object.values(STORE[id]?.items ?? {}).some((n) => (n ?? 0) > 0));
 
 /** Workbook row order — the order the store shows them in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
@@ -2355,23 +2331,30 @@ export const SURVEY = balance.survey as {
   freeKnowledge: number[];
   freeSilverKeys: number[];
   freeGoldKeys: number[];
-  freePacks: string[];
+  freeFragments: number[];
   freeGems: number[];
   paidGems: number[];
   paidGoldKeys: number[];
-  paidPacks: string[];
+  paidFragments: number[];
   paidStardust: number[];
+  /** An item a level puts in the Bag, or '' for none, per column. */
+  freeItems: string[];
+  paidItems: string[];
 };
 
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
  *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
  *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
 export const PASS = balance.pass as {
+  /** The length of the shared 28-day calendar (`sim/seasonClock.ts`). */
+  seasonDays: number;
   missionXp: number;
   levelXpBase: number;
   levelXpGrowth: number;
-  freePacks: string[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
-  paidPacks: string[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
+  freeFragments: number[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
+  paidFragments: number[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
+  /** An item a level puts in the Bag, or '' for none, per column. */
+  freeItems: string[]; paidItems: string[];
 };
 
 /** The missions that feed the pass — Docs/features/20-season-pass.md §3. A
@@ -2382,11 +2365,11 @@ export const MISSIONS = balance.missions as {
   collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
   populationBand: number[]; upgradeBand: number[]; revealBand: number[];
   buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
-  packsBand: number[];
+  itemsBand: number[];
   /** The kinds that cannot be finished inside one session — they wait on a
    *  builder, a delve or a technology. They pay a pack; everything else rolls. */
   hardKinds: string[];
-  hardPack: PackTier; normalPack: PackTier;
+  hardFragments: number; normalFragments: number;
   rewardGems: number; rewardManaFraction: number;
 };
 
@@ -2492,4 +2475,12 @@ export const GAME_VERSION: string = pkg.version;
 // v87: the last world-server effect applied (`EffectSeq` on `kingdom.world`),
 // additive.
 // v88: minutes on screen (`PlayMs` on `kingdom.signals`), additive.
-export const SAVE_VERSION = 88;
+// v89: the Bag (`kingdom.bag`), additive.
+// v90: speed-ups — `CutMs` on a queue item and a training item, additive.
+// v91: the gacha keys move from the player's purse to the Bag (a migrator).
+// v92: the card season goes; cards, packs and wildcards become relic
+// fragments (`kingdom.relics`), pass missions use items (a migrator).
+// v93: the Shrine landmarks leave the map; their claims go (a migrator).
+// v94: a Shrine's relic (`Hosts` on a district), a zone's footprint (`W`,
+// `H` on a modifier's area), additive.
+export const SAVE_VERSION = 95;

@@ -16,7 +16,7 @@
 import { lairHolding } from './lairZone';
 import {
   ARTIFACTS, ARTIFACT_AUTO_TAP_PER_SECOND, ARTIFACT_COOLDOWN_SECONDS,
-  ARTIFACT_RADIUS_STEPS, type ArtifactActiveId,
+  ARTIFACT_RADIUS_STEPS, relicKind, type ArtifactActiveId,
 } from './data/definitions';
 import { isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { onPaidReveal, undiscoveredAround } from './treasures';
@@ -33,6 +33,8 @@ import { artifactLevel, ownsArtifact } from './artifacts';
 
 export type CastBlock =
   | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget'
+  // A city relic's spell is cast on its Shrine's aura, so it needs one.
+  | 'NotHosted'
   // Its own window is still open, or the wait after it has not run out.
   | 'Active' | 'OnCooldown';
 
@@ -129,6 +131,8 @@ export function castBlock(
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const active = ARTIFACTS[id].active;
   if (active === null) return 'NoActive';
+  // A world relic's spell waits for a Chapel to hold it.
+  if (relicKind(id) === 'world' && !state.world.chapels.includes(id)) return 'NotHosted';
   // The cycle before the purse: a relic that is still running tells the player
   // to wait, not that they are poor.
   const phase = castState(state, id, now).phase;
@@ -374,14 +378,28 @@ export function cast(
   id: ArtifactId,
   target: Coord | null,
   now: number,
+  /** A Shrine's aura, for a hosted city relic: the spell lands on it rather
+   *  than on a cell the player picks (sim/hosts.ts `castHosted`). */
+  aura?: ModifierArea,
 ): CastReport {
   const block = castBlock(state, id, now);
   if (block !== null) return nothing(block);
   const active = ARTIFACTS[id].active!;
-  if (active.targeted && target === null) return nothing('InvalidTarget');
-  if (active.targeted && !validCastCells(state, map, id).some((c) => coordKey(c) === coordKey(target!))) {
+  if (aura === undefined && relicKind(id) === 'city') return nothing('NotHosted');
+  if (aura === undefined && active.targeted && target === null) return nothing('InvalidTarget');
+  if (aura === undefined && active.targeted
+    && !validCastCells(state, map, id).some((c) => coordKey(c) === coordKey(target!))) {
     return nothing('InvalidTarget');
   }
+  // WHERE IT LANDS: the aura, or a ring round the cell the player picked.
+  const zone: ModifierArea = aura === undefined
+    ? { centre: target!, radius: activeRadius(state, id), relic: id, since: now }
+    : { ...aura, since: now };
+  const zoneCells: Coord[] = aura === undefined
+    ? [zone.centre, ...cellsWithinRadius(map, zone.centre, zone.radius)]
+    : map.cells.filter((c) => areaCovers(zone, c));
+  const harvestable = (c: Coord): boolean =>
+    harvestSourceAt(state, c) !== null && state.fog.revealed[coordKey(c)] === true && lairHolding(state, c) === null;
 
   const report: CastReport = {
     result: 'Cast', activeId: active.id, affected: [], goldSaved: 0, taps: 0,
@@ -391,7 +409,7 @@ export function cast(
       // THE REFILL FIRST. A recovery wait is stamped when the cell exhausts,
       // not read each tick, so the zone below only ever reaches cells that
       // empty INSIDE it — which is what emptying the waiting list arranges.
-      for (const c of reapCells(state, map, target!, activeRadius(state, id))) {
+      for (const c of zoneCells.filter(harvestable)) {
         const spec = harvestSpecAt(state, c);
         const cell = state.harvest[coordKey(c)];
         if (spec === null || cell === undefined) continue;
@@ -413,12 +431,12 @@ export function cast(
         op: 'mul',
         value: activePower(state, id),
         expiresAt: now + activeDurationMs(state, id),
-        area: { centre: target!, radius: activeRadius(state, id), relic: id, since: now },
+        area: zone,
       });
       break;
     }
     case 'Reap': {
-      const cells = reapCells(state, map, target!, activeRadius(state, id));
+      const cells = zoneCells.filter(harvestable);
       const run = spendTaps(state, map, cells, tapBudget(state, id), now);
       report.affected.push(...run.touched);
       report.taps = run.spent;
@@ -428,7 +446,7 @@ export function cast(
       // TWO NUMBERS, ONE IDEA. "Faster" for a crew is the swing AND the walk:
       // speeding only the walk would be a fraction of a round trip and would
       // read as nothing.
-      const area = { centre: target!, radius: activeRadius(state, id), relic: id, since: now };
+      const area = zone;
       const power = activePower(state, id);
       const until = now + activeDurationMs(state, id);
       for (const stat of ['workerStrikeSpeed', 'workerSpeed'] as const) {
@@ -447,7 +465,6 @@ export function cast(
       break;
     }
     case 'Tithe': {
-      const zone = { centre: target!, radius: activeRadius(state, id), relic: id, since: now };
       const houses = buildingsIn(state, zone)
         .filter((d) => d.state === 'Built' && residentsOf(state, d) > 0);
       const run = spendHouseTaps(state, houses, tapBudget(state, id));
@@ -469,7 +486,7 @@ export function cast(
       // each one: the spell buys the GOLD, never the ladder.
       // The player cast it, so the cells count towards the treasures — read
       // what was undiscovered first, as a tap does (sim/treasures.ts).
-      const cells = surveyCells(state, map, target!, activeRadius(state, id));
+      const cells = zoneCells.filter((c) => state.fog.revealed[coordKey(c)] !== true && isWithinReach(state, map, c));
       const fresh = undiscoveredAround(state, map, cells);
       for (const c of cells) {
         const key = coordKey(c);

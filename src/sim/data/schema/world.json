@@ -202,7 +202,7 @@
         "upgrades": {
           "type": "map",
           "keysRef": "worldUpgrade",
-          "doc": "What can be built into a district that stands, on any district.",
+          "doc": "What can be built into a district that stands, on any district: the Fortress, and the Chapel that hosts a world relic.",
           "of": {
             "type": "object",
             "fields": {
@@ -239,7 +239,12 @@
           "min": 1,
           "doc": "What a district on the inner ring makes and holds, times its rate (3 = +200%)."
         },
-        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Shrine adds." }
+        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Shrine adds." },
+        "chapelsPerHexes": {
+          "type": "int",
+          "min": 1,
+          "doc": "One Chapel per this many hexes held, plus one: how many world relics act. A Shrine district has a Chapel of its own that does not count."
+        }
       }
     },
     "worldBots": {

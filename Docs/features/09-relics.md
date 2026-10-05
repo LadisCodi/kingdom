@@ -706,7 +706,7 @@ Every number below is a **proposal until it is authored**; the ones marked
 
 | Dial | Value | Key |
 |---|---|---|
-| Season length | **28 days**, four weeks exactly, shared calendar | `collection.seasonDays` |
+| Season length | **28 days**, four weeks exactly, shared calendar | `pass.seasonDays` |
 | Albums a season · cards an album | **8 · 9, fixed** — 72 | seasons file |
 | Which relic each album levels | **one each, rotating one step a season** | derived, not authored |
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.albumGems`, `collection.prizeGems` |

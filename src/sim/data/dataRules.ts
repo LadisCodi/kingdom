@@ -58,7 +58,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
   { id: 'adjacency', label: 'Adjacency', domain: 'City', view: 'table', noun: 'rule', source: 'adjacency' },
   { id: 'economy', label: 'Economy', domain: 'City', view: 'form', noun: 'setting',
-    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush'] },
+    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'bag'] },
 
   { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', file: 'src/sim/data/tech-tree.json' },
 
@@ -66,17 +66,17 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'heroes', label: 'Heroes', domain: 'Army', view: 'table', noun: 'hero', source: 'heroes' },
   { id: 'villains', label: 'Villains', domain: 'Army', view: 'table', noun: 'villain', source: 'villains' },
   { id: 'combat', label: 'Combat', domain: 'Army', view: 'form', noun: 'setting', groups: ['army', 'combat', 'party'] },
+  { id: 'heroLadder', label: 'Hero ladder', domain: 'Army', view: 'form', noun: 'setting', groups: ['heroLadder'] },
 
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },
   { id: 'relics', label: 'Relic rules', domain: 'Magic', view: 'form', noun: 'setting',
-    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps'] },
+    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps', 'fragments', 'shrines'] },
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'pass', label: 'Season pass', domain: 'Progression', view: 'form', noun: 'setting', groups: ['pass'] },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
   { id: 'missions', label: 'Missions', domain: 'Progression', view: 'form', noun: 'setting', groups: ['missions'] },
-  { id: 'collection', label: 'Card collection', domain: 'Progression', view: 'form', noun: 'setting', groups: ['collection'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },
@@ -87,7 +87,8 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'unlocks', label: 'Unlock splashes', domain: 'Progression', view: 'table', noun: 'unlock', source: 'unlocks' },
 
   { id: 'store', label: 'Store', domain: 'Store', view: 'table', noun: 'product', source: 'store' },
-  { id: 'packs', label: 'Card packs', domain: 'Store', view: 'table', noun: 'pack', source: 'packs' },
+  // The Bag (Docs/plans/relics-and-bag.md): what the player holds and uses.
+  { id: 'items', label: 'Items', domain: 'Progression', view: 'table', noun: 'item', source: 'items' },
   { id: 'banners', label: 'Banners', domain: 'Store', view: 'table', noun: 'banner', source: 'banners' },
   { id: 'monetization', label: 'Ads & payers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer'] },
 ];
@@ -104,7 +105,7 @@ export type FieldType = 'int' | 'float' | 'text' | 'bool' | 'list' | 'map' | 'ob
 
 /** What an id-valued field may name. */
 export type RefKind =
-  | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact'
+  | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact' | 'item'
   | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'lair' | 'face'
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
@@ -121,7 +122,7 @@ export type RefKind =
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
   building: 'buildings', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree', speaker: 'speakers',
+  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree', speaker: 'speakers', item: 'items',
 };
 
 /** A length rule for a list: exact, or tied to a sibling number. `orEmpty`
@@ -171,12 +172,15 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   face: ['1star', '2star', '3star', '4star', '5star', '4gold', '5gold'],
   tech: Object.keys((techTree as { technologies: Record<string, unknown> }).technologies),
   character: Object.keys(CHARACTERS),
-  landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
+  landmarkKind: ['StandingStones', 'Leyspring', 'Watchtower'],
   worldTerrain: WORLD_TERRAINS,
   worldFeature: WORLD_FEATURES,
   worldDistrict: WORLD_DISTRICTS,
   worldUpgrade: WORLD_UPGRADES,
 };
+
+/** The coins a chest may pay: what the city makes, by rent or by crews. */
+export const CHEST_COINS: readonly string[] = ['Gold', 'Food', 'Wood', 'Stone'];
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
 export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'] as const;
@@ -198,7 +202,7 @@ export const QUEST_OPTIONAL_TARGET: ReadonlySet<string> = new Set(['ClaimLandmar
 const REF_SOURCE: Partial<Record<RefKind, string>> = {
   building: 'districts', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners', speaker: 'speakers',
+  terrain: 'terrain', store: 'store', banner: 'banners', speaker: 'speakers', item: 'items',
 };
 
 export type DataDoc = Record<string, unknown>;
@@ -493,7 +497,7 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   bookOpen: () => ['Kingdom', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
-  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey'],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag'],
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
@@ -558,7 +562,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
       // nothing: its whole contribution is its Harmony.
       if (num(b.harmonySupply) > 0) {
         if (!Number.isInteger(b.harmonySupply)) push(id, ['harmonySupply'], 'is not a whole number');
-        if (b.maxLevel !== 1) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
+        // A relic's host climbs levels for its aura (relic-restoration.md §5.1).
+        if (b.maxLevel !== 1 && b.hostsRelic !== true) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
         for (const f of ['maxWorkersPerLevel', 'populationCapacityPerLevel', 'armyCapPerLevel', 'bedsPerLevel', 'influenceRadiusPerLevel', 'queueLengthPerLevel']) {
           if (list(b[f]).length > 0) push(id, [f], 'a decoration has none');
         }
@@ -566,6 +571,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
         if (list(b.harmonyCostPerLevel).length > 0) push(id, ['harmonyCostPerLevel'], 'a decoration supplies Harmony; it does not demand it');
       }
       neverFalls(push, id, 'harmonyCostPerLevel', b.harmonyCostPerLevel);
+      if ((b.hostsRelic === true) !== (list(b.auraRadiusPerLevel).length > 0)) {
+        push(id, ['auraRadiusPerLevel'], 'a relic\'s host needs its aura, and only a host has one');
+      }
       // The rent bonus is a house's ladder.
       if (list(b.taxBonusPerLevel).length > 0 && list(b.populationCapacityPerLevel).length === 0) {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');
@@ -638,13 +646,42 @@ export const RULES: Readonly<Record<string, Rule>> = {
       }
     }
   },
+  items: (doc, push) => {
+    for (const [id, it] of records(doc.items)) {
+      // A chest pays the city's own production, and only the four coins the
+      // city makes have one (`cityMakesPerSecond`).
+      if (it.kind === 'chest' && !CHEST_COINS.includes(String(it.coin))) {
+        push(id, ['coin'], 'a chest pays Gold, Food, Wood or Stone');
+      }
+      if (it.kind === 'speedup' && (it.speeds === null || it.speeds === undefined)) {
+        push(id, ['speeds'], 'a speed-up names the timers it shortens');
+      }
+      if (it.kind !== 'speedup' && it.speeds !== null && it.speeds !== undefined) {
+        push(id, ['speeds'], 'only a speed-up shortens a timer: leave it empty');
+      }
+      if (it.kind !== 'chest' && it.coin !== null && it.coin !== undefined) {
+        push(id, ['coin'], 'only a chest pays a coin: leave it empty');
+      }
+      if ((it.kind === 'boost') !== (it.boost !== null && it.boost !== undefined)) {
+        push(id, ['boost'], it.kind === 'boost' ? 'a boost names what it raises' : 'only a boost raises something: leave it empty');
+      }
+      if (['boost', 'flask', 'tome'].includes(String(it.kind)) && !(num(it.value) > 0)) {
+        push(id, ['value'], `a ${it.kind} needs a value above 0`);
+      }
+      if (it.kind === 'key' && !Object.values((doc.banners ?? {}) as Record<string, { key?: unknown }>).some((b) => b.key === id)) {
+        push(id, ['kind'], 'a key is the key of a banner: no banner names this one');
+      }
+      if (['chest', 'choice', 'speedup', 'boost'].includes(String(it.kind)) && !(num(it.seconds) > 0)) {
+        push(id, ['seconds'], `a ${it.kind} needs its seconds`);
+      }
+      if (it.kind === 'flask' && num(it.value) > 100) push(id, ['value'], 'a flask fills at most the whole pool (100)');
+    }
+  },
   store: (doc, push) => {
     for (const [id, s] of records(doc.store)) {
       if (!(num(s.priceUsd) > 0)) push(id, ['priceUsd'], 'a product needs a positive price');
-      if ((num(s.packs) > 0) !== (s.packTier !== '' && s.packTier !== undefined)) push(id, ['packTier'], 'a pack count and a pack tier go together');
-      if ((num(s.wildcards) > 0) !== (num(s.wildcardRarity) > 0)) push(id, ['wildcardRarity'], 'a wildcard count and a wildcard rarity go together');
-      if (num(s.wildcardRarity) > 5) push(id, ['wildcardRarity'], '5★ is the dearest wildcard');
-      if (num(s.gems) > 0 && (num(s.packs) > 0 || num(s.wildcards) > 0)) push(id, ['gems'], 'grants both Gems and cards — a product is one thing');
+      const items = Object.values((s.items ?? {}) as Record<string, unknown>).some((n) => num(n) > 0);
+      if (items && num(s.gems) > 0) push(id, ['items'], 'grants items and Gems — a product is one thing');
     }
   },
   banners: (doc, push) => {
@@ -656,11 +693,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
     }
   },
-  packs: (doc, push) => {
-    for (const [id, p] of records(doc.packs)) {
-      const given = Object.values((p.guarantees ?? {}) as Record<string, unknown>).reduce((a: number, x) => a + num(x), 0);
-      if (given > num(p.cards)) push(id, ['guarantees'], `guarantees ${given} cards but the pack holds ${p.cards}`);
-      if (given < num(p.cards) && list(p.weights).every((x) => num(x) <= 0)) push(id, ['weights'], `has ${num(p.cards) - given} slots to roll and every weight is 0`);
+  artifacts: (doc, push) => {
+    // A city relic's door is a lair; a world relic's, a world source.
+    const worldDoors = ['room', 'boss', 'portal', 'scouting'];
+    for (const [id, a] of records(doc.artifacts)) {
+      const ok = a.kind === 'city' ? (STATIC_IDS.lair ?? []).includes(String(a.door)) : worldDoors.includes(String(a.door));
+      if (!ok) push(id, ['door'], a.kind === 'city' ? 'a city relic is found at a lair' : `a world relic is found at ${worldDoors.join(', ')}`);
     }
   },
   exploration: (doc, push) => {

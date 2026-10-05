@@ -25,7 +25,7 @@
 // a second made the grid blink, because a fresh `<img>` decodes before its
 // first paint.
 
-import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
@@ -54,7 +54,7 @@ function ready(game: Game, view: RosterEntry): boolean {
   if (!view.owned) return canUnlockHero(game.state, view.id);
   const canLevel = view.entry.level < view.levelCap
     && game.walletValue('HeroXp') >= xpLevelCost(view.entry.level);
-  const canAscend = view.entry.tier < COLLECTION.maxTier
+  const canAscend = view.entry.tier < HERO_LADDER.maxTier
     && view.entry.fragments >= tierCost(view.entry.tier);
   return canLevel || canAscend;
 }
@@ -114,7 +114,7 @@ function heroArt(def: HeroDef): HTMLElement {
 /** Ascension, as the stars the player counts rather than a number they read. */
 function stars(tier: number): HTMLElement {
   const row = el('span', { class: 'hd-stars' });
-  for (let i = 0; i < COLLECTION.maxTier; i++) {
+  for (let i = 0; i < HERO_LADDER.maxTier; i++) {
     row.append(iconEl('ascension', { locked: i >= tier, label: 'ascension' }));
   }
   return row;
@@ -161,7 +161,7 @@ function reading(label: string, have: number, of: number): HTMLElement {
 }
 
 function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
-  if (view.entry.tier >= COLLECTION.maxTier) {
+  if (view.entry.tier >= HERO_LADDER.maxTier) {
     return tray('hd-ascend is-max', stars(view.entry.tier),
       el('div', { class: 'hd-note' }, iconEl('ascension', { size: 'sm' }), 'Fully ascended'));
   }
@@ -189,7 +189,7 @@ function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
 function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   const lv = view.entry.level;
   const read = reading('Level', lv, view.levelCap);
-  if (lv >= COLLECTION.heroMaxLevel) {
+  if (lv >= HERO_LADDER.heroMaxLevel) {
     return tray('hd-level', read, el('div', { class: 'hd-note' }, 'At the ceiling'));
   }
   // At the ascension's ceiling the button goes away and the tray says what to

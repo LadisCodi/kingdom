@@ -42,6 +42,7 @@ export function freshWorld(seed: number): WorldState {
     explorers: [],
     builds: [],
     sanctuaries: 0,
+    chapels: [],
     armies: [],
     effectSeq: 0,
   };
@@ -258,6 +259,27 @@ export function tripRevealing(state: GameState, index: number): ExplorerTrip | n
  *  wherever the player meets it. */
 export const explorerRushCost = (trip: ExplorerTrip, now: number): number =>
   gemsToFinish((returnsAt(trip) - now) / 1000);
+
+/**
+ * TAKE `ms` OFF A TRIP, at `now` — a speed-up (sim/speedups.ts). The whole
+ * trip moves earlier: on the way, the work and the road home. One that
+ * covers what is left brings the explorer home NOW, its reveal done, exactly
+ * as the Gem finish does. Returns the milliseconds used and, if it came home,
+ * what it found.
+ */
+export function cutExplorer(
+  state: GameState, tripId: string, ms: number, now: number,
+): { used: number; home: ExplorerHome | null } {
+  const trip = state.world.explorers.find((t) => t.id === tripId);
+  if (trip === undefined || !(ms > 0)) return { used: 0, home: null };
+  const left = Math.max(0, returnsAt(trip) - now);
+  if (ms < left) {
+    trip.departedAt -= ms;
+    return { used: ms, home: null };
+  }
+  state.world.explorers = state.world.explorers.filter((t) => t !== trip);
+  return { used: left, home: foldHome(state, trip) };
+}
 
 export type FinishExplorerResult =
   | { kind: 'Finished'; home: ExplorerHome }

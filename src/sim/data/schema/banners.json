@@ -1,7 +1,11 @@
 {
   "type": "object",
   "fields": {
-    "key": { "type": "text", "ref": "currency" },
+    "key": {
+      "type": "text",
+      "ref": "item",
+      "doc": "The item one call costs: one key per banner (Docs/features/10-heroes.md §5)."
+    },
     "keyGemCost": { "type": "int" },
     "heroChance": { "type": "float" },
     "softPityAt": { "type": "int" },

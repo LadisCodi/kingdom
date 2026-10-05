@@ -268,13 +268,8 @@ describe('exploring pays in ground, not in currency', () => {
     for (const id of TECH_ORDER) {
       const keys = Object.keys(TECHNOLOGIES[id].cost);
       expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
-      // A FOUND book is paid outside the Knowledge budget, in Gold alone, so it
-      // never draws on a chapter (Docs/plans/tech-tree-rework.md §6).
-      if (TECHNOLOGIES[id].tome === 'Kingdom') {
-        expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
-      } else {
-        expect(keys, `${id} is a found book's card`).toEqual(['Gold']);
-      }
+      // Every book is priced in the clock, a found book's cards too.
+      expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
     }
   });
 });

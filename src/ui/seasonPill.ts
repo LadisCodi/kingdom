@@ -1,21 +1,19 @@
-// The season pill (Docs/features/09-relics.md §11.1).
+// The season pass's pill (Docs/features/20-season-pass.md §6).
 //
-// It sits in the left column of pills, under the quest scroll.
-//
-// IT GLOWS WHILE A PACK IS UNOPENED and goes quiet when none is. Never a badge
-// with a count of things owed: the collection asks for one tap, and a number
-// hanging off the pill would turn a cozy screen into a chore list.
+// It sits in the left column of pills, under the quest scroll: the pass's
+// level on its ladder, and the time the season has left. It glows while a
+// cell of the pass waits to be taken.
 //
 // Built once and mutated, never rebuilt: a `replaceChildren` every tick makes
 // the element new, and a new element restarts its own animation.
 
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
+import { el, formatDuration, formatExact } from './format';
 import { iconEl, setCta } from './kit';
 import { setAttr, setHidden, setStyle, setText } from './domWrite';
 
 export function mountSeasonPill(game: Game, root: HTMLElement): void {
-  const name = el('span', { class: 'sea-pill-name' }, '');
+  const name = el('span', { class: 'sea-pill-name' }, 'Season pass');
   const fill = el('span', { class: 'sea-pill-fill' });
   const count = el('span', { class: 'sea-pill-count' }, '');
   const left = el('span', { class: 'sea-pill-left' }, '');
@@ -28,32 +26,22 @@ export function mountSeasonPill(game: Game, root: HTMLElement): void {
       el('span', { class: 'sea-pill-trough' }, fill, count),
       el('span', { class: 'sea-pill-clock' }, iconEl('hourglass', { size: 'sm' }), left)),
   );
-  // IT OPENS THE PASS, not the collection. The nav's Relics button is the
-  // collection's door and always was; what had no door was the pass, and the
-  // pill is already the season's own object on the map
-  // (Docs/features/20-season-pass.md §6).
   pill.addEventListener('click', () => game.setOverlay('pass'));
   root.replaceChildren(pill);
 
   const refresh = (): void => {
-    const state = game.seasonPillState();
-    // Absent entirely before the first card: the collection is hidden until
-    // the player holds one, so its door must be too.
+    const state = game.passPillState();
     setHidden(root, state === null || !state.showing);
-    if (root.hidden) return;
-    const info = game.seasonInfo();
-    setText(name, info.name);
-    setText(count, `${info.held}/${info.total}`);
-    // A width, not a transform: the trough is a fact about the season and the
-    // countdown beside it already moves every tick.
-    setStyle(fill, 'width', `${Math.round((info.held / info.total) * 100)}%`);
-    setText(left, info.leftMs <= 0 ? 'closing' : `${formatDuration(info.leftMs / 1000)} left`);
-    pill.classList.toggle('is-quiet', !state!.glowing);
+    if (root.hidden || state === null) return;
+    setText(count, `Lv ${formatExact(state.level)}`);
+    setStyle(fill, 'width', `${Math.round((state.level / Math.max(1, state.length)) * 100)}%`);
+    setText(left, state.leftMs <= 0 ? 'closing' : `${formatDuration(state.leftMs / 1000)} left`);
+    pill.classList.toggle('is-quiet', !state.glowing);
     // The orb is the ask (kit/cta.ts), the same one every waiting thing wears.
-    setCta(pill, state!.glowing ? 1 : 0);
-    setAttr(pill, 'aria-label', state!.glowing
+    setCta(pill, state.glowing ? 1 : 0);
+    setAttr(pill, 'aria-label', state.glowing
       ? 'A reward is waiting on the season pass'
-      : `${info.name} — the season pass`);
+      : 'The season pass');
   };
 
   game.onChange(refresh);

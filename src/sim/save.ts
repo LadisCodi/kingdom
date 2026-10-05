@@ -11,7 +11,8 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ARTIFACTS, relicKind,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -20,8 +21,6 @@ import { withoutTallies } from './events';
 import { buildMapData, footprintAt, footprintCells, type MapData } from './grid';
 import { syncArtifactModifiers } from './artifacts';
 import { syncHeroBoons } from './heroes';
-import { ALBUM_ORDER, type AlbumId } from './data/seasons';
-import { PACK_ORDER, type PackTier } from './data/definitions';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
@@ -32,7 +31,7 @@ import { WORLD_DISTRICTS, WORLD_UPGRADES } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   cellsOfRect, coordKey, districtOccupies, parseCoordKey,
-  type Coord, type District, type GameState, type QueueItem,
+  type ArtifactId, type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
   type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
@@ -66,6 +65,8 @@ interface DistrictDto {
   /** A house's rent anchor. Additive since save 62: before it the city had
    *  one anchor, `LastTaxAt`, which every house starts from. */
   RentAnchorUtc?: string;
+  /** The relic a Shrine holds. Additive since save 94. */
+  Hosts?: string;
 }
 
 interface QueueItemDto {
@@ -74,6 +75,7 @@ interface QueueItemDto {
   DurationSeconds: number;
   StartedAtUtc: string | null;
   TargetLevel?: number;
+  CutMs?: number;
 }
 
 interface WorkerDto {
@@ -758,6 +760,89 @@ const MIGRATIONS: readonly Migration[] = [
       world.Armies = [];
     },
   },
+  {
+    // v91: THE KEYS ARE BAG ITEMS (Docs/plans/relics-and-bag.md, step 4).
+    // What the player's purse held of each moves to the Bag, as the same
+    // count; neither is new, so neither sparkles.
+    to: 91,
+    migrate: (modules) => {
+      const purse = modules['player.currencies'] as Record<string, number> | undefined;
+      if (purse === undefined) return;
+      const bag = (modules['kingdom.bag'] ??= { Held: {}, Fresh: [], Badge: 0 }) as { Held?: Record<string, number> };
+      bag.Held ??= {};
+      for (const key of ['SilverKey', 'GoldKey']) {
+        const n = purse[key];
+        delete purse[key];
+        if (Number.isInteger(n) && n > 0) bag.Held[key] = (bag.Held[key] ?? 0) + n;
+      }
+    },
+  },
+  {
+    // v92: RELICS ARE FOUND, NOT COLLECTED (Docs/plans/relics-and-bag.md,
+    // step 5). The card season goes. Each album's cards become fragments of
+    // the relic that album was levelling this season — its first five cards
+    // the five pieces, its last the keystone, the three between more pieces
+    // — and every unopened pack and wildcard becomes pieces, dealt in turn
+    // to the relics the save has met. Relic levels stay where they were:
+    // restored, at the same level. Stars go, as at a season's close.
+    // A pass mission that opened packs now uses items, and one that paid a
+    // pack pays its fragments.
+    to: 92,
+    migrate: (modules) => {
+      const per: Record<string, number> = { Green: 1, Yellow: 1, Rose: 2, Blue: 2, Purple: 3, Golden: 4 };
+      const albums = ['FirstFurrow', 'TheWildWood', 'HandsAtWork', 'MarketDay',
+        'TheKingsCoin', 'UnderTheHill', 'TheLongMarch', 'TheStarRoad'];
+      const relics = ARTIFACT_ORDER as readonly string[];
+      const held: Record<string, { Found: number[]; Bound: number[] }> = {};
+      const slots = (id: string) => (held[id] ??= { Found: [0, 0, 0, 0, 0, 0], Bound: [0, 0, 0, 0, 0, 0] });
+      const col = modules['kingdom.collection'] as {
+        Season?: number; Cards?: Record<string, number[]>; Packs?: Array<{ Tier?: string }>;
+        Wildcards?: Record<string, number>;
+      } | undefined;
+      const season = col?.Season ?? 0;
+      for (const [album, cards] of Object.entries(col?.Cards ?? {})) {
+        const at = albums.indexOf(album);
+        if (at < 0 || !Array.isArray(cards)) continue;
+        const relic = relics[(((at + season) % albums.length) + albums.length) % albums.length] ?? relics[0];
+        cards.forEach((n, i) => {
+          if (!Number.isInteger(n) || n <= 0) return;
+          const slot = i < 5 ? i : i === cards.length - 1 ? 5 : (i - 5) % 5;
+          slots(relic).Found[slot] += n;
+        });
+      }
+      const levels = ((modules['kingdom.artifacts'] as { Levels?: Record<string, number> } | undefined)?.Levels) ?? {};
+      const met = relics.filter((id) => (levels[id] ?? 0) > 0 || (held[id]?.Found.some((n) => n > 0) ?? false));
+      let spare = 0;
+      for (const p of col?.Packs ?? []) spare += per[p.Tier ?? ''] ?? 1;
+      for (const n of Object.values(col?.Wildcards ?? {})) spare += Number.isInteger(n) && n > 0 ? n : 0;
+      for (let i = 0; i < spare && met.length > 0; i++) slots(met[i % met.length]).Found[Math.floor(i / met.length) % 5] += 1;
+      delete modules['kingdom.collection'];
+      if (Object.keys(held).length > 0) modules['kingdom.relics'] = { Held: held, Chests: 0 };
+      const pass = (modules['kingdom.kingdoms'] as { Pass?: { Live?: Array<Record<string, unknown>> } } | undefined)?.Pass;
+      for (const m of pass?.Live ?? []) {
+        if (m.Kind === 'OpenPacks') {
+          m.Kind = 'UseItems';
+          m.Meter = 'items';
+          m.Base = 0;
+        }
+        const reward = m.Reward as { kind?: string; tier?: string } | undefined;
+        if (reward?.kind === 'Pack') m.Reward = { kind: 'Fragments', n: per[reward.tier ?? ''] ?? 1 };
+      }
+    },
+  },
+  {
+    // v93: THE SHRINES ARE FOUND IN RUINS (Docs/plans/relics-and-bag.md,
+    // step 6). The four Shrine landmarks leave the map: one is the Thorned
+    // Shrine's ruin now, the others are gone, and a claim on any of them goes
+    // with them. A Shrine standing adds the +10 max Mana a claim did.
+    to: 93,
+    migrate: (modules) => {
+      const lm = modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined;
+      if (lm?.Claimed === undefined) return;
+      const gone = ['ThornedShrine', 'OldOakShrine', 'CliffShrine', 'WindwardShrine'];
+      lm.Claimed = lm.Claimed.filter((id) => !gone.includes(id));
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -836,6 +921,7 @@ export function serialize(state: GameState, now: number): SaveFile {
                 ConstructionState: d.state,
                 ...(d.stored && Object.keys(d.stored).length > 0 ? { Stored: { ...d.stored } } : {}),
                 ...(d.rentAnchor !== undefined ? { RentAnchorUtc: iso(d.rentAnchor) } : {}),
+                ...(d.hosts !== undefined ? { Hosts: d.hosts } : {}),
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -844,6 +930,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               DurationSeconds: q.durationSeconds,
               StartedAtUtc: isoOrNull(q.startedAt),
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
+              ...(q.cutMs ? { CutMs: q.cutMs } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
             TrainingQueue: state.city.trainingQueue.map((i) => ({
@@ -857,6 +944,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               // A ward of wounded is one item that hands over many. Written
               // only when it is one, so a recruit's row is what it always was.
               ...(i.kind === 'heal' ? { Kind: 'heal', Count: i.count ?? 1 } : {}),
+              ...(i.cutMs ? { CutMs: i.cutMs } : {}),
             })),
             // The infirmary: who is waiting to be put back together.
             Wounded: Object.entries(state.city.wounded)
@@ -977,6 +1065,17 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.abandoned': {
         Repaired: Object.keys(state.abandoned.repaired),
       },
+      'kingdom.bag': {
+        Held: state.bag.held,
+        Fresh: Object.keys(state.bag.fresh),
+        Badge: state.bag.badge,
+      },
+      'kingdom.relics': {
+        Held: Object.fromEntries(Object.entries(state.relics.held)
+          .map(([id, f]) => [id, { Found: f!.found, Bound: f!.bound }])),
+        Chests: state.relics.chests,
+        PremiumShrines: state.relics.premiumShrines,
+      },
       // The playtest's signs (Docs/playtest.md §5): the times; the counts are
       // the tallies'.
       'kingdom.signals': {
@@ -1061,17 +1160,6 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       // The live season's cards. Wiped whole at the close, so this module is
       // the one thing in the file that is deliberately short-lived.
-      'kingdom.collection': {
-        Season: state.collection.season,
-        Cards: state.collection.cards,
-        Completed: state.collection.completed,
-        Stars: state.collection.stars,
-        Wildcards: state.collection.wildcards,
-        Packs: state.collection.packs.map((k) => ({ ID: k.id, Tier: k.tier })),
-        PacksIssued: state.collection.packsIssued,
-        PrizePaid: state.collection.prizePaid,
-        Cycle: state.collection.cycle,
-      },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
           ID: m.id, Source: m.source, Stat: m.stat, Scope: m.scope,
@@ -1081,6 +1169,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Area: m.area === undefined ? null : {
             X: m.area.centre.x, Y: m.area.centre.y, Radius: m.area.radius,
             Relic: m.area.relic, SinceUtc: iso(m.area.since),
+            ...(m.area.size !== undefined ? { W: m.area.size.x, H: m.area.size.y } : {}),
           },
         })),
       },
@@ -1104,6 +1193,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Index: b.index, What: b.what, Level: b.level, FinishesAtUtc: iso(b.finishesAt),
         })),
         Sanctuaries: state.world.sanctuaries,
+        Chapels: [...state.world.chapels],
         // What the city lent each army out: the army itself is server state.
         Armies: state.world.armies.map((a) => ({
           ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
@@ -1201,6 +1291,7 @@ export function deserialize(
         // into the houses from where the old anchor stood.
         ...(d.RentAnchorUtc ? { rentAnchor: ms(d.RentAnchorUtc) }
           : legacyTaxAt !== null ? { rentAnchor: legacyTaxAt } : {}),
+        ...(d.Hosts !== undefined && (ARTIFACT_ORDER as string[]).includes(d.Hosts) ? { hosts: d.Hosts as ArtifactId } : {}),
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -1212,6 +1303,8 @@ export function deserialize(
         targetLevel: q.TargetLevel,
         durationSeconds: q.DurationSeconds,
         startedAt: msOrNull(q.StartedAtUtc),
+        // Additive (v90): what speed-ups took off it.
+        ...(q.CutMs !== undefined && q.CutMs > 0 ? { cutMs: q.CutMs } : {}),
       }),
     );
     state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
@@ -1225,6 +1318,8 @@ export function deserialize(
       seconds: i.Seconds ?? null,
       // A pre-41 save has no infirmary in it, so every item is a recruit.
       ...(i.Kind === 'heal' ? { kind: 'heal' as const, count: i.Count ?? 1 } : {}),
+      // Additive (v90): what speed-ups took off it.
+      ...(i.CutMs > 0 ? { cutMs: i.CutMs } : {}),
     }));
     state.city.wounded = {};
     for (const w of (cityDto.Wounded ?? []) as any[]) {
@@ -1451,6 +1546,32 @@ export function deserialize(
     playMs: Number.isFinite(signalsDto?.PlayMs) && signalsDto!.PlayMs! >= 0 ? signalsDto!.PlayMs! : 0,
   };
 
+  // Additive (v89). An item the build no longer knows is dropped, and a
+  // count that is not a positive whole number is no item.
+  const bagDto = modules['kingdom.bag'] as
+    { Held?: Record<string, number>; Fresh?: string[]; Badge?: number } | undefined;
+  const known = (id: string): id is ItemId => ITEMS[id as ItemId] !== undefined;
+  state.bag = {
+    held: Object.fromEntries(Object.entries(bagDto?.Held ?? {})
+      .filter(([id, n]) => known(id) && Number.isInteger(n) && n > 0)) as GameState['bag']['held'],
+    fresh: Object.fromEntries((bagDto?.Fresh ?? []).filter(known).map((id) => [id, true as const])),
+    badge: Number.isInteger(bagDto?.Badge) && bagDto!.Badge! > 0 ? bagDto!.Badge! : 0,
+  };
+
+  // v92. Six slots a relic, found and bound; a relic the build no longer
+  // knows, or a malformed slot list, is dropped.
+  const relicsDto = modules['kingdom.relics'] as
+    { Held?: Record<string, { Found?: number[]; Bound?: number[] }>; Chests?: number; PremiumShrines?: number } | undefined;
+  const six = (v: unknown): number[] => (Array.isArray(v) && v.length === 6 && v.every((n) => Number.isInteger(n) && n >= 0)
+    ? [...v] : [0, 0, 0, 0, 0, 0]);
+  state.relics = {
+    held: Object.fromEntries(Object.entries(relicsDto?.Held ?? {})
+      .filter(([id]) => (ARTIFACT_ORDER as string[]).includes(id))
+      .map(([id, f]) => [id, { found: six(f.Found), bound: six(f.Bound) }])),
+    chests: Number.isInteger(relicsDto?.Chests) ? relicsDto!.Chests! : 0,
+    premiumShrines: Number.isInteger(relicsDto?.PremiumShrines) ? relicsDto!.PremiumShrines! : 0,
+  };
+
   // Additive (v81). A kingdom from before the abandoned buildings may have
   // built where one now stands: that one never appears — it reads as already
   // repaired, and the building there is the kingdom's own.
@@ -1579,32 +1700,6 @@ export function deserialize(
     };
   }
 
-  const collectionDto = modules['kingdom.collection'];
-  if (collectionDto) {
-    state.collection = {
-      season: collectionDto.Season ?? 0,
-      // An album the build no longer has is dropped rather than migrated: the
-      // ladder was rebuilt from five albums to eight, and the close wipes
-      // cards anyway, so a page of a retired album is worth nothing to carry.
-      cards: Object.fromEntries(Object.entries(collectionDto.Cards ?? {})
-        .filter(([album]) => ALBUM_ORDER.includes(album as AlbumId))) as typeof state.collection.cards,
-      completed: ((collectionDto.Completed ?? []) as AlbumId[])
-        .filter((album) => ALBUM_ORDER.includes(album)),
-      stars: collectionDto.Stars ?? 0,
-      wildcards: { ...(collectionDto.Wildcards ?? {}) },
-      // A pack whose TIER no longer exists is dropped rather than migrated.
-      // The pack ladder was rebuilt whole, and a card is wiped at the close
-      // anyway, so an unopened pack of a retired tier is worth nothing to
-      // carry forward and everything to not crash on.
-      packs: ((collectionDto.Packs ?? []) as any[])
-        .filter((k) => PACK_ORDER.includes(k.Tier as PackTier))
-        .map((k) => ({ id: k.ID as string, tier: k.Tier as PackTier })),
-      packsIssued: collectionDto.PacksIssued ?? 0,
-      prizePaid: collectionDto.PrizePaid === true,
-      cycle: collectionDto.Cycle ?? 0,
-    };
-  }
-
   const modifiersDto = modules['kingdom.modifiers']?.Modifiers;
   if (modifiersDto) {
     state.modifiers = (modifiersDto as any[]).map((m): Modifier => ({
@@ -1623,6 +1718,7 @@ export function deserialize(
           centre: { x: m.Area.X, y: m.Area.Y },
           radius: m.Area.Radius,
           relic: m.Area.Relic,
+          ...(m.Area.W !== undefined ? { size: { x: m.Area.W, y: m.Area.H } } : {}),
           // A save from before the map could draw a zone has no instant on it.
           // `expiresAt` still ends the zone correctly; only the wheel's sweep
           // needs a start, and it reads as full rather than as NaN.
@@ -1721,6 +1817,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Explorers?: Array<Record<string, unknown>>;
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
+    Chapels?: unknown;
     Armies?: Array<Record<string, unknown>>;
     EffectSeq?: unknown;
   };
@@ -1765,6 +1862,9 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         finishesAt: ms(b.FinishesAtUtc as string),
       })),
     sanctuaries: Number.isInteger(d.Sanctuaries) && (d.Sanctuaries as number) >= 0 ? d.Sanctuaries as number : 0,
+    chapels: Array.isArray(d.Chapels)
+      ? (d.Chapels as unknown[]).filter((id): id is ArtifactId => typeof id === 'string' && id in ARTIFACTS && relicKind(id as ArtifactId) === 'world')
+      : [],
     armies: (Array.isArray(d.Armies) ? d.Armies : [])
       .filter((a) => typeof a.ID === 'string' && Array.isArray(a.Heroes) && Array.isArray(a.Troops)
         && isBoardIndex(a.Target) && ['attack', 'claim', 'garrison', 'delve', 'portal', 'clear'].includes(a.Purpose as string))

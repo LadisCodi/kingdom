@@ -1,6 +1,15 @@
 {
   "type": "object",
   "fields": {
+    "kind": {
+      "type": "text",
+      "options": ["city", "world"],
+      "doc": "A city relic is hosted in a Shrine, a world relic in a Chapel; a source drops one kind (relic-restoration.md §1, §2)."
+    },
+    "door": {
+      "type": "text",
+      "doc": "Where its first fragment is found by play: a lair for a city relic (its prize, when claimed), or a world source — room, boss, portal, scouting."
+    },
     "passiveBase": { "type": "float" },
     "passivePerLevel": { "type": "float" },
     "activeManaCost": { "type": "int" },

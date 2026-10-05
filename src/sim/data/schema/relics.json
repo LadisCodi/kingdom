@@ -3,6 +3,50 @@
   "fields": {
     "artifactCooldownSeconds": { "type": "int" },
     "artifactAutoTapPerSecond": { "type": "int" },
-    "artifactRadiusSteps": { "type": "list", "of": { "type": "int" } }
+    "artifactRadiusSteps": { "type": "list", "of": { "type": "int" } },
+    "fragments": {
+      "type": "object",
+      "doc": "Fragments and restoration (Docs/proposals/relic-restoration.md §2, §4, §9, §11).",
+      "fields": {
+        "keystoneOneIn": { "type": "int", "min": 1, "doc": "A fragment that drops is the keystone one time in this many." },
+        "keystoneWorth": { "type": "int", "min": 1, "doc": "What a spare keystone counts for in levels." },
+        "levelCostBase": { "type": "int", "min": 1, "doc": "Spares the first level-up costs." },
+        "levelCostEvery": { "type": "int", "min": 1, "doc": "One more spare every this many levels." },
+        "replicaFreeSparesPiece": { "type": "int", "min": 1, "doc": "Spares that forge a missing piece without Gems." },
+        "replicaFreeSparesKeystone": { "type": "int", "min": 1, "doc": "Spares that forge the missing keystone without Gems." },
+        "replicaSpares": { "type": "int", "min": 0, "doc": "Spares the Gem forge takes besides its Gems." },
+        "replicaGemsPiece": { "type": "int", "min": 0, "doc": "Gems the forge asks for a piece." },
+        "replicaGemsKeystone": { "type": "int", "min": 0, "doc": "Gems the forge asks for the keystone." },
+        "restorerChestGems": { "type": "int", "min": 0, "doc": "The Restorer's chest: its Gem price." },
+        "restorerChestSize": { "type": "int", "min": 1, "doc": "The Restorer's chest: fragments of the chosen restored relic." },
+        "treasureEvery": {
+          "type": "int",
+          "min": 0,
+          "doc": "Every this many fog treasures, one city fragment comes too. 0: never."
+        },
+        "perLairTier": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "City fragments a lair's prize pays, by its tier."
+        },
+        "perPackTier": {
+          "type": "map",
+          "of": { "type": "int", "min": 0 },
+          "doc": "What a pack the save or a world source still names is worth in fragments."
+        }
+      }
+    },
+    "shrines": {
+      "type": "object",
+      "doc": "The Shrines (relic-restoration.md §5.1).",
+      "fields": {
+        "manaCap": { "type": "int", "min": 0, "doc": "Max Mana each Shrine standing adds." },
+        "premiumGems": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "The Shrines built anywhere for Gems: one price each, in order; how many there are is how long this is."
+        }
+      }
+    }
   }
 }

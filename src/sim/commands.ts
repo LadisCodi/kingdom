@@ -2,7 +2,7 @@
 // serves both the live once-per-second tick and offline replay.
 
 import { track } from './analytics';
-import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
+import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, SHRINE_RULES, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import {
   buildDurationForCell, buildGoodsCost, canMoveDistrict, districtCount, maxDistrictCount,
@@ -11,11 +11,14 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, grantPack, seasonEndsAt, type SeasonClose } from './collection';
+import { dropFragments } from './relics';
+import { lairHolding } from './lairZone';
+import { endHostedSpell } from './hosts';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
 import { recordEvent } from './events';
+import { grantItem } from './bag';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
 } from './timeline';
@@ -115,7 +118,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
   const cost = def.keyGemCost * count;
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
-  addToWallet(state.player.wallet, def.key, count);
+  grantItem(state, def.key, count);
   return 'Purchased';
 }
 
@@ -149,12 +152,14 @@ export function enqueueBuild(
  */
 function startBuild(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
+  /** False when the price was paid another way — a premium Shrine's Gems. */
+  charge = true,
 ): 'Started' | 'NotEnoughResources' | 'NotEnoughGoods' {
-  const cost = nextBuildCost(state, definitionId);
+  const cost = charge ? nextBuildCost(state, definitionId) : {};
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
   // goods are paid when the build is QUEUED and refunded in full on cancel —
   // the rule a workshop item already follows.
-  const goods = buildGoodsCost(state, definitionId);
+  const goods = charge ? buildGoodsCost(state, definitionId) : {};
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
@@ -188,8 +193,35 @@ function startBuild(
 
 // ------------------------------------------------------------- repairing
 
+/** The Gems the next premium Shrine costs, or null when all are built
+ *  (Docs/proposals/relic-restoration.md §5.1, §9). */
+export const premiumShrinePrice = (state: GameState): number | null =>
+  SHRINE_RULES.premiumGems[state.relics.premiumShrines] ?? null;
+
+export type PremiumShrineResult =
+  | 'Started' | 'NoneLeft' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+
+/**
+ * BUILD A SHRINE ANYWHERE, FOR GEMS: breadth, like a builder — one more
+ * host, never a relic. The ruin in the fog is the Shrine play finds; these
+ * are the rest, each dearer than the last, and the ladder ends.
+ */
+export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord): PremiumShrineResult {
+  const price = premiumShrinePrice(state);
+  if (price === null) return 'NoneLeft';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (districtCount(state, 'Shrine') >= maxDistrictCount(state, DISTRICTS.Shrine)) return 'CountLimit';
+  if (placementBlock(state, map, 'Shrine', cell) !== null) return 'InvalidCell';
+  if (getWallet(state.player.wallet, 'Gems') < price) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -price);
+  state.relics.premiumShrines += 1;
+  startBuild(state, map, 'Shrine', cell, false);
+  track(state, 'premium_shrine', { n: state.relics.premiumShrines, gems: price });
+  return 'Started';
+}
+
 export type RepairRefusal =
-  | 'NotFound' | 'NotRevealed' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
+  | 'NotFound' | 'NotRevealed' | 'LairHeld' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
   | 'NotEnoughResources' | 'NotEnoughGoods';
 
 /**
@@ -207,6 +239,8 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   const def = DISTRICTS[site.districtId];
   const cells = cellsOfRect(site.location, def.size);
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
+  // Not on ground a lair still holds — the Thorned Shrine waits on the Orcs.
+  if (cells.some((c) => lairHolding(state, c) !== null)) return 'LairHeld';
   if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
@@ -275,6 +309,9 @@ function relocateDistrict(
   state: GameState, map: MapData, district: District, cell: Coord, now: number,
 ): boolean {
   const from = district.location;
+  // A Shrine carries its relic's aura with it, so the spell running in the
+  // old one ends here; the cooldown keeps counting (sim/hosts.ts).
+  if (district.hosts !== undefined) endHostedSpell(state, district.hosts, now);
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
   });
@@ -379,7 +416,7 @@ export function researchTech(
     if (result !== 'Researched') return;
     payKnowledge(state, territoryKnowledge(state) - before);
     const band = claimBandReward(state, id);
-    if (band !== null) grantPack(state, band.tier, 'research');
+    if (band !== null) dropFragments(state, 'any', band.fragments, ['band', band.tome, band.era]);
     if (TECHNOLOGIES[id].effects.some((e) => e.stat === 'discoverRadius')) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);
@@ -494,6 +531,32 @@ export function finishWithGems(
   return 'Success';
 }
 
+/**
+ * TAKE `ms` OFF THE BUILD OR UPGRADE RUNNING AS `itemId`, at `now` — a
+ * speed-up (sim/speedups.ts). Only a running item: one waiting for a builder
+ * has no clock to move. If that brings its end to `now` or before, it
+ * completes NOW — never at the earlier instant the cut implies — and the item
+ * that takes its builder starts now too, so a speed-up never gives time away.
+ * Returns the milliseconds it used; the rest of a speed-up bigger than the
+ * wait is lost.
+ */
+export function cutQueueItem(state: GameState, map: MapData, itemId: string, ms: number, now: number): number {
+  const item = state.city.queue.find((q) => q.uniqueId === itemId);
+  if (!item || item.startedAt === null || !(ms > 0)) return 0;
+  const left = Math.max(0, completesAt(item) - now);
+  if (ms < left) {
+    item.cutMs = (item.cutMs ?? 0) + ms;
+    return ms;
+  }
+  state.city.queue.splice(state.city.queue.indexOf(item), 1);
+  // A house built or raised pays a new rent from now.
+  repriceTaxAnchorAround(state, now, () => completeQueueItem(state, map, item, now));
+  const slots = Math.max(1, buildQueueCapacity(state));
+  const promoted = state.city.queue[slots - 1];
+  if (promoted !== undefined && promoted.startedAt === null) promoted.startedAt = now;
+  return left;
+}
+
 // ------------------------------------------------------------------- workers
 
 export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'AtCapacity' | 'NotAWorkerDistrict' | 'NoWorkers';
@@ -600,10 +663,6 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** The season that closed under the player, if one did — the cards melted
-   *  into Gold, the stars are gone and a new season is open
-   *  (Docs/features/09-relics.md §3). */
-  seasonClosed: SeasonClose | null;
   /** Explorers that came home from the world board, and what they revealed. */
   explorersHome: ExplorerHome[];
   /** World builds whose builder came home: the district or upgrade stands. */
@@ -613,7 +672,7 @@ export interface AdvanceResult {
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
+  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
   explorersHome: [],
   worldBuildsDone: [],
 });
@@ -656,13 +715,6 @@ function applyDueAt(
     // A raid empties stores, and a crew waiting by a full one can go out again.
     if (raids.length > 0) wakeIdleWorkersAt(state, t);
     out.scheduleEvents.push(...advanceSchedule(state, t));
-    // THE SEASON'S CLOSE IS A TIMER (Docs/features/09-relics.md §3): it
-    // resolves at its absolute timestamp, so a player away for a week comes
-    // back to the wiped album and the new season rather than to a stale one
-    // that waits for them. `season` moving is what stops it firing twice.
-    if (t >= seasonEndsAt(state.collection.season)) {
-      out.seasonClosed = closeSeason(state, t);
-    }
     // A finished good lands in the stockpile here rather than in
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
@@ -709,9 +761,6 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextTrainingCompletion(state, after));
   consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
-  // One boundary a month, from a floor division with no state in it: two
-  // clients never disagree about when the season ends.
-  consider(seasonEndsAt(state.collection.season));
   consider(nextWorkshopCompletion(state, after));
   consider(nextExplorerReturn(state, after));
   consider(nextWorldBuildDone(state, after));
