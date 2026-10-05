@@ -69,15 +69,15 @@ Buildability:
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Mountain** | Stone | 1 | 5 | 120 s | Pickaxes |
-| **Iron mountain** | Stone | **5** | 5 | **300 s** | **Mining** |
-| **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Deep Mining** |
+| **Mountain** | Stone | 1 | never | — | Pickaxes |
+| **Iron mountain** | Stone | **5** | never | — | **Mining** |
+| **Gold mountain** | **Gold** | **3** | never | — | **Deep Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 
 Mountains:
 
-- Three mountains share one silhouette and differ in what the rock holds, which
-  research opens it and how long it takes to recover:
+- Three mountains share one silhouette and differ in what the rock holds and
+  which research opens it. **No mountain runs out**:
 
 | | Pays | Opened by | Role |
 |---|---|---|---|

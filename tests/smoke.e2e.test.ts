@@ -10,7 +10,9 @@ import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
-import { cityGoldPerMinute, maxPopulation, ownGoldPerMinute } from '../src/sim/population';
+import {
+  cityGoldPerMinute, maxPopulation, ownGoldPerMinute, villagerTrainSeconds,
+} from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
 import { isTechComplete, researchRefusal } from '../src/sim/research';
 import { revealCostForCell, revealTap } from '../src/sim/fog';
@@ -143,7 +145,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('AtMax'); // 2 living + 2 queued = cap
-    now += 41_000; // 2 x 20s of training
+    now += 60_000; // two villagers' training, the second a little longer
     tickAt(state, now);
     expect(state.city.population).toBe(4);
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
@@ -232,19 +234,19 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
-    now += 20_000;
+    now += villagerTrainSeconds(4) * 1000; // a bigger town trains slower
     tickAt(state, now);
     expect(state.city.population).toBe(5);
-    now += 20_000;
+    now += villagerTrainSeconds(5) * 1000;
     tickAt(state, now);
     expect(state.city.population).toBe(6);
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
 
-    // --- Offline: 10 minutes away keep rent and deliveries flowing, into
-    // the buildings' stores.
+    // --- Offline: 4 minutes away keep rent and deliveries flowing, into
+    // the buildings' stores (short of filling any of them).
     for (const d of state.city.districts) collectBuilding(state, d.uniqueId, now);
     const save = serialize(state, now);
-    const restored = deserialize(save, map, now + 600_000)!;
+    const restored = deserialize(save, map, now + 240_000)!;
     const earned = stored(restored, 'Gold');
     // Six villagers across four houses, filled in BUILD ORDER: the two L2
     // houses (capacity 4) take 4 and 2, the two L1 houses stand empty and pay
@@ -261,8 +263,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1)
       + ownGoldPerMinute(townhall(state));
     expect(perMinute).toBe(cityGoldPerMinute(state));
-    expect(earned).toBeGreaterThanOrEqual(perMinute * 10 - 1);
-    expect(earned).toBeLessThanOrEqual(perMinute * 10 + 1);
+    expect(earned).toBeGreaterThanOrEqual(perMinute * 4 - 1);
+    expect(earned).toBeLessThanOrEqual(perMinute * 4 + 1);
     expect(stored(restored, 'Wood')).toBeGreaterThan(0);
   });
 });

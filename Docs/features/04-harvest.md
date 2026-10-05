@@ -58,8 +58,10 @@ Every resource cell carries:
   not a live query, and a bonus that repriced a stretch already elapsed would
   hand the player a windfall for finishing a research at the right moment. It
   never falls below one second.
-- **Only a source that grows back IN PLACE has that clock**: Forest, Crops,
-  Stone and the two mountains. A berry bush, a herd and a shoal are consumed
+- **A mountain never runs out.** `stock` 0 means inexhaustible: Stone and the
+  two metal mountains keep no depot, never exhaust and have no recovery clock.
+- **Only a source that grows back IN PLACE has that clock**: Forest and
+  Crops. A berry bush, a herd and a shoal are consumed
   and reappear on another tile instead (`respawnSeconds`, §3), which is a
   different number the tree cannot move — so aiming a recovery bonus at one
   is refused rather than sold. The **Verdant Seal** relic is what moves it
@@ -86,10 +88,10 @@ Every resource cell carries:
 | **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 5.6 → 3.8/min | 0.64 |
 | **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 4.7 → 3.3/min | — |
 | **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 7.9 → 6.4/min | — |
-| **Stone** | 1 | 26 | 5 | 120 | 1 *(floor)* | 5 | 2.1 → 1.8/min | 0.55 |
+| **Stone** | 1 | 26 | 0 *(never runs out)* | — | 1 *(floor)* | — | 2.1 → 1.8/min | any |
 | **Fish** | 2 | 20 | 10 | finite | 1 | 10 | 5.3 → 4.3/min | — |
-| **MountainIron** | 5 | 60 | 25 | 300 | 1 *(floor)* | 25 | 4.8 → 4.4/min | 0.51 |
-| **MountainGold** | 3 | 60 | 15 | 300 | 1 *(floor)* | 15 | 2.9 → 2.6/min | 0.51 |
+| **MountainIron** | 5 | 60 | 0 *(never runs out)* | — | 1 *(floor)* | — | 4.8 → 4.4/min | any |
+| **MountainGold** | 3 | 60 | 0 *(never runs out)* | — | 1 *(floor)* | — | 2.9 → 2.6/min | any |
 
 - The spread narrows as the ground slows: a tree next door pays 1.4× one at
   radius 4, an iron peak 1.1×. Fast ground rewards a close shed; slow ground
@@ -97,9 +99,8 @@ Every resource cell carries:
 - The renewables hold the law to within a hundredth.
 - On slow ground the **floor** governs: ten seconds of work on a rock, an iron
   peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
-  shows in the grind length (5, 25, 15 taps) and in the first `TapPower` levels.
-- A metal peak's richness is in the depot and the crew: 25 units in one cell
-  against a rock's 5, five units a swing against one.
+  shows in the first `TapPower` levels.
+- A metal peak's richness is in the crew: five units a swing against one.
 - **FarmLands shares the `Crops` row.** A built plot behaves exactly like wild
   crops. Its own rhythm needs a new harvest source id (code, not data) — not
   built.
@@ -107,11 +108,12 @@ Every resource cell carries:
 ### 2.2 The ground under the cell
 
 - Terrain multiplies what a cell **holds** (`stock`), per currency. A grassland
-  tree holds 13 Wood, a snowy one 8, a desert one 5.
+  tree holds 13 Wood, a snowy one 8, a desert one 5. A mountain holds no stock,
+  so the ground under it changes nothing.
 - The multiplier is a property of the terrain, not of the building, so a
   Forest, a FarmLands and a rock on the same ground all take it.
 - It scales the stock, not the strike: `unitsPerStrike` is 1 on most cells and
-  `1 × 0.75` rounds back to 1. Stock runs 5 to 30.
+  `1 × 0.75` rounds back to 1. Stock runs 10 to 30.
 - Thumb and crew are both affected, because they draw the same depot (§1).
 
 | Terrain | Food | Wood | Stone |
@@ -124,13 +126,14 @@ Every resource cell carries:
 | Water | ×1 | ×1 | ×1 |
 
 - Water is ×1 so the multiplier does not retune Fish shoals.
+- The Stone column moves nothing while no Stone source holds stock.
 - Poor ground is bad twice: the total per cycle scales with the multiplier, the
   sustainable rate falls further because recovery is a fixed cost. A desert
   forest drains in 50 s and sits out 90, yielding 2.1 Wood/min against a
   grassland tree's 3.5 (61%, not 50%); its workers-per-cell drops from 0.59 to
   0.36, so a desert needs about three cells per worker.
-- On the map as painted, Grassland holds 45 of the 57 trees; Desert's stone
-  bonus reaches one mountain in 81 cells; Tundra holds no trees (OQ-56).
+- On the map as painted, Grassland holds 45 of the 57 trees; Tundra holds no
+  trees (OQ-56).
 
 ### 2.3 The map ceiling
 

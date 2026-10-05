@@ -185,11 +185,12 @@ describe('the Townhall makes Gold of its own', () => {
     const once = freshGame();
     const stepped = freshGame();
     const perMinute = DISTRICTS.Townhall.goldPerMinutePerLevel[0];
-    advance(once, map, T0 + 10 * 60_000);
-    for (let m = 1; m <= 10; m++) advance(stepped, map, T0 + m * 60_000 - 7_000);
-    advance(stepped, map, T0 + 10 * 60_000);
-    expect(storedOf(townhall(once), 'Gold')).toBe(10 * perMinute);
-    expect(storedOf(townhall(stepped), 'Gold')).toBe(10 * perMinute);
+    // Four minutes: inside what a level-1 store holds.
+    advance(once, map, T0 + 4 * 60_000);
+    for (let m = 1; m <= 4; m++) advance(stepped, map, T0 + m * 60_000 - 7_000);
+    advance(stepped, map, T0 + 4 * 60_000);
+    expect(storedOf(townhall(once), 'Gold')).toBe(4 * perMinute);
+    expect(storedOf(townhall(stepped), 'Gold')).toBe(4 * perMinute);
   });
 
   it('leaves the houses\' rent alone: a bigger Townhall is its own income', () => {

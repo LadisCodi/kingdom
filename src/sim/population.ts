@@ -1,7 +1,7 @@
 // Population: housing, auto-assigned residents, and the rent each house
 // stores for the player to collect.
 
-import { CITY_DEF, DISTRICTS, levelIndexed } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordEvent } from './events';
@@ -137,6 +137,15 @@ export const populationCost = (currentPopulation: number): number => {
   const beyond = currentPopulation - (authored.length - 1);
   return Math.round(last * CITY_DEF.populationCostGrowth ** beyond);
 };
+
+/**
+ * Seconds to train the villager who will be number `place` (0-based) — the
+ * population plus everyone queued ahead of them. A bigger town takes longer
+ * to grow: `training.seconds` for the first, `training.villagerSecondsGrowth`
+ * times dearer for each after.
+ */
+export const villagerTrainSeconds = (place: number): number =>
+  Math.max(1, Math.round(TRAINING.seconds * TRAINING.villagerSecondsGrowth ** Math.max(0, place)));
 
 // Villagers used to have their own queue here — `city.training`, a bare count
 // with one timestamp. They now share the city's one training line

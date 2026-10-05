@@ -343,7 +343,7 @@
       "requires": ["StonecuttingII"],
       "gold": 525, "knowledge": 3,
       "effects": [
-        {"stat":"regrowthSpeed","op":"percent","value":10,"target":{"harvest":"Stone"}}
+        {"stat":"harvestYield","op":"percent","value":10,"target":{"harvest":"Stone"}}
       ]
     },
     "TradeRoutesIII": {

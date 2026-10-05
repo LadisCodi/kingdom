@@ -25,7 +25,7 @@
 | Housing cap | 2 | 4 | 6 | 9 |
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
-| Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
+| Gate to the next level | 99 Gold + 66 Wood | `Bureaucracy` | `Magistracy` | — |
 | Villagers to reach it | — | 3 | 5 | 12 |
 | Explores to ring | 3 | 5 | 7 | 8 |
 
@@ -36,9 +36,9 @@
   level before can hold, so the answer is always roofs, Food and the training
   line. The card says the number and where the city stands: *Needs 12
   villagers · you have 9*.
-- Villagers are priced `5, 20, 45, 100, 250, 500, 1000` Food then **×1.05** each
-  ([`03-economy.md`](03-economy.md) §5), so a hundred of them is a month of
-  Food rather than a lifetime.
+- Villagers are priced `5, 20, 45, 100, 250, 500, 1000` Food then **×1.1** each,
+  and each one trains ×1.07 slower than the one before
+  ([`03-economy.md`](03-economy.md) §4).
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 - It also sets **how far the fog can be paid for**: `fog.reachPerTownhallLevel`,
   in Townhall rings, 3 at level 1 to the whole province at 10
@@ -89,6 +89,18 @@ costPerLevel: [ { cost: { Wood: 20 }, goods: {} }, { cost: { Wood: 60 }, goods: 
 - A building has exactly as many entries as it has levels; the schema refuses a
   `costPerLevel` whose length is not `maxLevel`.
 - What each level buys: [`buildings.md`](buildings.md).
+
+How the table is shaped:
+
+- **Every build and every level asks for Gold**, about 1.5× its Wood + Stone +
+  Food. A building that was already priced in Gold keeps Gold as its main line.
+- **Levels steepen.** A level costs about `1 + 0.1 × (L − 1)²` times the old
+  ×1.5–1.8 ladder: ×1.1 at level 2, ×2.6 at 5, ×9 at 10. From level 6 each
+  level is about ×2.2 the one before.
+- **Advanced buildings cost 2.5× a basic one**, every level, the build
+  included. Basic: Townhall, Housing, Farm, crop plot, Sawmill, Quarry, Docks.
+  Advanced: the military halls, Infirmary, War Camp, Sanctum, Tavern, the
+  workshops and the decorations.
 
 ### 3.1 The instance multiplier
 

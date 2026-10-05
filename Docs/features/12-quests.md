@@ -146,10 +146,10 @@
 - The three research beats at 23–25 (`Levies` · `Sawpits` · `Regrowth`) pay
   80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
-  - a crop plot costs **10 Wood**;
+  - a crop plot costs **15 Gold + 10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 44).
+  - Townhall L1→L2 costs **99 Gold + 66 Wood**, no Stone (the Quarry is quest 44).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
