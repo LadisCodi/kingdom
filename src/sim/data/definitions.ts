@@ -2153,6 +2153,12 @@ export interface WorldDungeonDef {
   /** A closed dungeon comes back after a roll between these many hours. */
   returnHoursMin: number;
   returnHoursMax: number;
+  /** Precious material a room pays, scaled as its other rewards. */
+  precious: number;
+  /** A dungeon's name: "The <first> <second>"; and its depths' bosses. */
+  nameFirst: readonly string[];
+  nameSecond: readonly string[];
+  bossNames: readonly string[];
 }
 
 export const WORLD_DUNGEON: WorldDungeonDef = balance.worldDungeon;

@@ -1,0 +1,7 @@
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references (image 1: the game's UI kit pieces; image 2: a mockup of the screen this will be used in).
+
+A seamless, tileable texture, square, 1024×1024, OPAQUE (no transparency): the dark rock wall of a cave in a cozy fantasy mobile game. Cool grey-brown stone, rough and natural, with a few subtle cracks and gentle variation in tone, softly lit from above. Mid-dark in value overall, low contrast, so cream text and warm torch-lit stone discs placed over it will read clearly. Painted in the same warm, textured, hand-painted style as image 1 — not photographic, not flat, not glossy.
+
+It must tile seamlessly in both directions: the left edge continues the right edge and the top continues the bottom. No objects, no stairs, no torches, no light sources, no vignette, no border, no text.
+
+Raw image only: do not resize, verify or save a corrected file.

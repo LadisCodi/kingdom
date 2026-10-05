@@ -311,6 +311,22 @@
           "type": "float",
           "min": 0,
           "doc": "…and at most this many: each return rolls a time between the two."
+        },
+        "precious": {
+          "type": "float",
+          "min": 0,
+          "doc": "Precious material a room pays, by the same scale as its other rewards (19 §7.4) — mostly the player’s own."
+        },
+        "nameFirst": {
+          "type": "list",
+          "of": { "type": "text" },
+          "doc": "A dungeon’s name is “The <first> <second>”, rolled when it appears."
+        },
+        "nameSecond": { "type": "list", "of": { "type": "text" }, "doc": "The second word of a dungeon’s name." },
+        "bossNames": {
+          "type": "list",
+          "of": { "type": "text" },
+          "doc": "Who waits at the bottom of each depth, rolled per dungeon and depth."
         }
       }
     },

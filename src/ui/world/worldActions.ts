@@ -27,6 +27,8 @@ export type HexAction =
   | { kind: 'recall'; army: string }
   /** Fight the next room of a dungeon, with the army camped there. */
   | { kind: 'delve'; army: string }
+  /** Open a dungeon's delve screen (19 §8.2). */
+  | { kind: 'openDelve' }
   /** Build an upgrade into the district, or raise it a level (19 §7.2). */
   | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number }
   | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency'] | null; amount: number; ready: boolean };
@@ -99,13 +101,9 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
     if (mine !== undefined) return mine.phase === 'camp' ? [{ kind: 'descend', army: mine.id }, { kind: 'recall', army: mine.id }] : [{ kind: 'recall', army: mine.id }];
     return portal?.open ? [{ kind: 'army', purpose: 'portal' }] : [];
   }
-  // A dungeon: never held, open to any army (19 §8.1).
-  if (bh.features.includes('Dungeon')) {
-    const mine = source.armies().find((a) => a.owner === seat && a.target === bh.index && a.purpose === 'delve' && a.phase !== 'home');
-    if (mine === undefined) return [{ kind: 'army', purpose: 'delve' }];
-    if (mine.phase === 'camp') return [{ kind: 'delve', army: mine.id }, { kind: 'recall', army: mine.id }];
-    return [{ kind: 'recall', army: mine.id }];
-  }
+  // A dungeon: never held, open to any army (19 §8.1). Everything about it
+  // happens on the delve screen; the sheet only opens it.
+  if (bh.features.includes('Dungeon')) return [{ kind: 'openDelve' }];
   if (h !== null && h.held && h.owner !== seat) {
     return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
   }

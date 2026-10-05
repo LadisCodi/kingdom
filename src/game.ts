@@ -207,7 +207,10 @@ export type OverlayName =
   | 'army'
   // The Exchange: precious materials traded between the board's players
   // (Docs/features/19-world-map.md §7.5).
-  | 'exchange';
+  | 'exchange'
+  // A world dungeon's descent: its rooms, the race, the army camped there
+  // (Docs/features/19-world-map.md §8.2).
+  | 'delve';
 
 /** Which door an overlay stands behind (Docs/features/22-progression.md §3).
  *  An overlay not named here is never padlocked. */
@@ -4890,6 +4893,14 @@ export class Game {
       this.notify();
       return;
     }
+    // What the room paid, for the spoils the delve screen shows after the
+    // fight (19 §8.2) — read before the snapshot's effects are spent.
+    const loot = r.snapshot.effects.find((e) => e.kind === 'loot');
+    this.delveSpoils = {
+      won: r.won, depth: r.depth, room: r.room, boss: r.boss, lost: r.lost,
+      loot: loot?.kind === 'loot' ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
+    };
+    this.delveDepth = null;
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, {
       title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
@@ -4932,6 +4943,29 @@ export class Game {
       ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
       : `Your explorer is home — nothing new out there${found}`);
     if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  }
+
+  /** The dungeon the delve screen is about, the depth it shows (null: the
+   *  player's current one), and what the last room fought there paid. */
+  delveHex: number | null = null;
+  delveDepth: number | null = null;
+  delveSpoils: {
+    won: boolean; depth: number; room: number; boss: boolean; lost: number;
+    loot: { gold: number; heroXp: number; stardust: number; knowledge: number; precious?: { id: PreciousId; amount: number } } | null;
+  } | null = null;
+
+  /** Open a dungeon's descent at the player's current depth. */
+  openDelve(index: number): void {
+    this.delveHex = index;
+    this.delveDepth = null;
+    this.delveSpoils = null;
+    this.setOverlay('delve');
+  }
+
+  /** Close the spoils, back to the descent. */
+  dismissSpoils(): void {
+    this.delveSpoils = null;
+    this.notify();
   }
 
   /** What the player is about to offer on the Exchange. */

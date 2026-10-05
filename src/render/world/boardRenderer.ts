@@ -41,7 +41,7 @@ import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGri
 import type { HexCamera } from './hexCamera';
 import { featureNudge, hash01, hexDecorations } from './hexScatter';
 import { DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
-import { LAIRS } from '../../sim/data/definitions';
+import { LAIRS, WORLD_DUNGEON } from '../../sim/data/definitions';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -244,6 +244,18 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
     const difficulty = campDifficulty(bh.camp.power, party);
     drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+  }
+
+  // A dungeon: how far the player has gone in it, as a ring and "13/24",
+  // and a badge when their army is camped there and can fight (19 §8.2).
+  const total = WORLD_DUNGEON.depths * WORLD_DUNGEON.roomsPerDepth;
+  for (const bh of board.hexes) {
+    if (!bh.features.includes('Dungeon') || states[bh.index] !== 'Revealed') continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const camped = (frame.armies ?? []).some((a) => a.target === bh.index && a.purpose === 'delve' && a.phase === 'camp'
+      && source.seats()[a.owner]?.owner.you === true);
+    drawProgressRing(ctx, camera, c.x, c.y - r * 0.55, source.delved(bh.index), total, camped);
   }
 
   // A rich hex: a sparkle and its material's icon at its right corner
@@ -946,6 +958,46 @@ function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number,
   ctx.lineTo(x + size * 0.2, y + size * 0.62);
   ctx.fill();
   drawIcon(ctx, icon, x - size / 2, y - size / 2, size);
+  ctx.restore();
+}
+
+/** A dungeon's progress: a ring filled as far as the player has cleared,
+ *  the count in it, and a red badge when their army can fight there. */
+function drawProgressRing(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, cleared: number, total: number, badge: boolean,
+): void {
+  const rad = Math.max(13, camera.hexWidth * 0.12);
+  ctx.save();
+  ctx.fillStyle = 'rgba(46, 28, 14, 0.8)';
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = Math.max(3, rad * 0.22);
+  ctx.strokeStyle = 'rgba(255, 243, 214, 0.25)';
+  ctx.beginPath();
+  ctx.arc(x, y, rad * 0.82, 0, Math.PI * 2);
+  ctx.stroke();
+  if (cleared > 0) {
+    ctx.strokeStyle = '#f2b233';
+    ctx.beginPath();
+    ctx.arc(x, y, rad * 0.82, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.min(cleared, total)) / total);
+    ctx.stroke();
+  }
+  const fs = Math.max(8, rad * 0.62);
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${formatCount(cleared)}/${formatCount(total)}`, x, y + 0.5);
+  if (badge) {
+    ctx.fillStyle = '#d4553e';
+    ctx.strokeStyle = '#5c1e14';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x + rad * 0.8, y - rad * 0.8, rad * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
   ctx.restore();
 }
 

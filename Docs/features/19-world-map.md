@@ -13,7 +13,7 @@
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps (§5.4), their numbers in `worldCamps`; Dungeons
-> (§8.1) and the Dark Portal (§10), which opens on Fridays (UTC) for three
+> and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
 > camps, trade on the Exchange (§7.5), man a Fortress and now and then
 > attack on their own.
@@ -495,7 +495,7 @@ A hex holds **none or one**. A feature decides the district built there
 - Where every dungeon stands is server state.
 - A dungeon hex is never owned and needs no adjacency: any army can march to
   it.
-- **An army camps at the dungeon.** From the dungeon's sheet the player
+- **An army camps at the dungeon.** From the delve screen (§8.2) the player
   attacks its rooms one at a time; each fight resolves at once.
   - The camped army's losses and its heroes' wounds carry from room to room.
   - Recalling it marches it home, to be reinforced and sent again.
@@ -503,8 +503,40 @@ A hex holds **none or one**. A feature decides the district built there
 - **Every dungeon is 3 depths of 8 rooms**; the last room of a depth is its
   boss, which fields more and pays a multiple of a room.
 - **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
-  room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
+  room ([`11-expeditions.md`](11-expeditions.md) §7.1), and a lump of
+  precious material on the same scale (`precious`, §7.4). What a dungeon pays
   beyond its rooms — the found book — is **OQ-122**.
+- **A dungeon is named when it appears** — *The Sunken Barrow* — from
+  `nameFirst` and `nameSecond`; each sixth keeps its own first word, so no
+  two standing share a name. It is held by the creature its rooms' formation
+  fights as, and each depth has its boss (`bossNames`).
+
+### 8.2 The delve
+
+- **The dungeon's sheet has one button, Delve**, which opens the delve: a
+  full-height menu.
+- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8* and
+  who holds it.
+- **The race**: a rope with a banner per player who has cleared a room, at
+  how far they have gone, the player's own blue; and who closes it and is
+  paid for it.
+- **Depth tabs**: one per depth; a depth not yet reached is locked.
+- **The descent**: the depth's rooms down a stair in the rock, one node each:
+  - cleared — dimmed, ticked;
+  - **the frontier** — lit, the creature's portrait, its power against the
+    army's, and what it pays, its precious lump included;
+  - ahead — hazed, its power only;
+  - **the boss** at the foot — larger, named, his chest open with what he
+    pays.
+- **The army**, docked at the foot: its heroes with their HP, its squads
+  with their counts and the soldiers lost so far, its power; **Fight** (the
+  frontier) and **Recall**. On its way: when it arrives, and Recall. None
+  there: **Send**.
+- **After a fight**, once it has played: the spoils over the descent — what
+  the room paid and the soldiers it cost — with **Fight next** (or **Fight
+  again** after a defeat) and **Back**.
+- **On the map**, a dungeon's hex carries a ring filled as far as the player
+  has gone, *13/24*, and a red badge while their army is camped there.
 
 ## 9. Generation
 

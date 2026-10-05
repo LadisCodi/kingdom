@@ -140,7 +140,20 @@
     "bossRewardMultiplier": 3,
     "closeRewardMultiplier": 2,
     "returnHoursMin": 12,
-    "returnHoursMax": 24
+    "returnHoursMax": 24,
+    "precious": 1,
+    "nameFirst": ["Sunken", "Hollow", "Drowned", "Ashen", "Weeping", "Forgotten", "Silent", "Shattered"],
+    "nameSecond": ["Barrow", "Halls", "Deep", "Vault", "Crypt", "Warren", "Mines", "Catacombs"],
+    "bossNames": [
+      "the Hollow King",
+      "the Bone Matron",
+      "the Pale Warden",
+      "the Ember Wyrm",
+      "the Rot Baron",
+      "the Grey Seer",
+      "the Drowned Queen",
+      "the Iron Abbot"
+    ]
   },
   "worldPortal": {
     "openWeekday": 5,

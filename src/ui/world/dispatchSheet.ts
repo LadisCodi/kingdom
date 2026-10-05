@@ -210,6 +210,11 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           info: 'The camp leaves, and pays nothing',
           onClick: () => void game.doTributeCamp(bh.index),
         });
+      case 'openDelve':
+        return action({
+          label: 'Delve', kind: 'primary', info: 'The descent, its rooms and what they pay',
+          onClick: () => game.openDelve(bh.index),
+        });
       case 'recall':
         return action({
           label: 'Recall', kind: 'secondary', info: 'The garrison marches home',
