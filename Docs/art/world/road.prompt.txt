@@ -1,0 +1,13 @@
+WORLD ROAD TEXTURE for the game "Kingdom". Follow this file exactly.
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references (ref-assets.png = sprites that ship in the game; your texture lies on the ground next to them).
+
+WHAT IT IS
+- ONE straight country road seen from directly above, running LEFT TO RIGHT across the whole image: packed light-brown earth, two faint cart ruts, a few small pebbles, soft grassy edges that fade out to full transparency.
+- The game lays pieces of it on the ground between districts, so it must TILE SEAMLESSLY left to right: the left edge must continue exactly into the right edge. No objects, no fences, no puddles, nothing that would repeat visibly.
+- The road band fills about the middle 60% of the height; above and below it is full transparency.
+- The same render as the attached sprites: warm, bright, a little stylised, two or three flat tones of earth, no photographic texture, no strong shadows.
+
+SIZE: one landscape image, 1536x512.
+
+End of the request: Do not draw grid lines, borders, labels, captions, shadows or any background. Everything outside the road must be alpha 0, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

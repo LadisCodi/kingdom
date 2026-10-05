@@ -23,7 +23,8 @@ import type { BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, fogStateOf, homeIndex, returnsAt, revealsAt, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
-import { PORTAL_INDEX, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
+import { loadImage } from '../imageLoad';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
@@ -205,6 +206,11 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawHex(ground, ctx, camera, bh, states[bh.index], veilAt(bh.index), c, frame);
   }
 
+  // Roads: every standing district joined to its owner's neighbours, its
+  // city included — on the ground, over the plates, so what stands on a
+  // hex stands over it (19 §7.1).
+  drawRoads(ground, camera, frame, states);
+
   // The Portal's appointment, over its hex: when it opens, or how long it
   // has left (19 §10.1).
   const portal = source.portal();
@@ -323,6 +329,83 @@ function easeDensities(m: Motion, target: readonly number[], clock: number): Flo
     m.density[i] += Math.sign(d) * Math.min(Math.abs(d), step);
   }
   return m.density;
+}
+
+// ------------------------------------------------------------------ roads
+
+/** The road strip: a seamless texture running left to right, its road band
+ *  across the middle (Docs/plans/world-districts.md §3). */
+const ROAD_SPRITE = 'wroad';
+/** How wide the strip is drawn, as a share of a hex's width: the road band
+ *  is the middle of it. */
+const ROAD_WIDTH = 0.3;
+/** Until the texture loads, a plain earth line, this share of a hex wide. */
+const ROAD_STAND_IN = { color: 'rgba(150, 112, 70, 0.85)', width: 0.1 };
+
+const roadPatterns = new WeakMap<CanvasRenderingContext2D, CanvasPattern>();
+
+/**
+ * One road between two hex centres on the screen, laid on the tilted ground:
+ * the strip is drawn on the untilted plane, turned to point from one centre
+ * to the other, then squashed as the ground is. Drawn centre to centre, so
+ * two roads that meet at a hex meet under its district.
+ */
+function drawRoad(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, hw: number): void {
+  const dx = b.x - a.x;
+  const dy = (b.y - a.y) / TILT;
+  const length = Math.hypot(dx, dy);
+  const url = spriteUrl(ROAD_SPRITE);
+  const img = url === null ? null : loadImage(url);
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.scale(1, TILT);
+  ctx.rotate(Math.atan2(dy, dx));
+  if (img === null || !img.ready) {
+    ctx.strokeStyle = ROAD_STAND_IN.color;
+    ctx.lineWidth = hw * ROAD_STAND_IN.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(length, 0);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  let pattern = roadPatterns.get(ctx);
+  if (pattern === undefined) {
+    pattern = ctx.createPattern(img.img, 'repeat-x')!;
+    roadPatterns.set(ctx, pattern);
+  }
+  const height = hw * ROAD_WIDTH;
+  const k = height / img.img.naturalHeight;
+  pattern.setTransform(new DOMMatrix().translate(0, -height / 2).scale(k));
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, -height / 2, length, height);
+  ctx.restore();
+}
+
+/** Every road on the board: one between each pair of neighbouring hexes a
+ *  seat holds — a standing district, or its city — both of them seen. */
+function drawRoads(ctx: CanvasRenderingContext2D, camera: HexCamera, frame: WorldFrame, states: readonly FogState[]): void {
+  const source = frame.source;
+  const ownerOf = (i: number): number | null => {
+    const seat = source.seats().find((s) => s.index === i);
+    if (seat !== undefined) return seat.seat;
+    const h = source.hexOf(i);
+    return h !== null && h.held && h.owner !== null ? h.owner : null;
+  };
+  const hw = camera.hexWidth;
+  for (const bh of source.board().hexes) {
+    if (states[bh.index] === 'Unknown') continue;
+    const owner = ownerOf(bh.index);
+    if (owner === null) continue;
+    for (const n of boardNeighbors(bh.index)) {
+      // Each pair once, from its lower index; a city to a city never.
+      if (n < bh.index || states[n] === 'Unknown' || ownerOf(n) !== owner) continue;
+      if (bh.seat !== null && source.board().hexes[n].seat !== null) continue;
+      drawRoad(ctx, camera.hexToScreen(bh.hex), camera.hexToScreen(hexAt(n)), hw);
+    }
+  }
 }
 
 /** The canvases under the board's: the ground, then the clouds — made the
@@ -481,7 +564,7 @@ function drawHex(
       if (art.district !== null) {
         g.save();
         if (held !== null && !held.held) g.globalAlpha = 0.45; // still being built
-        if (own) drawProp(g, art.district.sprite, c.x, c.y + r * FOOT * TILT, hw);
+        if (own) drawProp(g, variant(art.district.sprite, key), c.x, c.y + r * FOOT * TILT, hw);
         else drawProp(g, DISTRICT_STAND_IN[art.district.kind], c.x + hw * 0.12, c.y + r * 0.7 * TILT, hw * 0.42);
         g.restore();
       }
