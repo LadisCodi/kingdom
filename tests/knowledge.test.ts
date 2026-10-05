@@ -141,7 +141,7 @@ describe('buying Knowledge', () => {
   it('prices the nth point ever bought with Gold at base × n²', () => {
     const state = empty();
     const base = KNOWLEDGE.goldPriceBase;
-    expect(base).toBe(100);
+    expect(base).toBe(400);
     expect(KNOWLEDGE.goldPriceExponent).toBe(2);
     expect(knowledgeGoldPrice(state, 0)).toBe(0);
     expect(knowledgeGoldPrice(state, 1)).toBe(base);

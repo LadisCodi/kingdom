@@ -331,7 +331,7 @@ One page, refreshed weekly:
 | Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gemRefillCosts` |
 | Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.secondsPerGem` |
-| A point of Knowledge | **270**, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| A point of Knowledge | **200**, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
 | Hero slot | 2,500, `×2` ($4.99 / $9.99) | `party.heroSlotGemCost*` |
 | Card pack prices | **Blue 400, Purple 900, Golden 600**. Blank = the store does not sell that tier, which is how Green, Yellow and Rose stay the pass's faucet | `packs`, `gemCost` |
 | Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |

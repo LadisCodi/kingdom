@@ -90,24 +90,26 @@ quests pay 28.
 
 | Chapter | Townhall | Target days | Spine | Dead ends | Opens at |
 |---|---|---|---|---|---|
-| 1 | 1 → 2 | day 1 | 20 | — | 0 cells |
-| 2 | 2 → 3 | day 1 → 2 | 18 | 6 | 60 |
-| 3 | 3 → 4 | 2 → 5 | 50 | 15 | 120 |
-| 4 | 4 → 5 | 5 → 7 | 35 | 12 | 180 |
-| 5 | 5 → 6 | 7 → 10 | 50 | 15 | 240 |
-| 6 | 6 → 7 | 10 → 14 | 70 | 20 | 300 |
-| 7 | 7 → 8 | 14 → 20 | 105 | 30 | 380 |
-| 8 | 8 → 9 | 20 → 24 | 70 | 20 | 480 |
-| 9 | 9 → 10 | 24 → 30 | 105 | 30 | 600 |
-| | | | **523** | **148** | |
+| 1 | 1 → 2 | day 1 | 2 | — | 0 cells |
+| 2 | 2 → 3 | day 1 → 2 | 38 | 4 | 20 cells |
+| 3 | 3 → 4 | 2 → 5 | 96 | 28 | 100 cells |
+| 4 | 4 → 5 | 5 → 7 | 54 | 18 | 160 cells |
+| 5 | 5 → 6 | 7 → 10 | 75 | 24 | 220 cells |
+| 6 | 6 → 7 | 10 → 14 | 96 | 28 | 280 cells |
+| 7 | 7 → 8 | 14 → 20 | 149 | 40 | 340 cells |
+| 8 | 8 → 9 | 20 → 24 | 96 | 28 | 400 cells |
+| 9 | 9 → 10 | 24 → 30 | 149 | 40 | 460 cells |
+| | | | **755** | **210** | |
 
-- Today's tree prices **1,265** Knowledge.
+- The spine is priced so the bar, three visits a day, is what holds each
+  Townhall level up to TH5; the dead ends are Knowledge on top, bought with
+  Gold (400 × n², never reset) or Gems (200 a point).
 - A card costs about a tenth of its chapter; the finale costs less than the
   column before it.
 - The cell gates are a starting point. Each sits inside the reach of the
   Townhall that opens the chapter (TH2 reaches 144 cells, TH3 256, TH4 324,
   TH5 484, TH6 576, TH7 784, TH8 1,024, TH9 1,260).
-- **The engaged player's way through is buying Knowledge with Gold**, not
+- **The engaged player's way through is buying Knowledge with Gold or Gems**, not
   skipping cards; the dead ends are where extra Knowledge goes.
 
 ### 3.4 Price: Knowledge, then Gold
