@@ -93,6 +93,9 @@
 
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
+- **The hand never stands on the line box.** Where it would, it points
+  from the target's other side; where both sides meet the box, the box moves
+  to the other edge, once a line.
 - **A blue magic glow** marks it: a control's own silhouette lit blue
   (`--magic-glow-*`, the one cold light in a warm palette); a map plot as its
   own diamond in the same glow. Small motes of that light drift slowly off

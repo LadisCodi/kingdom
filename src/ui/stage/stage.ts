@@ -27,7 +27,7 @@ import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { bubbleTopOver, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
+import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
 /** A scene on the stage, and where it has got to. */
 interface Playing {
@@ -369,6 +369,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     box.classList.toggle('no-cast', top < limit);
   };
 
+  /** This line's box already moved out of the hand's way: once a line, so
+   *  the box never flaps between the edges. */
+  let boxMovedForHand = false;
+
   /** Where the box sits: its own place, or away from the target. */
   const place = (l: SceneLine): void => {
     let where = l.box;
@@ -384,6 +388,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       }
       where = r !== null && bottomCovers(r) ? 'top' : 'bottom';
     }
+    boxMovedForHand = false;
+    setPlace(where);
+  };
+
+  /** The box goes to `where`. */
+  const setPlace = (where: string): void => {
     // A box already on screen MOVES to its new place — quickly, overshooting
     // a touch and settling back — rather than jumping there.
     const from = boxShown && box.dataset.place !== where ? box.getBoundingClientRect() : null;
@@ -570,6 +580,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   const drawTarget = (r: Rect | null): void => {
     const show = r !== null;
+    // Read before anything is written, so the page lays out once: the box,
+    // and the hand's size (a guess on the frame it first shows).
+    const f = frame.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const boxRect = b.width > 0 ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
+    const hand = { w: arrow.offsetWidth || 48, h: arrow.offsetHeight || 56 };
     const isCell = playing?.target?.kind === 'cell';
     glow(show && !isCell && playing?.target?.kind === 'ui' ? uiNode(playing.target.key) : null);
     game.tutorialFocus = show && playing?.target?.kind === 'cell'
@@ -584,16 +600,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     };
     if (!isCell) Object.assign(halo.style, padded);
     Object.assign(sparks.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    // Over a building with its collect bubble up, the hand stands above the
+    // bubble: a line asking the player to gather it must not hide it.
+    const bubble = playing?.target ? bubbleTopOver(game, playing.target, frame) : null;
+    const top = bubble === null ? r.y - 8 : Math.min(r.y - 8, bubble - 4);
     // The arrow points DOWN at the target from above it, unless that would
-    // leave the screen, then UP from below.
-    const above = r.y > 70;
+    // leave the screen, then UP from below — and never stands on the line.
+    const { above, moveBox } = handPlace(r, hand, boxRect, f.height, top);
+    // Judged only while the box is still: mid-move, it is not where it settles.
+    if (moveBox && !boxMovedForHand && box.getAnimations().length === 0) {
+      boxMovedForHand = true;
+      setPlace(box.dataset.place === 'top' ? 'bottom' : 'top');
+    }
     arrow.classList.toggle('is-below', !above);
     const src = above ? handDown : handUp;
     if (src !== null && arrow.getAttribute('src') !== src) arrow.setAttribute('src', src);
-    // Over a building with its collect bubble up, the hand stands above the
-    // bubble: a line asking the player to gather it must not hide it.
-    const bubble = above && playing?.target ? bubbleTopOver(game, playing.target, frame) : null;
-    const top = bubble === null ? r.y - 8 : Math.min(r.y - 8, bubble - 4);
     Object.assign(arrow.style, {
       left: `${r.x + r.w / 2}px`, top: above ? `${top}px` : `${r.y + r.h + 8}px`,
     });
