@@ -192,9 +192,13 @@
 
 ### 3.1 The profile
 
-- A save with no profile stops at a sheet before the map is playable: five
-  options, each with its budget and a line about who it is, and a line about
-  why the game is asking.
+- **The First Morning is played before anything is asked**
+  ([`23-tutorials.md`](23-tutorials.md) §3). Once it is over, a save with no
+  profile stops at a sheet: five options, each with its budget and a line
+  about who it is, and a line about why the game is asking.
+- **A playtest organiser can set it in the link**: `?payer=<Profile>`
+  (`F2P`, `Minnow`, `Dolphin`, `Whale`, `SuperWhale`) chooses it at launch and
+  the sheet never shows. A link cannot change a profile already chosen.
 - The sheet has no close knob and the scrim does not dismiss it. The presenter
   forces it over anything else that asks to open, and lets the waiting request
   (chiefly the welcome-back report) through once a profile is picked.

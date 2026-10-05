@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
-import { DOOR_HINT, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
+import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
 import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
@@ -2774,6 +2774,12 @@ export class Game {
     return pullPrice(this.state, banner);
   }
 
+  /** The payer profile is owed: none chosen, and the First Morning is over.
+   *  The morning is played before anything is asked (14-monetization.md §3). */
+  payerDue(): boolean {
+    return this.state.player.payer === null && !firstMorningOn(this.state);
+  }
+
   /** Choosing a profile is the one command that runs with no profile chosen.
    *  It hands the screen to whatever was waiting behind the sheet. */
   doChoosePayerProfile(profile: PayerProfile): void {
@@ -4146,9 +4152,10 @@ export class Game {
   }
 
   setOverlay(name: OverlayName | null): void {
-    // No payer profile, no game: the profile sheet has the screen until one
-    // is chosen (14-monetization.md §3). Whatever was asked for waits.
-    if (this.state.player.payer === null && name !== 'payerProfile') {
+    // No payer profile, no game past the First Morning: the profile sheet has
+    // the screen until one is chosen (14-monetization.md §3). Whatever was
+    // asked for waits.
+    if (this.payerDue() && name !== 'payerProfile') {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
     }
@@ -4206,7 +4213,7 @@ export class Game {
     this.selectedHex = null;
     this.iapDismissed();
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
-    this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
+    this.openOverlay = this.payerDue() ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     this.pendingSku = null;
