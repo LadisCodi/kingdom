@@ -139,6 +139,8 @@ import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef 
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt } from './sim/world/explorers';
+import { gemsToFinish } from './sim/rush';
+import { hexWork } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
@@ -4652,6 +4654,7 @@ export class Game {
       OwnGround: 'That ground is yours already',
       Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
       NoRoute: 'No way there through explored ground',
+      NothingBuilding: 'Nothing is being built there',
     };
     return LINES[why];
   }
@@ -4665,6 +4668,37 @@ export class Game {
   /** Claim a hex with an Outpost: a builder and its Gold. */
   async doClaimHex(index: number, gold: number): Promise<void> {
     await this.worldCommand(index, 'Outpost', 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+  }
+
+  /** Finish the builder's work on one of the player's hexes now, with Gems:
+   *  the server makes it stand, and the builder comes home. */
+  async doFinishHexWork(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const h = this.worldSource().hexOf(index);
+    const work = h === null ? null : hexWork(h);
+    if (work === null) return;
+    const gems = gemsToFinish((work.endsAt - this.now()) / 1000);
+    if (getWallet(this.state.player.wallet, 'Gems') < gems) {
+      this.shake(['Gems']);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.finish(index, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.player.wallet.Gems = getWallet(this.state.player.wallet, 'Gems') - gems;
+    const done = this.state.world.builds.find((b) => b.index === index);
+    this.state.world.builds = this.state.world.builds.filter((b) => b !== done);
+    playSfx('gemSpend');
+    if (done !== undefined) {
+      this.toast(done.what === 'Outpost'
+        ? 'Your Outpost stands — the ground is yours'
+        : `${WORLD_BUILD.improvements[done.what].name} reached level ${formatCount(done.level)}`);
+    }
+    this.applyWorldSnapshot(r.snapshot);
   }
 
   /** Build an improvement on a held hex, or raise it a level. */

@@ -15,7 +15,8 @@
 // any length adds at most one boundary per explorer, because nothing ever
 // sends one out again on its own (CLAUDE.md, invariant 1).
 
-import { RUSH, WORLD } from '../data/definitions';
+import { WORLD } from '../data/definitions';
+import { gemsToFinish } from '../rush';
 import { resolve } from '../modifiers';
 import { isTechComplete } from '../research';
 import { randInt } from '../rng';
@@ -247,7 +248,7 @@ export function tripRevealing(state: GameState, index: number): ExplorerTrip | n
  *  the build queue's rate (`rush.secondsPerGem`) — one rule for buying time,
  *  wherever the player meets it. */
 export const explorerRushCost = (trip: ExplorerTrip, now: number): number =>
-  Math.max(1, Math.ceil(Math.max(0, returnsAt(trip) - now) / 1000 / RUSH.secondsPerGem));
+  gemsToFinish((returnsAt(trip) - now) / 1000);
 
 export type FinishExplorerResult =
   | { kind: 'Finished'; home: ExplorerHome }

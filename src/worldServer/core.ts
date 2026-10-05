@@ -279,6 +279,28 @@ export function build(b: ServerBoard, seat: number, index: number, kind: WorldIm
   return { ok: true, finishesAt, snapshot: snapshotOf(b, seat, t) };
 }
 
+/** Finish what a builder is doing on `seat`'s hex now — its Outpost, or the
+ *  level being raised. What it is paid with is the client's: the server only
+ *  makes it stand. */
+export function finish(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  const claiming = h.outpostAt > t;
+  if (!claiming && h.work === null) return { ok: false, why: 'NothingBuilding' };
+  // Every store to now first: what stands changes the rates, as at an event.
+  settleStores(b, t);
+  if (claiming) {
+    h.outpostAt = t;
+    h.storeAt = t;
+  } else if (h.work !== null) {
+    h.improvement = { kind: h.work.kind, level: h.work.toLevel };
+    h.work = null;
+  }
+  recomputeChains(b, t);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
 export function collect(b: ServerBoard, seat: number, index: number, t: number): CollectResult {
   resolveTo(b, t);
   const h = b.hexes[index];

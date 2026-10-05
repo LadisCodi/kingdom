@@ -23,7 +23,7 @@
 import { resolve } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
-  ARMY, DISTRICTS, HEROES, RUSH, TRAINING, UNITS, levelIndexed,
+  ARMY, DISTRICTS, HEROES, TRAINING, UNITS, levelIndexed,
 } from './data/definitions';
 import { isTechComplete } from './research';
 import {
@@ -37,6 +37,7 @@ import {
 } from './state';
 import { canAfford, pay } from './wallet';
 import { recordEvent } from './events';
+import { gemsToFinish } from './rush';
 
 /**
  * THE ARMY CAP IS A HEADCOUNT (Docs/features/combat.md §14).
@@ -546,7 +547,7 @@ export function lineRemainingSeconds(
  *  (`rush.secondsPerGem`). One rule for buying time, wherever the player
  *  meets it. */
 export const lineRushCost = (state: GameState, buildingId: string, now: number): number =>
-  Math.max(1, Math.ceil(lineRemainingSeconds(state, buildingId, now) / RUSH.secondsPerGem));
+  gemsToFinish(lineRemainingSeconds(state, buildingId, now));
 
 export type RushTrainingResult = 'Success' | 'NothingTraining' | 'NotEnoughGems';
 

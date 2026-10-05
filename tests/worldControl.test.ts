@@ -8,7 +8,8 @@ import { busyBuilders, getWallet } from '../src/sim/state';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import { boardNeighbors } from '../src/sim/world/hex';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
-import { hexActions } from '../src/ui/world/worldActions';
+import { hexActions, hexWork } from '../src/ui/world/worldActions';
+import { gemsToFinish } from '../src/sim/rush';
 import { fittingImprovements } from '../src/worldServer/core';
 import type { Game } from '../src/game';
 import { freshGame, freshPresenter, fund, map, T0 } from './helpers';
@@ -139,5 +140,60 @@ describe('playing as a rival', () => {
     expect(game.worldSource().hexOf(at)?.owner).toBe(rival);
     expect(busyBuilders(game.state)).toBe(0);
     expect(game.worldSource().controlOf(at)?.owner.you).toBe(false);
+  });
+});
+
+// A builder's work on the board can be finished with Gems, like every other
+// wait: the server makes it stand, the client pays and the builder comes home.
+describe('finishing a world build with Gems', () => {
+  it('makes the Outpost stand at once, for the time it had left', async () => {
+    const { game, clock } = await connected();
+    fund(game.state, { Gold: 100_000 });
+    const at = claimable(game);
+    await game.doClaimHex(at, WORLD_BUILD.outpost.gold);
+    clock.t += 60_000;
+    const work = hexWork(game.worldSource().hexOf(at)!)!;
+    expect(work.startedAt).toBe(T0);
+    expect(work.endsAt).toBe(T0 + OUTPOST_MS);
+    const gems = gemsToFinish((work.endsAt - clock.t) / 1000);
+    game.state.player.wallet.Gems = gems;
+    await game.doFinishHexWork(at);
+    expect(game.state.player.wallet.Gems).toBe(0);
+    expect(busyBuilders(game.state)).toBe(0);
+    expect(game.worldSource().hexOf(at)?.held).toBe(true);
+    expect(game.worldSource().controlOf(at)?.owner.you).toBe(true);
+  });
+
+  it('raises a level at once, and refuses with nothing building', async () => {
+    const { game, clock, toasts } = await connected();
+    fund(game.state, { Gold: 100_000 });
+    const board = game.worldSource().board();
+    const at = boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) =>
+      hexActions(game.worldSource(), game.worldSeat(), board.hexes[n], SEEN).some((a) => a.kind === 'claim')
+      && fittingImprovements(board.hexes[n]).includes('LoggingCamp'))!;
+    await game.doClaimHex(at, WORLD_BUILD.outpost.gold);
+    clock.t += OUTPOST_MS;
+    advance(game.state, map, clock.t);
+    await game.refreshWorld();
+    game.state.player.wallet.Gems = 1e6;
+    await game.doFinishHexWork(at); // nothing is building: nothing happens
+    expect(game.state.player.wallet.Gems).toBe(1e6);
+    await game.doBuildHex(at, 'LoggingCamp', 1, WORLD_BUILD.improvements.LoggingCamp.levels[0].gold);
+    expect(busyBuilders(game.state)).toBe(1);
+    await game.doFinishHexWork(at);
+    expect(busyBuilders(game.state)).toBe(0);
+    expect(game.worldSource().hexOf(at)?.improvement).toEqual({ kind: 'LoggingCamp', level: 1 });
+    expect(toasts.at(-1)).toMatch(/reached level 1/);
+  });
+
+  it('is not finished without the Gems', async () => {
+    const { game } = await connected();
+    fund(game.state, { Gold: 100_000 });
+    const at = claimable(game);
+    await game.doClaimHex(at, WORLD_BUILD.outpost.gold);
+    game.state.player.wallet.Gems = 0;
+    await game.doFinishHexWork(at);
+    expect(busyBuilders(game.state)).toBe(1);
+    expect(game.worldSource().hexOf(at)?.held).toBe(false);
   });
 });
