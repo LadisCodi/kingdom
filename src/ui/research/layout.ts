@@ -8,9 +8,10 @@
 //
 // Everything here is pure: authored slots in, rows and pixels out.
 
-/** Three columns. A fourth would not fit a phone, and the flow stops reading
- *  as a flow past three. */
-export const COLS = 3;
+import { COLS } from '../../sim/data/techTreeRules';
+
+/** Three columns — a rule of what a legal tree is (techTreeRules.ts). */
+export { COLS };
 
 // ---- pixels ---------------------------------------------------------------
 /** One node card. Three of these plus two gaps and the two channels is the

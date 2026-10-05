@@ -1107,6 +1107,8 @@ export function serialize(state: GameState, now: number): SaveFile {
         Armies: state.world.armies.map((a) => ({
           ID: a.id, Heroes: a.heroes, Troops: a.troops, Target: a.target, Purpose: a.purpose,
         })),
+        // The last world-server effect applied: saved with what it changed.
+        EffectSeq: state.world.effectSeq,
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1717,6 +1719,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
     Armies?: Array<Record<string, unknown>>;
+    EffectSeq?: unknown;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   // A trip's time to leave each hex of its path. (A trip from before v78
@@ -1770,5 +1773,6 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         target: a.Target as number,
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),
+    effectSeq: Number.isInteger(d.EffectSeq) && (d.EffectSeq as number) >= 0 ? d.EffectSeq as number : 0,
   };
 }

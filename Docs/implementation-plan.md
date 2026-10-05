@@ -219,9 +219,9 @@ timer hatches a creature that joins the party in a slot of its own.
 
 Named here so nobody rediscovers them, and so they stay out of scope.
 
-- **The real world server.** The board runs against a local stand-in;
-  control is server-authoritative in the design, and no sim code reads another
-  player's control directly.
+- **The real world server.** The board runs against a local stand-in, through
+  the same door the real server will run (`handleWorld`); the steps are
+  [`plans/online-server.md`](plans/online-server.md).
 - **A guild league.** Small once the bar exists, and meaningless at prototype
   population (OQ-33).
 - **Cosmetics as a pipeline**, if and only if the probe ranks (OQ-26).

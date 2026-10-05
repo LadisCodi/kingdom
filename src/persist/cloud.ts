@@ -31,6 +31,9 @@ export async function cloudInit(): Promise<boolean> {
   }
 }
 
+/** The signed-in user's id, once `cloudInit` has a session. */
+export const cloudUserId = (): string | null => userId;
+
 export async function cloudLoad(): Promise<SaveFile | null> {
   if (!client || !userId) return null;
   try {

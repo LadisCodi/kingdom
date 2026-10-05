@@ -12,12 +12,14 @@
     "art": "node scripts/ui-atlas.mjs build",
     "art:check": "node scripts/ui-atlas.mjs check",
     "art:buttons": "node scripts/ui-buttons.mjs",
-    "art:characters": "node scripts/char-atlas.mjs build"
+    "art:characters": "node scripts/char-atlas.mjs build",
+    "server:bundle": "node scripts/server-bundle.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
+    "esbuild": "^0.21.5",
     "sharp": "^0.35.5",
     "typescript": "^5.5.0",
     "vite": "^5.4.0",

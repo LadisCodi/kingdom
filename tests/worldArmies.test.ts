@@ -30,7 +30,7 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
   const clock = { t: T0 };
   game.now = () => clock.t;
   game.worldCamera = new HexCamera({ clientWidth: 390, clientHeight: 844 });
-  game.worldServer = new LocalWorldServer(memoryStore());
+  game.worldServer = new LocalWorldServer(memoryStore(), () => clock.t);
   const toasts: string[] = [];
   game.onToast((m) => toasts.push(m));
   await game.connectWorld();
