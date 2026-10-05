@@ -2337,7 +2337,7 @@ export interface EventTemplate {
  */
 export const EVENTS: readonly EventTemplate[] = [];
 
-export const GAME_VERSION = '0.1.0';
+export const GAME_VERSION = '0.2.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/implementation-plan.md §1).
