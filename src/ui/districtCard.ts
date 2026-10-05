@@ -32,6 +32,7 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
+import { spell } from './relicSheet';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -204,6 +205,38 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
           el('span', {}, `Harmony ${formatExact(supply)} supplied, ${formatExact(demand)} demanded`),
           el('span', { class: 'dc-army-note' }, note)));
       }
+    }
+
+    // A SHRINE holds one city relic, whose passive and spell reach its aura
+    // (sim/hosts.ts): what it holds, its spell, and what it could hold.
+    if (def.hostsRelic) {
+      const shrine = () => {
+        const view = game.shrineView(district);
+        const held = view.holds === null ? null : game.relicCard(view.holds);
+        return el('div', { class: 'dc-shrine rl-page' },
+          el('div', { class: `rl-line${held === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
+            el('span', {}, held === null
+              ? 'Empty — host a city relic and it acts over this Shrine\u2019s aura'
+              : `${held.name}, level ${formatExact(held.level)}: ${held.now}`)),
+          el('div', { class: 'rl-line is-muted' }, iconEl('compass', { size: 'sm' }),
+            el('span', {}, `The aura reaches ${formatExact(view.radius)} cells round the Shrine`)),
+          ...(held === null ? [] : [spell(game, held.id, held)].filter((x): x is HTMLElement => x !== null)),
+          ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
+            el('div', { class: 'rl-forge' },
+              ...view.candidates.map((c) => btn({
+                label: 'Host',
+                note: c.at === null ? c.name : `${c.name} · from ${c.at}`,
+                onClick: () => game.doHostRelic(c.id, district.uniqueId),
+              })),
+              ...(held === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(held.id) })])))]),
+        );
+      };
+      body.append(sectionHead('Relic'), part(() => {
+        const view = game.shrineView(district);
+        const cast = view.holds === null ? null : game.castPhase(view.holds);
+        return JSON.stringify([view, cast?.phase ?? null, cast === null ? 0 : Math.ceil(cast.leftMs / 1000),
+          view.holds === null ? 0 : game.walletValue('Mana')]);
+      }, shrine));
     }
 
     // A crop plot is a resource cell you tap, so show what is left in it.

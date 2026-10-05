@@ -98,7 +98,7 @@ function vertices(edges: readonly BorderEdge[]): Point[] {
  * it even along the edge. Where two bands meet at a corner they add up, and
  * the corner glows a little brighter.
  */
-function glow(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[], alpha: number): void {
+function glow(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[], alpha: number, rgb = GLOW_RGB): void {
   for (const e of edges) {
     const v: Point = [e.across[0] * GLOW_DEPTH, e.across[1] * GLOW_DEPTH];
     const dx = e.b[0] - e.a[0];
@@ -111,9 +111,9 @@ function glow(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[], alpha
     let depth = v[0] * nx + v[1] * ny;
     if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
     const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
-    g.addColorStop(0, `rgba(${GLOW_RGB}, ${alpha.toFixed(3)})`);
-    g.addColorStop(0.5, `rgba(${GLOW_RGB}, ${(alpha * 0.45).toFixed(3)})`);
-    g.addColorStop(1, `rgba(${GLOW_RGB}, 0)`);
+    g.addColorStop(0, `rgba(${rgb}, ${alpha.toFixed(3)})`);
+    g.addColorStop(0.5, `rgba(${rgb}, ${(alpha * 0.45).toFixed(3)})`);
+    g.addColorStop(1, `rgba(${rgb}, 0)`);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(...e.a);
@@ -132,6 +132,9 @@ const LINE = 'rgba(255, 255, 255, 0.9)';
 /** The glow: sky blue, `GLOW_ALPHA` against the line and gone `GLOW_DEPTH`
  *  of a cell in, breathing between `BREATH_LOW` and full once a period. */
 const GLOW_RGB = '125, 205, 255';
+/** A Shrine's aura glows gold rather than blue: it is a relic's reach, not a
+ *  building's work area. */
+export const AURA_RGB = '255, 200, 90';
 const GLOW_ALPHA = 0.7;
 const GLOW_DEPTH = 0.9;
 const BREATH_MS = 2600;
@@ -195,6 +198,7 @@ function borderPath(ctx: CanvasRenderingContext2D, edges: readonly BorderEdge[],
 export function drawArea(
   ctx: CanvasRenderingContext2D, cells: readonly Coord[],
   cellRect: (c: Coord) => PlotBox, diamondPath: (b: PlotBox) => void, unit: number, now: number,
+  rgb = GLOW_RGB,
 ): void {
   if (cells.length === 0) return;
   const edges = areaEdges(cells, cellRect);
@@ -205,7 +209,7 @@ export function drawArea(
   ctx.beginPath();
   for (const cell of cells) diamondPath(cellRect(cell));
   ctx.clip();
-  glow(ctx, edges, GLOW_ALPHA * breath);
+  glow(ctx, edges, GLOW_ALPHA * breath, rgb);
   ctx.restore();
 
   ctx.save();
