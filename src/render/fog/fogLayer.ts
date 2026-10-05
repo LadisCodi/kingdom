@@ -2,13 +2,19 @@
 //
 // Every Undiscovered cell on screen, and everything past the map's edge, is
 // one tileable cloud texture laid across the projected plane, cut to a mask
-// of one texel a cell. It is its own WebGL canvas, stacked between the floor
-// and the map canvas (`mapLayers` in mapRenderer.ts): what stands on the
-// ground is drawn over it, the ground under it.
+// of one texel a cell. It is its own WebGL canvas, stacked under the canvas
+// that draws the ground the player can see: what stands on the ground is
+// drawn over it.
 //
 // The bank never covers ground the player can see. Its edge is inside the
 // fogged cell: the cloud thins toward a seen neighbour, the tallest puffs
 // lasting longest, so the edge is the outline of the clouds and not a line.
+//
+// The same bank lies on two grids: the province's diamonds (`drawFogLayer`,
+// stacked between the floor and the map canvas — `mapLayers` in
+// mapRenderer.ts) and the world's hexes (`drawCloudBank` with
+// `world/cloudGrid.ts`). A grid is the GLSL that says, for a point of the
+// plane, whether it is under the bank and how far it is from seen ground.
 
 import { TILE_H, TILE_W } from '../palette';
 import { loadImage } from '../imageLoad';
@@ -37,7 +43,8 @@ export interface FogFrame {
   camY: number;
   zoom: number;
   /** One byte a cell, 255 under the bank and 0 on ground the player can
-   *  see, row-major over `maskW × maskH` cells from cell `(maskX, maskY)`. */
+   *  see, row-major over `maskW × maskH` cells from cell `(maskX, maskY)` —
+   *  in the grid's own coordinates. Past its edge the mask's rim repeats. */
   mask: Uint8Array;
   maskX: number;
   maskY: number;
@@ -54,7 +61,41 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-const FRAG = `
+/**
+ * A grid the bank lies on: GLSL defining `float clearance(vec2 proj)` — for
+ * a point of the projected plane, -1 on ground the player can see, otherwise
+ * how far it is, in cells, to the nearest such ground (2 when none is near).
+ * It reads the mask with `fogAt(vec2 cell)`. `edge` is how far into a fogged
+ * cell the bank takes to reach full thickness.
+ */
+export interface BankGrid {
+  glsl: string;
+  edge: number;
+}
+
+/** The province's grid: 2:1 diamonds, cell (x, y). */
+const DIAMONDS: BankGrid = {
+  edge: EDGE_CELLS,
+  glsl: `
+float clearance(vec2 proj) {
+  float u = proj.x / ${TILE_W.toFixed(1)};
+  float v = proj.y / ${TILE_H.toFixed(1)};
+  vec2 p = vec2(v + u, v - u);
+  vec2 c = floor(p);
+  if (fogAt(c) < 0.5) return -1.0;
+  float d = 2.0;
+  for (int dy = -1; dy <= 1; dy++) {
+    for (int dx = -1; dx <= 1; dx++) {
+      vec2 n = c + vec2(float(dx), float(dy));
+      if (fogAt(n) < 0.5) d = min(d, length(max(abs(p - n - 0.5) - 0.5, 0.0)));
+    }
+  }
+  return d;
+}
+`,
+};
+
+const frag = (grid: BankGrid): string => `
 precision highp float;
 uniform sampler2D uMask;
 uniform sampler2D uCloud;
@@ -69,24 +110,12 @@ uniform float uTime;
 float fogAt(vec2 c) {
   return texture2D(uMask, (c - uMaskOrigin + 0.5) / uMaskSize).r;
 }
-
+${grid.glsl}
 void main() {
   vec2 css = vec2(gl_FragCoord.x, uView.y * uDpr - gl_FragCoord.y) / uDpr;
   vec2 proj = (css - uView * 0.5) / uZoom + uCam;
-  float u = proj.x / ${TILE_W.toFixed(1)};
-  float v = proj.y / ${TILE_H.toFixed(1)};
-  vec2 p = vec2(v + u, v - u);
-  vec2 c = floor(p);
-  if (fogAt(c) < 0.5) discard;
-
-  // How far, in cells, to the nearest ground the player can see.
-  float d = 2.0;
-  for (int dy = -1; dy <= 1; dy++) {
-    for (int dx = -1; dx <= 1; dx++) {
-      vec2 n = c + vec2(float(dx), float(dy));
-      if (fogAt(n) < 0.5) d = min(d, length(max(abs(p - n - 0.5) - 0.5, 0.0)));
-    }
-  }
+  float d = clearance(proj);
+  if (d < 0.0) discard;
 
   float drift = uTime / ${DRIFT_S.toFixed(1)};
   vec2 uv = proj / ${CLOUD_PX.toFixed(1)};
@@ -96,7 +125,7 @@ void main() {
   // The texture's light is its height: sunlit tops stand tallest. Toward a
   // seen neighbour only the tallest puffs remain.
   float height = clamp((dot(col, vec3(0.299, 0.587, 0.114)) - 0.68) / 0.3, 0.0, 1.0);
-  float depth = smoothstep(0.0, ${EDGE_CELLS.toFixed(2)}, d);
+  float depth = smoothstep(0.0, ${grid.edge.toFixed(2)}, d);
   float cut = height - (1.0 - depth) * 1.1;
   float a = smoothstep(-0.05, 0.05, cut);
   // A soft shadow under the outline, so the edge is clean.
@@ -125,12 +154,12 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   return s;
 }
 
-function init(canvas: HTMLCanvasElement): Gl | null {
+function init(canvas: HTMLCanvasElement, grid: BankGrid): Gl | null {
   const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
   if (!gl) return null;
   const prog = gl.createProgram()!;
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
-  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
+  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, frag(grid)));
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) ?? 'fog program');
   gl.useProgram(prog);
@@ -180,17 +209,23 @@ function cloudTexture(g: Gl): boolean {
 }
 
 /**
- * Draw the bank into `canvas`, a WebGL canvas of its own. Without WebGL it
- * draws nothing, and the floor's flat cloud tone stands in for it.
+ * Draw the province's bank into `canvas`, a WebGL canvas of its own. Without
+ * WebGL it draws nothing, and the floor's flat cloud tone stands in for it.
  */
 export function drawFogLayer(canvas: HTMLCanvasElement, f: FogFrame): void {
+  drawCloudBank(canvas, DIAMONDS, f);
+}
+
+/** Draw the bank on `grid` into `canvas`. A canvas keeps the grid it was
+ *  first drawn with. */
+export function drawCloudBank(canvas: HTMLCanvasElement, grid: BankGrid, f: FogFrame): void {
   let layer = layers.get(canvas);
   if (layer === undefined) {
     layer = { gl: null, lost: false };
     const l = layer;
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); l.lost = true; l.gl = null; });
-    canvas.addEventListener('webglcontextrestored', () => { l.lost = false; l.gl = init(canvas); });
-    layer.gl = init(canvas);
+    canvas.addEventListener('webglcontextrestored', () => { l.lost = false; l.gl = init(canvas, grid); });
+    layer.gl = init(canvas, grid);
     layers.set(canvas, layer);
   }
   const g = layer.gl;
