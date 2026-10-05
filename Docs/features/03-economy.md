@@ -6,8 +6,7 @@
 > are [`09-relics.md`](09-relics.md); the Knowledge bar and buying Knowledge
 > are [`07-research.md`](07-research.md) §3.
 >
-> **Status: built**, building stores included (§3.2), except the Knowledge ↔
-> Stardust split (§1.1), which is designed, not built.
+> **Status: built**, building stores included (§3.2).
 
 ## 1. One job each
 
@@ -24,8 +23,8 @@
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every tap on the ground · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
-| **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
-| **Hero XP** | dungeons · the Survey's paid column | hero levels, on any hero | kingdom | no — reads on the roster |
+| **Stardust** | dungeons · hero calls | the toll on a hero's ascension | kingdom | no — reads on the roster |
+| **Hero XP** | dungeons · lairs · the Survey's paid column | hero levels, on any hero | kingdom | no — reads on the roster |
 | **Cards** | packs — every room, every boss, the event, the pass, the Survey, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
 | **Gems** | quests, first clears, the season pass and the Survey (both columns), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
@@ -49,13 +48,13 @@
   are a stockpile counter, not a wallet row
   ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).
 
-### 1.1 Knowledge and Stardust (designed, not built)
+### 1.1 Knowledge and Stardust
 
 | Name | Job | Source | Scope |
 |---|---|---|---|
 | **Knowledge** | what research is paid in | time, 1/h up to 10 · lumps · Gold · Gems | **kingdom** |
-| **Stardust** | the toll on a hero's ascension | dungeons | **kingdom** |
-| **Hero XP** | levels of heroes | dungeons | **kingdom** |
+| **Stardust** | the toll on a hero's ascension | dungeons · hero calls | **kingdom** |
+| **Hero XP** | levels of heroes | dungeons · lairs | **kingdom** |
 
 - Knowledge is kingdom-scoped; it survives a region reset.
 - Stardust and Hero XP are kingdom-scoped too.
@@ -86,7 +85,8 @@
 - Roofless villagers pay nothing; empty minutes are never banked.
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
-- Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
+- Housing capacity per level: `populationCapacityPerLevel`, 2 at level 1 and
+  2 more a level, to 20 at level 10 (OQ-46).
 - **A house's own level raises the rent its residents pay.**
   `buildings.taxBonusPerLevel` is a fraction of the base rate and a
   **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
@@ -149,24 +149,27 @@ running. Research already worked this way.
 
 **What a building makes waits inside it until the player collects it.**
 
-- Every building that makes Gold or harvests — Housing, Farm, Sawmill,
-  Quarry, Docks — has a **store**. A house's rent lands in it; a worker's
+- Every building that makes Gold or harvests — the Townhall, Housing, Farm,
+  Sawmill, Quarry, Docks — has a **store**. A house's rent lands in it; a worker's
   haul lands in it when the worker gets home.
 - Capacity is per building, per level, in units: `buildings` ›
   `storageCapacityPerLevel`. All currencies count together: a Quarry keeps
   Stone and Gold in one store.
-- Capacity is authored as about **4 h** of the building at full strength at
-  levels 1–5, rising to about **12 h** at level 10 (OQ-107). Nothing but the
-  building's level raises it (OQ-108).
+- Capacity is authored as **1 hour** of the building at full strength at
+  level 1, rising by the same factor each level to **12 hours** at level 10
+  (×1.32 a level: 1 h · 1 h 19 · 1 h 44 · 2 h 17 · 3 h · 4 h · 5 h 16 ·
+  6 h 56 · 9 h 8 · 12 h).
+  Full strength is a full house, a full crew, or the Townhall's own income at
+  that level. Nothing but the building's level raises it (OQ-108).
 
 | Building | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Townhall | 2,400 Gold | 250,000 | 2,600,000 |
-| Housing | 15,000 Gold | 350,000 | 4,600,000 |
-| Farm | 4,300 | 14,000 | 250,000 |
-| Sawmill | 3,600 | 11,000 | 170,000 |
-| Quarry | 1,600 | 5,500 | 100,000 |
-| Docks | 3,100 | 12,000 | 120,000 |
+| Townhall | 600 Gold | 190,000 | 3,900,000 |
+| Housing | 3,600 Gold | 110,000 | 1,400,000 |
+| Farm | 1,400 | 15,000 | 360,000 |
+| Sawmill | 1,100 | 12,000 | 290,000 |
+| Quarry | 420 | 4,600 | 110,000 |
+| Docks | 1,100 | 12,000 | 170,000 |
 
 - A data rule requires a store on anything that makes Gold or harvests, and
   forbids one on anything else.
@@ -225,13 +228,17 @@ absence is replayed, and each building stops when its store is full
 - The Townhall trains villagers in a queue.
 - Each press of Train pays its Food cost up front, priced as if everything
   already queued had delivered, and appends one villager.
-- Villagers complete sequentially at `training.seconds` = 20 s each.
+- Villagers complete one at a time. A villager's wait depends on their place
+  in the town (the population plus everyone queued ahead of them):
+  `training.seconds` (20 s) × `training.villagerSecondsGrowth` (×1.07) per
+  place. So the 1st takes 20 s, the 20th about 1 min, the 40th about 5 min
+  and the 70th about 35 min. The wait is stamped when the villager's clock starts.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.05`
-  per villager beyond — the Townhall's levels ask for villagers
-  ([`05-city-and-districts.md`](05-city-and-districts.md) §1), so the curve
-  has to let a city reach seventy of them in a month.
+- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.1`
+  per villager beyond: about 3,500 Food for the 20th, 23,000 for the 40th and
+  405,000 for the 70th. The Townhall's levels ask for villagers
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - No tap hurries the queue.
 - Timers take Gems ([`04-harvest.md`](04-harvest.md) §3.2).
 
@@ -242,7 +249,7 @@ absence is replayed, and each building stops when its store is full
 - The rate a tap reads is the cell's own measured rate — its chunk over its
   rhythm ([`04-harvest.md`](04-harvest.md) §4) — never the city-wide total for
   that resource. Full design: [`04-harvest.md`](04-harvest.md) §3.
-- `TapPower` buys the tap's duration: +20% a level over ten levels.
+- `TapPower` buys the tap's duration: +20% a rank over four ranks.
 - **Mana is spent only on taps on the ground** — trees, berries, crops, rocks,
   mountains, shoals: `tap.manaCost` = 1. A tap on a building never costs Mana
   (§3.2). Paying fog costs Gold. A tap refused by a tech gate costs no Mana.
@@ -264,17 +271,17 @@ and research**.
 
 | Sink | Size |
 |---|---|
-| The whole map's fog | 4,729,789,354 |
-| The technology tree, 24 techs | 6,600 |
-| Expedition supplies, per launch | 50 → 2,000 by tier, recurring |
-| Landmark claims | 2,000 · 25,000 ×5 · 100,000 ×4 |
-| Buildings and upgrades | on a count and level curve; the fifteen upgrades total **51,926** |
-| **Wonder levels** | **unbounded** — [`16-wonders.md`](16-wonders.md) |
+| The whole map's fog | 2,522,803,392 |
+| The technology tree, 167 techs | 592,385 |
+| A lair fight's supplies, per attempt | 25 → 1,000 by tier |
+| Landmark claims | 2,000 · 10,000 (the Watchtower) · 25,000 ×5 · 100,000 ×4 |
+| Buildings and upgrades | on a count and level curve |
+| **Wonder levels** (designed, not built) | **unbounded** — [`16-wonders.md`](16-wonders.md) |
 
-- The quest chain pays **11,865 Gold across 50 quests**: 1.80× the whole
-  technology tree ([`07-research.md`](07-research.md) §1).
-- Every row except Wonder levels is one-time: upgrades **51,926** plus landmark
-  claims **527,000**, roughly 780,000 Gold of finite sink.
+- The quest chain pays **16,215 Gold across 67 quests**
+  ([`12-quests.md`](12-quests.md)).
+- Every row except Wonder levels is one-time: landmark claims total
+  **537,000**.
 - The only unbounded sink is Wonder levels ([`16-wonders.md`](16-wonders.md)).
 
 ## 7. Dials, in the order to reach for them
@@ -286,10 +293,10 @@ and research**.
 | The Townhall's own Gold per level | 10 · 60 · 240 · 560 · 1,050 · 1,700 · 2,500 · 3,400 · 4,500 · 5,400 a minute | `buildings` › Townhall › `goldPerMinutePerLevel` |
 | Seconds a tap is worth | **10 s of work** | `tap.workSeconds` |
 | Tap Mana cost, ground taps only | 1 | `tap.manaCost` |
-| Store capacity per level | about 4 h of the building at levels 1–5, 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
+| Store capacity per level | 1 h of the building at level 1, ×1.32 a level to 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
-| Housing capacity per level | [2, 4] — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
-| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
+| Housing capacity per level | 2 · 4 · 6 … 20 — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
+| Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,20,45,100,250,500,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
 | Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `currencies.goldValue` |
 | Adjacency rules | §3.1 | `adjacency` — `district`, `neighbor`, `stat`, `magnitude` |

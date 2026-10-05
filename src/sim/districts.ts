@@ -131,7 +131,7 @@ export function placementBlock(
   // Harmony, like the count cap above it, is about the BUILDING rather than
   // the cell — every cell on the map answers the same way, which is why the
   // build menu refuses the card before the player ever enters placement
-  // (Docs/plans/builder-30-days.md §6.7).
+  // (Docs/features/21-harmony.md).
   if (movingId === undefined && harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   // The one per-type rule left, and it is about terrain rather than layout:
   // a pier spanning the shoreline needs exactly ONE of its 2×1 cells on

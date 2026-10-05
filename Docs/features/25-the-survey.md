@@ -6,8 +6,7 @@
 > ([`../overview.md`](../overview.md) § *The fantasies*). The other ladder
 > is the season pass ([`20-season-pass.md`](20-season-pass.md)).
 >
-> **Status: built 2026-10-02**, but for the seal that flies to the pill
-> (§4).
+> **Status: built**, but for the seal that flies to the pill (§4).
 
 ## 1. Shape
 
@@ -63,8 +62,8 @@
 - **Buying the Survey opens every level already reached**: a column of cells
   to tap, not a payout.
 - **A level reached is a moment on the map**: the reveal that crosses it
-  sends a small seal from the cell to the Survey's pill, which glows while a
-  cell waits.
+  sends a small seal from the cell to the Survey's pill *(not built)*; the
+  pill glows while a cell waits.
 - A pack opens itself in the card reveal ([`09-relics.md`](09-relics.md) §6).
 
 ## 5. The door
@@ -116,7 +115,7 @@ and [`m63-survey-widget.png`](../art/ui/mockups/m63-survey-widget.png).
   would slow the ladder exactly when the player plays most.
 - **A level for sale**, a reveal for sale, or anything that climbs it but
   revealing.
-- **Instant reveals as a product** (the Fog charter is cut): the Survey sells
+- **Instant reveals as a product**: the Survey sells
   what exploring finds, never a way round exploring.
 - A second paid tier above the paid column.
 - Counting the world map or a temporary province.

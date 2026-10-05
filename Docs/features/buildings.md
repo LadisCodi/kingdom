@@ -9,9 +9,9 @@
 > [`04-harvest.md`](04-harvest.md).
 >
 > **Status.** Built: every district below is an entry of `buildings`
-> (`src/sim/data/game/buildings.json`) — the twelve of the province economy, the Infirmary (§4.9), the
-> four workshops (§4.10), whose count cap opens at Townhall 5, and the six
-> decorations (§4.12). Designed, not built: Townhall 5, and the three Wonders
+> (`src/sim/data/game/buildings.json`) — among them the Infirmary (§4.9), the
+> four workshops (§4.10), whose count cap opens at Townhall 4, the six
+> decorations (§4.12) and the War Camp. Designed, not built: the three Wonders
 > (§5, [`16-wonders.md`](16-wonders.md)).
 
 ## 1. Reading the tables
@@ -25,8 +25,9 @@
   the same late ladder, and it is written once, in §4.11.
 - **A cost shown is the first instance's.** A later one multiplies it
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3.1).
-- Every building has a fog ring: reveal 1, discover 2 (the four halls discover
-  1).
+- Every building reveals its own ground and discovers 2 around it (the four
+  halls, the Infirmary and the War Camp 1); only the Townhall reveals a ring
+  (§3). The decorations have no fog ring.
 - Every building is movable, free and instantly, except the Townhall.
 
 ## 2. The city at a glance
@@ -36,7 +37,7 @@
 | **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; makes Gold of its own into its store (10 a minute at L1); the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
-| **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
+| **Farm** | 1×1 | Farming | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
@@ -46,6 +47,8 @@
 | **Spear Hall** | 2×2 | Spears | 1 | **10** | army cap; trains Lancer |
 | **Shooting Grounds** | 2×2 | Archery | 1 | **10** | army cap; trains Archer |
 | **Stables** | 2×2 | Cavalry | 1 | **10** | army cap; trains Cavalry |
+| **Infirmary** | 2×2 | Infirmary | 1 | **10** | beds for the wounded (§4.9) |
+| **War Camp** | 2×2 | Muster | 1 | **5** | army slots on the world board ([`19-world-map.md`](19-world-map.md) §4) |
 | **Carpenter** | 2×2 | Joinery | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
 | **Mason's Yard** | 2×2 | Stone Dressing | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
@@ -63,20 +66,20 @@
 - The Townhall level is the era: it gates every count cap and every level gate
   in the tables below, and nothing else does that for all of them at once
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
-- Trains **villagers** in a queue: 20 s each, Food cost `5, 20, 45, 100,
-  250, 500, 1000` then ×1.05 ([`03-economy.md`](03-economy.md) §4). No tap
+- Trains **villagers** in a queue: 20 s for the first and ×1.07 for each
+  villager already in town or queued; Food cost `5, 20, 45, 100, 250, 500,
+  1000` then ×1.1 ([`03-economy.md`](03-economy.md) §4). No tap
   hurries it. Its own levels ask for villagers
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
-- Is the map's origin: fog price, build cost and build time are measured from
-  it. It seeds the fog (reveal 1, discover 2).
+- Is the map's origin: fog price and build time are measured from it. It seeds the fog (reveal 1, discover 2).
 - Does not answer a tap, does not produce Mana, does not raise the army cap,
   cannot be moved.
 
 | Level | Gate | Cost | Time |
 |---|---|---|---|
 | 1 | — | placed at game start | — |
-| 2 | — | 60 Wood | 30 s |
-| 3 | `Bureaucracy` (Civics era 2) | ×3.9 per level | ×4 per level |
+| 2 | — | 99 Gold + 66 Wood | 30 s |
+| 3 | `Bureaucracy` (Civics era 2) | 6,000 Gold + 330 Wood | ×4 per level |
 | 4 | `Magistracy` (Civics era 3) | | |
 
 ### 3.1 The ladder to 10
@@ -99,14 +102,14 @@
   ([`21-harmony.md`](21-harmony.md)).
 - **The wait doubles a level from 6**: 6 h · 12 h · 24 h · 48 h · 96 h, twice
   and more a district's, since the Townhall is the clock every other ladder
-  hangs from. Currencies grow ×1.7 a level from 6, continuous with the early
-  curve.
+  hangs from. Currencies grow about ×2.2 a level from 6
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §3).
 - **Pacing** (the design's target, days orientative — the thirty-day harness
   asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
   6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
-  2026-09-09: 2 · 3 · 6 · 8 · 8 · 10 · 12 · 16 · 21 — the whole ladder runs
-  ahead of target now that a house's level pays rent as well as room
-  ([`03-economy.md`](03-economy.md) §3).
+  2026-10-05, three visits a day: 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 ·
+  day 11 — 6 · day 16 — 7 · day 26, and 8 not inside thirty days. Knowledge
+  gates 3 and 4; villagers, and the Food they cost, gate every level from 5.
 
 ## 4. The districts
 
@@ -121,7 +124,8 @@
 - Housing next to Housing: −1 Gold/min per neighbour, flat — a level does not
   scale it.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
-- Build 10 Wood, 20 s. Upgrade 30 Wood + 10 Stone, 20 s, ×1.5 per level.
+- Build 15 Gold + 10 Wood, 20 s. Level 2: 66 Gold + 33 Wood + 11 Stone, 20 s;
+  time ×1.5 per level.
 - Levels 6–10 add two residents and +25% rent each, to 20 residents at +225%
   (§4.11).
 
@@ -138,17 +142,18 @@
 - The plot **is** the resource: a Crops cell, 1 Food per 8 s strike, stock 10,
   recovers in 60 s ([`04-harvest.md`](04-harvest.md) §2).
 - Tapped by hand, or worked by a Farm whose area of influence covers it.
-- One level. Build 10 Wood, 10 s.
+- One level. Build 15 Gold + 10 Wood, 10 s.
 
 ### 4.3 Farm
 
 - Sends its crew to every crop plot inside its area of influence.
-- Build 30 Wood, 20 s. Upgrade 50 Wood, 30 s, ×1.5 per level.
+- Build 45 Gold + 30 Wood, 20 s. Level 2: 83 Gold + 55 Wood, 30 s; time ×1.5
+  per level.
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
 | 1 | 3 | 1 | — |
-| 2 | 5 | 2 | TH2 · `Farming` |
+| 2 | 5 | 2 | TH2 |
 | 3 | 7 | 2 | TH3 |
 | 4 | 9 | 3 | TH3 |
 | 5 | 11 | 3 | TH4 |
@@ -156,13 +161,14 @@
 ### 4.4 Sawmill
 
 - Sends its crew to every forest inside its area of influence.
-- Build 20 Wood, 20 s. Upgrade 60 Wood, 30 s, ×2.5 per level.
+- Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
+  per level.
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
 | 1 | 3 | 1 | — |
 | 2 | 5 | 2 | TH1 |
-| 3 | 7 | 3 | TH2 · `Engineering` |
+| 3 | 7 | 3 | TH2 · `Timber Framing` |
 | 4 | 9 | 4 | TH3 · `Architecture` |
 | 5 | 11 | 4 | TH4 |
 
@@ -172,12 +178,13 @@
   pays Stone; an iron vein pays Stone once `Mining` is researched; a gold
   mountain pays Gold once `Deep Mining` is researched
   ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
-- Build 30 Wood, 120 s. Upgrade 40 Wood, 30 s, ×1.5 per level.
+- Build 45 Gold + 30 Wood, 120 s. Level 2: 66 Gold + 44 Wood, 30 s; time ×1.5
+  per level.
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
 | 1 | 3 | 1 | — |
-| 2 | 5 | 2 | TH2 · `Engineering` |
+| 2 | 5 | 2 | TH2 · `Quarry Hoists` |
 | 3 | 7 | 3 | TH3 · `Architecture` |
 | 4 | 9 | 4 | TH3 |
 | 5 | 11 | 4 | TH4 |
@@ -186,7 +193,8 @@
 
 - A pier, one half on land and one on water. Its boats work every shoal inside
   its area of influence: 2 Food per 20 s strike, respawning in 90 s.
-- Build 25 Wood, 20 s. Upgrade 35 Wood, 30 s, ×1.5 per level.
+- Build 38 Gold + 25 Wood, 20 s. Level 2: 59 Gold + 39 Wood, 30 s; time ×1.5
+  per level.
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
@@ -201,8 +209,8 @@
 - The Mana engine: each level adds capacity and regeneration
   ([`08-magic.md`](08-magic.md) §2). Unlocked by `Consecration` (Magic era 1).
 - One per city; `Second Sanctum` (Magic era 3) allows a second.
-- Build 300 Gold + 40 Stone, 90 s. Upgrade 500 Gold + 80 Stone ×1.8 per
-  level, 120 s ×1.6 per level.
+- Build 9,000 Gold + 100 Stone, 90 s. Level 2: 17,000 Gold + 220 Stone, 120 s;
+  time ×1.6 per level.
 
 | Level | Capacity | Regen / h | Gate |
 |---|---|---|---|
@@ -224,12 +232,12 @@ regeneration +20, +25, +30, +36, +42 an hour.
   has exactly one hall (checked by `dataRules.ts`); the technology that
   unlocks a unit unlocks its hall.
 
-| Hall | Trains | Unlock | Build | Upgrade base |
+| Hall | Trains | Unlock | Build | Level 2 |
 |---|---|---|---|---|
-| **Barracks** | Warrior | `Warrior` | 60 W + 20 S, 60 s | 180 W + 60 S, 90 s |
-| **Spear Hall** | Lancer | `Spears` | 80 W + 30 S, 120 s | 240 W + 90 S, 120 s |
-| **Shooting Grounds** | Archer | `Archery` | 80 W + 30 S, 300 s | 240 W + 90 S, 120 s |
-| **Stables** | Cavalry | `Cavalry` | 120 W + 70 S, 90 s | 360 W + 210 S, 180 s |
+| **Barracks** | Warrior | `Warrior` | 3,600 G + 200 W, 60 s | 12,000 G + 500 W + 170 S, 90 s |
+| **Spear Hall** | Lancer | `Spears` | 4,900 G + 200 W + 75 S, 120 s | 17,000 G + 660 W + 250 S, 120 s |
+| **Shooting Grounds** | Archer | `Archery` | 4,900 G + 200 W + 75 S, 300 s | 17,000 G + 660 W + 250 S, 120 s |
+| **Stables** | Cavalry | `Cavalry` | 8,600 G + 300 W + 180 S, 90 s | 29,000 G + 990 W + 580 S, 180 s |
 
 Upgrades grow ×1.6 in time per level; what each level costs is authored in its
 `costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)
@@ -237,14 +245,14 @@ Upgrades grow ×1.6 in time per level; what each level costs is authored in its
 
 | Level | Army cap | Gate |
 |---|---|---|
-| 1 | 6 | — |
-| 2 | 10 | TH1 |
-| 3 | 15 | TH2 |
-| 4 | 21 | TH3 · `Warband II` — veteran units |
-| 5 | 28 | TH3 · `Warband III` — champion units |
+| 1 | 150 | — |
+| 2 | 250 | TH1 |
+| 3 | 400 | TH2 |
+| 4 | 600 | TH3 · `Warband II` — veteran units |
+| 5 | 850 | TH3 · `Warband III` — champion units |
 
-Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten field
-272.
+Levels 6–10 continue — 1,100, 1,400, 1,750, 2,150, 2,600 — so four halls at
+ten field 10,400.
 
 ### 4.9 The Infirmary
 
@@ -260,7 +268,7 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
   Infirmary's own bench, at `army.healCostShare` of the recruit price and
   `army.healTimeShare` of the recruit clock. It never competes with a hall's
   recruiting.
-- 1×1, 80 Wood + 40 Stone to build.
+- 2×2, 80 Wood + 40 Stone to build.
 
 ### 4.10 The four workshops
 
@@ -269,15 +277,16 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
   [`17-workshops-and-goods.md`](17-workshops-and-goods.md).
 - A level buys **crew and queue length** — 1 → 6 villagers, 3 → 12 slots —
   and never shortens an item's work.
-- Their only gate is the count cap by Townhall level: no workshop level asks
-  for a technology or a Townhall level of its own.
+- Below level 6 their only gate is the count cap by Townhall level: no
+  workshop level asks for a technology, and none up to 5 for a Townhall level
+  of its own.
 
-| Workshop | Makes | Unlock | Build | Upgrade base |
+| Workshop | Makes | Unlock | Build | Level 2 |
 |---|---|---|---|---|
-| **Carpenter** | Planks | `Engineering` | 120 W, 60 s | 200 W, 120 s |
-| **Mason's Yard** | Cut Stone | `Engineering` | 100 W + 60 S, 90 s | 160 W + 100 S, 180 s |
-| **Smelter** | Iron | `Mining` | 400 G + 120 S, 120 s | 600 G + 200 S, 240 s |
-| **Rune Carver** | Runestone | `Attunement II` | 800 G + 200 S, 180 s | 1200 G + 300 S, 360 s |
+| **Carpenter** | Planks | `Joinery` | 5,400 G + 300 W, 60 s | 10,000 G + 550 W, 120 s |
+| **Mason's Yard** | Cut Stone | `Stone Dressing` | 7,200 G + 250 W + 150 S, 90 s | 13,000 G + 440 W + 280 S, 180 s |
+| **Smelter** | Iron | `Mining` | 12,000 G + 300 S, 120 s | 20,000 G + 550 S, 240 s |
+| **Rune Carver** | Runestone | `Attunement II` | 24,000 G + 500 S, 180 s | 40,000 G + 830 S, 360 s |
 
 Upgrades grow ×1.6 in time per level; what each level costs is authored in its
 `costPerLevel` ([`05-city-and-districts.md`](05-city-and-districts.md)
@@ -302,12 +311,11 @@ written once. The Townhall's own ladder is §3.
 | Sawmill · Docks | 3 → 7 **Planks** |
 | Carpenter | 2 → 6 **Cut Stone** |
 | Quarry · Smelter | 3 → 7 **Cut Stone** |
-| the four halls · Rune Carver | 2 → 6 **Iron** |
+| the four halls · the Infirmary · Rune Carver | 2 → 6 **Iron** |
 | Sanctum | 2, 3 **Cut Stone**, then 2, 3, 4 **Runestone** |
 
-- **Currencies grow ×1.7 a level** from level 6, on top of what the building's own
-  ladder reached at 5 ([`05-city-and-districts.md`](05-city-and-districts.md)
-  §3).
+- **Currencies grow about ×2.2 a level** from level 6
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §3).
 - **The wait is 2 h at level 6 and ×1.7 a level after it** — about 17 h at
   level 10. It is a timer, so it resolves in full during an absence.
 - **What the level buys**, by building:
@@ -354,7 +362,7 @@ Full design: [`16-wonders.md`](16-wonders.md).
 Research owns the early half of every ladder and nothing above it: past these
 levels a building is bought with a Townhall level and goods (§4.11).
 
-**Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
+**Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=data#tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
 
 | Building | Last tech-gated level |
 |---|---|
@@ -362,11 +370,11 @@ levels a building is bought with a Townhall level and goods (§4.11).
 | Housing 3 | `Aqueducts` (Civics era 3) |
 | Sawmill 4 | TH3 · `Architecture` |
 | Quarry 3 | TH3 · `Architecture` |
-| Farm 2 | TH2 · `Farming` |
 | Docks 2 | `Shipbuilding` (Magic era 3) |
 | Sanctum 5 | TH4 · `Attunement III` (Magic era 3) |
+| Tavern 5 | `Minstrels' Gallery` (Sagas era 2) |
 | the four halls 5 | TH3 · `Warband III` (Warfare era 3) |
-| the four workshops · the Infirmary | none — their unlock technology is the only one |
+| Farm · the four workshops · the Infirmary | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them
 
@@ -374,15 +382,15 @@ levels a building is bought with a Townhall level and goods (§4.11).
 |---|---|
 | A building's max level | `buildings.maxLevel` |
 | Count caps per Townhall level | `buildings.maxCountPerTownhallLevel` |
-| Per-level gates | `buildings.requiredTownhallLevelPerLevel`; a technology that gates a level says so in `?dev=tree` |
-| The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
+| Per-level gates | `buildings.requiredTownhallLevelPerLevel`; a technology that gates a level says so in `?dev=data#tree` |
+| The unlock technology | the card's `unlocks` in `?dev=data#tree` — derived onto `requiredTech` |
 | What a piece supplies, and what a level demands | `buildings.harmonySupply`, `harmonyCostPerLevel` — [`21-harmony.md`](21-harmony.md) |
 | What a build costs in refined goods | `buildings` › `costPerLevel`, level 1 `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | Residents, workers, radius, army cap, beds per level | `buildings.populationCapacityPerLevel`, `maxWorkersPerLevel`, `influenceRadiusPerLevel`, `armyCapPerLevel`, `bedsPerLevel` |
 | Which good a workshop makes, and its queue per level | `buildings.produces`, `queueLengthPerLevel` |
 | What a level costs in refined goods | `buildings` › `costPerLevel`, that level's `goods` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | Sanctum capacity and regen per level | `mana.sanctumCapPerLevel`, `mana.sanctumPerHourPerLevel` |
-| A second Sanctum | the card's `unlocks` in `?dev=tree` — derived onto `extraCountTech` |
+| A second Sanctum | the card's `unlocks` in `?dev=data#tree` — derived onto `extraCountTech` |
 | What every level costs, build included | `buildings` › `costPerLevel` — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |
 | How much dearer a later instance is | `buildings.instanceLinearGrowth`, `instanceExponentialGrowth` — [`05-city-and-districts.md`](05-city-and-districts.md) §3.1 |
 | Build and upgrade times | `buildings.buildDuration*`, `upgradeDuration*` |

@@ -1,4 +1,4 @@
-// Research: the research book (Docs/plans/research-book.md, mockups M43 and
+// Research: the research book (Docs/features/07-research.md §5, mockups M43 and
 // M46).
 //
 //  - ONE page, never a spread: a sheet of parchment centred on the screen on a

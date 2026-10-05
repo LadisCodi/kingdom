@@ -7,19 +7,19 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: built against a local stand-in for the world server**
-> ([`../plans/world-board.md`](../plans/world-board.md)): the board, the fog
-> and the explorers (§1–§3, §9); claiming, the chain, inactive hexes,
-> improvements and their stores, landmarks and Sanctuaries (§5, §7, §8);
+> **Status: built against a local stand-in for the world server**:
+> the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
+> the explorers (§3); claiming a district, its store, its roads and the
+> Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
-> (§4, §6). Five stand-in rivals claim, build, man a Fortress and now and
-> then attack on their own. The hex art is the province's, arranged on a
-> hex. Dungeons (§8.1) and the Dark Portal (§10) are built too: the Portal
-> opens on Fridays (UTC) for three days, its numbers in `worldPortal`.
+> (§4, §6); Dungeons (§8.1) and the Dark Portal (§10), which opens on
+> Fridays (UTC) for three days, its numbers in `worldPortal`. Five stand-in
+> rivals claim, build, man a Fortress and now and then attack on their own.
+> The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
 
-- **A pointy-top hex board, radius 5 from the centre: 91 hexes.**
+- **A pointy-top hex board, radius 6 from the centre: 127 hexes.**
 - **Six players a board.** A seventh player opens a new instance; for the
   prototype that is enough.
 - **A player joins the first board with a free city**, on its first free
@@ -29,14 +29,14 @@
 | Ring | Hexes | Its job |
 |---|---|---|
 | **0 — the centre** | 1 | The Dark Portal. Never owned, never built on, never fogged (§10) |
-| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to improvements built on it** (§7) |
-| **2–3 — the corridors** | 30 | The ground between a city and the centre. Nothing special, and unavoidable |
-| **4 — the home ring** | 24 | The six city hexes, on its corners, and the ground between them |
-| **5 — the outer ring** | 30 | Dungeons and Sanctuaries. Poor in production, rich in what production cannot buy |
+| **1 — the inner ring** | 6 | The richest ground on the board: **+200% to districts built on it** (§7) |
+| **2–4 — the corridors** | 54 | The ground between a city and the centre. Nothing special, and unavoidable |
+| **5 — the home ring** | 30 | The six city hexes, on its corners, and the ground between them |
+| **6 — the outer ring** | 36 | Dungeons and Sanctuaries. Poor in production, rich in what production cannot buy |
 
-- A city is **four hexes** from the centre and four from each neighbouring
-  city.
-- An inner-ring hex is three hexes from its nearest city and at most five from
+- A city is **five hexes** from the centre and five from each neighbouring
+  city: four hexes of ground lie between two neighbours.
+- An inner-ring hex is four hexes from its nearest city and at most six from
   any.
 - **The board is small on purpose.** There is nowhere to hide, every hex has a
   job, and conflict is a property of the geometry rather than a rule.
@@ -60,6 +60,7 @@
 - The jump between registers is ~3×. The strategic register is a planning
   surface, not an overview, and ships with the board.
 - 3–4 content elements are legible on a tactical hex.
+- **The board opens on your city**, in the tactical register.
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**
@@ -68,11 +69,14 @@
 
 | | |
 |---|---|
-| **Terrain** | grassland, plains, desert, mountain, … |
-| **Features** | **0…N of them** — a world hex is larger than a province cell and may hold several (§7) |
+| **Terrain** | Grassland, Plains or Desert |
+| **Feature** | **none or one** — Forest, Mountain, Fertile land, Game, or a site (§8) |
 | **Control** | neutral, or one named player |
 | **Connection** | active or inactive — only meaningful on a controlled hex (§5) |
-| **Improvements** | what the controlling player has built on it (§6) |
+| **District** | what its controller built on it, decided by its feature, and its upgrades (§7) |
+
+- **The feature decides the hex.** It is what the hex is worth, what can be
+  built there, and what its art is. The terrain is the ground under it.
 
 ## 3. Fog and exploring
 
@@ -84,8 +88,8 @@
 | State | Looks like | Province equivalent |
 |---|---|---|
 | **Revealed** | full terrain, contents, borders | Revealed |
-| **Sensed** | dimmed and half-veiled, faint silhouettes showing through | Discovered |
-| **Unknown** | opaque rolling mist, the whole hex hidden | Undiscovered |
+| **Sensed** | under a thin veil of cloud, what stands on it a pale silhouette (art-direction §8.1) | Discovered |
+| **Unknown** | under the cloud bank (art-direction §8.1): the hex is not there | Undiscovered |
 
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**
 - **A hex is Sensed when it is next to a hex you revealed.** The Portal,
@@ -101,7 +105,11 @@
 - **You explore by sending an explorer to a Sensed hex.** It marches there,
   works there, and marches home. There is no button that buys fog.
 - **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
-  first; a rank ladder in the Atlas gives more. No training, no cost per use.
+  first; a rank ladder in the Atlas gives more. No training.
+- **Sending one costs Gold**, paid when it leaves:
+  `exploreGoldBase` (2,500) × `exploreGoldGrowth` (×1.5) for every hex past
+  the first from the city — 2,500 next door, about 19,000 at 6 hexes, 96,000
+  at 10. A short purse refuses the trip.
 - **An explorer never fights and can never be stopped, attacked or lost.** It
   lives in the player's own save, like the fog it reveals.
 - **The work**: once there, the explorer works the hex for
@@ -109,8 +117,15 @@
   hex it lies from the city.
 - When the work is done, the hex **and the six around it** are revealed. The
   radius upgrades to 2. Nothing is revealed on the way.
-- **A march costs time, hex by hex** (§4.1), and no Gold.
+- **A march costs time, hex by hex** (§4.1).
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
+- **One trip per hex.** No explorer is sent to a hex one already out will
+  reveal — its target, or a hex within its reveal.
+- **A hex an explorer is out to shows the trip** in place of Explore: what
+  it is doing (on the way, exploring, coming home), one bar for the whole
+  trip, and **Finish**: Gems for the time left until it is home, at
+  `rush.secondsPerGem` like every other wait. Finished, its hexes are
+  revealed and the explorer is home.
 
 ## 4. Armies
 
@@ -154,13 +169,13 @@
 |---|---|
 | Grassland, Plains | ×1 |
 | Desert | ×1.5 |
-| Mountain | ×3 |
-| Forest (a feature, on top of the terrain) | ×1.5 |
+| Mountain (a feature, on top of the terrain) | ×3 |
+| Forest (a feature) | ×1.5 |
 | Every other feature, the Portal | ×1 |
 
-- Factors multiply: a forest on desert is ×2.25.
+- Factors multiply: a mountain on desert is ×4.5.
 - *Example, an explorer*: leaving open plain 1 min, a plain with forest
-  1 min 30 s, a mountain 3 min.
+  1 min 30 s, a mountain on grassland 3 min.
 - **A speed divides one hex's time** and never lengthens it — the hook for a
   hero or technology that is quicker over some ground.
 - **Your explorers and armies show their way**: footprints along the hexes
@@ -175,14 +190,22 @@
   active, and **can never be attacked**.
 - **Adjacency is always required.** A player may only take a hex adjacent to an
   **active** hex of their own.
-- **A neutral hex with nothing on it** is claimed by building an **Outpost**,
-  paying its Gold and a builder's time. Each Outpost costs more than the last,
-  by the hexes already held.
-- **World builds use the province's builders**: an Outpost or an improvement
-  level holds a builder until it stands, like a building in the city.
-- **A neutral hex that still carries buildings** — someone held it and lost it —
-  has its Outpost already standing: marching an army there is enough to claim
-  it, and its improvements change hands intact.
+- **A neutral hex with nothing on it is claimed by building its district**:
+  its Gold and a builder's time. There is no choice to make — **the hex's
+  feature decides which district it is** (§7).
+- **Each claim costs more than the last**, by the hexes already held.
+- **While its district is building, the hex is claimed but not held**: its
+  owner's border runs round it dashed, and turns solid when the district
+  stands.
+- **World builds use the province's builders**: a district or an upgrade
+  holds a builder until it stands, like a building in the city.
+- **A build on your own hex shows its progress** on the hex's sheet — what
+  is being built, one bar for the whole build, and **Finish**: Gems for the
+  time left, at `rush.secondsPerGem` like every other wait. Finished, it
+  stands at once and the builder is home.
+- **A neutral hex that still carries its district** — someone held it and
+  lost it — is claimed by marching an army there; the district and its
+  upgrades change hands intact.
 
 ### 5.2 Connection
 
@@ -199,7 +222,7 @@
 A hex that loses its chain to the city **is not lost — it goes inactive.** While
 inactive:
 
-- its improvements produce nothing;
+- its district produces nothing;
 - it grants neither the inner-ring bonus nor its features' passive effects, the
   Sanctuary included;
 - it cannot claim neighbours and cannot carry connection;
@@ -262,49 +285,71 @@ Two plays out of one button:
   ([`combat.md`](combat.md) §4); a fallen garrison's heroes go home
   exhausted.
 
-## 7. Improvements
+## 7. Districts
 
-Built only on a hex the player already controls, and only after the Outpost.
-**Each is opened by its own Atlas card**; *Cartography* opens the first
-explorer and the Outpost.
+**A held hex is a district**, and its feature decides which. No technology
+gates them; *Cartography* opens the first explorer.
 
-| Improvement | Needs | Gives |
+| The hex holds | District | Pays, into its store |
 |---|---|---|
-| **Outpost** | — | takes the hex, and opens the rest of this table |
-| **Logging Camp** | a Forest | Wood, into its store |
-| **Homestead** | a hex with no feature | Food, into its store |
-| **Stone Pit** | a Mountain | Stone, into its store |
-| **Fortress** | — | garrisoned by an army; covers this hex and its six neighbours (§6.1) |
+| **no feature** | **Rural district** — a small village | Gold: a tenth of what a full level-1 House pays (6 a minute) |
+| **Forest** | **Logging Camp** | Wood |
+| **Mountain** | **Quarry** | Stone |
+| **Fertile land** | **Farm Lands** | Food |
+| **Game** | **Hunting Grounds** | Food |
+| **Landmark** | **Observatory** | Knowledge |
+| **Sanctuary** | **Shrine** | raises max Mana while held and active — no store |
+| **Dungeon** | — never held (§8.1) | |
 
-- **Improvements are what Gold buys out here.** They are the world's Gold sink,
+- **Rural districts are the board's houses**, and pay far less than the
+  city's: the city's Houses stay the main source of Gold.
+- **Districts are what Gold buys out here.** They are the world's Gold sink,
   which is why the march is free.
-- **The inner ring pays +200%** to improvements standing on it. Permanent,
+- **The inner ring pays +200%** to districts standing on it. Permanent,
   independent of whether the Portal is open, and **only while the hex is
   active**.
+- **A district has one level.** Levels are an upgrade still to design.
 
-### 7.1 Stores
+### 7.1 Roads
 
-- **A producing improvement fills a store of its own**, as a province building
+- **Every district is joined by road to its owner's neighbours**: a road runs
+  from its centre to each adjacent hex its owner holds, the city included.
+- Roads are drawn **between the ground and the district**: the same road
+  pieces serve every district.
+- A road shows the chain back to the city (§5.2): a cut-off hex is where the
+  road stops.
+
+### 7.2 Upgrades
+
+- **An upgrade is built into a district that stands**, with Gold and a
+  builder's time, and shows on its hex.
+- **The Fortress is the first, and fits any district**: three levels,
+  garrisoned by an army, covering its hex and the six around it (§6.1).
+
+### 7.3 Stores
+
+- **A producing district fills a store of its own**, as a province building
   does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
 - **A tap on its hex collects the store into the city's wallet**, free.
-- **Yield and store size are authored amounts per improvement level.**
+- **Yield and store size are authored amounts per district.**
 - An inactive hex's store stops filling and can still be collected.
 - **The store goes with the hex.** A conquest hands it to the conqueror; a
   denial empties it. Collecting is the defence.
 
 ## 8. Features
 
-A hex holds 0…N. Some open an improvement, some give a passive while the hex is
-held, some are destinations.
+A hex holds **none or one**. A feature decides the district built there
+(§7); some are destinations instead.
 
 | Feature | What it does |
 |---|---|
-| **Forest** | opens the Logging Camp |
-| **Fertile land** | a Homestead here yields extra Food |
-| **Game** | a Homestead here yields extra Food |
-| **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). **Outer ring only** |
-| **Sanctuary** | raises max Mana while the hex is held and active. **Outer ring only** |
-| **Landmark** | fills a store of Knowledge while the hex is held and active, collected with a tap like an improvement's (§7.1). **Corridors only** (rings 2–3) |
+| **Forest** | its district is the Logging Camp |
+| **Mountain** | its district is the Quarry. A feature, as in the province: the ground under it is a terrain like any other |
+| **Fertile land** | its district is Farm Lands |
+| **Game** | its district is the Hunting Grounds |
+| **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). Never held. **Outer ring only** |
+| **Sanctuary** | its district is the Shrine: max Mana while held and active. **Outer ring only** |
+| **Landmark** | its district is the Observatory, which fills a store of Knowledge. **Corridors only** (rings 2–4) |
 
 ### 8.1 Dungeons
 
@@ -319,7 +364,7 @@ held, some are destinations.
   - the others are told who closed it.
 - **A closed dungeon comes back** after a roll between `returnHoursMin` and
   `returnHoursMax` (12–24 h), in its own sixth of the board:
-  - on rings 3–5, on a hex nobody holds and no other site stands on;
+  - on rings 3–6, on a hex nobody holds and no other site stands on;
   - never beside a city, never where it last stood;
   - it covers what the ground holds while it stands; gone, the ground is as
     it was;
@@ -336,25 +381,24 @@ held, some are destinations.
   boss, which fields more and pays a multiple of a room.
 - **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
   room ([`11-expeditions.md`](11-expeditions.md) §7.1). What a dungeon pays
-  beyond its rooms — the found book — is **OQ-118**.
+  beyond its rooms — the found book — is **OQ-122**.
 
 ## 9. Generation
 
 Contents are rolled at board creation, under rules:
 
 - **One 60° wedge is rolled and turned six times**, so every seat has the same
-  ground round it. A wedge is a seat's 15 hexes of rings 1–5; the inner ring
+  ground round it. A wedge is a seat's 21 hexes of rings 1–6; the inner ring
   is the exception (below).
-
+- **A hex rolls one feature at most** (`maxFeaturesPerHex`, 1).
 - A hex designated for a player start is always **Grassland with no feature**.
-- Every player has **at least one Grassland + Forest** hex adjacent to their
-  city.
-- Every player has **at least one Grassland with no feature** adjacent to their
+- Every player has **at least one Forest** hex adjacent to their city.
+- Every player has **at least one hex with no feature** adjacent to their
   city.
 - **No dungeon** is adjacent to a player's city.
 - **The inner ring is not rolled and not turned — it is authored by hand**, so
-  all six hexes are worth something and no two are alike. Proposed split: 2 Forest, 2 empty
-  (one of them Fertile land), 2 Mountain.
+  all six hexes are worth something and no two are alike: 2 Forest, 2
+  Mountain, 1 Fertile land, 1 empty (`worldGen.innerRing`).
 - **Every sixth of the board has exactly one Dungeon and one Sanctuary**, on
   its outer ring and never beside a city: six of each on every board, one for
   each seat at the same distance. They are placed, not rolled
@@ -364,22 +408,21 @@ Contents are rolled at board creation, under rules:
 
 ### 9.1 Which features roll where
 
-| Feature | Rolls on | Never with |
-|---|---|---|
-| **Forest** | Grassland, Plains, Mountain | Fertile land, Game, any site |
-| **Fertile land** | Grassland, Plains | Forest, any site |
-| **Game** | Grassland, Plains, Desert | Forest, any site |
-| **Dungeon** | any terrain (its art carries its own rock) | every other feature |
-| **Sanctuary** | Grassland, Plains | every other feature |
-| **Landmark** | Grassland, Plains, Desert | every other feature |
+| Feature | Rolls on |
+|---|---|
+| **Forest** | Grassland, Plains |
+| **Mountain** | Grassland, Plains, Desert |
+| **Fertile land** | Grassland, Plains |
+| **Game** | Grassland, Plains, Desert |
+| **Dungeon** | any terrain (its art carries its own rock) |
+| **Sanctuary** | Grassland, Plains |
+| **Landmark** | Grassland, Plains, Desert |
 
-- Dungeon, Sanctuary and Landmark are **sites**: a site stands alone on its hex.
-- Features roll in the table's order; **one that does not fit the terrain or a
-  feature already rolled is skipped**. Dungeon and Sanctuary are placed
-  instead (above). At most `maxFeaturesPerHex` (2) are kept.
+- Features roll in the table's order; **the first that rolls and fits the
+  terrain is kept**. Dungeon and Sanctuary are placed instead (above).
 - The rules are data (`worldGen.featureRules`), and the inner ring obeys them
   too.
-- Every combination they allow has its own art
+- Every feature has its own art, and so has every district
   ([`../plans/world-hex-art.md`](../plans/world-hex-art.md) §2).
 
 ## 10. The Dark Portal
@@ -405,7 +448,7 @@ The fixed appointment is worth more than the surprise.
 
 - Every player on the board is notified when it opens, and **every player may
   enter regardless of where their territory is**.
-- A **maximum depth** of 30–50 floors, tuned so nobody empties it in one event.
+- A **maximum depth** of 40 floors (`worldPortal.floors`), tuned so nobody empties it in one event.
 - Floors are taken **one at a time, no skipping**.
 - **Three attempts a day**, restored at a fixed hour. **An attempt is spent only
   on clearing a floor — failing costs nothing.**
@@ -434,11 +477,11 @@ The outer scope feeds the inner one.
 
 | The world pays | Which lands in |
 |---|---|
-| **Wood, Food and Stone**, collected from improvements' stores (§7.1) | the city's own purse |
+| **Gold, Wood, Food and Stone**, collected from districts' stores (§7.3) | the city's own purse |
 | **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
 | **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
 | **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |
-| **Knowledge**, from held landmarks' stores | research ([`07-research.md`](07-research.md) §7) |
+| **Knowledge**, from Observatories' stores | research ([`07-research.md`](07-research.md) §7) |
 
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
@@ -453,8 +496,9 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
-| **Outpost cost and build time** | how fast territory spreads | the map is claimed out too early |
-| **Improvement yields** | what holding ground is worth | the world is not worth leaving home for |
+| **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
+| **District cost and build time** | how fast territory spreads | the map is claimed out too early |
+| **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
@@ -464,16 +508,20 @@ The outer scope feeds the inner one.
 
 - **Attacking a city.** A city hex is never attackable, by anyone, ever.
 - **Cascading conquest** — no hex falls because a neighbour did.
-- **A hex that opens a map of its own** (OQ-5): a dungeon is a destination, not
+- **A hex that opens a map of its own**: a dungeon is a destination, not
   a third map level.
 - **Reactive defence.** Nothing is scrambled when an attack lands; what defends
   is what was garrisoned beforehand.
 - **Losing a hex outright to a cut corridor** — it goes inactive, never away.
-- **Cities on the world map.** One or two structures on a claimed hex, no more.
+- **Cities on the world map.** One district on a claimed hex, and its upgrades.
+- **Choosing what to build on a hex.** The feature decides; the choice is
+  which hex to take.
+- **More than one feature on a hex.**
+- **An Outpost before the building.** The district is the claim.
 - **Reusing `grid.ts`** for the lattice.
 - **A rule that forbids continuous conflict.** The price in troops is the only
   brake.
 
-**Open questions:** OQ-3 (season length — the shard is six players on 91 hexes,
-the season is not set), OQ-66, OQ-67 in
+**Open questions:** OQ-3 (season length — the shard is six players on 127 hexes,
+the season is not set), OQ-122 in
 [`../open-questions.md`](../open-questions.md).

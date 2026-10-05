@@ -30,8 +30,8 @@
   "Stone": {
     "unitsPerStrike": 1,
     "secondsPerStrike": 26,
-    "stock": 5,
-    "recoverySeconds": 120,
+    "stock": 0,
+    "recoverySeconds": 0,
     "respawnSeconds": 0
   },
   "Fish": {
@@ -44,15 +44,15 @@
   "MountainIron": {
     "unitsPerStrike": 5,
     "secondsPerStrike": 60,
-    "stock": 25,
-    "recoverySeconds": 300,
+    "stock": 0,
+    "recoverySeconds": 0,
     "respawnSeconds": 0
   },
   "MountainGold": {
     "unitsPerStrike": 3,
     "secondsPerStrike": 60,
-    "stock": 15,
-    "recoverySeconds": 300,
+    "stock": 0,
+    "recoverySeconds": 0,
     "respawnSeconds": 0
   }
 }

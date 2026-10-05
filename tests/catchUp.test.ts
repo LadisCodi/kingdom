@@ -10,6 +10,8 @@ import { getWallet } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, stored, T0 } from './helpers';
 
 const HOUR = 3_600_000;
+/** Shorter than a level-1 store takes to fill (five minutes of its rent). */
+const SHORT = 4 * 60_000;
 
 /** A kingdom that earns while away: housed villagers paying rent. */
 function earningKingdom() {
@@ -29,7 +31,7 @@ const reload = (state: ReturnType<typeof freshGame>, at: number) => {
 
 describe('the offline report', () => {
   it('accounts for every gold the stores gained, and leaves the wallet alone', () => {
-    const { loaded, report } = reload(earningKingdom(), T0 + HOUR);
+    const { loaded, report } = reload(earningKingdom(), T0 + SHORT);
 
     expect(report).not.toBeNull();
     expect(report!.result.goldEarned).toBeGreaterThan(0);
@@ -38,9 +40,9 @@ describe('the offline report', () => {
   });
 
   it('reports the whole absence it replayed', () => {
-    const { report } = reload(earningKingdom(), T0 + HOUR);
+    const { report } = reload(earningKingdom(), T0 + SHORT);
 
-    expect(report!.elapsedMs).toBe(HOUR);
+    expect(report!.elapsedMs).toBe(SHORT);
     expect(report!.storesFull).toBe(false);
   });
 

@@ -19,7 +19,7 @@ describe('tech-gated upgrades', () => {
   it('Housing L2 sits behind Urban Planning', () => {
     expect(requiredTechForLevel('Housing', 2)).toBe('UrbanPlanning');
     const state = freshGame();
-    fund(state, { Wood: 1000, Stone: 1000 });
+    fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     addBuilt(state, 'Housing', HOUSE);
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
     expect(upgradeDistrict(state, house.uniqueId)).toBe('RequirementsNotMet');
@@ -37,7 +37,7 @@ describe('tech-gated upgrades', () => {
     expect(requiredTechForLevel('Townhall', 3)).toBe('Bureaucracy');
     expect(requiredTechForLevel('Townhall', 4)).toBe('Magistracy');
     const state = freshGame();
-    fund(state, { Wood: 1000, Stone: 1000 });
+    fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     state.city.population = 99; // the people are not what this tests
     const th = townhall(state);
     expect(upgradeDistrict(state, th.uniqueId)).toBe('Started');
@@ -65,7 +65,7 @@ describe('tech-gated upgrades', () => {
     state.city.wallet.Wood = 0;
     state.city.wallet.Stone = 0;
     expect(says()).toBe('NotEnoughResources');
-    fund(state, { Wood: 1000, Stone: 1000 });
+    fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     const before = JSON.stringify(state);
     expect(says()).toBe(null);
     expect(JSON.stringify(state)).toBe(before);
@@ -138,7 +138,7 @@ describe('every upgradable building has something to show for the level', () => 
     // The War Camp's: armies more out at once (Docs/features/19-world-map.md §4).
     'armySlotsPerLevel',
     // What a producer's LATE level buys, since crew and reach stop growing at
-    // five (Docs/plans/builder-30-days.md §4).
+    // five (Docs/features/buildings.md §4).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',
     'queueLengthPerLevel',
   ] as const;
@@ -308,7 +308,7 @@ describe('the Townhall asks for villagers', () => {
 
   it('refuses the level until the villagers are there, and says so', () => {
     const state = freshGame();
-    fund(state, { Wood: 1000, Stone: 1000 });
+    fund(state, { Gold: 50_000, Wood: 1000, Stone: 1000 });
     const th = townhall(state);
     const need = requiredPopulation('Townhall', 2);
     expect(need).toBeGreaterThan(0);

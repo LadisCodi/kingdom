@@ -4,14 +4,17 @@
 // nothing here has to be the final word — only the right offer.
 
 import { WORLD_BUILD } from '../../sim/data/definitions';
+import type { WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
 import type { HexControl, WorldSource } from '../../sim/world/source';
-import type { WorldImprovement } from '../../sim/world/types';
-import { fittingImprovements, outpostGold } from '../../worldServer/core';
+import { WORLD_UPGRADES, type WorldDistrict, type WorldUpgrade } from '../../sim/world/types';
+import { claimGold, districtOf } from '../../worldServer/core';
+import { formatCount } from '../format';
 
 export type HexAction =
-  | { kind: 'claim'; gold: number; seconds: number }
+  /** Claim the hex: build its district, which its feature decides (19 §5.1). */
+  | { kind: 'claim'; district: WorldDistrict; gold: number; seconds: number }
   /** An army: to attack a rival's ground, to take ground nobody holds, or to
    *  man the player's own Fortress (19 §4–§6). */
   | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' }
@@ -20,8 +23,25 @@ export type HexAction =
   | { kind: 'recall'; army: string }
   /** Fight the next room of a dungeon, with the army camped there. */
   | { kind: 'delve'; army: string }
-  | { kind: 'build'; improvement: WorldImprovement; level: number; gold: number; seconds: number }
-  | { kind: 'collect'; material: number; knowledge: number; ready: boolean };
+  /** Build an upgrade into the district, or raise it a level (19 §7.2). */
+  | { kind: 'upgrade'; upgrade: WorldUpgrade; level: number; gold: number; seconds: number }
+  | { kind: 'collect'; currency: NonNullable<HexControl['stores']>['currency']; amount: number; ready: boolean };
+
+/** Is a world build an upgrade rather than a district's claim? */
+export const isUpgrade = (what: WorldBuildWhat): what is WorldUpgrade => (WORLD_UPGRADES as readonly string[]).includes(what);
+
+/** A world build's name: the district's, or the upgrade's. */
+export const worldBuildName = (what: WorldBuildWhat): string =>
+  isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
+
+/** Seconds a builder spends on a world build: a district, or an upgrade's level. */
+export const worldBuildSeconds = (what: WorldBuildWhat, level: number): number =>
+  isUpgrade(what) ? WORLD_BUILD.upgrades[what].levels[level - 1]?.buildSeconds ?? 0 : WORLD_BUILD.claim.buildSeconds;
+
+/** What the player is told when a world build stands. */
+export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
+  !isUpgrade(what) ? `Your ${worldBuildName(what)} stands — the ground is yours`
+    : level === 1 ? `Your ${worldBuildName(what)} stands` : `${worldBuildName(what)} reached level ${formatCount(level)}`;
 
 /** Hexes `seat` holds or is claiming beyond its city. */
 export const hexesHeldBy = (source: WorldSource, seat: number): number =>
@@ -36,11 +56,23 @@ function touches(source: WorldSource, seat: number, index: number): boolean {
   });
 }
 
-/** A store is worth a tap once it holds a whole unit of something. */
-const collectable = (h: HexControl): { material: number; knowledge: number } => ({
-  material: Math.floor(h.stores?.material ?? 0),
-  knowledge: Math.floor(h.stores?.knowledge ?? 0),
-});
+/** What a builder is doing on a hex, and when it began and ends: its
+ *  district going up, or an upgrade's level. Every job takes exactly its
+ *  data's time, so when it began is when it ends less that. Null when
+ *  nothing is building. */
+export function hexWork(h: HexControl): { what: string; startedAt: number; endsAt: number } | null {
+  if (!h.held) {
+    const ms = WORLD_BUILD.claim.buildSeconds * 1000;
+    return { what: `Building the ${WORLD_BUILD.districts[h.district].name}`, startedAt: h.standsAt - ms, endsAt: h.standsAt };
+  }
+  if (h.work === null) return null;
+  const def = WORLD_BUILD.upgrades[h.work.upgrade];
+  return {
+    what: h.work.toLevel === 1 ? `Building the ${def.name}` : `${def.name} to level ${formatCount(h.work.toLevel)}`,
+    startedAt: h.work.at - (def.levels[h.work.toLevel - 1]?.buildSeconds ?? 0) * 1000,
+    endsAt: h.work.at,
+  };
+}
 
 /** What `seat` can do on this hex now, in the order the sheet shows it.
  *  Nothing is claimed, built on or sent an army until it is Revealed: the
@@ -66,28 +98,27 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
     return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
   }
   if (h === null) {
-    const neverHeld = bh.features.includes('Dungeon') || bh.seat !== null;
-    if (neverHeld || !touches(source, seat, bh.index)) return [];
-    return [{ kind: 'claim', gold: outpostGold(hexesHeldBy(source, seat)), seconds: WORLD_BUILD.outpost.buildSeconds }];
+    const district = districtOf(bh);
+    if (district === null || !touches(source, seat, bh.index)) return [];
+    return [{ kind: 'claim', district, gold: claimGold(hexesHeldBy(source, seat)), seconds: WORLD_BUILD.claim.buildSeconds }];
   }
   if (h.owner !== seat || !h.held) return [];
   const out: HexAction[] = [];
   // The player's own Fortress: man it, or call its garrison home.
-  if (h.improvement?.kind === 'Fortress') {
+  if (h.fortress > 0) {
     if (h.garrison && h.garrison.owner === seat) out.push({ kind: 'recall', army: h.garrison.army });
     else out.push({ kind: 'army', purpose: 'garrison' });
   }
-  const { material, knowledge } = collectable(h);
-  if (h.stores !== null && (h.stores.materialCap > 0 || h.stores.knowledgeCap > 0)) {
-    out.push({ kind: 'collect', material, knowledge, ready: material > 0 || knowledge > 0 });
+  if (h.stores !== null && h.stores.cap > 0) {
+    const amount = Math.floor(h.stores.amount);
+    out.push({ kind: 'collect', currency: h.stores.currency, amount, ready: amount > 0 });
   }
   if (h.work !== null || !h.active) return out;
-  const kinds = h.improvement !== null ? [h.improvement.kind] : fittingImprovements(bh);
-  for (const kind of kinds) {
-    const levels = WORLD_BUILD.improvements[kind].levels;
-    const level = (h.improvement?.level ?? 0) + 1;
+  for (const upgrade of WORLD_UPGRADES) {
+    const levels = WORLD_BUILD.upgrades[upgrade].levels;
+    const level = h.fortress + 1;
     if (level > levels.length) continue;
-    out.push({ kind: 'build', improvement: kind, level, gold: levels[level - 1].gold, seconds: levels[level - 1].buildSeconds });
+    out.push({ kind: 'upgrade', upgrade, level, gold: levels[level - 1].gold, seconds: levels[level - 1].buildSeconds });
   }
   return out;
 }

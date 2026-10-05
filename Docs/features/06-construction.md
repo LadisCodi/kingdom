@@ -24,28 +24,32 @@
 ## 2. The offer
 
 - A build or upgrade refused for want of a builder opens a sheet. No toast.
+  The same holds on the world map: a claim or a world build refused for want
+  of a builder opens the same sheet.
 - Two states, one sheet:
 
 | State | Shows |
 |---|---|
-| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot |
+| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot. A builder out on the world map shows its job and time left, with no Finish |
 | **At** the ceiling | the same, and **no hire** |
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player
   to the positioned ghost.
 - A job that ends while the sheet is open — on its own or by Finish — turns
-  its builder's row into a Build for the positioned ghost.
+  its builder's row into the job the sheet was raised for: the Build for the
+  positioned ghost, or the claim or world build that was refused.
 
 ## 3. The price
 
 - `round(base × growth^purchased)`: the same escalating-slot curve as the
-  research and party slots.
+  hero slots.
 - `purchased` is **derived**, `builders − startBuilders`, not stored. A
   *granted* builder (a quest, an event) makes the next *bought* one dearer.
 - Every Gem sink is priced on the 500-Gems-a-dollar ladder
   ([`14-monetization.md`](14-monetization.md) §2.2). Each builder is the next
   pack up (`×2`).
-- The up-front Gem faucet is 3,750 Gems.
+- The up-front Gem faucet is 1,250 Gems: 500 to start, 750 across the quest
+  chain ([`14-monetization.md`](14-monetization.md) §1.1).
 
 | Builder | Gems | Pack |
 |---|---|---|

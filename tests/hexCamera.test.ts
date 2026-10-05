@@ -5,7 +5,7 @@ import { HexCamera } from '../src/render/world/hexCamera';
 import {
   HEX_W, STRATEGIC_W, TILT, acrossEdge, edgeDir, hexCorners, hexToPlane, planeToHex, regionEdges,
 } from '../src/render/world/hexLayout';
-import { BOARD_HEXES, HEX_DIRS, hexNeighbors } from '../src/sim/world/hex';
+import { BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexNeighbors } from '../src/sim/world/hex';
 
 const phone = { clientWidth: 390, clientHeight: 844 };
 
@@ -99,7 +99,7 @@ describe('the world camera', () => {
   it('never lets the board slide off the screen', () => {
     const cam = new HexCamera(phone);
     cam.panByScreen(1e6, -1e6);
-    expect(Math.abs(cam.x)).toBeLessThan(HEX_W * 6);
-    expect(Math.abs(cam.y)).toBeLessThan(HEX_W * 6);
+    expect(Math.abs(cam.x)).toBeLessThan(HEX_W * (BOARD_RADIUS + 1));
+    expect(Math.abs(cam.y)).toBeLessThan(HEX_W * (BOARD_RADIUS + 1));
   });
 });

@@ -5,7 +5,7 @@
 > box of text that can sit anywhere on the screen, a pointer and a lock. What
 > is said, and when, is [`23-tutorials.md`](23-tutorials.md).
 >
-> **Status: built 2026-10-01** on `feat/ftue` (`src/ui/stage/`).
+> **Status: built** (`src/ui/stage/`).
 
 ## 1. The stage
 
@@ -86,6 +86,8 @@
 | `district:<id>` | the nearest building of that kind |
 | `lair:<id>` · `landmark:<id>` | that site |
 | `lair:` | the first lair found that still stands |
+| `abandoned:<id>` | an abandoned building, wherever the fog has it — silhouette, ruin or revealed |
+| `treasure` | the nearest treasure still on the ground |
 | `quest` | the quest pill |
 | `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
@@ -126,6 +128,8 @@ which one a line waits on is data.
 | `landmarkClaimed` · `landmarkSeen` | that landmark, kind or any claimed · that one out of the dark |
 | `bookOpen` · `doorOpen` | that book · that door is open |
 | `featureSeen` | a cell with that feature is out of the dark |
+| `treasureRevealed` · `treasurePicked` | a treasure stands on revealed ground · `amount` picked up |
+| `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
 

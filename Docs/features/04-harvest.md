@@ -29,8 +29,8 @@
 - Tuning relation: the thumb's worker-equivalent stays ahead of the crew the
   city can house. It also sets what a rewarded ad is worth (§3.3).
 - At 10 s the thumb is 20 workers against the 30 a Townhall-3 city can house.
-  `QuickHands` takes the thumb to 40, `TapPower` at the top of its ladder to
-  60, both together to 120.
+  `QuickHands` at the top of its ladder (+45% tap speed) takes the thumb to 29,
+  `TapPower` at the top of its ladder to 36, both together to 52.
 - `tap.workSeconds` is the dial for late-game hand-play; doubling it doubles the
   ad with it (§3.3).
 
@@ -58,8 +58,10 @@ Every resource cell carries:
   not a live query, and a bonus that repriced a stretch already elapsed would
   hand the player a windfall for finishing a research at the right moment. It
   never falls below one second.
-- **Only a source that grows back IN PLACE has that clock**: Forest, Crops,
-  Stone and the two mountains. A berry bush, a herd and a shoal are consumed
+- **A mountain never runs out.** `stock` 0 means inexhaustible: Stone and the
+  two metal mountains keep no depot, never exhaust and have no recovery clock.
+- **Only a source that grows back IN PLACE has that clock**: Forest and
+  Crops. A berry bush, a herd and a shoal are consumed
   and reappear on another tile instead (`respawnSeconds`, §3), which is a
   different number the tree cannot move — so aiming a recovery bonus at one
   is refused rather than sold. The **Verdant Seal** relic is what moves it
@@ -86,10 +88,10 @@ Every resource cell carries:
 | **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 5.6 → 3.8/min | 0.64 |
 | **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 4.7 → 3.3/min | — |
 | **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 7.9 → 6.4/min | — |
-| **Stone** | 1 | 26 | 5 | 120 | 1 *(floor)* | 5 | 2.1 → 1.8/min | 0.55 |
+| **Stone** | 1 | 26 | 0 *(never runs out)* | — | 1 *(floor)* | — | 2.1 → 1.8/min | any |
 | **Fish** | 2 | 20 | 10 | finite | 1 | 10 | 5.3 → 4.3/min | — |
-| **MountainIron** | 5 | 60 | 25 | 300 | 1 *(floor)* | 25 | 4.8 → 4.4/min | 0.51 |
-| **MountainGold** | 3 | 60 | 15 | 300 | 1 *(floor)* | 15 | 2.9 → 2.6/min | 0.51 |
+| **MountainIron** | 5 | 60 | 0 *(never runs out)* | — | 1 *(floor)* | — | 4.8 → 4.4/min | any |
+| **MountainGold** | 3 | 60 | 0 *(never runs out)* | — | 1 *(floor)* | — | 2.9 → 2.6/min | any |
 
 - The spread narrows as the ground slows: a tree next door pays 1.4× one at
   radius 4, an iron peak 1.1×. Fast ground rewards a close shed; slow ground
@@ -97,9 +99,8 @@ Every resource cell carries:
 - The renewables hold the law to within a hundredth.
 - On slow ground the **floor** governs: ten seconds of work on a rock, an iron
   peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
-  shows in the grind length (5, 25, 15 taps) and in the first `TapPower` levels.
-- A metal peak's richness is in the depot and the crew: 25 units in one cell
-  against a rock's 5, five units a swing against one.
+  shows in the first `TapPower` levels.
+- A metal peak's richness is in the crew: five units a swing against one.
 - **FarmLands shares the `Crops` row.** A built plot behaves exactly like wild
   crops. Its own rhythm needs a new harvest source id (code, not data) — not
   built.
@@ -107,11 +108,12 @@ Every resource cell carries:
 ### 2.2 The ground under the cell
 
 - Terrain multiplies what a cell **holds** (`stock`), per currency. A grassland
-  tree holds 13 Wood, a snowy one 8, a desert one 5.
+  tree holds 13 Wood, a snowy one 8, a desert one 5. A mountain holds no stock,
+  so the ground under it changes nothing.
 - The multiplier is a property of the terrain, not of the building, so a
   Forest, a FarmLands and a rock on the same ground all take it.
 - It scales the stock, not the strike: `unitsPerStrike` is 1 on most cells and
-  `1 × 0.75` rounds back to 1. Stock runs 5 to 30.
+  `1 × 0.75` rounds back to 1. Stock runs 10 to 30.
 - Thumb and crew are both affected, because they draw the same depot (§1).
 
 | Terrain | Food | Wood | Stone |
@@ -124,13 +126,14 @@ Every resource cell carries:
 | Water | ×1 | ×1 | ×1 |
 
 - Water is ×1 so the multiplier does not retune Fish shoals.
+- The Stone column moves nothing while no Stone source holds stock.
 - Poor ground is bad twice: the total per cycle scales with the multiplier, the
   sustainable rate falls further because recovery is a fixed cost. A desert
   forest drains in 50 s and sits out 90, yielding 2.1 Wood/min against a
   grassland tree's 3.5 (61%, not 50%); its workers-per-cell drops from 0.59 to
   0.36, so a desert needs about three cells per worker.
-- On the map as painted, Grassland holds 44 of the 57 trees; Desert's stone
-  bonus reaches one mountain in 81 cells; Tundra holds no trees (OQ-56).
+- On the map as painted, Grassland holds 45 of the 57 trees; Tundra holds no
+  trees (OQ-56).
 
 ### 2.3 The map ceiling
 
@@ -155,18 +158,19 @@ carry   = max(0, owed + carry − paid)
 
 - **`tap.workSeconds` = 10**, global: a property of the thumb, not the ground.
   A ten-unit tree is about ten taps.
-- **`TapPower` buys duration, not units**: +20% per level, ten levels, ×3 at the
-  top (a tap worth thirty seconds of work). Priced in Gold; a permanent sink.
+- **`TapPower` buys duration, not units**: +20% per rank, four ranks, ×1.8 at
+  the top (a tap worth eighteen seconds of work). Priced in Gold; a permanent
+  sink.
 - **Carry**: the fractional remainder is carried per currency, so a +20% upgrade
   on a one-unit cell pays out on the fifth tap. Four numbers, additive to the
   save.
 - **Floor of one unit**: a tap never pays nothing. At this duration the floor
   covers four of the eight cells (§2.1).
 - **The shortfall when the depot runs dry is not carried.** A maxed thumb wants
-  3 Wood; the last tap of a 10-Wood tree pays what is left, the rest is waste.
+  1.8 Wood; the last tap of a 10-Wood tree pays what is left, the rest is waste.
   Raising `TapPower` past the ground's richness buys less and less.
-- An iron vein pays 1 a tap, not 3: its richness is in the depot (15 units
-  against a rock's 5) and its three-unit swing.
+- An iron vein pays 1 a tap, not 5: its richness is in the depot (25 units
+  against a rock's 5) and its five-unit swing.
 - A tap reads the cell's own rate, `unitsPerStrike ÷ secondsPerStrike`, with no
   travel term. It does not read `cityGatherPerSecond` (§4).
 - A tap refused by a tech gate costs no Mana.
@@ -260,9 +264,8 @@ Quests:
 - A **nominal** city-wide rate with a travel term that takes the influence
   radius as the distance, and with each building's own level in its haul and
   its cadence.
-- The tap does not read it. It has no caller in `src/` (orders,
-  [`12-quests.md`](12-quests.md) §5, do not exist); it is kept as a dead export
-  with a comment saying so.
+- The tap does not read it. Treasures, raids, the mission board and the card
+  collection read it as the city's rate of a coin.
 
 ## 5. Areas of influence, claims and migration
 
@@ -278,7 +281,7 @@ Quests:
 - The radius decides two things: the **gradient** (a tree next door pays 1.4×
   one at radius 4, §4) and **coverage** (how many cells of the right type the
   building reaches, which under two-cells-per-worker (§2.1) decides how many
-  plazas are ever busy, §6).
+  worker slots are ever busy, §6).
 - **No reserve floor.** Workers empty cells; nothing stops them at a share of
   stock.
 - **The thumb works the frontier; the crews work the covered ground.** With a
@@ -297,8 +300,8 @@ Quests:
   idle. No icon.
 - The count lives in the district card only (`4/7` busy). Nothing on the map.
 - When a stump becomes a tree, one of the loiterers heads for it.
-- One onboarding beat that makes the player hire past their ground, around the
-  time the Tome of Earth opens — not built.
+- One onboarding beat that makes the player hire past their ground — not
+  built.
 
 ## 7. The three actors
 
@@ -306,7 +309,7 @@ Quests:
 |---|---|---|---|
 | **The ground** | abundance (`stock`), recovery, richness (`unitsPerStrike`) | what the map can give | "everything is a stump" · "they never stop walking" |
 | **The thumb** | `TapPower` | seconds per tap | "I want it now" |
-| **The payroll** | `WorkerLoad`, **the building's own level** (§4), plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
+| **The payroll** | `WorkerLoad`, **the building's own level** (§4), worker slots per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
 - The cell-scoped ladders — Sawpits, Irrigation, Stonecutting, Butchery,
   Iron Picks, Gold Panning, Big Nets — are a **percentage** of the ground's
@@ -333,14 +336,14 @@ Quests:
 | Dial | Value | Key |
 |---|---|---|
 | Seconds a tap is worth | **10** | `tap.workSeconds` |
-| `TapPower` | **+20%/level, 10 levels** (→ ×3) | its ranks in `tech-tree.json`, through `?dev=tree` |
+| `TapPower` | **+20% a rank, 4 ranks** (→ ×1.8) | its ranks in `tech-tree.json`, through `?dev=data#tree` |
 | Chunk and rhythm, per cell | §2.1 | `harvest.unitsPerStrike`, `.secondsPerStrike` |
 | Stock, per cell | §2.1 | `harvest.stock` |
 | Ground multiplier, per terrain × currency | §2.2 | `terrain` |
 | Recovery, per cell | §2.1 | `harvest.recoverySeconds` |
 | Respawn, finite features | 120 s Berries · 180 s Meat · 90 s Fish | `harvest.respawnSeconds` |
 | Worker move speed | 1 tile/s | `worker.moveSpeedTilesPerSecond` |
-| Influence radius, plazas per level | §5 | `buildings` › `influenceRadiusPerLevel` |
+| Influence radius, worker slots per level | §5 | `buildings` › `influenceRadiusPerLevel`, `maxWorkersPerLevel` |
 | What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
 | Mana per tap on the ground | 1 | `tap.manaCost` |
 | Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |

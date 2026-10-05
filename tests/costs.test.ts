@@ -24,20 +24,28 @@ describe('build cost by instance', () => {
     }
   });
   it('Housing (1.25 + 1.2): 10 → 25 → 39 → 55 Wood', () => {
-    expect(buildCost('Housing', 1)).toEqual({ Wood: 10 });
-    expect(buildCost('Housing', 2)).toEqual({ Wood: 25 });
-    expect(buildCost('Housing', 3)).toEqual({ Wood: 39 });
-    expect(buildCost('Housing', 4)).toEqual({ Wood: 55 });
+    expect(buildCost('Housing', 1)).toEqual({ Gold: 15, Wood: 10 });
+    expect(buildCost('Housing', 2)).toEqual({ Gold: 37, Wood: 25 });
+    expect(buildCost('Housing', 3)).toEqual({ Gold: 59, Wood: 39 });
+    expect(buildCost('Housing', 4)).toEqual({ Gold: 82, Wood: 55 });
   });
   it('Farm (2 + 1.2): 30 → 96 → 163 Wood', () => {
-    expect(buildCost('Farm', 1)).toEqual({ Wood: 30 });
-    expect(buildCost('Farm', 2)).toEqual({ Wood: 96 });
-    expect(buildCost('Farm', 3)).toEqual({ Wood: 163 });
+    expect(buildCost('Farm', 1)).toEqual({ Gold: 45, Wood: 30 });
+    expect(buildCost('Farm', 2)).toEqual({ Gold: 144, Wood: 96 });
+    expect(buildCost('Farm', 3)).toEqual({ Gold: 245, Wood: 163 });
   });
   it('Sawmill (2.5 + 1.2): 20 → 74 → 129 Wood', () => {
-    expect(buildCost('Sawmill', 1)).toEqual({ Wood: 20 });
-    expect(buildCost('Sawmill', 2)).toEqual({ Wood: 74 });
-    expect(buildCost('Sawmill', 3)).toEqual({ Wood: 129 });
+    expect(buildCost('Sawmill', 1)).toEqual({ Gold: 30, Wood: 20 });
+    expect(buildCost('Sawmill', 2)).toEqual({ Gold: 111, Wood: 74 });
+    expect(buildCost('Sawmill', 3)).toEqual({ Gold: 193, Wood: 129 });
+  });
+  it('asks for Gold on every build and every level, beside its materials', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      DISTRICTS[id].costPerLevel.forEach((row, i) => {
+        if (Object.keys(row.cost).length === 0) return; // a Townhall is never built
+        expect(row.cost.Gold, `${id} level ${i + 1}`).toBeGreaterThan(0);
+      });
+    }
   });
   // The cheapest thing in the game, deliberately: a crop plot is a furrow,
   // and at 20 Wood it cost twice a House — which stranded the player at
@@ -45,17 +53,17 @@ describe('build cost by instance', () => {
   // And the second is not three times the first: the opening asks for two.
   it('FarmLands (0.5 + 1.2): 10 → 17 → 24 → 32 → 41 → 50', () => {
     const expected = [10, 17, 24, 32, 41, 50];
-    expected.forEach((wood, i) => expect(buildCost('FarmLands', i + 1)).toEqual({ Wood: wood }));
+    expected.forEach((wood, i) => expect(buildCost('FarmLands', i + 1).Wood).toBe(wood));
   });
 });
 
 // The ordinal prices the WHOLE ladder of a building, not just its build
 // (Docs/features/05-city-and-districts.md §3.1).
 describe('the ordinal prices every level', () => {
-  it('Housing level 5 costs 101 Wood for #1, 247 for #2, 398 for #3', () => {
-    expect(upgradeCost('Housing', 1, 4)).toEqual({ Wood: 101, Stone: 33 });
-    expect(upgradeCost('Housing', 2, 4)).toEqual({ Wood: 247, Stone: 81 });
-    expect(upgradeCost('Housing', 3, 4)).toEqual({ Wood: 398, Stone: 130 });
+  it('Housing level 5 costs 260 Wood for #1, 637 for #2, 1,020 for #3', () => {
+    expect(upgradeCost('Housing', 1, 4)).toEqual({ Gold: 6200, Wood: 260, Stone: 86 });
+    expect(upgradeCost('Housing', 2, 4)).toEqual({ Gold: 15200, Wood: 637, Stone: 211 });
+    expect(upgradeCost('Housing', 3, 4)).toEqual({ Gold: 24400, Wood: 1020, Stone: 339 });
   });
 
   it('is one curve for the whole ladder: every level scales by the same M(N)', () => {
@@ -77,9 +85,10 @@ describe('the ordinal prices every level', () => {
   });
 
   it('rounds a multiplied price to three significant figures, and only then', () => {
-    // 101 × 2.45 = 247.45, which reads back as 247 rather than 247.45 — but
-    // an AUTHORED 101 is never nudged to 100.
-    expect(upgradeCost('Housing', 1, 4).Wood).toBe(101);
+    // 86 × 2.45 = 210.7, which reads back as 211 — but an AUTHORED 86 is
+    // never nudged to 90.
+    expect(upgradeCost('Housing', 1, 4).Stone).toBe(86);
+    expect(upgradeCost('Housing', 2, 4).Stone).toBe(211);
     expect(String(upgradeCost('Housing', 4, 9).Wood)).toMatch(/^\d{3}0+$/);
   });
 
@@ -144,33 +153,33 @@ describe('build time (Docs/04 examples)', () => {
 
 describe('upgrade cost & time (Docs/04 examples)', () => {
   const base = freshGame();
-  it('single Farm L1→L2 = 50 Wood, 30 s', () => {
-    expect(upgradeCost('Farm', 1, 1)).toEqual({ Wood: 50 });
+  it('single Farm L1→L2 = 55 Wood, 30 s', () => {
+    expect(upgradeCost('Farm', 1, 1)).toEqual({ Gold: 83, Wood: 55 });
     expect(upgradeDuration(base, 'Farm', 1)).toBe(30);
   });
-  it('Sawmill upgrades: 60 then 150 Wood, 30 s then 45 s', () => {
-    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Wood: 60 });
+  it('Sawmill upgrades: 66 then 210 Wood, 30 s then 45 s', () => {
+    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Gold: 99, Wood: 66 });
     expect(upgradeDuration(base, 'Sawmill', 1)).toBe(30);
-    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Wood: 150 });
+    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Gold: 3800, Wood: 210 });
     expect(upgradeDuration(base, 'Sawmill', 2)).toBe(45);
   });
-  // Wood ONLY, deliberately: the onboarding chain reaches Townhall 2 before
+  // No Stone, deliberately: the onboarding chain reaches Townhall 2 before
   // it reaches the Quarry (Docs/features/12-quests.md §2 (quest 35)), and
   // an upgrade that asks for Stone the player has no building for is a wall,
   // not a goal.
-  it('Townhall L1→L2 = 60 Wood in 30 s; L2→L3 = 234 Wood in 120 s', () => {
-    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 60 });
+  it('Townhall L1→L2 = 66 Wood in 30 s; L2→L3 = 330 Wood in 120 s', () => {
+    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Gold: 99, Wood: 66 });
     expect(upgradeDuration(base, 'Townhall', 1)).toBe(30);
-    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Wood: 234 });
+    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Gold: 6000, Wood: 330 });
     expect(upgradeDuration(base, 'Townhall', 2)).toBe(120);
   });
-  it('Housing L1→L2 = 30 Wood + 10 Stone in 20 s', () => {
-    expect(upgradeCost('Housing', 1, 1)).toEqual({ Wood: 30, Stone: 10 });
+  it('Housing L1→L2 = 33 Wood + 11 Stone in 20 s', () => {
+    expect(upgradeCost('Housing', 1, 1)).toEqual({ Gold: 66, Wood: 33, Stone: 11 });
     expect(upgradeDuration(base, 'Housing', 1)).toBe(20);
   });
 });
 
-// The late half of the ladder (Docs/plans/builder-30-days.md §4). The early
+// The late half of the ladder (Docs/features/buildings.md §4). The early
 // examples above are the proof it did not move: they are the same numbers
 // they were before the pivot existed.
 describe('the late curve, from level 6', () => {
@@ -187,7 +196,7 @@ describe('the late curve, from level 6', () => {
     expect(DISTRICTS.FarmLands.maxLevel).toBe(1);
   });
 
-  it('grows every late level by ×1.7, the pivot included', () => {
+  it('grows every late level by about ×2.2, the pivot included', () => {
     for (const id of LATE) {
       const wood = (level: number) => {
         const cost = upgradeCost(id, 1, level);
@@ -195,8 +204,9 @@ describe('the late curve, from level 6', () => {
       };
       for (let level = LATE_FROM - 1; level < DISTRICTS[id].maxLevel; level++) {
         // Floors, so compare the ratio rather than the exact integer.
-        expect(wood(level) / wood(level - 1), `${id} level ${level + 1}`)
-          .toBeCloseTo(1.7, 1);
+        const ratio = wood(level) / wood(level - 1);
+        expect(ratio, `${id} level ${level + 1}`).toBeGreaterThan(1.9);
+        expect(ratio, `${id} level ${level + 1}`).toBeLessThan(2.4);
       }
     }
   });

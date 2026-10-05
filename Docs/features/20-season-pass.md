@@ -12,7 +12,8 @@
   ([`13-events.md`](13-events.md) §2.4, OQ-20).
 - It runs on the **collection's season**: 28 days, everyone's, the same clock
   the albums close on. There is no clock of its own.
-- Opened by tapping the **Sowing Season** pill on the map. Never auto-opened.
+- Opened by tapping the **season pill** on the map, which carries the current
+  season's name. Never auto-opened.
 - Levels come from **XP**, and the only source of XP is finishing a mission.
 - The paid column is one purchase, `SeasonPass`, **$4.99**, once a season
   ([`14-monetization.md`](14-monetization.md) §2).
@@ -92,8 +93,6 @@ always eligible**, so the board can always be filled.
 | Build X buildings | every unlocked building is at its count cap |
 | Train X soldiers | no trainer, or the army cap is full |
 | Level heroes X times | no hero, or all at max level |
-| Clear X dungeon rooms | no ruin open, or no hero to send |
-| Complete X depths | as above |
 | Open X card packs | never |
 
 - A kind already on the board is avoided where possible.
@@ -105,9 +104,8 @@ always eligible**, so the board can always be filled.
 and shown on its row, so a player picks what to do next by what it pays.
 
 - **A hard errand always pays a Yellow pack.** Hard means it cannot be finished
-  inside one session — it waits on a builder, a delve or a technology: *raise
-  the Townhall*, *build X buildings*, *level heroes*, *clear rooms*, *complete
-  depths*. It does not roll: an errand that waits three days has to say what it
+  inside one session — it waits on a builder or a technology: *raise
+  the Townhall*, *build X buildings*, *level heroes*. It does not roll: an errand that waits three days has to say what it
   is worth before the player commits to it.
 - **An ordinary errand rolls one of three** — Gems, Mana, or a **Green** pack,
   about a third each. Mana is a fraction of the pool and lands on top of the
@@ -119,15 +117,9 @@ and shown on its row, so a player picks what to do next by what it pays.
 
 ## 4. Where the packs come from
 
-The card packs moved off the dungeon and onto the pass. The five authored
-ruins used to pay a pack per room — 191 in the lifetime of an account, and
-then nothing for ever. That is a welcome, not a supply. The dungeon now feeds
-the collection through the missions it completes, which is the one source that
-answers *playing more*.
-
-This does not close **OQ-102**: 24 free-track packs a season against a
-target of 200. The pass changes the faucet's shape, not its
-volume, and the repeatable dungeon still owes the bulk.
+- The dungeon pays no packs. It feeds the collection through the missions it
+  completes, which is the one source that answers *playing more*.
+- The free column pays 24 packs a season against a target of 200: **OQ-102**.
 
 ## 5. Dials, in the order to reach for them
 

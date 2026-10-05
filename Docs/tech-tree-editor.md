@@ -96,7 +96,7 @@ Nobody types it. A technology's line is **generated from what it does**
 |---|---|---|
 | `unlock` | `Unlocks …`, one clause per thing, with display names. Building levels that share a number fold into one clause | *Unlocks Barracks, Spear Hall, Shooting Grounds and Stables at level 4* |
 | `bonus` | one sentence per effect, from the stat's `says` in the registry | *+1 Wood per tap and delivery from a forest* |
-| `mechanic` | its `description`, the only written prose left in the tree | *Paved ways — every worker walks a quarter faster.* |
+| `mechanic` | its `description`, the only written prose left in the tree | *Reading the ground — a bad matchup costs a tenth less.* |
 
 In the game the card shows only the glyph and the name; the line is read in
 the info panel a tap opens ([`features/07-research.md`](features/07-research.md)
@@ -118,8 +118,8 @@ the game is derived from that (`GATES`, `definitions.ts`):
 One technology per gate: two claiming the same door is an error, because the
 derivation would otherwise answer with whichever it read last.
 
-Nothing opens a BOOK — every book is open — and nothing but the era bar opens
-a band. A card that raises the Townhall's level is an ordinary `unlock` sitting
+No technology opens a BOOK — what opens one is code (`TOME_OPENS`,
+`sim/research.ts`) — and nothing but the era bar opens a band. A card that raises the Townhall's level is an ordinary `unlock` sitting
 wherever it is placed.
 
 **`bonus` — it moves numbers, and names them.** Each effect is four fields:
@@ -163,8 +163,8 @@ technology moves it yet — so a stat added in code is pickable immediately.
 read by something in `src/sim`, and the file may only name a stat the registry
 declares.
 
-**`mechanic` — the code reads it by id.** `Conquest` bending the Knowledge
-rate, `SanctifiedRuins` doubling the per-ruin drip. The editor can label these;
+**`mechanic` — the code reads it by id.** `Tactics` softening a bad matchup,
+`Cartography` sending the first explorer. The editor can label these;
 it cannot write them. What is left in this kind is what genuinely is code: a
 `planned` node, and the few mechanics whose arithmetic does not fit
 `(base + Σflat) × (1 + Σpct)`.
@@ -196,7 +196,7 @@ ungated until it is placed again.
 - no prose on a `mechanic`, whose effect is code and whose card has nothing
   else to read
 - two cards in one slot of one page (the same slot on another page is fine)
-- a tome that is not a tome, a band outside 1–4, a column outside 0–2
+- a tome that is not a tome, a band the book does not have, a column outside 0–2
 - one row shared by two eras — an era bar takes a whole line
 - more than three requirements; **no requirements on a card that is not on its
   page's first row** — the first row is where a root belongs, because there is
@@ -251,7 +251,7 @@ status bar goes back.
 
 | Pane | What it holds |
 |---|---|
-| left | **the open book first**, then the other two under their own heading, with the filter box and **+ new technology**. A faint green ground means SETTLED — in a slot the rules are happy with; red means the problem list is still asking about it, and the row's tooltip says what. A row names its book only when it is not the one on screen |
+| left | **the open book first**, then the others under their own heading, with the filter box and **+ new technology**. A faint green ground means SETTLED — in a slot the rules are happy with; red means the problem list is still asking about it, and the row's tooltip says what. A row names its book only when it is not the one on screen |
 | middle | the open book's page: three columns of slots, era bars between bands |
 | right | the selected technology's fields, its unlocks, and the problem list |
 
@@ -334,8 +334,8 @@ status bar goes back.
 - **Click a chip to cut what it names**, whether that is an unlock or a
   requirement. They go red under the pointer to say so.
 - The status bar carries **each band's Gold and Knowledge total** — the
-  price-band pass ([`features/tech-tree.md`](features/tech-tree.md) §5) used
-  to be a spreadsheet formula and happens here now.
+  price-band pass ([`features/tech-tree.md`](features/tech-tree.md) §7)
+  happens here.
 
 ## 6. Saving
 

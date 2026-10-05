@@ -5,7 +5,9 @@
 > a map design**: the province's map is [`01`](01-map-and-fog.md), the world
 > board is [`19`](19-world-map.md).
 >
-> **Status: designed, not built.**
+> **Status:** the province is built; the world board is built against a local
+> stand-in for the world server ([`19-world-map.md`](19-world-map.md)).
+> Temporary provinces and the guild siege are not built.
 
 ## 1. Three scopes
 
@@ -13,13 +15,13 @@
 |---|---|---|---|---|
 | **Your province** | authored, **identical for every player**, square grid, buildable wherever it is revealed | client | build, tap, harvest | permanent, **inviolable** |
 | **Temporary provinces** | event maps, PvE, compressed scale, square grid | client | the same verbs, inside a window | disposable |
-| **The world board** | a shared pointy-top hex board, six players, outposts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
+| **The world board** | a shared pointy-top hex board, six players, districts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
 
 ### 1.1 Your province
 
 - One authored map, identical for every player: `region-map.json` as it is. **No
   procedural province generator.**
-- 1,470 cells; the whole fog costs **4,729,789,354 Gold** across the 1,466 that
+- 1,470 cells; the whole fog costs **2,522,803,392 Gold** across the 1,466 that
   are priced.
 - **The buildable plot is the revealed province** — no bound, no ring, no
   expansion to buy ([`05-city-and-districts.md`](05-city-and-districts.md) §4).
@@ -44,11 +46,11 @@
 Designed in full in [`19-world-map.md`](19-world-map.md). What belongs here is
 only what it is structurally:
 
-- 91 hexes, six players, **real axial coordinates**. `grid.ts` is square-grid
+- 127 hexes, six players, **real axial coordinates**. `grid.ts` is square-grid
   maths with three metrics and is **not** reused.
 - No code shared with the province: no workers, no influence radius, no
   adjacency that pays Gold.
-- **A hexagon never opens a map of its own** (OQ-5). Contents sit on the hex;
+- **A hexagon never opens a map of its own.** Contents sit on the hex;
   actions live in a dispatch sheet.
 
 ## 2. The two tempos
@@ -73,7 +75,7 @@ One tactile loop and one planning loop, across two or three visits a day.
 - **World fog gates actions**: a hex must be Revealed before it is claimed,
   built on or sent an army ([`19-world-map.md`](19-world-map.md) §3).
 - **So world fog is server-authoritative** — the server checks it. Until the
-  real server exists the fog lives in the player's save (a bitset over 91
+  real server exists the fog lives in the player's save (a bitset over 127
   hexes) and the client applies the rule; the local stand-in trusts it.
 
 ### 3.1 Armies on the server
@@ -122,9 +124,9 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 - Design rule, technical boundary and marketing line at once: **province private
   and client-authoritative, world shared and server-authoritative.**
-- **An outpost is a claim, not a building.** If the hex falls, the player keeps
+- **A district is a claim, not a building.** If the hex falls, the player keeps
   everything they already collected from it; what sits in its stores goes
-  with the hex ([`19`](19-world-map.md) §7.1).
+  with the hex ([`19`](19-world-map.md) §7.3).
 
 ## 6. The save shape
 
@@ -144,7 +146,7 @@ Each is playable without the ones after it.
 1. **The board proper**: axial coordinates, neighbours, distance, march time,
    both zoom registers, client-side fog, explorers, the dispatch sheet
    ([`19`](19-world-map.md) §1–§3).
-2. **Control**: outposts, connection, inactive hexes, improvements and their
+2. **Control**: districts, connection, inactive hexes, upgrades and their
    stores ([`19`](19-world-map.md) §5, §7).
 3. **Contest**: armies, attacks, conquest and denial, the Fortress, resolved
    on the server (§3.1; [`19`](19-world-map.md) §4, §6).

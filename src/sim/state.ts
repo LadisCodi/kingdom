@@ -4,6 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import { DISTRICTS, type PackTier } from './data/definitions';
+import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
 import buildings from './data/game/buildings.json';
@@ -30,7 +31,7 @@ export type CurrencyId =
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
- *  four coins on the plank stays four (Docs/plans/builder-30-days.md §2). */
+ *  four coins on the plank stays four (Docs/features/17-workshops-and-goods.md §1). */
 export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
 /** What the city holds of each. Absent = none, exactly like a Wallet. */
 export type GoodsStock = Partial<Record<GoodId, number>>;
@@ -426,7 +427,9 @@ export interface Mission {
  * with one boundary — the moment it is home.
  */
 /** What can stand on a held world hex (sim/world/types.ts). */
-export type WorldImprovementId = 'LoggingCamp' | 'Homestead' | 'StonePit' | 'Fortress';
+/** What a builder out on the world board is building: a hex's district
+ *  (the claim), or an upgrade into one (Docs/features/19-world-map.md §7). */
+export type WorldBuildWhat = WorldDistrict | WorldUpgrade;
 
 export interface ExplorerTrip {
   id: string;
@@ -475,8 +478,8 @@ export interface WorldArmyOut {
 export interface WorldBuild {
   /** The board hex, by index. */
   index: number;
-  /** An Outpost, or an improvement's level. */
-  what: 'Outpost' | WorldImprovementId;
+  /** A district, or an upgrade's level. */
+  what: WorldBuildWhat;
   level: number;
   finishesAt: number;
 }
@@ -750,8 +753,10 @@ export interface GameState {
    *  top level rather than inside `city`. See sim/modifiers.ts. */
   modifiers: Modifier[];
   /** The quest chain: index into QUESTS (length = all done); progress is the
-   *  event counter for RELATIVE goals, reset when a quest is claimed. */
-  quests: { index: number; progress: number };
+   *  event counter for RELATIVE goals, reset when a quest is claimed. `rush`
+   *  is the tutorial's rent rush (sim/quests.ts): the quest it is for, and
+   *  when it tops the house up — null once it has. */
+  quests: { index: number; progress: number; rush?: { index: number; at: number | null } };
   /**
    * THE LIFETIME ODOMETERS the season pass's missions read (sim/events.ts).
    *

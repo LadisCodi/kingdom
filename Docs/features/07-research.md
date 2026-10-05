@@ -2,7 +2,7 @@
 
 > **Scope.** The research **system**: technologies, the books and their
 > eras, the Knowledge bar that pays for them, buying Knowledge, the
-> Knowledge ↔ Stardust split, the research screen, and spells as technologies. The **content** — every
+> Knowledge ↔ Stardust split, the research screen, and why Magic holds no spells. The **content** — every
 > node, the rank ladders and the price bands — is
 > [`tech-tree.md`](tech-tree.md).
 >
@@ -11,7 +11,7 @@
 > era bars, the climbing bonuses (§1.2), the Knowledge bar (§3), pouring and
 > instant completion (§1) and buying Knowledge (§3.2). The shape is authored
 > in `?dev=data#tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
-> Designed, not built: world-map landmarks (§7) and guild investment (§8).
+> Designed, not built: guild investment (§8).
 
 ## 1. Technologies
 
@@ -66,8 +66,8 @@
 - **Gems never complete a technology.** They buy Knowledge (§3.2), which is
   poured like any other; the Gold is always the city's
   ([`14-monetization.md`](14-monetization.md) §1).
-- The tree has 163 cards: **Civics 74 · Warfare 41 · Magic 28 · Sagas 11 ·
-  Atlas 9**, totalling **435,600 Gold and 1,260 Knowledge**. Price bands per
+- The tree has 167 cards: **Civics 75 · Warfare 40 · Magic 28 · Sagas 11 ·
+  Atlas 13**, totalling **592,385 Gold and 1,265 Knowledge**. Price bands per
   era are in [`tech-tree.md`](tech-tree.md) §7.
 
 ### 1.1 Majors and minors
@@ -132,14 +132,14 @@ A `bonus` names its effects, and each is four fields:
 - A row may carry `planned: true`: it is on the tree, researchable, and does
   nothing yet.
 - Its info panel says so ("Not yet in the prototype").
-- 7 cards are planned; the list is [`tech-tree.md`](tech-tree.md) §9.
+- 5 cards are planned; the list is [`tech-tree.md`](tech-tree.md) §9.
 
 ## 2. The shelf — five books, each opened by the world
 
 | Book | Kind | Opens when | Remit |
 |---|---|---|---|
 | **Civics** | general | from the first minute | the city and its purse |
-| **Warfare** | general | the first lair is **discovered** | the army, and the lairs it clears |
+| **Warfare** | general | Isolde **hands it over** once the first lair is found (scene `firstLair`) | the army, and the lairs it clears |
 | **Magic** | general | the first landmark is **claimed** | Mana, Knowledge, the Sanctum, the water |
 | **Sagas** | found | a **Tavern** stands | heroes, and the Tavern that hosts them |
 | **Atlas** | found | the **Watchtower** is claimed | sight, landmarks, the world beyond |
@@ -161,7 +161,7 @@ A `bonus` names its effects, and each is four fields:
   `completed`, and every technology costs Knowledge and Gold.
 - **No edge crosses tomes.** Townhall level gates the Sanctum and the military
   halls independently of the tree, so Civics paces the others without an edge.
-- A ruin pays the tree in Knowledge (§7).
+- Landmarks and lairs pay the tree in Knowledge (§7).
 - **Two books may aim at the same outcome; they may never move the same
   stat.** More per strike (`crewYield`, Civics) and more Knowledge per lair
   (`lairKnowledge`, Warfare) are different stats.
@@ -276,29 +276,30 @@ A `bonus` names its effects, and each is four fields:
   - The drip resumes as soon as pouring takes the balance back under 10.
 - **Offline, the bar is the cap.** Away for ten hours or more, the player
   comes back to a full bar.
-- **Territory and the ruins pay in lumps, never in rate.** Claiming a
-  landmark and a ruin's first clear each pay once; every ruin room pays as
-  it is cleared. The ladders and mechanics that raise
+- **Territory and fights pay in lumps, never in rate.** Claiming a
+  landmark and a lair's first clear each pay once; every world-map dungeon
+  room and Portal floor pays as it is cleared. The ladders and mechanics that raise
   those lumps are in the table.
 - **A lump raise pays back.** A technology that raises a lump pays its raise
   at once for every site already claimed or cleared, so researching it late
   never costs what researching it early would have paid.
 - **A new kingdom starts with no Knowledge.** The opening chain pays for its
-  own cards: eleven quests pay Knowledge, enough to carry the chain to
-  `Attuned` with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
+  own cards: eighteen quests pay Knowledge, enough to carry the chain's own
+  research with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
   opening the drip, the lumps and the purchases are the funding.
 
 | Source | Pays | Key |
 |---|---|---|
 | the **drip** | 1/h while under 10 | `knowledge.basePerHour` · `knowledge.cap` |
 | claiming a **landmark** | 3, once | `knowledge.landmarkClaimLump` |
-| a ruin's **first clear** | 3, once | `delve.firstClearKnowledge` |
-| every **ruin room** | at least 1, rising with depth, tier and room ([`11-expeditions.md`](11-expeditions.md) §7.1) — 1,156 across the 186 rooms | `ruins.knowledgeCoef` (0.25) |
+| a lair's **first clear** | 3, once | `delve.firstClearKnowledge` |
+| every **dungeon room** and **Portal floor** (world map) | at least 1, rising with depth and room ([`19-world-map.md`](19-world-map.md) §8.1, §10) | `worldDungeon.knowledge` (0.25) · `worldPortal` |
+| a held **world-map landmark** | 4 a day into a store of 8, collected with a tap | `worldBuild.landmark` |
 | `Wayposts I–IV` (Atlas) | +20% on every landmark claim, per rank | a `bonus` ladder |
 | `Bounties I–IV` (Warfare) | +20% on every lair cleared, per rank | a `bonus` ladder |
 | `Scriptorium I–V` (Magic) | +10% on every lump, per rank | a `bonus` ladder |
-| `knowledgeYield` modifier | × on every lump while it runs | the `insight` delve boon (×3) |
-| the **quest chain** | 29 across twelve quests | `quests` › `rewardKnowledge` |
+| `knowledgeYield` modifier | × on every lump | the Necromancer's boon (×1.25, [`10-heroes.md`](10-heroes.md) §2.6) |
+| the **quest chain** | 41 across eighteen quests | `quests` › `rewardKnowledge` |
 | **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
 | **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` · `knowledge.gemsPerPoint` |
 
@@ -325,7 +326,7 @@ A `bonus` names its effects, and each is four fields:
 | | Mana | Knowledge |
 |---|---|---|
 | Scope | city | kingdom |
-| Fills with | time | time; lumps from landmarks, ruins, quests and events |
+| Fills with | time | time; lumps from landmarks, lairs, dungeons, quests and events |
 | Ceiling | capped; what arrives over the cap is lost | 10; only the drip stops, and lumps and purchases land over it |
 | Spent on | taps on the ground and casts on the map ([`08-magic.md`](08-magic.md) §1) | technologies, poured |
 | Bought with | Gems, a rewarded video | Gold, Gems (§3.2) |
@@ -359,12 +360,11 @@ the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledg
 
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
-| **Knowledge** | technologies | the drip, lumps from landmarks, ruins, rooms, quests and events, Gold, Gems | kingdom | its tab under the plank (§3) |
-| **Stardust** | the hero ascension toll (`src/sim/collection.ts`; [`10-heroes.md`](10-heroes.md) §4) — relic levels left it 2026-09-09 ([`09-relics.md`](09-relics.md)) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the hero screens |
+| **Knowledge** | technologies | the drip, lumps from landmarks, lairs, dungeon rooms, quests and events, Gold, Gems | kingdom | its tab under the plank (§3) |
+| **Stardust** | the hero ascension toll (`src/sim/heroes.ts`; [`10-heroes.md`](10-heroes.md) §4) | dungeon rooms and Portal floors (`worldDungeon.stardust`), calls (`banners.pullStardust` 50 / 150), the chain (`rewardStardust`, 140 total), the season pass and the survey | kingdom | the hero screens |
 
 - One job each. `knowledgeYield` multiplies a Knowledge lump; `stardustYield`
-  multiplies what a depth pays.
-- A ruin's first clear pays **both** lumps.
+  is read by nothing (**OQ-113**).
 - Stardust has no row on the plank: a currency spent in exactly one screen
   lives in that screen's header. Knowledge is the exception that has to be
   seen from the map, because a full bar stops earning, so it has a tab of its
@@ -375,8 +375,7 @@ the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledg
 
 ## 5. The screen — the research book
 
-The research screen is a book (mockups M43 and M46,
-[`../plans/research-book.md`](../plans/research-book.md)).
+The research screen is a book (mockups M43 and M46).
 
 ### 5.1 The page and the bookmarks
 
@@ -456,34 +455,22 @@ technology's needs, whatever state it is in. It reads top to bottom in three par
 ## 6. Magic holds no spells
 
 **The Magic tome does not cast.** An ability is a **relic's**, cast from the
-relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
-2026-09-15**.
+relic that owns it ([`09-relics.md`](09-relics.md) §2.1).
 
-- This section used to plan the opposite: four spell nodes taking the relic
-  actives off the relics, on the line *"a relic is what you wear, a spell is
-  what you know"*. The line was good and the split was not. A relic whose
-  ability lived in a tome was **a passive with a picture**, and the collection
-  asks a player for nine cards a page — the thing those cards buy has to be
-  something they press.
-- **The two could not both exist**: the same four abilities cannot be a
-  relic's second half and a tome's unlock.
-- Magic keeps what is not an ability: **`Resonance`** (what a cast costs) and
-  **what raises the Mana cap**. Both make every relic's active better without
+- Magic keeps what is not an ability: **`Invocation`** (a second charge on a
+  relic's active, planned) and **what raises the Mana cap and regen**. Both make every relic's active better without
   owning any of them, which is what a tome should do for a pillar it does not
   contain.
 - **A relic's level is the ability's ladder.** There is nothing to research, so
   a player who wants a stronger active closes that relic's album — which is the
   collection's whole promise and the reason the split had to go one way.
 
-## 7. Ruins and landmarks
+## 7. Lairs and landmarks
 
-- A **cleared ruin** pays 3 Knowledge on its first clear (§3).
-- **No tome is gated behind anything.** Every book is open, so a ruin being
-  *discovered*, not cleared.
-- A **province landmark** pays 5 on claiming.
+- A **lair** pays 3 Knowledge on its first clear (§3).
+- A **province landmark** pays 3 on claiming.
 - A **world-map landmark** fills a store of Knowledge while its hex is held
-  and active ([`19-world-map.md`](19-world-map.md) §8) *(designed, not
-  built)*.
+  and active ([`19-world-map.md`](19-world-map.md) §8).
 
 ## 8. Guild investment — designed, not built
 
@@ -499,19 +486,18 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
 
 | Dial | Value | Key |
 |---|---|---|
-| Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
+| Era price bands | [`tech-tree.md`](tech-tree.md) §7 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
 | **The bar** | 1/h up to 10 | `knowledge.basePerHour` · `knowledge.cap` |
 | **Gold price of a point** | 100 × n², never reset — **OQ-105** | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` |
 | **Gem price of a point** | 270, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
 | Landmark claim lump · per `Wayposts` rank | 3 · +20% | `knowledge.landmarkClaimLump` · `tech-tree.json` |
 | First-clear lump · per `Bounties` rank | 3 · +20% | `delve.firstClearKnowledge` · `tech-tree.json` |
-| Chain Knowledge | 29 total | `quests` › `rewardKnowledge` |
+| Chain Knowledge | 41 total | `quests` › `rewardKnowledge` |
 | What opens a book | §2 | `sim/research.ts` `TOME_OPENS` |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many bands a book has, and what each asks for | 3 · 4 · 4 · 2 · 2 bands; 0 · 43 (Civics) or 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
-| A spell's Mana cost | per spell | a `spells` collection *(designed)* |
 
 ## 10. Deliberately not in this design
 
@@ -560,10 +546,7 @@ relic that owns it ([`09-relics.md`](09-relics.md) §2.1) — **OQ-98, closed
   ([`../tech-tree-editor.md`](../tech-tree-editor.md) §8).
 - Exclusive branch picks.
 - A prerequisite that crosses tomes (§2).
-- A spell that requires a node in another tome (§6).
 - The same stat appearing in two tomes (§2).
-- A spell gated on anything after its discovery — a slot, a charge, a
-  cooldown, an equipped item (§6).
 - **Research slots** of any kind, bought or granted.
 - A contested landmark that raises the Knowledge rate (§7).
 - A `mul` op beside `percent` and `flat`. `SanctifiedRuins` and `Roadworks`

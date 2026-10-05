@@ -59,8 +59,10 @@ import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
+import { giveBook } from './sim/research';
+import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
-import { SCENES, UNLOCKS } from './sim/data/definitions';
+import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -73,9 +75,28 @@ import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
-import { button, el } from './ui/format';
+import { button, el, formatCount } from './ui/format';
+import { recordResourceDiscovery } from './sim/discovery';
+import { addToWallet, getWallet, type CurrencyId } from './sim/state';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
+
+/** The dev bar's resource buttons (main.ts dev bar): what each adds — a
+ *  material, null, doubles what is held (at least 1,000). */
+const DEV_GRANTS: ReadonlyArray<{ icon: string; coin: CurrencyId; amount: number | null }> = [
+  { icon: '🪙', coin: 'Gold', amount: null },
+  { icon: '🍎', coin: 'Food', amount: null },
+  { icon: '🪵', coin: 'Wood', amount: null },
+  { icon: '🪨', coin: 'Stone', amount: null },
+  { icon: '🔮', coin: 'Mana', amount: 100 },
+  { icon: '📖', coin: 'Knowledge', amount: 10 },
+  { icon: '💎', coin: 'Gems', amount: 1000 },
+  { icon: '✨', coin: 'Stardust', amount: 100 },
+  { icon: '⭐', coin: 'HeroXp', amount: 1000 },
+  { icon: '🗝', coin: 'SilverKey', amount: 5 },
+  { icon: '🔑', coin: 'GoldKey', amount: 5 },
+];
+
 
 // Every five seconds to the device: a page killed without a `pagehide` (an
 // app swiped away, a crashed tab) loses no more than that. The cloud copy is
@@ -690,12 +711,24 @@ async function boot(): Promise<void> {
         if (th && th.level < 10) th.level += 1;
         runTick();
       }),
-      // Goods, until a workshop can make them (Docs/plans/builder-30-days.md
+      // Goods, until a workshop can make them (Docs/features/17-workshops-and-goods.md
       // §3): the prices that name them ship before the producer does.
       button('📦 +10 goods', () => {
         for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
         runTick();
       }),
+      // RESOURCES, into the wallet each one lives in (the scopes the Survey
+      // pays into, sim/survey.ts). A material adds 1,000 or doubles what is
+      // held, whichever is more, so the button keeps up with a late city.
+      ...DEV_GRANTS.map(({ icon, coin, amount }) =>
+        Object.assign(button(amount === null ? `${icon} +${coin}` : `${icon} +${formatCount(amount)} ${coin}`, () => {
+          const wallet = coin === 'Gems' || coin === 'SilverKey' || coin === 'GoldKey' ? game.state.player.wallet
+            : coin === 'Stardust' || coin === 'Knowledge' || coin === 'HeroXp' ? game.state.kingdom.wallet
+              : game.state.city.wallet;
+          addToWallet(wallet, coin, amount ?? Math.max(1000, getWallet(wallet, coin)));
+          recordResourceDiscovery(game.state, coin);
+          runTick();
+        }), { title: amount === null ? `Adds ${formatCount(1000)} ${coin}, or doubles what you hold` : '' })),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {
         game.state.ads.readyAt = 0;
@@ -724,6 +757,21 @@ async function boot(): Promise<void> {
         for (const s of SCENES) if (s.id === 'intro' || s.id.startsWith('morning')) game.state.tutorial.seen[`scene:${s.id}`] = true;
         runTick();
       }),
+      // Every scene still to play, played: what one would have handed over —
+      // a book, a build's materials — handed over now, so nothing it gives
+      // is left behind it.
+      button('🎓 tutorials', () => {
+        for (const s of SCENES) {
+          const key = `scene:${s.id}`;
+          if (game.state.tutorial.seen[key]) continue;
+          for (const l of s.lines) {
+            if (l.gives) giveBook(game.state, l.gives);
+            if (l.stocks) stockBuild(game.state, l.stocks);
+          }
+          game.state.tutorial.seen[key] = true;
+        }
+        runTick();
+      }),
       button('🎬 replay scenes', () => {
         for (const k of Object.keys(game.state.tutorial.seen)) if (k.startsWith('scene:')) delete game.state.tutorial.seen[k];
         game.state.tutorial.veteran = false;
@@ -733,6 +781,16 @@ async function boot(): Promise<void> {
       button('✨ unlocks', () => {
         game.unlockQueue.push(...Object.keys(UNLOCKS));
         runTick();
+      }),
+      // The world board, opened for real: a Watchtower is claimed — its
+      // door (sim/doors.ts) — without finding it, and the player walks out.
+      button('🌍 world', () => {
+        const tower = LANDMARKS.find((l) => l.kind === 'Watchtower');
+        if (tower === undefined) return;
+        game.state.discoveries[`site:${tower.id}`] = true;
+        game.state.landmarks.claimed[tower.id] = true;
+        runTick();
+        game.enterWorld();
       }),
       // The world server's stand-in rivals: play a turn as any of them, to
       // set up a board by hand. Their commands cost the player nothing.

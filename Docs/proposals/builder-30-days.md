@@ -229,7 +229,7 @@ Recommendation: **one tier of three goods, and one late good**.
   prices Harmony is **a count cap per piece and a good in every piece past the
   Garden**: reaching a Townhall's demand needs several KINDS, and each kind is
   a queue at a workshop
-  ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §6).
+  ([`../features/21-harmony.md`](../features/21-harmony.md)).
 
 ## 5. Watchtower — the world map
 

@@ -23,7 +23,7 @@
     "initialCurrencies": { "Gold": 100, "Food": 0 },
     "initialPopulation": 0,
     "populationCostFirst": [5, 20, 45, 100, 250, 500, 1000],
-    "populationCostGrowth": 1.05,
+    "populationCostGrowth": 1.1,
     "lateUpgradeFromLevel": 6
   },
   "kingdom": {
@@ -39,7 +39,8 @@
     "moveSpeedTilesPerSecond": 1
   },
   "training": {
-    "seconds": 20
+    "seconds": 20,
+    "villagerSecondsGrowth": 1.07
   },
   "rush": {
     "secondsPerGem": 5

@@ -156,13 +156,12 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });
 
-  // Its richness moved from the TAP to the DEPOT and the CREW when a cell
-  // became a depot. A tap is priced in seconds of that cell's own work, and a
-  // sixty-second swing is slow ground — so twenty seconds of it is a fraction
-  // and the floor pays 1, the same as a bare rock. What makes a vein worth the
-  // walk is that there is five times as much in it and a miner takes five
-  // units a swing (Docs/features/04-harvest.md §2.1).
-  it('an iron mountain is a RICH stone node — in the ground, not in the tap', () => {
+  // Its richness is in the CREW, not the tap. A tap is priced in seconds of
+  // that cell's own work, and a sixty-second swing is slow ground — so twenty
+  // seconds of it is a fraction and the floor pays 1, the same as a bare rock.
+  // What makes a vein worth the walk is that a miner takes five units a swing
+  // (Docs/features/04-harvest.md §2.1).
+  it('an iron mountain is a RICH stone node — in the swing, not in the tap', () => {
     const state = freshGame();
     reveal(state, [IRON_MOUNTAIN]);
     completeTech(state, 'Mining'); // the iron out of the peak
@@ -171,7 +170,6 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     expect(getWallet(state.city.wallet, 'Stone'))
       .toBe(tapYieldAt(state, map, IRON_MOUNTAIN, T0));
 
-    expect(HARVEST.MountainIron.stock).toBeGreaterThan(HARVEST.Stone.stock);
     expect(HARVEST.MountainIron.unitsPerStrike)
       .toBe(HARVEST.Stone.unitsPerStrike * 5);
   });

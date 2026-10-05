@@ -29,7 +29,8 @@ const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 export function renderBuilderSheet(game: Game): HTMLElement {
   const { builders, ceiling, cost: hireCost } = game.builderOffer();
   const jobs = game.builderJobs();
-  const free = Math.max(0, builders - jobs.length);
+  const worldJobs = game.builderWorldJobs();
+  const free = Math.max(0, builders - jobs.length - worldJobs.length);
   const ask = game.builderAskJob();
   const close = () => game.setOverlay(null);
 
@@ -78,6 +79,20 @@ export function renderBuilderSheet(game: Game): HTMLElement {
         cost: { Gems: gemRushCost(item, t) },
         have: (c) => game.walletValue(c),
       })));
+  }
+
+  // A builder out on the world board: the server's timer, so no Finish.
+  for (const job of worldJobs) {
+    const bar = progress('blue');
+    const leftMs = Math.max(0, job.startedAt + job.durationMs - t);
+    bar.run(job.durationMs > 0 ? Math.min(1, Math.max(0, (t - job.startedAt) / job.durationMs)) : 1,
+      leftMs, formatDuration(leftMs / 1000));
+    rows.push(el('div', { class: 'crew-row k-section' },
+      el('div', { class: 'crew-art' }, iconEl('build', { size: 'lg' })),
+      el('div', { class: 'crew-mid' },
+        el('div', { class: 'crew-name' }, job.name),
+        el('div', { class: 'crew-task' }, job.task),
+        bar.root)));
   }
 
   // The places still to hire, up to the ceiling: the next one holds the

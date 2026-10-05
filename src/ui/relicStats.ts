@@ -62,7 +62,7 @@ const STAT_FACE: Partial<Record<ModifierStat, { icon: IconName; label: string }>
   stardustYield: { icon: 'Stardust', label: 'Stardust from rooms' },
   roomHaul: { icon: 'dungeon', label: 'A room’s gold and stone' },
   armyCap: { icon: 'army', label: 'Army the halls field' },
-  worldImprovementYield: { icon: 'build', label: 'Improvement yield' },
+  worldImprovementYield: { icon: 'build', label: 'District yield' },
 };
 
 /**

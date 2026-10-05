@@ -8,29 +8,29 @@
 
 import type { Board } from '../sim/battle';
 import type { HeroId, UnitId } from '../sim/state';
-import type { WorldImprovement } from '../sim/world/types';
+import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
 export interface BoardRef { id: string; seed: number; seat: number }
 
-/** A held hex — or one being claimed (its Outpost not yet standing), or
- *  one nobody holds that still carries what was built on it. */
+/** A held hex — or one being claimed (its district not yet standing), or
+ *  one nobody holds that still carries its district. Which district it is
+ *  is the hex's feature's (19 §7), so it is never stored. */
 export interface ServerHex {
   /** The seat that holds or is claiming it; null once it was denied — its
-   *  Outpost and improvement still standing, waiting to be taken. */
+   *  district and its upgrades still standing, waiting to be taken. */
   owner: number | null;
-  /** When its Outpost stands; later than now while a builder is on it. */
-  outpostAt: number;
-  /** The improvement standing on it, and its level. */
-  improvement: { kind: WorldImprovement; level: number } | null;
-  /** A level under construction: the improvement reaches `toLevel` at `at`. */
-  work: { kind: WorldImprovement; toLevel: number; at: number } | null;
+  /** When its district stands; later than now while a builder is on it. */
+  standsAt: number;
+  /** The Fortress built into it: its level, 0 for none (19 §7.2). */
+  fortress: number;
+  /** An upgrade under construction: it reaches `toLevel` at `at`. */
+  work: { upgrade: WorldUpgrade; toLevel: number; at: number } | null;
   /** On the chain back to its owner's city (19 §5.2). */
   active: boolean;
-  /** What its stores hold, settled at `storeAt`: the improvement's material
-   *  and a landmark's Knowledge. Fractions carry. */
-  material: number;
-  knowledge: number;
+  /** What its store holds, in its district's currency, settled at
+   *  `storeAt`. Fractions carry. */
+  stored: number;
   storeAt: number;
   /** The army garrisoned in its Fortress, by id. */
   garrison: string | null;
@@ -106,7 +106,7 @@ export interface ServerSeat {
   nextMoveAt: number | null;
   /** How many moves it has made — the key of its next roll. */
   moves: number;
-  /** How many hexes it has ever claimed with an Outpost. */
+  /** How many hexes it has ever claimed. */
   claims?: number;
 }
 
@@ -151,7 +151,7 @@ export interface ServerDungeon {
 }
 
 export interface ServerWorld {
-  version: 1;
+  version: 3;
   boards: ServerBoard[];
 }
 
@@ -161,14 +161,15 @@ export interface ServerWorld {
 export interface HexView {
   index: number;
   owner: number | null;
-  /** Its Outpost stands. */
+  /** Its district stands. */
   held: boolean;
-  outpostAt: number;
-  improvement: { kind: WorldImprovement; level: number } | null;
-  work: { kind: WorldImprovement; toLevel: number; at: number } | null;
+  standsAt: number;
+  district: WorldDistrict;
+  fortress: number;
+  work: { upgrade: WorldUpgrade; toLevel: number; at: number } | null;
   active: boolean;
-  /** Only on the player's own hexes. */
-  stores: { material: number; materialCap: number; knowledge: number; knowledgeCap: number } | null;
+  /** Only on the player's own hexes: its store, in its district's currency. */
+  stores: { currency: WorldStoreCurrency; amount: number; cap: number } | null;
   /** The army standing in its Fortress: whose, and what it is worth. */
   garrison: { army: string; owner: number; power: number } | null;
 }
@@ -224,14 +225,18 @@ export interface WorldSnapshot {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute';
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
+  | 'NothingBuilding';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }
   | { ok: false; why: Refusal };
 
+/** What a district's store can hold. */
+export type WorldStoreCurrency = 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
+
 export type CollectResult =
-  | { ok: true; material: { currency: 'Wood' | 'Food' | 'Stone'; amount: number } | null; knowledge: number; snapshot: WorldSnapshot }
+  | { ok: true; paid: { currency: WorldStoreCurrency; amount: number } | null; snapshot: WorldSnapshot }
   | { ok: false; why: Refusal };
 
 export type SendResult =

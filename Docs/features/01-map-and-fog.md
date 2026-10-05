@@ -4,10 +4,10 @@
 > reveal, and what the fog holds. The *scopes* the map splits into are
 > [`02-map-scopes.md`](02-map-scopes.md).
 >
-> **Status: built** — the treasures, the abandoned buildings and the sea of
-> clouds the fog is drawn as (§4.2, §6.2, §6.3) since 2026-10-02, but for the
-> wisps of a tear and a reveal (Docs/implementation-plan.md Step 11). The map is authored in the
-> `?dev=map` editor ([`../map-editor.md`](../map-editor.md)) and stored in
+> **Status: built**, but for the wisps of a tear and a reveal (§4.2,
+> [`../implementation-plan.md`](../implementation-plan.md) Step 11). The map is
+> authored in the map editor at `?dev=data#map`
+> ([`../map-editor.md`](../map-editor.md)) and stored in
 > `src/sim/data/region-map.json`.
 
 ## 1. The grid
@@ -69,15 +69,15 @@ Buildability:
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Mountain** | Stone | 1 | 5 | 120 s | Pickaxes |
-| **Iron mountain** | Stone | **5** | 5 | **300 s** | **Mining** |
-| **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Deep Mining** |
+| **Mountain** | Stone | 1 | never | — | Pickaxes |
+| **Iron mountain** | Stone | **5** | never | — | **Mining** |
+| **Gold mountain** | **Gold** | **3** | never | — | **Deep Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 
 Mountains:
 
-- Three mountains share one silhouette and differ in what the rock holds, which
-  research opens it and how long it takes to recover:
+- Three mountains share one silhouette and differ in what the rock holds and
+  which research opens it. **No mountain runs out**:
 
 | | Pays | Opened by | Role |
 |---|---|---|---|
@@ -101,7 +101,7 @@ Mountains:
   throttle on stone**. A bare peak recovers in two minutes, a metal one in
   **five**.
 - Gold from a gold mountain is a second faucet beside housing taxes: a level-1
-  Quarry with three men on gold is about 45 Gold a minute against roughly 120
+  Quarry with three men on gold is about 8 Gold a minute against roughly 120
   from a Townhall-1 city's rent ([`03-economy.md`](03-economy.md) §3).
 - `DeepSeams` asks for Mining only after `Bureaucracy` is done and the
   Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)). A test
@@ -116,27 +116,17 @@ So a feature may occupy a square **footprint**.
 | | Footprint | How it is decided |
 |---|---|---|
 | **Mountain** | 1×1, 2×2, 3×3 | **grouped** from the painted cells |
-| **Sanctuaries and ruins** | 1×1, 2×2, 3×3 | **authored**, per site |
+| **Landmarks and lairs** | 1×1, 2×2, 3×3 | **authored**, per site (`size`, 1 unless stated) |
 | Everything else | 1×1 | — |
 
-A mountain is painted, so its blocks are derived; a sanctuary or a ruin is
+A mountain is painted, so its blocks are derived; a landmark or a lair is
 PLACED, so it carries its own size. Everything after this is the same for
 both.
 
 | Site | Cells |
 |---|---|
-| Wayside shrine | 1×1 |
-| Ring of standing stones | 2×2 |
-| Leyspring | 1×1 |
-| Hollow Barrow (T1) | 1×1 |
-| Sunken Chapel (T2) | 3×3 |
-| Drowned Ironworks (T3) | 2×2 |
-| Counting House (T4) | 2×2 |
-| Star Observatory (T5) | 2×2 |
-
-A landmark's size is per KIND, because its drawing is: three sanctuaries of
-one kind at three sizes would want three drawings. A ruin's is its own, since
-each has its own art already.
+| Every landmark (shrine, standing stones, leyspring, watchtower) | 1×1 |
+| Every lair | 2×2 |
 
 - The footprint is **square**, and the feature is **drawn once** across the
   whole of it. There is no quarter of a mountain, in any sense: not
@@ -171,9 +161,9 @@ each has its own art already.
 
 **Authoring.**
 
-- Mountain cells are painted **one at a time** in `?dev=map`. Nothing declares
+- Mountain cells are painted **one at a time** in the map editor. Nothing declares
   a footprint.
-- A sanctuary or a ruin declares `size` on its own row instead. The editor
+- A landmark or a lair declares `size` on its own row instead. The editor
   round-trips it; `validateRegionMap` refuses a size outside 1–3 and checks
   every cell of the footprint the way it checks a single one, so a 3×3 whose
   far corner hangs over water is an error rather than a site nobody can
@@ -285,11 +275,11 @@ fallback past ring 14. The province reaches ring 23.
 
 | Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
-| **Gold** | 4 | 8 | 20 | 55 | 110 | 330 | 800 |
+| **Gold** | 4 | 8 | 20 | 85 | 220 | 990 | 2,400 |
 
 | Distance | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15+ |
 |---|---|---|---|---|---|---|---|---|
-| **Gold** | 2,200 | 5,900 | 15,000 | 43,000 | 105,000 | 330,000 | 925,000 | ×1.37/ring |
+| **Gold** | 6,600 | 18,000 | 45,000 | 130,000 | 320,000 | 990,000 | 2,800,000 | ×1.37/ring |
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
@@ -311,7 +301,7 @@ fallback past ring 14. The province reaches ring 23.
 - **Every tap that takes tears a fifth of the cell's mist away**, the last
   one blowing it off — every cell of a block at once (§4.2). A refused tap
   tears nothing.
-- At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
+- At ×1 the whole map is **2,522,803,392 Gold across 1,466 priced cells**, and
   the outer third of it is most of that; the count multiplier only raises it.
   It is the largest Gold sink in the game by three orders of magnitude. What
   limits how fast it is spent is the Townhall's reach in the first week and the
@@ -321,22 +311,23 @@ fallback past ring 14. The province reaches ring 23.
 
 | Found in the fog | Count | Gives | Verb |
 |---|---|---|---|
-| **Resources** | 42 features | Wood, Stone, Food | tap / work |
+| **Resources** | 178 feature cells | Wood, Stone, Food, Gold | tap / work |
 | **Landmarks** | 11 | **+10 max Mana**, permanently, and a discover ring | claim |
-| **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
+| **Lairs** | 5 | its hoard back, Hero XP, a Knowledge lump, and the ground it held | find it, beat its garrison, claim |
 | **Treasures** | one every five cells revealed | a coin, once (§6.2) | reveal its cell, tap to pick up |
 | **Abandoned buildings** | authored | a building, once repaired (§6.3) | repair |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.
-- A revealed ruin is a repeatable dungeon node, not a one-time pickup.
-- Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
+- A lair is cleared once and is gone; repeatable dungeons are the world
+  map's ([`19-world-map.md`](19-world-map.md)).
+- Neither landmarks nor lairs are visible when a kingdom begins. Sites draw
   through the Discovered mist once discovered.
 - **A site coming into view is announced once**, by a banner — unless a
   scene introduces it ([`23-tutorials.md`](23-tutorials.md)), which then says
   it instead. A resource is never announced: its coin lands on the plank.
-- **Every ruin opens with a gate.** Discovering it starts a counter; clear the
-  gate before it raids, and the ruin's rooms are yours to take
+- **Every lair holds a garrison.** Finding it starts its raid clock; it
+  raids until its garrison is beaten
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has
   no guard: it is claimed for its Gold.
 
@@ -382,22 +373,21 @@ Costs are **authored per sanctuary**, not derived from distance.
 - **A landmark inside a standing lair's ground cannot be claimed**
   (`LairHeld`): the Thorned Shrine waits for the Orcs.
 
-### The five ruins
+### The five lairs
 
-| Ruin | Tier | Artifact | Ring |
-|---|---|---|---|
-| Hollow Barrow | I | Dowsing Rod | 4 |
-| Sunken Chapel | II | Verdant Seal | 8 |
-| Drowned Ironworks | III | Foreman's Sigil | 19 |
-| The Counting House | IV | Gilded Ledger | 15 |
-| Star Observatory | V | Wanderer's Compass | 15 |
+| Lair | Tier | Ring |
+|---|---|---|
+| Orc Lair | I | 6 |
+| Harpy Roost | II | 6 |
+| Goblin Den | III | 19 |
+| Wolf-rider Camp | IV | 14 |
+| Drake's Lair | V | 14 |
 
-- The first two are the ones a month of play reaches, and they sit on the fog
-  curve's near half. The last three are deep province: past ring 12 a single
-  cell costs six figures (§5), so meeting them is a late-game project and
-  their order is not the tier order.
-- Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
-  [`combat.md`](combat.md).
+- The first two are the ones a month of play reaches. The last three are deep
+  province: past ring 12 a single cell costs six figures (§5), so meeting them
+  is a late-game project and their order is not the tier order.
+- Full lair design: [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md);
+  the fights are [`combat.md`](combat.md).
 
 ### 6.2 Treasures
 
@@ -427,8 +417,8 @@ whatever direction the player explores.
   lump.
 - **It pays `treasure.workSeconds` of the kingdom's production of its coin**,
   floored at `treasure.floor`, priced when it is picked up. Knowledge pays a
-  fixed `treasure.knowledge`. **The first is fixed** — `treasure.first`, 20
-  Gold — for the First Morning ([`23-tutorials.md`](23-tutorials.md) §3).
+  fixed `treasure.knowledge`. **The first is fixed** — 20 Gold
+  (`treasure.firstCoin`, `treasure.firstAmount`) — for the First Morning ([`23-tutorials.md`](23-tutorials.md) §3).
 - It waits for ever, discovered or revealed. Workers never take it; placing
   a building on its cell picks it up.
 
@@ -484,17 +474,17 @@ them, to be found and repaired.
 
 - **`?dev=data` is the source of truth for every number; the map editor is the
   source of truth for the map.**
-- Terrain, features, landmarks, ruins and abandoned buildings live in
-  `src/sim/data/region-map.json`, painted in `?dev=map`
+- Terrain, features, landmarks, lairs and abandoned buildings live in
+  `src/sim/data/region-map.json`, painted at `?dev=data#map`
   ([`../map-editor.md`](../map-editor.md)).
 - What a legal map is lives in one module, `mapRules.ts`, checked by the
   editor, the save endpoint and a test.
 - Fog ring prices are numbers: `fog.rings` in the `exploration` settings.
-- **The ruin roster is fixed in code** (`RuinId` is a union): a ruin can be
+- **The lair roster is fixed in code** (`LairId` is a union): a lair can be
   moved and retuned but not added.
 - Landmarks have no code-side identity beyond their `kind`; they are fully
   editable.
-- Every ruin carries a `guard` — threat, power, and its two counters in
+- Every lair carries a `guard` — threat, power and its first-raid warning in
   minutes ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2).
   Landmarks carry none.
 
@@ -502,24 +492,24 @@ them, to be found and repaired.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 4 → 925,000, ×1.37 past ring 14 | `fog.rings` |
-| How far each Townhall level lets the fog be paid for | 3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40 rings | `fog.reachPerTownhallLevel` |
+| Fog price per ring | 4 → 2,800,000, ×1.37 past ring 14 | `fog.rings` |
+| How far each Townhall level lets the fog be paid for | 3 · 5 · 7 · 8 · 10 · 11 · 13 · 15 · 17 · 23 rings | `fog.reachPerTownhallLevel` |
 | How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.countStep`, `fog.countGrowth` |
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
-| Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| Claim discover radius | 5 (the Watchtower 8) | `fog.claimDiscoverRadius`, `fog.watchtowerDiscoverRadius` |
 | How often a treasure is due | every 5 cells revealed | `treasure.everyReveals` |
 | What a treasure pays | 120 s of the kingdom's production, floored at 10 Gold · 5 Food · 5 Wood · 5 Stone | `treasure.workSeconds`, `treasure.floor` |
 | Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
-| The first treasure | 20 Gold | `treasure.first` |
+| The first treasure | 20 Gold | `treasure.firstCoin`, `treasure.firstAmount` |
 | Where the abandoned buildings stand | §6.3 | the map editor |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
-| A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
+| A lair's guard, zone and sight | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `harvest` |
 | Which features may span cells, and how far | Mountain, up to 3×3 | §3.1, `definitions.ts` |
-| The world itself | — | `?dev=map` |
+| The world itself | — | `?dev=data#map` |
 
 ## 9. Deliberately not in this design
 

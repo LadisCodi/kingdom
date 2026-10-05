@@ -10,10 +10,10 @@
 
 import type { Board } from '../sim/battle';
 import type { HeroId } from '../sim/state';
-import type { WorldImprovement } from '../sim/world/types';
+import type { WorldUpgrade } from '../sim/world/types';
 import {
-  build, claim, collect, delveRoom, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  sendArmy, snapshotOf,
+  claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
+  sendArmy, snapshotOf, upgrade,
 } from './core';
 import type {
   ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SendResult, ServerBoard, ServerWorld,
@@ -26,7 +26,10 @@ export interface WorldServerApi {
   join(player: { id: string; name: string; prefer?: BoardRef }, now: number): Promise<WorldSnapshot>;
   snapshot(now: number, asSeat?: number): Promise<WorldSnapshot | null>;
   claim(index: number, now: number, asSeat?: number): Promise<CommandResult>;
-  build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult>;
+  /** Build an upgrade into a district that stands, or raise it a level. */
+  upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult>;
+  /** Finish a builder's work on a hex now — paid for by the client. */
+  finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
   sendArmy(
     req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[] },
@@ -64,7 +67,10 @@ export class LocalWorldServer implements WorldServerApi {
       const text = store.load();
       if (text !== null) world = JSON.parse(text) as ServerWorld;
     } catch { world = null; }
-    this.world = world?.version === 1 ? world : emptyWorld();
+    // A store of another version is thrown away: v2's board is radius 6, so
+    // a v1 board's hexes are numbered for a board that no longer exists, and
+    // v3's hexes are districts.
+    this.world = world?.version === 3 ? world : emptyWorld();
     // A board kept from before armies existed.
     for (const b of this.world.boards) {
       b.armies ??= [];
@@ -130,8 +136,12 @@ export class LocalWorldServer implements WorldServerApi {
     return this.run(asSeat, (b, seat) => claim(b, seat, index, now), { ok: false, why: 'NoBoard' });
   }
 
-  async build(index: number, kind: WorldImprovement, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => build(b, seat, index, kind, now), { ok: false, why: 'NoBoard' });
+  async upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => upgrade(b, seat, index, what, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async finish(index: number, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => finish(b, seat, index, now), { ok: false, why: 'NoBoard' });
   }
 
   async collect(index: number, now: number, asSeat?: number): Promise<CollectResult> {
@@ -159,7 +169,7 @@ export class LocalWorldServer implements WorldServerApi {
     const b = at.board;
     b.resolvedTo -= ms;
     for (const h of Object.values(b.hexes)) {
-      h.outpostAt -= ms;
+      h.standsAt -= ms;
       h.storeAt -= ms;
       if (h.work !== null) h.work.at -= ms;
     }

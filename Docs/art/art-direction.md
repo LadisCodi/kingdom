@@ -151,7 +151,9 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 - **Three or four content elements read comfortably on a tactical hex.** Past
   that, the hex is overloaded and something must be dropped or merged.
 - Ownership reads as a **border colour on the hex edge**, never as a tint over
-  the ground — a tinted hex fights the terrain it is meant to identify.
+  the ground — a tinted hex fights the terrain it is meant to identify. It is
+  painted on the ground: over the plate, under everything that stands on the
+  hex.
 
 ### 7.1 The tilt
 
@@ -162,10 +164,10 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
   route rings are squashed; castles, trees, mountains, buildings and figures
   stand upright, their foot on the squashed ground.
 - **A tile has thickness**: a side 16 % of the hex's radius deep under its two
-  lower edges, the right face in shade. Packed earth under revealed and sensed
-  ground, grey under the mist.
-- The row in front hides that side, so it shows only along the near rim of the
-  board, and where explored ground meets the mist.
+  lower edges, the right face in shade, packed earth. Only revealed and sensed
+  hexes are tiles; an Unknown hex is the cloud bank (§8.1).
+- The row in front hides that side, and the clouds hide it where explored
+  ground meets them: the board stands in the clouds, never floats on them.
 - **Hex art is still authored flat** (256 × 296) and squashed when drawn.
 
 ## 8. States the map has to show
@@ -175,11 +177,11 @@ Every one of these is a treatment of the same asset, never a second asset.
 | State | Treatment |
 |---|---|
 | **Undiscovered** | the cloud bank (§8.1); the hex or cell is not there |
-| **Discovered / Sensed** | under low mist, desaturated (§8.1); silhouettes rise out of the clouds |
+| **Discovered / Sensed** | under low mist, desaturated (§8.1); silhouettes rise out of the clouds — on the world board, a thin veil of the bank's clouds |
 | **Revealed** | full colour, the default |
 | **Exhausted** (a harvest cell) | the same tile, spent — stumps, bare soil, still clearly the same place |
 | **Under construction** | scaffold and a pit, at the building's own footprint |
-| **Selected / valid target** | a warm rim on the diamond's edge, never a fill |
+| **Selected / valid target** | a warm rim on the diamond's edge, never a fill; painted on the ground, under what stands there |
 | **Inactive** (a world hex off the chain) | greyed toward the Sensed treatment, buildings intact |
 
 - **Unexplored ground is under a sunlit sea of clouds — and still the same
@@ -229,6 +231,26 @@ province under the midday sun. Target:
 - **The bank drifts**: the whole field slides slowly across the province,
   one texture repeat every ten minutes, with a slow boil over it; it never
   covers a cell the player can see.
+- **The world board stands in the same bank**: every Unknown hex and
+  everything past the board's edge, at full thickness up to every seen hex.
+  The tallest puffs lap over a seen hex's edges — a fifth of a hex over its
+  two near edges, a tenth over its two far ones.
+- **A Sensed hex is under a thin veil** of the same clouds, drifting with
+  the bank: the terrain shows through, pale; it spills a little onto clear
+  ground beside it. What stands on it rises out as a silhouette in the
+  cloud-shadow tone, palest at its foot.
+- **A reveal lifts the clouds** over about a second: the bank thins to a
+  veil, its tallest puffs last, and the veil lifts.
+- **Cloud shadows** — the texture at far larger scale — drift slowly over
+  seen ground the other way.
+- **Far out, the puffs grow**: past 75 % zoom the texture at twice the size
+  takes over, so the bank never becomes a busy speckle.
+- **Layers, bottom to top:** plates and sides; the bank, the veil and the
+  shadows; the rims on the hex edges (ownership, selection); everything that
+  stands on a hex; every other mark on the board.
+- **A tap on a hex answers at once**: a brief warm flash on it, its rim
+  swelling, before the sheet is read.
+- **An explorer's route fades as it goes into the bank.**
 - **Art:** the bank is one tileable texture
   (`src/render/fog/cloud_tile.webp`; original and prompt in
   [`fog/`](fog/)); the cushion and the payable patch are sprites.

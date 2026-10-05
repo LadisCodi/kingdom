@@ -25,6 +25,12 @@
           "min": 0,
           "doc": "Seconds more of that work for every hex the target lies from the city."
         },
+        "exploreGoldBase": { "type": "int", "min": 0, "doc": "Gold to send an explorer to a hex next to the city." },
+        "exploreGoldGrowth": {
+          "type": "float",
+          "min": 1,
+          "doc": "How much dearer exploring is for every hex further from the city."
+        },
         "explorerRevealRadius": {
           "type": "int",
           "min": 1,
@@ -152,51 +158,62 @@
       "type": "object",
       "doc": "What is built on a held world hex and what it pays (Docs/features/19-world-map.md §5.1, §7).",
       "fields": {
-        "outpost": {
+        "claim": {
           "type": "object",
-          "doc": "The claim on a neutral hex. Takes a builder.",
+          "doc": "Claiming a neutral hex: building its district. Takes a builder.",
           "fields": {
-            "gold": { "type": "int", "min": 0, "doc": "Gold for the first Outpost." },
+            "gold": { "type": "int", "min": 0, "doc": "Gold for the first claim." },
             "goldGrowth": {
               "type": "float",
               "min": 1,
-              "doc": "Each Outpost costs this many times the last, by hexes already held."
+              "doc": "Each claim costs this many times the last, by hexes already held."
             },
-            "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." }
+            "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on a district." }
           }
         },
-        "improvements": {
+        "districts": {
           "type": "map",
-          "keysRef": "worldImprovement",
-          "doc": "Each improvement and its ladder. One per hex, after the Outpost.",
+          "keysRef": "worldDistrict",
+          "doc": "Each district: the feature that decides it, and what it pays. One per hex, the claim itself.",
           "of": {
             "type": "object",
             "fields": {
               "name": { "type": "text" },
-              "needs": {
+              "feature": {
                 "type": "text",
-                "options": ["Forest", "Open", "Mountain", "Any"],
-                "doc": "Forest: a Forest feature. Open: no Forest, Dungeon, Sanctuary or Landmark, and not a Mountain. Mountain: Mountain terrain."
+                "options": ["None", "Forest", "Mountain", "FertileLand", "Game", "Landmark", "Sanctuary"],
+                "doc": "The feature a hex holds for this to be its district; None for bare ground."
               },
               "produces": {
                 "type": "text",
-                "options": ["", "Wood", "Food", "Stone"],
+                "options": ["", "Gold", "Wood", "Food", "Stone", "Knowledge"],
                 "emptyOk": true,
-                "doc": "The material its store fills with; empty for a Fortress."
+                "doc": "The currency its store fills with; empty for one that makes nothing (the Shrine raises max Mana instead)."
               },
+              "perHour": {
+                "type": "float",
+                "min": 0,
+                "doc": "What it adds to its store an hour, while its hex is active. The Rural district’s is a tenth of a full level-1 House."
+              },
+              "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+            }
+          }
+        },
+        "upgrades": {
+          "type": "map",
+          "keysRef": "worldUpgrade",
+          "doc": "What can be built into a district that stands, on any district.",
+          "of": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "text" },
               "levels": {
                 "type": "list",
                 "of": {
                   "type": "object",
                   "fields": {
                     "gold": { "type": "int", "min": 0, "doc": "Gold this level costs." },
-                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." },
-                    "perHour": {
-                      "type": "int",
-                      "min": 0,
-                      "doc": "What it adds to its store an hour, while its hex is active."
-                    },
-                    "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+                    "buildSeconds": { "type": "int", "min": 0, "doc": "Seconds a builder spends on it." }
                   }
                 },
                 "doc": "Level 1 is the build."
@@ -207,22 +224,9 @@
         "innerRingMultiplier": {
           "type": "float",
           "min": 1,
-          "doc": "What an improvement on the inner ring makes, times its level’s rate (3 = +200%)."
+          "doc": "What a district on the inner ring makes and holds, times its rate (3 = +200%)."
         },
-        "featureFoodBonus": {
-          "type": "float",
-          "min": 0,
-          "doc": "The share more a Homestead makes for each of Fertile land and Wild game on its hex."
-        },
-        "landmark": {
-          "type": "object",
-          "doc": "A corridor landmark: a store of Knowledge while its hex is held and active.",
-          "fields": {
-            "knowledgePerDay": { "type": "int", "min": 0 },
-            "store": { "type": "int", "min": 0, "doc": "The most Knowledge it holds before it stops." }
-          }
-        },
-        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Sanctuary adds." }
+        "sanctuaryManaCap": { "type": "int", "min": 0, "doc": "Max Mana each held, active Shrine adds." }
       }
     },
     "worldBots": {
@@ -233,7 +237,7 @@
         "maxHexes": {
           "type": "int",
           "min": 0,
-          "doc": "The most hexes a rival ever claims with an Outpost; what it takes in a fight comes on top."
+          "doc": "The most hexes a rival ever claims; what it takes in a fight comes on top."
         },
         "attackChance": {
           "type": "float",

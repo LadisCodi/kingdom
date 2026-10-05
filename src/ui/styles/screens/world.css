@@ -10,6 +10,19 @@
   touch-action: none;
 }
 #app.in-world #world { display: block; }
+/* The board's ground and the cloud bank, under #world
+ * (render/world/boardRenderer.ts worldLayers). What shows where the clouds
+ * thin is the sky far below them. */
+.world-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  pointer-events: none;
+}
+.world-ground { background: linear-gradient(#c3cdd6, #a9b6c1); }
+#app.in-world .world-layer { display: block; }
 #app.in-world #map, #app.in-world .map-layer { visibility: hidden; }
 #app.in-world #quest,
 #app.in-world #daily,

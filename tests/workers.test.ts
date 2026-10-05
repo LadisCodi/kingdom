@@ -3,8 +3,10 @@
 import { describe, expect, it } from 'vitest';
 import { storedOf } from '../src/sim/storage';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { populationCost } from '../src/sim/population';
-import { cancelTraining, lineFor, trainCost, trainUnit } from '../src/sim/army';
+import { populationCost, villagerTrainSeconds } from '../src/sim/population';
+import {
+  cancelTraining, lineFor, trainCost, trainSecondsAt, trainUnit,
+} from '../src/sim/army';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { harvestSourceAt, isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import {
@@ -260,13 +262,15 @@ describe('Townhall villager training', () => {
     expect(trainUnit(state, 'Villager', T0)).toBe('Queued'); // second one queues behind
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5 - populationCost(1));
     expect(trainUnit(state, 'Villager', T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
-    tickAt(state, T0 + 19_000);
+    const first = villagerTrainSeconds(0) * 1000;
+    const both = first + villagerTrainSeconds(1) * 1000;
+    tickAt(state, T0 + first - 1_000);
     expect(state.city.population).toBe(0);
-    tickAt(state, T0 + 20_000);
+    tickAt(state, T0 + first);
     expect(state.city.population).toBe(1);
-    tickAt(state, T0 + 39_000);
+    tickAt(state, T0 + both - 1_000);
     expect(state.city.population).toBe(1);
-    tickAt(state, T0 + 40_000);
+    tickAt(state, T0 + both);
     expect(state.city.population).toBe(2);
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
@@ -306,15 +310,36 @@ describe('Townhall villager training', () => {
     trainUnit(state, 'Villager', T0);
     // Nothing the player can do hurries this — the queue is a timer, and a
     // tap buys work rather than time (04-harvest.md §3.2).
-    tickAt(state, T0 + 19_000);
+    const first = villagerTrainSeconds(0) * 1000;
+    const both = first + villagerTrainSeconds(1) * 1000;
+    tickAt(state, T0 + first - 1_000);
     expect(state.city.population).toBe(0);
-    tickAt(state, T0 + 20_000);
+    tickAt(state, T0 + first);
     expect(state.city.population).toBe(1);
     // Villager 2 started at villager 1's completion, not back at T0.
-    tickAt(state, T0 + 39_000);
+    tickAt(state, T0 + both - 1_000);
     expect(state.city.population).toBe(1);
-    tickAt(state, T0 + 40_000);
+    tickAt(state, T0 + both);
     expect(state.city.population).toBe(2);
+  });
+
+  it('takes longer the bigger the town, counting the villagers already queued', () => {
+    for (let n = 1; n < 80; n++) {
+      expect(villagerTrainSeconds(n), `villager ${n + 1}`)
+        .toBeGreaterThanOrEqual(villagerTrainSeconds(n - 1));
+    }
+    expect(villagerTrainSeconds(40)).toBeGreaterThan(villagerTrainSeconds(0) * 10);
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addBuilt(state, 'Housing', { x: 0, y: -1 });
+    fund(state, { Food: 1000 });
+    const th = townhall(state).uniqueId;
+    state.city.population = 1;
+    expect(trainSecondsAt(state, th, 'Villager')).toBe(villagerTrainSeconds(1));
+    trainUnit(state, 'Villager', T0);
+    // The next one is the third villager: one standing, one on the bench.
+    expect(trainSecondsAt(state, th, 'Villager')).toBe(villagerTrainSeconds(2));
+    expect(lineFor(state, th)[0].seconds).toBe(villagerTrainSeconds(1));
   });
 
   it('is blocked at the housing cap (queued villagers count)', () => {

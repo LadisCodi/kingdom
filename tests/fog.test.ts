@@ -73,8 +73,8 @@ describe('map data', () => {
 });
 
 describe('reveal cost curve (fog.rings)', () => {
-  it('d 1–14 → 4,8,20,55,110,330,800,2200,5900,15000,43000,105000,330000,925000', () => {
-    const expected = [4, 8, 20, 55, 110, 330, 800, 2200, 5900, 15000, 43000, 105000, 330000, 925000];
+  it('d 1–14 → 4,8,20,85,220,990,2400,6600,18000,45000,130000,320000,990000,2800000', () => {
+    const expected = [4, 8, 20, 85, 220, 990, 2400, 6600, 18000, 45000, 130000, 320000, 990000, 2800000];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
   });
   // Fourteen rings are authored and every one is dearer than the last; past

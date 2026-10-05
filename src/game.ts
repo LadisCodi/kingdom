@@ -15,7 +15,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type FaceId, type PackTier, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
@@ -39,7 +39,7 @@ import { harmonyBlock } from './sim/harmony';
 import {
   committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
-  trainingCompletesAt,
+  itemTrainSeconds, trainingCompletesAt,
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, ownedArtifacts, passiveValue } from './sim/artifacts';
 import {
@@ -138,7 +138,9 @@ import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, homeIndex, worldFogAt } from './sim/world/explorers';
+import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt } from './sim/world/explorers';
+import { gemsToFinish } from './sim/rush';
+import { hexWork, isUpgrade, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { hexAt, hexIndex } from './sim/world/hex';
@@ -148,8 +150,9 @@ import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
 import { departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
-import { WORLD_BUILD } from './sim/data/definitions';
-import type { WorldImprovement } from './sim/world/types';
+import type { WorldUpgrade } from './sim/world/types';
+import type { WorldBuildWhat } from './sim/state';
+import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -373,7 +376,8 @@ export class Game {
   /** What the builder sheet was raised for — the build on the ghost, or an
    *  upgrade — so a builder freed while it is open offers that exact job. */
   builderAsk: { kind: 'build' } | { kind: 'upgrade'; districtUniqueId: string }
-    | { kind: 'repair'; id: string } = { kind: 'build' };
+    | { kind: 'repair'; id: string }
+    | { kind: 'world'; index: number; what: WorldBuildWhat; level: number; gold: number } = { kind: 'build' };
   /** Which card panel is open over the battle screen, if any. */
   /** The lair the battle sheet is being composed for
    *  (Docs/features/18-garrisons-and-raids.md §5). */
@@ -679,9 +683,7 @@ export class Game {
     this.worldTicks += 1;
     if (this.worldServer !== null && (this.scene === 'world' || this.worldTicks % 30 === 0)) void this.refreshWorld();
     for (const done of result.worldBuildsDone) {
-      this.toast(done.what === 'Outpost'
-        ? 'Your Outpost stands — the ground is yours'
-        : `${WORLD_BUILD.improvements[done.what].name} reached level ${formatCount(done.level)}`);
+      this.toast(worldBuildDone(done.what, done.level));
     }
     // An explorer home says what it found; the board already shows where.
     for (const home of result.explorersHome) {
@@ -2635,6 +2637,22 @@ export class Game {
     });
   }
 
+  /** The builders out on the world board, one row of the builder sheet
+   *  each. A world build is the server's timer: it cannot be rushed, so it
+   *  carries no Finish. Its start is its finish less its authored time. */
+  builderWorldJobs(): Array<{ name: string; task: string; startedAt: number; durationMs: number }> {
+    return this.state.world.builds.map((b) => {
+      const seconds = worldBuildSeconds(b.what, b.level);
+      return {
+        name: worldBuildName(b.what),
+        task: isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
+          : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
+        startedAt: b.finishesAt - seconds * 1000,
+        durationMs: seconds * 1000,
+      };
+    });
+  }
+
   /**
    * The job the builder sheet was raised for, as a free builder's row offers
    * it: what it is, what it costs, and the press that starts it. Null when
@@ -2657,6 +2675,17 @@ export class Game {
       return {
         verb: 'Repair', what: `Ready to repair ${site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name}`,
         cost: nextBuildCost(this.state, def.id), start: () => this.doRepairAbandoned(site.location),
+      };
+    }
+    if (ask.kind === 'world') {
+      const { index, what, level, gold } = ask;
+      const name = `the ${worldBuildName(what)}`;
+      return {
+        verb: !isUpgrade(what) ? 'Claim' : level > 1 ? 'Upgrade' : 'Build',
+        what: !isUpgrade(what) ? `Ready to claim with ${name}`
+          : level > 1 ? `Ready to upgrade ${name}` : `Ready to build ${name}`,
+        cost: { Gold: gold },
+        start: () => void (isUpgrade(what) ? this.doUpgradeHex(index, what, level, gold) : this.doClaimHex(index, gold)),
       };
     }
     const d = districtById(this.state, ask.districtUniqueId);
@@ -3048,7 +3077,7 @@ export class Game {
   }
 
   /**
-   * The sheet's three pours (Docs/plans/research-book.md §4): how many points
+   * The sheet's three pours (Docs/features/07-research.md §5): how many points
    * the "as much as it can" button pours — the least of what the bar holds
    * and what is missing — and what the Gems button charges to buy every point
    * still missing.
@@ -4419,7 +4448,7 @@ export class Game {
     const line = hall ? lineFor(this.state, hall.uniqueId) : [];
     const head = line[0];
     const completesAt = head ? trainingCompletesAt(head) : null;
-    const total = TRAINING.seconds * 1000;
+    const total = head ? itemTrainSeconds(head) * 1000 : 0;
     const queued = line.length;
     return {
       active: completesAt !== null && Number.isFinite(completesAt),
@@ -4613,7 +4642,7 @@ export class Game {
     const LINES: Record<Refusal, string> = {
       NoSuchHex: 'There is no such place', NotAdjacent: 'Claim the ground beside it first',
       Taken: 'Someone holds it already', NeverHeld: 'Nobody can hold this place',
-      NotYours: 'This is not your ground', NotStanding: 'The Outpost is still being built',
+      NotYours: 'This is not your ground', NotStanding: 'The district is still being built',
       Busy: 'A builder is already at work there', WrongGround: 'That cannot stand here',
       MaxLevel: 'It is as high as it goes', Inactive: 'Cut off from your city — reconnect it first',
       NoBoard: 'The roads to the world are closed',
@@ -4622,29 +4651,57 @@ export class Game {
       OwnGround: 'That ground is yours already',
       Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
       NoRoute: 'No way there through explored ground',
+      NothingBuilding: 'Nothing is being built there',
     };
     return LINES[why];
   }
 
-  /** A builder free for the world, or the line that says why not. */
+  /** The Gold for a world build, or the line that says why not. */
   private worldBuilderRefusal(gold: number): string | null {
-    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) return 'Every builder is busy';
     if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
     return null;
   }
 
-  /** Claim a hex with an Outpost: a builder and its Gold. */
+  /** Claim a hex: build its district, with a builder and its Gold. */
   async doClaimHex(index: number, gold: number): Promise<void> {
-    await this.worldCommand(index, 'Outpost', 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+    const district = districtOf(this.worldSource().board().hexes[index]) ?? 'Rural';
+    await this.worldCommand(index, district, 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
   }
 
-  /** Build an improvement on a held hex, or raise it a level. */
-  async doBuildHex(index: number, kind: WorldImprovement, level: number, gold: number): Promise<void> {
-    await this.worldCommand(index, kind, level, gold, (asSeat) => this.worldServer!.build(index, kind, this.now(), asSeat));
+  /** Finish the builder's work on one of the player's hexes now, with Gems:
+   *  the server makes it stand, and the builder comes home. */
+  async doFinishHexWork(index: number): Promise<void> {
+    if (this.worldServer === null) return;
+    const h = this.worldSource().hexOf(index);
+    const work = h === null ? null : hexWork(h);
+    if (work === null) return;
+    const gems = gemsToFinish((work.endsAt - this.now()) / 1000);
+    if (getWallet(this.state.player.wallet, 'Gems') < gems) {
+      this.shake(['Gems']);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.finish(index, this.now());
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.player.wallet.Gems = getWallet(this.state.player.wallet, 'Gems') - gems;
+    const done = this.state.world.builds.find((b) => b.index === index);
+    this.state.world.builds = this.state.world.builds.filter((b) => b !== done);
+    playSfx('gemSpend');
+    if (done !== undefined) this.toast(worldBuildDone(done.what, done.level));
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Build an upgrade into a district, or raise it a level. */
+  async doUpgradeHex(index: number, what: WorldUpgrade, level: number, gold: number): Promise<void> {
+    await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, this.now(), asSeat));
   }
 
   private async worldCommand(
-    index: number, what: 'Outpost' | WorldImprovement, level: number, gold: number,
+    index: number, what: WorldBuildWhat, level: number, gold: number,
     send: (asSeat?: number) => ReturnType<WorldServerApi['claim']>,
   ): Promise<void> {
     if (this.worldServer === null) return;
@@ -4653,6 +4710,14 @@ export class Game {
       const r = await send(this.actingSeat);
       if (!r.ok) this.toast(this.worldRefusal(r.why));
       await this.refreshWorld();
+      return;
+    }
+    // Every builder busy raises the builder sheet, as a refused city build
+    // does: its free row offers this very job once a builder comes home.
+    if (busyBuilders(this.state) >= buildQueueCapacity(this.state)) {
+      this.builderAsk = { kind: 'world', index, what, level, gold };
+      this.offerBuilder();
+      this.notify();
       return;
     }
     const refused = this.worldBuilderRefusal(gold);
@@ -4670,6 +4735,8 @@ export class Game {
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
     playSfx('click');
+    // Started from a free builder's row: the sheet was only in the way.
+    if (this.openOverlay === 'builder') this.openOverlay = null;
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -4808,16 +4875,11 @@ export class Game {
       return;
     }
     if (this.actingSeat === null) {
-      const haul: Wallet = {};
-      if (r.material !== null) {
-        addToWallet(this.state.city.wallet, r.material.currency, r.material.amount);
-        haul[r.material.currency] = r.material.amount;
+      if (r.paid !== null) {
+        // Knowledge is the kingdom's; every other coin the city's purse.
+        addToWallet(r.paid.currency === 'Knowledge' ? this.state.kingdom.wallet : this.state.city.wallet, r.paid.currency, r.paid.amount);
+        this.reward({ [r.paid.currency]: r.paid.amount } as Wallet);
       }
-      if (r.knowledge > 0) {
-        addToWallet(this.state.kingdom.wallet, 'Knowledge', r.knowledge);
-        haul.Knowledge = r.knowledge;
-      }
-      if (Object.keys(haul).length > 0) this.reward(haul);
     }
     this.applyWorldSnapshot(r.snapshot);
   }
@@ -4831,7 +4893,8 @@ export class Game {
     }
     this.dismiss();
     this.scene = 'world';
-    this.worldCamera?.fitBoard();
+    // Out onto the board at the player's own city, up close.
+    this.worldCamera?.focusHex(hexAt(homeIndex(this.state)));
     void this.refreshWorld();
     this.notify();
   }
@@ -4863,6 +4926,20 @@ export class Game {
     this.notify();
   }
 
+  /** Bring an explorer home now, with Gems: its hexes are revealed at once. */
+  doFinishExplorer(tripId: string): void {
+    const result = finishExplorerWithGems(this.state, tripId, this.now());
+    if (result.kind === 'Finished') {
+      playSfx('gemSpend');
+      this.toast(result.home.revealed > 0
+        ? `Your explorer is home — ${formatCount(result.home.revealed)} new hexes on the map`
+        : 'Your explorer is home — nothing new out there');
+    } else if (result.kind === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
   /** Send an explorer to the hex the sheet is about. */
   doSendExplorer(): void {
     const target = this.selectedHex;
@@ -4881,6 +4958,10 @@ export class Game {
       this.toast('No way there through explored ground');
     } else if (result.kind === 'Explored') {
       this.toast('Already explored');
+    } else if (result.kind === 'BeingExplored') {
+      this.toast('An explorer is already on the way');
+    } else if (result.kind === 'NotEnoughGold') {
+      this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
     }
     this.notify();
   }
@@ -5405,7 +5486,7 @@ const RELIC_SUBJECT: Record<ArtifactId, string> = {
   WanderersCompass: 'Rooms pay Stardust',
   DelversLantern: 'A room pays gold and stone',
   MusterHorn: 'Your halls field',
-  BailiffsTally: 'Every improvement you hold pays',
+  BailiffsTally: 'Every district you hold pays',
 };
 
 /** Why a lair attack is refused. A power shortfall is NOT one of these: it

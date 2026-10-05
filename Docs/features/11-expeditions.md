@@ -7,9 +7,10 @@
 > [`11a-ruins-ui.md`](11a-ruins-ui.md).
 >
 > **Status: built on the world board as 3 depths × 8 rooms** with the room
-> formula of §6 and §7.1, one shape for every dungeon (`worldDungeon` in the
-> world collection). Not built: supplies, the Scout preview, boss chests
-> (§7.2), permanent generation (§7.3) and §4's per-ruin content.
+> formula of §6 and §7.1 at tier 1, one shape for every dungeon (`worldDungeon`
+> in the world collection). Not built: supplies, the Scout preview, room
+> materials, boss chests (§7.2), permanent generation (§7.3) and §4's
+> per-ruin content.
 
 ## 1. Structure
 
@@ -85,6 +86,7 @@ Rules:
 - No attempt cap, no cooldown.
 - Party HP does not carry between rooms.
 - Retry is unlimited and identical to a first attempt.
+- An army with no hero left walks home.
 
 ## 6. Power requirement
 
@@ -92,7 +94,8 @@ Rules:
 power_req(D, r) = powerStart(D) + powerStep(D) × (r − 1)
 ```
 
-Displayed against party power as an estimate. Actual outcome is decided by
+The boss room fields `bossMultiplier` (1.6) times that. Displayed against
+party power as an estimate. Actual outcome is decided by
 [`combat.md`](combat.md).
 
 ## 7. Rewards
@@ -113,6 +116,7 @@ knowledge = max(1, round(rewardBase(D) × 0.25 × t × 1.06^(r − 1)))
   It lands in the Knowledge bar in full, over the cap if it must
   ([`07-research.md`](07-research.md) §3).
 
+A boss room pays `bossRewardMultiplier` (3) times the formula.
 `rewardBase(D)` continues the previous depth's curve. Individual rooms may be
 overridden by hand.
 
@@ -185,10 +189,12 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 
 | Dial | Key |
 |---|---|
-| `powerStart`, `powerStep` per depth | `depths` |
-| `rooms` per depth | `depths` |
-| Reward base and per-room growth (×1.06) | `depths` |
-| Knowledge per room (×0.25, at least 1) | `ruins.knowledgeCoef` |
+| `powerStart`, `powerStep` per depth | `worldDungeon.powerStart`, `worldDungeon.powerStep` |
+| Depths, and rooms per depth | `worldDungeon.depths`, `worldDungeon.roomsPerDepth` |
+| Reward base and per-room growth (×1.06) | `worldDungeon.rewardBase`, `worldDungeon.rewardGrowth` |
+| Gold, Hero XP, Stardust per room (×20, ×10, ×2) | `worldDungeon.gold`, `.heroXp`, `.stardust` |
+| Knowledge per room (×0.25, at least 1) | `worldDungeon.knowledge` |
+| Boss power and reward (×1.6, ×3) | `worldDungeon.bossMultiplier`, `.bossRewardMultiplier` |
 | Boss chest and fragment pool | a `bosses` collection *(designed)* |
 | Supplies per room attempt | `ruins.supply_*` |
 | Permanent generation coefficients | `ruins.trickle_*` |

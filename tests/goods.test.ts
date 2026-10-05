@@ -1,5 +1,5 @@
 // Refined goods: the stockpile, and a building level priced in it
-// (Docs/plans/builder-30-days.md §2).
+// (Docs/features/17-workshops-and-goods.md §1).
 //
 // Nothing MAKES a good yet — the workshops are the next step — so what is
 // under test here is the plumbing that has to exist before they can: the

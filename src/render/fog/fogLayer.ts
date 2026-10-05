@@ -2,13 +2,19 @@
 //
 // Every Undiscovered cell on screen, and everything past the map's edge, is
 // one tileable cloud texture laid across the projected plane, cut to a mask
-// of one texel a cell. It is its own WebGL canvas, stacked between the floor
-// and the map canvas (`mapLayers` in mapRenderer.ts): what stands on the
-// ground is drawn over it, the ground under it.
+// of one texel a cell. It is its own WebGL canvas, stacked under the canvas
+// that draws the ground the player can see: what stands on the ground is
+// drawn over it.
 //
 // The bank never covers ground the player can see. Its edge is inside the
 // fogged cell: the cloud thins toward a seen neighbour, the tallest puffs
 // lasting longest, so the edge is the outline of the clouds and not a line.
+//
+// The same bank lies on two grids: the province's diamonds (`drawFogLayer`,
+// stacked between the floor and the map canvas — `mapLayers` in
+// mapRenderer.ts) and the world's hexes (`drawCloudBank` with
+// `world/cloudGrid.ts`). A grid is the GLSL that says what the bank looks
+// like at a point of the plane, from the pieces every grid shares.
 
 import { TILE_H, TILE_W } from '../palette';
 import { loadImage } from '../imageLoad';
@@ -16,14 +22,16 @@ import cloudTileUrl from './cloud_tile.webp?url';
 
 /** How many projected-plane pixels (at zoom 1) one repeat of the texture
  *  spans — about six cells across, so a puff is about a cell wide. */
-const CLOUD_PX = 900;
+export const CLOUD_PX = 900;
 /** How far into a fogged cell, in cells, the bank takes to reach full
  *  thickness from a seen neighbour. */
 const EDGE_CELLS = 0.55;
 /** The drift: one repeat of the texture every `DRIFT_S` seconds, and the
- *  slow boil laid over it. The clock wraps at the same period, so the wrap
- *  is a whole repeat and cannot be seen. */
+ *  slow boil laid over it. The clock wraps at twice the period, so the wrap
+ *  is a whole repeat of every layer — the far octave's half-speed one too —
+ *  and cannot be seen. */
 const DRIFT_S = 600;
+const CLOCK_WRAP_S = DRIFT_S * 2;
 const BOIL = 0.025;
 
 /** What a frame of the bank is drawn from. */
@@ -37,7 +45,8 @@ export interface FogFrame {
   camY: number;
   zoom: number;
   /** One byte a cell, 255 under the bank and 0 on ground the player can
-   *  see, row-major over `maskW × maskH` cells from cell `(maskX, maskY)`. */
+   *  see, row-major over `maskW × maskH` cells from cell `(maskX, maskY)` —
+   *  in the grid's own coordinates. Past its edge the mask's rim repeats. */
   mask: Uint8Array;
   maskX: number;
   maskY: number;
@@ -47,6 +56,9 @@ export interface FogFrame {
   maskSig: string;
   /** `performance.now()`, for the drift. */
   clock: number;
+  /** How much of the far octave — the texture at twice the size — is mixed
+   *  in, 0 to 1: a camera far out sees calmer, bigger puffs. */
+  far?: number;
 }
 
 const VERT = `
@@ -54,7 +66,39 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-const FRAG = `
+/**
+ * A grid the bank lies on: GLSL defining `vec4 shade(vec2 proj)` — the
+ * premultiplied colour at a point of the projected plane, transparent on
+ * ground the player can see. It reads the mask with `fogAt(vec2 cell)` and
+ * builds the bank from `cloudAt`, `cloudHeight` and `bankCut`.
+ */
+export interface BankGrid {
+  glsl: string;
+}
+
+/** The province's grid: 2:1 diamonds, cell (x, y). */
+const DIAMONDS: BankGrid = {
+  glsl: `
+vec4 shade(vec2 proj) {
+  float u = proj.x / ${TILE_W.toFixed(1)};
+  float v = proj.y / ${TILE_H.toFixed(1)};
+  vec2 p = vec2(v + u, v - u);
+  vec2 c = floor(p);
+  if (fogAt(c) < 0.5) return vec4(0.0);
+  // How far, in cells, to the nearest ground the player can see.
+  float d = 2.0;
+  for (int dy = -1; dy <= 1; dy++) {
+    for (int dx = -1; dx <= 1; dx++) {
+      vec2 n = c + vec2(float(dx), float(dy));
+      if (fogAt(n) < 0.5) d = min(d, length(max(abs(p - n - 0.5) - 0.5, 0.0)));
+    }
+  }
+  return bankCut(cloudAt(proj), (1.0 - smoothstep(0.0, ${EDGE_CELLS.toFixed(2)}, d)) * 1.1);
+}
+`,
+};
+
+const frag = (grid: BankGrid): string => `
 precision highp float;
 uniform sampler2D uMask;
 uniform sampler2D uCloud;
@@ -65,43 +109,51 @@ uniform float uDpr;
 uniform vec2 uCam;
 uniform float uZoom;
 uniform float uTime;
+uniform float uFar;
 
 float fogAt(vec2 c) {
   return texture2D(uMask, (c - uMaskOrigin + 0.5) / uMaskSize).r;
 }
 
-void main() {
-  vec2 css = vec2(gl_FragCoord.x, uView.y * uDpr - gl_FragCoord.y) / uDpr;
-  vec2 proj = (css - uView * 0.5) / uZoom + uCam;
-  float u = proj.x / ${TILE_W.toFixed(1)};
-  float v = proj.y / ${TILE_H.toFixed(1)};
-  vec2 p = vec2(v + u, v - u);
-  vec2 c = floor(p);
-  if (fogAt(c) < 0.5) discard;
+/** One repeat of the drift: a whole number of texture repeats per wrap. */
+float drift() { return uTime / ${DRIFT_S.toFixed(1)}; }
 
-  // How far, in cells, to the nearest ground the player can see.
-  float d = 2.0;
-  for (int dy = -1; dy <= 1; dy++) {
-    for (int dx = -1; dx <= 1; dx++) {
-      vec2 n = c + vec2(float(dx), float(dy));
-      if (fogAt(n) < 0.5) d = min(d, length(max(abs(p - n - 0.5) - 0.5, 0.0)));
-    }
-  }
+vec3 cloudSample(vec2 uv, float d) {
+  vec2 boil = texture2D(uCloud, uv * 0.5 + vec2(d * 2.0, d)).rg - 0.5;
+  return texture2D(uCloud, uv + vec2(d, 0.0) + boil * ${BOIL}).rgb;
+}
 
-  float drift = uTime / ${DRIFT_S.toFixed(1)};
+/** The cloud texture at a point of the plane: puffs about a cell wide,
+ *  and, as far as uFar says, the same texture at twice the size — drifting
+ *  at the same speed across the plane. */
+vec3 cloudAt(vec2 proj) {
   vec2 uv = proj / ${CLOUD_PX.toFixed(1)};
-  vec2 boil = texture2D(uCloud, uv * 0.5 + vec2(drift * 2.0, drift)).rg - 0.5;
-  vec3 col = texture2D(uCloud, uv + vec2(drift, 0.0) + boil * ${BOIL}).rgb;
+  vec3 near = cloudSample(uv, drift());
+  if (uFar <= 0.0) return near;
+  return mix(near, cloudSample(uv * 0.5 + vec2(0.37, 0.61), drift() * 0.5), uFar);
+}
 
-  // The texture's light is its height: sunlit tops stand tallest. Toward a
-  // seen neighbour only the tallest puffs remain.
-  float height = clamp((dot(col, vec3(0.299, 0.587, 0.114)) - 0.68) / 0.3, 0.0, 1.0);
-  float depth = smoothstep(0.0, ${EDGE_CELLS.toFixed(2)}, d);
-  float cut = height - (1.0 - depth) * 1.1;
+/** The texture's light is its height: sunlit tops stand tallest. */
+float cloudHeight(vec3 col) {
+  return clamp((dot(col, vec3(0.299, 0.587, 0.114)) - 0.68) / 0.3, 0.0, 1.0);
+}
+
+/** The bank where a puff has to stand th tall to show: 0 is all of it;
+ *  toward seen ground only the tallest puffs remain. */
+vec4 bankCut(vec3 col, float th) {
+  float cut = cloudHeight(col) - th;
   float a = smoothstep(-0.05, 0.05, cut);
   // A soft shadow under the outline, so the edge is clean.
   col *= mix(0.88, 1.0, smoothstep(0.0, 0.25, cut));
-  gl_FragColor = vec4(col * a, a);
+  return vec4(col * a, a);
+}
+${grid.glsl}
+void main() {
+  vec2 css = vec2(gl_FragCoord.x, uView.y * uDpr - gl_FragCoord.y) / uDpr;
+  vec2 proj = (css - uView * 0.5) / uZoom + uCam;
+  vec4 c = shade(proj);
+  if (c.a <= 0.002) discard;
+  gl_FragColor = c;
 }
 `;
 
@@ -125,12 +177,12 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   return s;
 }
 
-function init(canvas: HTMLCanvasElement): Gl | null {
+function init(canvas: HTMLCanvasElement, grid: BankGrid): Gl | null {
   const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
   if (!gl) return null;
   const prog = gl.createProgram()!;
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
-  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
+  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, frag(grid)));
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) ?? 'fog program');
   gl.useProgram(prog);
@@ -152,7 +204,7 @@ function init(canvas: HTMLCanvasElement): Gl | null {
 
   const cloud = gl.createTexture()!;
   const g: Gl = { gl, prog, mask, cloud, cloudReady: false, maskSig: '', u: {} };
-  for (const name of ['uMask', 'uCloud', 'uMaskOrigin', 'uMaskSize', 'uView', 'uDpr', 'uCam', 'uZoom', 'uTime']) {
+  for (const name of ['uMask', 'uCloud', 'uMaskOrigin', 'uMaskSize', 'uView', 'uDpr', 'uCam', 'uZoom', 'uTime', 'uFar']) {
     g.u[name] = gl.getUniformLocation(prog, name);
   }
   gl.uniform1i(g.u.uMask, 0);
@@ -180,17 +232,23 @@ function cloudTexture(g: Gl): boolean {
 }
 
 /**
- * Draw the bank into `canvas`, a WebGL canvas of its own. Without WebGL it
- * draws nothing, and the floor's flat cloud tone stands in for it.
+ * Draw the province's bank into `canvas`, a WebGL canvas of its own. Without
+ * WebGL it draws nothing, and the floor's flat cloud tone stands in for it.
  */
 export function drawFogLayer(canvas: HTMLCanvasElement, f: FogFrame): void {
+  drawCloudBank(canvas, DIAMONDS, f);
+}
+
+/** Draw the bank on `grid` into `canvas`. A canvas keeps the grid it was
+ *  first drawn with. */
+export function drawCloudBank(canvas: HTMLCanvasElement, grid: BankGrid, f: FogFrame): void {
   let layer = layers.get(canvas);
   if (layer === undefined) {
     layer = { gl: null, lost: false };
     const l = layer;
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); l.lost = true; l.gl = null; });
-    canvas.addEventListener('webglcontextrestored', () => { l.lost = false; l.gl = init(canvas); });
-    layer.gl = init(canvas);
+    canvas.addEventListener('webglcontextrestored', () => { l.lost = false; l.gl = init(canvas, grid); });
+    layer.gl = init(canvas, grid);
     layers.set(canvas, layer);
   }
   const g = layer.gl;
@@ -221,6 +279,7 @@ export function drawFogLayer(canvas: HTMLCanvasElement, f: FogFrame): void {
   gl.uniform1f(g.u.uDpr, f.dpr);
   gl.uniform2f(g.u.uCam, f.camX, f.camY);
   gl.uniform1f(g.u.uZoom, f.zoom);
-  gl.uniform1f(g.u.uTime, (f.clock / 1000) % DRIFT_S);
+  gl.uniform1f(g.u.uTime, (f.clock / 1000) % CLOCK_WRAP_S);
+  gl.uniform1f(g.u.uFar, f.far ?? 0);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }

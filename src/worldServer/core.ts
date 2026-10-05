@@ -17,7 +17,7 @@ import {
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL, type WorldImprovementDef,
+  WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL,
 } from '../sim/data/definitions';
 import { rand, randInt } from '../sim/rng';
 import type { HeroId, UnitId } from '../sim/state';
@@ -25,16 +25,16 @@ import { SEAT_INDICES, wedgeIndexOf, withDungeons, type Board, type BoardHex } f
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
-import { WORLD_IMPROVEMENTS, type WorldImprovement } from '../sim/world/types';
+import { WORLD_DISTRICTS, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
   ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SendResult,
-  ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot,
+  ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
 } from './types';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
-export const emptyWorld = (): ServerWorld => ({ version: 1, boards: [] });
+export const emptyWorld = (): ServerWorld => ({ version: 3, boards: [] });
 
 /** The board as generated from its seed: where the dungeons started. */
 const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, seat: 0 });
@@ -60,41 +60,31 @@ const standingDungeons = (b: ServerBoard): number[] =>
 
 // ------------------------------------------------------------ what a hex is
 
-/** Whether an improvement may stand on this ground. */
-export function fits(bh: BoardHex, def: WorldImprovementDef): boolean {
-  switch (def.needs) {
-    case 'Forest': return bh.features.includes('Forest');
-    case 'Mountain': return bh.terrain === 'Mountain';
-    case 'Open': return bh.terrain !== 'Mountain'
-      && !bh.features.some((f) => f === 'Forest' || f === 'Dungeon' || f === 'Sanctuary' || f === 'Landmark');
-    case 'Any': return true;
-  }
+/** The district a hex is, decided by its feature (19 §7): null for a hex
+ *  that is never held — a city, the Portal, a dungeon. */
+export function districtOf(bh: BoardHex): WorldDistrict | null {
+  if (bh.seat !== null || bh.role === 'portal' || bh.features.includes('Dungeon')) return null;
+  const feature = bh.features[0] ?? 'None';
+  return WORLD_DISTRICTS.find((d) => WORLD_BUILD.districts[d].feature === feature) ?? null;
 }
 
-/** The improvements a hex could take, in the data's order. */
-export const fittingImprovements = (bh: BoardHex): WorldImprovement[] =>
-  WORLD_IMPROVEMENTS.filter((id) => fits(bh, WORLD_BUILD.improvements[id]));
-
-/** What one level makes an hour on this hex, and how much its store holds:
- *  the inner ring multiplies both, so its store lasts the same hours. */
-export function improvementRate(bh: BoardHex, kind: WorldImprovement, level: number): { perHour: number; cap: number } {
-  const def = WORLD_BUILD.improvements[kind];
-  const l = def.levels[Math.min(level, def.levels.length) - 1];
-  if (def.produces === '' || l === undefined) return { perHour: 0, cap: 0 };
-  let mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
-  if (kind === 'Homestead') {
-    const extras = bh.features.filter((f) => f === 'FertileLand' || f === 'Game').length;
-    mult *= 1 + WORLD_BUILD.featureFoodBonus * extras;
-  }
-  return { perHour: l.perHour * mult, cap: l.store * mult };
+/** What a district on this hex makes an hour and how much its store holds,
+ *  in its currency: the inner ring multiplies both, so its store lasts the
+ *  same hours. */
+export function districtRate(bh: BoardHex): { currency: WorldStoreCurrency | null; perHour: number; cap: number } {
+  const d = districtOf(bh);
+  const def = d === null ? null : WORLD_BUILD.districts[d];
+  if (def === null || def.produces === '') return { currency: null, perHour: 0, cap: 0 };
+  const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
+  return { currency: def.produces, perHour: def.perHour * mult, cap: def.store * mult };
 }
 
-/** What the next Outpost costs a seat that already holds or claims `held`
+/** What the next claim costs a seat that already holds or claims `held`
  *  hexes beyond its city. */
-export const outpostGold = (held: number): number =>
-  Math.round(WORLD_BUILD.outpost.gold * WORLD_BUILD.outpost.goldGrowth ** held);
+export const claimGold = (held: number): number =>
+  Math.round(WORLD_BUILD.claim.gold * WORLD_BUILD.claim.goldGrowth ** held);
 
-const isHeld = (h: ServerHex | undefined, t: number): h is ServerHex => h !== undefined && h.outpostAt <= t;
+const isHeld = (h: ServerHex | undefined, t: number): h is ServerHex => h !== undefined && h.standsAt <= t;
 
 export const hexesOf = (b: ServerBoard, seat: number): number => Object.values(b.hexes).filter((h) => h.owner === seat).length;
 
@@ -113,50 +103,35 @@ function touches(b: ServerBoard, seat: number, index: number, t: number): boolea
     n === SEAT_INDICES[seat] || (b.hexes[n]?.owner === seat && b.hexes[n].active && isHeld(b.hexes[n], t)));
 }
 
-/** Whether `seat` may build or raise `kind` on `index` now, and why not. */
-export function buildRefusal(b: ServerBoard, seat: number, index: number, kind: WorldImprovement, t: number): Refusal | null {
+/** Whether `seat` may build or raise `upgrade` in its district on `index`
+ *  now, and why not. Any district takes the Fortress (19 §7.2). */
+export function upgradeRefusal(b: ServerBoard, seat: number, index: number, upgrade: WorldUpgrade, t: number): Refusal | null {
   if (!isBoardIndex(index)) return 'NoSuchHex';
   const h = b.hexes[index];
   if (h === undefined || h.owner !== seat) return 'NotYours';
   if (!isHeld(h, t)) return 'NotStanding';
   if (h.work !== null) return 'Busy';
   if (!h.active) return 'Inactive';
-  const def = WORLD_BUILD.improvements[kind];
-  if (h.improvement !== null) {
-    if (h.improvement.kind !== kind) return 'WrongGround';
-    if (h.improvement.level >= def.levels.length) return 'MaxLevel';
-    return null;
-  }
-  return fits(boardData(b).hexes[index], def) ? null : 'WrongGround';
+  return h.fortress >= WORLD_BUILD.upgrades[upgrade].levels.length ? 'MaxLevel' : null;
 }
 
 // ------------------------------------------------------------- resolving
 
-/** What a hex's stores hold at `t`: its anchor, plus its rate since. */
-export function storesAt(b: ServerBoard, index: number, t: number): { material: number; knowledge: number } {
+/** What a hex's store holds at `t`: its anchor, plus its rate since. */
+export function storedAt(b: ServerBoard, index: number, t: number): number {
   const h = b.hexes[index];
-  if (h === undefined) return { material: 0, knowledge: 0 };
+  if (h === undefined) return 0;
   const dt = t - h.storeAt;
-  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return { material: h.material, knowledge: h.knowledge };
-  const bh = boardData(b).hexes[index];
-  let material = h.material;
-  if (h.improvement !== null) {
-    const { perHour, cap } = improvementRate(bh, h.improvement.kind, h.improvement.level);
-    material = Math.min(cap, h.material + (perHour * dt) / HOUR);
-  }
-  const knowledge = bh.features.includes('Landmark')
-    ? Math.min(WORLD_BUILD.landmark.store, h.knowledge + (WORLD_BUILD.landmark.knowledgePerDay * dt) / DAY)
-    : h.knowledge;
-  return { material, knowledge };
+  if (dt <= 0 || !h.active || !isHeld(h, h.storeAt)) return h.stored;
+  const { perHour, cap } = districtRate(boardData(b).hexes[index]);
+  return Math.min(Math.max(cap, h.stored), h.stored + (perHour * dt) / HOUR);
 }
 
 /** Move one hex's anchor to `t`. */
 function settleHex(b: ServerBoard, index: number, t: number): void {
   const h = b.hexes[index];
   if (h === undefined || t <= h.storeAt) return;
-  const now = storesAt(b, index, t);
-  h.material = now.material;
-  h.knowledge = now.knowledge;
+  h.stored = storedAt(b, index, t);
   h.storeAt = t;
 }
 
@@ -190,7 +165,7 @@ function nextEvent(b: ServerBoard, after: number): number {
   let next = Infinity;
   const consider = (at: number | null) => { if (at !== null && at > after && at < next) next = at; };
   for (const h of Object.values(b.hexes)) {
-    consider(h.outpostAt);
+    consider(h.standsAt);
     consider(h.work?.at ?? null);
   }
   for (const s of b.seats) consider(s?.bot ? s.nextMoveAt : null);
@@ -208,7 +183,7 @@ function applyDue(b: ServerBoard, t: number): void {
   for (const k of keys) {
     const h = b.hexes[k];
     if (h.work !== null && h.work.at <= t) {
-      h.improvement = { kind: h.work.kind, level: h.work.toLevel };
+      h.fortress = h.work.toLevel;
       h.work = null;
     }
   }
@@ -247,22 +222,22 @@ export function resolveTo(b: ServerBoard, t: number): void {
 // ------------------------------------------------------------- commands
 
 function startClaim(b: ServerBoard, seat: number, index: number, t: number): number {
-  const at = t + WORLD_BUILD.outpost.buildSeconds * 1000;
+  const at = t + WORLD_BUILD.claim.buildSeconds * 1000;
   b.hexes[index] = {
-    owner: seat, outpostAt: at, improvement: null, work: null, active: false,
-    material: 0, knowledge: 0, storeAt: t, garrison: null,
+    owner: seat, standsAt: at, fortress: 0, work: null, active: false, stored: 0, storeAt: t, garrison: null,
   };
   return at;
 }
 
-function startWork(b: ServerBoard, index: number, kind: WorldImprovement, t: number): number {
+function startUpgrade(b: ServerBoard, index: number, upgrade: WorldUpgrade, t: number): number {
   const h = b.hexes[index];
-  const toLevel = (h.improvement?.level ?? 0) + 1;
-  const at = t + WORLD_BUILD.improvements[kind].levels[toLevel - 1].buildSeconds * 1000;
-  h.work = { kind, toLevel, at };
+  const toLevel = h.fortress + 1;
+  const at = t + WORLD_BUILD.upgrades[upgrade].levels[toLevel - 1].buildSeconds * 1000;
+  h.work = { upgrade, toLevel, at };
   return at;
 }
 
+/** Claim a hex: build its district. */
 export function claim(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
   resolveTo(b, t);
   const why = claimRefusal(b, seat, index, t);
@@ -271,28 +246,50 @@ export function claim(b: ServerBoard, seat: number, index: number, t: number): C
   return { ok: true, finishesAt, snapshot: snapshotOf(b, seat, t) };
 }
 
-export function build(b: ServerBoard, seat: number, index: number, kind: WorldImprovement, t: number): CommandResult {
+/** Build an upgrade into a district, or raise it a level. */
+export function upgrade(b: ServerBoard, seat: number, index: number, what: WorldUpgrade, t: number): CommandResult {
   resolveTo(b, t);
-  const why = buildRefusal(b, seat, index, kind, t);
+  const why = upgradeRefusal(b, seat, index, what, t);
   if (why !== null) return { ok: false, why };
-  const finishesAt = startWork(b, index, kind, t);
+  const finishesAt = startUpgrade(b, index, what, t);
   return { ok: true, finishesAt, snapshot: snapshotOf(b, seat, t) };
 }
 
+/** Finish what a builder is doing on `seat`'s hex now — its district, or the
+ *  upgrade being raised. What it is paid with is the client's: the server
+ *  only makes it stand. */
+export function finish(b: ServerBoard, seat: number, index: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  const claiming = h.standsAt > t;
+  if (!claiming && h.work === null) return { ok: false, why: 'NothingBuilding' };
+  // Every store to now first: what stands changes the rates, as at an event.
+  settleStores(b, t);
+  if (claiming) {
+    h.standsAt = t;
+    h.storeAt = t;
+  } else if (h.work !== null) {
+    h.fortress = h.work.toLevel;
+    h.work = null;
+  }
+  recomputeChains(b, t);
+  return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
+}
+
+/** Empty a district's store into its owner's purse: whole units only, the
+ *  fraction left to carry. */
 export function collect(b: ServerBoard, seat: number, index: number, t: number): CollectResult {
   resolveTo(b, t);
   const h = b.hexes[index];
   if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
   settleHex(b, index, t);
-  const whole = Math.floor(h.material);
-  const knowledge = Math.floor(h.knowledge);
-  h.material -= whole;
-  h.knowledge -= knowledge;
-  const produces = h.improvement === null ? '' : WORLD_BUILD.improvements[h.improvement.kind].produces;
+  const whole = Math.floor(h.stored);
+  h.stored -= whole;
+  const { currency } = districtRate(boardData(b).hexes[index]);
   return {
     ok: true,
-    material: produces === '' || whole === 0 ? null : { currency: produces, amount: whole },
-    knowledge,
+    paid: currency === null || whole === 0 ? null : { currency, amount: whole },
     snapshot: snapshotOf(b, seat, t),
   };
 }
@@ -388,7 +385,7 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     return;
   }
   if (a.purpose === 'garrison') {
-    if (h !== undefined && h.owner === a.owner && isHeld(h, t) && h.improvement?.kind === 'Fortress' && h.garrison === null) {
+    if (h !== undefined && h.owner === a.owner && isHeld(h, t) && h.fortress > 0 && h.garrison === null) {
       a.phase = 'garrison';
       a.at = null;
       h.garrison = a.id;
@@ -437,8 +434,7 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     report(b, holder, t, `${seatName(b, a.owner)} took your ground`, false);
   } else {
     h.owner = null;
-    h.material = 0;
-    h.knowledge = 0;
+    h.stored = 0;
     h.work = null;
     report(b, a.owner, t, `Your army denied ${seatName(b, holder)} their ground`, true);
     report(b, holder, t, `${seatName(b, a.owner)} drove you off your ground`, false);
@@ -464,7 +460,7 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
   }
   if (purpose === 'garrison') {
     if (h === undefined || h.owner !== seat) return 'NotYours';
-    if (!isHeld(h, t) || h.improvement?.kind !== 'Fortress') return 'NotAFortress';
+    if (!isHeld(h, t) || h.fortress === 0) return 'NotAFortress';
     const heading = b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'garrison' && a.phase !== 'home');
     return h.garrison !== null || heading ? 'Garrisoned' : null;
   }
@@ -582,7 +578,7 @@ function returnDungeon(b: ServerBoard, d: NonNullable<ServerBoard['dungeons']>[n
     const ring = hexDistance(h.hex, hexAt(PORTAL_INDEX));
     return ring >= 3 && wedgeIndexOf(h.hex) === d.wedge && h.seat === null && !h.features.some((f) => SITES.has(f))
       && h.index !== d.left && !nearCity.has(h.index) && !taken.has(h.index) && !camped.has(h.index)
-      && (b.hexes[h.index] === undefined || (b.hexes[h.index].owner === null && b.hexes[h.index].improvement === null));
+      && b.hexes[h.index] === undefined;
   });
   if (room.length === 0) { d.returnsAt = t + HOUR; return; }
   d.index = room[Math.floor(rand(b.seed, 'dungeonPlace', d.wedge, d.n) * room.length)].index;
@@ -787,8 +783,8 @@ function botBoard(b: ServerBoard, seat: number, move: number, power: number): Fi
 // ----------------------------------------------------------------- bots
 
 /** A stand-in rival's move: man an empty Fortress, now and then attack a
- *  neighbour, claim ground while it is under its size, then build on what it
- *  holds, then raise what it built. It pays nothing. */
+ *  neighbour, claim ground while it is under its size, then build a
+ *  Fortress into one of its districts and raise it. It pays nothing. */
 function botMove(b: ServerBoard, seat: number, t: number): void {
   const s = b.seats[seat]!;
   const roll = (what: string, max: number) => randInt(b.seed, max, 'bot', seat, s.moves, what);
@@ -796,7 +792,7 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
   const mine = Object.entries(b.hexes).map(([k, h]) => [Number(k), h] as const).filter(([, h]) => h.owner === seat);
   let done = false;
   // An empty Fortress is manned at once, from the city.
-  const empty = mine.find(([, h]) => h.improvement?.kind === 'Fortress' && isHeld(h, t) && h.garrison === null);
+  const empty = mine.find(([, h]) => h.fortress > 0 && isHeld(h, t) && h.garrison === null);
   if (empty !== undefined) {
     const [i, h] = empty;
     const g: ServerArmy = {
@@ -835,24 +831,10 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
     }
   }
   if (!done) {
-    // Something that makes a living where it fits; one Fortress, on ground
-    // nothing else would stand on.
-    const hasFort = mine.some(([, h]) => h.improvement?.kind === 'Fortress' || h.work?.kind === 'Fortress');
-    const bare = mine.filter(([i, h]) => h.improvement === null && h.work === null && h.active && isHeld(h, t)
-      && (!hasFort || fittingImprovements(data.hexes[i]).some((k) => k !== 'Fortress')));
-    if (bare.length > 0) {
-      const [i] = bare[roll('build', bare.length)];
-      startWork(b, i, fittingImprovements(data.hexes[i]).find((k) => k !== 'Fortress') ?? 'Fortress', t);
-      done = true;
-    }
-  }
-  if (!done) {
-    const raisable = mine.filter(([i, h]) => h.improvement !== null && h.work === null && h.active
-      && buildRefusal(b, seat, i, h.improvement.kind, t) === null);
-    if (raisable.length > 0) {
-      const [i, h] = raisable[roll('raise', raisable.length)];
-      startWork(b, i, h.improvement!.kind, t);
-    }
+    // One Fortress, raised as far as it goes.
+    const fort = mine.find(([, h]) => h.fortress > 0 || h.work !== null);
+    const at = fort ?? mine.find(([i]) => upgradeRefusal(b, seat, i, 'Fortress', t) === null);
+    if (at !== undefined && upgradeRefusal(b, seat, at[0], 'Fortress', t) === null) startUpgrade(b, at[0], 'Fortress', t);
   }
   // While the Portal is open, a rival goes down a floor now and then.
   if (portalOpen(t) && rand(b.seed, 'botPortal', seat, s.moves) < WORLD_PORTAL.botFloorChance) {
@@ -918,15 +900,11 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     const index = Number(k);
     const bh = data.hexes[index];
     const mineHex = h.owner === seat;
-    const rate = h.improvement === null ? { cap: 0 } : improvementRate(bh, h.improvement.kind, h.improvement.level);
-    const now = storesAt(b, index, t);
+    const rate = districtRate(bh);
     return {
-      index, owner: h.owner, held: isHeld(h, t), outpostAt: h.outpostAt,
-      improvement: h.improvement, work: h.work, active: h.active,
-      stores: mineHex ? {
-        material: now.material, materialCap: rate.cap,
-        knowledge: now.knowledge, knowledgeCap: bh.features.includes('Landmark') ? WORLD_BUILD.landmark.store : 0,
-      } : null,
+      index, owner: h.owner, held: isHeld(h, t), standsAt: h.standsAt,
+      district: districtOf(bh) ?? 'Rural', fortress: h.fortress, work: h.work, active: h.active,
+      stores: mineHex && rate.currency !== null ? { currency: rate.currency, amount: storedAt(b, index, t), cap: rate.cap } : null,
       garrison: garrisonView(b, h),
     };
   }).sort((x, y) => x.index - y.index);

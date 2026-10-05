@@ -70,8 +70,8 @@ describe('save round-trip', () => {
     state.city.districts.at(-1)!.rentAnchor = saveAt;
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = stored(state, 'Wood');
-    const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(rentStored(restored)).toBe(600); // 2 housed × 30/min × 10 min
+    const restored = deserialize(serialize(state, saveAt), map, saveAt + 4 * 60_000)!;
+    expect(rentStored(restored)).toBe(240); // 2 housed × 30/min × 4 min, under the store
     expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold); // not the player's until collected
     expect(stored(restored, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });

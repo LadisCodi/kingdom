@@ -17,7 +17,7 @@ import {
 import type { TechEffect } from './techEffectRules';
 import type { Rarity } from './seasons';
 import type { ModifierScope, ModifierStat } from '../modifiers';
-import type { RolledRole, WorldFeature, WorldImprovement, WorldTerrain } from '../world/types';
+import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrade } from '../world/types';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
@@ -221,7 +221,7 @@ const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef 
  *
  * `workSeconds` is the work ONE villager does on a queued item. The crew
  * shares itself over the items in progress, so two workers on one item finish
- * it in half the time (Docs/plans/builder-30-days.md §3).
+ * it in half the time (Docs/features/17-workshops-and-goods.md §3).
  */
 export interface GoodDef {
   id: GoodId;
@@ -385,7 +385,7 @@ export const TAXES = balance.taxes;
  * tier pays on the tax rate. Ascending — a reader takes the LAST tier
  * reached. **At demand 0 there is no ratio and no bonus**, or one Garden at
  * Townhall 5 would pay the top tier for the whole midgame, for free
- * (Docs/plans/builder-30-days.md §6.2).
+ * (Docs/features/21-harmony.md).
  */
 export const HARMONY = balance.harmony as {
   readonly surplusTiers: readonly { readonly at: number; readonly bonus: number }[];
@@ -488,6 +488,10 @@ export interface QuestDef {
   rewardPack: PackTier | null;
   /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
   autoClaim: boolean;
+  /** Tutorial pacing on a quest that collects Gold: seconds after it becomes
+   *  active until the first house's store holds what it asks (sim/quests.ts
+   *  `applyRentRush`). Null: the real rent. */
+  tutorialRentSeconds: number | null;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -713,7 +717,7 @@ export interface DistrictDef {
   strikeSpeedPerLevel: readonly number[];
   /** How many items may be queued at once, by level. Empty = not a workshop.
    *  A longer queue is a longer absence covered, never more goods per hour —
-   *  that is the crew (Docs/plans/builder-30-days.md §2.2). */
+   *  that is the crew (Docs/features/17-workshops-and-goods.md §4). */
   queueLengthPerLevel: readonly number[];
   /** Harmony this building SUPPLIES once built. Non-zero = it is a
    *  decoration, which is the whole of what it does: no level, no crew, no
@@ -723,7 +727,7 @@ export interface DistrictDef {
    *  increment, indexed from level 1 the way `armyCapPerLevel` is. So entry 0
    *  is the gate on BUILDING it and the rest are the gates on its levels, one
    *  column for both and no prefix summed anywhere. Empty = it demands
-   *  nothing (Docs/plans/builder-30-days.md §6.1). */
+   *  nothing (Docs/features/21-harmony.md). */
   harmonyCostPerLevel: readonly number[];
 }
 
@@ -2039,6 +2043,10 @@ export interface WorldDef {
    *  and more for every hex it lies from the city. */
   exploreWorkSeconds: number;
   exploreWorkSecondsPerHex: number;
+  /** Gold to send an explorer: the base for a hex next to the city, times
+   *  the growth for every hex further out. */
+  exploreGoldBase: number;
+  exploreGoldGrowth: number;
   explorerRevealRadius: number;
   revealRadiusMax: number;
   cartographyExplorers: number;
@@ -2070,24 +2078,30 @@ export const WORLD: WorldDef = balance.world;
 export const WORLD_GEN = balance.worldGen as WorldGenDef;
 
 /** One level of a world improvement. */
-export interface WorldImprovementLevel { gold: number; buildSeconds: number; perHour: number; store: number }
-
-export interface WorldImprovementDef {
+/** A district: the feature that makes a hex this one, and what it pays
+ *  (19 §7). */
+export interface WorldDistrictDef {
   name: string;
-  /** What the hex must be: a Forest, open ground, a Mountain, or anything. */
-  needs: 'Forest' | 'Open' | 'Mountain' | 'Any';
-  /** The material its store fills with; '' for one that makes nothing. */
-  produces: '' | 'Wood' | 'Food' | 'Stone';
-  levels: readonly WorldImprovementLevel[];
+  /** The feature a hex holds for this to be its district; 'None' for bare ground. */
+  feature: WorldFeature | 'None';
+  /** The currency its store fills with; '' for one that makes nothing. */
+  produces: '' | 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
+  perHour: number;
+  store: number;
+}
+
+/** An upgrade built into a district that stands, and its levels (19 §7.2). */
+export interface WorldUpgradeDef {
+  name: string;
+  levels: ReadonlyArray<{ gold: number; buildSeconds: number }>;
 }
 
 /** What is built on a held world hex and what it pays (19 §5.1, §7). */
 export interface WorldBuildDef {
-  outpost: { gold: number; goldGrowth: number; buildSeconds: number };
-  improvements: Record<WorldImprovement, WorldImprovementDef>;
+  claim: { gold: number; goldGrowth: number; buildSeconds: number };
+  districts: Record<WorldDistrict, WorldDistrictDef>;
+  upgrades: Record<WorldUpgrade, WorldUpgradeDef>;
   innerRingMultiplier: number;
-  featureFoodBonus: number;
-  landmark: { knowledgePerDay: number; store: number };
   sanctuaryManaCap: number;
 }
 
@@ -2323,7 +2337,7 @@ export interface EventTemplate {
  */
 export const EVENTS: readonly EventTemplate[] = [];
 
-export const GAME_VERSION = '0.1.0';
+export const GAME_VERSION = '0.2.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/implementation-plan.md §1).
@@ -2388,4 +2402,7 @@ export const GAME_VERSION = '0.1.0';
 // v81: the abandoned buildings (`kingdom.abandoned`), additive.
 // v82: the Survey (`kingdom.kingdoms.Survey`), additive.
 // v83: the playtest's signals (`kingdom.signals`, a treasure's `AtUtc`), additive.
-export const SAVE_VERSION = 83;
+// v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
+// v85: the world board is radius 6 — the save's world fog, trips, builds,
+// Sanctuaries and armies are reset, the armies' troops sent home.
+export const SAVE_VERSION = 85;

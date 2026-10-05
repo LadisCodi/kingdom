@@ -1,0 +1,18 @@
+WORLD DECORATIONS for the game "Kingdom". Follow this file exactly.
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style references.
+- approved-sheet1.png = hex sprites already approved. THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same camera.
+- ref-assets.png = sprites that ship in the game. Your decorations are scattered on the ground around them, so they must match their trees, bushes, rocks and flowers exactly — the same shapes, the same greens, the same greys, only on their own.
+
+WHAT THEY ARE
+- SIXTEEN small loose decorations, each one alone, standing on nothing: the game scatters them across the ground of the world board. NO ground plate, NO base, NO patch of grass under them, NO drop shadow. Only the object, on full transparency.
+- Camera: from a little south of overhead, a high three-quarter angle, standing upright — the camera of the attached sprites.
+- Each is drawn at the SCALE it has in the attached sprites: a single tree as big as one tree of the FOREST, a bush as big as one of its bushes, a rock as big as one of its rocks.
+
+THE SHEET: one square image, 1536x1536, a 4x4 grid of sixteen cells, ONE decoration centred in each cell, each about 60% of its cell. Keep a clear 40 px band of transparency between cells: nothing may touch or cross a cell edge.
+Row 1: GRASS TUFT (short), GRASS TUFT (taller, a few blades), GRASS TUFT (wide, low), CLOVER AND SMALL WHITE FLOWERS (a tiny patch).
+Row 2: SMALL ROUND BUSH, SMALL BUSH WITH RED BERRIES, TWO LITTLE BUSHES TOGETHER, A FERN.
+Row 3: ONE SMALL GREY ROCK, TWO PEBBLE-ROCKS, ONE MOSSY BOULDER, A LOW FLAT STONE WITH A TUFT.
+Row 4: ONE ROUND DECIDUOUS TREE, ONE CONIFER, ONE SMALLER ROUND TREE, BLUE AND YELLOW WILDFLOWERS (a small clump).
+
+End of the request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

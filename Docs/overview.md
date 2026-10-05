@@ -15,7 +15,7 @@
   players.
 - **The twist is exploration.** The player **buys back the map from the fog**,
   one tap at a time; builds districts whose workers harvest; grows a population
-  that pays rent; and recovers the magic buried in ruins.
+  that pays rent; and drives out the monsters camped in it.
 - **Magic is how a kingdom becomes yours.** Spellbooks hold the research that
   opens mechanics, and which books you own is a choice the game does not make
   for you (§ *Magic and the books*).
@@ -65,10 +65,10 @@
 
 1. **Your city can never be attacked. Everything outside it can be.** The
    province is inviolable: no player reaches it, and the only thing that ever
-   takes from it is a garrison you have seen and left standing — three raids
-   per camp at most, at most half of what sits uncollected in the buildings'
-   stores each — never the wallet — and handed back in full when you clear
-   it. No decay, no starvation, no failure state. **What a player can
+   takes from it is a lair you have found and left standing — three raids a
+   day, at most half of what sits uncollected in the buildings' stores each —
+   never the wallet — and what it carries, up to a day of raids, handed back
+   when you clear it. No decay, no starvation, no failure state. **What a player can
    take from a player is territory** — a claimed hex on the world map, never a
    building, never a purse. Losing ground costs you what it was producing; it
    never costs you what you built.
@@ -88,8 +88,8 @@
    distance from the Townhall. **The frontier stays connected**, and a building
    sees further than it can buy. What the fog kept comes out: **treasures** to
    pick up, and **abandoned buildings** to repair.
-2. **Clear** — every ruin opens with a gate, and discovering the ruin starts
-   the gate's counter: clear it with hero and troops before it raids the city.
+2. **Clear** — discovering a lair starts its counter: clear it with a hero
+   and troops before it raids the city.
 3. **Harvest** — tap resource cells directly. Every tap on the ground spends
    **1 Mana**. Cells exhaust after a number of taps and recover on a timer.
 4. **Build** — repair what the fog kept, then place districts on revealed
@@ -102,8 +102,8 @@
 7. **Collect** — what a building makes waits in its store, under a bubble. A
    tap collects it, free. A full store stops the building.
 8. **Reinvest** — upgrade districts, research technologies, buy upgrades.
-9. **Fight** — clear the garrison at a ruin's gate, then take its rooms one at
-   a time with a hero and a party.
+9. **Fight** — clear the lairs with a hero and a party; on the world board,
+   take a dungeon's rooms one at a time.
 10. **Empower** — fill the albums that level the relics, and spend Mana on magic.
 
 ## The fog
@@ -116,20 +116,17 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 | **Treasures** — one every five cells revealed, a chest in the fog beside the last | a coin, picked up with a free tap once its cell is revealed |
 | **Abandoned buildings** — the village the fog swallowed, seen first as silhouettes of their ruins | a House, plots, a Farm, a Sawmill… repaired before the player can build their own |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
-| **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |
-| **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |
+| **Lairs** — monster camps that hold the ground around them | the first job for the army: clear them, or they raid |
 
 - Landmarks compound: a bigger Mana pool is a bigger session and a bigger ad
   reward, because the ad reward is a whole pool.
 
 > explore → a bigger pool → a bigger ad → more taps → explore further
 
-- Ruins are a non-repeating reward at the end of the fog's cost curve, and a
-  place the player returns to.
-- Every site is held by a garrison. Discovering one starts a counter measured
-  in minutes; when it runs out the garrison raids the city and takes a bounded
-  slice of what waits uncollected in the buildings' stores, at most three times, all of it returned when
-  the garrison is cleared. **Defend your village** is the doorway to combat
+- Every lair is held by a garrison. Discovering one starts a counter measured
+  in minutes; when it runs out the garrison raids the city, three times a day,
+  and takes a bounded slice of what waits uncollected in the buildings'
+  stores, returned when the lair is cleared. A cleared lair is gone for good. **Defend your village** is the doorway to combat
   ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
 
 **Full design:** [`features/01-map-and-fog.md`](features/01-map-and-fog.md).
@@ -140,7 +137,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 > Stardust comes out of dungeons. Knowledge fills a bar, and research is paid
 > in it.**
 
-- Eight wallet rows; **five on the plank, three of them for the whole first
+- Eleven wallet rows; **five on the plank, three of them for the whole first
   hour**.
 - A cell's identity and the coin it pays are different things: berry bushes,
   wild game and fish shoals all pay **Food** (1, 3 and 2 a tap); an iron vein
@@ -151,7 +148,8 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - harvest → the building's store → a collect → materials → buildings
   - Mana → magic
   - time, lumps, Gold, Gems → Knowledge → research
-  - rooms → card packs → albums → relic levels
+  - quests, the Survey, the pass, the Portal and the store → card packs →
+    albums → relic levels
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
 
@@ -178,20 +176,21 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   poured into it** until it is full, then Gold completes it on the spot — there
   is no research time and no queue.
 - **Knowledge fills a bar, 1 an hour up to 10**, and the drip stops while the
-  bar is full. Landmarks, ruins, quests and events pay it in lumps that land
+  bar is full. Landmarks, lairs, quests and dungeons pay it in lumps that land
   over the cap. More can be bought with Gold, dearer with every point ever
   bought, or with Gems.
-- **General books** are open from the start and every kingdom has them. They
-  hold the spine of the game: the city, the army, the basic enchantments.
-- **Specific books are found, not bought** — at the bottom of a ruin, out of an
-  event, on the world map. A specific book is narrow and deep: it does one thing
-  no general book does.
+- **General books** — Civics, Warfare, Magic — every kingdom has. They hold
+  the spine of the game: the city, the army, the basic enchantments. Civics
+  is open from the start; the other two open on a fact about the world
+  ([`features/22-progression.md`](features/22-progression.md) §4).
+- **Found books are found, not bought** — the Sagas when a Tavern stands, the
+  Atlas when the Watchtower is claimed. A found book is narrow and deep: it
+  does one thing no general book does.
 - **Personalisation comes from which books you own and in what order**, not from
   a renunciation. Nothing is locked away by choosing; two kingdoms differ
   because they found different books and studied them in a different order.
-- This is what makes the province's ruins matter past their loot: **a ruin can
-  pay a book**, and a book is the only reward that changes how the game is
-  played rather than how fast.
+- **A place can pay a book**, and a book is the only reward that changes how
+  the game is played rather than how fast.
 
 **Full design:** [`features/07-research.md`](features/07-research.md).
 
@@ -200,44 +199,40 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 - A relic is a **permanent kingdom passive with no ceiling**: one effect, one
   number, rising with the relic's level. Every relic the player has is on.
 - Relics are **levelled by a card collection**: a 28-day season on a shared
-  calendar, **five albums of nine cards, one per relic**. The first season a
+  calendar, **eight albums of nine cards**. The first season a
   relic's album is completed hands it over; every season after adds a level,
   so a relic rises at most once a season.
-- Cards come in **packs** — every ruin room pays one — and an album pays a
-  level, a chest of production hours, keys and Gems. Completing all five pays
-  the season hero and a pile of Gems.
+- Cards come in **packs** — from quests, the Survey, the pass, the Portal and
+  the store — and an album pays a level, a chest of production hours, keys and
+  Gems. Completing all eight pays the season hero and a pile of Gems.
 - At the close the cards are wiped and the levels stay. A duplicate is free to
   give, which is what makes trading work.
-- **Spells are a separate thing, in the Magic tome**: discovered as a research
-  node, improved by the upgrades under it, castable for Mana from then on.
-  **A relic is what the kingdom has; a spell is what you know**
-  ([`features/07-research.md`](features/07-research.md) §6).
+- **The Magic tome does not cast.** An ability is a relic's active, cast from
+  the relic that owns it ([`features/07-research.md`](features/07-research.md) §6).
 
 > **A relic never drops, is never worn, and never goes anywhere. It is a
 > number the kingdom has earned, season after season.**
 
 **Full design:** [`features/09-relics.md`](features/09-relics.md).
 
-## Ruins
+## Lairs and dungeons
 
-- A ruin is a **ladder of rooms**: numbered depths, numbered rooms, a boss at
-  the end of every depth. One room is one fight.
-- A **garrison** stands at the gate before Depth 1, with a clock on it: clear
-  it or it raids the city ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
+- A **lair** is a monster camp in the province: one garrison, one fight, with
+  a clock on it — clear it or it raids the city. Cleared, it is gone
+  ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
+- A **dungeon** stands on the world board: numbered depths of rooms, a boss
+  at the end of every depth. An army camps at it and takes the rooms one at a
+  time, in order, never replayed
+  ([`features/19-world-map.md`](features/19-world-map.md) §8.1).
 - The party is **a hero** (mandatory) plus troops in the slots of the battle
-  screen; supplies are paid on the way in.
-- **The fight resolves the instant the room is entered.** There is nothing in
-  flight, nothing to wait for and nothing to come back from.
-- Rooms are cleared **in order and never replayed**. Clearing the last room of
-  a depth opens the next one.
-- **A room pays the moment it falls**, so nothing is ever carried and nothing
-  can be lost on the way home.
+  screen.
+- **The fight resolves the instant it is entered.** A room pays the moment it
+  falls.
 - **A fight costs soldiers, win or lose.** Most of the fallen are dead; a
   tenth come home **wounded** and wait in the Infirmary until the player pays
   a fraction of what recruiting them would cost, and research and medic heroes
-  buy that share upward. Supplies and bodies are
-  the whole price of an attempt — a room that beats the party takes nothing
-  else the player has banked, and it is still there to try again.
+  buy that share upward. A fight that beats the party takes nothing else the
+  player has banked, and it is still there to try again.
 
 > **Enter the room, or go and train?**
 
@@ -245,18 +240,19 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   hero slots a side, units with DMG/DEF/HP, and a type chart that rewards
   composition. It resolves the instant the room is entered and the screen
   replays the log ([`features/combat.md`](features/combat.md)).
-- Party HP does not carry between rooms.
+- In a dungeon the camped army's losses and its heroes' wounds carry from
+  room to room.
 
 **Full design:** [`features/11-expeditions.md`](features/11-expeditions.md).
 
 ## Progression
 
-Three arcs run at different speeds.
+Four arcs run at different speeds.
 
 | Arc | Gated by | Measured in |
 |---|---|---|
 | **The city** | the Townhall level — how many of each district, and how high | hours |
-| **The army** — garrisons cleared, and therefore how deep the rooms go | four military buildings the player chooses to build | hours to days |
+| **The army** — lairs cleared | four military buildings the player chooses to build | hours to days |
 | **The collection** — relics and heroes | card albums on a 28-day shared season; Fragments and Hero XP | **weeks and seasons** |
 | **The world** — ground claimed and held | the army, and the books the province paid for | days to weeks |
 
@@ -288,8 +284,8 @@ supplies the world.
 
 1. **The province teaches.** Fog, harvest, building and the first fights are all
    learned alone, with nothing at stake and nobody watching.
-2. **The province arms.** Its ruins pay the card packs that level relics, and
-   the **spellbooks** that decide what kind of kingdom this is.
+2. **The province arms.** Its lairs, landmarks and buildings open the
+   **spellbooks** that decide what kind of kingdom this is.
 3. **The world tests.** An explorer marches out, ground is claimed, and what the
    player built at home is what they bring.
 4. **The world feeds the province.** Held hexes produce into the city that holds
@@ -297,8 +293,6 @@ supplies the world.
 
 **Full design:** [`features/02-map-scopes.md`](features/02-map-scopes.md),
 [`features/19-world-map.md`](features/19-world-map.md).
-
-**Full design:** [`features/02-map-scopes.md`](features/02-map-scopes.md).
 
 ## The rules that govern every new number
 
@@ -318,7 +312,7 @@ supplies the world.
 - An absence is replayed in full.
 - Production stops at its own ceiling: each building's store, the Mana pool,
   the Knowledge bar, the workshop and training queues.
-- Timers — the build queue, a gate's raid, event windows — resolve in full.
+- Timers — the build queue, a lair's raid, event windows — resolve in full.
 - Anything new that is time-based and produces names its ceiling in its doc.
 
 ## What the prototype is for

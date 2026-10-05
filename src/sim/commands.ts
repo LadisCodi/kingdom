@@ -4,7 +4,6 @@
 import { grantStoryHeroes } from './story';
 import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
-import { RUSH } from './data/definitions';
 import {
   buildDurationForCell, buildGoodsCost, canMoveDistrict, districtCount, maxDistrictCount,
   nextBuildCost, nextOrdinal,
@@ -49,6 +48,8 @@ import {
   type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
+import { applyRentRush, nextRentRush, stampRentRush } from './quests';
+import { gemsToFinish } from './rush';
 import {
   finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
 } from './world/explorers';
@@ -206,7 +207,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   const def = DISTRICTS[site.districtId];
   const cells = cellsOfRect(site.location, def.size);
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
@@ -414,7 +415,7 @@ export function upgradeRefusal(
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   // The third errand: the decorations. Asked once, here, and never read
   // again — the level this buys keeps its demand for good, but nothing ever
-  // takes it back (Docs/plans/builder-30-days.md §6.1).
+  // takes it back (Docs/features/21-harmony.md).
   if (harmonyBlock(state, def, district.level + 1, district) !== null) return 'NeedsHarmony';
   return null;
 }
@@ -467,9 +468,8 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
 
 export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
 
-/** gemCost = max(1, ceil(remainingSeconds / RUSH.secondsPerGem)). */
-export const gemRushCost = (item: QueueItem, now: number): number =>
-  Math.max(1, Math.ceil(remainingSeconds(item, now) / RUSH.secondsPerGem));
+/** The Gems that finish a build now (sim/rush.ts). */
+export const gemRushCost = (item: QueueItem, now: number): number => gemsToFinish(remainingSeconds(item, now));
 
 export function finishWithGems(
   state: GameState,
@@ -600,7 +600,7 @@ export interface AdvanceResult {
   seasonClosed: SeasonClose | null;
   /** Explorers that came home from the world board, and what they revealed. */
   explorersHome: ExplorerHome[];
-  /** World builds whose builder came home: the Outpost or level stands. */
+  /** World builds whose builder came home: the district or upgrade stands. */
   worldBuildsDone: WorldBuild[];
 }
 
@@ -669,6 +669,10 @@ function applyDueAt(
     out.explorersHome.push(...returnExplorers(state, t));
     // A builder out on the world board comes home when its build stands.
     out.worldBuildsDone.push(...finishWorldBuilds(state, t));
+    // The tutorial's rent rush: stamped when its quest becomes active, and
+    // the house topped up when it falls due (sim/quests.ts).
+    stampRentRush(state, t);
+    applyRentRush(state, t);
   });
 }
 
@@ -708,6 +712,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextWorkshopCompletion(state, after));
   consider(nextExplorerReturn(state, after));
   consider(nextWorldBuildDone(state, after));
+  consider(nextRentRush(state));
   return t;
 }
 

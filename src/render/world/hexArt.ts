@@ -1,16 +1,13 @@
 // What a world hex is drawn with (Docs/plans/world-hex-art.md §2–§4): a
-// terrain plate, at most one sprite for its combination of terrain and
-// features, an improvement that includes the feature it works, and what the
-// improvement leaves behind. Pure: names only, no drawing, so the rules are
+// terrain plate, at most one sprite for its feature, and the district that
+// works it. Pure: names only, no drawing, so the rules are
 // testable and the art drops in by filename.
 
-import type { WorldFeature, WorldImprovement, WorldTerrain } from '../../sim/world/types';
+import type { WorldDistrict, WorldFeature, WorldTerrain } from '../../sim/world/types';
 
-/** Every combination generation can make (world-hex-art.md §2). */
+/** Every feature's drawing (world-hex-art.md §2): a hex holds one at most. */
 export const HEX_COMBOS = [
-  'Forest', 'FertileLand', 'Game', 'FertileGame',
-  'Mountain', 'MountainForest', 'MountainDungeon',
-  'Sanctuary', 'Landmark',
+  'Forest', 'FertileLand', 'Game', 'Mountain', 'MountainDungeon', 'Sanctuary', 'Landmark',
 ] as const;
 export type HexCombo = typeof HEX_COMBOS[number];
 
@@ -19,21 +16,18 @@ export const COMBO_SPRITE: Record<HexCombo, string> = {
   Forest: 'whex_forest',
   FertileLand: 'whex_fertile',
   Game: 'whex_game',
-  FertileGame: 'whex_fertile_game',
   Mountain: 'whex_mountain',
-  MountainForest: 'whex_mountain_forest',
   MountainDungeon: 'whex_mountain_dungeon',
   Sanctuary: 'whex_sanctuary',
   Landmark: 'whex_landmark',
 };
 
 /** The ground under everything: the province's own textures — one terrain
- *  set (art-direction §2) — the mossy rock of the tundra under a mountain. */
+ *  set (art-direction §2). A mountain's sprite carries its own rock. */
 export const PLATE_SPRITE: Record<WorldTerrain, string> = {
   Grassland: 'terrain_grassland',
   Plains: 'terrain_plains',
   Desert: 'terrain_desert',
-  Mountain: 'terrain_tundra',
 };
 
 /**
@@ -49,80 +43,58 @@ export function pickVariant(name: string, count: number, key: number): string {
   return k === 0 ? name : `${name}_${k + 1}`;
 }
 
-/** An improvement's art, before its tier. */
-export const IMPROVEMENT_SPRITE: Record<WorldImprovement, string> = {
-  LoggingCamp: 'whex_logging_camp',
-  Homestead: 'whex_homestead',
-  StonePit: 'whex_stone_pit',
-  Fortress: 'whex_fortress',
-};
-
-/** The Outpost's watch-tower at the hex's corner — `whex_outpost[_n]` — and
- *  the same tower while its builder is still at it. */
-export const OUTPOST_SPRITE = 'whex_outpost';
-export const OUTPOST_BUILDING_SPRITE = 'whex_outpost_building';
-
-/** Three art tiers across an improvement's five levels. */
-export const improvementTier = (level: number): string => (level >= 5 ? 'l5' : level >= 3 ? 'l3' : 'l1');
-
-/** The combination a hex of this terrain and these features is drawn as;
- *  null for bare ground. */
-export function comboOf(terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
+/** The drawing a hex's feature is drawn as; null for bare ground. */
+export function comboOf(_terrain: WorldTerrain, features: readonly WorldFeature[]): HexCombo | null {
   const has = (f: WorldFeature) => features.includes(f);
   // A dungeon's art carries its own rock, whatever ground it came back on.
   if (has('Dungeon')) return 'MountainDungeon';
-  if (terrain === 'Mountain') return has('Forest') ? 'MountainForest' : 'Mountain';
+  if (has('Mountain')) return 'Mountain';
   if (has('Sanctuary')) return 'Sanctuary';
   if (has('Landmark')) return 'Landmark';
   if (has('Forest')) return 'Forest';
-  if (has('FertileLand')) return has('Game') ? 'FertileGame' : 'FertileLand';
+  if (has('FertileLand')) return 'FertileLand';
   if (has('Game')) return 'Game';
   return null;
 }
 
+/** Each district's art: the shipped improvement's for the three it
+ *  replaces, its own for the rest (Docs/plans/world-districts.md §2). A
+ *  district's art includes the feature it works. */
+export const DISTRICT_SPRITE: Record<WorldDistrict, string> = {
+  Rural: 'whex_rural',
+  LoggingCamp: 'whex_logging_camp_l1',
+  Quarry: 'whex_stone_pit_l1',
+  FarmLands: 'whex_homestead_l1',
+  HuntingGrounds: 'whex_hunting_grounds',
+  Observatory: 'whex_observatory',
+  Shrine: 'whex_shrine',
+};
+
+/** The Fortress's mark at the hex's rear corner, by level: the shipped
+ *  keep's three tiers. */
+export const fortressSprite = (level: number): string =>
+  (level >= 3 ? 'whex_fortress_l5' : level === 2 ? 'whex_fortress_l3' : 'whex_fortress_l1');
+
 /** What a hex is drawn with, back to front. */
 export interface HexArt {
   plate: string;
-  /** What an improvement does not work, drawn behind it at 60 %. */
-  behind: HexCombo | null;
-  /** The combination, or the improvement standing in its place. */
-  main: { combo: HexCombo } | { improvement: WorldImprovement; sprite: string } | null;
-  /** Game left in front of an improvement. */
-  front: HexCombo | null;
+  /** Its feature's drawing; a district that has its own art replaces it. */
+  combo: HexCombo | null;
+  /** The district standing, or going up, and its art. */
+  district: { kind: WorldDistrict; sprite: string } | null;
 }
 
-/** What each improvement works, and so takes out of the hex's drawing. */
-const WORKS: Record<WorldImprovement, (terrain: WorldTerrain, f: readonly WorldFeature[]) => [WorldTerrain, WorldFeature[]]> = {
-  LoggingCamp: (t, f) => [t, f.filter((x) => x !== 'Forest')],
-  StonePit: (_t, f) => ['Grassland', [...f]],
-  Homestead: (t, f) => [t, f.filter((x) => x !== 'FertileLand')],
-  Fortress: (t, f) => [t, [...f]],
-};
-
 /**
- * The art for a hex: its plate, its combination, or its improvement with
- * what is left of the combination behind it — Game, the one small thing,
- * goes in front instead (world-hex-art.md §3). At the strategic zoom Game is
- * not drawn (§4).
+ * The art for a hex: its plate, its feature, and its district. At the
+ * strategic zoom Game is not drawn (world-hex-art.md §4).
  */
 export function hexArt(
-  terrain: WorldTerrain, features: readonly WorldFeature[],
-  improvement: { kind: WorldImprovement; level: number } | null, strategic: boolean,
+  terrain: WorldTerrain, features: readonly WorldFeature[], district: WorldDistrict | null, strategic: boolean,
 ): HexArt {
   const shown = strategic ? features.filter((f) => f !== 'Game') : features;
-  const plate = PLATE_SPRITE[terrain];
-  if (improvement === null) {
-    const combo = comboOf(terrain, shown);
-    return { plate, behind: null, main: combo === null ? null : { combo }, front: null };
-  }
-  const [t, rest] = WORKS[improvement.kind](terrain, shown);
-  const left = comboOf(t, rest);
-  const main = {
-    improvement: improvement.kind,
-    sprite: `${IMPROVEMENT_SPRITE[improvement.kind]}_${improvementTier(improvement.level)}`,
+  return {
+    plate: PLATE_SPRITE[terrain],
+    combo: comboOf(terrain, shown),
+    district: district === null ? null : { kind: district, sprite: DISTRICT_SPRITE[district] },
   };
-  if (left === 'Game') return { plate, behind: null, main, front: 'Game' };
-  // Game beside fertile land: the Homestead took the fields, the boars stay.
-  if (left === 'FertileGame') return { plate, behind: 'FertileLand', main, front: 'Game' };
-  return { plate, behind: left, main, front: null };
 }

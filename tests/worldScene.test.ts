@@ -4,10 +4,10 @@
 import { describe, expect, it } from 'vitest';
 import { HexCamera } from '../src/render/world/hexCamera';
 import { DOOR_HINT } from '../src/sim/doors';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../src/sim/world/hex';
+import { BOARD_RADIUS, PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../src/sim/world/hex';
 import { setBit } from '../src/sim/world/fogBits';
 import { hexActions } from '../src/ui/world/worldActions';
-import { SEAT_INDICES } from '../src/sim/world/board';
+import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import { hexTitle } from '../src/ui/world/dispatchSheet';
 import { fogStateOf } from '../src/sim/world/explorers';
 import type { Game } from '../src/game';
@@ -37,11 +37,12 @@ describe('the world door', () => {
     expect(toasts).toEqual([DOOR_HINT.world]);
   });
 
-  it('opens onto the whole board, and the knob goes home', () => {
+  it('opens on the city, up close, and the knob goes home', () => {
     const { game } = world();
     game.enterWorld();
     expect(game.scene).toBe('world');
-    expect(game.worldCamera!.zoom).toBeCloseTo(game.worldCamera!.minZoom);
+    expect(game.worldCamera!.zoom).toBeCloseTo(game.worldCamera!.maxZoom);
+    expect(hexIndex(game.worldCamera!.screenToHex(390 / 2, 844 / 2))).toBe(game.homeHex());
     game.leaveWorld();
     expect(game.scene).toBe('province');
   });
@@ -76,10 +77,10 @@ describe('a tap on the board', () => {
     expect(t(rival)).toBe('Unknown ground');
     // The rim across the board from home: as far from anything seen as it gets.
     const home = hexAt(game.homeHex());
-    const across = hexIndex({ q: (-home.q * 5) / 4, r: (-home.r * 5) / 4 });
+    const across = hexIndex({ q: (-home.q * BOARD_RADIUS) / HOME_RING, r: (-home.r * BOARD_RADIUS) / HOME_RING });
     expect(t(across)).toBe('Unknown ground');
     // Next to the city: shapes in the mist.
-    const beside = hexIndex({ q: (home.q * 5) / 4, r: (home.r * 5) / 4 });
+    const beside = hexIndex({ q: (home.q * BOARD_RADIUS) / HOME_RING, r: (home.r * BOARD_RADIUS) / HOME_RING });
     expect(t(beside)).toBe('Misty ground');
   });
 });
@@ -95,15 +96,22 @@ describe('Explore', () => {
     expect(toasts.at(-1)).toMatch(/Cartography/);
 
     game.state.research.completed.push('Cartography');
+    game.state.city.wallet.Gold = 0;
+    game.doSendExplorer();
+    expect(game.state.world.explorers).toHaveLength(0);
+    expect(toasts.at(-1)).toMatch(/Not enough Gold/);
+
+    game.state.city.wallet.Gold = 1e9;
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
     expect(game.state.world.explorers[0].target).toBe(beside);
     expect(game.openOverlay).toBeNull();
 
+    // The same hex again: one is already on its way there.
     game.handleWorldTap(...tapAt(game, beside));
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
-    expect(toasts.at(-1)).toMatch(/Every explorer is out/);
+    expect(toasts.at(-1)).toMatch(/already on the way/);
   });
 
   it('will not go where it has not seen the way', () => {

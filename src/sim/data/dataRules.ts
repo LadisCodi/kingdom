@@ -16,7 +16,7 @@
 
 import techTree from './tech-tree.json';
 import regionMap from './region-map.json';
-import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_FEATURES, WORLD_IMPROVEMENTS, WORLD_TERRAINS } from '../world/types';
+import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -115,7 +115,7 @@ export type RefKind =
   /** Someone who speaks on the stage (`speakers`). */
   | 'speaker'
   /** A world hex's terrain, and what it may hold (sim/world/types.ts). */
-  | 'worldTerrain' | 'worldFeature' | 'worldImprovement';
+  | 'worldTerrain' | 'worldFeature' | 'worldDistrict' | 'worldUpgrade';
 
 /** Which collection a ref kind opens in the tool, for "points to" links. */
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
@@ -174,7 +174,8 @@ export const STATIC_IDS: Partial<Record<RefKind, readonly string[]>> = {
   landmarkKind: ['Shrine', 'StandingStones', 'Leyspring', 'Watchtower'],
   worldTerrain: WORLD_TERRAINS,
   worldFeature: WORLD_FEATURES,
-  worldImprovement: WORLD_IMPROVEMENTS,
+  worldDistrict: WORLD_DISTRICTS,
+  worldUpgrade: WORLD_UPGRADES,
 };
 
 export const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'] as const;
@@ -712,18 +713,29 @@ export const RULES: Readonly<Record<string, Rule>> = {
         push(null, ['worldGen', 'terrainWeights', role], 'every weight is 0 — a hex here could roll no terrain');
       }
     }
+    // Every district once, every feature a hex can be held on decided by
+    // exactly one of them (19 §7).
     const build = (doc.worldBuild ?? {}) as Record<string, unknown>;
-    const improvements = (build.improvements ?? {}) as Record<string, Record<string, unknown>>;
-    for (const id of WORLD_IMPROVEMENTS) {
-      const def = improvements[id];
-      if (def === undefined) { push(null, ['worldBuild', 'improvements', id], 'is missing — every improvement needs its ladder'); continue; }
-      const levels = list(def.levels) as Array<Record<string, unknown>>;
-      if (levels.length === 0) push(null, ['worldBuild', 'improvements', id, 'levels'], 'has no level 1');
+    const districts = (build.districts ?? {}) as Record<string, Record<string, unknown>>;
+    const decides = new Map<string, string>();
+    for (const id of WORLD_DISTRICTS) {
+      const def = districts[id];
+      if (def === undefined) { push(null, ['worldBuild', 'districts', id], 'is missing — every district needs its row'); continue; }
+      const feature = String(def.feature ?? '');
+      const was = decides.get(feature);
+      if (was !== undefined) push(null, ['worldBuild', 'districts', id, 'feature'], `${was} is already the district of ${feature}`);
+      decides.set(feature, id);
       const makes = def.produces !== '' && def.produces !== undefined;
-      levels.forEach((l, i) => {
-        if (makes && (num(l.perHour) <= 0 || num(l.store) <= 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'makes nothing, or has nowhere to put it');
-        if (!makes && (num(l.perHour) > 0 || num(l.store) > 0)) push(null, ['worldBuild', 'improvements', id, 'levels', i], 'fills a store with nothing');
-      });
+      if (makes && (num(def.perHour) <= 0 || num(def.store) <= 0)) push(null, ['worldBuild', 'districts', id], 'makes nothing, or has nowhere to put it');
+      if (!makes && (num(def.perHour) > 0 || num(def.store) > 0)) push(null, ['worldBuild', 'districts', id], 'fills a store with nothing');
+    }
+    for (const f of ['None', ...WORLD_FEATURES.filter((x) => x !== 'Dungeon')]) {
+      if (!decides.has(f)) push(null, ['worldBuild', 'districts'], `no district for ${f === 'None' ? 'bare ground' : `a ${f}`}`);
+    }
+    const upgrades = (build.upgrades ?? {}) as Record<string, Record<string, unknown>>;
+    for (const id of WORLD_UPGRADES) {
+      if (upgrades[id] === undefined) { push(null, ['worldBuild', 'upgrades', id], 'is missing'); continue; }
+      if (list(upgrades[id].levels).length === 0) push(null, ['worldBuild', 'upgrades', id, 'levels'], 'has no level 1');
     }
     const world = (doc.world ?? {}) as Record<string, unknown>;
     if (num(world.explorerRevealRadius) > num(world.revealRadiusMax)) {

@@ -6,22 +6,21 @@
 > is [`11-expeditions.md`](11-expeditions.md); the fight is
 > [`combat.md`](combat.md); the screens are [`11a-ruins-ui.md`](11a-ruins-ui.md).
 >
-> **Status: built 2026-09-09.** The clock, the raid, the hoard, the fight and
-> the screens all ship. The fight is scored the way a room is
-> ([`11-expeditions.md`](11-expeditions.md) §5) until the tick resolver
-> ([`combat.md`](combat.md)) lands; `power` is the number it is scored
-> against either way.
+> **Status: built as the province's lairs** (`src/sim/lairs.ts`): the clock,
+> the raid, the hoard and the fight, through the resolver
+> ([`combat.md`](combat.md)). A lair has no ruin behind it — cleared, it is
+> gone — and its zone denies the ground around it
+> ([`../proposals/lairs.md`](../proposals/lairs.md) §3).
 
 ## 1. The rules, up front
 
-1. **Every ruin opens with a gate**: one garrison, one room, before Depth 1.
-   Nothing in the ruin can be entered until the gate is cleared.
+1. **A lair is one garrison**: one board, one clear. Nothing behind it.
 2. **The gate is a room on the surface.** It is generated from its `guard` the
    way a room is generated from its budget, and clearing it is a room attempt
    like any other — the player attacks, the enemy never does.
-3. **Discovering the ruin starts the gate's counter**, authored in minutes.
-   When it runs out the garrison raids the city, and raids again every period
-   until the gate is cleared or the garrison is out of trips.
+3. **Discovering the lair starts its counter**, authored in minutes.
+   When it runs out the garrison raids the city, then **three times a day**,
+   inside the player's raid window, for as long as it stands.
 4. **A raid is not a fight.** Nothing defends. The garrison takes, and the
    answers are to collect and to go and clear the gate.
 5. **A raid takes from the buildings' stores, never from the wallet, and only
@@ -30,18 +29,18 @@
    the Townhall's own Gold — the city's floor — and never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
    or units.
 6. **A raid is priced in production, not in units**, capped by a fraction of
-   what the stores hold, and **a garrison makes at most three trips**, then sits on what it
-   took. Bounded, and **recoverable**: clearing the gate returns its whole
+   what the stores hold. **A lair carries at most a day of raids** of each
+   material; what it takes over that is lost. Clearing it returns its
    hoard.
 7. **The gate is the incentive, not the punishment.** It is a small personal
    event with a clock, whose whole job is to send the player into the ruin.
 
 ## 2. The gate
 
-- Authored **per ruin**, in `?dev=map` ([`../map-editor.md`](../map-editor.md)):
+- Authored **per lair**, in `?dev=data#map` ([`../map-editor.md`](../map-editor.md)):
 
 ```
-guard { threat, power, warningMinutes, periodMinutes }
+guard { threat, power, warningMinutes }
 ```
 
 - `threat` is a unit type or `Any`. The creature is derived from it; there is
@@ -66,37 +65,38 @@ guard { threat, power, warningMinutes, periodMinutes }
 - **Recommended `power`: below the ruin's `powerStart` at Depth 1.** The gate is
   easier than the first room, because it is the room the player is pushed
   into on a clock.
-- The two counters are per ruin: a harder ruin gets a longer one, because the
+- The warning is per lair: a harder lair gets a longer one, because the
   army it needs takes longer to build.
 - A ruin's **tier** keys the `garrisons` entries that are not per site: take seconds
   and gate supplies (§8).
 
-| Ruin | Gate | `power` | Enemies | Warning · period | Board that beats it |
-|---|---|---|---|---|---|
-| Hollow Barrow | Orcs | **60** | **20** | **30 · 30 min** | the company the chain musters — 24 soldiers and the free hero |
-| Sunken Chapel | Harpies | 144 | 24 | 90 · 90 min | a company that answers Archers |
-| Drowned Ironworks | Goblins | 250 | 50 | 120 · 120 min | fifty-odd, well matched |
-| The Counting House | Wolf riders | 500 | 71 | 180 · 180 min | a hundred, or seventy that answer Cavalry |
-| Star Observatory | Drake | 1,000 | 211 | 240 · 240 min | a full board; no type answer |
+| Lair | Tier | `threat` | `power` | Warning |
+|---|---|---|---|---|
+| Orcs | 1 | Warrior | **45** | **30 min** |
+| Harpies | 2 | Archer | 180 | 90 min |
+| Goblins | 3 | Lancer | 440 | 120 min |
+| Wolf riders | 4 | Cavalry | 700 | 180 min |
+| Drake | 5 | Any | 1,000 | 240 min |
 
 - **`power` is a budget in troops' worth, and the count is what the player
-  sees**: the generator spends it on each unit's `power`, so twenty orcs is 20 ×
-  3 (§2, [`combat.md`](combat.md) §5).
-- Every one of them is under the strength of the ruin's own first depth, and
-  `tests/gates.test.ts` holds them there.
+  sees**: the generator spends it on each unit's `power`, so fifteen orcs is
+  15 × 3 (§2, [`combat.md`](combat.md) §5).
 
 ## 3. The counter
 
-- The counter starts the moment the ruin is **discovered**
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §4): `nextRaidAt = discoveredAt +
-  warningMinutes`. Each raid sets `nextRaidAt += periodMinutes`. Cleared, or
-  out of trips: no counter.
+- The counter starts the moment the lair is **discovered** — any cell of its
+  zone Revealed ([`01-map-and-fog.md`](01-map-and-fog.md) §4):
+  `nextRaidAt = discoveredAt + warningMinutes`.
+- After the first raid, `raid.perDay` (3) raids a local day: the window
+  `raid.windowStartHour`–`windowEndHour` (9–23) is cut into equal slices, one
+  raid in each, at a moment hashed from the lair, the day and the slice.
+  Cleared: no counter.
 - **One counter per gate.** Several may run at once; raids due at the same
   instant resolve in ruin order.
 - **It is a timer.** It runs and resolves in full while the player is away.
 - A cleared gate is gone for good. No re-infestation.
-- **Minutes, not hours.** The Barrow's thirty minutes says *you have this
-  session and maybe the next*. What bounds a long absence is the trip limit
+- **Minutes, not hours.** The Orcs' thirty minutes says *you have this
+  session and maybe the next*. What bounds a long absence is the hoard cap
   (§4), not the counter.
 
 ## 4. The raid
@@ -118,11 +118,9 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   `takeSeconds` bounds one on full stores.
 - The take is spread across the buildings in proportion to what each holds.
 - A raid that empties a full store sets its crew going again from that moment.
-- **Trips.** A raid that takes anything counts one trip. At `raid.maxRaids` the
-  garrison stops raiding and holds its hoard. The worst case of any absence is
-  three raids per open gate, each at most half of what the stores hold — and
-  it all comes back when the gate is cleared (§5).
-- The **hoard** is a per-gate counter of what it has taken.
+- The **hoard** is a per-lair counter of what it has taken, capped per
+  material at a day of raids (`perDay × cityRate × takeSeconds`); a raid over
+  the cap still takes, and the rest is lost.
 - A raid writes a **report** — ruin, time, what was taken — that the widget
   shows until dismissed (§7).
 
@@ -165,18 +163,18 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 
 ## 6. The doorway to combat
 
-- The first fight is **the Hollow Barrow's gate: on the surface, the enemy in
+- The first fight is **the Orcs: on the surface, the enemy in
   view, the outcome guaranteed by authoring.** It teaches the room sheet, the
   type chart and the board before Depth 1 adds the power ladder.
-- **Twenty orcs is a company's job, not a hero's.** The chain musters
+- **Fifteen orcs is a company's job, not a hero's.** The chain musters
   twenty-four soldiers one beat before it
   ([`12-quests.md`](12-quests.md) §2), so the fight is won by the army the
   onboarding just built and the hero that leads it — which is what makes the
   military block mean something.
-- Discovering the Barrow starts its thirty minutes, so the military block sits
+- Discovering the Orcs starts their thirty minutes, so the military block sits
   right after the reveal that finds it in the onboarding
   ([`12-quests.md`](12-quests.md) §2): Warrior → Barracks → first soldier →
-  free summon → **a company of twenty-four** → **`DriveThemOut`**.
+  **a company of twenty-four** → **`DriveThemOut`**.
 - Every later gate is the argument for the next hall, the next squad, the next
   tier.
 
@@ -184,7 +182,7 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 
 - **The raid widget** sits on the **right edge of the screen, in the slot the
   Mana-refill offer uses**, and hides behind any sheet. It shows the gate
-  whose counter is nearest and its countdown — *Orcs at the Hollow Barrow raid
+  whose counter is nearest and its countdown — *The Orcs raid
   in 27 min* — with a count when more are open. After a raid it carries the
   report until dismissed; several raids in one absence are one summary.
   Tapping it opens the ruin sheet. It never opens itself.
@@ -202,10 +200,10 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 
 | Dial | Recommended | Where |
 |---|---|---|
-| a ruin's gate: threat, power, warning and period in minutes | §2 | `?dev=map` |
+| a lair's guard: threat, power, warning in minutes | §2 | `?dev=data#map` |
 | take seconds per tier | 300 × tier | `garrisons` › `takeSeconds`, one entry per tier |
 | take fraction max, of what the stores hold | 0.5 | `raid.takeFractionMax` (`exploration`) |
-| max raids per gate | 3 | `raid.maxRaids` (`exploration`) |
+| raids a day, and the window they land in | 3 · 9–23 h | `raid.perDay`, `windowStartHour`, `windowEndHour` (`exploration`) |
 | gate supplies per tier | half the ruin's own supplies | `garrisons` › `supplies` |
 
 ## 9. Deliberately not in this design
@@ -234,5 +232,5 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - Player-versus-player raiding ([`02-map-scopes.md`](02-map-scopes.md) §5).
 - A technology that gates the gate (`Siegecraft` is retired).
 
-**Open questions:** OQ-72, OQ-74 in
+**Open questions:** OQ-72 in
 [`../open-questions.md`](../open-questions.md).

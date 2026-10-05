@@ -9,8 +9,10 @@
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  exploreWorkMs, explorerRoute, explorerSlots, fogStateOf, freeExplorers, returnsAt, type FogState,
+  arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
+  returnsAt, revealsAt, tripRevealing, type FogState,
 } from '../../sim/world/explorers';
+import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
@@ -18,15 +20,16 @@ import { WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definit
 import { floorPower, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId } from '../../sim/state';
 import { el, formatCount, formatCountdown, formatDuration } from '../format';
-import { action, sheet, stat } from '../kit';
-import { hexActions, type HexAction } from './worldActions';
+import { action, btn, progress, sheet, stat } from '../kit';
+import { hexActions, hexWork, type HexAction } from './worldActions';
+import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
-  Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert', Mountain: 'Mountains',
+  Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert',
 };
 
 const FEATURE_NAME: Record<WorldFeature, string> = {
-  Forest: 'Forest', FertileLand: 'Fertile land', Game: 'Wild game',
+  Forest: 'Forest', Mountain: 'Mountains', FertileLand: 'Fertile land', Game: 'Wild game',
   Dungeon: 'Dungeon', Sanctuary: 'Sanctuary', Landmark: 'Landmark',
 };
 
@@ -46,13 +49,12 @@ export function hexTitle(game: Game, bh: BoardHex, fog: FogState): string {
   if (fog === 'Unknown') return 'Unknown ground';
   if (bh.seat !== null && control !== null && !control.owner.you) return `${control.owner.name}'s city`;
   if (fog === 'Sensed') return 'Misty ground';
-  const standing = game.worldSource().hexOf(bh.index)?.improvement;
-  if (standing) return WORLD_BUILD.improvements[standing.kind].name;
-  const main = bh.features.find((f) => f !== 'FertileLand' && f !== 'Game');
+  // A district, standing or going up, is what the hex is called.
+  const held = game.worldSource().hexOf(bh.index);
+  if (held !== null) return WORLD_BUILD.districts[held.district].name;
+  const main = bh.features[0];
   return main !== undefined ? FEATURE_NAME[main] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
 }
-
-const MATERIAL_OF: Record<string, string> = { Wood: 'Wood', Food: 'Food', Stone: 'Stone' };
 
 /** "Your" or "Lady Maren's". */
 export function seatName(game: Game, seat: number | null): string {
@@ -71,26 +73,25 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   const mine = h.owner === game.worldSeat();
   const lines: HTMLElement[] = [];
   const whose = `${seatName(game, h.owner)} ground`;
+  const work = hexWork(h);
   if (!h.held) {
-    lines.push(el('p', { class: 'wd-line' }, `${whose}, being claimed · the Outpost stands in ${formatCountdown(Math.max(0, h.outpostAt - now) / 1000)}`));
+    lines.push(el('p', { class: 'wd-line' }, mine && work !== null && game.actingSeat === null
+      ? `${whose}, being claimed`
+      : `${whose}, being claimed · it stands in ${formatCountdown(Math.max(0, h.standsAt - now) / 1000)}`));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
     return lines;
   }
   lines.push(el('p', { class: `wd-line${h.active ? '' : ' is-cut'}` },
     h.active ? whose : `${whose} — cut off from its city, it makes nothing`));
-  if (h.improvement !== null) {
-    lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.improvements[h.improvement.kind].name} · level ${formatCount(h.improvement.level)}`));
+  if (h.fortress > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${WORLD_BUILD.upgrades.Fortress.name} · level ${formatCount(h.fortress)}`));
   }
   if (h.work !== null) {
-    lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
+    if (mine && work !== null && game.actingSeat === null) lines.push(hexWorkRow(game, bh.index, work));
+    else lines.push(el('p', { class: 'wd-line' }, `Level ${formatCount(h.work.toLevel)} ready in ${formatCountdown(Math.max(0, h.work.at - now) / 1000)}`));
   }
-  if (mine && h.stores !== null) {
-    const produces = h.improvement === null ? '' : WORLD_BUILD.improvements[h.improvement.kind].produces;
-    if (produces !== '' && h.stores.materialCap > 0) {
-      lines.push(el('p', { class: 'wd-line' }, `${MATERIAL_OF[produces]} in store ${formatCount(Math.floor(h.stores.material))}/${formatCount(Math.floor(h.stores.materialCap))}`));
-    }
-    if (h.stores.knowledgeCap > 0) {
-      lines.push(el('p', { class: 'wd-line' }, `Knowledge in store ${formatCount(Math.floor(h.stores.knowledge))}/${formatCount(h.stores.knowledgeCap)}`));
-    }
+  if (mine && h.stores !== null && h.stores.cap > 0) {
+    lines.push(el('p', { class: 'wd-line' }, `${h.stores.currency} in store ${formatCount(Math.floor(h.stores.amount))}/${formatCount(Math.floor(h.stores.cap))}`));
   }
   return lines;
 }
@@ -143,15 +144,15 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
       case 'claim':
         return action({
           label: 'Claim', kind: 'primary', cost: { Gold: a.gold }, have,
-          info: `An Outpost · ${formatDuration(a.seconds)}`,
+          info: `${WORLD_BUILD.districts[a.district].name} · ${formatDuration(a.seconds)}`,
           onClick: () => void game.doClaimHex(bh.index, asRival ? 0 : a.gold),
         });
-      case 'build':
+      case 'upgrade':
         return action({
-          label: a.level === 1 ? 'Build' : 'Upgrade', kind: a.level === 1 ? 'primary' : 'secondary',
+          label: a.level === 1 ? 'Build' : 'Upgrade', kind: 'secondary',
           cost: { Gold: a.gold }, have,
-          info: `${WORLD_BUILD.improvements[a.improvement].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
-          onClick: () => void game.doBuildHex(bh.index, a.improvement, a.level, asRival ? 0 : a.gold),
+          info: `${WORLD_BUILD.upgrades[a.upgrade].name}${a.level > 1 ? ` level ${formatCount(a.level)}` : ''} · ${formatDuration(a.seconds)}`,
+          onClick: () => void game.doUpgradeHex(bh.index, a.upgrade, a.level, asRival ? 0 : a.gold),
         });
       case 'army':
         return action({
@@ -232,8 +233,12 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     lines.push(el('p', { class: 'wd-where' }, `Dev — playing for ${seatName(game, game.actingSeat)} kingdom`));
   }
   const body = el('div', { class: 'wd-body' }, ...lines, ...actionRows(game, bh));
-  // Explore is offered only on ground not yet explored.
-  if (index !== home && fog !== 'Revealed' && game.actingSeat === null) {
+  // A trip that will reveal the hex: how far along it is, and the Gems that
+  // finish it. While one is out, Explore is not offered there again.
+  const trip = game.actingSeat === null ? tripRevealing(state, index) : null;
+  if (trip !== null && (fog !== 'Revealed' || trip.target === index)) body.append(tripRow(game, trip));
+  // Explore is offered only on ground not yet explored, and nobody is out to.
+  if (index !== home && fog !== 'Revealed' && trip === null && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
     const route = explorerRoute(state, index, now);
@@ -252,6 +257,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
         stat('hourglass', formatDuration(work), 'to explore'))]),
       action({
         label: 'Explore', kind: 'primary', icon: 'compass',
+        cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => getWallet(state.city.wallet, c),
         onClick: () => game.doSendExplorer(),
         disabledReason: reason,
         info: slots > 0 ? `Explorers ${formatCount(free)}/${formatCount(slots)}` : undefined,
@@ -259,6 +265,50 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     );
   }
   return sheet({ title: hexTitle(game, bh, fog), onClose: () => game.dismiss() }, body);
+}
+
+/**
+ * A WAIT THE PLAYER CAN BUY, as the training line draws a batch: what is
+ * happening over the bar, the bar from start to end with the time left
+ * inside it, the whole wait under it, and the Gems button that finishes it
+ * (sim/rush.ts prices it).
+ */
+function waitRow(
+  game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void,
+): HTMLElement {
+  const now = game.now();
+  const total = endsAt - startedAt;
+  const left = Math.max(0, endsAt - now);
+  const bar = progress('green');
+  bar.run(total <= 0 ? 1 : 1 - left / total, left, formatDuration(Math.ceil(left / 1000)));
+  return el('div', { class: 'tr-batch-row wd-trip' },
+    el('div', { class: 'tr-batch-progress' },
+      el('span', { class: 'tr-batch-what' }, what),
+      bar.root,
+      el('span', { class: 'tr-batch-total' }, `Total time: ${formatDuration(Math.ceil(total / 1000))}`)),
+    btn({
+      label: 'Finish',
+      kind: 'gem',
+      onClick: onFinish,
+      cost: { Gems: gems },
+      have: (c) => game.walletValue(c),
+    }));
+}
+
+/** An explorer's trip: there, the work, and home. */
+function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
+  const now = game.now();
+  const doing = now < arrivesAt(trip) ? 'On the way'
+    : now < revealsAt(trip) ? 'Exploring'
+      : 'Coming home';
+  return waitRow(game, doing, trip.departedAt, returnsAt(trip), explorerRushCost(trip, now),
+    () => game.doFinishExplorer(trip.id));
+}
+
+/** A builder's work on one of the player's hexes: its district, or an upgrade's level. */
+function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
+  return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
+    () => void game.doFinishHexWork(index));
 }
 
 /** For the explorers chip: how many are out of how many. */
