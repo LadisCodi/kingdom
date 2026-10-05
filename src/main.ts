@@ -60,6 +60,8 @@ import { mountExchangeChip } from './ui/world/exchangeChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
+import { RemoteWorldServer } from './worldServer/remote';
+import { cloudWorldCall } from './persist/cloud';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
@@ -164,9 +166,11 @@ async function boot(): Promise<void> {
   const worldCanvas = document.getElementById('world') as HTMLCanvasElement;
   const worldCamera = new HexCamera(worldCanvas);
   game.worldCamera = worldCamera;
-  // World control is server state. Until the server exists, a local stand-in
-  // plays its part, under its own key (worldServer/local.ts).
-  game.worldServer = new LocalWorldServer(browserStore());
+  // World control is server state: the `world` edge function when the cloud
+  // is up (worldServer/remote.ts), else a stand-in in the browser under its
+  // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
+  const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
+  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
   game.playerId = saveManager.playerId();
   game.persist = () => saveManager.save(game.state, game.now());
   void game.connectWorld();

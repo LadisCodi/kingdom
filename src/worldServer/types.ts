@@ -325,7 +325,11 @@ export type Refusal =
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
-  | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer';
+  | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer'
+  /** The dev tool asked to play a seat that is not a rival's. */
+  | 'NotARival'
+  /** The server could not be reached, however often it was asked. */
+  | 'Offline';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

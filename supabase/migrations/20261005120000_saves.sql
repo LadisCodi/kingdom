@@ -1,6 +1,5 @@
 -- Kingdom cloud saves: one row per (anonymous) player, RLS-guarded.
--- Run once in the Supabase SQL editor, then enable Anonymous sign-ins under
--- Authentication → Sign In / Up → Anonymous.
+-- Enable Anonymous sign-ins under Authentication → Sign In / Up → Anonymous.
 
 create table public.saves (
   user_id      uuid primary key references auth.users (id) on delete cascade,

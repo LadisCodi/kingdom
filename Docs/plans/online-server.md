@@ -4,8 +4,8 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: step 1 built.** The world server's door, its protocol and its
-> bundle exist and run against the local stand-in.
+> **Status: step 2 built, not yet deployed.** The game uses the real server
+> when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
 
@@ -45,21 +45,49 @@
 
 ## 3. The world server on Supabase
 
-- **Runtime:** an edge function (Deno) running the bundle `npm run
-  server:bundle` writes to `supabase/functions/_shared/world.js`. The
-  bundle is checked to reach for no browser API (`tests/serverBundle.test.ts`).
-- **Storage:** one row per board — `boards (id text primary key, doc jsonb,
-  version int, updated_at timestamptz)` — and one per seated player —
-  `seats (user_id uuid primary key, board_id text)`.
-- **A request:** read the user from the JWT; `select … for update` the
-  player's board row; `handleWorld` at the database's `now()`; write the row
-  back; answer. One board is one lock, so two players on a board are served
-  one after the other.
+- **Runtime:** the `world` edge function (Deno) wraps `serveWorld`
+  (`src/worldServer/serve.ts`), bundled by `npm run server:bundle` into
+  `supabase/functions/_shared/world.js`. The bundle is checked to reach for
+  no browser API (`tests/serverBundle.test.ts`).
+- **Storage** (`supabase/migrations/`): one row per board — `boards (id,
+  doc jsonb, version)` — and one per seated player — `seats (user_id,
+  board_id, seat)`.
+- **A request:** the user from the JWT; read the player's board and its
+  version; `handleWorld` at the function's clock; write it back only if the
+  version is unchanged (`update_board`), else start again on the newer board,
+  up to five times. A first join writes the board and the seat together
+  (`create_board`); a board id already taken becomes `b-<user>`.
+- **A malformed request** is refused before it is read; one that throws is
+  refused and nothing is written.
+- **Dev "play as"** reaches only the rivals' seats on the real server.
 - **Rivals:** resolved when the board is read, as today. No scheduled job.
 - **Access:** neither table is readable by the client. Everything goes
   through the function, which answers with a snapshot cut for that seat.
 
-## 4. What the client still decides
+## 4. The client
+
+- `RemoteWorldServer` (`src/worldServer/remote.ts`) sends each command with
+  one id up to four times, waiting longer each time. One that never gets
+  through is refused as `Offline`.
+- The board is read every 5 s on the world screen, every 30 s elsewhere; a
+  read waits for the one before it.
+- A join that fails leaves the board as generated locally; the next read
+  joins again.
+- On a join, an army the save has out that the server does not hold comes
+  home whole.
+
+## 5. Deploying
+
+```bash
+npx supabase db push            # the tables
+npm run server:bundle
+npx supabase functions deploy world
+```
+
+- Anonymous sign-ins on (Authentication → Sign In / Up).
+- `.env.local` with the project URL and anon key turns the game onto it.
+
+## 6. What the client still decides
 
 - The city, its economy and what it pays for a world command
   (15 §1.1). The server trusts the board an army sets out with and the
@@ -68,7 +96,7 @@
   retry with the same id is answered again, so a lost answer is recovered by
   retrying; an answer never retried is lost.
 
-## 5. Deliberately not in this design
+## 7. Deliberately not in this design
 
 - The city simulation on the server
 - Live push of board changes — a player sees others' moves on the next read

@@ -26,12 +26,16 @@ offline progress, save reset).
 
 ## Cloud saves (Supabase, optional)
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. Paste `supabase/schema.sql` into the SQL editor and run it.
-3. Enable **Anonymous sign-ins**: Authentication → Sign In / Up → Anonymous.
-4. Copy `.env.example` to `.env.local` and fill in the project URL + anon key
+1. Create a free project at [supabase.com](https://supabase.com), then
+   `npx supabase login` and `npx supabase link`.
+2. `npx supabase db push` — the save and world tables (`supabase/migrations/`).
+3. `npm run server:bundle && npx supabase functions deploy world` — the world
+   server.
+4. Enable **Anonymous sign-ins**: Authentication → Sign In / Up → Anonymous.
+5. Copy `.env.example` to `.env.local` and fill in the project URL + anon key
    (Settings → API).
-5. `npm run dev` — the header shows “☁️ cloud save”.
+6. `npm run dev` — the header shows “☁️ cloud save”, and the world board is
+   the server's (`?world=local` keeps the in-browser stand-in).
 
 Each browser gets an anonymous account; the save follows it across visits.
 Clearing browser storage orphans the anonymous save (prototype limitation).
