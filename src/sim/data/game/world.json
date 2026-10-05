@@ -169,7 +169,9 @@
     "milestoneEvery": 10,
     "milestoneGems": 100,
     "rankGems": [300, 150, 150, 50, 50, 50],
-    "botFloorChance": 0.6
+    "botFloorChance": 0.6,
+    "preciousEvery": 5,
+    "precious": 4
   },
   "worldTravel": {
     "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5 },

@@ -2182,6 +2182,9 @@ export interface WorldPortalDef {
   milestoneGems: number;
   rankGems: readonly number[];
   botFloorChance: number;
+  /** Every `preciousEvery` floors, a lump of precious material (19 §10.4). */
+  preciousEvery: number;
+  precious: number;
 }
 
 export const WORLD_PORTAL: WorldPortalDef = balance.worldPortal;

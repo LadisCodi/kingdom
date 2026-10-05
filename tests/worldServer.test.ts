@@ -12,7 +12,7 @@ import { snapshotWorld } from '../src/sim/world/source';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
-  portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
+  floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
   recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, upgrade,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
@@ -459,6 +459,22 @@ describe('the Dark Portal', () => {
     expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY - 1)).toBe(true);
     expect(portalOpen(opens + WORLD_PORTAL.openDays * DAY)).toBe(false);
     expect(portalClosesAt(k + 1) - portalOpensAt(k + 1)).toBe(WORLD_PORTAL.openDays * DAY);
+  });
+
+  it('pays a precious lump on the floors that carry one', () => {
+    const { b, seat } = quietBoard();
+    const opens = portalOpensAt(portalEvent(T0) + 1);
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(500_000, 'p') }, opens);
+    if (!r.ok) throw new Error(r.why);
+    resolveTo(b, r.arrivesAt);
+    // One floor short of the first that pays one, in this opening.
+    b.portal.event = portalEvent(r.arrivesAt);
+    b.portal.floors[seat] = { floor: WORLD_PORTAL.preciousEvery - 1, at: r.arrivesAt };
+    drainEffects(b, seat);
+    const f = descendPortal(b, seat, r.army, r.arrivesAt + 1);
+    expect(f.ok && f.won).toBe(true);
+    const loot = drainEffects(b, seat).find((e) => e.kind === 'loot');
+    expect(loot?.kind === 'loot' && loot.precious?.amount).toBe(floorReward(WORLD_PORTAL.preciousEvery).precious);
   });
 
   it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {
