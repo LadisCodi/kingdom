@@ -437,7 +437,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const gold = techCost(id);
     const shortGold = game.walletValue('Gold') < gold;
     // The refined goods beside the Gold, as a building level shows them.
-    const goods = Object.entries(techGoodsCost(id)) as Array<[GoodId, number]>;
+    const goods = Object.entries(techGoodsCost(game.state, id)) as Array<[GoodId, number]>;
     const shortGoods = goods.some(([g, n]) => getGood(state.city.goods, g) < n);
     const note = filled ? null : 'Assign all its Knowledge to research it';
     page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),

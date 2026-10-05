@@ -27,8 +27,8 @@
 > §7.6). The delve (§4) is built — spec 19 §8.2 — with the rooms' precious
 > lumps. Camp raids (§1.6) are built — spec 19 §5.5 — burning the district
 > rather than only emptying its store, a garrisoned Fortress fighting them.
-> Still proposed: the Atlas chapters' prices (on hold for the tech-tree
-> rebuild) and the Portal's lumps.
+> Research asks for them from the single tree's chapter 5 on (19 §7.6),
+> the Atlas being one chapter now. Still proposed: the Portal's lumps.
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);

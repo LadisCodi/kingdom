@@ -71,6 +71,8 @@ export interface TechnologyDef {
   cost: Wallet; // city Gold and kingdom Knowledge
   /** Refined goods paid with the Gold when it is completed; empty = none. */
   goods: GoodsStock;
+  /** Precious material of any kind it costs (19 §7.6); 0 = none. */
+  anyPrecious: number;
   requires: TechId[]; // tree edges — all must be completed first
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
@@ -134,6 +136,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
       goods: (node.goods ?? {}) as GoodsStock,
+      anyPrecious: node.anyPrecious ?? 0,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];

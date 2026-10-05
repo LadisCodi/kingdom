@@ -50,7 +50,7 @@ describe('goods on a technology', () => {
     const id = last();
     withGoods(id, { Planks: 2 });
     const state = oneCardShort();
-    expect(techGoodsCost(id)).toEqual({ Planks: 2 });
+    expect(techGoodsCost(state, id)).toEqual({ Planks: 2 });
     pourKnowledge(state, id);
     expect(canResearchTech(state, id)).toBe(false);
     expect(canStartTech(state, id)).toBe(false);

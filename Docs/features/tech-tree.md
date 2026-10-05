@@ -21,6 +21,10 @@
 - **Researching every card of a chapter, dead ends included, pays its card
   pack**, once.
 - **Price: Knowledge is poured, then Gold and goods complete the card.**
+- **From chapter 5, some cards also ask for precious materials**
+  ([`19-world-map.md`](19-world-map.md) §7.6), more cards a chapter and
+  dearer, the deepest cards of each chapter first. None is asked while the
+  world is shut.
 - **Every bonus climbs**: a positive percentage or a positive step; a wait
   is a speed; nothing is a discount.
 
@@ -275,7 +279,7 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 
 | Dial | Where | What it moves |
 |---|---|---|
-| a card's `knowledge`, `gold`, `goods` | `?dev=data#tree` | one card |
+| a card's `knowledge`, `gold`, `goods`, `anyPrecious` | `?dev=data#tree` | one card |
 | a chapter's cells | `?dev=data#tree` (`eras`) | when a chapter opens |
 | a chapter's pack | `?dev=data#tree` (`eraRewards`) | what finishing it pays |
 | `requires` | `?dev=data#tree` | the shape; a card nothing requires is a dead end |

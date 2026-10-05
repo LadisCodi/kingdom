@@ -481,8 +481,22 @@ gates them; *Cartography* opens the first explorer.
   | the Townhall | 10 each | 20 each | 30 each |
 
   Fortress level 3 asks 10 of each.
-- They are goods terms on a level's price: `buildings` › `costPerLevel`
-  (`goods`, `anyPrecious`) and `worldBuild.upgrades` › `levels`.
+- **Research, from the middle of the tree on** — the deepest cards of each
+  Kingdom chapter, more of them and dearer as the tree goes on:
+
+  | Chapter | Cards | Each asks |
+  |---|---|---|
+  | 5 | 2 | 5 of any |
+  | 6 | 3 | 10 of any |
+  | 7 | 4 | 5 of each |
+  | 8 | 5 | 10 of each |
+  | 9 | 6 | 15 of each |
+
+  A card's `goods` name materials; its `anyPrecious` asks for any
+  (`tech-tree.json`, at `?dev=data#tree`).
+- They are goods terms on a price: `buildings` › `costPerLevel` (`goods`,
+  `anyPrecious`), `worldBuild.upgrades` › `levels`, and a technology's
+  `goods` and `anyPrecious`.
 
 ## 8. Features
 

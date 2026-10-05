@@ -2,11 +2,12 @@
 // any at level 5, named and more at levels 8–10 and the Fortress — and never
 // anything while the world is shut.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, LANDMARKS, WORLD_BUILD } from '../src/sim/data/definitions';
+import { DISTRICTS, LANDMARKS, TECHNOLOGIES, WORLD_BUILD } from '../src/sim/data/definitions';
+import { techGoodsCost } from '../src/sim/research';
 import { upgradeGoodsCost } from '../src/sim/districts';
 import { addGood } from '../src/sim/goods';
 import { preciousAsked, resolvePrice, worldUpgradeGoods } from '../src/sim/precious';
-import { PRECIOUS, type GameState } from '../src/sim/state';
+import { PRECIOUS, type GameState, type TechId } from '../src/sim/state';
 import { freshGame } from './helpers';
 
 const worldOpen = (): GameState => {
@@ -58,5 +59,27 @@ describe('a precious price', () => {
     const two = worldUpgradeGoods(state, 'Fortress', 2);
     expect(PRECIOUS.reduce((s, p) => s + (two[p] ?? 0), 0)).toBe(WORLD_BUILD.upgrades.Fortress.levels[1].anyPrecious);
     for (const p of PRECIOUS) expect(worldUpgradeGoods(state, 'Fortress', 3)[p]).toBeGreaterThan(0);
+  });
+
+  it('asks research from the middle of the tree on — more technologies a chapter, and dearer', () => {
+    const shut = freshGame();
+    const open = worldOpen();
+    const asked = (tech: TechId) => PRECIOUS.reduce((n, p) => n + (techGoodsCost(open, tech)[p] ?? 0), 0);
+    const byChapter = new Map<number, number[]>();
+    for (const id of Object.keys(TECHNOLOGIES) as TechId[]) {
+      const def = TECHNOLOGIES[id];
+      // Never while the world is shut.
+      expect(PRECIOUS.some((p) => (techGoodsCost(shut, id)[p] ?? 0) > 0)).toBe(false);
+      const n = asked(id);
+      if (n === 0 || def.tome !== 'Kingdom') continue;
+      byChapter.set(def.era, [...(byChapter.get(def.era) ?? []), n]);
+    }
+    const chapters = [...byChapter.keys()].sort((a, b) => a - b);
+    expect(chapters[0]).toBeGreaterThanOrEqual(4);
+    for (let i = 1; i < chapters.length; i++) {
+      const [was, now] = [byChapter.get(chapters[i - 1])!, byChapter.get(chapters[i])!];
+      expect(now.length).toBeGreaterThanOrEqual(was.length);
+      expect(Math.max(...now)).toBeGreaterThanOrEqual(Math.max(...was));
+    }
   });
 });

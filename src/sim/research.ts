@@ -11,6 +11,7 @@ import {
   type PackTier,
 } from './data/definitions';
 import { canAffordGoods, payGoods } from './goods';
+import { resolvePrice } from './precious';
 import {
   addToWallet, getWallet,
   type DistrictId, type GameState, type GoodsStock, type TechId, type TomeId, type UnitId,
@@ -67,12 +68,14 @@ export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost,
 export const techKnowledgeCost = (id: TechId): number =>
   getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
 
-/** The refined goods paid with the Gold, when it is completed. */
-export const techGoodsCost = (id: TechId): GoodsStock => TECHNOLOGIES[id].goods;
+/** The goods paid with the Gold, when it is completed: refined goods, and
+ *  precious materials — never asked while the world is shut (19 §7.6). */
+export const techGoodsCost = (state: GameState, id: TechId): GoodsStock =>
+  resolvePrice(state, TECHNOLOGIES[id].goods, TECHNOLOGIES[id].anyPrecious);
 
 const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
 const hasGoods = (state: GameState, id: TechId): boolean =>
-  canAffordGoods(state.city.goods, techGoodsCost(id));
+  canAffordGoods(state.city.goods, techGoodsCost(state, id));
 const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
 
 /** Knowledge already poured into a technology. */
@@ -196,7 +199,7 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
   if (gold(state) < techCost(id)) return 'NotEnoughGold';
   if (!hasGoods(state, id)) return 'NotEnoughGoods';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));
-  payGoods(state.city.goods, techGoodsCost(id));
+  payGoods(state.city.goods, techGoodsCost(state, id));
   delete state.research.poured[id];
   state.research.completed.push(id);
   return 'Researched';
