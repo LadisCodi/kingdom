@@ -257,7 +257,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // free to assign are the header's counter while this card is open
     // (Game.hudSlot).
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0) {
-      const limit = assignableWorkerLimit(district);
+      const limit = assignableWorkerLimit(game.state, district);
       const crew = district.assignedWorkers;
 
       const minus = knob('−', () => game.doChangeWorkers(district.uniqueId, -1), {

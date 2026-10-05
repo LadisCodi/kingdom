@@ -19,7 +19,7 @@
 // whole `k`-millisecond chunks — the same trick as the tax and Mana anchors —
 // so one-call replay and stepped ticking agree exactly (invariant 1).
 
-import { techMultiplier } from './techEffects';
+import { techMultiplier, techValue } from './techEffects';
 import { adjacencyMultiplier } from './adjacency';
 import { DISTRICTS, GOODS, RUSH, levelIndexed } from './data/definitions';
 import { addGood, canAffordGoods, payGoods, refundGoods } from './goods';
@@ -60,9 +60,11 @@ export const isWorkshop = (d: District): boolean =>
 export const workshops = (state: GameState): District[] =>
   state.city.districts.filter((d) => d.state === 'Built' && isWorkshop(d));
 
-/** How many items may be queued here at once. */
-export const queueCapacity = (d: District): number =>
-  levelIndexed(DISTRICTS[d.definitionId].queueLengthPerLevel, d.level);
+/** How many items may be queued here at once: the level's, plus the tree's
+ *  order slots (`workshopQueueSlots`). Whole orders. */
+export const queueCapacity = (state: GameState, d: District): number =>
+  Math.floor(techValue(state, 'workshopQueueSlots',
+    levelIndexed(DISTRICTS[d.definitionId].queueLengthPerLevel, d.level), { district: d.definitionId }));
 
 /** The line, created on first use so a district carries no state until it
  *  is actually used as a workshop. */
@@ -193,7 +195,7 @@ export function queueGood(
   if (!d || !isWorkshop(d)) return 'NotAWorkshop';
   if (d.state !== 'Built') return 'NotBuilt';
   const line = lineOf(state, d, now);
-  if (line.items.length >= queueCapacity(d)) return 'QueueFull';
+  if (line.items.length >= queueCapacity(state, d)) return 'QueueFull';
 
   const recipe = recipeOf(d);
   const goodCost = recipe.inputGood === null

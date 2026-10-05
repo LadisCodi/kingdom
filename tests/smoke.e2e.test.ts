@@ -263,7 +263,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       * techMultiplier(state, 'taxRate', { district: 'Housing' })
       * (1 + DISTRICTS.Housing.taxBonusPerLevel[1]); // both occupied houses are L2
     const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1)
-      + ownGoldPerMinute(townhall(state));
+      + ownGoldPerMinute(state, townhall(state));
     expect(perMinute).toBe(cityGoldPerMinute(state));
     expect(earned).toBeGreaterThanOrEqual(perMinute * 4 - 1);
     expect(earned).toBeLessThanOrEqual(perMinute * 4 + 1);

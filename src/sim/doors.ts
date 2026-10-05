@@ -11,7 +11,7 @@
 
 import { ABANDONED, QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
-import { ownGoldPerMinute } from './population';
+import { ownGoldBase } from './population';
 import { readyToCollect } from './storage';
 import { townhall, type District, type GameState } from './state';
 
@@ -115,4 +115,4 @@ export const firstMorningOn = (state: GameState): boolean =>
  * piles up, and shows the moment the morning ends.
  */
 export const showsCollect = (state: GameState, district: District): boolean =>
-  readyToCollect(state, district) && !(ownGoldPerMinute(district) > 0 && firstMorningOn(state));
+  readyToCollect(state, district) && !(ownGoldBase(district) > 0 && firstMorningOn(state));

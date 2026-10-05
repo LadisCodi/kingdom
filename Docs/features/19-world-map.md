@@ -179,7 +179,9 @@
 - *Example, an explorer*: leaving open plain 1 min, a plain with forest
   1 min 30 s, a mountain on grassland 3 min.
 - **A speed divides one hex's time** and never lengthens it — the hook for a
-  hero or technology that is quicker over some ground.
+  hero or technology that is quicker over some ground. The tree's
+  `explorerSpeed` and `armyMarchSpeed` are two; an army's is priced by the
+  city and sent with it, like its board.
 - **Your explorers and armies show their way**: footprints along the hexes
   walked, a dashed line along the hexes still to go, ringed on the hex it is
   bound for — the target out, the city home. A rival's army shows only itself.
@@ -333,7 +335,11 @@ gates them; *Cartography* opens the first explorer.
 - **A producing district fills a store of its own**, as a province building
   does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
 - **A tap on its hex collects the store into the city's wallet**, free.
-- **Yield and store size are authored amounts per district.**
+- **Yield and store size are authored amounts per district**, times what the
+  owner's research adds (`improvementYield`, `improvementStore`). The city
+  sends that boost when it joins and after a research that moves it; the
+  server settles every store at that moment, so nothing already made is
+  repriced.
 - An inactive hex's store stops filling and can still be collected.
 - **The store goes with the hex.** A conquest hands it to the conqueror; a
   denial empties it. Collecting is the defence.

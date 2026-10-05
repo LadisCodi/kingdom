@@ -110,7 +110,7 @@ function chooseCell(state: GameState, def: DistrictDef): Coord | null {
         uniqueId: 'ghost', definitionId: def.id, ordinal: 1, level: 1, assignedWorkers: 0,
         location: cell, state: 'Built', visualVariant: 1,
       };
-      return influenceCells(map, ghost).filter((c) => {
+      return influenceCells(state, map, ghost).filter((c) => {
         const src = harvestSourceAt(state, c);
         return src !== null && def.harvestSources.includes(src)
           && state.fog.revealed[coordKey(c)] === true;

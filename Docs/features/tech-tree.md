@@ -221,7 +221,57 @@
 | **Pathfinding** | +1 worldRevealRadius | 8,000 G |
 | **Muster** | the War Camp | 9,000 G |
 
-## 12. Dials, in the order to reach for them
+## 12. What a bonus can move
+
+The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call site that reads it.
+
+| Stat | How it enters | Cards |
+|---|---|---|
+| `armyCap` | multiplies the number | 1 |
+| `armyMarchSpeed` | an army's time per hex on the world board is divided by it; the city sends the pace with the army | 0 |
+| `autoTapSpeed` | the auto-tap cooldown is divided by it | 0 |
+| `buildSpeed` | build and upgrade times are divided by it | 3 |
+| `cellStock` | multiplies what a cell holds when full; never a mountain, which holds no stock | 0 |
+| `crewSlots` | whole workers, added to a producer's level | 0 |
+| `crewStrikeSpeed` | the time between a building's crew strikes is divided by it | 0 |
+| `crewYield` | multiplies a worker delivery; the fraction carries | 0 |
+| `decorationHarmony` | added to, or multiplying, a decoration's Harmony; whole points, rounded down | 0 |
+| `discoverRadius` | whole rings, added | 2 |
+| `explorerSlots` | whole explorers, added to Cartography's | 2 |
+| `explorerSpeed` | an explorer's time per hex is divided by it, before the Scout's boon | 0 |
+| `harvestYield` | multiplies the chunk a tap and a strike take; the fraction carries | 17 |
+| `healSpeed` | a ward's mending time is divided by it, priced when it starts | 0 |
+| `heroXp` | multiplies the number | 1 |
+| `improvementStore` | multiplies a world improvement's store; the server settles every store when it changes | 0 |
+| `improvementYield` | multiplies what a world improvement makes an hour; the server settles every store when it changes | 0 |
+| `infirmaryBeds` | multiplies the number | 0 |
+| `influenceRadius` | whole tiles, added to a producer's reach | 0 |
+| `knowledgeYield` | multiplies the number | 0 |
+| `lairKnowledge` | multiplies the number | 0 |
+| `landmarkKnowledge` | multiplies the number | 0 |
+| `manaCap` | multiplies the number | 0 |
+| `manaRegen` | multiplies the number | 0 |
+| `ownGold` | multiplies the Gold the Townhall makes by itself | 0 |
+| `populationCapacity` | whole beds, added | 1 |
+| `recruitSpeed` | a soldier’s training time is divided by it | 0 |
+| `regrowthSpeed` | a stump’s wait is divided by it | 4 |
+| `requires` | the shape | 0 |
+| `respawnSpeed` | a consumed feature's wait to come back is divided by it | 0 |
+| `storageCapacity` | multiplies the number | 7 |
+| `summonStardust` | multiplies the number | 1 |
+| `tapWorkSeconds` | multiplies the number | 0 |
+| `taxRate` | multiplies the number | 5 |
+| `treasureYield` | multiplies a fog treasure priced in production; never the first, never Knowledge | 0 |
+| `unitAtk` | multiplies the number | 5 |
+| `unitDef` | multiplies the number | 4 |
+| `unitHp` | multiplies the number | 2 |
+| `villagerTrainingSpeed` | a villager’s training time is divided by it | 2 |
+| `workerSpeed` | multiplies the number | 0 |
+| `workshopQueueSlots` | whole orders, added to a workshop's queue | 0 |
+| `workshopSpeed` | a workshop item’s work time is divided by it | 2 |
+| `worldRevealRadius` | whole hexes round an explorer's path, added, capped at 2 | 1 |
+
+## 13. Dials, in the order to reach for them
 
 | Dial | Where | What it moves |
 |---|---|---|
@@ -232,7 +282,7 @@
 | `kind`, `unlocks`, `effects` | `?dev=data#tree` | what a card IS |
 | what opens a found book | `sim/research.ts` `TOME_OPENS` | code, by design |
 
-## 13. Deliberately not in this design
+## 14. Deliberately not in this design
 
 - More than one general book: one tree, so a chapter's Knowledge is exact.
 - A card about the tap or the Mana pool.

@@ -322,11 +322,24 @@ export function trainSecondsAt(
  *  A ward full of wounded is one wait, priced by the same neighbours. */
 function startTrainee(state: GameState, item: TrainingItem, at: number): void {
   item.startedAt = at;
-  const building = districtById(state, item.buildingId);
-  const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
   item.seconds = item.kind === 'heal'
-    ? Math.max(1, Math.round(healSeconds(item.trainee as UnitId, itemCount(item)) * mult))
+    ? healSecondsAt(state, item.buildingId, item.trainee as UnitId, itemCount(item))
     : trainSecondsAt(state, item.buildingId, item.trainee, item);
+}
+
+/**
+ * Seconds a ward of `count` takes to mend at THIS building: the authored
+ * share, times what its neighbours do to `trainTime`, divided by the tree's
+ * `healSpeed`. Read once, when the mending starts, and stored on the item —
+ * a technology finished mid-heal does not reprice the wait already running.
+ */
+export function healSecondsAt(
+  state: GameState, buildingId: string | undefined, unitId: UnitId, count: number,
+): number {
+  const building = buildingId === undefined ? undefined : districtById(state, buildingId);
+  const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
+  return Math.max(1, Math.round((healSeconds(unitId, count) * mult)
+    / Math.max(1, techMultiplier(state, 'healSpeed'))));
 }
 
 /** What is on this item's clock: what it was stamped with, or the authored
@@ -537,7 +550,9 @@ export function lineRemainingSeconds(
     } else {
       // Not started, so not stamped: it will be priced by the neighbours
       // standing there when its turn comes.
-      total += trainSecondsAt(state, buildingId, item.trainee, item);
+      total += item.kind === 'heal'
+        ? healSecondsAt(state, buildingId, item.trainee as UnitId, itemCount(item))
+        : trainSecondsAt(state, buildingId, item.trainee, item);
     }
   });
   return total;
