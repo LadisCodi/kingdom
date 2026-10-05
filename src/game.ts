@@ -27,7 +27,7 @@ import {
   requiredPopulation,
 } from './sim/districts';
 import {
-  explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
+  explorationGate, fogState, isPayable, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
 } from './sim/fog';
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
@@ -3171,6 +3171,11 @@ export class Game {
     };
     const built = (pred: (d: District) => boolean) =>
       this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
+    // A cell the player can buy THIS tap: dark, on the cleared ground's edge,
+    // inside the Townhall's reach and behind no technology. Pointing anywhere
+    // else answers the tap with a refusal.
+    const buyable = (c: Coord): boolean => fogState(this.state, this.map, c) === 'Discovered'
+      && isPayable(this.state, this.map, c) && explorationGate(this.map, c) === null;
     switch (quest.goalType) {
       // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
       // and the render they trigger must already see the hint.
@@ -3238,7 +3243,7 @@ export class Game {
         break;
       }
       case 'DiscoverCells':
-        centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        centerCell(this.nearestCell(buyable));
         break;
       case 'DiscoverFeature': {
         // Point at a DARK cell that has the thing on it. This is the whole
@@ -3256,7 +3261,7 @@ export class Game {
         // Nothing of that kind in sight yet — fall back to the frontier,
         // because the answer is still "go and explore".
         centerCell(target
-          ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+          ?? this.nearestCell(buyable));
         break;
       }
       case 'ClaimLandmarks': {
@@ -3275,7 +3280,7 @@ export class Game {
           this.camera.centerOnCell(claimable.location, undefined, CAMERA_GLIDE_MS);
           this.notify();
         } else {
-          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+          centerCell(this.nearestCell(buyable));
         }
         break;
       }
@@ -3301,7 +3306,7 @@ export class Game {
             if (d < bestD) { bestD = d; target = c; }
           }
         }
-        centerCell(target ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        centerCell(target ?? this.nearestCell(buyable));
         break;
       }
       case 'ClearLairs': {
@@ -3310,7 +3315,7 @@ export class Game {
         // one".
         const open = this.openLairViews()[0];
         if (open) this.showLair(open.lairId);
-        else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        else centerCell(this.nearestCell(buyable));
         break;
       }
       case 'OwnArtifacts':
@@ -3420,6 +3425,11 @@ export class Game {
       this.floaters.add(cell, `+${formatExact(manaProduction(this.state) - before)}/h`, 'Mana');
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
+    } else if (result === 'LairHeld') {
+      // The ground is a camp's: say whose, so the refusal points at the fight.
+      const lair = lairHolding(this.state, cell);
+      playSfx('error');
+      if (lair) this.toast(holdsThisGround(lairCreature(lair)));
     }
     this.notify();
   }

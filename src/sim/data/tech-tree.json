@@ -6,7 +6,7 @@
     "Atlas": [0]
   },
   "eraRewards": {
-    "Kingdom": ["Green", "Green", "Yellow", "Yellow", "Rose", "Blue", "Blue", "Purple", "Golden"],
+    "Kingdom": [null, "Green", "Yellow", "Yellow", "Rose", "Blue", "Blue", "Purple", "Golden"],
     "Sagas": [null, null],
     "Atlas": [null]
   },
