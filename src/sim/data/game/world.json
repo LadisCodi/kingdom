@@ -162,5 +162,22 @@
     "terrain": { "Grassland": 1, "Plains": 1, "Desert": 1.5 },
     "feature": { "Forest": 1.5, "Mountain": 3, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
     "portal": 1
+  },
+  "worldCamps": {
+    "share": 0.34,
+    "lurkingShare": 0.4,
+    "powerByRing": [2400, 1500, 1000, 650, 300, 400],
+    "powerJitter": 0.15,
+    "creatures": {
+      "inner": ["Drake"],
+      "corridor": ["Orcs", "Harpies", "WolfRiders", "Goblins"],
+      "home": ["Goblins", "Orcs"],
+      "outer": ["WolfRiders", "Harpies", "Orcs"]
+    },
+    "goldPerPower": 1,
+    "heroXpPerPower": 0.1,
+    "tributePremium": 1.5,
+    "tributeLossShare": 0.35,
+    "botHoursPer1000Power": 6
   }
 }

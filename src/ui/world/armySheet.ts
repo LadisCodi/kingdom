@@ -4,6 +4,7 @@
 
 import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
+import { CAMP_CREATURE } from '../../sim/world/camps';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { UnitId } from '../../sim/state';
@@ -12,7 +13,13 @@ import { renderBattleSheet, type BattleView } from '../battleSheet';
 import { unitBust } from '../unitArt';
 import { seatName } from './dispatchSheet';
 
-const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend' } as const;
+const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'Attack' } as const;
+
+/** Whose camp stands on a hex: its creature's lair's name. */
+const campName = (game: Game, index: number): string => {
+  const camp = game.worldSource().board().hexes[index]?.camp;
+  return camp ? CAMP_CREATURE[camp.creature] : 'monsters';
+};
 
 export function renderArmySheet(game: Game): HTMLElement {
   const target = game.armyTarget;
@@ -26,7 +33,9 @@ export function renderArmySheet(game: Game): HTMLElement {
   const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.upgrades.Fortress.name}`
     : game.armyPurpose === 'claim' ? 'Ground nobody holds'
       : game.armyPurpose === 'delve' ? 'A dungeon'
-        : game.armyPurpose === 'portal' ? 'The Dark Portal' : `${seatName(game, h?.owner ?? null)} ground`;
+        : game.armyPurpose === 'portal' ? 'The Dark Portal'
+          : game.armyPurpose === 'clear' ? `A camp of ${campName(game, target)}`
+            : `${seatName(game, h?.owner ?? null)} ground`;
   const view: BattleView = {
     title: `${where} · ${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'}, ${march}`,
     enemy: {

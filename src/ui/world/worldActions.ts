@@ -4,12 +4,13 @@
 // nothing here has to be the final word — only the right offer.
 
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import type { WorldBuildWhat } from '../../sim/state';
+import type { Wallet, WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
 import type { HexControl, WorldSource } from '../../sim/world/source';
 import { WORLD_UPGRADES, type WorldDistrict, type WorldUpgrade } from '../../sim/world/types';
 import { claimGold, districtOf } from '../../worldServer/core';
+import { campTribute } from '../../sim/world/camps';
 import { formatCount } from '../format';
 
 export type HexAction =
@@ -17,7 +18,9 @@ export type HexAction =
   | { kind: 'claim'; district: WorldDistrict; gold: number; seconds: number }
   /** An army: to attack a rival's ground, to take ground nobody holds, or to
    *  man the player's own Fortress (19 §4–§6). */
-  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' }
+  | { kind: 'army'; purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear' }
+  /** Pay a camp off instead of fighting it (19 §5.4). */
+  | { kind: 'tribute'; cost: Wallet }
   /** Go down the Portal's next floor, with the army in it. */
   | { kind: 'descend'; army: string }
   | { kind: 'recall'; army: string }
@@ -96,6 +99,13 @@ export function hexActions(source: WorldSource, seat: number, bh: BoardHex, seen
   }
   if (h !== null && h.held && h.owner !== seat) {
     return [{ kind: 'army', purpose: h.owner === null ? 'claim' : 'attack' }];
+  }
+  // A camp the player has not beaten stands between them and the ground:
+  // fight it, or pay it off (19 §5.4).
+  if (h === null && bh.camp !== null && !source.campBeaten(bh.index)) {
+    const mine = source.armies().find((a) => a.owner === seat && a.target === bh.index && a.purpose === 'clear' && a.phase !== 'home');
+    if (mine !== undefined) return [{ kind: 'recall', army: mine.id }];
+    return [{ kind: 'army', purpose: 'clear' }, { kind: 'tribute', cost: campTribute(bh.camp.power) }];
   }
   if (h === null) {
     const district = districtOf(bh);

@@ -12,9 +12,10 @@
 > the explorers (§3); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
-> (§4, §6); Dungeons (§8.1) and the Dark Portal (§10), which opens on
-> Fridays (UTC) for three days, its numbers in `worldPortal`. Five stand-in
-> rivals claim, build, man a Fortress and now and then attack on their own.
+> (§4, §6); monster camps (§5.4), their numbers in `worldCamps`; Dungeons
+> (§8.1) and the Dark Portal (§10), which opens on Fridays (UTC) for three
+> days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
+> camps, man a Fortress and now and then attack on their own.
 > The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
@@ -192,6 +193,8 @@
   active, and **can never be attacked**.
 - **Adjacency is always required.** A player may only take a hex adjacent to an
   **active** hex of their own.
+- **A camp the player has not beaten guards its hex** (§5.4): the claim is
+  refused *Guarded*.
 - **A neutral hex with nothing on it is claimed by building its district**:
   its Gold and a builder's time. There is no choice to make — **the hex's
   feature decides which district it is** (§7).
@@ -242,6 +245,42 @@ the ground** — to own it you still take the hexes one at a time. With six
 neighbours per hex, a corridor with one hex of redundancy does not fall to a
 single attack: **cutting is a deliberate operation of several hexes, never an
 accident.**
+
+### 5.4 Monster camps
+
+- **A camp is a monster army standing on a neutral hex**, fought once
+  through the ordinary resolver ([`combat.md`](combat.md)). Its creatures are
+  the province's lairs' (Orcs, Harpies, Goblins, Wolf-riders, a Drake); its
+  lair's threat is its formation's type, as a lair's garrison is
+  ([`18`](18-garrisons-and-raids.md) §2).
+- **Rolled with the board**, in the wedge (§9): every seat faces the same
+  camps at the same distances.
+  - About a third (`share`) of the hexes on rings 2–6, never beside a city,
+    never on a Dungeon, Sanctuary or Landmark.
+  - **Every inner-ring hex has one**, the strongest: the inner ring's bonus
+    is earned.
+  - Power by ring (`powerByRing`), ± `powerJitter`; which creatures by role.
+- **Each player beats a camp for themselves.** Beating it opens the hex to
+  that player only. Once anyone holds the hex its camp no longer matters.
+  A camp never comes back.
+- **Seen or lurking.** A standing camp shows on a Sensed hex as a silhouette;
+  a lurking one (`lurkingShare`) shows only once the hex is Revealed. On
+  explored ground a pill over the camp says how hard it is against the
+  strongest party the player could send: **Very easy · Easy · Fair · Hard ·
+  Deadly**.
+- **Fighting it**: an army sent to *clear* it — the party screen, march and
+  slot of an attack (§4) — fights on arrival.
+  - Won: the camp is beaten for that player, and pays Gold
+    (`goldPerPower`) and Hero XP (`heroXpPerPower`) by its power when the army
+    is home.
+  - Lost: the army walks home with its survivors; the camp stands, whole.
+- **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
+  It is the training cost of the soldiers a winning army would lose
+  (`tributeLossShare` of the camp's power, in Warriors), times
+  `tributePremium` — **always dearer than the fight**. A paid camp pays no
+  loot.
+- **A rival beats a camp in its way** after `botHoursPer1000Power` hours per
+  1,000 of the camp's power, without a fight.
 
 ## 6. Attacking
 
@@ -505,6 +544,8 @@ The outer scope feeds the inner one.
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
+| **Camp power by ring** and **share** (a third) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
+| **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |

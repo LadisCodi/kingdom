@@ -13,7 +13,7 @@ import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
   claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  sendArmy, setBoost, snapshotOf, upgrade,
+  sendArmy, setBoost, snapshotOf, tribute, upgrade,
 } from './core';
 import type {
   ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard, ServerWorld,
@@ -28,6 +28,8 @@ export interface WorldServerApi {
   claim(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   /** Build an upgrade into a district that stands, or raise it a level. */
   upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult>;
+  /** Pay a camp off — the tribute paid by the client (19 §5.4). */
+  tribute(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
   finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
   collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
@@ -140,6 +142,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult> {
     return this.run(asSeat, (b, seat) => upgrade(b, seat, index, what, now), { ok: false, why: 'NoBoard' });
+  }
+
+  async tribute(index: number, now: number, asSeat?: number): Promise<CommandResult> {
+    return this.run(asSeat, (b, seat) => tribute(b, seat, index, now), { ok: false, why: 'NoBoard' });
   }
 
   async finish(index: number, now: number, asSeat?: number): Promise<CommandResult> {

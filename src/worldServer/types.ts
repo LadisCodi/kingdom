@@ -39,7 +39,7 @@ export interface ServerHex {
 export type ArmyPhase = 'out' | 'garrison' | 'camp' | 'home';
 
 /** What an army was sent to do (19 §4, §5.1, §6, §8.1). */
-export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve' | 'portal';
+export type ArmyPurpose = 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
 
 /** An army out on the board — server state from the moment it leaves
  *  (02-map-scopes.md §3.1). */
@@ -140,6 +140,11 @@ export interface ServerBoard {
    *  stored before dungeons moved: it is read from the generated board. */
   dungeons?: ServerDungeon[];
   portal: PortalState;
+  /** The monster camps each seat has beaten, by hex index (19 §5.4): a camp
+   *  is beaten by each player for themselves. */
+  beaten?: Record<number, number[]>;
+  /** When each stand-in rival will have beaten a camp it means to claim. */
+  botCamps?: Record<number, Record<number, number>>;
 }
 
 /** A sixth's dungeon (19 §8.1): standing on a hex, or closed and coming
@@ -220,6 +225,8 @@ export interface WorldSnapshot {
   armies: ArmyView[];
   /** Rooms the player has cleared in each dungeon, by hex index. */
   delves: Record<number, number>;
+  /** The monster camps the player has beaten, by hex index. */
+  beaten?: number[];
   /** The hexes a dungeon stands on now. */
   dungeons: number[];
   /** The Dark Portal as the player sees it. */
@@ -233,7 +240,7 @@ export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
-  | 'NothingBuilding';
+  | 'NothingBuilding' | 'Guarded';
 
 export type CommandResult =
   | { ok: true; finishesAt: number; snapshot: WorldSnapshot }

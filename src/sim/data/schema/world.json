@@ -366,6 +366,75 @@
         },
         "portal": { "type": "float", "min": 0.1, "doc": "The Portal’s hex, which has no terrain." }
       }
+    },
+    "worldCamps": {
+      "type": "object",
+      "doc": "Monster camps on the world board: an army on a hex, beaten by each player before they can claim it (Docs/features/19-world-map.md §5.4).",
+      "fields": {
+        "share": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The share of hexes on rings 2–6 that carry a camp — never a site, a city or a city’s neighbour. Every inner-ring hex carries one."
+        },
+        "lurkingShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The share of camps that lurk: unseen until the hex is explored."
+        },
+        "powerByRing": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "doc": "A camp’s power on rings 1 to 6, the inner ring first."
+        },
+        "powerJitter": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "How far a camp’s power strays from its ring’s, up or down."
+        },
+        "creatures": {
+          "type": "object",
+          "doc": "Which creatures hold camps on each kind of ring; one is picked per camp.",
+          "fields": {
+            "inner": {
+              "type": "list",
+              "of": { "type": "text", "options": ["Orcs", "Harpies", "Goblins", "WolfRiders", "Drake"] }
+            },
+            "corridor": {
+              "type": "list",
+              "of": { "type": "text", "options": ["Orcs", "Harpies", "Goblins", "WolfRiders", "Drake"] }
+            },
+            "home": {
+              "type": "list",
+              "of": { "type": "text", "options": ["Orcs", "Harpies", "Goblins", "WolfRiders", "Drake"] }
+            },
+            "outer": {
+              "type": "list",
+              "of": { "type": "text", "options": ["Orcs", "Harpies", "Goblins", "WolfRiders", "Drake"] }
+            }
+          }
+        },
+        "goldPerPower": { "type": "float", "min": 0, "doc": "Gold a beaten camp pays, per point of its power." },
+        "heroXpPerPower": { "type": "float", "min": 0, "doc": "Hero XP a beaten camp pays, per point of its power." },
+        "tributePremium": {
+          "type": "float",
+          "min": 1,
+          "doc": "How much dearer paying a camp off is than the troops it would cost to beat it."
+        },
+        "tributeLossShare": {
+          "type": "float",
+          "min": 0,
+          "max": 1,
+          "doc": "The share of a camp’s power a winning army is reckoned to lose to it — what the tribute is priced on."
+        },
+        "botHoursPer1000Power": {
+          "type": "float",
+          "min": 0,
+          "doc": "Hours a stand-in rival takes to beat a camp, per 1,000 of its power."
+        }
+      }
     }
   }
 }

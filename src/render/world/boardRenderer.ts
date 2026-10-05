@@ -40,6 +40,8 @@ import { drawCloudBank } from '../fog/fogLayer';
 import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
 import { featureNudge, hash01, hexDecorations } from './hexScatter';
+import { DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
+import { LAIRS } from '../../sim/data/definitions';
 
 /** A flat colour under the plate, for the frames before it loads. */
 const PLATE_COLOR: Record<WorldTerrain, string> = {
@@ -231,6 +233,18 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // city included — on the ground, over the plates, so what stands on a
   // hex stands over it (19 §7.1).
   if (groundStale) drawRoads(ground, camera, frame, states);
+
+  // Over every camp the player can see, how hard it is against the
+  // strongest party they could send (19 §5.4) — on explored ground only,
+  // since a camp in the mist is only a shape.
+  const party = strongestParty(state);
+  for (const bh of board.hexes) {
+    if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
+    const c = camera.hexToScreen(bh.hex);
+    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    const difficulty = campDifficulty(bh.camp.power, party);
+    drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+  }
 
   // The Portal's appointment, over its hex: when it opens, or how long it
   // has left (19 §10.1).
@@ -725,6 +739,10 @@ function drawHex(
         g.restore();
       }
       if (held !== null) drawHeld(ground, g, camera, held, c, fogState, frame);
+      // A camp stands at the hex's near left, in front of its feature (19 §5.4).
+      if (campShown(frame.source, bh, fogState) && bh.camp !== null) {
+        drawProp(g, LAIRS[bh.camp.creature].sprite, c.x - hw * 0.14, c.y + r * 0.78 * TILT, hw * CAMP_WIDTH);
+      }
     }
   };
   if (veil > 0.01 || (held !== null && held.held && !held.active)) drawSilhouetted(ctx, c, r, hw, veil, stand);
@@ -736,6 +754,9 @@ function drawHex(
   ground.lineWidth = Math.max(1, r * 0.025);
   ground.stroke();
 }
+
+/** A camp's drawing, as a share of the hex's width. */
+const CAMP_WIDTH = 0.46;
 
 /** How thick a tile is, as a share of its radius. */
 const SKIRT = 0.16;
@@ -898,21 +919,22 @@ function drawBubble(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number,
   ctx.restore();
 }
 
-/** A wooden pill with a short text — a countdown over something at work. */
-function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string): void {
+/** A wooden pill with a short text — a countdown over something at work —
+ *  or, with `ink`, a parchment one with the text in that colour. */
+function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string, ink?: string): void {
   const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
   ctx.save();
   ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
   const pw = ctx.measureText(text).width + fs * 1.4;
   const ph = fs * 1.6;
-  ctx.fillStyle = '#5a3a20';
+  ctx.fillStyle = ink === undefined ? '#5a3a20' : '#f4e3bc';
   ctx.strokeStyle = '#2e1c0e';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#fff3d6';
+  ctx.fillStyle = ink ?? '#fff3d6';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y + 0.5);

@@ -6,7 +6,8 @@
 // which seat (`state.world.board`). The server will later hand the client a
 // board of the same shape; only `source.ts` changes then.
 
-import { WORLD_GEN, type WorldGenDef } from '../data/definitions';
+import { WORLD_CAMPS, WORLD_GEN, type WorldCampsDef, type WorldGenDef } from '../data/definitions';
+import type { LairId } from '../state';
 import { rand } from '../rng';
 import {
   BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexIndex, hexNeighbors, hexScale, ringOf, rotateBy,
@@ -26,7 +27,14 @@ export interface BoardHex {
   features: WorldFeature[];
   /** The seat whose city stands here, or null. */
   seat: number | null;
+  /** The monster camp that holds it until a player beats it (19 §5.4), or
+   *  null. */
+  camp: Camp | null;
 }
+
+/** A monster camp: which creature, how strong, and whether it can be seen
+ *  before its hex is explored. */
+export interface Camp { creature: LairId; power: number; lurking: boolean }
 
 export interface Board {
   /** Which board this is. Local boards are named for their seed. */
@@ -102,7 +110,7 @@ export function withDungeons(board: Board, dungeons: readonly number[]): Board {
         if (has === set.has(h.index)) return h;
         // A dungeon covers the ground while it stands; gone, the ground is
         // what it was generated as.
-        return { ...h, features: has ? h.features.filter((f) => f !== 'Dungeon') : ['Dungeon'] };
+        return { ...h, features: has ? h.features.filter((f) => f !== 'Dungeon') : ['Dungeon'], camp: has ? h.camp : null };
       }),
     };
     if (LIVE.size > 64) LIVE.clear();
@@ -227,21 +235,66 @@ function rollWedge(seed: number, gen: WorldGenDef): Map<string, Contents> {
   return local;
 }
 
+/** The sites a camp never stands on: they are destinations of their own. */
+const CAMPLESS = new Set(['Dungeon', 'Sanctuary', 'Landmark']);
+
+/** A camp's power on ring `k`, strayed by its own roll. */
+function campPower(seed: number, k: number, j: number | string, camps: WorldCampsDef): number {
+  const base = camps.powerByRing[Math.min(k, camps.powerByRing.length) - 1] ?? 1;
+  return Math.max(1, Math.round(base * (1 + (rand(seed, 'campPower', k, j) - 0.5) * 2 * camps.powerJitter)));
+}
+
+const pick = <T>(list: readonly T[], x: number): T => list[Math.min(list.length - 1, Math.floor(x * list.length))];
+
+/**
+ * Wedge 0's camps, keyed by local place (19 §5.4): one in `share` of the
+ * rolled places, never on a site, the city or a place beside it; power by
+ * ring; a creature by the ring's kind; some lurking.
+ */
+function rollCamps(seed: number, local: Map<string, Contents>, camps: WorldCampsDef): Map<string, Camp> {
+  const around = new Set(seatNeighbourPlaces());
+  const out = new Map<string, Camp>();
+  for (let k = 2; k <= BOARD_RADIUS; k++) {
+    for (let j = 0; j < k; j++) {
+      const key = localKey(k, j);
+      if (key === localKey(HOME_RING, 0) || around.has(key)) continue;
+      if (local.get(key)!.features.some((f) => CAMPLESS.has(f))) continue;
+      if (rand(seed, 'camp', k, j) >= camps.share) continue;
+      const role = roleOf(wedgeHex(k, j, 0)) as RolledRole;
+      out.set(key, {
+        creature: pick(camps.creatures[role], rand(seed, 'campCreature', k, j)),
+        power: campPower(seed, k, j, camps),
+        lurking: rand(seed, 'campLurks', k, j) < camps.lurkingShare,
+      });
+    }
+  }
+  return out;
+}
+
 /** A board from its seed. Pure: the same seed and data give the same board. */
-export function generateBoard(id: string, seed: number, gen: WorldGenDef = WORLD_GEN): Board {
+export function generateBoard(id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS): Board {
   const local = rollWedge(seed, gen);
+  const wedgeCamps = rollCamps(seed, local, camps);
   const hexes = BOARD_HEXES.map((hex, index): BoardHex => {
     const role = roleOf(hex);
     const seat = SEAT_INDICES.indexOf(index);
     const base = { index, hex, role, seat: seat >= 0 ? seat : null };
-    if (role === 'portal') return { ...base, terrain: null, features: [] };
+    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null };
     const at = wedgeOf(hex)!;
     if (role === 'inner') {
+      // Every inner hex is held by the strongest camp: its +200% is earned.
       const authored = gen.innerRing[at.wedge];
-      return { ...base, terrain: authored.terrain, features: [...authored.features] };
+      const camp: Camp = {
+        creature: pick(camps.creatures.inner, rand(seed, 'campCreature', 1, at.wedge)),
+        power: campPower(seed, 1, at.wedge, camps),
+        lurking: false,
+      };
+      return { ...base, terrain: authored.terrain, features: [...authored.features], camp };
     }
-    const c = local.get(localKey(at.k, at.j))!;
-    return { ...base, terrain: c.terrain, features: [...c.features] };
+    const key = localKey(at.k, at.j);
+    const c = local.get(key)!;
+    const camp = wedgeCamps.get(key);
+    return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp } };
   });
   return { id, seed, hexes };
 }
