@@ -45,6 +45,7 @@
       "nullable": true,
       "doc": "A card pack handed over on the claim — the first is how the collection is met (Docs/features/22-progression.md §7)."
     },
+    "rewardItems": { "type": "map", "of": { "type": "int", "min": 1 }, "keysRef": "item", "doc": "Items it puts in the Bag." },
     "autoClaim": {
       "type": "bool",
       "doc": "Claims itself the moment it is done — for a quest whose next step the player is already reaching for, where a tap on the scroll would only be in the way."

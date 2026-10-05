@@ -15,7 +15,7 @@
 import { track as trackEvent } from './analytics';
 import { SURVEY } from './data/definitions';
 import { cityGoldPerSecond } from './production';
-import { grant, type Grant, type ItemStock } from './rewards';
+import { addItemAt, grant, type Grant, type ItemStock } from './rewards';
 import { recordEvent } from './events';
 import { revealedCellCount } from './research';
 import type { GameState, Wallet } from './state';
@@ -64,6 +64,7 @@ export function freeSurveyCell(state: GameState, level: number): SurveyCell {
   if ((SURVEY.freeSilverKeys[i] ?? 0) > 0) items.SilverKey = SURVEY.freeSilverKeys[i];
   if ((SURVEY.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.freeGoldKeys[i];
   if ((SURVEY.freeGems[i] ?? 0) > 0) wallet.Gems = SURVEY.freeGems[i];
+  addItemAt(items, SURVEY.freeItems, level);
   return { level, wallet, items, pack: packAt(SURVEY.freePacks, level) };
 }
 
@@ -74,6 +75,7 @@ export function paidSurveyCell(level: number): SurveyCell {
   if ((SURVEY.paidGems[i] ?? 0) > 0) wallet.Gems = SURVEY.paidGems[i];
   if ((SURVEY.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.paidGoldKeys[i];
   if ((SURVEY.paidStardust[i] ?? 0) > 0) wallet.Stardust = SURVEY.paidStardust[i];
+  addItemAt(items, SURVEY.paidItems, level);
   return { level, wallet, items, pack: packAt(SURVEY.paidPacks, level) };
 }
 

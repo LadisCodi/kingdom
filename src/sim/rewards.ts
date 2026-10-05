@@ -7,7 +7,7 @@
 // goods), an item lands in the Bag and a pack in the collection's queue,
 // without each source repeating the routing.
 
-import { CURRENCIES, type PackTier } from './data/definitions';
+import { CURRENCIES, ITEMS, type PackTier } from './data/definitions';
 import { grantItem } from './bag';
 import { grantPack, type PackSource } from './collection';
 import { payKnowledge } from './knowledge';
@@ -20,6 +20,13 @@ export interface Grant {
   wallet: Wallet;
   items: ItemStock;
   pack: PackTier | null;
+}
+
+/** A column of item ids by level ('' for none): one more of the item at
+ *  `level`, if the column names one the build knows. */
+export function addItemAt(items: ItemStock, column: readonly string[] | undefined, level: number): void {
+  const id = (column ?? [])[level - 1] ?? '';
+  if (id !== '' && ITEMS[id as ItemId] !== undefined) items[id as ItemId] = (items[id as ItemId] ?? 0) + 1;
 }
 
 export const emptyGrant = (): Grant => ({ wallet: {}, items: {}, pack: null });

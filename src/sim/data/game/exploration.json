@@ -51,6 +51,8 @@
     "weights": { "Gold": 3, "Food": 3, "Wood": 3, "Stone": 2, "Knowledge": 1 },
     "knowledge": 1,
     "firstCoin": "Gold",
-    "firstAmount": 20
+    "firstAmount": 20,
+    "itemEvery": 4,
+    "items": { "GoldChest10m": 3, "FoodChest10m": 3, "WoodChest10m": 3, "StoneChest10m": 2, "GeneralSpeedup5m": 2 }
   }
 }

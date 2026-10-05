@@ -15,7 +15,17 @@
         "paidPacks": { "type": "list", "of": { "type": "text" } },
         "paidGems": { "type": "list", "of": { "type": "int" } },
         "paidGoldKeys": { "type": "list", "of": { "type": "int" } },
-        "paidStardust": { "type": "list", "of": { "type": "int" } }
+        "paidStardust": { "type": "list", "of": { "type": "int" } },
+        "freeItems": {
+          "type": "list",
+          "of": { "type": "text", "ref": "item", "emptyOk": true },
+          "doc": "Free column: an item to put in the Bag, or empty for none."
+        },
+        "paidItems": {
+          "type": "list",
+          "of": { "type": "text", "ref": "item", "emptyOk": true },
+          "doc": "Paid column: an item to put in the Bag, or empty for none."
+        }
       }
     }
   }

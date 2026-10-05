@@ -7,7 +7,7 @@
 // and the one command that spends it: the lair attack.
 
 import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
-import { COMBAT, HEROES, PARTY, LAIRS, UNITS } from './data/definitions';
+import { COMBAT, HEROES, PARTY, LAIRS, UNITS, garrisonForTier } from './data/definitions';
 import { addHeroXp, heroSlots } from './heroes';
 import {
   NO_DRILL, partyPower, partyStats,
@@ -24,7 +24,8 @@ import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techMultiplier, techPctAimed, techTotals } from './techEffects';
-import type { GameState, HeroId, LairId, UnitId, Wallet } from './state';
+import type { GameState, HeroId, ItemId, LairId, UnitId, Wallet } from './state';
+import { grantItem } from './bag';
 import { canAfford, pay } from './wallet';
 
 // ------------------------------------------------------------------- slots
@@ -356,6 +357,8 @@ export interface ClaimReport {
   hoard: Wallet;
   heroXp: number;
   knowledge: number;
+  /** What it put in the Bag. */
+  items: Partial<Record<ItemId, number>>;
 }
 
 /**
@@ -366,14 +369,16 @@ export interface ClaimReport {
  */
 export function claimLair(state: GameState, lairId: LairId): ClaimReport {
   const lair = state.lairs[lairId];
-  const none = { hoard: {}, heroXp: 0, knowledge: 0 };
+  const none = { hoard: {}, heroXp: 0, knowledge: 0, items: {} };
   if (lair?.cleared === true) return { result: 'AlreadyClaimed', ...none };
   if (lair?.defeated !== true) return { result: 'NotDefeated', ...none };
   const { heroXp, knowledge } = lairClearReward(state, lairId);
   const hoard = markLairCleared(state, lairId);
   addHeroXp(state, heroXp);
   payKnowledge(state, knowledge);
-  return { result: 'Claimed', hoard, heroXp, knowledge };
+  const items = { ...garrisonForTier(LAIRS[lairId].tier).rewardItems };
+  for (const [id, n] of Object.entries(items) as Array<[ItemId, number]>) grantItem(state, id, n);
+  return { result: 'Claimed', hoard, heroXp, knowledge, items };
 }
 
 /**

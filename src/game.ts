@@ -235,6 +235,15 @@ export type OverlayName =
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname';
 
+/** An item as a sentence says it: "1h Wood chest", "Gold key". */
+export function itemWords(id: ItemId): string {
+  const def = ITEMS[id];
+  const size = def.kind === 'flask' ? `${formatExact(def.value)}% `
+    : def.kind === 'tome' ? `${formatExact(def.value)} `
+      : def.seconds > 0 ? `${formatDuration(def.seconds)} ` : '';
+  return `${size}${def.name}`;
+}
+
 /** The Bag as its screen draws it (ui/bagSheet.ts). */
 export interface BagScreen {
   tab: BagTab;
@@ -921,6 +930,7 @@ export class Game {
         const box = this.camera.cellToScreen(cell);
         const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
         queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
+        if (picked.item !== null) this.toast(`Found a ${itemWords(picked.item)} — it is in the Bag`);
         this.notify();
         return true;
       },
@@ -4027,6 +4037,8 @@ export class Game {
     this.inspectedSite = null;
     this.vanishingLairs.set(lairId, performance.now());
     playSfx('questComplete');
+    const items = Object.keys(report.items) as ItemId[];
+    if (items.length > 0) this.toast(`In the Bag: ${items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ')}`);
     this.notify();
     queueMicrotask(() => this.reward(haul, from));
   }

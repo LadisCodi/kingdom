@@ -31,6 +31,8 @@ import { techMultiplier } from './techEffects';
 import {
   addToWallet, coordKey, getWallet, type Coord, type CurrencyId, type GameState, type Wallet,
 } from './state';
+import type { ItemId } from './state';
+import { grantItem } from './bag';
 
 /** Is a treasure owed and not yet placed? One is owed on the first paid
  *  reveal and every `everyReveals` after it. */
@@ -144,7 +146,26 @@ export function treasureReward(state: GameState, treasure: { n: number; coin: Cu
     * techMultiplier(state, 'treasureYield')) };
 }
 
-export type PickUpResult = { kind: 'PickedUp'; reward: Wallet } | { kind: 'None' } | { kind: 'Hidden' };
+export type PickUpResult =
+  | { kind: 'PickedUp'; reward: Wallet; item: ItemId | null } | { kind: 'None' } | { kind: 'Hidden' };
+
+/**
+ * The item the n-th treasure brings with its coin, or null: every
+ * `itemEvery`-th after the first, which item by weight — rolled on the
+ * treasure's own number, never on the moment it is picked up.
+ */
+export function treasureItem(state: GameState, n: number): ItemId | null {
+  if (n === 0 || TREASURE.itemEvery <= 0 || n % TREASURE.itemEvery !== 0) return null;
+  const entries = (Object.entries(TREASURE.items ?? {}) as Array<[ItemId, number]>).filter(([, w]) => w > 0);
+  const total = entries.reduce((s, [, w]) => s + w, 0);
+  if (total <= 0) return null;
+  let roll = rand(state.seed, 'treasure', n, 'item') * total;
+  for (const [id, w] of entries) {
+    roll -= w;
+    if (roll < 0) return id;
+  }
+  return entries[entries.length - 1][0];
+}
 
 /**
  * Pick up the treasure on a revealed cell. Free: a find is not work, so it
@@ -160,9 +181,11 @@ export function pickUpTreasure(state: GameState, map: MapData, cell: Coord): Pic
     if (coin === 'Knowledge') payKnowledge(state, amount);
     else addToWallet(state.city.wallet, coin, amount);
   }
+  const item = treasureItem(state, treasure.n);
+  if (item !== null) grantItem(state, item, 1);
   delete state.fog.treasures[key];
   state.signals.treasureWaitMs += Math.max(0, state.lastAdvance - treasure.at);
   recordEvent(state, { kind: 'signal', key: 'treasurePicked' });
   track(state, 'treasure_picked', { n: treasure.n, wait_ms: Math.max(0, state.lastAdvance - treasure.at) });
-  return { kind: 'PickedUp', reward };
+  return { kind: 'PickedUp', reward, item };
 }
