@@ -583,6 +583,9 @@ export interface GameState {
     /** Knowledge poured into technologies not yet researched. It stays there
      *  for ever; a technology leaves this map when it is researched. */
     poured: Partial<Record<TechId, number>>;
+    /** Bands finished whole whose card pack has been paid, as `Tome:era` —
+     *  so a band pays once, whatever is researched after. */
+    rewarded: string[];
   };
   /**
    * Scheduled content: seasons, events and gacha banners.

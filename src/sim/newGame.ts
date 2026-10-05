@@ -58,7 +58,7 @@ export function newGame(map: MapData, now: number): GameState {
     // Nothing is researched, and nothing is granted. Civics is open from the
     // first minute; every other book opens on a fact about the world
     // (sim/research.ts `TOME_OPENS`), and the era bars pace each page.
-    research: { completed: [], poured: {} },
+    research: { completed: [], poured: {}, rewarded: [] },
     schedule: [],
     // One hero from the start — the Warden, captain of the guard. Nothing
     // shows her until the first lair, where she steps forward

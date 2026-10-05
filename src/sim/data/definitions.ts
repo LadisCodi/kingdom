@@ -69,6 +69,8 @@ export interface TechnologyDef {
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
   cost: Wallet; // city Gold and kingdom Knowledge
+  /** Refined goods paid with the Gold when it is completed; empty = none. */
+  goods: GoodsStock;
   requires: TechId[]; // tree edges — all must be completed first
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
@@ -131,6 +133,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
+      goods: (node.goods ?? {}) as GoodsStock,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];
@@ -974,6 +977,21 @@ export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
       { length: ERA_COUNT[tome] },
       (_, i) => eraCells(treeDoc as unknown as TechTreeDoc, tome, i + 1),
     )];
+  }
+  return out;
+})();
+
+/**
+ * THE CARD PACK FINISHING A BAND PAYS — `ERA_REWARDS[tome][era]`, indexed by
+ * era like `ERA_UNLOCK_CELLS`, so `[0]` is unused. Null = that band pays
+ * nothing; a book the file names no rewards for pays nothing in any band.
+ */
+export const ERA_REWARDS: Record<TomeId, Array<PackTier | null>> = (() => {
+  const authored = (treeDoc as unknown as TechTreeDoc).eraRewards ?? {};
+  const out = {} as Record<TomeId, Array<PackTier | null>>;
+  for (const tome of TOME_ORDER) {
+    const list = authored[tome] ?? [];
+    out[tome] = [null, ...Array.from({ length: ERA_COUNT[tome] }, (_, i) => (list[i] ?? null) as PackTier | null)];
   }
   return out;
 })();
@@ -2399,4 +2417,4 @@ export const GAME_VERSION = '0.1.0';
 // v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
 // v85: the world board is radius 6 — the save's world fog, trips, builds,
 // Sanctuaries and armies are reset, the armies' troops sent home.
-export const SAVE_VERSION = 85;
+export const SAVE_VERSION = 86;

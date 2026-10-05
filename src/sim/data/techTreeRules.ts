@@ -81,6 +81,8 @@ export interface TechNodeDoc {
   /** City Gold and kingdom Knowledge. A technology takes no time. */
   gold: number;
   knowledge?: number;
+  /** Refined goods paid with the Gold, when it is completed. Absent = none. */
+  goods?: Record<string, number>;
   /** `kind: 'unlock'` only. */
   unlocks?: TechUnlock[];
   /** `kind: 'bonus'` only: what this technology moves, and what it aims at
@@ -107,6 +109,12 @@ export interface TechTreeDoc {
    * `[0]` is always 0: a book's first band opens with the book.
    */
   eras: Record<string, number[]>;
+  /**
+   * The card pack finishing a band pays: `eraRewards.Civics[i]` is what
+   * researching every placed card of era `i + 1` grants, once, or null for
+   * nothing. Parallel to `eras`; absent = no band of that book pays anything.
+   */
+  eraRewards?: Record<string, Array<string | null>>;
   technologies: Record<string, TechNodeDoc>;
 }
 
@@ -203,6 +211,8 @@ export const DISTRICT_IDS = Object.keys(balance.districts);
 export const UNIT_IDS = Object.keys(balance.units);
 export const HARVEST_IDS = Object.keys(balance.harvest);
 export const TERRAIN_IDS = Object.keys(balance.terrain);
+export const GOOD_IDS = Object.keys(balance.goods);
+export const PACK_TIER_IDS = Object.keys(balance.packs);
 const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxLevel: number }>;
 
 /** A technology that HAS a slot — the same object, with the four fields known
@@ -369,6 +379,25 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     if (!TOME_IDS.includes(tome as TomeId)) {
       errors.push({ message: `the bands name "${tome}", which is not a tome` });
     }
+  }
+  // ---- what finishing a band pays ---------------------------------------
+  for (const [tome, rewards] of Object.entries(doc.eraRewards ?? {})) {
+    const ladder = doc.eras?.[tome];
+    if (ladder === undefined) {
+      errors.push({ message: `the band rewards name "${tome}", which has no bands` });
+      continue;
+    }
+    if (!Array.isArray(rewards) || rewards.length !== ladder.length) {
+      errors.push({
+        message: `${tome} has ${ladder.length} bands but ${Array.isArray(rewards) ? rewards.length : 0} band rewards`,
+      });
+      continue;
+    }
+    rewards.forEach((tier, i) => {
+      if (tier !== null && !PACK_TIER_IDS.includes(tier)) {
+        errors.push({ message: `${tome} era ${i + 1} pays a "${tier}", which is not a pack` });
+      }
+    });
   }
 
   // ---- identity ---------------------------------------------------------
@@ -608,6 +637,13 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     for (const [what, value] of money) {
       if (!Number.isInteger(value) || value < 0) {
         errors.push({ message: `${id} has ${what} of ${value}`, tech: id });
+      }
+    }
+    for (const [good, n] of Object.entries(node.goods ?? {})) {
+      if (!GOOD_IDS.includes(good)) {
+        errors.push({ message: `${id} asks for ${good}, which is not a good`, tech: id });
+      } else if (!Number.isInteger(n) || n <= 0) {
+        errors.push({ message: `${id} asks for ${n} ${good} — a whole number above 0`, tech: id });
       }
     }
     // NOTHING is free. A technology that cost neither Gold nor Knowledge
