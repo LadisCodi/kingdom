@@ -25,32 +25,17 @@
 import type { Game } from '../game';
 import type { CurrencyId, ItemId, Wallet } from '../sim/state';
 import type { ItemStock } from '../sim/rewards';
-import { itemIcon } from './bagSheet';
-import type { PackTier } from '../sim/data/definitions';
+import { itemIcon } from './itemArt';
 import { el, formatCount, formatUsd } from './format';
 import { ctaBadge, currencyIcon, iconEl } from './kit';
 import { sheet } from './kit/surface';
-import { spriteUrl } from '../render/sprites';
 
-/**
- * A reward as icon-and-number chips, in wallet order, with the pack last —
- * it is the thing the player is collecting toward rather than spending.
- *
- * THE PACK IS ITS OWN SPRITE AND CARRIES NO LABEL. The nine pouches were drawn
- * to be told apart by colour (`pack_green.png` … `pack_golden.png`, the same
- * art the reveal deals), so spelling "Blue" beside a generic pack glyph both
- * says it twice and costs a cell most of its width — on a ~180px cell a third
- * chip of text is what pushed the row to two lines and clipped it.
- */
-/** A pouch, drawn as its own art with no label — the colour IS the label. */
-function packChip(tier: PackTier): HTMLElement {
-  const url = spriteUrl(`pack_${tier.toLowerCase()}`);
-  return url === null
-    ? iconEl('pack', { size: 'sm' })
-    : el('img', { class: 'pss-pack', src: url, alt: `${tier} pack`, title: `${tier} pack` });
+/** Relic fragments, as a chip: the shard and how many. */
+function fragmentChip(n: number): HTMLElement {
+  return el('span', { class: 'pss-prize' }, iconEl('shard', { size: 'sm' }), el('b', {}, formatCount(n)));
 }
 
-export function prize(reward: Wallet, pack: PackTier | null, items: ItemStock = {}): HTMLElement[] {
+export function prize(reward: Wallet, fragments: number, items: ItemStock = {}): HTMLElement[] {
   const chips = (Object.entries(reward) as Array<[CurrencyId, number]>).map(([c, n]) =>
     el('span', { class: 'pss-prize' },
       currencyIcon(c, { size: 'sm' }),
@@ -60,11 +45,7 @@ export function prize(reward: Wallet, pack: PackTier | null, items: ItemStock = 
     if (!n) continue;
     chips.push(el('span', { class: 'pss-prize' }, iconEl(itemIcon(id), { size: 'sm' }), el('b', {}, formatCount(n))));
   }
-  // The atlas glyph is the fallback, so a tier whose art has not landed still
-  // draws something rather than a gap (`tests/icons.test.ts`).
-  if (pack !== null) {
-    chips.push(el('span', { class: 'pss-prize is-pack' }, packChip(pack)));
-  }
+  if (fragments > 0) chips.push(fragmentChip(fragments));
   return chips;
 }
 
@@ -108,9 +89,9 @@ export function renderPassSheet(game: Game): HTMLElement {
     // green pack for the rest — and variety nobody can see is not variety: the
     // whole reason to roll it is so the player picks what to do next by what
     // it is worth.
-    const reward = 'pack' in m.reward
-      ? el('span', { class: `pss-task-pay is-pack${m.hard ? ' is-hard' : ''}` },
-          packChip(m.reward.pack))
+    const reward = 'fragments' in m.reward
+      ? el('span', { class: `pss-task-pay${m.hard ? ' is-hard' : ''}` },
+          iconEl('shard', { size: 'sm' }), el('b', {}, `+${formatCount(m.reward.fragments)}`))
       : el('span', { class: 'pss-task-pay' },
           currencyIcon(m.reward.currency, { size: 'sm' }),
           // A LEADING `+`, because the row can carry two Gem figures that mean
@@ -170,7 +151,7 @@ export function renderPassSheet(game: Game): HTMLElement {
   const cell = (
     track: 'free' | 'paid',
     level: number,
-    c: { reward: Wallet; items: ItemStock; pack: PackTier | null; claimed: boolean; claimable: boolean; locked?: boolean },
+    c: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean; locked?: boolean },
     grand: boolean,
   ): HTMLElement => {
     const classes = `pss-cell is-${track}`
@@ -179,7 +160,7 @@ export function renderPassSheet(game: Game): HTMLElement {
       + (c.locked ? ' is-locked' : '')
       + (grand ? ' is-grand' : '');
     const bits = [
-      ...prize(c.reward, c.pack, c.items),
+      ...prize(c.reward, c.fragments, c.items),
       // One mark per cell, never one per prize — the lock is a property of
       // the track, not of each thing behind it.
       ...(c.claimed ? [iconEl('tick', { size: 'sm' })] : []),
@@ -229,13 +210,8 @@ export function renderPassSheet(game: Game): HTMLElement {
   // zero. `is-panes` gives the sheet a definite height, which is the thing the
   // two panes below divide.
   // THE SEASON THAT IS RUNNING, not the first one ever written. The pass
-  // "runs on the collection's season" (Docs/features/20-season-pass.md §1) —
-  // same table, same clock — so its name is the collection's, which
-  // `seasonInfo()` already resolves for the pill and the Collection header.
-  // Hard-coded, it announced Sowing Season while the collection two taps away
-  // said Season of Lanterns.
   const surface = sheet({
-    title: game.seasonInfo().name, onClose: close, tall: true,
+    title: 'Season pass', onClose: close, tall: true,
   }, body);
   surface.classList.add('is-panes');
   return surface;

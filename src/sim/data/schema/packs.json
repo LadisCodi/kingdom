@@ -1,9 +1,0 @@
-{
-  "type": "object",
-  "fields": {
-    "cards": { "type": "int" },
-    "guarantees": { "type": "map", "of": { "type": "int" }, "keysRef": "face" },
-    "weights": { "type": "list", "of": { "type": "float" }, "length": { "exact": 7 } },
-    "gemCost": { "type": "int" }
-  }
-}

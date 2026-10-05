@@ -9,7 +9,6 @@ import { track } from './analytics';
 import { watchtowerClaimed } from './landmarks';
 import {
   DISTRICTS, ERA_REWARDS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
-  type PackTier,
 } from './data/definitions';
 import { canAffordGoods, payGoods } from './goods';
 import { resolvePrice } from './precious';
@@ -244,15 +243,15 @@ export function isBandFinished(state: GameState, tome: TomeId, era: number): boo
  * whole and that band pays one it has not paid yet — recorded as paid here,
  * so it is earned once. The caller grants it (`commands.ts#researchTech`).
  */
-export function claimBandReward(state: GameState, id: TechId): { tome: TomeId; era: number; tier: PackTier } | null {
+export function claimBandReward(state: GameState, id: TechId): { tome: TomeId; era: number; fragments: number } | null {
   const { tome, era, placed } = TECHNOLOGIES[id];
   if (!placed) return null;
-  const tier = ERA_REWARDS[tome]?.[era] ?? null;
-  if (tier === null) return null;
+  const fragments = ERA_REWARDS[tome]?.[era] ?? null;
+  if (fragments === null) return null;
   const key = bandKey(tome, era);
   if (state.research.rewarded.includes(key) || !isBandFinished(state, tome, era)) return null;
   state.research.rewarded.push(key);
-  return { tome, era, tier };
+  return { tome, era, fragments };
 }
 
 // ------------------------------------------------------------- the states

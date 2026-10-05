@@ -3,7 +3,6 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { dayIndex } from './day';
-import { freshCollection, seasonAt } from './collection';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -84,7 +83,6 @@ export function newGame(map: MapData, now: number): GameState {
     // No lair has been seen yet, so nothing is counting (sim/lairs.ts).
     lairs: {},
     artifacts: { levels: {}, casts: {}, charges: {} },
-    collection: freshCollection(seasonAt(now)),
     modifiers: [],
     quests: { index: 0, progress: 0 },
     tallies: {},
@@ -94,6 +92,7 @@ export function newGame(map: MapData, now: number): GameState {
     tutorial: { veteran: false, seen: {}, startedAt: now },
     abandoned: { repaired: {} },
     bag: { held: {}, fresh: {}, badge: 0 },
+    relics: { held: {}, chests: 0 },
     signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [], playMs: 0 },
     pendingDiscoveries: [],
     pendingAnalytics: [],

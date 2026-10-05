@@ -11,7 +11,7 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { closeSeason, grantPack, seasonEndsAt, type SeasonClose } from './collection';
+import { dropFragments } from './relics';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -380,7 +380,7 @@ export function researchTech(
     if (result !== 'Researched') return;
     payKnowledge(state, territoryKnowledge(state) - before);
     const band = claimBandReward(state, id);
-    if (band !== null) grantPack(state, band.tier, 'research');
+    if (band !== null) dropFragments(state, 'any', band.fragments, ['band', band.tome, band.era]);
     if (TECHNOLOGIES[id].effects.some((e) => e.stat === 'discoverRadius')) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);
@@ -627,10 +627,6 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** The season that closed under the player, if one did — the cards melted
-   *  into Gold, the stars are gone and a new season is open
-   *  (Docs/features/09-relics.md §3). */
-  seasonClosed: SeasonClose | null;
   /** Explorers that came home from the world board, and what they revealed. */
   explorersHome: ExplorerHome[];
   /** World builds whose builder came home: the district or upgrade stands. */
@@ -640,7 +636,7 @@ export interface AdvanceResult {
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [], seasonClosed: null,
+  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
   explorersHome: [],
   worldBuildsDone: [],
 });
@@ -683,13 +679,6 @@ function applyDueAt(
     // A raid empties stores, and a crew waiting by a full one can go out again.
     if (raids.length > 0) wakeIdleWorkersAt(state, t);
     out.scheduleEvents.push(...advanceSchedule(state, t));
-    // THE SEASON'S CLOSE IS A TIMER (Docs/features/09-relics.md §3): it
-    // resolves at its absolute timestamp, so a player away for a week comes
-    // back to the wiped album and the new season rather than to a stale one
-    // that waits for them. `season` moving is what stops it firing twice.
-    if (t >= seasonEndsAt(state.collection.season)) {
-      out.seasonClosed = closeSeason(state, t);
-    }
     // A finished good lands in the stockpile here rather than in
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
@@ -736,9 +725,6 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextTrainingCompletion(state, after));
   consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
-  // One boundary a month, from a floor division with no state in it: two
-  // clients never disagree about when the season ends.
-  consider(seasonEndsAt(state.collection.season));
   consider(nextWorkshopCompletion(state, after));
   consider(nextExplorerReturn(state, after));
   consider(nextWorldBuildDone(state, after));

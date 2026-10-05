@@ -10,7 +10,8 @@
 // open. The BOOKS are the sim's own doors, decided in `research.ts`.
 
 import { track } from './analytics';
-import { ABANDONED, QUESTS } from './data/definitions';
+import { ABANDONED, ARTIFACT_ORDER, QUESTS } from './data/definitions';
+import { isMet } from './relics';
 import { watchtowerClaimed } from './landmarks';
 import { ownGoldBase } from './population';
 import { readyToCollect } from './storage';
@@ -52,17 +53,17 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
     || state.city.districts.some((d) => d.definitionId !== 'Townhall' && !wasAbandoned(state, d)),
   heroes: tavernStands,
   banner: tavernStands,
-  relics: (state) => state.collection.packs.length > 0
-    || Object.values(state.collection.cards ?? {}).some((page) => (page ?? []).some((n) => n > 0))
-    || state.collection.completed.length > 0,
+  // The first relic fragment, found at a relic's door.
+  relics: (state) => ARTIFACT_ORDER.some((id) => isMet(state, id)),
   // The market waits for a capital worth trading with.
   store: (state) => townhall(state).level >= 2,
   // The Survey opens with the Store: what the column sells is sold there
   // (Docs/features/25-the-survey.md §5).
   survey: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
-  // The first item held (Docs/art/ui-inventory.md §3.1).
-  bag: (state) => Object.keys(state.bag.held).length > 0,
+  // The first item held, or the first relic fragment — relics are kept in
+  // the Bag (Docs/art/ui-inventory.md §3.1, §3.6).
+  bag: (state) => Object.keys(state.bag.held).length > 0 || ARTIFACT_ORDER.some((id) => isMet(state, id)),
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —

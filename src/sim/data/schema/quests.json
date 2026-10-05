@@ -39,12 +39,7 @@
     "rewardStardust": { "type": "int" },
     "rewardKnowledge": { "type": "int" },
     "rewardMana": { "type": "int" },
-    "rewardPack": {
-      "type": "text",
-      "ref": "pack",
-      "nullable": true,
-      "doc": "A card pack handed over on the claim — the first is how the collection is met (Docs/features/22-progression.md §7)."
-    },
+    "rewardFragments": { "type": "int", "min": 0, "doc": "Relic fragments it pays, of relics already met." },
     "rewardItems": { "type": "map", "of": { "type": "int", "min": 1 }, "keysRef": "item", "doc": "Items it puts in the Bag." },
     "autoClaim": {
       "type": "bool",

@@ -32,7 +32,7 @@
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId, ItemId } from '../sim/state';
-import { itemIcon } from './bagSheet';
+import { itemIcon } from './itemArt';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';

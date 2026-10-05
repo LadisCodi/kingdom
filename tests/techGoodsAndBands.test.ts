@@ -1,7 +1,8 @@
 // A technology's goods, and the card pack a finished band pays
 // (Docs/plans/tech-tree-rework.md §3.4–§3.5).
 import { afterEach, describe, expect, it } from 'vitest';
-import { ERA_REWARDS, TECHNOLOGIES, TECH_ORDER, type PackTier } from '../src/sim/data/definitions';
+import { ERA_REWARDS, TECHNOLOGIES, TECH_ORDER } from '../src/sim/data/definitions';
+import { openRelicDoor } from '../src/sim/relics';
 import { validateTechTree, type TechTreeDoc } from '../src/sim/data/techTreeRules';
 import treeDoc from '../src/sim/data/tech-tree.json';
 import {
@@ -29,9 +30,9 @@ const withGoods = (id: TechId, goods: Record<string, number>): void => {
   TECHNOLOGIES[id].goods = goods;
   restore.push(() => { TECHNOLOGIES[id].goods = before; });
 };
-const withReward = (tier: PackTier | null): void => {
+const withReward = (n: number | null): void => {
   const before = ERA_REWARDS[TOME][ERA];
-  ERA_REWARDS[TOME][ERA] = tier;
+  ERA_REWARDS[TOME][ERA] = n;
   restore.push(() => { ERA_REWARDS[TOME][ERA] = before; });
 };
 
@@ -79,24 +80,28 @@ describe('goods on a technology', () => {
   });
 });
 
-describe('the card pack a finished band pays', () => {
+/** Every relic fragment held. */
+const fragmentsHeld = (state: GameState): number =>
+  Object.values(state.relics.held).reduce((n, f) => n + [...f!.found, ...f!.bound].reduce((a, b) => a + b, 0), 0);
+
+describe('the relic fragments a finished band pays', () => {
   it('pays once, the moment the last card of the band is researched', () => {
-    withReward('Green');
+    withReward(2);
     const state = oneCardShort();
-    const packs = state.collection.packs.length;
+    openRelicDoor(state, 'Orcs'); // a relic met, so the drop has one to roll
+    const before = fragmentsHeld(state);
     expect(isBandFinished(state, TOME, ERA)).toBe(false);
     expect(researchTech(state, map, (pourKnowledge(state, last()), last()), T0)).toBe('Researched');
     expect(isBandFinished(state, TOME, ERA)).toBe(true);
-    expect(state.collection.packs.length).toBe(packs + 1);
-    expect(state.collection.packs.at(-1)!.tier).toBe('Green');
+    expect(fragmentsHeld(state)).toBe(before + 2);
     expect(state.research.rewarded).toEqual([`${TOME}:${ERA}`]);
     // Asked again, the band has paid already.
     expect(claimBandReward(state, last())).toBeNull();
-    expect(state.collection.packs.length).toBe(packs + 1);
+    expect(fragmentsHeld(state)).toBe(before + 2);
   });
 
   it('pays nothing while a card of the band is left, and nothing for a band with no reward', () => {
-    withReward('Green');
+    withReward(1);
     const state = oneCardShort();
     const other = band().find((id) => id !== last())!;
     expect(claimBandReward(state, other)).toBeNull();
@@ -107,7 +112,7 @@ describe('the card pack a finished band pays', () => {
   });
 
   it('remembers what it paid across a save', () => {
-    withReward('Green');
+    withReward(1);
     const state = oneCardShort();
     pourKnowledge(state, last());
     researchTech(state, map, last(), T0);
@@ -116,15 +121,15 @@ describe('the card pack a finished band pays', () => {
     expect(claimBandReward(loaded, last())).toBeNull();
   });
 
-  it('is validated: one entry per band, and only packs that exist', () => {
+  it('is validated: one entry per band, and whole numbers of fragments', () => {
     const doc = structuredClone(treeDoc) as unknown as TechTreeDoc;
     expect(validateTechTree(doc).ok).toBe(true);
-    doc.eraRewards = { ...doc.eraRewards, Kingdom: ['Green'] };
+    doc.eraRewards = { ...doc.eraRewards, Kingdom: [1] };
     expect(validateTechTree(doc).errors.map((e) => e.message).join('\n')).toMatch(/band rewards/);
     doc.eraRewards = {
       ...doc.eraRewards,
-      Kingdom: [...(treeDoc.eraRewards.Kingdom as Array<PackTier | null>).slice(0, -1), 'Diamond' as PackTier],
+      Kingdom: [...(treeDoc.eraRewards.Kingdom as Array<number | null>).slice(0, -1), 1.5],
     };
-    expect(validateTechTree(doc).errors.map((e) => e.message).join('\n')).toMatch(/Diamond/);
+    expect(validateTechTree(doc).errors.map((e) => e.message).join('\n')).toMatch(/whole number above 0/);
   });
 });

@@ -27,18 +27,18 @@
         },
         "freeSilverKeys": { "type": "list", "of": { "type": "int" }, "doc": "Free column: silver keys." },
         "freeGoldKeys": { "type": "list", "of": { "type": "int" }, "doc": "Free column: gold keys." },
-        "freePacks": {
+        "freeFragments": {
           "type": "list",
-          "of": { "type": "text" },
-          "doc": "Free column: a card pack tier, or empty for none."
+          "of": { "type": "int", "min": 0 },
+          "doc": "Free column: relic fragments a level pays, of relics already met."
         },
         "freeGems": { "type": "list", "of": { "type": "int" }, "doc": "Free column: Gems." },
         "paidGems": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Gems." },
         "paidGoldKeys": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: gold keys." },
-        "paidPacks": {
+        "paidFragments": {
           "type": "list",
-          "of": { "type": "text" },
-          "doc": "Paid column: a card pack tier, or empty for none."
+          "of": { "type": "int", "min": 0 },
+          "doc": "Paid column: relic fragments a level pays, of relics already met."
         },
         "paidStardust": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Stardust." },
         "freeItems": {

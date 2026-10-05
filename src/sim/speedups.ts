@@ -13,6 +13,7 @@
 //     offers the typed ones first, then General, smallest first.
 
 import { track } from './analytics';
+import { recordEvent } from './events';
 import { cutLine, lineFor, lineRemainingSeconds } from './army';
 import { cutQueueItem } from './commands';
 import { ITEMS, type SpeedupKind } from './data/definitions';
@@ -104,6 +105,7 @@ export function spendSpeedups(state: GameState, job: SpeedJob, id: ItemId, n: nu
     delete state.bag.held[id];
     delete state.bag.fresh[id];
   }
+  recordEvent(state, { kind: 'itemUsed', count: n });
   track(state, 'item_used', { item: id, count: n, job: job.kind });
 }
 

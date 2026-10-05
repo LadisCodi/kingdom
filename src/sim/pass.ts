@@ -24,7 +24,7 @@
 // Docs/features/20-season-pass.md.
 
 import { PASS, MISSIONS } from './data/definitions';
-import { grantPack } from './collection';
+import { dropFragments } from './relics';
 import { seasonAt, seasonEndsAt } from './seasonClock';
 import { addItemAt, grant, type Grant, type ItemStock } from './rewards';
 import { manaCap } from './mana';
@@ -33,11 +33,10 @@ import {
 } from './missions';
 import { buySku, type BuySkuResult } from './store';
 import { addToWallet, getWallet, type GameState, type Mission, type Wallet } from './state';
-import type { PackTier } from './data/definitions';
 
 /** How long the ladder is, from the authored columns rather than a constant —
  *  so lengthening the season is one longer column and nothing else. */
-export const ladderLength = (): number => PASS.freePacks.length;
+export const ladderLength = (): number => PASS.freeFragments.length;
 
 /** What level `xp` buys, 0-based at the bottom: level 0 is a pass nobody has
  *  earned anything on, and the ladder's last rung is `ladderLength()`. */
@@ -143,11 +142,6 @@ export function rollMissionsIfDue(state: GameState, now: number): void {
 
 // ---------------------------------------------------------------- the rewards
 
-const packAt = (column: readonly string[], level: number): PackTier | null => {
-  const tier = column[level - 1] ?? '';
-  return tier === '' ? null : (tier as PackTier);
-};
-
 /** What one cell of one column holds. Packs are named separately from the
  *  wallet because a pack is not a currency — it is a thing that goes into the
  *  collection's queue and is opened by hand. */
@@ -163,7 +157,7 @@ export function freeCell(level: number): PassCell {
   if ((PASS.freeGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.freeGoldKeys[i];
   if ((PASS.freeStardust[i] ?? 0) > 0) wallet.Stardust = PASS.freeStardust[i];
   addItemAt(items, PASS.freeItems, level);
-  return { level, wallet, items, pack: packAt(PASS.freePacks, level) };
+  return { level, wallet, items, fragments: PASS.freeFragments[i] ?? 0 };
 }
 
 export function paidCell(level: number): PassCell {
@@ -174,7 +168,7 @@ export function paidCell(level: number): PassCell {
   if ((PASS.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = PASS.paidGoldKeys[i];
   if ((PASS.paidStardust[i] ?? 0) > 0) wallet.Stardust = PASS.paidStardust[i];
   addItemAt(items, PASS.paidItems, level);
-  return { level, wallet, items, pack: packAt(PASS.paidPacks, level) };
+  return { level, wallet, items, fragments: PASS.paidFragments[i] ?? 0 };
 }
 
 /** Is this cell waiting to be tapped? Reached, untaken, and — on the paid
@@ -217,8 +211,8 @@ export function claimCell(
   if (claimed(state, now, track).includes(level)) return 'AlreadyClaimed';
 
   const cell = track === 'free' ? freeCell(level) : paidCell(level);
-  pay(state, cell);
   const pass = normalise(state, now);
+  grant(state, cell, ['pass', pass.season, track, level]);
   const list = track === 'free' ? pass.claimedFree : pass.claimedPaid;
   list.push(level);
   list.sort((a, b) => a - b);
@@ -285,7 +279,7 @@ function payMission(state: GameState, mission: Mission): void {
     state.city.wallet.Mana = Math.max(
       0, getWallet(state.city.wallet, 'Mana') + Math.round(manaCap(state) * reward.fraction));
   } else {
-    grantPack(state, reward.tier, 'pass');
+    dropFragments(state, 'any', reward.n, ['mission', mission.uniqueId]);
   }
   state.kingdom.pass.xp += PASS.missionXp;
 }
@@ -316,8 +310,4 @@ function normalise(state: GameState, now: number): GameState['kingdom']['pass'] 
   return pass;
 }
 
-/** Pay a cell: its coins to their purses, its keys to the Bag, its pack to
- *  the collection's queue, unopened (`rewards.ts`). */
-function pay(state: GameState, cell: PassCell): void {
-  grant(state, cell, 'pass');
-}
+

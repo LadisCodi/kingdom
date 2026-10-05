@@ -20,7 +20,6 @@
 // player's thumb is already moving past.
 
 import { HEROES } from '../sim/data/definitions';
-import { ALBUMS } from '../sim/data/seasons';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
@@ -51,43 +50,6 @@ function prizeTile(prize: GachaPrize): HTMLElement {
     return el('div', { class: 'gr-tile is-currency' },
       iconEl(prize.currency, { size: 'lg' }),
       el('span', { class: 'gr-count' }, formatExact(prize.amount)));
-  }
-  // A card pack, which a room pays and a call never does. It is not opened
-  // here — the Collection is where a pack is turned over, so this tile says
-  // "you have one" and nothing more.
-  if (prize.kind === 'pack') {
-    const url = spriteUrl(`pack_${prize.tier.toLowerCase()}`);
-    return el('div', { class: `gr-tile is-pack is-${prize.tier.toLowerCase()}` },
-      url ? spriteImgAt(url, 'gr-art')
-        : el('span', { class: 'gr-art is-glyph' }, iconEl('pack', { size: 'lg' })),
-      el('span', { class: 'gr-name' }, `${prize.tier} pack`));
-  }
-  // ONE CARD TURNING OVER (Docs/features/09-relics.md §11.5).
-  //
-  // BOTH MARKS, AND THEY ARE INDEPENDENT. `New` says the player held none of
-  // this card before the pack; `×2` says the pack handed over two. A pack can
-  // do both at once, and the old tile could show only one of them — it drew
-  // `New` or, failing that, the running total the player now holds, which read
-  // as "the pack gave you four" over a fourth copy it gave one of.
-  //
-  // `×1` is left unsaid: one is what a card normally is, and a mark on every
-  // tile is a mark on none.
-  if (prize.kind === 'card') {
-    const card = ALBUMS[prize.album].cards[prize.slot];
-    const url = spriteUrl(`album_${prize.album.toLowerCase()}`);
-    return el('div', {
-      class: `gr-tile is-card r${card.rarity}${card.gold === true ? ' is-gold' : ''}`
-        + (prize.isNew ? ' is-fresh' : ''),
-    },
-      el('span', { class: 'gr-stars' },
-        ...Array.from({ length: card.rarity }, () => iconEl('star', { size: 'sm' }))),
-      url ? spriteImgAt(url, 'gr-art')
-        : el('div', { class: 'gr-art is-glyph' }, ALBUMS[prize.album].name.slice(0, 1)),
-      el('span', { class: 'gr-name' }, card.name),
-      ...(prize.isNew ? [el('span', { class: 'gr-new' }, 'New')] : []),
-      ...(prize.copies > 1
-        ? [el('span', { class: 'gr-count' }, `\u00d7${prize.copies}`)]
-        : []));
   }
   const def = HEROES[prize.heroId];
   if (prize.kind === 'hero') {

@@ -8,10 +8,10 @@ import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
 import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
 import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
-import { claimQuest } from '../src/sim/quests';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect } from '../src/sim/doors';
 import { grantItem, useItem } from '../src/sim/bag';
+import { openRelicDoor } from '../src/sim/relics';
 import { townhall } from '../src/sim/state';
 import { coordKey, type TomeId } from '../src/sim/state';
 import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
@@ -97,16 +97,13 @@ describe('the first hero', () => {
   });
 });
 
-describe('the first pack', () => {
-  it('is the first fight\'s reward', () => {
-    const state = freshGame();
-    const i = QUESTS.findIndex((q) => q.id === 'DriveThemOut');
-    state.quests.index = i;
-    clearLair(state, 'Orcs');
-    const before = state.collection.packs.length;
-    expect(claimQuest(state)).toBe('Claimed');
-    expect(state.collection.packs.length).toBe(before + 1);
-    expect(state.collection.packs.at(-1)!.tier).toBe(QUESTS[i].rewardPack);
+describe('the first relic', () => {
+  it('is met at the first lair\'s prize, and opens the relics door', () => {
+    const state = firstGame();
+    expect(isDoorOpen(state, 'relics')).toBe(false);
+    openRelicDoor(state, 'Orcs');
+    expect(isDoorOpen(state, 'relics')).toBe(true);
+    expect(isDoorOpen(state, 'bag')).toBe(true);
   });
 });
 
@@ -161,14 +158,14 @@ describe('the doors of the UI', () => {
 
   it('never shuts a door once it has opened', () => {
     const state = firstGame();
-    state.collection.packs.push({ id: 'x', tier: 'Green' } as never);
+    grantItem(state, 'GoldChest10m');
     const fresh = freshlyOpenDoors(state);
-    expect(fresh).toContain('relics');
+    expect(fresh).toContain('bag');
     for (const d of fresh) markDoorSeen(state, d);
     expect(freshlyOpenDoors(state)).toEqual([]);
-    // The pack is opened and the season wipes the cards: the door stays.
-    state.collection.packs = [];
-    expect(isDoorOpen(state, 'relics')).toBe(true);
+    // The chest is used: the door stays.
+    useItem(state, 'GoldChest10m', 1, T0);
+    expect(isDoorOpen(state, 'bag')).toBe(true);
   });
 
   it('opens every door for a veteran, and announces none', () => {

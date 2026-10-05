@@ -466,3 +466,63 @@ button.pss-cell:focus-visible { outline: calc(var(--px) * 3) solid var(--ink); o
   text-shadow: none;
   opacity: 1;
 }
+
+/* ----------------------------------------------- the pass's pill on the map */
+
+/* In the left column of pills, under the quest scroll (ui/seasonPill.ts, the season pass). */
+#season { padding: calc(var(--px) * 6) calc(var(--px) * 12) 0; align-self: flex-start; max-width: 100%; }
+#season[hidden] { display: none; }
+/* The Survey's widget: survey.css. */
+
+.sea-pill {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 5) calc(var(--px) * 14) calc(var(--px) * 5) calc(var(--px) * 8);
+  border-radius: calc(var(--px) * 10);
+  border: calc(var(--px) * 3) solid var(--gold-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.35);
+  /* The ask is the kit's orb on its corner (seasonPill.ts). */
+  position: relative;
+}
+.sea-pill:active { transform: translateY(calc(var(--px) * 2)); box-shadow: none; }
+.sea-pill.is-quiet { border-color: var(--wood-dark); opacity: 0.9; }
+
+.sea-pill-body { display: flex; flex-direction: column; gap: 1px; }
+/* Body, not the title face: a pill is read at a glance, not announced. */
+.sea-pill-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-body); line-height: 1.1; }
+/* A trough with the count printed ON it, as M20 draws it. */
+.sea-pill-trough {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 104);
+  height: calc(var(--px) * 14);
+  border-radius: calc(var(--px) * 7);
+  background: rgba(60, 36, 18, 0.4);
+  overflow: hidden;
+}
+.sea-pill-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+}
+.sea-pill-count {
+  position: relative;
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-strong);
+  color: var(--ink-inverse);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.8);
+}
+.sea-pill-clock {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 3);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+}

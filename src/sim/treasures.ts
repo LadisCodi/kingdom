@@ -17,7 +17,8 @@
 // here is time-based: a treasure waits for ever, so it needs no boundary.
 
 import { track } from './analytics';
-import { HARVEST, TREASURE } from './data/definitions';
+import { HARVEST, RELIC_RULES, TREASURE } from './data/definitions';
+import { dropFragments, type FragmentDrop } from './relics';
 import { cityMakesPerSecond } from './production';
 import { explorationGate, fogState, isPayable } from './fog';
 import { footprintCells, neighbors, type MapData } from './grid';
@@ -147,7 +148,8 @@ export function treasureReward(state: GameState, treasure: { n: number; coin: Cu
 }
 
 export type PickUpResult =
-  | { kind: 'PickedUp'; reward: Wallet; item: ItemId | null } | { kind: 'None' } | { kind: 'Hidden' };
+  | { kind: 'PickedUp'; reward: Wallet; item: ItemId | null; fragments: FragmentDrop[] }
+  | { kind: 'None' } | { kind: 'Hidden' };
 
 /**
  * The item the n-th treasure brings with its coin, or null: every
@@ -183,9 +185,13 @@ export function pickUpTreasure(state: GameState, map: MapData, cell: Coord): Pic
   }
   const item = treasureItem(state, treasure.n);
   if (item !== null) grantItem(state, item, 1);
+  // Every `treasureEvery`-th, a city relic's fragment too, rolled on its number.
+  const every = RELIC_RULES.treasureEvery;
+  const fragments = every > 0 && treasure.n > 0 && treasure.n % every === 0
+    ? dropFragments(state, 'city', 1, ['treasure', treasure.n]) : [];
   delete state.fog.treasures[key];
   state.signals.treasureWaitMs += Math.max(0, state.lastAdvance - treasure.at);
   recordEvent(state, { kind: 'signal', key: 'treasurePicked' });
   track(state, 'treasure_picked', { n: treasure.n, wait_ms: Math.max(0, state.lastAdvance - treasure.at) });
-  return { kind: 'PickedUp', reward, item };
+  return { kind: 'PickedUp', reward, item, fragments };
 }

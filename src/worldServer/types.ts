@@ -94,6 +94,9 @@ export type WorldEffect = { seq?: number } & (
   | {
     kind: 'loot'; at: number; gold: number; knowledge: number; heroXp: number; stardust: number;
     gems?: number; pack?: 'Rose' | 'Golden';
+    /** Where it was won — what a world relic's door is (relic-restoration.md
+     *  §2). Absent from a server older than the doors. */
+    from?: 'room' | 'boss' | 'portal';
     /** A camp's lump of precious material (19 §5.4). */
     precious?: { id: PreciousId; amount: number };
   }

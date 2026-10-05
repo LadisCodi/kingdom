@@ -43,11 +43,9 @@ import { setAttr } from './domWrite';
 // than after the thing it buys made the relics a screen behind a screen.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName; door: DoorId }> = [
   { name: 'store', label: 'Store', icon: 'shop', door: 'store' },
-  // The Bag (Docs/art/ui-inventory.md §3.1). It takes the Relics tab's
-  // place once relics are found rather than collected; until then the bar
-  // carries both.
+  // The Bag (Docs/art/ui-inventory.md §3.1), in the place the Relics tab
+  // held: relics are found and restored there now.
   { name: 'bag', label: 'Bag', icon: 'bag', door: 'bag' },
-  { name: 'collection', label: 'Relics', icon: 'relics', door: 'relics' },
   { name: 'heroes', label: 'Heroes', icon: 'helmet', door: 'heroes' },
   { name: 'research', label: 'Research', icon: 'research', door: 'research' },
   { name: 'build', label: 'Build', icon: 'build', door: 'build' },

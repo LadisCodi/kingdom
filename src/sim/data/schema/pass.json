@@ -8,11 +8,19 @@
         "missionXp": { "type": "int" },
         "levelXpBase": { "type": "int" },
         "levelXpGrowth": { "type": "int" },
-        "freePacks": { "type": "list", "of": { "type": "text" } },
+        "freeFragments": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "Free column: relic fragments a level pays, of relics already met."
+        },
         "freeGems": { "type": "list", "of": { "type": "int" } },
         "freeGoldKeys": { "type": "list", "of": { "type": "int" } },
         "freeStardust": { "type": "list", "of": { "type": "int" } },
-        "paidPacks": { "type": "list", "of": { "type": "text" } },
+        "paidFragments": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "Paid column: relic fragments a level pays, of relics already met."
+        },
         "paidGems": { "type": "list", "of": { "type": "int" } },
         "paidGoldKeys": { "type": "list", "of": { "type": "int" } },
         "paidStardust": { "type": "list", "of": { "type": "int" } },

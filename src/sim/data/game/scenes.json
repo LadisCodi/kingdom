@@ -1253,9 +1253,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.",
+        "text": "A piece of an old relic! Find all six and it can be restored — the rest are out in the lairs and the fog. I keep the pieces in the Bag.",
         "box": "auto",
-        "point": "ui:nav:collection",
+        "point": "ui:nav:bag",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

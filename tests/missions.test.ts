@@ -36,16 +36,16 @@ function playableKingdom(): GameState {
 describe('active play only', () => {
   it('moves the odometer live and never in a replay', () => {
     const state = freshGame();
-    recordEvent(state, { kind: 'packOpened' });
-    expect(tally(state, 'packs')).toBe(1);
+    recordEvent(state, { kind: 'itemUsed', count: 1 });
+    expect(tally(state, 'items')).toBe(1);
 
     state.replaying = true;
-    recordEvent(state, { kind: 'packOpened' });
-    expect(tally(state, 'packs')).toBe(1); // the replay counted nothing
+    recordEvent(state, { kind: 'itemUsed', count: 1 });
+    expect(tally(state, 'items')).toBe(1); // the replay counted nothing
 
     state.replaying = false;
-    recordEvent(state, { kind: 'packOpened' });
-    expect(tally(state, 'packs')).toBe(2);
+    recordEvent(state, { kind: 'itemUsed', count: 1 });
+    expect(tally(state, 'items')).toBe(2);
   });
 
   it('leaves a live mission exactly where it was across a three-day absence', () => {
@@ -123,7 +123,7 @@ describe('the odometer', () => {
       { kind: 'unitTrained', unit: 'Warrior' as const },
       { kind: 'villager' as const },
       { kind: 'heroLevel', hero: 'Warden' as const },
-      { kind: 'packOpened' as const },
+      { kind: 'itemUsed' as const, count: 1 },
     ] as const) {
       recordEvent(state, e);
     }
@@ -277,34 +277,34 @@ describe('what a mission is worth', () => {
     // A HARD ONE NEVER ROLLS. An errand that waits three days on a builder has
     // to say what it is worth before the player commits to it.
     for (const s of hard) {
-      expect(s.reward.kind).toBe('Pack');
-      expect(s.reward.kind === 'Pack' && s.reward.tier).toBe(MISSIONS.hardPack);
+      expect(s.reward.kind).toBe('Fragments');
+      expect(s.reward.kind === 'Fragments' && s.reward.n).toBe(MISSIONS.hardFragments);
     }
   });
 
-  it('varies an ordinary errand between Gems, Mana and a green pack', () => {
+  it('varies an ordinary errand between Gems, Mana and relic fragments', () => {
     const state = playableKingdom();
     const easy = sample(state).filter((s) => !isHardKind(s.kind));
     expect(easy.length).toBeGreaterThan(0);
     const kinds = new Set(easy.map((s) => s.reward.kind));
     // All three turn up — a board of eight identical chips is the thing this
     // replaced.
-    expect(kinds).toEqual(new Set(['Gems', 'Mana', 'Pack']));
+    expect(kinds).toEqual(new Set(['Gems', 'Mana', 'Fragments']));
     for (const s of easy) {
-      if (s.reward.kind === 'Pack') expect(s.reward.tier).toBe(MISSIONS.normalPack);
+      if (s.reward.kind === 'Fragments') expect(s.reward.n).toBe(MISSIONS.normalFragments);
     }
     // Roughly even, which is what "varies" has to mean to be worth doing. A
     // third each, and this only asks that none of them is rare.
-    for (const kind of ['Gems', 'Mana', 'Pack'] as const) {
+    for (const kind of ['Gems', 'Mana', 'Fragments'] as const) {
       const share = easy.filter((s) => s.reward.kind === kind).length / easy.length;
       expect(share).toBeGreaterThan(0.2);
     }
   });
 
-  it('never pays the free ladder s own tier for a hard errand', () => {
-    // The two pack tiers have to differ, or telling hard from ordinary buys
-    // the player nothing.
-    expect(MISSIONS.hardPack).not.toBe(MISSIONS.normalPack);
+  it('pays a hard errand more fragments than an ordinary one', () => {
+    // The two have to differ, or telling hard from ordinary buys the player
+    // nothing.
+    expect(MISSIONS.hardFragments).toBeGreaterThan(MISSIONS.normalFragments);
   });
 
   it('names only real kinds as hard', () => {
