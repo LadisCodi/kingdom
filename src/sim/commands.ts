@@ -16,6 +16,7 @@ import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lair
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
 import { recordEvent } from './events';
+import { grantItem } from './bag';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
 } from './timeline';
@@ -115,7 +116,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
   const cost = def.keyGemCost * count;
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
-  addToWallet(state.player.wallet, def.key, count);
+  grantItem(state, def.key, count);
   return 'Purchased';
 }
 

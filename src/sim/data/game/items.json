@@ -488,5 +488,25 @@
     "speeds": null,
     "boost": null,
     "value": 5
+  },
+  "SilverKey": {
+    "name": "Silver key",
+    "kind": "key",
+    "coin": null,
+    "seconds": 0,
+    "tier": 3,
+    "speeds": null,
+    "boost": null,
+    "value": 0
+  },
+  "GoldKey": {
+    "name": "Gold key",
+    "kind": "key",
+    "coin": null,
+    "seconds": 0,
+    "tier": 5,
+    "speeds": null,
+    "boost": null,
+    "value": 0
   }
 }

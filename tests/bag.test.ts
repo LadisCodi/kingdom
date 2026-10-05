@@ -7,6 +7,7 @@ import {
   chestValue, grantItem, heldItems, itemCount, markBagOpened, markItemSeen, useItem,
 } from '../src/sim/bag';
 import { cityMakesPerSecond } from '../src/sim/production';
+import { buyKeys } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
 import { addBuilt, freshGame, freshPresenter, map, T0 } from './helpers';
@@ -116,5 +117,28 @@ describe('the Bag on screen', () => {
     expect(getWallet(game.state.city.wallet, 'Wood') - wood).toBe(2 * item.worth.Wood!);
     expect(game.bagScreen().items).toEqual([]);
     expect(game.bagScreen().picked).toBeNull();
+  });
+});
+
+describe('the keys', () => {
+  it('move from an old save\'s purse to the Bag', () => {
+    const state = freshGame();
+    const file = serialize(state, T0);
+    file.SaveVersion = 90;
+    (file.Modules['player.currencies'] as Record<string, number>).SilverKey = 3;
+    (file.Modules['player.currencies'] as Record<string, number>).GoldKey = 1;
+    delete file.Modules['kingdom.bag'];
+    const back = deserialize(file, map, T0)!;
+    expect(back.bag.held).toEqual({ SilverKey: 3, GoldKey: 1 });
+    expect(back.bag.fresh).toEqual({});
+    expect((back.player.wallet as Record<string, number>).SilverKey).toBeUndefined();
+  });
+
+  it('are what a call spends, and what the store sells', () => {
+    const state = freshGame();
+    state.player.wallet.Gems = 10_000;
+    expect(buyKeys(state, 'advanced', 2)).toBe('Purchased');
+    expect(itemCount(state, 'GoldKey')).toBe(2);
+    expect(useItem(state, 'GoldKey', 1, T0)).toBe('UsedElsewhere');
   });
 });

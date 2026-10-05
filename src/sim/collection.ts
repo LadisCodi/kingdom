@@ -41,6 +41,7 @@ import { callGuaranteed } from './heroes';
 import { cityGatherPerSecond } from './upgrades';
 import { cityGoldPerSecond } from './production';
 import { recordEvent } from './events';
+import { grantItem } from './bag';
 
 // ---------------------------------------------------------------- the season
 
@@ -362,8 +363,8 @@ export function claimAlbum(state: GameState, album: AlbumId): AlbumPayout | null
   for (const [c, n] of Object.entries(chest)) {
     addToWallet(state.city.wallet, c as CurrencyId, n);
   }
-  if (rewards.silverKeys > 0) addToWallet(state.player.wallet, 'SilverKey', rewards.silverKeys);
-  if (rewards.goldKeys > 0) addToWallet(state.player.wallet, 'GoldKey', rewards.goldKeys);
+  if (rewards.silverKeys > 0) grantItem(state, 'SilverKey', rewards.silverKeys);
+  if (rewards.goldKeys > 0) grantItem(state, 'GoldKey', rewards.goldKeys);
   if (rewards.gems > 0) addToWallet(state.player.wallet, 'Gems', rewards.gems);
 
   const payout: AlbumPayout = {

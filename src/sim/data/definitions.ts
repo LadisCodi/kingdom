@@ -279,8 +279,6 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Stardust: currency('kingdom', balance.currencies.Stardust),
   HeroXp: currency('kingdom', balance.currencies.HeroXp),
   Gems: currency('player', balance.currencies.Gems),
-  SilverKey: currency('player', balance.currencies.SilverKey),
-  GoldKey: currency('player', balance.currencies.GoldKey),
 };
 
 // -------------------------------------------------------------- harvest loop
@@ -386,7 +384,7 @@ export const RUSH = balance.rush;
 export const BAG = balance.bag;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
-export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome';
+export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
 
 /** What a boost raises. */
 export type BoostKind = 'Rent' | 'Harvest' | 'Mana';
@@ -2019,9 +2017,9 @@ export type BannerId = 'basic' | 'advanced';
 export interface BannerDef {
   id: BannerId;
   name: string;
-  /** The currency one pull costs. One key per banner, and the key is what
+  /** The Bag item one pull costs. One key per banner, and the key is what
    *  tells the two apart before the player has read a single number. */
-  key: CurrencyId;
+  key: ItemId;
   /** What one key costs in Gems, in the store. */
   keyGemCost: number;
   heroChance: number;
@@ -2529,4 +2527,5 @@ export const GAME_VERSION: string = pkg.version;
 // v88: minutes on screen (`PlayMs` on `kingdom.signals`), additive.
 // v89: the Bag (`kingdom.bag`), additive.
 // v90: speed-ups — `CutMs` on a queue item and a training item, additive.
-export const SAVE_VERSION = 90;
+// v91: the gacha keys move from the player's purse to the Bag (a migrator).
+export const SAVE_VERSION = 91;

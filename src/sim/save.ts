@@ -759,6 +759,23 @@ const MIGRATIONS: readonly Migration[] = [
       world.Armies = [];
     },
   },
+  {
+    // v91: THE KEYS ARE BAG ITEMS (Docs/plans/relics-and-bag.md, step 4).
+    // What the player's purse held of each moves to the Bag, as the same
+    // count; neither is new, so neither sparkles.
+    to: 91,
+    migrate: (modules) => {
+      const purse = modules['player.currencies'] as Record<string, number> | undefined;
+      if (purse === undefined) return;
+      const bag = (modules['kingdom.bag'] ??= { Held: {}, Fresh: [], Badge: 0 }) as { Held?: Record<string, number> };
+      bag.Held ??= {};
+      for (const key of ['SilverKey', 'GoldKey']) {
+        const n = purse[key];
+        delete purse[key];
+        if (Number.isInteger(n) && n > 0) bag.Held[key] = (bag.Held[key] ?? 0) + n;
+      }
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */

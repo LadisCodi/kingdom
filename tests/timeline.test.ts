@@ -10,6 +10,7 @@
 // The three things the design says are easy to get wrong are the three things
 // asserted here: reconciliation reaches an existing save, a window is paid for
 // exactly once, and a kingdom is not paid for a window it never lived through.
+import { itemCount } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { advance, buyKeys } from '../src/sim/commands';
 import {
@@ -162,12 +163,12 @@ describe('the gacha', () => {
    *  Gems buy the keys, in the store. */
   const rich = (): GameState => {
     const state = freshGame();
-    state.player.wallet.SilverKey = 500;
-    state.player.wallet.GoldKey = 500;
+    state.bag.held.SilverKey = 500;
+    state.bag.held.GoldKey = 500;
     return state;
   };
   const keys = (state: GameState, banner: 'basic' | 'advanced'): number =>
-    getWallet(state.player.wallet, BANNERS[banner].key);
+    itemCount(state, BANNERS[banner].key);
 
   // Docs/features/12-quests.md §2 (quest 33): the first call on the standard banner is a
   // gift, and every one after it is the authored price. No new save field —
@@ -180,7 +181,7 @@ describe('the gacha', () => {
     expect(pull(state).result).toBe('Pulled');
     expect(keys(state, 'basic')).toBe(before); // nothing taken
 
-    expect(pullPrice(state, 'basic')).toEqual({ currency: 'SilverKey', amount: 1 });
+    expect(pullPrice(state, 'basic')).toEqual({ key: 'SilverKey', amount: 1 });
     expect(pull(state).result).toBe('Pulled');
     expect(keys(state, 'basic')).toBe(before - 1);
   });
@@ -409,9 +410,9 @@ describe('the gacha', () => {
     const state = freshGame();
     state.player.wallet.Gems = BANNERS.basic.keyGemCost + BANNERS.advanced.keyGemCost;
     expect(buyKeys(state, 'basic')).toBe('Purchased');
-    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(1);
+    expect(itemCount(state, 'SilverKey')).toBe(1);
     expect(buyKeys(state, 'advanced')).toBe('Purchased');
-    expect(getWallet(state.player.wallet, 'GoldKey')).toBe(1);
+    expect(itemCount(state, 'GoldKey')).toBe(1);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     expect(buyKeys(state, 'basic')).toBe('NotEnoughGems');
     // …and a pull never touches the Gem purse, however rich it is.
@@ -442,7 +443,7 @@ describe('the gacha', () => {
     const dust = getWallet(state.kingdom.wallet, 'Stardust');
     const claimed = claimFreePull(state, 'basic', T0);
     expect(claimed.result).toBe('Pulled');
-    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(0); // nothing to take
+    expect(itemCount(state, 'SilverKey')).toBe(0); // nothing to take
     expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(dust + BANNERS.basic.pullStardust);
   });
 
@@ -513,14 +514,14 @@ describe('the gacha', () => {
   it('charges nine for a ten-call over the free first one', () => {
     // The free call is free once, not ten times.
     const state = freshGame();
-    state.player.wallet.SilverKey = 9;
+    state.bag.held.SilverKey = 9;
     expect(pullMany(state, 'basic', 10).result).toBe('Pulled');
-    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(0);
+    expect(itemCount(state, 'SilverKey')).toBe(0);
   });
 
   it('refuses a ten-call whole rather than spending nine keys', () => {
     const state = freshGame();
-    state.player.wallet.SilverKey = 9;
+    state.bag.held.SilverKey = 9;
     pull(state, 'basic'); // the free one, which does not touch the purse
     const batch = pullMany(state, 'basic', 10);
     expect(batch.result).toBe('NotEnoughKeys');

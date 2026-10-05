@@ -40,8 +40,9 @@ import {
 } from './heroLadder';
 import { dayIndex } from './day';
 import { rand } from './rng';
-import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
+import { addToWallet, getWallet, type ItemId, type GameState, type HeroId } from './state';
 import { recordEvent } from './events';
+import { itemCount, takeItem } from './bag';
 
 // ------------------------------------------------------------ the collection
 
@@ -333,9 +334,9 @@ export const STANDARD_BANNER: BannerId = 'basic';
  */
 export function pullPrice(
   state: GameState, banner: BannerId = STANDARD_BANNER,
-): { currency: CurrencyId; amount: number } {
+): { key: ItemId; amount: number } {
   const free = banner === STANDARD_BANNER && pullCount(state, banner) === 0;
-  return { currency: BANNERS[banner].key, amount: free ? 0 : 1 };
+  return { key: BANNERS[banner].key, amount: free ? 0 : 1 };
 }
 
 export const pullCount = (state: GameState, banner: string): number =>
@@ -537,10 +538,10 @@ export function pull(
   };
   const price = pullPrice(state, banner);
   const cost = opts.free === true ? 0 : price.amount;
-  if (getWallet(state.player.wallet, price.currency) < cost) return miss;
+  if (itemCount(state, price.key) < cost) return miss;
   if (bannerHeroes(state, banner).length === 0) return { ...miss, result: 'NothingToPull' };
 
-  if (cost > 0) addToWallet(state.player.wallet, price.currency, -cost);
+  if (cost > 0) takeItem(state, price.key, cost);
   const stardust = callStardust(state, banner);
   addToWallet(state.kingdom.wallet, 'Stardust', stardust);
   recordResourceDiscovery(state, 'Stardust');
@@ -667,7 +668,7 @@ export function pullMany(
   // The free first call is free inside a batch too, so the batch costs one
   // less than it looks.
   const owed = price.amount === 0 ? Math.max(0, count - 1) : count;
-  if (getWallet(state.player.wallet, price.currency) < owed) {
+  if (itemCount(state, price.key) < owed) {
     return { result: 'NotEnoughKeys', pulls: [] };
   }
   if (bannerHeroes(state, banner).length === 0) {

@@ -4,6 +4,7 @@
 // Node, no DOM. `gachaPrizes` is a pure function on `PullResult[]` precisely
 // so the shape the reveal screen draws is testable without one — the screen
 // then only owns the timing.
+import { grantItem } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
@@ -73,7 +74,7 @@ describe('fragments are the second door to a hero', () => {
   // still reachable, because a miss pays fragments toward someone.
   it('lets a run of misses alone reach a hero', () => {
     const state = freshGame();
-    addToWallet(state.player.wallet, 'SilverKey', 40);
+    grantItem(state, 'SilverKey', 40);
     for (let i = 0; i < 40; i++) pull(state, 'basic');
     const reachable = Object.entries(state.heroes.fragments)
       .filter(([id]) => !ownsHeroId(state, id as never))
@@ -146,7 +147,7 @@ describe('the presenter hands a call to the reveal screen', () => {
 
   it('reports the ten as ten calls, however few widgets they condense to', () => {
     const state = freshGame();
-    addToWallet(state.player.wallet, 'SilverKey', 10);
+    grantItem(state, 'SilverKey', 10);
     const game = freshPresenter(state);
 
     game.doPullMany('basic', 10);
@@ -159,7 +160,7 @@ describe('the presenter hands a call to the reveal screen', () => {
 
   it('opens nothing when the purse cannot pay', () => {
     const state = freshGame();
-    state.player.wallet.SilverKey = 0;
+    state.bag.held.SilverKey = 0;
     const game = freshPresenter(state);
     game.doPull('basic'); // the free first call
     game.dismissGachaReveal();

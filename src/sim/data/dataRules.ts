@@ -107,7 +107,7 @@ export type FieldType = 'int' | 'float' | 'text' | 'bool' | 'list' | 'map' | 'ob
 
 /** What an id-valued field may name. */
 export type RefKind =
-  | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact'
+  | 'building' | 'good' | 'currency' | 'unit' | 'hero' | 'villain' | 'pack' | 'artifact' | 'item'
   | 'harvest' | 'terrain' | 'store' | 'banner' | 'tech' | 'feature' | 'lair' | 'face'
   /** What a building turns out: a unit, or the Villager. */
   | 'trainable'
@@ -124,7 +124,7 @@ export type RefKind =
 export const REF_COLLECTION: Partial<Record<RefKind, string>> = {
   building: 'buildings', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree', speaker: 'speakers',
+  terrain: 'terrain', store: 'store', banner: 'banners', tech: 'tree', speaker: 'speakers', item: 'items',
 };
 
 /** A length rule for a list: exact, or tied to a sibling number. `orEmpty`
@@ -204,7 +204,7 @@ export const QUEST_OPTIONAL_TARGET: ReadonlySet<string> = new Set(['ClaimLandmar
 const REF_SOURCE: Partial<Record<RefKind, string>> = {
   building: 'districts', good: 'goods', currency: 'currencies', unit: 'units', hero: 'heroes',
   villain: 'villains', pack: 'packs', artifact: 'artifacts', harvest: 'harvest',
-  terrain: 'terrain', store: 'store', banner: 'banners', speaker: 'speakers',
+  terrain: 'terrain', store: 'store', banner: 'banners', speaker: 'speakers', item: 'items',
 };
 
 export type DataDoc = Record<string, unknown>;
@@ -665,6 +665,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
       }
       if (['boost', 'flask', 'tome'].includes(String(it.kind)) && !(num(it.value) > 0)) {
         push(id, ['value'], `a ${it.kind} needs a value above 0`);
+      }
+      if (it.kind === 'key' && !Object.values((doc.banners ?? {}) as Record<string, { key?: unknown }>).some((b) => b.key === id)) {
+        push(id, ['kind'], 'a key is the key of a banner: no banner names this one');
       }
       if (['chest', 'choice', 'speedup', 'boost'].includes(String(it.kind)) && !(num(it.seconds) > 0)) {
         push(id, ['seconds'], `a ${it.kind} needs its seconds`);

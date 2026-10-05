@@ -30,6 +30,7 @@ export type BagTab = typeof BAG_TABS[number];
 
 const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = {
   chest: 'Resources', choice: 'Resources', speedup: 'Speed ups', boost: 'Boosts', flask: 'Other', tome: 'Other',
+  key: 'Other',
 };
 
 /** Which tab an item is shown in: a fact of its kind. */
@@ -112,7 +113,7 @@ function startBoost(state: GameState, def: ItemDef, n: number, now: number): voi
   else work();
 }
 
-export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'NeedsATimer' | 'NeedsACoin';
+export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'UsedElsewhere' | 'NeedsACoin';
 
 /**
  * Use `n` of an item at `now`. A chest pays `n` times what one pays: it lands
@@ -124,8 +125,9 @@ export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'NeedsATimer' |
 export function useItem(state: GameState, id: ItemId, n: number, now: number, choice?: CurrencyId): UseItemResult {
   const def = ITEMS[id];
   if (def === undefined) return 'UnknownItem';
-  // A speed-up is used ON a timer (sim/speedups.ts), never from the Bag alone.
-  if (def.kind === 'speedup') return 'NeedsATimer';
+  // A speed-up is used ON a timer (sim/speedups.ts), a key on its banner's
+  // call (heroes.ts) — never from the Bag alone.
+  if (def.kind === 'speedup' || def.kind === 'key') return 'UsedElsewhere';
   if (def.kind === 'choice' && (choice === undefined || !CHEST_COINS.includes(choice))) return 'NeedsACoin';
   if (!(n >= 1) || !Number.isInteger(n) || itemCount(state, id) < n) return 'NotHeld';
   if (def.kind === 'chest' || def.kind === 'choice') {
@@ -149,6 +151,19 @@ export function useItem(state: GameState, id: ItemId, n: number, now: number, ch
   }
   track(state, 'item_used', { item: id, count: n, ...(choice !== undefined ? { coin: choice } : {}) });
   return 'Used';
+}
+
+/** Take `n` of an item out of the Bag for what spends it — a key on a pull.
+ *  False, and nothing taken, when it holds fewer. */
+export function takeItem(state: GameState, id: ItemId, n: number): boolean {
+  if (itemCount(state, id) < n) return false;
+  const left = itemCount(state, id) - n;
+  if (left > 0) state.bag.held[id] = left;
+  else {
+    delete state.bag.held[id];
+    delete state.bag.fresh[id];
+  }
+  return true;
 }
 
 /** The tile was tapped: it is no longer new. */

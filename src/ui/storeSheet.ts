@@ -66,7 +66,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     const offer = game.keyOffer(banner);
     const def = BANNERS[banner];
     return card({
-      art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': offer.key }),
+      art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': String(offer.key) }),
       name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
       desc: `One call on ${def.name.toLowerCase()}. You hold ${formatExact(offer.held)}.`,
     }, btn({
