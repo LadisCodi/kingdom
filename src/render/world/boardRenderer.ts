@@ -9,7 +9,8 @@
 //
 // The three fog states are treatments of the same hex, never a second asset:
 // Revealed is full colour, Sensed is the same hex dimmed under a thin veil,
-// Unknown is opaque rolling mist. Ownership is a border on the hex edge.
+// Unknown is under the cloud bank (cloudGrid.ts), a canvas of its own below
+// this one. Ownership is a border on the hex edge.
 
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
@@ -28,7 +29,9 @@ import { WORLD_BUILD } from '../../sim/data/definitions';
 import {
   COMBO_SPRITE, OUTPOST_BUILDING_SPRITE, OUTPOST_SPRITE, hexArt, pickVariant, type HexCombo,
 } from './hexArt';
-import { HEX_R, TILT, hexCorners, regionEdges } from './hexLayout';
+import { TILT, hexCorners, regionEdges } from './hexLayout';
+import { drawCloudBank } from '../fog/fogLayer';
+import { HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
 
 /** A flat colour under the plate, for the frames before it loads. */
@@ -84,12 +87,9 @@ export const SEAT_COLORS = {
   rivals: ['#c8312b', '#2e9e57', '#e0a020', '#7b4fc9', '#1c9a9a'],
 };
 
-const MIST = '#d9e0e6';
-const MIST_DEEP = '#b9c4cd';
 const SEAM = 'rgba(40, 52, 30, 0.28)';
-/** A tile's side: packed earth under the ground, grey under the mist. */
+/** A tile's side: packed earth. */
 const SKIRT_EARTH = { lit: '#7a5a3a', shade: '#5c4129' };
-const SKIRT_MIST = { lit: '#9aa6b2', shade: '#86929e' };
 const SENSED_DIM = 'rgba(24, 32, 44, 0.48)';
 const SENSED_VEIL = 'rgba(225, 232, 238, 0.28)';
 
@@ -114,23 +114,32 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
   camera.settle();
   const ctx = canvas.getContext('2d')!;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-
-  // The world past the board's edge is mist too: the board stops and the
-  // clouds go on (19 §1).
-  const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#c3cdd6');
-  sky.addColorStop(1, '#a9b6c1');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h);
 
   const { state, source, now } = frame;
   const board = source.board();
   const fog = worldFogAt(state, now);
   const r = camera.hexRadius;
   const states = board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog));
+
+  // The clouds, under this canvas: every Unknown hex, and the world past the
+  // board's edge — the board stops and the clouds go on (19 §1).
+  const mask = new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
+  let seen = '';
+  for (const bh of board.hexes) {
+    if (states[bh.index] === 'Unknown') continue;
+    mask[maskIndex(bh.hex)] = 0;
+    seen += `${bh.index},`;
+  }
+  drawCloudBank(cloudLayer(canvas), HEX_GRID, {
+    w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
+    mask, maskX: MASK_ORIGIN, maskY: MASK_ORIGIN, maskW: MASK_SPAN, maskH: MASK_SPAN,
+    maskSig: seen, clock: performance.now(),
+  });
 
   // Row by row, top to bottom, so a prop that rises over the hex above is
   // drawn after it.
@@ -224,6 +233,22 @@ function drawArmy(
 
 // ------------------------------------------------------------------ a hex
 
+/** The bank's canvas, made the first time the board is drawn and laid
+ *  under it (`.world-layer`). */
+const cloudLayers = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
+
+function cloudLayer(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  let layer = cloudLayers.get(canvas);
+  if (layer === undefined) {
+    layer = document.createElement('canvas');
+    layer.className = 'world-layer';
+    layer.setAttribute('aria-hidden', 'true');
+    canvas.parentElement?.insertBefore(layer, canvas);
+    cloudLayers.set(canvas, layer);
+  }
+  return layer;
+}
+
 function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   const corners = hexCorners(cx, cy, r);
   ctx.beginPath();
@@ -239,14 +264,12 @@ function drawHex(
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
 
-  // The tile's thickness under its two lower edges: hidden by the row in
-  // front, it shows only along the board's near rim.
-  drawSkirt(ctx, c.x, c.y, r, fogState === 'Unknown');
+  // Under the clouds, the hex is not there.
+  if (fogState === 'Unknown') return;
 
-  if (fogState === 'Unknown') {
-    drawMist(ctx, c.x, c.y, r, bh.index, camera.dpr);
-    return;
-  }
+  // The tile's thickness under its two lower edges: hidden by the row in
+  // front, it shows only along the board's near rim and over the clouds.
+  drawSkirt(ctx, c.x, c.y, r);
 
   // A city's hex and the Portal have their own drawing; every other hex is
   // its plate and its art (world-hex-art.md §2–§3).
@@ -307,7 +330,7 @@ function drawHex(
 const SKIRT = 0.16;
 
 /** The two faces under a tile's lower edges, the right one in shade. */
-function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, mist: boolean): void {
+function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   const [, c1, c2, c3] = hexCorners(cx, cy, r);
   const d = r * SKIRT;
   const face = (a: { x: number; y: number }, b: { x: number; y: number }, color: string) => {
@@ -320,8 +343,8 @@ function drawSkirt(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: num
     ctx.fillStyle = color;
     ctx.fill();
   };
-  face(c2, c3, mist ? SKIRT_MIST.lit : SKIRT_EARTH.lit);
-  face(c1, c2, mist ? SKIRT_MIST.shade : SKIRT_EARTH.shade);
+  face(c2, c3, SKIRT_EARTH.lit);
+  face(c1, c2, SKIRT_EARTH.shade);
 }
 
 /** A combination standing with its foot at (x, footY), `width` wide: its own
@@ -380,59 +403,6 @@ function drawProp(ctx: CanvasRenderingContext2D, sprite: string, x: number, foot
   }
   const height = width * aspect;
   drawSprite(ctx, sprite, x - width / 2, footY - height, width, height);
-}
-
-/** Opaque rolling mist: a pale hex with soft puffs, placed by the hex's
- *  index so the clouds hold still from frame to frame. */
-function paintMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, seed: number): void {
-  ctx.save();
-  hexPath(ctx, cx, cy, r * 1.04);
-  ctx.fillStyle = MIST;
-  ctx.fill();
-  ctx.clip();
-  for (let i = 0; i < 4; i++) {
-    const a = ((seed * 7 + i * 13) % 12) / 12 * Math.PI * 2;
-    const px = cx + Math.cos(a) * r * 0.45;
-    const py = cy + Math.sin(a) * r * 0.35 * TILT;
-    const g = ctx.createRadialGradient(px, py, 0, px, py, r * 0.75);
-    g.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
-    g.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 2.4);
-  }
-  const shade = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
-  shade.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  shade.addColorStop(1, MIST_DEEP + '66');
-  ctx.fillStyle = shade;
-  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-  ctx.restore();
-}
-
-/**
- * THE MIST, BAKED. Its puffs depend on the hex's index only through
- * `seed * 7 % 12` — twelve drawings in all — so each is painted once, at the
- * closest zoom and the screen's scale, and laid down as one copy: four
- * radial gradients a hex, ninety hexes a frame, were most of the board's cost.
- */
-const MIST_KINDS = 12;
-const mists = new Map<number, HTMLCanvasElement>();
-let mistScale = 0;
-
-function drawMist(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, seed: number, dpr: number): void {
-  const bakeR = HEX_R * dpr;
-  if (mistScale !== bakeR) {
-    mists.clear();
-    mistScale = bakeR;
-  }
-  const kind = seed % MIST_KINDS;
-  let art = mists.get(kind);
-  if (art === undefined) {
-    art = document.createElement('canvas');
-    art.width = art.height = Math.ceil(bakeR * 2.4);
-    paintMist(art.getContext('2d')!, bakeR * 1.2, bakeR * 1.2, bakeR, kind);
-    mists.set(kind, art);
-  }
-  ctx.drawImage(art, cx - r * 1.2, cy - r * 1.2, r * 2.4, r * 2.4);
 }
 
 /** The Portal's hex has no ground: cracked dark stone. */

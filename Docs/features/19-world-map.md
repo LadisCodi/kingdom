@@ -85,7 +85,7 @@
 |---|---|---|
 | **Revealed** | full terrain, contents, borders | Revealed |
 | **Sensed** | dimmed and half-veiled, faint silhouettes showing through | Discovered |
-| **Unknown** | opaque rolling mist, the whole hex hidden | Undiscovered |
+| **Unknown** | under the cloud bank (art-direction §8.1): the hex is not there | Undiscovered |
 
 - At the start only two hexes are revealed: **your city, and the Dark Portal.**
 - **A hex is Sensed when it is next to a hex you revealed.** The Portal,
