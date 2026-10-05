@@ -2304,6 +2304,8 @@ export interface StoreSkuDef {
   /** The hand of cards this SKU hands over, or **null for a SKU that is not a
    *  bundle** — every Gem pack and the Royal chest. */
   bundle: CardBundleDef | null;
+  /** An item bundle: what it puts in the Bag. Empty for anything else. */
+  items: Partial<Record<ItemId, number>>;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
@@ -2341,6 +2343,15 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   CardsSatchel: { name: "A collector's satchel", description: 'Star packs and a wildcard, for the album you are closest to.', sprite: 'bundle_satchel' },
   CardsCase: { name: "A collector's case", description: 'Star packs and the wildcard that fills any slot.', sprite: 'bundle_case' },
   CardsCabinet: { name: "A collector's cabinet", description: 'A season of star packs, and three wildcards to aim.', sprite: 'bundle_cabinet' },
+  // The Bag's bundles (Docs/proposals/inventory.md §5): speed-ups in a
+  // satchel, a crate, a chest; choice chests in a sack and a cart; and the
+  // builder's crate.
+  SpeedupSatchel: { name: 'A satchel of speed-ups', description: 'A few hours off whatever you are waiting for.', sprite: 'bundle_speed_s' },
+  SpeedupCrate: { name: 'A crate of speed-ups', description: 'Most of a day off your timers.', sprite: 'bundle_speed_m' },
+  SpeedupChest: { name: 'A chest of speed-ups', description: 'A long build, done tonight.', sprite: 'bundle_speed_l' },
+  ResourceSack: { name: 'A sack of chests', description: 'Eight hours of the coin you pick.', sprite: 'bundle_res_s' },
+  ResourceCart: { name: 'A cart of chests', description: 'A day of the coins you pick.', sprite: 'bundle_res_m' },
+  BuildersCrate: { name: "The builder's crate", description: 'Construction speed-ups and a chest for the materials.', sprite: 'bundle_builder' },
 };
 
 /** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
@@ -2352,6 +2363,7 @@ export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
 interface StoreRow {
   priceUsd: number; gems: number;
   packs: number; packTier: string; wildcards: number; wildcardRarity: number;
+  items?: Partial<Record<ItemId, number>>;
 }
 
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
@@ -2368,7 +2380,7 @@ export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
           wildcardRarity: (b.wildcardRarity || 1) as Rarity,
         }
       : null;
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle }];
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, bundle, items: { ...(b.items ?? {}) } }];
   }),
 ) as Record<StoreSkuId, StoreSkuDef>;
 
@@ -2376,6 +2388,10 @@ export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
  *  (Docs/features/09-relics.md §6.1). Workbook row order, like every shelf. */
 export const CARD_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
   .filter((id) => STORE[id]?.bundle !== null);
+
+/** The Bag's bundles, in row order — the store's item shelf. */
+export const ITEM_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => Object.values(STORE[id]?.items ?? {}).some((n) => (n ?? 0) > 0));
 
 /** Workbook row order — the order the store shows them in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];

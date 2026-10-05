@@ -19,7 +19,7 @@ import {
 import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
-  GOODS, ITEMS, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
+  GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   CHEST_ORDER, COLLECTION, FACE_ORDER, PACKS, PACK_ORDER, faceOf,
   type BoostKind, type FaceId, type ItemDef, type PackTier, HELP } from './sim/data/definitions';
@@ -115,7 +115,7 @@ import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
+  PROFILE_LABEL, budgetRemainingCents, buyItemBundle, buySku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { addHeroXp, boonText, pullPrice } from './sim/heroes';
@@ -2025,6 +2025,21 @@ export class Game {
    * renders no shelf at all rather than a row explaining why, because a
    * withdrawn product is not an offer.
    */
+  /** The Bag's bundles, as the store's item shelf draws them: what each
+   *  holds, and — for the speed-ups — what that time would cost in Gems at
+   *  the rush price, the comparison the shelf exists to offer. */
+  itemBundleOffers(): Array<{ id: StoreSkuId; name: string; priceCents: number; sprite: string; lines: string[]; gemValue: number }> {
+    return ITEM_BUNDLE_ORDER.map((id) => {
+      const sku = STORE[id];
+      const seconds = (Object.entries(sku.items) as Array<[ItemId, number]>)
+        .reduce((s, [item, n]) => s + (ITEMS[item].kind === 'speedup' ? ITEMS[item].seconds * n : 0), 0);
+      return {
+        id, name: sku.name, priceCents: priceCents(id), sprite: sku.sprite,
+        lines: this.bundleLines(id), gemValue: seconds > 0 ? gemsToFinish(seconds) : 0,
+      };
+    });
+  }
+
   cardBundleOffers(): Array<{
     id: StoreSkuId; name: string; priceCents: number; sprite: string;
     packs: number; tier: PackTier; wildcards: number; rarity: Rarity;
@@ -2052,6 +2067,10 @@ export class Game {
    *  confirmation's grant. A star pack's promise is named rather than implied:
    *  the gold edition is what the player is buying. */
   bundleLines(id: StoreSkuId): string[] {
+    if (isItemBundle(id)) {
+      return (Object.entries(STORE[id].items) as Array<[ItemId, number]>)
+        .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`);
+    }
     const bundle = bundleOf(id);
     if (bundle === null) return [];
     const out: string[] = [];
@@ -2736,7 +2755,12 @@ export class Game {
   /** Raise the shortfall sheet for `cost`, if the Bag can help with it. */
   private offerShortfall(title: string, cost: Wallet, retry: () => void): boolean {
     const short = Object.keys(this.shortfall(cost)) as CurrencyId[];
-    if (!short.some((c) => this.chestsFor(c).length > 0)) return false;
+    // With no chest of a short coin, the sheet still has somewhere to send
+    // the player once the store sells the Bag's bundles — not before.
+    const anyChest = short.some((c) => this.chestsFor(c).length > 0);
+    const storeHelps = this.doorOpen('bag') && this.doorOpen('store') && ITEM_BUNDLE_ORDER.length > 0
+      && short.some((c) => (['Gold', 'Food', 'Wood', 'Stone'] as CurrencyId[]).includes(c));
+    if (!anyChest && !storeHelps) return false;
     if (this.openOverlay !== 'shortfall') this.shortfallReturn = this.openOverlay === 'upgrade' ? null : this.openOverlay;
     this.setOverlay('shortfall');
     this.shortfallAsk = { title, cost, retry };
@@ -3265,6 +3289,8 @@ export class Game {
         ? buySurvey(this.state, this.now())
       : bundleOf(id) !== null
         ? buyCardBundle(this.state, id, this.now())
+      : isItemBundle(id)
+        ? buyItemBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
     if (result === 'Purchased') this.track('purchased', this.skuProps(id));
     if (result === 'NoBudget') this.track('refused_no_credit', this.skuProps(id));
@@ -3277,9 +3303,10 @@ export class Game {
       // store hands over the things, it does not turn them over.
       if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
       else if (bundleOf(id) !== null) this.toast(`${STORE[id].name} — open it in the Collection`);
+      else if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
       this.setOverlay(back);
       if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
-      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null) {
+      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && bundleOf(id) === null && !isItemBundle(id)) {
         this.reward({ Gems: STORE[id].gems });
       }
     } else if (result === 'SeasonClosing') {

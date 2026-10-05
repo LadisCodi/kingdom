@@ -161,6 +161,32 @@ export function renderStoreSheet(game: Game): HTMLElement {
       }));
   });
 
+  // ---- the Bag's bundles: the card bundles' row, what lands in the Bag
+  // listed, and the speed-ups' Gem worth at the rush price — what the shelf
+  // exists to compare.
+  const itemBundles = game.itemBundleOffers().map((bundle) => {
+    const url = spriteUrl(bundle.sprite);
+    const art = url
+      ? spriteImgAt(url, 'store-pack-row-art')
+      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('bag', { size: 'lg' }));
+    return card({
+      art,
+      name: bundle.name,
+      desc: bundle.gemValue > 0
+        ? `${formatExact(bundle.gemValue)} gems' worth of time, at the Finish price`
+        : 'Into the Bag, to open when you need it',
+    },
+      el('div', { class: 'store-bundle-lines' },
+        ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },
+          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
+      btn({
+        label: formatUsd(bundle.priceCents),
+        kind: 'primary',
+        finish: 'gem',
+        onClick: () => game.openIap(bundle.id),
+      }));
+  });
+
   // ---- gem packs: upright cards, count over art over price
   // GEM_PACK_ORDER, not every SKU: the season pass is a Store row because the
   // budget has to see it, but it is sold on the pass where the ladder beside
@@ -211,6 +237,11 @@ export function renderStoreSheet(game: Game): HTMLElement {
     ...(bundles.length === 0 ? [] : [
       el('div', { class: 'store-section' }, el('span', {}, 'Card bundles')),
       ...bundles,
+    ]),
+    // The Bag's own shelf, once the Bag is open.
+    ...(itemBundles.length === 0 || !game.doorOpen('bag') ? [] : [
+      el('div', { class: 'store-section' }, el('span', {}, 'For the Bag')),
+      ...itemBundles,
     ]),
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),

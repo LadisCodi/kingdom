@@ -130,6 +130,8 @@ describe('placement', () => {
 
   it('an unaffordable confirm shakes the costed currencies and queues nothing', () => {
     const state = freshGame();
+    // Before the Bag is open there is no sheet to raise: the purse shakes.
+    state.tutorial.veteran = false;
     const game = freshPresenter(state);
     const shaken: CurrencyId[][] = [];
     game.onShake((c) => shaken.push(c));
@@ -640,6 +642,7 @@ describe('villager training', () => {
 
   it('with room but no Food, it shakes Food and queues nobody', () => {
     const state = freshGame();
+    state.tutorial.veteran = false; // the Bag shut: nothing to offer but the shake
     const game = freshPresenter(state);
     addBuilt(state, 'Housing', { x: 3, y: 2 });
     const shaken: CurrencyId[][] = [];

@@ -21,7 +21,8 @@
 // walks the same code, sees the same prices and is refused the same way.
 
 import { PAYER, STORE } from './data/definitions';
-import type { GameState, PayerProfile, PayerState, StoreSkuId } from './state';
+import type { GameState, ItemId, PayerProfile, PayerState, StoreSkuId } from './state';
+import { grantItem } from './bag';
 import { addToWallet } from './state';
 
 export const PAYER_PROFILES: readonly PayerProfile[] = [
@@ -105,6 +106,23 @@ export const canAffordSku = (state: GameState, sku: StoreSkuId, now: number): bo
 };
 
 export type BuySkuResult = 'Purchased' | 'NoProfile' | 'NoBudget';
+
+/** Does this SKU put items in the Bag? */
+export const isItemBundle = (sku: StoreSkuId): boolean =>
+  Object.values(STORE[sku].items).some((n) => (n ?? 0) > 0);
+
+/**
+ * Buy one of the Bag's bundles: the budget first, through `buySku` (which
+ * grants no Gems for it), then the items. A bundle hands over the things,
+ * never the Gems that would buy them.
+ */
+export function buyItemBundle(state: GameState, sku: StoreSkuId, now: number): BuySkuResult | 'NotABundle' {
+  if (!isItemBundle(sku)) return 'NotABundle';
+  const paid = buySku(state, sku, now);
+  if (paid !== 'Purchased') return paid;
+  for (const [id, n] of Object.entries(STORE[sku].items) as Array<[ItemId, number]>) grantItem(state, id, n);
+  return 'Purchased';
+}
 
 /**
  * The purchase. The price leaves the monthly budget and the Gems land in the
