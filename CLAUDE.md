@@ -166,6 +166,19 @@ PR, merged with a merge commit.
 - **Finishing a feature or bugfix is one motion**: commit, run the gate,
   push, open the PR into `develop`, merge it. No need to ask.
 - **A release or hotfix to `main` is only on request** — it deploys.
+- **A release or hotfix also deploys the server.** On the release branch,
+  once the gate is green and BEFORE it merges into `main` (the push to
+  `main` ships the client, and a new client must never meet an old server):
+  ```bash
+  npx supabase db push --dry-run   # read what will apply
+  npx supabase db push             # the migrations in supabase/migrations/
+  npm run server:bundle && npx supabase functions deploy world
+  ```
+  The project is the one `supabase link` points at (`supabase/.temp/`,
+  never committed — a fresh worktree links again). A migration must keep
+  the server the live client talks to working, since the server goes
+  first. Nothing changed under `supabase/` or in what `server:bundle`
+  builds → say so, and skip it.
 
 ## Saves
 
