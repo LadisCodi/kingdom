@@ -78,7 +78,7 @@ yet inside it.
 | The store, the payer profile, three ad placements | [`14`](features/14-monetization.md) | the other placements and SKUs, the telemetry pipeline (§4 Step 4) |
 | Workshops and refined goods | [`17`](features/17-workshops-and-goods.md) | — |
 | Garrisons, raids and lairs | [`18`](features/18-garrisons-and-raids.md) | — |
-| The world board — explorers, claims, chains, improvements, armies, conquest, the Dark Portal | [`19`](features/19-world-map.md) | a real world server; today it runs against a local stand-in with five rivals |
+| The world board — explorers, claims, chains, improvements, armies, conquest, the Dark Portal | [`19`](features/19-world-map.md) | districts on a radius-6 board ([`plans/world-districts.md`](plans/world-districts.md)); a real world server — today it runs against a local stand-in with five rivals |
 | The season pass and its missions | [`20`](features/20-season-pass.md) | — |
 | Harmony and the decorations | [`21`](features/21-harmony.md) | — |
 | Progression doors, tutorials, the dialogue stage | [`22`](features/22-progression.md), [`23`](features/23-tutorials.md), [`24`](features/24-dialogue.md) | the advisor's portrait |

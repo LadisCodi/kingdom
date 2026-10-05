@@ -15,7 +15,7 @@
 |---|---|---|---|---|
 | **Your province** | authored, **identical for every player**, square grid, buildable wherever it is revealed | client | build, tap, harvest | permanent, **inviolable** |
 | **Temporary provinces** | event maps, PvE, compressed scale, square grid | client | the same verbs, inside a window | disposable |
-| **The world board** | a shared pointy-top hex board, six players, outposts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
+| **The world board** | a shared pointy-top hex board, six players, districts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
 
 ### 1.1 Your province
 
@@ -124,9 +124,9 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 - Design rule, technical boundary and marketing line at once: **province private
   and client-authoritative, world shared and server-authoritative.**
-- **An outpost is a claim, not a building.** If the hex falls, the player keeps
+- **A district is a claim, not a building.** If the hex falls, the player keeps
   everything they already collected from it; what sits in its stores goes
-  with the hex ([`19`](19-world-map.md) §7.1).
+  with the hex ([`19`](19-world-map.md) §7.3).
 
 ## 6. The save shape
 
@@ -146,7 +146,7 @@ Each is playable without the ones after it.
 1. **The board proper**: axial coordinates, neighbours, distance, march time,
    both zoom registers, client-side fog, explorers, the dispatch sheet
    ([`19`](19-world-map.md) §1–§3).
-2. **Control**: outposts, connection, inactive hexes, improvements and their
+2. **Control**: districts, connection, inactive hexes, upgrades and their
    stores ([`19`](19-world-map.md) §5, §7).
 3. **Contest**: armies, attacks, conquest and denial, the Fortress, resolved
    on the server (§3.1; [`19`](19-world-map.md) §4, §6).
