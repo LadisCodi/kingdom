@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 109 suites, keep them all green
+npm test             # vitest run — 111 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -182,7 +182,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 87; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 88; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -201,6 +201,11 @@ than the build is rejected rather than downgraded.
   the game's (`Game.now`) — and a command id, so a retry runs once. An effect
   the server owes is applied past `state.world.effectSeq`, saved, then
   acknowledged (`Docs/plans/online-server.md` §2).
+- **Analytics are events, never reads of the save** (`Docs/plans/analytics.md`).
+  A new one is `track(state, name, props)` in the sim (`sim/analytics.ts`,
+  an outbox the tick drains) or `game.track(name, props)` in the game, and
+  a line in the plan's table. Testers' numbers are in the `analytics.v_*`
+  views.
 - **One tick driver.** The Unity build double-ticked its timer; the web build
   ticks from exactly one place. Do not add a second.
 - **Three distance metrics coexist by design.** Adjacency — fog state, the

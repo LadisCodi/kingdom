@@ -984,6 +984,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         DiscoveredAt: Object.fromEntries(Object.entries(state.signals.discoveredAt).map(([id, t]) => [id, iso(t)])),
         TreasureWaitMs: state.signals.treasureWaitMs,
         ReturnTaps: state.signals.returnTaps.map((r) => ({ AtUtc: iso(r.at), Kind: r.kind })),
+        PlayMs: state.signals.playMs,
       },
       'kingdom.research': {
         Completed: state.research.completed,
@@ -1439,13 +1440,15 @@ export function deserialize(
   // Additive (v83): a kingdom from before the signals starts them empty.
   const signalsDto = modules['kingdom.signals'] as {
     SightedAt?: Record<string, string>; DiscoveredAt?: Record<string, string>;
-    TreasureWaitMs?: number; ReturnTaps?: Array<{ AtUtc: string; Kind: string }>;
+    TreasureWaitMs?: number; ReturnTaps?: Array<{ AtUtc: string; Kind: string }>; PlayMs?: number;
   } | undefined;
   state.signals = {
     sightedAt: Object.fromEntries(Object.entries(signalsDto?.SightedAt ?? {}).map(([id, t]) => [id, ms(t)])),
     discoveredAt: Object.fromEntries(Object.entries(signalsDto?.DiscoveredAt ?? {}).map(([id, t]) => [id, ms(t)])),
     treasureWaitMs: signalsDto?.TreasureWaitMs ?? 0,
     returnTaps: (signalsDto?.ReturnTaps ?? []).map((r) => ({ at: ms(r.AtUtc), kind: r.Kind })),
+    // Additive (v88).
+    playMs: Number.isFinite(signalsDto?.PlayMs) && signalsDto!.PlayMs! >= 0 ? signalsDto!.PlayMs! : 0,
   };
 
   // Additive (v81). A kingdom from before the abandoned buildings may have

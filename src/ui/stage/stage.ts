@@ -298,7 +298,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   const end = (): void => {
-    if (playing !== null) game.state.tutorial.seen[sceneKey(playing.scene.id)] = true;
+    if (playing !== null) {
+      if (game.state.tutorial.seen[sceneKey(playing.scene.id)] !== true) game.track('scene_done', { id: playing.scene.id });
+      game.state.tutorial.seen[sceneKey(playing.scene.id)] = true;
+    }
     gapUntil = performance.now() + HELP.sceneGapSeconds * 1000;
     playing = null;
     boxShown = false;

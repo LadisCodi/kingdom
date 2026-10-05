@@ -8,6 +8,7 @@
 // authored by coordinate, so they live in region-map.json and are edited in
 // the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
+import pkg from '../../../package.json';
 import balance from './balance';
 import regionMap from './region-map.json';
 import treeDoc from './tech-tree.json';
@@ -2418,7 +2419,9 @@ export interface EventTemplate {
  */
 export const EVENTS: readonly EventTemplate[] = [];
 
-export const GAME_VERSION = '0.2.0';
+/** The build, as `package.json` names it — so a release's bump is the only
+ *  place it changes. */
+export const GAME_VERSION: string = pkg.version;
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/implementation-plan.md §1).
@@ -2488,4 +2491,5 @@ export const GAME_VERSION = '0.2.0';
 // Sanctuaries and armies are reset, the armies' troops sent home.
 // v87: the last world-server effect applied (`EffectSeq` on `kingdom.world`),
 // additive.
-export const SAVE_VERSION = 87;
+// v88: minutes on screen (`PlayMs` on `kingdom.signals`), additive.
+export const SAVE_VERSION = 88;

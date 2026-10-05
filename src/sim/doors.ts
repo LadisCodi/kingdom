@@ -9,6 +9,7 @@
 // Relics. A veteran kingdom (a save from before the doors) has every door
 // open. The BOOKS are the sim's own doors, decided in `research.ts`.
 
+import { track } from './analytics';
 import { ABANDONED, QUESTS } from './data/definitions';
 import { watchtowerClaimed } from './landmarks';
 import { ownGoldBase } from './population';
@@ -98,6 +99,7 @@ export const freshlyOpenDoors = (state: GameState): DoorId[] => {
 
 /** Remember that a door is open, so it never shuts. */
 export function markDoorSeen(state: GameState, door: DoorId): void {
+  if (state.tutorial.seen[doorKey(door)] !== true) track(state, 'door_opened', { id: door });
   state.tutorial.seen[doorKey(door)] = true;
 }
 

@@ -12,6 +12,7 @@
 // player's pace, and buying the paid column opens every level already
 // reached — a column of cells to tap, not a payout.
 
+import { track as trackEvent } from './analytics';
 import { SURVEY } from './data/definitions';
 import { cityGoldPerSecond, grantPack } from './collection';
 import { recordEvent } from './events';
@@ -104,6 +105,7 @@ export function claimSurveyCell(state: GameState, level: number, track: 'free' |
   if (list.includes(level)) return 'AlreadyClaimed';
   pay(state, track === 'free' ? freeSurveyCell(state, level) : paidSurveyCell(level));
   recordEvent(state, { kind: 'signal', key: 'surveyClaimed' });
+  trackEvent(state, 'survey_claimed', { level, paid: track === 'paid' });
   list.push(level);
   list.sort((a, b) => a - b);
   return 'Claimed';

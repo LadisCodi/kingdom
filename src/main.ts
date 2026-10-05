@@ -13,7 +13,7 @@ import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, DISTRICTS, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { grantPack, seasonLeftMs } from './sim/collection';
 import { PACK_ORDER } from './sim/data/definitions';
@@ -62,7 +62,9 @@ import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { RemoteWorldServer } from './worldServer/remote';
 import { renderNicknameSheet } from './ui/world/nicknameSheet';
-import { cloudWorldCall } from './persist/cloud';
+import { cloudAnalyticsSend, cloudWorldCall } from './persist/cloud';
+import { Analytics, browserAnalyticsStore } from './analytics/analytics';
+import { trackedWorld } from './analytics/worldEvents';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
@@ -108,6 +110,12 @@ const DEV_GRANTS: ReadonlyArray<{ icon: string; coin: CurrencyId; amount: number
 // app swiped away, a crashed tab) loses no more than that. The cloud copy is
 // debounced on its own (persist/saveManager.ts).
 const AUTOSAVE_TICKS = 5;
+/** A heartbeat a minute while the page is seen, and a batch of analytics
+ *  every half minute (Docs/plans/analytics.md §3.1, §5). */
+const HEARTBEAT_TICKS = 60;
+const ANALYTICS_FLUSH_TICKS = 30;
+/** Hidden this long, a page that shows again starts a new session. */
+const NEW_SESSION_AFTER_MS = 5 * 60_000;
 
 async function boot(): Promise<void> {
   // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),
@@ -172,6 +180,35 @@ async function boot(): Promise<void> {
   // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
   const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
   game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
+  // The playtest's analytics (Docs/plans/analytics.md), when there is a
+  // server to send them to: every world command is an event of its own.
+  if (saveManager.cloudActive) {
+    game.analytics = new Analytics({
+      send: cloudAnalyticsSend,
+      store: browserAnalyticsStore(),
+      context: () => game.analyticsContext(),
+      dev: new URLSearchParams(location.search).has('dev'),
+      gameVersion: GAME_VERSION,
+      saveVersion: SAVE_VERSION,
+    });
+    game.worldServer = trackedWorld(game.worldServer, (name, props) => game.track(name, props));
+    const away = catchUp as CatchUpReport | null;
+    game.analytics.startSession(game.now(), {
+      away_ms: away?.elapsedMs ?? 0,
+      gold: away?.result.goldEarned ?? 0,
+      mana: away?.result.manaEarned ?? 0,
+      knowledge: away?.result.knowledgeEarned ?? 0,
+    });
+    // What no player reports: an error, with where it happened.
+    const failed = (message: string, stack: string): void => game.track('client_error', {
+      message: message.slice(0, 300), stack: stack.split('\n').slice(0, 4).join('\n'),
+    });
+    window.addEventListener('error', (e) => failed(String(e.message), String((e.error as Error | undefined)?.stack ?? '')));
+    window.addEventListener('unhandledrejection', (e) => {
+      const reason = e.reason as Error | undefined;
+      failed(String(reason?.message ?? e.reason), String(reason?.stack ?? ''));
+    });
+  }
   game.playerId = saveManager.playerId();
   game.persist = () => saveManager.save(game.state, game.now());
   void game.connectWorld();
@@ -484,20 +521,46 @@ async function boot(): Promise<void> {
   };
 
   let ticks = 0;
+  let lastTickAt = Date.now();
   const runTick = () => {
     timed('tick', () => game.tick());
     syncAmbience(biomeAtCenter()); // ambience has its own mute now
     ticks += 1;
     if (ticks % AUTOSAVE_TICKS === 0) saveManager.save(game.state, game.now());
+    // Time on screen (Docs/plans/analytics.md §2): only while the page is
+    // seen, and never a throttled background gap.
+    const at = Date.now();
+    const visible = document.visibilityState === 'visible';
+    if (visible) game.state.signals.playMs += Math.min(Math.max(0, at - lastTickAt), 5_000);
+    lastTickAt = at;
+    if (visible && ticks % HEARTBEAT_TICKS === 0) game.track('heartbeat');
+    if (ticks % ANALYTICS_FLUSH_TICKS === 0) void game.analytics?.flush();
   };
   setInterval(runTick, 1000);
   runTick(); // catch up immediately on load (offline progress pays out here)
 
+  // A page out of sight ends its session for now: it carries on if it is
+  // seen again soon, and a new one starts after a longer absence.
+  let hiddenAt: number | null = null;
+  const leaving = (): void => {
+    saveManager.save(game.state, game.now(), true);
+    game.analytics?.endSession(game.now());
+    void game.analytics?.flush();
+  };
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') runTick(); // browsers throttle hidden tabs
-    else saveManager.save(game.state, game.now(), true);
+    if (document.visibilityState === 'visible') {
+      if (hiddenAt !== null && Date.now() - hiddenAt >= NEW_SESSION_AFTER_MS) {
+        game.analytics?.startSession(game.now(), { away_ms: Date.now() - hiddenAt });
+      }
+      hiddenAt = null;
+      lastTickAt = Date.now();
+      runTick(); // browsers throttle hidden tabs
+    } else {
+      hiddenAt = Date.now();
+      leaving();
+    }
   });
-  window.addEventListener('pagehide', () => saveManager.save(game.state, game.now(), true));
+  window.addEventListener('pagehide', leaving);
 
   // ------------------------------------------------------------ render loop
   // Paced (render/framePacer.ts): the display's rate while the map is being
