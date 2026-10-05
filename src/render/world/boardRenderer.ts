@@ -12,10 +12,11 @@
 // Unknown is under the cloud bank (cloudGrid.ts).
 //
 // Three canvases, bottom to top: the GROUND (plates, sides, seams, veils,
-// ownership borders), the CLOUD BANK, and this one — everything that stands
-// on a hex, and every mark over the board. So the clouds lap over the near
-// edge of a tile while nothing upright is hidden. Ownership is a border
-// painted on the hex edge, under what stands there.
+// ownership borders, the selection rim), the CLOUD BANK, and this one —
+// everything that stands on a hex, and every mark over the board. So the
+// clouds lap over the near edge of a tile while nothing upright is hidden.
+// Ownership and selection are rims painted on the hex edge, under what
+// stands there.
 
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
@@ -179,8 +180,12 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawBorder(ground, camera, region.map(hexAt), color, seen ? 1 : 0.55, 3, claiming);
   }
 
+  // The selected hex's rim: on the ground like a border, so what stands on
+  // the hex stands over it — but over the clouds on an Unknown hex, which
+  // has nothing standing and would hide it.
   if (frame.selected !== null) {
-    drawBorder(ctx, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4);
+    const on = states[frame.selected] === 'Unknown' ? ctx : ground;
+    drawBorder(on, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4);
   }
 
   // The Portal's appointment, over its hex: when it opens, or how long it
