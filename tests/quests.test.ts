@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DISTRICTS, ERA_UNLOCK_CELLS, FOG, KNOWLEDGE, LANDMARKS, QUESTS, LAIRS, LAIR_ORDER, TECHNOLOGIES, TECH_ORDER,
-  levelIndexed, type QuestDef, CURRENCIES,
+  levelIndexed, type QuestDef, CURRENCIES, SURVEY,
 } from '../src/sim/data/definitions';
 import { requiredPopulation, requiredTechForLevel } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
@@ -814,4 +814,16 @@ describe('the chain trains the villagers each Townhall level asks for', () => {
       }
     });
   });
+});
+
+// The quest and the Survey's pill read the same count of revealed cells, and
+// both can be on screen at once: a quest's goal is one of the Survey's levels,
+// or the screen shows one count against two near goals — 23/30 beside 23/32
+// (Docs/plans/ux-pass.md §2.7).
+describe('a cells quest shares its goal with the Survey', () => {
+  it.each(QUESTS.filter((q) => q.goalType === 'DiscoverCells').map((q) => [q.id, q.goalAmount] as const))(
+    '%s asks for a Survey level (%i)', (_id, goal) => {
+      expect(SURVEY.cells).toContain(goal);
+    },
+  );
 });
