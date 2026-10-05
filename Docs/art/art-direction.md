@@ -151,7 +151,9 @@ always 2:1. Canvas height is that diamond plus the footprint's headroom.
 - **Three or four content elements read comfortably on a tactical hex.** Past
   that, the hex is overloaded and something must be dropped or merged.
 - Ownership reads as a **border colour on the hex edge**, never as a tint over
-  the ground — a tinted hex fights the terrain it is meant to identify.
+  the ground — a tinted hex fights the terrain it is meant to identify. It is
+  painted on the ground: over the plate, under everything that stands on the
+  hex.
 
 ### 7.1 The tilt
 
@@ -232,9 +234,9 @@ province under the midday sun. Target:
 - **The world board stands in the same bank**: every Unknown hex and
   everything past the board's edge, at full thickness up to every seen hex.
   The tallest puffs lap over a seen hex's edges — a fifth of a hex over its
-  two near edges, a tenth over its two far ones. Plates and sides are under
-  the clouds; everything that stands on a hex, and every mark on the board,
-  is over them.
+  two near edges, a tenth over its two far ones. Plates, sides and ownership
+  borders are under the clouds; everything that stands on a hex, and every
+  other mark on the board, is over them.
 - **Art:** the bank is one tileable texture
   (`src/render/fog/cloud_tile.webp`; original and prompt in
   [`fog/`](fog/)); the cushion and the payable patch are sprites.

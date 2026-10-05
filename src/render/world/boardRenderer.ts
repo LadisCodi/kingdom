@@ -11,10 +11,11 @@
 // Revealed is full colour, Sensed is the same hex dimmed under a thin veil,
 // Unknown is under the cloud bank (cloudGrid.ts).
 //
-// Three canvases, bottom to top: the GROUND (plates, sides, seams, veils),
-// the CLOUD BANK, and this one — everything that stands on a hex, and every
-// mark over the board. So the clouds lap over the near edge of a tile while
-// nothing upright is hidden. Ownership is a border on the hex edge.
+// Three canvases, bottom to top: the GROUND (plates, sides, seams, veils,
+// ownership borders), the CLOUD BANK, and this one — everything that stands
+// on a hex, and every mark over the board. So the clouds lap over the near
+// edge of a tile while nothing upright is hidden. Ownership is a border
+// painted on the hex edge, under what stands there.
 
 import type { GameState } from '../../sim/state';
 import type { BoardHex } from '../../sim/world/board';
@@ -165,14 +166,15 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
 
   // Borders: each kingdom's city and the ground it holds or is claiming, as
-  // far as the player can see it, in its owner's colour.
+  // far as the player can see it, in its owner's colour. Painted on the
+  // ground, so what stands on a hex stands over it.
   for (const seat of source.seats()) {
     const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
       .filter((i) => states[i] !== 'Unknown');
     if (region.length === 0) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
     const seen = region.some((i) => states[i] === 'Revealed');
-    drawBorder(ctx, camera, region.map(hexAt), color, seen ? 1 : 0.55);
+    drawBorder(ground, camera, region.map(hexAt), color, seen ? 1 : 0.55);
   }
 
   if (frame.selected !== null) {
