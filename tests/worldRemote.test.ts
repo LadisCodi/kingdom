@@ -223,6 +223,8 @@ describe('the game on the real server', () => {
     expect(game.scene).toBe('world');
     expect(game.openOverlay).toBeNull();
     expect(game.worldView?.seats.find((s) => s.you)?.name).toBe('Ada of Kent');
+    // The name the board draws under the player's city (19 §1.3).
+    expect(game.worldSource().seats().find((s) => s.owner.you)?.owner.name).toBe('Ada of Kent');
   });
 
   it('says so when the name is taken, and stays on the sheet', async () => {

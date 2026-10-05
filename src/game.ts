@@ -4646,7 +4646,7 @@ export class Game {
   /** Where the board comes from: the server's snapshot once there is one,
    *  the locally generated board before (sim/world/source.ts). */
   worldSource(): WorldSource {
-    return this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(this.state.world.board);
+    return this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(this.state.world.board, this.state.city.name);
   }
 
   /** The seat world commands are made for. */

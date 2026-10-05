@@ -306,6 +306,16 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
   }
 
+  // Under every city the player can see, its kingdom's name on a plank
+  // (19 §1.3): the nickname a player chose, or a rival's.
+  for (const seat of source.seats()) {
+    if (!seat.owner.you && states[seat.index] === 'Unknown') continue;
+    const c = camera.hexToScreen(hexAt(seat.index));
+    if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 2 || c.y > h + r * 3) continue;
+    const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
+    drawNameplate(ctx, camera, c.x, c.y + r * 0.62, seat.owner.name, color, seat.owner.you);
+  }
+
   // A route fades as it goes into the bank.
   const routeAlpha = (i: number): number => 1 - 0.65 * bankAt(i);
   for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now, routeAlpha);
@@ -1162,6 +1172,61 @@ function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y + 0.5);
+  ctx.restore();
+}
+
+/**
+ * A kingdom's name under its city: a plank of carved wood, lit from above,
+ * the name burnt in cream, and a strip of cloth in the kingdom's colour
+ * tacked along its top edge — the colour of its border. The player's own
+ * plank is edged in brass.
+ */
+function drawNameplate(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, name: string, color: string, you: boolean,
+): void {
+  const fs = Math.max(10, Math.min(15, camera.hexWidth * 0.1));
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(name).width + fs * 1.5;
+  const ph = fs * 1.75;
+  const px = x - pw / 2;
+  const py = y - ph / 2;
+  const radius = ph * 0.28;
+  // Its shadow on the ground below it.
+  ctx.fillStyle = 'rgba(30, 18, 8, 0.35)';
+  ctx.beginPath();
+  ctx.roundRect(px + 1, py + 2.5, pw, ph, radius);
+  ctx.fill();
+  // The plank.
+  const wood = ctx.createLinearGradient(0, py, 0, py + ph);
+  wood.addColorStop(0, '#8a5a30');
+  wood.addColorStop(0.45, '#6b4324');
+  wood.addColorStop(1, '#4a2d16');
+  ctx.fillStyle = wood;
+  ctx.strokeStyle = you ? '#e9c46a' : '#2e1c0e';
+  ctx.lineWidth = you ? 2 : 1.5;
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, radius);
+  ctx.fill();
+  ctx.stroke();
+  // The cloth along its top, in the kingdom's colour.
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, radius);
+  ctx.clip();
+  ctx.fillStyle = color;
+  ctx.fillRect(px, py, pw, ph * 0.26);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+  ctx.fillRect(px, py + ph * 0.26, pw, 1);
+  ctx.restore();
+  // The name, burnt into it: a dark groove under the cream.
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const ty = py + ph * 0.62;
+  ctx.fillStyle = 'rgba(20, 10, 4, 0.6)';
+  ctx.fillText(name, x, ty + 1);
+  ctx.fillStyle = '#fff3d6';
+  ctx.fillText(name, x, ty);
   ctx.restore();
 }
 
