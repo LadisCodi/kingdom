@@ -77,6 +77,8 @@ import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
+import { choosePayerProfile, PAYER_PROFILES } from './sim/store';
+import type { PayerProfile } from './sim/state';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
@@ -434,6 +436,13 @@ async function boot(): Promise<void> {
     }
     else overlaySlot.clear();
   };
+  // A playtest organiser can set a tester's profile in the link
+  // (`?payer=Minnow`): it is chosen here, before anything asks, and is as
+  // final as one picked on the sheet (14-monetization.md §3).
+  const presetPayer = new URLSearchParams(location.search).get('payer');
+  if (presetPayer !== null && (PAYER_PROFILES as readonly string[]).includes(presetPayer)) {
+    choosePayerProfile(game.state, presetPayer as PayerProfile, game.now());
+  }
   // A return is watched for its first tap (Docs/playtest.md §5).
   game.armReturnTap(catchUp === null ? 0 : (catchUp as CatchUpReport).elapsedMs);
   // Show the offline report once, and only when the absence was long enough
@@ -441,13 +450,18 @@ async function boot(): Promise<void> {
   if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
     game.setOverlay('welcome');
   }
-  // A save with no payer profile stops here until one is chosen
-  // (Docs/features/14-monetization.md §3). setOverlay already forces the
-  // profile sheet over anything else asked for, so this only matters when
-  // nothing else was — a fresh game with no welcome report.
-  if (game.state.player.payer === null) game.setOverlay('payerProfile');
+  // A save with no payer profile stops here until one is chosen, once its
+  // First Morning is over (Docs/features/14-monetization.md §3). setOverlay
+  // already forces the profile sheet over anything else asked for, so this
+  // only matters when nothing else was — and the moment the morning ends,
+  // the sheet takes the next free screen.
+  const askPayer = (): void => {
+    if (game.payerDue() && game.openOverlay === null) game.setOverlay('payerProfile');
+  };
+  askPayer();
 
   game.onChange(refreshScreens);
+  game.onChange(askPayer);
   // Which board is on screen, as a class the CSS swaps the canvases and the
   // province's pills on.
   const appRoot = document.getElementById('app')!;
