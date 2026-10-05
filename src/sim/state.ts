@@ -470,6 +470,9 @@ export interface WorldState {
   /** The player's armies out on the board: the client's half — who went and
    *  with what. The army itself is server state (02-map-scopes.md §3.1). */
   armies: WorldArmyOut[];
+  /** The last world-server effect applied (WorldEffect.seq): those at or
+   *  below it are not applied again when the server sends them again. */
+  effectSeq: number;
 }
 
 export interface WorldArmyOut {

@@ -5,6 +5,9 @@ const KEY = 'kingdom.save';
  *  it is the record that the wipe happened, and it has to outlive the thing
  *  it wiped. */
 const RESET_KEY = 'kingdom.resetAt';
+/** Who this device plays as when there is no signed-in user. Not cleared by
+ *  a reset either: a reset starts the kingdom again, not the player. */
+const PLAYER_KEY = 'kingdom.playerId';
 
 export function loadLocal(): SaveFile | null {
   try {
@@ -51,5 +54,19 @@ export function lastResetAt(): number {
     return Number.isFinite(n) ? n : 0;
   } catch {
     return 0;
+  }
+}
+
+/** This device's player id, made on first use. A private window that blocks
+ *  storage plays as a new player each visit. */
+export function localPlayerId(): string {
+  try {
+    const known = localStorage.getItem(PLAYER_KEY);
+    if (known !== null && known !== '') return known;
+    const made = `local-${crypto.randomUUID()}`;
+    localStorage.setItem(PLAYER_KEY, made);
+    return made;
+  } catch {
+    return `local-${crypto.randomUUID()}`;
   }
 }

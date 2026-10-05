@@ -548,8 +548,11 @@ export class Game {
     this.packsSeen = state.collection.packs.length;
   }
 
+  /** The game's clock is the world server's: the device's time moved by
+   *  how far the server's runs ahead of it. One clock means a time the
+   *  server sends — a build done, an army home — is read as it was meant. */
   now(): number {
-    return Date.now();
+    return Date.now() + (this.worldServer?.clockOffset() ?? 0);
   }
 
   // ------------------------------------------------------------ subscriptions
@@ -3084,7 +3087,7 @@ export class Game {
     const paid = this.state.research.rewarded.length;
     const result = researchTech(this.state, this.map, id, this.now());
     if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id].effects)) {
-      void this.worldServer.setBoost(worldImprovementBoost(this.state), this.now());
+      void this.worldServer.setBoost(worldImprovementBoost(this.state));
     }
     if (result === 'Researched') {
       playSfx('researchComplete');
@@ -4623,6 +4626,13 @@ export class Game {
   /** The dev tool's "play as": the seat world commands are made for, or
    *  null for the player's own. A rival's commands cost the player nothing. */
   actingSeat: number | null = null;
+  /** Who the player is to the servers: the signed-in user's id, handed over
+   *  by main; a test plays as the stand-in's old fixed id. */
+  playerId = 'local-player';
+  /** Saves the game now — main's save, handed over. A world effect is
+   *  acknowledged to the server only once the state it changed is saved, so
+   *  a crash between the two delivers it again rather than losing it. */
+  persist: (() => void) | null = null;
 
   /** Where the board comes from: the server's snapshot once there is one,
    *  the locally generated board before (sim/world/source.ts). */
@@ -4640,15 +4650,15 @@ export class Game {
   async connectWorld(): Promise<void> {
     if (this.worldServer === null) return;
     const snap = await this.worldServer.join(
-      { id: 'local-player', name: this.state.city.name, prefer: this.state.world.board }, this.now());
-    await this.worldServer.setBoost(worldImprovementBoost(this.state), this.now());
+      { id: this.playerId, name: this.state.city.name, prefer: this.state.world.board });
+    await this.worldServer.setBoost(worldImprovementBoost(this.state));
     this.applyWorldSnapshot(snap);
   }
 
   /** Ask the server for the board as it stands now. */
   async refreshWorld(): Promise<void> {
     if (this.worldServer === null) return;
-    const snap = await this.worldServer.snapshot(this.now());
+    const snap = await this.worldServer.snapshot();
     if (snap !== null) this.applyWorldSnapshot(snap);
   }
 
@@ -4661,9 +4671,13 @@ export class Game {
       this.state.world.board = { ...snap.board };
       this.state.world.revealed = emptyBits();
       this.state.world.explorers = [];
+      this.state.world.effectSeq = 0;
     }
     // What the server owed: armies home and the reports of what they did.
-    for (const e of snap.effects) {
+    // Each is sent until acknowledged, so only those past the last one
+    // applied are new.
+    const fresh = snap.effects.filter((e) => (e.seq ?? 0) > this.state.world.effectSeq);
+    for (const e of fresh) {
       if (e.kind === 'armyHome') receiveArmy(this.state, e);
       else if (e.kind === 'loot') {
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
@@ -4686,6 +4700,11 @@ export class Game {
         this.toast(e.text);
       } else this.toast(e.text);
     }
+    if (fresh.length > 0) {
+      this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
+      this.persist?.();
+    }
+    if (this.actingSeat === null) this.worldServer?.acknowledge(this.state.world.effectSeq);
     this.worldView = snap;
     this.reportSeenCamps(snap);
     const board = snapshotWorld(snap).board();
@@ -4707,7 +4726,7 @@ export class Game {
       .map((h) => h.index);
     if (fresh.length === 0) return;
     this.seenPending = true;
-    void this.worldServer.reportSeen(fresh, this.now()).then((r) => {
+    void this.worldServer.reportSeen(fresh).then((r) => {
       this.seenPending = false;
       if (r.ok) this.applyWorldSnapshot(r.snapshot);
     });
@@ -4744,13 +4763,13 @@ export class Game {
   /** Repair a district a camp burnt: a builder, and a share of a claim's
    *  Gold (19 §5.5). */
   async doRepairHex(index: number, gold: number): Promise<void> {
-    await this.worldCommand(index, 'Repair', 1, gold, (asSeat) => this.worldServer!.repair(index, this.now(), asSeat));
+    await this.worldCommand(index, 'Repair', 1, gold, (asSeat) => this.worldServer!.repair(index, asSeat));
   }
 
   /** Claim a hex: build its district, with a builder and its Gold. */
   async doClaimHex(index: number, gold: number): Promise<void> {
     const district = districtOf(this.worldSource().board().hexes[index]) ?? 'Rural';
-    await this.worldCommand(index, district, 1, gold, (asSeat) => this.worldServer!.claim(index, this.now(), asSeat));
+    await this.worldCommand(index, district, 1, gold, (asSeat) => this.worldServer!.claim(index, asSeat));
   }
 
   /** Finish the builder's work on one of the player's hexes now, with Gems:
@@ -4766,7 +4785,7 @@ export class Game {
       this.notify();
       return;
     }
-    const r = await this.worldServer.finish(index, this.now());
+    const r = await this.worldServer.finish(index);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4782,7 +4801,7 @@ export class Game {
 
   /** Build an upgrade into a district, or raise it a level. */
   async doUpgradeHex(index: number, what: WorldUpgrade, level: number, gold: number): Promise<void> {
-    await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, this.now(), asSeat));
+    await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, asSeat));
   }
 
   private async worldCommand(
@@ -4898,7 +4917,7 @@ export class Game {
     const route = this.armyRoute(target)!;
     const r = await this.worldServer.sendArmy({
       purpose: this.armyPurpose, target, heroes, board, path: route.path, speed: armyMarchSpeed(this.state),
-    }, this.now());
+    });
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4917,15 +4936,16 @@ export class Game {
   /** Fight the next room of the dungeon an army camps at, and watch it. */
   async doDelveRoom(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.delveRoom(armyId, this.now());
+    const r = await this.worldServer.delveRoom(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
       return;
     }
     // What the room paid, for the spoils the delve screen shows after the
-    // fight (19 §8.2) — read before the snapshot's effects are spent.
-    const loot = r.snapshot.effects.find((e) => e.kind === 'loot');
+    // fight (19 §8.2) — the newest loot owed, read before the snapshot's
+    // effects are spent.
+    const loot = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
     this.delveSpoils = {
       won: r.won, depth: r.depth, room: r.room, boss: r.boss, lost: r.lost,
       loot: loot?.kind === 'loot' ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
@@ -4943,7 +4963,7 @@ export class Game {
   /** Go down the Portal's next floor, and watch the fight. */
   async doDescendPortal(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.descendPortal(armyId, this.now());
+    const r = await this.worldServer.descendPortal(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -4957,7 +4977,7 @@ export class Game {
   /** Call an army home. */
   async doRecallArmy(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.recall(armyId, this.now(), this.actingSeat ?? undefined);
+    const r = await this.worldServer.recall(armyId, this.actingSeat ?? undefined);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -5022,7 +5042,7 @@ export class Game {
       return;
     }
     addGood(this.state.city.goods, d.give, -d.giveN);
-    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN }, this.now());
+    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN });
     if (!r.ok) {
       addGood(this.state.city.goods, d.give, d.giveN);
       this.toast(this.worldRefusal(r.why));
@@ -5045,7 +5065,7 @@ export class Game {
       return;
     }
     addGood(this.state.city.goods, o.want.id, -o.want.amount);
-    const r = await this.worldServer.takeOffer(offerId, this.now());
+    const r = await this.worldServer.takeOffer(offerId);
     if (!r.ok) {
       addGood(this.state.city.goods, o.want.id, o.want.amount);
       this.toast(this.worldRefusal(r.why));
@@ -5063,7 +5083,7 @@ export class Game {
   /** Take one's own offer down: what it held comes back. */
   async doWithdrawOffer(offerId: string): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.withdrawOffer(offerId, this.now());
+    const r = await this.worldServer.withdrawOffer(offerId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -5085,7 +5105,7 @@ export class Game {
       this.notify();
       return;
     }
-    const r = await this.worldServer.tribute(index, this.now());
+    const r = await this.worldServer.tribute(index);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
@@ -5100,7 +5120,7 @@ export class Game {
   /** Collect a held hex's stores into the purse. */
   async doCollectHex(index: number): Promise<void> {
     if (this.worldServer === null) return;
-    const r = await this.worldServer.collect(index, this.now(), this.actingSeat ?? undefined);
+    const r = await this.worldServer.collect(index, this.actingSeat ?? undefined);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();

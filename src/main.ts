@@ -167,6 +167,8 @@ async function boot(): Promise<void> {
   // World control is server state. Until the server exists, a local stand-in
   // plays its part, under its own key (worldServer/local.ts).
   game.worldServer = new LocalWorldServer(browserStore());
+  game.playerId = saveManager.playerId();
+  game.persist = () => saveManager.save(game.state, game.now());
   void game.connectWorld();
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately

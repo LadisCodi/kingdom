@@ -23,9 +23,13 @@
 // a designer probably did not mean.
 
 import balance from './balance';
-import { COLS } from '../../ui/research/layout';
 import { effectProblems, type TechEffect } from './techEffectRules';
 import type { TomeId } from '../state';
+
+/** Three columns to a tome page. A fourth would not fit a phone, and the
+ *  flow stops reading as a flow past three. The page's geometry
+ *  (ui/research/layout.ts) is drawn from this. */
+export const COLS = 3;
 
 /** What a technology puts in the player's hands. One entry per thing it
  *  opens; every gate the game checks is derived from these. */

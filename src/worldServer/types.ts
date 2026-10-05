@@ -74,9 +74,12 @@ export interface ServerArmy {
   fallen: Array<{ unitId: UnitId; count: number }>;
 }
 
-/** What the server owes a player, delivered with the next snapshot and
- *  applied by the client (15-social.md §1.2). */
-export type WorldEffect =
+/** What the server owes a player, delivered with every snapshot until the
+ *  client acknowledges it, and applied by the client once (15-social.md
+ *  §1.2). `seq` numbers a seat's effects from 1, in the order they were
+ *  owed: the client applies those above the last it saved, and its ack
+ *  lets the server forget the rest. */
+export type WorldEffect = { seq?: number } & (
   | {
     kind: 'armyHome'; armyId: string; at: number;
     troops: Array<{ unitId: UnitId; count: number }>;
@@ -93,7 +96,8 @@ export type WorldEffect =
     gems?: number; pack?: 'Rose' | 'Golden';
     /** A camp's lump of precious material (19 §5.4). */
     precious?: { id: PreciousId; amount: number };
-  };
+  }
+);
 
 /** The Dark Portal on one board (19 §10). */
 export interface PortalState {
@@ -140,8 +144,14 @@ export interface ServerBoard {
   /** Everything due up to here has been resolved. */
   resolvedTo: number;
   armies: ServerArmy[];
-  /** Owed to each seat, oldest first. */
+  /** Owed to each seat, oldest first, until the seat acknowledges them. */
   effects: Record<number, WorldEffect[]>;
+  /** The last `seq` given to an effect owed to each seat. */
+  effectSeq?: Record<number, number>;
+  /** The commands each seat made most recently, by the id the client gave
+   *  them, with the answer they got: a retry is answered again, never run
+   *  again. */
+  ops?: Record<number, Array<{ id: string; reply: unknown }>>;
   /** The counter army ids are made from. */
   nextId: number;
   /** Rooms each seat has cleared in each dungeon, by hex index. Each player

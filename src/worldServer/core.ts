@@ -608,9 +608,15 @@ const walksFrom = (from: number, to: number, path: readonly number[]): boolean =
   path.length >= 2 && path[0] === from && path[path.length - 1] === to && path.every(isBoardIndex)
   && path.every((i, k) => k === 0 || hexDistance(hexAt(path[k - 1]), hexAt(i)) === 1);
 
-/** Owed to a seat: delivered with its next snapshot. */
+/** Owed to a seat: delivered with every snapshot until it is acknowledged. */
 function owe(b: ServerBoard, seat: number, effect: WorldEffect): void {
-  (b.effects[seat] ??= []).push(effect);
+  (b.effects[seat] ??= []).push({ ...effect, seq: nextSeq(b, seat) });
+}
+
+function nextSeq(b: ServerBoard, seat: number): number {
+  const seqs = (b.effectSeq ??= {});
+  seqs[seat] = (seqs[seat] ?? 0) + 1;
+  return seqs[seat];
 }
 
 const report = (b: ServerBoard, seat: number, t: number, text: string, good: boolean): void =>
@@ -1147,9 +1153,22 @@ function portalView(b: ServerBoard, seat: number, t: number): PortalView {
   };
 }
 
-/** What the server owes a seat, handed over once. */
+/** What the server still owes a seat once it has acknowledged every effect
+ *  up to `ack`: those are forgotten, the rest delivered again. An effect
+ *  owed before effects were numbered is numbered now. */
+export function owedTo(b: ServerBoard, seat: number, ack: number): WorldEffect[] {
+  const owed = b.effects[seat];
+  if (owed === undefined) return [];
+  for (const e of owed) e.seq ??= nextSeq(b, seat);
+  const left = owed.filter((e) => e.seq! > ack);
+  if (left.length === 0) delete b.effects[seat];
+  else b.effects[seat] = left;
+  return left.map((e) => ({ ...e }));
+}
+
+/** Everything owed to a seat, acknowledged as it is handed over. */
 export function drainEffects(b: ServerBoard, seat: number): WorldEffect[] {
-  const out = b.effects[seat] ?? [];
+  const out = owedTo(b, seat, 0);
   delete b.effects[seat];
   return out;
 }

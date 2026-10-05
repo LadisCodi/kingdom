@@ -26,7 +26,7 @@ async function connected(): Promise<{ game: Game; clock: { t: number }; toasts: 
   const clock = { t: T0 };
   game.now = () => clock.t;
   game.worldCamera = new HexCamera({ clientWidth: 390, clientHeight: 844 });
-  game.worldServer = new LocalWorldServer(memoryStore());
+  game.worldServer = new LocalWorldServer(memoryStore(), () => clock.t);
   const toasts: string[] = [];
   game.onToast((m) => toasts.push(m));
   await game.connectWorld();
@@ -48,7 +48,7 @@ describe('connecting to the world server', () => {
     const game = freshPresenter(freshGame());
     game.now = () => T0;
     const before = { ...game.state.world.board };
-    game.worldServer = new LocalWorldServer(memoryStore());
+    game.worldServer = new LocalWorldServer(memoryStore(), () => T0);
     await game.connectWorld();
     expect(game.state.world.board).toEqual(before);
     expect(game.worldView?.seats.filter((s) => s.bot)).toHaveLength(5);

@@ -2486,4 +2486,6 @@ export const GAME_VERSION = '0.2.0';
 // v84: the tutorial's rent rush (`Rush` on `kingdom.quests`), additive.
 // v85: the world board is radius 6 — the save's world fog, trips, builds,
 // Sanctuaries and armies are reset, the armies' troops sent home.
-export const SAVE_VERSION = 86;
+// v87: the last world-server effect applied (`EffectSeq` on `kingdom.world`),
+// additive.
+export const SAVE_VERSION = 87;

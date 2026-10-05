@@ -6,55 +6,59 @@
 // apart from the player's save, as the real server's database will be.
 //
 // Every method is async, as a call to the real server will be, so nothing
-// that uses it changes the day it is swapped for one.
+// that uses it changes the day it is swapped for one. Every request goes
+// through `handleWorld` (handle.ts) — the one function the real server runs.
 
-import type { Board } from '../sim/battle';
-import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
-import {
-  claim, collect, delveRoom, finish, descendPortal, drainEffects, emptyWorld, freshPortal, join, recall, resolveTo,
-  postOffer, repair, reportSeen, sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
-} from './core';
+import { emptyWorld, freshPortal } from './core';
+import { handleWorld, seatOf, type SendArmyRequest, type WorldCommand, type WorldCommandKind, type WorldReply } from './handle';
 import type {
-  ArmyPurpose, BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard, ServerWorld, TradeResult,
+  BoardRef, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerWorld, TradeResult,
   WorldSnapshot,
 } from './types';
 
-/** What the client asks of the world server. `asSeat` is the dev tool's
- *  "play as a rival": the command is made for that seat instead. */
+/** What the client asks of the world server. The server keeps the time:
+ *  nothing here says when. `asSeat` is the dev tool's "play as a rival": the
+ *  command is made for that seat instead. */
 export interface WorldServerApi {
-  join(player: { id: string; name: string; prefer?: BoardRef }, now: number): Promise<WorldSnapshot>;
-  snapshot(now: number, asSeat?: number): Promise<WorldSnapshot | null>;
-  claim(index: number, now: number, asSeat?: number): Promise<CommandResult>;
+  join(player: { id: string; name: string; prefer?: BoardRef }): Promise<WorldSnapshot>;
+  snapshot(asSeat?: number): Promise<WorldSnapshot | null>;
+  claim(index: number, asSeat?: number): Promise<CommandResult>;
   /** Build an upgrade into a district that stands, or raise it a level. */
-  upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult>;
+  upgrade(index: number, what: WorldUpgrade, asSeat?: number): Promise<CommandResult>;
   /** Pay a camp off — the tribute paid by the client (19 §5.4). */
-  tribute(index: number, now: number, asSeat?: number): Promise<CommandResult>;
+  tribute(index: number, asSeat?: number): Promise<CommandResult>;
   /** The Exchange (19 §7.5): the client pays what it gives, and is handed
    *  what it receives. */
-  postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult>;
+  postOffer(give: Lot, want: Lot, asSeat?: number): Promise<TradeResult>;
   /** Repair a district a camp burnt (19 §5.5); the client pays. */
-  repair(index: number, now: number, asSeat?: number): Promise<CommandResult>;
+  repair(index: number, asSeat?: number): Promise<CommandResult>;
   /** Tell the server which lurking camps the player has now seen. */
-  reportSeen(indices: number[], now: number): Promise<CommandResult>;
-  takeOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
-  withdrawOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult>;
+  reportSeen(indices: number[]): Promise<CommandResult>;
+  takeOffer(offerId: string, asSeat?: number): Promise<TradeResult>;
+  withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
-  finish(index: number, now: number, asSeat?: number): Promise<CommandResult>;
-  collect(index: number, now: number, asSeat?: number): Promise<CollectResult>;
-  sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[]; speed?: number },
-    now: number, asSeat?: number,
-  ): Promise<SendResult>;
-  recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult>;
+  finish(index: number, asSeat?: number): Promise<CommandResult>;
+  collect(index: number, asSeat?: number): Promise<CollectResult>;
+  sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult>;
+  recall(armyId: string, asSeat?: number): Promise<CommandResult>;
   /** What this kingdom's research does to its districts' output and stores. */
-  setBoost(boost: SeatBoost, now: number): Promise<void>;
-  delveRoom(armyId: string, now: number): Promise<DelveResult>;
-  descendPortal(armyId: string, now: number): Promise<DelveResult>;
+  setBoost(boost: SeatBoost): Promise<void>;
+  delveRoom(armyId: string): Promise<DelveResult>;
+  descendPortal(armyId: string): Promise<DelveResult>;
+  /** The last effect the client has applied AND saved: the next request
+   *  tells the server, which then stops sending it. */
+  acknowledge(seq: number): void;
+  /** How far the server's clock is ahead of this device's, in ms. The
+   *  client keeps its time on the server's (Game.now). */
+  clockOffset(): number;
   /** Dev only: move every time on the player's board `ms` into the past,
    *  so the next read plays that much more of the world. */
   devShift?(ms: number): Promise<void>;
 }
+
+/** A command id: unique per command, made once and reused on a retry. */
+export const newOpId = (): string => globalThis.crypto.randomUUID();
 
 /** Where the local server keeps its state: localStorage in the game, a map
  *  in the tests. */
@@ -73,8 +77,11 @@ export const browserStore = (key = 'kingdom.worldServer'): WorldStore => ({
 export class LocalWorldServer implements WorldServerApi {
   private world: ServerWorld;
   private playerId: string | null = null;
+  private ack = 0;
 
-  constructor(private store: WorldStore) {
+  /** `clock` is the server's: the device's own in the game, the test's in
+   *  a test. */
+  constructor(private store: WorldStore, private clock: () => number = () => Date.now()) {
     let world: ServerWorld | null = null;
     try {
       const text = store.load();
@@ -95,121 +102,107 @@ export class LocalWorldServer implements WorldServerApi {
     }
   }
 
-  /** What the server owes the player rides out with every answer to them —
-   *  never with one made for another seat. */
-  private deliver<T extends { snapshot?: WorldSnapshot } | WorldSnapshot>(at: { board: ServerBoard; seat: number }, own: boolean, r: T): T {
-    if (!own) return r;
-    const snap = ('snapshot' in r ? r.snapshot : r) as WorldSnapshot | undefined;
-    if (snap !== undefined && 'effects' in snap) snap.effects = drainEffects(at.board, at.seat);
-    return r;
-  }
-
   private persist(): void {
     this.store.save(JSON.stringify(this.world));
   }
 
-  private mine(asSeat?: number): { board: ServerBoard; seat: number } | null {
-    if (this.playerId === null) return null;
-    for (const board of this.world.boards) {
-      const seat = board.seats.findIndex((s) => s?.playerId === this.playerId);
-      if (seat >= 0) return { board, seat: asSeat ?? seat };
+  /** Send one request through the server's door and keep the world it left. */
+  private ask<K extends WorldCommandKind>(cmd: WorldCommand<K>, asSeat?: number): WorldReply<K> {
+    const reply = handleWorld(this.world, {
+      opId: newOpId(), playerId: this.playerId ?? '', ack: this.ack, asSeat, cmd,
+    }, this.clock());
+    this.persist();
+    // A copy, as the wire would hand over: the caller never holds the
+    // server's own objects.
+    return structuredClone(reply);
+  }
+
+  async join(player: { id: string; name: string; prefer?: BoardRef }): Promise<WorldSnapshot> {
+    // Before players had ids, the stand-in seated everyone as 'local-player':
+    // that seat is this device's player.
+    if (seatOf(this.world, player.id) === null) {
+      const legacy = seatOf(this.world, 'local-player');
+      if (legacy !== null) legacy.board.seats[legacy.seat]!.playerId = player.id;
     }
-    return null;
-  }
-
-  async join(player: { id: string; name: string; prefer?: BoardRef }, now: number): Promise<WorldSnapshot> {
     this.playerId = player.id;
-    const { board, seat } = join(this.world, player, now);
-    resolveTo(board, now);
-    const snap = this.deliver({ board, seat }, true, snapshotOf(board, seat, now));
-    this.persist();
-    return snap;
+    return this.ask({ kind: 'join', name: player.name, prefer: player.prefer });
   }
 
-  async snapshot(now: number, asSeat?: number): Promise<WorldSnapshot | null> {
-    const at = this.mine(asSeat);
-    if (at === null) return null;
-    resolveTo(at.board, now);
-    const snap = this.deliver(at, asSeat === undefined, snapshotOf(at.board, at.seat, now));
-    this.persist();
-    return snap;
+  async snapshot(asSeat?: number): Promise<WorldSnapshot | null> {
+    return this.ask({ kind: 'snapshot' }, asSeat);
   }
 
-  /** Run a command for the player (or the seat it plays as), keep the
-   *  result, and hand over what is owed with it. */
-  private run<T extends { ok: boolean }>(asSeat: number | undefined, fn: (b: ServerBoard, seat: number) => T, refused: T): T {
-    const at = this.mine(asSeat);
-    if (at === null) return refused;
-    const r = this.deliver(at, asSeat === undefined, fn(at.board, at.seat) as T & { snapshot?: WorldSnapshot });
-    this.persist();
-    return r;
+  async claim(index: number, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'claim', index }, asSeat);
   }
 
-  async claim(index: number, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => claim(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  async upgrade(index: number, what: WorldUpgrade, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'upgrade', index, what }, asSeat);
   }
 
-  async upgrade(index: number, what: WorldUpgrade, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => upgrade(b, seat, index, what, now), { ok: false, why: 'NoBoard' });
+  async tribute(index: number, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'tribute', index }, asSeat);
   }
 
-  async tribute(index: number, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => tribute(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  async repair(index: number, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'repair', index }, asSeat);
   }
 
-  async repair(index: number, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => repair(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  async reportSeen(indices: number[]): Promise<CommandResult> {
+    return this.ask({ kind: 'reportSeen', indices });
   }
 
-  async reportSeen(indices: number[], now: number): Promise<CommandResult> {
-    return this.run(undefined, (b, seat) => reportSeen(b, seat, indices, now), { ok: false, why: 'NoBoard' });
+  async postOffer(give: Lot, want: Lot, asSeat?: number): Promise<TradeResult> {
+    return this.ask({ kind: 'postOffer', give, want }, asSeat);
   }
 
-  async postOffer(give: Lot, want: Lot, now: number, asSeat?: number): Promise<TradeResult> {
-    return this.run(asSeat, (b, seat) => postOffer(b, seat, give, want, now), { ok: false, why: 'NoBoard' });
+  async takeOffer(offerId: string, asSeat?: number): Promise<TradeResult> {
+    return this.ask({ kind: 'takeOffer', offerId }, asSeat);
   }
 
-  async takeOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult> {
-    return this.run(asSeat, (b, seat) => takeOffer(b, seat, offerId, now), { ok: false, why: 'NoBoard' });
+  async withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult> {
+    return this.ask({ kind: 'withdrawOffer', offerId }, asSeat);
   }
 
-  async withdrawOffer(offerId: string, now: number, asSeat?: number): Promise<TradeResult> {
-    return this.run(asSeat, (b, seat) => withdrawOffer(b, seat, offerId, now), { ok: false, why: 'NoBoard' });
+  async finish(index: number, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'finish', index }, asSeat);
   }
 
-  async finish(index: number, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => finish(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  async collect(index: number, asSeat?: number): Promise<CollectResult> {
+    return this.ask({ kind: 'collect', index }, asSeat);
   }
 
-  async collect(index: number, now: number, asSeat?: number): Promise<CollectResult> {
-    return this.run(asSeat, (b, seat) => collect(b, seat, index, now), { ok: false, why: 'NoBoard' });
+  async sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult> {
+    return this.ask({ kind: 'sendArmy', req }, asSeat);
   }
 
-  async sendArmy(
-    req: { purpose: ArmyPurpose; target: number; heroes: HeroId[]; board: Board; path?: number[]; speed?: number },
-    now: number, asSeat?: number,
-  ): Promise<SendResult> {
-    return this.run(asSeat, (b, seat) => sendArmy(b, seat, req, now), { ok: false, why: 'NoBoard' });
+  async setBoost(boost: SeatBoost): Promise<void> {
+    this.ask({ kind: 'setBoost', boost });
   }
 
-  async setBoost(boost: SeatBoost, now: number): Promise<void> {
-    const at = this.mine();
-    if (at === null) return;
-    setBoost(at.board, at.seat, boost, now);
-    this.persist();
+  async recall(armyId: string, asSeat?: number): Promise<CommandResult> {
+    return this.ask({ kind: 'recall', armyId }, asSeat);
   }
 
-
-  async recall(armyId: string, now: number, asSeat?: number): Promise<CommandResult> {
-    return this.run(asSeat, (b, seat) => recall(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
+  async delveRoom(armyId: string): Promise<DelveResult> {
+    return this.ask({ kind: 'delveRoom', armyId });
   }
 
-  async delveRoom(armyId: string, now: number): Promise<DelveResult> {
-    return this.run(undefined, (b, seat) => delveRoom(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
+  async descendPortal(armyId: string): Promise<DelveResult> {
+    return this.ask({ kind: 'descendPortal', armyId });
+  }
+
+  acknowledge(seq: number): void {
+    this.ack = Math.max(this.ack, seq);
+  }
+
+  /** The stand-in keeps the device's own time. */
+  clockOffset(): number {
+    return 0;
   }
 
   async devShift(ms: number): Promise<void> {
-    const at = this.mine();
+    const at = this.playerId === null ? null : seatOf(this.world, this.playerId);
     if (at === null) return;
     const b = at.board;
     b.resolvedTo -= ms;
@@ -224,9 +217,5 @@ export class LocalWorldServer implements WorldServerApi {
     }
     for (const s of b.seats) if (s?.nextMoveAt != null) s.nextMoveAt -= ms;
     this.persist();
-  }
-
-  async descendPortal(armyId: string, now: number): Promise<DelveResult> {
-    return this.run(undefined, (b, seat) => descendPortal(b, seat, armyId, now), { ok: false, why: 'NoBoard' });
   }
 }

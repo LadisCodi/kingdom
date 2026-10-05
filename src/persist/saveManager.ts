@@ -3,8 +3,8 @@
 
 import { serialize, type SaveFile } from '../sim/save';
 import type { GameState } from '../sim/state';
-import { cloudClear, cloudInit, cloudLoad, cloudSave } from './cloud';
-import { clearLocal, lastResetAt, loadLocal, markReset, saveLocal } from './local';
+import { cloudClear, cloudInit, cloudLoad, cloudSave, cloudUserId } from './cloud';
+import { clearLocal, lastResetAt, loadLocal, localPlayerId, markReset, saveLocal } from './local';
 
 const CLOUD_DEBOUNCE_MS = 3000;
 
@@ -18,6 +18,12 @@ export class SaveManager {
 
   async init(): Promise<void> {
     this.cloudActive = await cloudInit();
+  }
+
+  /** Who the player is to the servers: the signed-in user, or this device
+   *  when there is no cloud. */
+  playerId(): string {
+    return (this.cloudActive ? cloudUserId() : null) ?? localPlayerId();
   }
 
   /**
