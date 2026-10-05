@@ -662,6 +662,10 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         message: `${id} costs nothing`,
         tech: id,
       });
+    } else if (knowledge === 0) {
+      // EVERY BOOK DRAWS ON THE BAR, the found ones too: Knowledge is what
+      // research is paid in, and Gold rides beside it (07-research.md §2.3).
+      errors.push({ message: `${id} costs no Knowledge`, tech: id });
     }
   }
 
