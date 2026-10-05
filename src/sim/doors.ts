@@ -19,7 +19,7 @@ import { townhall, type District, type GameState } from './state';
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
   | 'research' | 'build' | 'heroes' | 'relics' | 'store' | 'world'
-  | 'knowledge' | 'banner' | 'survey';
+  | 'knowledge' | 'banner' | 'survey' | 'bag';
 
 /** Has the chain reached this quest — is it active, or past? */
 const questReached = (state: GameState, id: string): boolean => {
@@ -61,6 +61,8 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   // (Docs/features/25-the-survey.md §5).
   survey: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
+  // The first item held (Docs/art/ui-inventory.md §3.1).
+  bag: (state) => Object.keys(state.bag.held).length > 0,
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —
@@ -75,6 +77,7 @@ export const DOOR_HINT: Record<DoorId, string> = {
   store: 'Raise the Townhall to level 2 to open this.',
   survey: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
+  bag: 'Find a chest to open this.',
 };
 
 /** The door's key in `tutorial.seen`. */

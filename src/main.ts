@@ -13,9 +13,10 @@ import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { grantPack, seasonLeftMs } from './sim/collection';
+import { grantItem } from './sim/bag';
 import { PACK_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
 import { grantBuilder } from './sim/commands';
@@ -49,6 +50,7 @@ import { renderResearchMenu, researchSignature } from './ui/researchMenu';
 import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
+import { bagSignature, renderBagSheet } from './ui/bagSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
@@ -288,6 +290,7 @@ async function boot(): Promise<void> {
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
     collection: renderCollectionSheet,
+    bag: renderBagSheet,
     heroes: renderHeroesSheet,
     lair: renderLairSheet,
     heroPicker: renderHeroPicker,
@@ -331,6 +334,7 @@ async function boot(): Promise<void> {
     // Each of these reads one presenter view and nothing that counts down,
     // so that view IS what it is drawn from.
     purse: () => JSON.stringify(game.state.city.wallet),
+    bag: () => bagSignature(game),
     pass: () => JSON.stringify([game.passScreen(), game.seasonInfo().name]),
     survey: () => JSON.stringify(game.surveyScreen()),
     upgrade: () => {
@@ -419,7 +423,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'heroes', 'lair', 'welcome', 'settings',
+        'purse', 'collection', 'bag', 'heroes', 'lair', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
@@ -714,6 +718,12 @@ async function boot(): Promise<void> {
       }
       runTick();
     };
+    // Three of every item, so the Bag's tiles, popovers and Use ×N can be
+    // seen before anything in the game pays an item.
+    const someItems = () => {
+      for (const id of ITEM_ORDER) grantItem(game.state, id, 3);
+      runTick();
+    };
     // THE SEASON ROLLOVER, on demand.
     //
     // The warp above moves the STATE backwards, which is how an absence is
@@ -798,7 +808,7 @@ async function boot(): Promise<void> {
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
-      button('🃏 packs', somePacks), button('🗓 end season', endSeason),
+      button('🃏 packs', somePacks), button('🎒 items', someItems), button('🗓 end season', endSeason),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {

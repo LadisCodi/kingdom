@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -32,7 +32,7 @@ import { WORLD_DISTRICTS, WORLD_UPGRADES } from './world/types';
 import { hexDistance, hexAt, isBoardIndex } from './world/hex';
 import {
   cellsOfRect, coordKey, districtOccupies, parseCoordKey,
-  type Coord, type District, type GameState, type QueueItem,
+  type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
   type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
@@ -977,6 +977,11 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.abandoned': {
         Repaired: Object.keys(state.abandoned.repaired),
       },
+      'kingdom.bag': {
+        Held: state.bag.held,
+        Fresh: Object.keys(state.bag.fresh),
+        Badge: state.bag.badge,
+      },
       // The playtest's signs (Docs/playtest.md §5): the times; the counts are
       // the tallies'.
       'kingdom.signals': {
@@ -1449,6 +1454,18 @@ export function deserialize(
     returnTaps: (signalsDto?.ReturnTaps ?? []).map((r) => ({ at: ms(r.AtUtc), kind: r.Kind })),
     // Additive (v88).
     playMs: Number.isFinite(signalsDto?.PlayMs) && signalsDto!.PlayMs! >= 0 ? signalsDto!.PlayMs! : 0,
+  };
+
+  // Additive (v89). An item the build no longer knows is dropped, and a
+  // count that is not a positive whole number is no item.
+  const bagDto = modules['kingdom.bag'] as
+    { Held?: Record<string, number>; Fresh?: string[]; Badge?: number } | undefined;
+  const known = (id: string): id is ItemId => ITEMS[id as ItemId] !== undefined;
+  state.bag = {
+    held: Object.fromEntries(Object.entries(bagDto?.Held ?? {})
+      .filter(([id, n]) => known(id) && Number.isInteger(n) && n > 0)) as GameState['bag']['held'],
+    fresh: Object.fromEntries((bagDto?.Fresh ?? []).filter(known).map((id) => [id, true as const])),
+    badge: Number.isInteger(bagDto?.Badge) && bagDto!.Badge! > 0 ? bagDto!.Badge! : 0,
   };
 
   // Additive (v81). A kingdom from before the abandoned buildings may have

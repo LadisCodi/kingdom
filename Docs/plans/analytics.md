@@ -70,6 +70,7 @@ Every event is one row:
 | `research` | `tech` |
 | `townhall_level` | `level` |
 | `world_joined` | `board`, `players` (humans on it) |
+| `item_used` | `item`, `count` — one Use, ×N counted once |
 
 ### 3.3 The playtest signals
 
