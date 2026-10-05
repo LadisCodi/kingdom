@@ -52,6 +52,7 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderCollectionSheet } from './ui/collectionSheet';
 import { bagSignature, renderBagSheet } from './ui/bagSheet';
 import { renderSpeedupSheet } from './ui/speedupSheet';
+import { renderShortfallSheet } from './ui/shortfallSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
@@ -293,6 +294,7 @@ async function boot(): Promise<void> {
     collection: renderCollectionSheet,
     bag: renderBagSheet,
     speedup: renderSpeedupSheet,
+    shortfall: renderShortfallSheet,
     heroes: renderHeroesSheet,
     lair: renderLairSheet,
     heroPicker: renderHeroPicker,
@@ -425,7 +427,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'collection', 'bag', 'speedup', 'heroes', 'lair', 'welcome', 'settings',
+        'purse', 'collection', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
         'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);

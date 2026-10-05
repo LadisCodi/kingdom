@@ -13,9 +13,13 @@
 //     lands in the wallet, past any store — the offline replay never sees it.
 
 import { track } from './analytics';
-import { BAG, ITEMS, type ItemDef } from './data/definitions';
+import { BAG, ITEMS, type BoostKind, type ItemDef } from './data/definitions';
+import { payKnowledge } from './knowledge';
+import { accrueMana, addMana, manaCap } from './mana';
+import { addModifier, type Modifier, type ModifierStat } from './modifiers';
+import { repriceTaxAnchorAround } from './population';
 import { cityMakesPerSecond } from './production';
-import { addToWallet, type GameState, type ItemId, type Wallet } from './state';
+import { addToWallet, type CurrencyId, type GameState, type ItemId, type Wallet } from './state';
 
 export const itemDef = (id: ItemId): ItemDef | undefined => ITEMS[id];
 
@@ -24,7 +28,9 @@ export const itemDef = (id: ItemId): ItemDef | undefined => ITEMS[id];
 export const BAG_TABS = ['Resources', 'Speed ups', 'Boosts', 'Other'] as const;
 export type BagTab = typeof BAG_TABS[number];
 
-const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = { chest: 'Resources', speedup: 'Speed ups' };
+const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = {
+  chest: 'Resources', choice: 'Resources', speedup: 'Speed ups', boost: 'Boosts', flask: 'Other', tome: 'Other',
+};
 
 /** Which tab an item is shown in: a fact of its kind. */
 export const bagTabOf = (id: ItemId): BagTab => TAB_OF_KIND[ITEMS[id].kind];
@@ -44,32 +50,96 @@ export function grantItem(state: GameState, id: ItemId, n = 1): void {
   state.bag.badge += n;
 }
 
+/** The coins a chest or a choice chest may pay. */
+export const CHEST_COINS: readonly CurrencyId[] = ['Gold', 'Food', 'Wood', 'Stone'];
+
 /** What ONE of this chest pays, now: its seconds of what the city makes of
- *  its coin, floored. Nothing for an item that is not a chest. */
-export function chestValue(state: GameState, id: ItemId): Wallet {
+ *  its coin, floored. A choice chest pays the coin picked when it is opened.
+ *  Nothing for an item that is not a chest. */
+export function chestValue(state: GameState, id: ItemId, choice?: CurrencyId): Wallet {
   const def = ITEMS[id];
-  if (def === undefined || def.kind !== 'chest' || def.coin === null) return {};
-  const made = cityMakesPerSecond(state, def.coin) * def.seconds;
+  if (def === undefined) return {};
+  const coin = def.kind === 'chest' ? def.coin : def.kind === 'choice' ? choice ?? null : null;
+  if (coin === null || !CHEST_COINS.includes(coin)) return {};
+  const made = cityMakesPerSecond(state, coin) * def.seconds;
   const floor = (BAG.chestFloorPerHour * def.seconds) / 3600;
-  return { [def.coin]: Math.round(Math.max(floor, made)) };
+  return { [coin]: Math.round(Math.max(floor, made)) };
 }
 
-export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'NeedsATimer';
+/** The modifier a boost of this kind runs as: the stat it multiplies. */
+const BOOST_STAT: Record<BoostKind, ModifierStat> = { Rent: 'taxRate', Harvest: 'tapYield', Mana: 'manaRegen' };
+
+/** The running boost of this kind, if one is. Its id is the kind's, so a
+ *  second of the same kind finds the first and extends it. */
+export const runningBoost = (state: GameState, kind: BoostKind): Modifier | undefined =>
+  state.modifiers.find((m) => m.id === `boost:${kind}` && m.expiresAt !== null && m.expiresAt > state.lastAdvance);
+
+/** Every boost running, and when each ends. */
+export const runningBoosts = (state: GameState): Array<{ kind: BoostKind; value: number; endsAt: number }> =>
+  (Object.keys(BOOST_STAT) as BoostKind[]).flatMap((kind) => {
+    const m = runningBoost(state, kind);
+    return m === undefined ? [] : [{ kind, value: Math.round((m.value - 1) * 100), endsAt: m.expiresAt! }];
+  });
 
 /**
- * Use `n` of an item. A chest pays `n` times what one pays: it lands in the
- * wallet, not in a store, so a second chest reads the same rate as the first
- * and Use ×N is exactly N single uses.
+ * START A BOOST AT `now`, or extend the one running — it never stacks
+ * (Docs/proposals/inventory.md §3.3). A modifier, because it happened to the
+ * kingdom and expires; its expiry is a boundary like any other. Rent is
+ * priced house by house, so the rate change is repriced at `now`; Mana is
+ * accrued to `now` first, so the new rate starts there and not at the last
+ * advance.
  */
-export function useItem(state: GameState, id: ItemId, n: number): UseItemResult {
+function startBoost(state: GameState, def: ItemDef, n: number, now: number): void {
+  const kind = def.boost!;
+  const work = (): void => {
+    accrueMana(state, now);
+    const running = runningBoost(state, kind);
+    const length = def.seconds * 1000 * n;
+    if (running !== undefined) {
+      running.expiresAt = Math.max(running.expiresAt!, now) + length;
+      // A stronger boost of the same kind lifts the running one; a weaker one
+      // only extends it.
+      running.value = Math.max(running.value, 1 + def.value / 100);
+      return;
+    }
+    state.modifiers = state.modifiers.filter((m) => m.id !== `boost:${kind}`);
+    addModifier(state, {
+      id: `boost:${kind}`, source: 'item', stat: BOOST_STAT[kind], scope: null,
+      op: 'mul', value: 1 + def.value / 100, expiresAt: now + length,
+    });
+  };
+  if (kind === 'Rent') repriceTaxAnchorAround(state, now, work);
+  else work();
+}
+
+export type UseItemResult = 'Used' | 'NotHeld' | 'UnknownItem' | 'NeedsATimer' | 'NeedsACoin';
+
+/**
+ * Use `n` of an item at `now`. A chest pays `n` times what one pays: it lands
+ * in the wallet, not in a store, so a second chest reads the same rate as the
+ * first and Use ×N is exactly N single uses. A choice chest pays the coin
+ * `choice` names. A boost starts or extends; a flask fills the pool, what
+ * goes over the cap lost; a tome's Knowledge lands over the bar's cap.
+ */
+export function useItem(state: GameState, id: ItemId, n: number, now: number, choice?: CurrencyId): UseItemResult {
   const def = ITEMS[id];
   if (def === undefined) return 'UnknownItem';
   // A speed-up is used ON a timer (sim/speedups.ts), never from the Bag alone.
   if (def.kind === 'speedup') return 'NeedsATimer';
+  if (def.kind === 'choice' && (choice === undefined || !CHEST_COINS.includes(choice))) return 'NeedsACoin';
   if (!(n >= 1) || !Number.isInteger(n) || itemCount(state, id) < n) return 'NotHeld';
-  const one = chestValue(state, id);
-  for (const [c, amount] of Object.entries(one) as Array<[keyof Wallet, number]>) {
-    addToWallet(state.city.wallet, c, amount * n);
+  if (def.kind === 'chest' || def.kind === 'choice') {
+    const one = chestValue(state, id, choice);
+    for (const [c, amount] of Object.entries(one) as Array<[CurrencyId, number]>) {
+      addToWallet(state.city.wallet, c, amount * n);
+    }
+  } else if (def.kind === 'boost') {
+    startBoost(state, def, n, now);
+  } else if (def.kind === 'flask') {
+    accrueMana(state, now);
+    addMana(state, Math.floor((manaCap(state) * def.value * n) / 100));
+  } else if (def.kind === 'tome') {
+    payKnowledge(state, def.value * n);
   }
   const left = itemCount(state, id) - n;
   if (left > 0) state.bag.held[id] = left;
@@ -77,7 +147,7 @@ export function useItem(state: GameState, id: ItemId, n: number): UseItemResult 
     delete state.bag.held[id];
     delete state.bag.fresh[id];
   }
-  track(state, 'item_used', { item: id, count: n });
+  track(state, 'item_used', { item: id, count: n, ...(choice !== undefined ? { coin: choice } : {}) });
   return 'Used';
 }
 

@@ -386,7 +386,10 @@ export const RUSH = balance.rush;
 export const BAG = balance.bag;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
-export type ItemKind = 'chest' | 'speedup';
+export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome';
+
+/** What a boost raises. */
+export type BoostKind = 'Rent' | 'Harvest' | 'Mana';
 
 /** The timers a speed-up shortens: one kind of timer, or any of them. */
 export type SpeedupKind = 'General' | 'Construction' | 'Training' | 'Workshop';
@@ -404,6 +407,10 @@ export interface ItemDef {
   tier: number;
   /** A speed-up: the timers it shortens. */
   speeds: SpeedupKind | null;
+  /** A boost: what it raises. */
+  boost: BoostKind | null;
+  /** A boost: +% while it runs. A flask: % of the Mana pool. A tome: Knowledge. */
+  value: number;
 }
 
 export const ITEMS = balance.items as Record<ItemId, ItemDef>;

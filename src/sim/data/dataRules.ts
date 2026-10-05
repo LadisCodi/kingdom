@@ -660,6 +660,16 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (it.kind !== 'chest' && it.coin !== null && it.coin !== undefined) {
         push(id, ['coin'], 'only a chest pays a coin: leave it empty');
       }
+      if ((it.kind === 'boost') !== (it.boost !== null && it.boost !== undefined)) {
+        push(id, ['boost'], it.kind === 'boost' ? 'a boost names what it raises' : 'only a boost raises something: leave it empty');
+      }
+      if (['boost', 'flask', 'tome'].includes(String(it.kind)) && !(num(it.value) > 0)) {
+        push(id, ['value'], `a ${it.kind} needs a value above 0`);
+      }
+      if (['chest', 'choice', 'speedup', 'boost'].includes(String(it.kind)) && !(num(it.seconds) > 0)) {
+        push(id, ['seconds'], `a ${it.kind} needs its seconds`);
+      }
+      if (it.kind === 'flask' && num(it.value) > 100) push(id, ['value'], 'a flask fills at most the whole pool (100)');
     }
   },
   store: (doc, push) => {

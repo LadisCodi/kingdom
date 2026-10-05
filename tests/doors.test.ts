@@ -140,7 +140,7 @@ describe('the doors of the UI', () => {
     grantItem(state, 'GoldChest10m');
     expect(isDoorOpen(state, 'bag')).toBe(true);
     markDoorSeen(state, 'bag');
-    useItem(state, 'GoldChest10m', 1);
+    useItem(state, 'GoldChest10m', 1, T0);
     expect(isDoorOpen(state, 'bag')).toBe(true);
   });
 
