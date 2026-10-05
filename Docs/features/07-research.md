@@ -233,8 +233,8 @@ A `bonus` names its effects, and each is four fields:
   bands. What differs is that it is **narrow**: it does one thing the tree
   does not, and it is not on the shelf until the kingdom finds it.
 - **It is outside the pacing**: never required by a chapter or a Townhall
-  level, and **paid in Gold alone**, so it never draws on a chapter's
-  Knowledge.
+  level. **It costs Knowledge and Gold** like every card, so it competes with
+  the chapters for the bar.
 - **The two that ship** are found in the province itself: the **Sagas** with
   the first Tavern, the **Atlas** with the Watchtower.
 - **Later ones** are the pattern for a far lair, an event or the world map.

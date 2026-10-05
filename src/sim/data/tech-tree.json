@@ -901,14 +901,14 @@
       "name": "Common Room", "glyph": "🍲", "kind": "unlock",
       "tome": "Sagas", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 600,
+      "gold": 600, "knowledge": 3,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":2}}]
     },
     "TalesI": {
       "name": "Tales I", "glyph": "📖", "kind": "bonus",
       "tome": "Sagas", "era": 1, "row": 1, "col": 0,
       "requires": ["CommonRoom"],
-      "gold": 400,
+      "gold": 400, "knowledge": 3,
       "effects": [
         {"stat":"heroXp","op":"percent","value":10}
       ]
@@ -917,7 +917,7 @@
       "name": "Warm Welcome I", "glyph": "🕯️", "kind": "bonus",
       "tome": "Sagas", "era": 1, "row": 1, "col": 2,
       "requires": ["CommonRoom"],
-      "gold": 400,
+      "gold": 400, "knowledge": 3,
       "effects": [
         {"stat":"summonStardust","op":"percent","value":10}
       ]
@@ -926,21 +926,21 @@
       "name": "Guest Rooms", "glyph": "🛏️", "kind": "unlock",
       "tome": "Sagas", "era": 1, "row": 2, "col": 1,
       "requires": ["TalesI", "WarmWelcomeI"],
-      "gold": 1500,
+      "gold": 1500, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":3}}]
     },
     "GreatHall": {
       "name": "Great Hall", "glyph": "🏛️", "kind": "unlock",
       "tome": "Sagas", "era": 2, "row": 3, "col": 1,
       "requires": ["GuestRooms"],
-      "gold": 4000,
+      "gold": 4000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":4}}]
     },
     "MinstrelsGallery": {
       "name": "Minstrels’ Gallery", "glyph": "🎻", "kind": "unlock",
       "tome": "Sagas", "era": 2, "row": 4, "col": 1,
       "requires": ["GreatHall"],
-      "gold": 8000,
+      "gold": 8000, "knowledge": 7,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":5}}]
     },
     "Cartography": {
@@ -948,13 +948,13 @@
       "description": "The first explorer — send it out to reveal the world map.",
       "tome": "Atlas", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 2000
+      "gold": 2000, "knowledge": 4
     },
     "FarsightI": {
       "name": "Farsight I", "glyph": "🔭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 0,
       "requires": ["Cartography"],
-      "gold": 800,
+      "gold": 800, "knowledge": 4,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -963,7 +963,7 @@
       "name": "Scouts I", "glyph": "🧭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 2,
       "requires": ["Cartography"],
-      "gold": 2500,
+      "gold": 2500, "knowledge": 4,
       "effects": [
         {"stat":"explorerSlots","op":"flat","value":1}
       ]
@@ -972,7 +972,7 @@
       "name": "Farsight II", "glyph": "🔭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 0,
       "requires": ["FarsightI"],
-      "gold": 1500,
+      "gold": 1500, "knowledge": 4,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -981,7 +981,7 @@
       "name": "Scouts II", "glyph": "🧭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 2,
       "requires": ["ScoutsI"],
-      "gold": 4000,
+      "gold": 4000, "knowledge": 5,
       "effects": [
         {"stat":"explorerSlots","op":"flat","value":1}
       ]
@@ -990,7 +990,7 @@
       "name": "Pathfinding", "glyph": "🥾", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 3, "col": 1,
       "requires": ["ScoutsII"],
-      "gold": 8000,
+      "gold": 8000, "knowledge": 7,
       "effects": [
         {"stat":"worldRevealRadius","op":"flat","value":1}
       ]
@@ -999,7 +999,7 @@
       "name": "Muster", "glyph": "⛺", "kind": "unlock",
       "tome": "Atlas", "era": 1, "row": 4, "col": 1,
       "requires": ["Pathfinding"],
-      "gold": 9000,
+      "gold": 9000, "knowledge": 7,
       "unlocks": [{"district":"WarCamp"}]
     }
   }

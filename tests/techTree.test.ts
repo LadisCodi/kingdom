@@ -376,9 +376,16 @@ describe('what the rules refuse', () => {
     d.technologies.Saws.gold = 0;
     d.technologies.Saws.knowledge = 0;
     expect(messages(d)).toContain('Saws costs nothing');
-    // Either price alone is enough: Saws is authored Knowledge-only.
+    // Knowledge alone is enough: Saws is authored Knowledge-only.
     d.technologies.Saws.knowledge = 2;
     expect(messages(d).some((m) => m.startsWith('Saws costs nothing'))).toBe(false);
+  });
+
+  // EVERY BOOK DRAWS ON THE BAR — a found book's cards as much as the tree's.
+  it('a technology that costs no Knowledge, in any book', () => {
+    const d = clone();
+    d.technologies.CommonRoom.knowledge = 0;
+    expect(messages(d)).toContain('CommonRoom costs no Knowledge');
   });
 
   it('an unlock that names something the game does not have', () => {
