@@ -16,7 +16,7 @@ import type { Board } from '../sim/battle';
 import type { HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
-  claim, collect, delveRoom, descendPortal, finish, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
+  claim, collect, delveRoom, descendPortal, finish, hurry, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
   sendArmy, setBoost, snapshotOf, takeOffer, tribute, upgrade, withdrawOffer,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
@@ -47,6 +47,8 @@ export interface WorldCommands {
   tribute: { cmd: { index: number }; reply: CommandResult };
   repair: { cmd: { index: number }; reply: CommandResult };
   finish: { cmd: { index: number }; reply: CommandResult };
+  /** A speed-up from the Bag: `seconds` off a builder's work on a hex. */
+  hurry: { cmd: { index: number; seconds: number }; reply: CommandResult };
   collect: { cmd: { index: number }; reply: CollectResult };
   reportSeen: { cmd: { indices: number[] }; reply: CommandResult };
   postOffer: { cmd: { give: Lot; want: Lot }; reply: TradeResult };
@@ -143,6 +145,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'tribute': return tribute(b, seat, cmd.index, t);
     case 'repair': return repair(b, seat, cmd.index, t);
     case 'finish': return finish(b, seat, cmd.index, t);
+    case 'hurry': return hurry(b, seat, cmd.index, cmd.seconds, t);
     case 'collect': return collect(b, seat, cmd.index, t);
     case 'reportSeen': return reportSeen(b, seat, cmd.indices, t);
     case 'postOffer': return postOffer(b, seat, cmd.give, cmd.want, t);

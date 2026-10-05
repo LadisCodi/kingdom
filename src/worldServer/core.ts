@@ -582,6 +582,27 @@ export function finish(b: ServerBoard, seat: number, index: number, t: number): 
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
 }
 
+/**
+ * TAKE `seconds` OFF A BUILDER'S WORK on `seat`'s hex — a speed-up, paid for
+ * by the client from its Bag. The end moves; a speed-up that covers what is
+ * left finishes it now, exactly as `finish` does.
+ */
+export function hurry(b: ServerBoard, seat: number, index: number, seconds: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const h = b.hexes[index];
+  if (h === undefined || h.owner !== seat) return { ok: false, why: 'NotYours' };
+  if (!(seconds > 0)) return { ok: false, why: 'NothingBuilding' };
+  const ms = seconds * 1000;
+  const claiming = h.standsAt > t;
+  const ends = claiming ? h.standsAt : h.work !== null ? h.work.at : (h.repairAt ?? null);
+  if (ends === null) return { ok: false, why: 'NothingBuilding' };
+  if (ends - t <= ms) return finish(b, seat, index, t);
+  if (claiming) h.standsAt -= ms;
+  else if (h.work !== null) h.work.at -= ms;
+  else h.repairAt = h.repairAt! - ms;
+  return { ok: true, finishesAt: ends - ms, snapshot: snapshotOf(b, seat, t) };
+}
+
 /** Empty a district's store into its owner's purse: whole units only, the
  *  fraction left to carry. */
 export function collect(b: ServerBoard, seat: number, index: number, t: number): CollectResult {

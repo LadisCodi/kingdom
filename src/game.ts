@@ -70,7 +70,8 @@ import {
 import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
-  autoPlan, fits, jobRemainingSeconds, speedupsFor, useAuto, useSpeedup, type SpeedJob,
+  autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
+  type SpeedJob,
 } from './sim/speedups';
 import { partyPower, typeMultiplier } from './sim/combat';
 import {
@@ -145,7 +146,10 @@ import type { HarvestSourceId } from './sim/state';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
-import { dispatchExplorer, finishExplorerWithGems, homeIndex, worldFogAt, type ExplorerHome } from './sim/world/explorers';
+import {
+  arrivesAt, cutExplorer, dispatchExplorer, explorerRushCost, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
+  worldFogAt, type ExplorerHome,
+} from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
@@ -242,7 +246,7 @@ export interface BagScreen {
 export interface SpeedupScreen {
   /** What is being sped up: "Sawmill · level 4". */
   title: string;
-  icon: DistrictId;
+  icon: IconName;
   progress: number;
   /** Seconds left. */
   left: number;
@@ -2699,12 +2703,35 @@ export class Game {
       ...[...new Set(this.state.city.trainingQueue.map((i) => i.buildingId))]
         .map((b): SpeedJob => ({ kind: 'training', buildingId: b })),
       ...this.state.city.districts.map((d): SpeedJob => ({ kind: 'workshop', districtId: d.uniqueId })),
+      ...this.state.world.builds.map((b): SpeedJob => ({ kind: 'hex', index: b.index })),
+      ...this.state.world.explorers.map((t): SpeedJob => ({ kind: 'explorer', tripId: t.id })),
     ];
     return jobs.find((j) => fits(id, j) && jobRemainingSeconds(this.state, j, now) !== null) ?? null;
   }
 
-  private jobFacts(job: SpeedJob): { title: string; icon: DistrictId; progress: number; gems: number } | null {
+  private jobFacts(job: SpeedJob): { title: string; icon: IconName; progress: number; gems: number } | null {
     const now = this.now();
+    if (job.kind === 'explorer') {
+      const trip = this.state.world.explorers.find((t) => t.id === job.tripId);
+      if (!trip) return null;
+      const total = returnsAt(trip) - trip.departedAt;
+      return {
+        title: `Explorer · ${now < arrivesAt(trip) ? 'on the way' : now < revealsAt(trip) ? 'exploring' : 'coming home'}`,
+        icon: 'compass', progress: total > 0 ? Math.min(1, (now - trip.departedAt) / total) : 1,
+        gems: explorerRushCost(trip, now),
+      };
+    }
+    if (job.kind === 'hex') {
+      const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
+      const work = h === null ? null : hexWork(h);
+      if (work === null) return null;
+      const total = work.endsAt - work.startedAt;
+      return {
+        title: work.what, icon: 'build',
+        progress: total > 0 ? Math.min(1, (now - work.startedAt) / total) : 1,
+        gems: gemsToFinish((work.endsAt - now) / 1000),
+      };
+    }
     if (job.kind === 'queue') {
       const item = this.state.city.queue.find((q) => q.uniqueId === job.itemId);
       const d = item && districtById(this.state, item.districtUniqueId);
@@ -2762,15 +2789,57 @@ export class Game {
     this.notify();
   }
 
-  doSpeedup(id: ItemId, n = 1): void {
-    if (this.speedJob === null) return;
-    if (useSpeedup(this.state, this.map, this.speedJob, id, n, this.now()) === 'Used') playSfx('click');
+  /**
+   * Take `seconds` off a job that is not the city's own: an explorer, whose
+   * return is told as it always is, or a world build, which the server moves
+   * (`hurry`) before anything is spent. True when the time was taken.
+   */
+  private async speedAway(job: SpeedJob, seconds: number): Promise<boolean> {
+    const now = this.now();
+    if (job.kind === 'explorer') {
+      const { home } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
+      if (home !== null) this.explorerHomeToast(home);
+      return true;
+    }
+    if (job.kind !== 'hex' || this.worldServer === null) return false;
+    const r = await this.worldServer.hurry(job.index, seconds);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      return false;
+    }
+    const build = this.state.world.builds.find((b) => b.index === job.index);
+    if (build !== undefined && r.finishesAt <= this.now()) {
+      this.state.world.builds = this.state.world.builds.filter((b) => b !== build);
+      this.toast(worldBuildDone(build.what, build.level));
+    } else if (build !== undefined) build.finishesAt = r.finishesAt;
+    this.applyWorldSnapshot(r.snapshot);
+    return true;
+  }
+
+  async doSpeedup(id: ItemId, n = 1): Promise<void> {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'hex' || job.kind === 'explorer') {
+      if (speedupRefusal(this.state, job, id, n, this.now()) !== null) return;
+      if (await this.speedAway(job, ITEMS[id].seconds * n)) {
+        spendSpeedups(this.state, job, id, n);
+        playSfx('click');
+      }
+    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('click');
     this.afterSpeedup();
   }
 
-  doAutoSpeedup(): void {
-    if (this.speedJob === null) return;
-    useAuto(this.state, this.map, this.speedJob, this.now());
+  async doAutoSpeedup(): Promise<void> {
+    const job = this.speedJob;
+    if (job === null) return;
+    if (job.kind === 'hex' || job.kind === 'explorer') {
+      // One move by the whole plan, then the items it took.
+      const plan = autoPlan(this.state, job, this.now());
+      const seconds = plan.reduce((s, p) => s + ITEMS[p.id].seconds * p.n, 0);
+      if (seconds > 0 && await this.speedAway(job, seconds)) {
+        for (const p of plan) spendSpeedups(this.state, job, p.id, p.n);
+      }
+    } else useAuto(this.state, this.map, job, this.now());
     this.afterSpeedup();
   }
 
@@ -2782,7 +2851,9 @@ export class Game {
     else if (job.kind === 'training') {
       const d = districtById(this.state, job.buildingId);
       if (d) this.doFinishTraining(d);
-    } else this.doRushWorkshopItem(job.districtId);
+    } else if (job.kind === 'workshop') this.doRushWorkshopItem(job.districtId);
+    else if (job.kind === 'explorer') this.doFinishExplorer(job.tripId);
+    else void this.doFinishHexWork(job.index).then(() => this.afterSpeedup());
     this.afterSpeedup();
   }
 
@@ -2892,10 +2963,11 @@ export class Game {
   /** The builders out on the world board, one row of the builder sheet
    *  each. A world build is the server's timer: it cannot be rushed, so it
    *  carries no Finish. Its start is its finish less its authored time. */
-  builderWorldJobs(): Array<{ name: string; task: string; startedAt: number; durationMs: number }> {
+  builderWorldJobs(): Array<{ index: number; name: string; task: string; startedAt: number; durationMs: number }> {
     return this.state.world.builds.map((b) => {
       const seconds = worldBuildSeconds(b.what, b.level);
       return {
+        index: b.index,
         name: worldBuildName(b.what),
         task: b.what === 'Repair' ? 'Repairing on the world map'
           : isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`

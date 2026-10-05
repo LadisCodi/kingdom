@@ -82,6 +82,7 @@ export class RemoteWorldServer implements WorldServerApi {
   takeOffer(offerId: string, asSeat?: number): Promise<TradeResult> { return this.command({ kind: 'takeOffer', offerId }, asSeat); }
   withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult> { return this.command({ kind: 'withdrawOffer', offerId }, asSeat); }
   finish(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'finish', index }, asSeat); }
+  hurry(index: number, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurry', index, seconds }); }
   collect(index: number, asSeat?: number): Promise<CollectResult> { return this.command({ kind: 'collect', index }, asSeat); }
   sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult> { return this.command({ kind: 'sendArmy', req }, asSeat); }
   recall(armyId: string, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'recall', armyId }, asSeat); }
