@@ -7,11 +7,12 @@
 > [`10-heroes.md`](10-heroes.md) §6.2.
 >
 > **Status: three ad placements, the builder offer and the
-> store's first cut are built** — the payer profile and its monthly budget (§3), and five
-> surfaces: builders for Gems, keys for Gems, cards for Gems, the three **card
-> bundles** for simulated dollars (§2.3), Gem packs for simulated dollars,
-> and the two hero banners (§2.1). The remaining SKUs, the other four
-> placements and the telemetry pipeline (§4) are designed, not built.
+> store are built** — the payer profile and its monthly budget (§3);
+> builders, keys, card packs and wildcards for Gems; the three **card
+> bundles** (§2.3), the Gem packs, the season pass's paid column and the
+> Survey's for simulated dollars; and the two hero banners (§2.1). The shop
+> refresh, the town banner set, the other three placements and the telemetry
+> pipeline (§4) are designed, not built.
 
 ## 0. Rules
 
@@ -66,9 +67,9 @@
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
   ([`10-heroes.md`](10-heroes.md) §6.1).
-- Faucet: **3,750 up front, ~8,000 a season from the pass, and what the
-  collection pays** — 500 to start, 750 across the quest chain, 500 a first
-  delve clear, **~8,000 in the season pass's free column**
+- Faucet: **1,250 up front, ~8,000 a season from the pass, and what the
+  collection pays** — 500 to start, 750 across the quest chain,
+  **~8,000 in the season pass's free column**
   ([`20-season-pass.md`](20-season-pass.md) §2), and **2,000 an album with
   25,000 for the whole collection** ([`09-relics.md`](09-relics.md) §5):
   35,000 a season to a player who completes it, most of it behind the gold
@@ -92,12 +93,12 @@
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Season pass, paid column** | season | **$4.99** | the pass's paid column for one 28-day season — a card pack, Gems, keys and Stardust on every one of 40 levels, opened for every level already reached ([`20-season-pass.md`](20-season-pass.md) §2) — built |
-| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems on every one of 36 levels climbed by cells revealed, with gold keys, Stardust and packs, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) |
+| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems on every one of 36 levels climbed by cells revealed, with gold keys, Stardust and packs, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) — built |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Hero slot | one-time ladder | Gems | built |
-| **Card packs** | chance | Gems (500 / 1,500) | a Gold or Star pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. The cheap tiers are not sold: they are the season pass's free column |
-| **Card bundles** | chance | **$4.99 / $9.99 / $19.99** | 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards — every pack with a gold edition guaranteed ([`09-relics.md`](09-relics.md) §6.1) — built |
+| **Card packs** | chance | Gems (400 / 900 / 600) | a Blue, Purple or Golden pack of the running season, at **published odds printed on the shelf** ([`09-relics.md`](09-relics.md) §6) — built. The cheap tiers are not sold: they are the season pass's free column |
+| **Card bundles** | chance | **$4.99 / $9.99 / $19.99** | 2 / 5 / 10 Purple packs and 1 / 1 / 3 wildcards — every pack with a 5★ guaranteed ([`09-relics.md`](09-relics.md) §6.1) — built |
 | **Wildcard** | chance | Gems (100 → 1,500 by rarity) | one card of its rarity or lower, in the slot the player chooses; **never gold** ([`09-relics.md`](09-relics.md) §9) — built, sold as an **aimed offer** on the same shelf |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
@@ -113,8 +114,8 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §8). Here until the Tavern is built | a key |
-| **Cards** | an **aimed wildcard offer** for each album the player has nearly finished ([`09-relics.md`](09-relics.md) §9), then the Gold and Star packs **with their odds printed on the row** (§6), then one line of fine print saying Bronze and Silver come from the ruins | Gems |
+| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
+| **Cards** | an **aimed wildcard offer** for each album the player has nearly finished ([`09-relics.md`](09-relics.md) §9), then the Blue, Purple and Golden packs **with their odds printed on the row** (§6), then one line of fine print saying green, yellow and rose packs come from the season pass | Gems |
 | **Card bundles** | the three bundles of §2.3, under the Cards shelf they answer. The only rows on that shelf with a **dollar** price, and the only green slabs among its wood ones | the monthly budget |
 | **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
@@ -140,13 +141,12 @@
 
 ### 2.3 The card bundles
 
-- Three bundles of the collection's two Gem purchases — a **star pack** and a
+- Three bundles of the collection's two Gem purchases — a **Purple pack** and a
   **wildcard** — sold together for money ([`09-relics.md`](09-relics.md)
   §6.1): **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 packs and 1 / 1 / 3
   wildcards.
-- **Every pack in one is a star pack**, so every one of them guarantees a gold
-  edition. That is what a bundle is for: the gold cards are what the last two
-  albums turn on, and they are the slowest thing in the collection to earn.
+- **Every pack in one is a Purple pack**, so every one of them guarantees a
+  5★.
 - **They grant no Gems.** A bundle hands over
   the things, not the currency that buys them, and the packs land unopened —
   the Collection is where a pack is turned over, never the till.
@@ -163,8 +163,8 @@
   availability is a clock, and it is a read of the season rather than a timer:
   nothing is scheduled, and the next season opens the shelf on its own.
 - **The line of §1 holds against money exactly as it holds against Gems**: a
-  bundle sells no gold wildcard, and the star packs it holds are the same
-  packs the vault, the milestones and the pass already pay.
+  bundle sells no gold wildcard, and the Purple packs it holds are the same
+  packs the milestones and the pass already pay.
 
 ## 3. The simulated budget
 
@@ -289,7 +289,7 @@ offer_shown → store_opened → sku_viewed → confirm_opened
   **500 taps**, worth **83 minutes** of production — the watcher's day is
   **~6% richer**, and their tap budget is close to **three times** the
   non-watcher's.
-- The six call placements buy **no production at all**: they buy roughly
+- The six calls a day buy **no production at all**: they buy roughly
   **150 common calls and 30 golden ones a month**, which is what makes a
   Legendary reachable without a wallet (§1).
 - Both figures scale with the Sanctum, which raises the cap and therefore the
@@ -326,19 +326,19 @@ One page, refreshed weekly:
 
 | Dial | Value | Key |
 |---|---|---|
-| Gacha pull | **1,000** Gems ($1.99) | `gacha.pullGemCost` |
+| Keys | **500** a silver key, **1,500** a gold key | `banners.*.keyGemCost` |
 | Second builder | **2,500**, `×2` per builder ($4.99 / $9.99 / $19.99) | `kingdom.builderGemCost*` |
 | Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gemRefillCosts` |
 | Video refill | a whole pool, **5 a day** | `ads.manaRefillsPerDay` |
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.secondsPerGem` |
-| A point of Knowledge | fixed — **OQ-105** | `knowledge.gemsPerPoint` |
-| Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.heroSlotGemCost*` |
-| Card pack prices | **500 a Gold pack, 1,500 a Star pack** — the key ladder's two prices. Blank = the store does not sell that tier, which is how Bronze and Silver stay the ruins' faucet | `packs`, `gemCost` |
+| A point of Knowledge | **270**, fixed — **OQ-105** | `knowledge.gemsPerPoint` |
+| Hero slot | 2,500, `×2` ($4.99 / $9.99) | `party.heroSlotGemCost*` |
+| Card pack prices | **Blue 400, Purple 900, Golden 600**. Blank = the store does not sell that tier, which is how Green, Yellow and Rose stay the pass's faucet | `packs`, `gemCost` |
 | Wildcard prices, by the rarity covered | **100 · 200 · 400 · 800 · 1,500** — the top one at a gold key | `collection.wildcardGemCosts` |
 | How short an album must be for an offer | **3 cards** | `collection.wildcardOfferAt` |
 | The collection's Gems | 2,000 an album, five a season · 25,000 the prize | `collection.albumGems`, `collection.prizeGems` |
-| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **~8,000 a pass season** | `currencies`, `quests`, `delve.firstClearGems`, `pass.freeGems` |
-| Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 star packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `store`, `packs` · `packTier` · `wildcards` · `wildcardRarity` |
+| Gem faucet | 500 start · 150/250/200/150 in the chain · **~8,000 a pass season** | `currencies`, `quests`, `pass.freeGems` |
+| Card bundles | **$4.99 / $9.99 / $19.99** for 2 / 5 / 10 Purple packs and 1 / 1 / 3 wildcards at 4★ / 5★ / 5★ — 1.5× to 2× the Gem ladder | `store`, `packs` · `packTier` · `wildcards` · `wildcardRarity` |
 | How close to a season's close the bundles are withdrawn | **24 hours** | `collection.bundleWithdrawHours` |
 | Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
 | Ad eligibility | below half a pool | `ads.eligibleBelowFraction` |
@@ -355,7 +355,7 @@ One page, refreshed weekly:
   that is not; the season pass and the Survey are the ladder products
   ([`20-season-pass.md`](20-season-pass.md) §2,
   [`25-the-survey.md`](25-the-survey.md)).
-- **A login ladder**, and the Royal chest that was its paid column.
+- **A login ladder.**
 - **A deadline on a mission, a reroll, and a price on finishing one.** The
   season pass's board is capped rather than timed, and nothing on it is for
   sale at any price — the work is the whole of it (§1).

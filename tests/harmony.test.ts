@@ -1,5 +1,5 @@
 // Harmony: what a decoration supplies, what an advanced building demands, and
-// the gate between them (Docs/plans/builder-30-days.md §6).
+// the gate between them (Docs/features/21-harmony.md).
 //
 // Harmony is a city TOTAL — supply − demand, computed on read, a gate and
 // never a drain. With the province plot unbounded (OQ-1) a decoration does not

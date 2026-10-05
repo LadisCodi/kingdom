@@ -1,5 +1,5 @@
 // Workshops: the queue of goods, and the crew that works it
-// (Docs/plans/builder-30-days.md §3).
+// (Docs/features/17-workshops-and-goods.md §3).
 //
 // **Nothing happens without a worker.** A workshop with no villager assigned
 // does not advance — there is no hand production and no collect tap. The crew

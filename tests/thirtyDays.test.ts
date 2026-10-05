@@ -1,4 +1,4 @@
-// The thirty-day harness — Docs/plans/builder-30-days.md §1.
+// The thirty-day harness — Docs/features/buildings.md §3.
 //
 // A scripted player who visits three times a day for thirty days, plays only
 // what the game grants and earns, and follows one fixed policy. Every visit
@@ -502,7 +502,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
 
     // THE DAY each Townhall level, and each technology that gates one, was
     // first seen standing — the pacing table step 7 is measured against
-    // (Docs/plans/builder-30-days.md §7). Printed with the weeks.
+    // (Docs/features/buildings.md §3). Printed with the weeks.
     const milestones: Record<string, number> = {};
     const early: Array<Record<string, number>> = [];
     for (let day = 0; day < DAYS; day++) {
@@ -553,7 +553,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           maxed: state.city.districts.filter((d) => d.level >= DISTRICTS[d.definitionId].maxLevel).length,
           // `maxed` says how much of the city has nothing left to buy;
           // `levels` says how much was bought at all, which is the column the
-          // builder programme moves (Docs/plans/builder-30-days.md §4).
+          // builder programme moves (Docs/features/buildings.md §4).
           levels: state.city.districts.reduce((n, d) => n + d.level, 0),
           techs: state.research.completed.length,
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
@@ -608,12 +608,12 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     }
 
     // ---- The baseline the builder programme exists to move ----------------
-    // Docs/plans/builder-30-days.md §1. Every one of these is a MEASUREMENT of
+    // Docs/features/buildings.md §3. Every one of these is a MEASUREMENT of
     // today's game, not a target: re-pin them as each step lands.
     const end = weeks[weeks.length - 1];
     const prev = weeks[weeks.length - 2];
 
-    // 1. THE PACING TABLE (Docs/plans/builder-30-days.md §7), as the day each
+    // 1. THE PACING TABLE (Docs/features/buildings.md §3), as the day each
     //    Townhall level has to be standing by. The design's days are
     //    orientative, so each bound carries a few days of slack; the two
     //    lower bounds keep the ladder from collapsing into a week. Measured

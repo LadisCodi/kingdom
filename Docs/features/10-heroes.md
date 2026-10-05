@@ -6,19 +6,14 @@
 > [`11-expeditions.md`](11-expeditions.md) and how the fight resolves is
 > [`combat.md`](combat.md) §9.
 >
-> **Status: the gacha is built** (§6), and so are **the nav tab, the roster
-> grid, the hero card and the reveal screen** (§8, built 2026-09-08), and
-> **the whole ladder** (§4): **Hero XP buys levels**, ten fragments recruit a
-> hero, and an ascension costs fragments plus a Stardust toll. **The hero itself is
-> designed, not built — reworked 2026-09-08 onto the resolver**: the stat
-> block and the passive (§2), XP-bought levels and the
-> Fragment-plus-Stardust ascension (§4), and Gem-bought hero slots (§3)
-> replace the delve-era hero the code still carries. **One thing is still ahead of the sim**: the
-> card's passive line reads a delve-era trait until Step 8 lands
-> ([`../implementation-plan.md`](../implementation-plan.md) §4), which changes
-> that one call site and nothing about the layout. The **Tavern**, the
-> building heroes arrive through, is designed and unbuilt
-> ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §9).
+> **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
+> card and the reveal screen (§8); the stat block and the type passive on the
+> board (§2.3, §2.4), the traits (§2.5) and the boons (§2.6); the whole ladder
+> (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
+> opens the Heroes tab and the banner. **Not built:** the rarity multipliers
+> (§2.1) and `passivePerTier` (§2.4) — every hero's numbers are authored whole
+> in `heroes`, and the passive does not step with ascension — and the banner
+> moving into the Tavern (§8.3).
 
 ## 1. The collection substrate
 
@@ -80,8 +75,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Its type sits in the matchup chart on both sides, as attacker and as target.
 - **Balanced to ~70% of a full squad's output at equivalent investment.** The
   hero is a second body and a buff, not the army.
-- `dmg` and `hp` grow per level (`dmgPerLevel`, `hpPerLevel`); `def` and
-  `cooldown` do not move.
+- `dmg`, `def` and `hp` grow per level (`dmgPerLevel`, `defPerLevel`,
+  `hpPerLevel`); `cooldown` does not move.
 - It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
   again when the fight ends.
 
@@ -120,7 +115,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ### 2.6 The boon
 
-> **Built 2026-09-14.** Design and rationale:
+> **Built.** Design and rationale:
 > [`../proposals/legendary-boons.md`](../proposals/legendary-boons.md).
 
 - **Every LEGENDARY carries one kingdom passive, and no Common or Rare does.**
@@ -143,8 +138,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 |---|---|
 | **The Pharaoh** | the builders work **20% faster** |
 | **The Elven Princess** | the kingdom makes **25% more Mana** |
-| **The Necromancer** | research runs **25% faster** |
-| **The Scout** | world-map cells are scouted **25% faster** *(pending its timer)* |
+| **The Necromancer** | every lump of Knowledge is **25% bigger** |
+| **The Scout** | explorers march **25% faster** |
 | **The Vampire Lord** | every room teaches your heroes **25% more** |
 | **The Golden Dragon** | every unit you field has **10% more health** |
 
@@ -186,20 +181,18 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ## 3. The hero slots
 
-> **Built 2026-09-09.** A party fields one hero per slot, and the battle
+> **Built.** A party fields one hero per slot, and the battle
 > screen's hero row is where they are picked
 > ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6).
 
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
 - Price: `party.heroSlotGemCostBase × party.heroSlotGemCostGrowth^n`,
-  the escalating-slot curve builders and research slots use, with a higher
+  the escalating-slot curve builders use, with a higher
   base because a hero slot carries a type buff as well as a body. They sit under `party.*` rather than `heroes.*`
   because that key is the Heroes SHEET.
 - **It is the only slot in a party that is sold.** Every troop slot on the
   board is open from the first fight ([`combat.md`](combat.md) §3).
-- The Adventurers' Guild opens **depths**, never slots
-  ([`11-expeditions.md`](11-expeditions.md) §3).
 - A second hero is worth two things: a second buffed type, and a second body on
   the board.
 
@@ -236,33 +229,28 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
   today is levelled with the XP the Commons earned.
-- **The XP curve flattens because the ladder is long.** 1.6 a level is fine
-  over ten rungs and absurd over fifty — level 50 alone would cost 4×10¹¹ — so
-  the growth carries the length and the TOTAL is what is held steady: about
-  4.5× what the old relic ladder cost, against a faucet that runs 5× as fast
-  ([`11-expeditions.md`](11-expeditions.md) §7). Whether that survives a
+- **The XP curve flattens because the ladder is long**: the growth carries
+  the length and the TOTAL is what is held steady. Whether that survives a
   playtest is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
-- The Stardust toll totals **750** to max one hero. Since 2026-09-09 the toll
-  is **Stardust's only sink** — relic levels come from albums
-  ([`09-relics.md`](09-relics.md)) — so whether the trickle is now oversized
-  is **OQ-78**.
+- The Stardust toll totals **750** to max one hero. The toll is **Stardust's
+  only sink**; whether the trickle is oversized is **OQ-78**.
 - **Every gacha drop has a play-based route.** Fragments fall from boss chests
-  as well as from calls; the wallet buys the same hero sooner, never alone.
+  (not built, **OQ-80**) as well as from calls; the wallet buys the same hero
+  sooner, never alone.
 
 ## 5. Where the currencies come from
 
-Every faucet is a fight or a banner. Amounts are
-[`11-expeditions.md`](11-expeditions.md) §7.
+Every faucet is a fight or a banner. Room and floor amounts are
+[`19-world-map.md`](19-world-map.md) §8.1 and §10.
 
 | Currency | Source |
 |---|---|
-| **Hero XP** | every cleared room · the completed-depth trickle (`10 × tier × depth` /h) |
-| **Fragments** | boss chests, from a per-boss pool (OQ-80) · a duplicate or a miss on a call |
-| **Stardust** | every cleared room · the completed-depth trickle · **every call, hero or not** |
+| **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor |
+| **Fragments** | a duplicate or a miss on a call · boss chests, from a per-boss pool (not built, OQ-80) |
+| **Stardust** | every dungeon room and Portal floor · **every call, hero or not** · the quest chain, the season pass and the survey |
 
-- **The trickle is gated on completed depths**, not discovered ruins.
-- The chain is **army → hero → cleared gate → rooms → XP and Stardust →
+- The chain is **army → hero → lairs and dungeon rooms → XP and Stardust →
   levels.** A player who never fights makes no progress on the
   weeks-long arc. **OQ-41.**
 
@@ -430,14 +418,11 @@ the rewarded video.
   stuck.
 - A duplicate is **not** drawn as a hero. It already paid its fragments, and a
   hero tile would promise a roster entry that is already there.
-- **The banners live in the Tavern** (*designed, not built*): heroes are
-  unlocked by that building and **tapping it is how one is called**, the way
-  tapping the Tavern opens the banner
-  ([`14-monetization.md`](14-monetization.md) §2.1).
+- **The banners sit on the store**, padlocked until a Tavern stands. Moving
+  them into the Tavern — **tapping it is how one is called**
+  ([`14-monetization.md`](14-monetization.md) §2.1) — is designed, not built.
 - **The keys stay in the store**, one Gem-priced card each. The store is where
   a currency is bought; the Tavern is where a key is spent.
-- Until the Tavern is built, the banners keep their place on the store — the
-  relocation is one mount, and it lands with the building.
 - Each banner card shows, always: the chance right now, the calls to a
   guaranteed hero, the calls to a guaranteed Legendary where there is one,
   **two buttons side by side**, and a line saying how many keys the player
@@ -488,9 +473,9 @@ how many slots it wants (1…n) and what to do with the answer.
 
 | Dial | Value | Key |
 |---|---|---|
-| A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `hpPerLevel` |
-| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`, `passivePerTier` |
-| The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` |
+| A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
+| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`; `passivePerTier` *(not built)* |
+| The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
 | What a level costs in XP | §4 | `collection.xpLevelCostBase`, `collection.xpLevelCostGrowth` |
 | How long a hero's ladder is | 10 a tier, 50 in all | `collection.heroLevelsPerTier`, `collection.heroMaxLevel` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragmentsPerTierBase` |
@@ -541,10 +526,9 @@ how many slots it wants (1…n) and what to do with the answer.
   `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
   call site consults either, so those heroes have no off-board effect at all.
   **OQ-95.**
-- **The Scout's boon has no screen yet.** `worldRevealSpeed` divides an
-  explorer's march time ([`19-world-map.md`](19-world-map.md) §3.1), and the
-  world board has no screen to send one from. Whether ×1.25 is worth a
-  Legendary is **OQ-96**.
+- **What a boon is worth is unproven.** The Scout's `worldRevealSpeed`
+  divides an explorer's march time ([`19-world-map.md`](19-world-map.md)
+  §3.1); whether ×1.25 is worth a Legendary is **OQ-96**.
 - **Rate-up is untested.** The timeline still carries a banner payload and the
   activation query exists, but the two banners are permanent entries, so nothing
   exercises a scheduled one. The season hero

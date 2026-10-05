@@ -170,7 +170,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   });
 });
 
-// The late half of the ladder (Docs/plans/builder-30-days.md §4). The early
+// The late half of the ladder (Docs/features/buildings.md §4). The early
 // examples above are the proof it did not move: they are the same numbers
 // they were before the pivot existed.
 describe('the late curve, from level 6', () => {

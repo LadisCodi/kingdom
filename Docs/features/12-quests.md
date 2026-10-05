@@ -11,8 +11,9 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **66 quests**, paying 16,035 Gold, 100 Mana, 750 Gems, 140 Stardust,
-  **37 Knowledge across sixteen of them** (§2.1) and **one card pack**.
+- **67 quests**, paying 16,215 Gold, 210 Stone, 180 Food, 130 Mana,
+  750 Gems, 140 Stardust, **41 Knowledge across eighteen of them** (§2.1) and
+  **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
 
@@ -63,8 +64,7 @@
   unlocks. So a rebalance updates its own prose, and a new goal type owes one
   phrase rather than 53 rewrites.
 - **The tracker holds 44 characters**, and that is the whole budget: it is the
-  only place a quest's line is ever shown. Written copy ran to 105 and was
-  read cut off mid-word; the generated lines top out at 30.
+  only place a quest's line is ever shown. The generated lines top out at 30.
 - **`DiscoverFeature`** counts the reveals that uncover a given feature,
   from activation — at the reveal, because a finite feature (a berry bush)
   leaves the map when it is used up.
@@ -87,7 +87,7 @@
 |---|---|---|---|
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge |
 | **8–13** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `ToWork` | 32 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, a worker | |
-| **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build** |
+| **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build**; the Store and the Survey |
 | **20–25** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
 | **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 75 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 24, **the first fight** | **Warfare**; the first pack and **Relics** |
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 85 and 110 cells cleared | **Magic** |
@@ -111,49 +111,45 @@
 ### 2.1 The opening economy
 
 - A new kingdom starts with **100 Gold** and **500 Gems**, and **no Knowledge
-  at all**. The purse doubled with the fog's price table
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §5): the first frontier cells now
-  cost 3 and 5 Gold, and at fifty a player who spent on the border before
-  raising a roof had no rent coming and no way back — the 30-day harness
-  never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
-  it twice over.
+  at all**. The first frontier cells cost 3 and 5 Gold
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §5); below about 60 Gold a player
+  who spends on the border before raising a roof has no rent coming and no
+  way back.
 - **The chain funds the research it asks for, through the opening only.**
   Quest 1 pays Forestry's 2 outright, and **eighteen quests pay Knowledge**,
-  placed so that every card the chain demands up to `Attuned` — quest 35,
+  placed so that every card the chain demands up to `Attuned` — quest 34,
   Consecration — is affordable **with no drip at all**, prerequisites included.
   **The quest just before each of those research quests pays its card's
   Knowledge by itself**, so a player who spent what was banked on cards of
   their own is never stuck.
-  A grant handed over at the title screen taught the player nothing about
-  where the clock comes from; a reward on the quest before the research does.
 - **Past `Attuned` the chain stops paying and the clock takes over**
   ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
   asserted for the opening and **only** the opening (`tests/quests.test.ts`);
   the cut is by chain position, not by era — `MoreRoom` asks for an era-1
-  card at quest 40, past it.
+  card at quest 39, past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
-  `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
+  `ByHand`, 30 · 30 · 40 (and `Rubble`, 30, later). They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
 - Quest 1's first reveal sets the first treasure beside it, **20 Gold**
   ([`01-map-and-fog.md`](01-map-and-fog.md) §6.2); revealing its cell is one
   more cell, and `ARoof` asks for another, the old House's.
-- Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
-  — the first four cards are priced in Knowledge alone — and 2 Knowledge,
-  which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the
-  cells, **asserted at the dearest frontier the player could pick**.
+- Quest 1's four forest cells cost ~16 Gold; **Forestry costs 20 Gold** and
+  2 Knowledge, which is exactly the Knowledge quest 1 pays alongside its
+  10 Gold. The 100 and quest 1's 10 cover the cells and Forestry, **asserted
+  at the dearest frontier the player could pick**.
 - Forest cells refuse work until Forestry is researched; the refusal names
   Forestry.
 - The first call on the standard banner is free, **and it is always a hero**
   ([`22-progression.md`](22-progression.md) §6).
-- The three research beats at 22–24 (`Levies` · `Sawpits` · `Regrowth`) pay
+- The three research beats at 23–25 (`Levies` · `Sawpits` · `Regrowth`) pay
   80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 43).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 44).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
@@ -161,11 +157,10 @@
 
 - **Gem rewards sit in four quests** — `ProperCapital`, `GrandCapital`,
   `Borough` and `SecondLair` — 150 + 250 + 200 + 150 = 750.
-- With the 500 grant and 2,500 from five ruin first-clears: **3,750 by play**,
-  which reaches the second builder (2,500) and a pull
-  ([`14-monetization.md`](14-monetization.md) §2.2). Later rungs come from the
-  season pass's free column ([`20-season-pass.md`](20-season-pass.md) §2) or a
-  wallet.
+- With the 500 grant: **1,250 by the chain**. The second builder (2,500)
+  and later rungs ([`14-monetization.md`](14-monetization.md) §2.2) come from
+  the season pass's free column ([`20-season-pass.md`](20-season-pass.md) §2)
+  or a wallet.
 - **Stardust is paid only past the first summon** — `FirstSummon`,
   `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
   hero ladder it buys is open.
@@ -180,8 +175,6 @@
 
 - The opening is played through the real sim with **nothing granted** and
   reaches the end of the authored chain without a dead end.
-- `ClearGarrisons` is the one goal type added since the chain was written,
-  and it pays Gold only.
 
 ## 5. Deliberately not in this design
 

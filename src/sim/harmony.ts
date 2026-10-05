@@ -1,5 +1,5 @@
 // Harmony: what a decoration supplies, what an advanced building demands, and
-// the gate between them (Docs/plans/builder-30-days.md §6).
+// the gate between them (Docs/features/21-harmony.md).
 //
 // Harmony is a city STAT, not a currency — `supply − demand`, computed on read,
 // with nothing stored and nothing serialized. It is a **gate and never a

@@ -7,10 +7,8 @@
 > how a line is drawn is [`24-dialogue.md`](24-dialogue.md); the quests the
 > beats follow are [`12-quests.md`](12-quests.md) §2.
 >
-> **Status: built 2026-10-01** on `feat/ftue`. Every line below is
-> data in `?dev=data` › Progression › **Scenes**. **The treasure and the
-> abandoned buildings** (beats 1.1b–1.1c, 4.1–4.3, the `farm`, `secondHouse` and `sawmill`
-> lessons) are **built 2026-10-02**.
+> **Status: built.** Every line below is data in `?dev=data` › Progression ›
+> **Scenes**.
 
 ## 1. The rules
 
@@ -133,7 +131,7 @@ Beats, as the First Morning's, each on its quest.
 | Scene | Quest | Isolde says | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
-| | | *And there was one! The old Farm, right beside the fields. Clear its fog and open it, Your Majesty.* | the old Farm, its ruin or its silhouette | none | its card is open |
+| | | *And there was one! The old farm, right beside the fields. Clear its fog and open it, Your Majesty.* | the old Farm, its ruin or its silhouette | none | its card is open |
 | | | *A Farm works the plots one step around it, corners too — and this one stands right beside ours. Repair it!* | **Repair** | the button | repairing |
 | | | *A Farm for Oakville! The townsfolk are grateful already — accept their gift.* | the quest pill | the pill | claimed |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
@@ -141,6 +139,7 @@ Beats, as the First Morning's, each on its quest.
 | | | *Send a villager! They'll walk to a plot in reach, reap it and carry the crop home. More hands, more trips.* | the card's **+** | none | the quest completes |
 | | | *Look at them go! The harvest piles up in the Farm's barn — gather it when it's ready. A full barn stops the work.* | the Farm | all | tap |
 | `secondHouse` | `GrowingTown` | *That House is full — two to a roof. And the fog kept no other… so we'll raise one of our own!* | **Build** (its padlock breaks) | the tab | the build menu is open |
+| | | *Oh — a new House wants more Wood than we hold. Here, I put some by for just this!* (only while the Wood is short; she makes up the difference) | nothing | all | tap |
 | | | *Builders want their wood up front — it says so in the guild charter. Choose the House.* | the Housing card | the card | placing |
 | | | *Anywhere on the cleared ground. Drag it wherever feels right, then confirm. I'd pick somewhere sunny.* | the confirm button | the map and the panel | placed |
 | | | *Our very own House! The townsfolk want to thank you — please, accept their gift.* | the quest pill | the pill | claimed |
@@ -152,7 +151,6 @@ Beats, as the First Morning's, each on its quest.
 | | | *The Sawmill stands idle — saws, and nobody to swing them. Open it.* | the Sawmill | the Sawmill | its card is open |
 | | | *Send it woodcutters. The townsfolk hope to see three villagers at work — the Farm's count too.* | the card's **+** | none | the quest completes |
 | | | *Food and Wood come in by themselves now, even while you're away. A real town, Your Majesty! I— I'm a little proud.* | the Sawmill | all | tap |
-
 | `picks` | `Picks` | *A second story wants stone, and nobody here knows how to cut it. But I'm sure I know a chapter that can teach them!* | **Research** | the tab | the book is open |
 | | | *Pickaxes. It opens the mountains to us.* | the Pickaxes card | the card | its sheet is open |
 | | | *Pour in our Knowledge…* · *…and a little Gold for the iron. Done!* | **+N** · **Research** | the button | filled · done |

@@ -4,6 +4,13 @@
 > [`combat.md`](combat.md). Map marker and fog:
 > [`01-map-and-fog.md`](01-map-and-fog.md). Guild and reservoir are owned
 > elsewhere; this document specifies only what ruins add to them.
+>
+> **Status: partly built.** The battle screen (§2.5–2.6) serves a lair's
+> attack and an army leaving for the world board; the playback (§2.7) serves
+> every fight. A dungeon room is fought from the camped army's sheet on the
+> world board (*Delve*), straight into the playback. Not built: the map marker,
+> discovery card, ruin sheet, room ladder, the room's widget, the Guild preview
+> and the reservoir meter.
 
 ## 1. Flow
 
@@ -58,9 +65,8 @@ City HUD ─────▶ Reservoir meter
 
 ### 2.5 Room sheet — the battle screen
 
-**Built 2026-09-09**, on the gate
-([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) and on the room
-attempt. One screen serves every fight; the caller hands it a descriptor, and
+Used by a lair's attack ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md))
+and by an army sent onto the world board. One screen serves every fight; the caller hands it a descriptor, and
 what differs between two fights is **the widget at the top** and the bands
 under the board.
 
@@ -101,21 +107,20 @@ the player is standing at it.
 
 ### 2.6 Party composition — slots and panels
 
-Two rows of slots on the battle screen, filled from card panels.
+Two rows of slots on the battle screen, filled from the roster under them.
 
 | | |
 |---|---|
 | Data | Troop slots and hero slots — open, filled or **locked**; the roster behind each panel; party attack, live |
-| Flow | Tap a slot → a panel of cards rises over the bottom of the screen → tap a card → **the first free slot fills** → the panel closes when the last slot does |
+| Flow | Tap a troop tile in the roster → **the next free troop slot fills**. Tap a hero slot → the hero picker. *Quick deploy* (on a lair) fills the board: the best heroes that can fight, then squad after squad, best answer to the lair first |
 | Fill rule | A card sends **as much as it legally can**: a whole squad (`squadSize`), or everything left of that type, or everything the army cap still allows |
-| Clearing | The **X** on a slot's corner empties it. It never re-opens the panel |
-| Closing | The panel's own knob, a tap outside it, or the way out of the screen — which leaves the screen standing |
+| Clearing | A tap on a filled troop slot sends that squad home |
 | Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
-| Cards | The heroes screen's card, in a horizontal rail: art, name, the **type as a word** (Melee / Ranged / Mounted for a troop, the hero's own type for a hero), the **power the pick would add** as the headline, the unit's **ATK / DEF / HP**, and one line saying what tapping it does — or which ceiling stopped it |
+| Roster | One tile per troop type: its bust, how many are left at home, its name. A tile that can send nothing says why when tapped |
 
 ### 2.7 The fight — the playback
 
-**Built 2026-09-09** (`src/ui/battleScreen.ts`). Its own full-screen mount at
+Its own full-screen mount at
 z 90, under the reveal (100) and over the nav (10): a fight the player can tap
 around is not a fight.
 

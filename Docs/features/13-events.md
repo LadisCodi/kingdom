@@ -5,17 +5,16 @@
 > shop, and a window that closes.
 >
 > **Status: the scheduling machinery is built and verified; the archetype
-> (§1–§4) is designed, not built.** **The catalogue is EMPTY** — the weekly
-> Conjunction was retired on 2026-09-08 and events are being redesigned, so
-> `EVENTS` holds nothing and a new kingdom has no schedule at all. The
-> machinery keeps its tests, driven by hand-built windows, because the next
-> event lands on it unchanged: one template in `EVENTS` schedules one again.
+> (§1–§4) is designed, not built.** **The catalogue is EMPTY**: `EVENTS`
+> holds nothing and a new kingdom has no schedule at all. The machinery keeps
+> its tests, driven by hand-built windows; one template in `EVENTS` schedules
+> an event.
 
 ## 1. Engine extensions (designed, not built)
 
 | Extension | Built | Designed, not built |
 |---|---|---|
-| **Modifier stats** | 12 values, including Stardust yield, active cost, delve speed and attunement slots | **build speed**, **research speed**, **training speed**, **card yield** |
+| **Modifier stats** | 34 values, including build speed, active cost, unit HP and Mana cap | **training speed**, **card yield** |
 | **Schedule payloads** | a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
 | **Where schedules live** | in code, beside the definitions | a hand-written events file (live-ops content with wall-clock dates) |
 
@@ -58,9 +57,9 @@ Six parts. Every authored event is a skin on them.
 | Source | Note |
 |---|---|
 | Buying a **Wonder level** | [`16-wonders.md`](16-wonders.md) |
-| Extracting from a **delve** | scales with depth |
-| Claiming a **landmark**, clearing a **ruin** depth | |
-| Clearing a ruin's **gate** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
+| Clearing a **dungeon room** | scales with depth |
+| Claiming a **landmark**, clearing a **dungeon** depth | |
+| Clearing a **lair** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
 | **Taps** | low rate |
 | A **rewarded video** | capped; the third ad placement |
 
@@ -113,7 +112,7 @@ threshold   free reward         paid reward
 - Points earned are banked; a milestone reached is paid; a collectible won is
   kept. What ends is the chance to earn more.
 - Refused inside an event: theft, decay, hunger, and timers that destroy
-  progress. The one raid in the game is a garrison's
+  progress. The one raid in the game is a lair's
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)), and it is bounded
   there.
 - **OQ-19.**
@@ -135,12 +134,8 @@ threshold   free reward         paid reward
 
 ## 5. The scheduling machinery (built, with nothing scheduled)
 
-**`EVENTS` is empty.** The weekly Conjunction — a 48-hour window every 7 days
-paying a lump and a boon drawn by seeded RNG — was **retired on 2026-09-08**,
-because events are being redesigned and a live one would have shaped the
-redesign around itself.
-
-What survives is the part every future event needs, and it keeps its tests:
+**`EVENTS` is empty.** What stands is the part every event needs, and it
+keeps its tests:
 
 - **A template in `EVENTS` schedules an event.** Id, first start, duration,
   period. That is the whole of adding one back.
@@ -154,9 +149,7 @@ What survives is the part every future event needs, and it keeps its tests:
   instant whether or not the player is there.
 - **A kingdom is not paid for a window it never lived through.** A window
   already open when the kingdom was created starts `done`; one the player
-  slept through does not. Learned the hard way: the Conjunction used to hand a
-  brand-new game its opening lump on the first tick, which read as a starting
-  grant nobody had authored.
+  slept through does not.
 
 ## 6. Dials, in the order to reach for them
 

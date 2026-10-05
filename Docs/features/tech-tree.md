@@ -7,7 +7,7 @@
 > [`22-progression.md`](22-progression.md) §4; where a card SITS and what it
 > requires is [`../tech-tree-editor.md`](../tech-tree-editor.md).
 >
-> **Status.** Built: **163 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **167 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=data#tree`. The tables below are generated from that file.
 
 ## 1. The shape
@@ -25,8 +25,8 @@
 
 | Book | Opens on | Remit | Bands (cells revealed) | Cards |
 |---|---|---|---|---|
-| **Civics** | from the first minute | the city and its purse | 0 · 43 · 100 | 74 |
-| **Warfare** | the first lair **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
+| **Civics** | from the first minute | the city and its purse | 0 · 43 · 100 | 75 |
+| **Warfare** | handed over once the first lair is **found** | the army, and the lairs it clears | 0 · 85 · 100 · 220 | 40 |
 | **Magic** | the first landmark **claimed** | Mana, Knowledge, the Sanctum, the water | 0 · 30 · 100 · 220 | 28 |
 | **Sagas** | a **Tavern** standing (found) | heroes, and the Tavern that hosts them | 0 · 100 | 11 |
 | **Atlas** | the **Watchtower** claimed (found) | sight, landmarks, the world beyond | 0 · 220 | 13 |
@@ -397,23 +397,23 @@
 
 | | Minor (a rank) | Major | 
 |---|---|---|
-| **Era 1** | 60–200 G · 1–2 K | 20–400 G · 2–3 K — the quest chain pays Civics' |
+| **Era 1** | 50–200 G · 1–2 K | 20–400 G · 2–3 K — the quest chain pays Civics' |
 | **Warfare** | 550–12,500 G, climbing down the page | 500 G (Warrior) to 7,000 G (Warband III) |
 | **Era 2** | 250–1,000 G · 2–4 K | 400–2,500 G · 2–8 K |
 | **Era 3** | 1,500–5,000 G · 8–14 K | 4,000–15,000 G · 10–25 K |
-| **Era 4** | — | the keystones, 30,000 G · 40 K |
+| **Era 4** | — | Warband IV, Attunement IV — 30,000 G · 40 K |
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 23,960 | 110 |
-| 2 | 70,425 | 211 |
+| 1 | 30,460 | 125 |
+| 2 | 87,425 | 249 |
 | 3 | 414,500 | 811 |
 | 4 | 60,000 | 80 |
-| **All** | **568,885** | **1,212** |
+| **All** | **592,385** | **1,265** |
 
 - The pace these prices set is [`22-progression.md`](22-progression.md) §8.
 - The quest chain funds the **opening** — every era-1 card it asks for — with
-  no drip at all (`tests/quests.test.ts`). Past `Attuned` the drip and the
+  no drip at all (`tests/quests.test.ts`). Past the opening the drip and the
   lumps pay.
 
 ## 8. What a bonus can move

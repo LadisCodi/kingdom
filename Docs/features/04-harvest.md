@@ -29,8 +29,8 @@
 - Tuning relation: the thumb's worker-equivalent stays ahead of the crew the
   city can house. It also sets what a rewarded ad is worth (§3.3).
 - At 10 s the thumb is 20 workers against the 30 a Townhall-3 city can house.
-  `QuickHands` takes the thumb to 40, `TapPower` at the top of its ladder to
-  60, both together to 120.
+  `QuickHands` at the top of its ladder (+45% tap speed) takes the thumb to 29,
+  `TapPower` at the top of its ladder to 36, both together to 52.
 - `tap.workSeconds` is the dial for late-game hand-play; doubling it doubles the
   ad with it (§3.3).
 
@@ -129,7 +129,7 @@ Every resource cell carries:
   forest drains in 50 s and sits out 90, yielding 2.1 Wood/min against a
   grassland tree's 3.5 (61%, not 50%); its workers-per-cell drops from 0.59 to
   0.36, so a desert needs about three cells per worker.
-- On the map as painted, Grassland holds 44 of the 57 trees; Desert's stone
+- On the map as painted, Grassland holds 45 of the 57 trees; Desert's stone
   bonus reaches one mountain in 81 cells; Tundra holds no trees (OQ-56).
 
 ### 2.3 The map ceiling
@@ -155,18 +155,19 @@ carry   = max(0, owed + carry − paid)
 
 - **`tap.workSeconds` = 10**, global: a property of the thumb, not the ground.
   A ten-unit tree is about ten taps.
-- **`TapPower` buys duration, not units**: +20% per level, ten levels, ×3 at the
-  top (a tap worth thirty seconds of work). Priced in Gold; a permanent sink.
+- **`TapPower` buys duration, not units**: +20% per rank, four ranks, ×1.8 at
+  the top (a tap worth eighteen seconds of work). Priced in Gold; a permanent
+  sink.
 - **Carry**: the fractional remainder is carried per currency, so a +20% upgrade
   on a one-unit cell pays out on the fifth tap. Four numbers, additive to the
   save.
 - **Floor of one unit**: a tap never pays nothing. At this duration the floor
   covers four of the eight cells (§2.1).
 - **The shortfall when the depot runs dry is not carried.** A maxed thumb wants
-  3 Wood; the last tap of a 10-Wood tree pays what is left, the rest is waste.
+  1.8 Wood; the last tap of a 10-Wood tree pays what is left, the rest is waste.
   Raising `TapPower` past the ground's richness buys less and less.
-- An iron vein pays 1 a tap, not 3: its richness is in the depot (15 units
-  against a rock's 5) and its three-unit swing.
+- An iron vein pays 1 a tap, not 5: its richness is in the depot (25 units
+  against a rock's 5) and its five-unit swing.
 - A tap reads the cell's own rate, `unitsPerStrike ÷ secondsPerStrike`, with no
   travel term. It does not read `cityGatherPerSecond` (§4).
 - A tap refused by a tech gate costs no Mana.
@@ -260,9 +261,8 @@ Quests:
 - A **nominal** city-wide rate with a travel term that takes the influence
   radius as the distance, and with each building's own level in its haul and
   its cadence.
-- The tap does not read it. It has no caller in `src/` (orders,
-  [`12-quests.md`](12-quests.md) §5, do not exist); it is kept as a dead export
-  with a comment saying so.
+- The tap does not read it. Treasures, raids, the mission board and the card
+  collection read it as the city's rate of a coin.
 
 ## 5. Areas of influence, claims and migration
 
@@ -278,7 +278,7 @@ Quests:
 - The radius decides two things: the **gradient** (a tree next door pays 1.4×
   one at radius 4, §4) and **coverage** (how many cells of the right type the
   building reaches, which under two-cells-per-worker (§2.1) decides how many
-  plazas are ever busy, §6).
+  worker slots are ever busy, §6).
 - **No reserve floor.** Workers empty cells; nothing stops them at a share of
   stock.
 - **The thumb works the frontier; the crews work the covered ground.** With a
@@ -297,8 +297,8 @@ Quests:
   idle. No icon.
 - The count lives in the district card only (`4/7` busy). Nothing on the map.
 - When a stump becomes a tree, one of the loiterers heads for it.
-- One onboarding beat that makes the player hire past their ground, around the
-  time the Tome of Earth opens — not built.
+- One onboarding beat that makes the player hire past their ground — not
+  built.
 
 ## 7. The three actors
 
@@ -306,7 +306,7 @@ Quests:
 |---|---|---|---|
 | **The ground** | abundance (`stock`), recovery, richness (`unitsPerStrike`) | what the map can give | "everything is a stump" · "they never stop walking" |
 | **The thumb** | `TapPower` | seconds per tap | "I want it now" |
-| **The payroll** | `WorkerLoad`, **the building's own level** (§4), plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
+| **The payroll** | `WorkerLoad`, **the building's own level** (§4), worker slots per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
 - The cell-scoped ladders — Sawpits, Irrigation, Stonecutting, Butchery,
   Iron Picks, Gold Panning, Big Nets — are a **percentage** of the ground's
@@ -333,14 +333,14 @@ Quests:
 | Dial | Value | Key |
 |---|---|---|
 | Seconds a tap is worth | **10** | `tap.workSeconds` |
-| `TapPower` | **+20%/level, 10 levels** (→ ×3) | its ranks in `tech-tree.json`, through `?dev=tree` |
+| `TapPower` | **+20% a rank, 4 ranks** (→ ×1.8) | its ranks in `tech-tree.json`, through `?dev=data#tree` |
 | Chunk and rhythm, per cell | §2.1 | `harvest.unitsPerStrike`, `.secondsPerStrike` |
 | Stock, per cell | §2.1 | `harvest.stock` |
 | Ground multiplier, per terrain × currency | §2.2 | `terrain` |
 | Recovery, per cell | §2.1 | `harvest.recoverySeconds` |
 | Respawn, finite features | 120 s Berries · 180 s Meat · 90 s Fish | `harvest.respawnSeconds` |
 | Worker move speed | 1 tile/s | `worker.moveSpeedTilesPerSecond` |
-| Influence radius, plazas per level | §5 | `buildings` › `influenceRadiusPerLevel` |
+| Influence radius, worker slots per level | §5 | `buildings` › `influenceRadiusPerLevel`, `maxWorkersPerLevel` |
 | What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
 | Mana per tap on the ground | 1 | `tap.manaCost` |
 | Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |

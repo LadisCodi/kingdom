@@ -5,7 +5,7 @@
 > construction itself is [`06-construction.md`](06-construction.md); what
 > workers do is [`04-harvest.md`](04-harvest.md).
 >
-> **Status: built 2026-09-09.** Every level is authored in the building's
+> **Status: built.** Every level is authored in the building's
 > `costPerLevel` and priced by the building's own instance ordinal (§3).
 
 ## 1. The Townhall level is the era
@@ -27,7 +27,7 @@
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
 | Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
 | Villagers to reach it | — | 3 | 5 | 12 |
-| Explores to ring | 3 | 6 | 8 | 10 |
+| Explores to ring | 3 | 5 | 7 | 8 |
 
 - **A town grows when its people do.** Every level past the first asks for
   villagers on top of its technology: `buildings.requiredPopulationPerLevel`
@@ -48,9 +48,8 @@
 Three arcs run past TH3:
 
 - **Military buildings** raise the army cap — how many troops the city may
-  own — and therefore how deep a ruin can be pushed. The cap is the sum over
-  the four halls ([`combat.md`](combat.md) §14); what *opens* a depth is the
-  Adventurers' Guild ([`11-expeditions.md`](11-expeditions.md) §3).
+  own — and therefore which lairs a party can take on. The cap is the sum over the four halls
+  ([`combat.md`](combat.md) §14).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
   session length ([`08-magic.md`](08-magic.md)).
 - **Card albums, Fragments, Stardust and Hero XP** gate relic and hero levels,
@@ -153,7 +152,7 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ```
 
 - The pivot is `city.lateUpgradeFromLevel` (6), and the late half restarts
-  at its own base — 2 h for every district — because a minute-long step cannot
+  at its own base — 2 h for every district, 6 h for the Townhall — because a minute-long step cannot
   be compounded into a multi-day ladder without deforming the opening.
 - A build's wait grows with the ordinal and with distance from the Townhall;
   neither touches the price.
@@ -258,13 +257,13 @@ What follows the building:
 | What every level costs, build included — currencies and goods alike | `buildings` › `costPerLevel` — §3 |
 | How much dearer a later instance is | `buildings.instanceLinearGrowth`, `instanceExponentialGrowth` — §3.1 |
 | Build time, and how it grows with count and distance | `buildings.buildDuration*` |
-| Per-level Townhall and tech gates | `buildings.requiredTownhallLevelPerLevel`; the tech gates are the technologies' unlocks (`?dev=tree`) |
+| Per-level Townhall and tech gates | `buildings.requiredTownhallLevelPerLevel`; the tech gates are the technologies' unlocks (`?dev=data#tree`) |
 | Villagers each Townhall level asks for | `buildings.requiredPopulationPerLevel` on the Townhall — §1 |
 | Housing capacity per level | `buildings` › Housing › `populationCapacityPerLevel` — OQ-46 |
 | House rent bonus per level | `buildings.taxBonusPerLevel` — +25% a level ([`03-economy.md`](03-economy.md) §3) |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
-| Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |
+| Army cap per level | 150 · 250 · 400 · 600 · 850 · 1,100 · 1,400 · 1,750 · 2,150 · 2,600, on each of the four military halls — `buildings.armyCapPerLevel` ([`buildings.md`](buildings.md) §4.8) |
 | The late half of the wait | `buildings.upgradeDurationLateSeconds`, `upgradeDurationLateLevelGrowth`, `city.lateUpgradeFromLevel` — §3.3 |
 | Adjacency | `adjacency` — [`03-economy.md`](03-economy.md) §3 |
 
@@ -281,6 +280,5 @@ What follows the building:
 - An instance multiplier on refined goods (§3.2).
 - Renumbering ordinals. #2 is #2 for life, and there is nothing that could
   free the number (§3.1).
-- `Desert`, a declared terrain with zero cells.
 
 **Open questions:** OQ-46.

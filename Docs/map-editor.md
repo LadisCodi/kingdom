@@ -1,7 +1,7 @@
 Map editor
 ---
 
-> **Scope.** How map content — terrain, features, landmarks and ruins — is
+> **Scope.** How map content — terrain, features, landmarks, lairs and abandoned buildings — is
 > authored, and why it is not a table. Covers the map editor — the Region map
 > collection of the data editor (`?dev=data#map`,
 > [`plans/data-editor.md`](plans/data-editor.md)) — the shared rule module
@@ -43,16 +43,14 @@ of its own there.
 ## 2. Where map content lives now
 
 `src/sim/data/region-map.json` is hand-authored (by the editor) and holds all
-four kinds of map content:
+five kinds of map content:
 
 ```
 terrain   { cells: [{x, y, id}] }   every cell that exists; absent = void
 features  { cells: [{x, y, id}] }   at most one per cell
 landmarks [{id, kind, x, y, claimCost}]
-ruins     { <RuinId>: {x, y, tier, difficulty, baseDepthSeconds,
-                       depthGrowth, maxDepth, supplies, affinity, artifact,
-                       guard} }
-guard     { threat, power, warningMinutes, periodMinutes }   on every ruin
+lairs     { <LairId>: {x, y, size, tier, radius, sight, guard, flavour} }
+guard     { threat, power, warningMinutes }   on every lair
 abandoned [{id, district, x, y, sight, name?}]   buildings the fog swallowed
 ```
 
@@ -62,19 +60,20 @@ validator holds its ground to a site's rules, its id to the sites' one
 namespace, and its count to the Townhall cap at the level whose reach first
 covers it.)*
 
-*(`guard` is the garrison that holds the ruin's door and the clock discovering
-it starts — [`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
-§2. The validator asks for a unit type or `Any`, a `power` of at least 1, and
-both counters of at least one minute.)*
+*(`guard` is the lair's garrison and the clock discovering it starts —
+[`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
+§2. The validator asks for a unit type or `Any`, a `power` of at least 1, a
+warning of at least one minute, a `sight` that reaches past the `radius` (or
+0 for never), and a flavour line.)*
 
-`definitions.ts` reads `LANDMARKS` and `RUINS` from here rather than from the
+`definitions.ts` reads `LANDMARKS` and `LAIRS` from here rather than from the
 balance collections; `grid.ts` reads terrain and features as before. The file is
 written one cell per line, sorted in reading order, so a map change shows up in
 `git diff` as the cells that moved rather than as a reflowed blob.
 
-The one asymmetry worth knowing: **the ruin roster is fixed in code.** `RuinId`
-is a union in `state.ts` and five ruins have hand-written names, descriptions
-and sprites in `definitions.ts`, so the editor can move and retune a ruin but
+The one asymmetry worth knowing: **the lair roster is fixed in code.** `LairId`
+is a union in `state.ts` and five lairs have hand-written names, descriptions
+and sprites in `definitions.ts`, so the editor can move and retune a lair but
 not add or delete one. Landmarks have no code-side identity beyond their
 `kind`, so they are fully editable.
 
@@ -97,8 +96,8 @@ in none.
 
 **Errors** are what the sim cannot cope with: a Townhall footprint that is not
 clear Grassland, a site on water or void or sharing a cell, a shoal on dry land
-or a forest at sea, an unknown id, a ruin missing or invented, a delve number
-that makes no sense (`depthGrowth < 1` would make deeper delves *faster*).
+or a forest at sea, an unknown id, a lair missing or invented, a lair's
+sight that does not reach past its radius.
 
 **Warnings** are what a designer probably did not mean. Today there is one that
 matters: **land the Townhall cannot walk to**. `townhallDistance()` returns 0
@@ -135,7 +134,7 @@ outlines and labels — is an overlay drawn over that view.
 | Pick | `I` | or hold `Alt` |
 | Sites | `S` | three modes of its own, below |
 
-The Sites tool splits into three modes, shown as labelled buttons in the
+The Sites tool splits into four modes, shown as labelled buttons in the
 toolbar because "what does a click do right now" is the one question a modal
 tool has to answer out loud:
 
@@ -148,7 +147,7 @@ tool has to answer out loud:
 
 The cursor changes per mode, and Place and Erase each carry a one-line note
 saying what you are about to get: a new landmark arrives as an unnamed `Shrine`
-at 25,000 Gold, to be renamed and priced in the inspector, and a ruin refuses
+at 25,000 Gold, to be renamed and priced in the inspector, and a lair refuses
 to be erased with a toast rather than silently doing nothing.
 
 Two guard rails worth knowing. Placing onto an occupied cell **selects what is
@@ -201,7 +200,7 @@ In the order to reach for them.
 | what a legal map is | `validateRegionMap()` in `src/sim/data/mapRules.ts` — then a case in `tests/regionMap.test.ts` |
 | fog price per ring | `fog.rings` in the Exploration settings (`?dev=data#exploration`) |
 | a new terrain or feature | `TerrainId` / `FeatureId` in `state.ts`, `FEATURES` and a sprite in `definitions.ts`, `TERRAIN_IDS` in `mapRules.ts` — the editor's palette is generated from those |
-| a sixth ruin | `RuinId` in `state.ts` + a `ruinContent` entry in `definitions.ts`, then place it in the editor |
+| a sixth lair | `LairId` in `state.ts` + a `lairContent` entry in `definitions.ts`, then place it in the editor |
 | how wide a void fill may spread | `FILL_MARGIN` / `FILL_LIMIT` in `src/editor/mount.ts` |
 
 ## 7. What was deliberately not built

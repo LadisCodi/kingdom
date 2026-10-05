@@ -30,7 +30,7 @@ export type CurrencyId =
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
- *  four coins on the plank stays four (Docs/plans/builder-30-days.md §2). */
+ *  four coins on the plank stays four (Docs/features/17-workshops-and-goods.md §1). */
 export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
 /** What the city holds of each. Absent = none, exactly like a Wallet. */
 export type GoodsStock = Partial<Record<GoodId, number>>;

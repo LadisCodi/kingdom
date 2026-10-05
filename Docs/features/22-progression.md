@@ -9,7 +9,7 @@
 > player through it is [`12-quests.md`](12-quests.md) §2. The tree's content
 > is [`tech-tree.md`](tech-tree.md).
 >
-> **Status: built 2026-10-01** on `feat/ftue`.
+> **Status: built.**
 
 ## 1. The rules
 
@@ -38,7 +38,7 @@
 | **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** steps forward, **the Book of Warfare**, the Barracks, soldiers | revealing a lair's ground; Isolde hands over the book |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
-| **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of every book | claiming the shrine; 43 cells revealed |
+| **Day 1–2** | the Thorned Shrine, **the Book of Magic**, the Sanctum; era 2 of Civics and Magic | claiming the shrine; 43 cells revealed (Magic's at 30, Warfare's at 85) |
 | **Day 2** | **the Tavern**: heroes, the banner, **the Sagas** | building the Tavern |
 | **Day 2–3** | Townhall 3, Mining, the Harpies | the chain; the fog |
 | **Day 4–6** | Townhall 4, era 3, workshops and refined goods | Magistracy; 100 cells revealed |
@@ -57,7 +57,7 @@
 | **Survey** pill ([`25-the-survey.md`](25-the-survey.md)) | the Townhall reaches **level 2**, with the Store | absent |
 | **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
-| **Season** pill | as today — a card or a pack held | absent |
+| **Season** pill | a card or a pack held | absent |
 | **The Book of Civics** | always open | — |
 | **The Book of Warfare** | Isolde **hands it over**, once the first lair is discovered and its card opened (`firstLair`, [`23-tutorials.md`](23-tutorials.md) §4.2) | a padlocked bookmark — *Find a lair* |
 | **The Book of Magic** | the first landmark is **claimed** | a padlocked bookmark — *Claim a landmark* |
@@ -149,8 +149,8 @@
 |---|---|
 | the drip, three visits a day | ~20 (at most 24) |
 | the quest chain, days 1–2 | ~27 in all |
-| a landmark claimed | 5 each (+Wayposts) |
-| a lair cleared | 15 each (+Bounties) |
+| a landmark claimed | 3 each (+Wayposts) |
+| a lair cleared | 3 each (+Bounties) |
 
 ### 8.2 What a card costs
 
@@ -205,12 +205,12 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
 | Dial | Value | Where |
 |---|---|---|
 | What each card costs | §8.2 | `?dev=data#tree` |
-| What each band asks for in revealed cells | 0 · 43 (Civics) or 30 · 100 · 220 | `?dev=data#tree` |
-| The Watchtower's place and price | (0, −8) · 10,000 Gold | `?dev=data#map` |
+| What each band asks for in revealed cells | Civics 0 · 43 · 100; Warfare 0 · 85 · 100 · 220; Magic 0 · 30 · 100 · 220; Sagas 0 · 100; Atlas 0 · 220 | `?dev=data#tree` |
+| The Watchtower's place and price | (−2, −8) · 10,000 Gold | `?dev=data#map` |
 | The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |
 | Hero XP per Tavern level | +10% | `buildings` › `Tavern` › `heroXpBonusPerLevel` |
-| Which quest opens Research and Build | `Woodcraft` · `GrowingTown` | `sim/unlocks.ts` |
+| Which quest opens Research and Build | `Woodcraft` · `GrowingTown` | `sim/doors.ts` |
 | What opens a book | §4 | `sim/research.ts` `TOME_OPENS` |
 
 ## 11. Deliberately not in this design
@@ -224,7 +224,5 @@ A page mixes four kinds of card, in the proportion Elvenar's research does:
   Morning is played on the save.
 - Heroes before the first lair; a random first free call.
 - A Tavern that sells calls. The banner sells them; the Tavern hosts it.
-- Claiming, contesting or the Portal on the world board — the door opens
-  onto exploring only until those are built (**OQ-114**).
 
-**Open questions:** **OQ-114**, **OQ-115**, **OQ-116**.
+**Open questions:** **OQ-115**, **OQ-116**.

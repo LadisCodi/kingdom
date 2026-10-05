@@ -1,5 +1,5 @@
 // Refined goods: the stockpile, and what an advanced building level costs in
-// it (Docs/plans/builder-30-days.md §2).
+// it (Docs/features/17-workshops-and-goods.md §1).
 //
 // A good is NOT a currency. It has no cap, no Market price and no coin on the
 // plank: the city keeps a counter per good, the way the collection keeps
