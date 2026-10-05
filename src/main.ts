@@ -60,7 +60,7 @@ import { LocalWorldServer, browserStore } from './worldServer/local';
 import { mountWorldKnob } from './ui/worldKnob';
 import { mountStage } from './ui/stage/stage';
 import { mountUnlockSplash } from './ui/unlockSplash';
-import { SCENES, UNLOCKS } from './sim/data/definitions';
+import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -733,6 +733,16 @@ async function boot(): Promise<void> {
       button('✨ unlocks', () => {
         game.unlockQueue.push(...Object.keys(UNLOCKS));
         runTick();
+      }),
+      // The world board, opened for real: a Watchtower is claimed — its
+      // door (sim/doors.ts) — without finding it, and the player walks out.
+      button('🌍 world', () => {
+        const tower = LANDMARKS.find((l) => l.kind === 'Watchtower');
+        if (tower === undefined) return;
+        game.state.discoveries[`site:${tower.id}`] = true;
+        game.state.landmarks.claimed[tower.id] = true;
+        runTick();
+        game.enterWorld();
       }),
       // The world server's stand-in rivals: play a turn as any of them, to
       // set up a board by hand. Their commands cost the player nothing.

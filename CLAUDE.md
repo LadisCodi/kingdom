@@ -31,7 +31,8 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
-reset, and 📱 — the frame at an iPhone X, iPhone 17 or iPad Pro 12.9"
+reset, 🌍 — the world board opened, a Watchtower claimed without finding it —
+and 📱 — the frame at an iPhone X, iPhone 17 or iPad Pro 12.9"
 aspect ratio, with that device's safe-area insets and its notch or Dynamic Island
 and home bar drawn over it, to sign off a menu per device from a desktop
 browser). `?dev=kit`
