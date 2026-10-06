@@ -298,11 +298,11 @@ describe('one-call replay equals stepped ticking', () => {
 // ------------------------------------------------------------------ the zone
 
 describe('the zone', () => {
-  // The Harpies hold the near 2×2 mountains: (3, -4) is one of them, inside
-  // the zone; (4, -3) is grass just outside it, a Quarry's reach away.
+  // The Harpies hold the gold vein at (3, -6), inside the zone; (4, -5) is
+  // grass just outside it, a Quarry's reach away.
   const HELD = HARPIES;
-  const MOUNTAIN = { x: 3, y: -4 };
-  const OUTSIDE = { x: 4, y: -3 };
+  const MOUNTAIN = { x: 3, y: -6 };
+  const OUTSIDE = { x: 4, y: -5 };
   const inZone = (c: { x: number; y: number }) =>
     lairZoneCells(HELD).some((z) => z.x === c.x && z.y === c.y);
 
@@ -334,7 +334,7 @@ describe('the zone', () => {
 
   it('refuses a building placed or moved into it, and the lair\'s own cells until it falls', () => {
     const state = earningKingdom();
-    const lot = { x: 5, y: -4 }; // bare ground in the zone, between the two blocks
+    const lot = { x: 6, y: -7 }; // bare ground in the zone, beside the camp
     reveal(state, [lot, LAIRS[HELD].location]);
     advance(state, map, T0);
     expect(placementBlock(state, map, 'Housing', lot)).toBe('LairZone');
