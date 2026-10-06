@@ -13,7 +13,7 @@ import {
   addBuilt, firstGame, completeTech, FOREST, freshGame, fund, map, rentStored, reveal, stored, T0, tickAt,
 } from './helpers';
 
-const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
+const SAWMILL = { x: 2, y: -1 }; // beside FOREST, diagonal to the Townhall
 
 const workingGame = () => {
   const state = freshGame();
