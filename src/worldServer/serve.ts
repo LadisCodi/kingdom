@@ -42,8 +42,7 @@ export type Served =
   | { status: 400 | 409; error: string };
 
 const KINDS: ReadonlySet<WorldCommandKind> = new Set<WorldCommandKind>([
-  'join', 'snapshot', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect', 'reportSeen', 'postOffer',
-  'takeOffer', 'withdrawOffer', 'sendArmy', 'recall', 'delveRoom', 'descendPortal', 'setBoost',
+  'join', 'snapshot', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect', 'reportSeen', 'sendArmy', 'recall', 'delveRoom', 'descendPortal', 'setBoost',
   'setCrest',
 ]);
 

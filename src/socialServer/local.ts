@@ -6,10 +6,14 @@
 // it peoples them: a dozen made-up kingdoms that are found, suggested, ask
 // the player to be friends and answer the player's requests a little later
 // — one says no, so a declined request can be seen, and one never answers,
-// so a request left waiting can be. They act through `serveSocial` like any
-// player, so what they do lands in the player's Inbox as it would.
+// so a request left waiting can be. On the wish board they keep a wish up
+// each, and a friend among them fills the player's within a minute or two.
+// They act through `serveSocial` like any player, so what they do lands in
+// the player's Inbox as it would.
 
+import { ARTIFACT_ORDER } from '../sim/data/definitions';
 import { randInt } from '../sim/rng';
+import type { TradeLot } from '../sim/trade';
 import { emptyTables, friendCodeFor, memorySocial, serveSocial, type SocialTables } from './serve';
 import type { SocialCommand, SocialReply } from './types';
 
@@ -67,6 +71,17 @@ const GRUMPY = 'Dunmere';
 const EAGER = ['Foxhollow', 'Elderglen'];
 
 const botId = (name: string) => `bot:${name}`;
+
+/** What each made-up kingdom keeps wishing for on the wish board (§2.4):
+ *  pinned again whenever the last one is filled or ends. */
+const WISHES: Record<string, { need: TradeLot; give: TradeLot }> = {
+  Foxhollow: { need: { kind: 'material', id: 'Heartwood' }, give: { kind: 'material', id: 'Moonglass' } },
+  Elderglen: { need: { kind: 'material', id: 'Starmetal' }, give: { kind: 'fragment', relic: ARTIFACT_ORDER[0], slot: 1 } },
+  Aldermoor: { need: { kind: 'fragment', relic: ARTIFACT_ORDER[1], slot: 2 }, give: { kind: 'material', id: 'Heartwood' } },
+  'Kestrel Rock': {
+    need: { kind: 'fragment', relic: ARTIFACT_ORDER[2], slot: 5 }, give: { kind: 'fragment', relic: ARTIFACT_ORDER[3], slot: 5 },
+  },
+};
 
 /** The stand-in's tables, and who has been asked by the eager two. */
 type LocalTables = SocialTables & { askedFirst?: string[] };
@@ -137,6 +152,18 @@ export class LocalSocialServer implements SocialServerApi {
       const yes = id !== botId(GRUMPY) && (await as(id, { kind: 'accept', code })).status === 200
         && !(await store.links(me)).outgoing.some((r) => r.id === id);
       if (!yes) await as(id, { kind: 'decline', code });
+    }
+    // The wish board: each keeps its wish up, and a friend among them fills
+    // a wish of the player's after a little while.
+    for (const [name, wish] of Object.entries(WISHES)) {
+      const id = botId(name);
+      if ((await store.openWishes([id])).length === 0) await as(id, { kind: 'pinWish', ...wish });
+    }
+    const friends = (await store.links(me)).friends.filter((id) => id.startsWith('bot:') && id !== botId(SHY));
+    for (const w of await store.openWishes([me])) {
+      const by = friends[randInt(0x50c1a1, Math.max(1, friends.length), 'fill', w.id)];
+      if (by === undefined || now < w.at + 30_000 + randInt(0x50c1a1, 60_000, 'fillAt', w.id)) continue;
+      await as(by, { kind: 'fillWish', id: w.id });
     }
   }
 }

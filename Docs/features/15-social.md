@@ -6,7 +6,8 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity, the friends list, the crest and the Inbox built (§2–§2.3); the rest
+> **Status: identity, the friends list, the crest, the Inbox and the wish
+> board built (§2–§2.4); the rest
 > designed, not built.** Prototype population is five to ten named
 > playtesters.
 
@@ -74,7 +75,8 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 
 - **The door:** a knob hanging under the header, left of Settings. It opens
   once the world map is open and the kingdom has a nickname (the `friends`
-  door). A red orb counts requests to answer plus unread Inbox messages.
+  door). A red orb counts requests to answer, unread Inbox messages and
+  friends' wishes the player can fill.
 - **The cap:** 10 friends, held on both sides. At most 10 requests waiting
   for an answer at once.
 - **Requests expire** after 48 hours unanswered, on both sides.
@@ -82,8 +84,9 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
   after its splash and its scene ([`19-world-map.md`](19-world-map.md)
   §1.3); taking it seats the kingdom on a board. One name, unique, never
   changed, the save keeps it. The friends list never asks.
-- **Two tabs:** *List* and *Inbox* (§2.3); a red seal on the Inbox counts
-  its unread messages.
+- **Three tabs:** *List*, *Trade* (§2.4) and *Inbox* (§2.3). A red seal on
+  Trade counts the friends' wishes the player can fill; on the Inbox, its
+  unread messages.
 - **The List, top to bottom:**
   - **The player's own card**, pinned: their place among their friends
     (ribbon), crest, name, Townhall tag, friend code (a tap copies it), and a
@@ -159,18 +162,79 @@ Modelled on Theme Park's Inbox (ITP-009/26, the send and receive pages).
     Answered here or on the list, it says so (*You accepted…* / *You
     declined…*, a tick or a cross); unanswered, it expires;
   - the answer to a request the player sent: *Accepted your friend
-    request* or *Declined your friend request*.
+    request* or *Declined your friend request*;
+  - the wish board's news (§2.4), each with what moved: *Filled your wish*,
+    *You filled their wish*, *Nobody filled your wish* (its stake came back).
   - Sending a request writes nothing to the sender's Inbox. A cancelled
     request leaves the other's.
 - **Read:** opening the tab reads what is new; it moves under *Old* on the
   next visit, stamped with when it was read. A request waiting for an answer
   stays new until it is answered.
 - **Kept 30 days**, then gone. *Delete read* clears every old message.
-- Other systems add their own kinds (a friend's trade offer).
+- Other systems add their own kinds.
+
+### 2.4 Trading: the wish board
+
+Friends trade the three precious materials and relic fragments on a wish
+board: a player pins what they need and what they give for it, and any
+friend who has it fills it in one tap. Modelled on Clash Royale's requests
+and Township's help, with the rules of Idle Town Master's *Comercio*.
+Mockups: [`../art/ui/mockups/m77-wish-board.png`](../art/ui/mockups/m77-wish-board.png),
+[`m78-wish-steps.png`](../art/ui/mockups/m78-wish-steps.png).
+
+- **A lot:** a precious material ×5, one relic piece, or one keystone.
+- **One lot for one lot:** material for material or piece, piece for piece
+  or material; **a keystone only for a keystone**; never the same thing
+  both ways.
+- **A fragment is wished for only if missing** — a relic met and not yet
+  restored, none held in that slot. Never a spare to level with.
+- **A fragment is given only if duplicated** — at least two in its slot,
+  one kept — and found, never bound.
+- A fragment received by trade is found. A wish whose stake is a fragment
+  of a relic the player has never met cannot be filled by them: the first
+  fragment of every relic is found by play.
+
+**The Trade tab:**
+
+- *Your wishes n/3*: each *I need → I give*, the time left, a ✕ to take it
+  down (its stake comes back); *+ Make a wish* while fewer than three.
+- *Friends need*, with *Fills n/5*: every friend's open wish, the ones the
+  player can fill first and lit (*You have it*, **Fill**); the rest greyed
+  with why (*You don't have it*, *You have only one*, *You have not found
+  this relic yet*).
+
+**Making a wish**, two windows one after the other:
+
+1. *What do you need?* (step 1 of 2) — one relic a row, every relic met and
+   not restored, its six slots across it: held ones faded, missing ones
+   dashed and pickable, the keystone the sixth and gold-rimmed. Under them,
+   the three materials ×5. A need already wished for is greyed.
+2. *What will you give?* (step 2 of 2) — the need on top with *Change*;
+   *Your duplicates*, every fragment held, the ones that cannot go greyed
+   with why (*Only 1*, *Keystone only*); the materials ×5. *Held until a
+   friend fills it, or for 48 hours.* **Pin wish**: the stake leaves the
+   player's goods.
+
+**Filling:** **Fill** gives what the wish needs and takes its stake, at once.
+*Wish filled!* shows who, what went and what came; both players get an
+Inbox message.
+
+**Rules on the server:**
+
+- Up to **3** wishes at once; never the same need twice.
+- **5 fills in any 24 hours**; pinning and receiving are not capped. The
+  filler gets nothing beyond the stake.
+- A wish stands **48 hours**, then its stake comes back. Withdrawn, at once.
+- A wish is filled once, by one friend: the fill is one conditional write.
+- Every lot that lands on a player — a filled need, a filled wish's stake, a
+  stake back — is a **delivery**, numbered; the client applies each once,
+  saves, and acknowledges the last with its next hello.
 
 | Dial, in the order to reach for them | Where |
 |---|---|
 | The cap on friends, on requests waiting | `?dev=data` › Friends (`friends.max`, `friends.maxSent`) |
+| A material's lot | `trade.materialLot` |
+| Wishes at once, fills a day, a wish's hours | `trade.wishes`, `trade.fillsPerDay`, `trade.wishHours` |
 | How long a request waits, a message is kept | `friends.requestHours`, `friends.messageDays` |
 | Rows the requests list fills with suggestions | `friends.requestRows` |
 

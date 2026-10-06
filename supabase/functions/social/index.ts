@@ -33,20 +33,35 @@ const profileOf = (r: Row) => ({
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
-const MESSAGE = 'user_id, id, kind, from_id, created_at, read_at, state';
+const MESSAGE = 'user_id, id, kind, from_id, created_at, read_at, state, lots';
 
 interface MessageRow {
   user_id: string; id: string; kind: string; from_id: string; created_at: string; read_at: string | null; state: string | null;
+  lots: unknown;
 }
 
 /** A message as `serveSocial` reads it (src/socialServer/serve.ts MessageRow). */
 interface Message {
   userId: string; id: string; kind: string; fromId: string; at: number; readAt: number | null; state: string | null;
+  lots?: unknown;
 }
 
 const messageOf = (r: MessageRow): Message => ({
   userId: r.user_id, id: r.id, kind: r.kind, fromId: r.from_id, at: Date.parse(r.created_at),
-  readAt: r.read_at === null ? null : Date.parse(r.read_at), state: r.state,
+  readAt: r.read_at === null ? null : Date.parse(r.read_at), state: r.state, lots: r.lots ?? null,
+});
+
+const WISH = 'id, user_id, need, give, created_at, state, filled_by, filled_at';
+
+interface WishRow {
+  id: string; user_id: string; need: unknown; give: unknown; created_at: string; state: string;
+  filled_by: string | null; filled_at: string | null;
+}
+
+/** A wish as `serveSocial` reads it (src/socialServer/serve.ts WishRow). */
+const wishOf = (r: WishRow) => ({
+  id: r.id, userId: r.user_id, need: r.need, give: r.give, at: Date.parse(r.created_at), state: r.state,
+  filledBy: r.filled_by, filledAt: r.filled_at === null ? null : Date.parse(r.filled_at),
 });
 
 function rows<T>({ data, error }: { data: T[] | null; error: unknown }): T[] {
@@ -86,7 +101,7 @@ const store = {
     if (error) throw error;
     return true;
   },
-  async touch(userId: string, progress: { townhall: number; cells: number; crest?: string | null }, now: number) {
+  async touch(userId: string, progress: { townhall: number; cells: number; crest?: string | null; ack?: number }, now: number) {
     const { error } = await admin.from('profiles')
       .update({
         townhall: progress.townhall, cells: progress.cells, seen_at: iso(now),
@@ -143,7 +158,7 @@ const store = {
   async putMessage(m: Message) {
     const { error } = await admin.from('messages').upsert({
       user_id: m.userId, id: m.id, kind: m.kind, from_id: m.fromId, created_at: iso(m.at),
-      read_at: m.readAt === null ? null : iso(m.readAt), state: m.state,
+      read_at: m.readAt === null ? null : iso(m.readAt), state: m.state, lots: m.lots ?? null,
     }, { onConflict: 'user_id,id' });
     if (error) throw error;
   },
@@ -157,6 +172,44 @@ const store = {
   async dropMessages(userId: string, ids: string[]) {
     if (ids.length === 0) return;
     const { error } = await admin.from('messages').delete().eq('user_id', userId).in('id', ids);
+    if (error) throw error;
+  },
+  async openWishes(ids: string[]) {
+    if (ids.length === 0) return [];
+    return rows<WishRow>(await admin.from('wishes').select(WISH).eq('state', 'open').in('user_id', ids)).map(wishOf);
+  },
+  async addWish(w: { id: string; userId: string; need: unknown; give: unknown; at: number }) {
+    const { error } = await admin.from('wishes')
+      .insert({ id: w.id, user_id: w.userId, need: w.need, give: w.give, created_at: iso(w.at), state: 'open' });
+    if (error) throw error;
+  },
+  /** One statement, conditional on the wish still being open: two fills at
+   *  once cannot both take it. */
+  async closeWish(id: string, end: { state: string; filledBy: string | null; filledAt: number | null }) {
+    const { data, error } = await admin.from('wishes')
+      .update({ state: end.state, filled_by: end.filledBy, filled_at: end.filledAt === null ? null : iso(end.filledAt) })
+      .eq('id', id).eq('state', 'open').select(WISH);
+    if (error) throw error;
+    const hit = (data ?? []) as WishRow[];
+    return hit.length === 0 ? null : wishOf(hit[0]);
+  },
+  async fillsSince(userId: string, since: number) {
+    const { count, error } = await admin.from('wishes').select('id', { count: 'exact', head: true })
+      .eq('filled_by', userId).gt('filled_at', iso(since));
+    if (error) throw error;
+    return count ?? 0;
+  },
+  async deliver(userId: string, lot: unknown, why: string) {
+    const { error } = await admin.from('deliveries').insert({ user_id: userId, lot, why });
+    if (error) throw error;
+  },
+  async deliveriesOf(userId: string) {
+    return rows<{ seq: number; user_id: string; lot: unknown; why: string }>(
+      await admin.from('deliveries').select('seq, user_id, lot, why').eq('user_id', userId).order('seq'),
+    ).map((r) => ({ userId: r.user_id, seq: Number(r.seq), lot: r.lot, why: r.why }));
+  },
+  async dropDeliveries(userId: string, upTo: number) {
+    const { error } = await admin.from('deliveries').delete().eq('user_id', userId).lte('seq', upTo);
     if (error) throw error;
   },
 };

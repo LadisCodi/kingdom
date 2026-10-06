@@ -39,23 +39,8 @@
   z-index: 3;
 }
 #worldchip[hidden] { display: none; }
-/* The Exchange chip, under the explorers chip. */
-#worldtrade {
-  position: absolute;
-  left: 0;
-  top: calc(var(--hud-h) + var(--rpx) * 108);
-  z-index: 3;
-}
-#worldtrade[hidden] { display: none; }
 .world-chip-label { font-weight: var(--weight-strong); }
 
-/* THE EXCHANGE — what is held, the offers, and an offer to make. */
-.ex-held { display: flex; justify-content: space-around; gap: calc(var(--px) * 8); }
-.ex-lot { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); font-weight: var(--weight-strong); }
-.ex-pick { flex-wrap: nowrap; }
-.ex-pick .k-btn { flex: 1 1 0; min-width: 0; }
-.k-toggles.ex-pick .k-btn:not(.k-knob):not(.has-cost) > .k-btn-label { min-width: 0; }
-.ex-offer { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--px) * 3); }
 .world-chip.hud-plaque { cursor: pointer; }
 
 /* THE DISPATCH SHEET — a hex, what it holds, and Explore. */

@@ -155,7 +155,7 @@ import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
-import { PRECIOUS, type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
+import { type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -210,9 +210,6 @@ export type OverlayName =
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
   | 'army'
-  // The Exchange: precious materials traded between the board's players
-  // (Docs/features/19-world-map.md §7.5).
-  | 'exchange'
   // A world dungeon's descent: its rooms, the race, the army camped there
   // (Docs/features/19-world-map.md §8.2).
   | 'delve'
@@ -225,7 +222,9 @@ export type OverlayName =
   // The shield editor, from the pencil on the player's own card (§2.2).
   | 'crestEditor'
   // Asking a kingdom by its name or code, from the requests list (§2.1).
-  | 'friendSearch';
+  | 'friendSearch'
+  // The wish board (§2.4): a wish made in two steps, and a fill's window.
+  | 'wishNeed' | 'wishGive' | 'wishFilled';
 
 /** Fragments that landed, as one line: "A piece of the Staff of Renewal". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -351,6 +350,7 @@ const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
   friends: 'friends', friendProfile: 'friends', crestEditor: 'friends', friendSearch: 'friends',
+  wishNeed: 'friends', wishGive: 'friends', wishFilled: 'friends',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -3075,6 +3075,10 @@ export class Game {
       // as the player types (ui/friends/friendSearch.ts).
       case 'friendSearch': return JSON.stringify([this.friends.searchStage, this.friends.searchRefused, this.friends.sentTo]);
       case 'crestEditor': return JSON.stringify([this.friends.crestDraft, this.state.kingdom.profile]);
+      // A wish being made reads the player's goods as well as the picks.
+      case 'wishNeed': case 'wishGive':
+        return JSON.stringify([this.friends.wishNeed, this.friends.wishGive, this.state.relics.held, this.state.city.goods]);
+      case 'wishFilled': return JSON.stringify(this.friends.justFilled);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -5079,8 +5083,6 @@ export class Game {
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',
-      NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
-      TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
@@ -5351,81 +5353,6 @@ export class Game {
   dismissSpoils(): void {
     this.delveSpoils = null;
     this.notify();
-  }
-
-  /** What the player is about to offer on the Exchange. */
-  exchangeDraft: { give: PreciousId; giveN: number; want: PreciousId; wantN: number } = {
-    give: 'Starmetal', giveN: 10, want: 'Heartwood', wantN: 10,
-  };
-
-  /** Open the Exchange, the player's own material offered first. */
-  openExchange(): void {
-    const own = this.worldSource().board().materials[this.worldSeat()];
-    if (own !== undefined && this.exchangeDraft.give !== own) {
-      this.exchangeDraft = { ...this.exchangeDraft, give: own, want: PRECIOUS.find((p) => p !== own)! };
-    }
-    this.setOverlay('exchange');
-  }
-
-  /** Put the draft up: what it gives leaves the city's goods now. */
-  async doPostOffer(): Promise<void> {
-    if (this.worldServer === null) return;
-    const d = this.exchangeDraft;
-    if (getGood(this.state.city.goods, d.give) < d.giveN) {
-      this.toast(`Not enough ${d.give}`);
-      this.notify();
-      return;
-    }
-    addGood(this.state.city.goods, d.give, -d.giveN);
-    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN });
-    if (!r.ok) {
-      addGood(this.state.city.goods, d.give, d.giveN);
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    playSfx('click');
-    this.toast('Your offer is up on the Exchange');
-    this.applyWorldSnapshot(r.snapshot);
-  }
-
-  /** Take an offer: pay what it wants, receive what it gives. */
-  async doTakeOffer(offerId: string): Promise<void> {
-    if (this.worldServer === null) return;
-    const o = this.worldView?.offers?.find((x) => x.id === offerId);
-    if (o === undefined) return;
-    if (getGood(this.state.city.goods, o.want.id) < o.want.amount) {
-      this.toast(`Not enough ${o.want.id}`);
-      this.notify();
-      return;
-    }
-    addGood(this.state.city.goods, o.want.id, -o.want.amount);
-    const r = await this.worldServer.takeOffer(offerId);
-    if (!r.ok) {
-      addGood(this.state.city.goods, o.want.id, o.want.amount);
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    if (r.received !== null) {
-      addGood(this.state.city.goods, r.received.id, r.received.amount);
-      this.toast(`+${formatCount(r.received.amount)} ${r.received.id}`);
-    }
-    playSfx('click');
-    this.applyWorldSnapshot(r.snapshot);
-  }
-
-  /** Take one's own offer down: what it held comes back. */
-  async doWithdrawOffer(offerId: string): Promise<void> {
-    if (this.worldServer === null) return;
-    const r = await this.worldServer.withdrawOffer(offerId);
-    if (!r.ok) {
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    if (r.received !== null) addGood(this.state.city.goods, r.received.id, r.received.amount);
-    this.applyWorldSnapshot(r.snapshot);
   }
 
   /** Pay a camp off with its tribute: the camp is beaten for the player,

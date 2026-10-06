@@ -14,7 +14,7 @@ import type { JoinResult, SendArmyRequest, WorldCommand, WorldCommandKind, World
 import { newOpId, type WorldConnect, type WorldServerApi } from './local';
 import type { WorldBody } from './serve';
 import type {
-  CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, TradeResult, WorldSnapshot,
+  CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, WorldSnapshot,
 } from './types';
 
 /** One trip to the server: its answer, or whether trying again could help. */
@@ -79,9 +79,6 @@ export class RemoteWorldServer implements WorldServerApi {
   tribute(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'tribute', index }, asSeat); }
   repair(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'repair', index }, asSeat); }
   reportSeen(indices: number[]): Promise<CommandResult> { return this.command({ kind: 'reportSeen', indices }); }
-  postOffer(give: Lot, want: Lot, asSeat?: number): Promise<TradeResult> { return this.command({ kind: 'postOffer', give, want }, asSeat); }
-  takeOffer(offerId: string, asSeat?: number): Promise<TradeResult> { return this.command({ kind: 'takeOffer', offerId }, asSeat); }
-  withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult> { return this.command({ kind: 'withdrawOffer', offerId }, asSeat); }
   finish(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'finish', index }, asSeat); }
   hurry(index: number, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurry', index, seconds }); }
   hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> { return this.command({ kind: 'hostRelic', index, relic, level }); }

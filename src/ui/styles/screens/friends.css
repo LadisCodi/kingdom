@@ -53,7 +53,7 @@
 /* THE TABS: the Build menu's wooden plates, List and Inbox, a red wax seal
    of what is unread on the Inbox's corner. */
 .fr-tabs { margin-bottom: calc(var(--px) * 8); }
-.bld-tabs.fr-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bld-tabs.fr-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .fr-count {
   position: absolute;
   top: calc(var(--px) * -6);
@@ -360,3 +360,209 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 }
 .fr-crest-ed > .k-btn { margin-top: calc(var(--px) * 6); align-self: stretch; }
 .fr-crest-ed .k-section-head { margin: calc(var(--px) * 2) 0; }
+
+/* THE WISH BOARD (§2.4, M77–M78): a wish is two parchment tiles with an
+   arrow between them; a friend's wish the player can fill is lit gold; the
+   two windows that make a wish list one relic a row. */
+.fr-fine.is-trade { color: var(--leaf-dark); }
+.fr-msg .fr-trail .wb-art { --tr-art: calc(var(--px) * 40); }
+
+/* A lot: its picture on a parchment tile, its name under it. */
+.wb-lot { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); position: relative; min-width: 0; }
+.wb-art {
+  --tr-art: calc(var(--px) * 46);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tr-art);
+  height: var(--tr-art);
+}
+.wb-art .icon { --icon-size: calc(var(--tr-art) * 0.9); }
+.wb-relic { width: 100%; height: 100%; object-fit: contain; }
+.wb-relic.is-glyph { display: grid; place-items: center; font-size: calc(var(--tr-art) * 0.6); }
+/* A fragment: the relic, a shard on its corner — gold-rimmed for a keystone. */
+.wb-shard {
+  position: absolute;
+  right: calc(var(--px) * -4);
+  bottom: calc(var(--px) * -2);
+  display: grid;
+  place-items: center;
+  width: calc(var(--tr-art) * 0.5);
+  height: calc(var(--tr-art) * 0.5);
+  border-radius: 50%;
+  border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.6);
+  background: #fbf1da;
+}
+.wb-shard .icon { --icon-size: calc(var(--tr-art) * 0.36); }
+.wb-art.is-keystone .wb-shard { border-color: var(--gold-dark); background: #f7dc93; }
+.wb-lot-name { font-size: calc(var(--px) * 11); font-weight: var(--weight-strong); line-height: 1.15; text-align: center; color: var(--ink); }
+.wb-lot-note { font-size: calc(var(--px) * 11); font-weight: var(--weight-strong); color: var(--ink-muted); text-align: center; }
+.wb-count {
+  position: absolute;
+  top: 0;
+  right: calc(var(--px) * -2);
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-title);
+  color: var(--ink);
+  text-shadow: 0 0 calc(var(--px) * 2) #fff6e0;
+}
+
+/* A wish: I need → I give, and its time and its ✕ at the end. */
+.wb-wish, .wb-friend {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.55);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.18);
+}
+.wb-side { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); flex: 1 1 0; min-width: 0; }
+.wb-head { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); color: var(--ink-muted); }
+.wb-arrow { font-size: calc(var(--px) * 22); font-weight: var(--weight-title); color: var(--wood-light); }
+.wb-end { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 6); flex: none; }
+.wb-left {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 2) calc(var(--px) * 6);
+  border-radius: var(--radius-sm);
+  border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.4);
+  background: #f7e3a8;
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+.wb-make {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 56);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) dashed rgba(92, 58, 30, 0.45);
+  background: rgba(255, 255, 255, 0.2);
+  font: inherit;
+  font-size: calc(var(--px) * 16);
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.wb-plus { font-size: calc(var(--px) * 26); font-weight: var(--weight-title); color: var(--wood-light); }
+
+/* A friend's wish: their crest, needs → gives, and Fill — lit gold when the
+   player has it, faded when not. */
+.wb-theirs-head { display: flex; align-items: baseline; gap: calc(var(--px) * 8); }
+.wb-theirs-head .k-section-head { flex: 1; }
+.wb-fills { font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); white-space: nowrap; }
+.wb-friend-body { flex: 1; min-width: 0; }
+.wb-trade { display: flex; align-items: center; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 2); }
+.wb-friend.is-fillable { background: #f7e3a8; border-color: var(--gold-dark); }
+.wb-friend.is-out { filter: saturate(0.4); opacity: 0.8; }
+.wb-tag {
+  padding: calc(var(--px) * 2) calc(var(--px) * 6);
+  border-radius: var(--radius-sm);
+  background: rgba(92, 58, 30, 0.2);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
+  text-align: center;
+  max-width: calc(var(--px) * 88);
+}
+.wb-tag.is-have { background: var(--leaf-dark); color: #fff6e0; }
+.wb-end > .k-btn { min-width: calc(var(--px) * 72); }
+
+/* THE TWO WINDOWS: the step under the title, one relic a row. */
+.wb-sheet { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
+.wb-step { margin: calc(var(--px) * -4) 0 0; text-align: center; font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--gold-dark); }
+.wb-relics { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.wb-relic-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment-shade);
+}
+.wb-relic-art { flex: none; width: calc(var(--px) * 56); height: calc(var(--px) * 56); }
+.wb-relic-body { flex: 1; min-width: 0; }
+.wb-relic-name { font-size: calc(var(--px) * 15); font-weight: var(--weight-title); margin-bottom: calc(var(--px) * 4); }
+.wb-slots { display: flex; align-items: center; gap: calc(var(--px) * 4); }
+.wb-slot {
+  --slot: calc(var(--px) * 34);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--slot);
+  height: var(--slot);
+  padding: 0;
+  border-radius: calc(var(--px) * 7);
+  border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.45);
+  background: rgba(255, 255, 255, 0.3);
+}
+.wb-slot.is-keystone { --slot: calc(var(--px) * 40); border-color: var(--gold-dark); }
+.wb-slot .icon { --icon-size: calc(var(--slot) * 0.8); }
+.wb-slot.is-held { opacity: 0.55; }
+/* A missing fragment: a chalk outline, pressable. */
+.wb-slot.is-missing { border-style: dashed; background: none; cursor: pointer; }
+.wb-slot.is-missing:not(:disabled):active { transform: translateY(calc(var(--px) * 1)); background: #f7dc93; }
+.wb-slot.is-missing:disabled { opacity: 0.35; cursor: default; }
+
+.wb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--px) * 6); }
+.wb-pick {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--px) * 6) calc(var(--px) * 2);
+  border-radius: var(--radius-sm);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
+  background: var(--parchment-shade);
+  font: inherit;
+  cursor: pointer;
+}
+.wb-pick:not(:disabled):active { transform: translateY(calc(var(--px) * 1)); }
+.wb-pick.is-picked { border-color: var(--gold-dark); background: #f7dc93; box-shadow: 0 0 calc(var(--px) * 6) rgba(255, 200, 80, 0.8); }
+.wb-pick.is-out, .wb-pick:disabled { filter: grayscale(0.8); opacity: 0.6; cursor: default; }
+.wb-need {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment-shade);
+  font-weight: var(--weight-strong);
+}
+.wb-need > .wb-lot { flex: 1; flex-direction: row; justify-content: center; }
+.wb-need > .k-btn { flex: none; width: auto; }
+.wb-held {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 5);
+  margin: calc(var(--px) * 4) 0 0;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+.wb-sheet > .k-btn { align-self: center; min-width: calc(var(--px) * 180); }
+
+/* A FILL: the friend's crest, what went and what came. */
+.wb-filled { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 8); }
+.wb-filled-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  align-self: stretch;
+  padding: calc(var(--px) * 6) calc(var(--px) * 12);
+  border-radius: var(--radius);
+  background: rgba(226, 204, 160, 0.55);
+}
+.wb-filled-row > span:first-child { width: calc(var(--px) * 72); font-weight: var(--weight-strong); color: var(--ink-muted); }
+.wb-filled-row.is-got { background: rgba(166, 227, 110, 0.25); }
+.wb-filled > .k-btn { margin-top: calc(var(--px) * 6); min-width: calc(var(--px) * 140); }
+/* A friend's wish sits in a narrower row: its tiles a size down, a long
+   relic name kept to two lines. */
+.wb-friend .wb-art { --wb-art: calc(var(--px) * 38); }
+.wb-lot-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wb-friend .wb-end > .k-btn { min-width: calc(var(--px) * 64); min-height: calc(var(--px) * 40); }

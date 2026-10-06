@@ -7,7 +7,8 @@
 > it in one tap. Modelled on Clash Royale's requests and Township's help,
 > with the rules of Idle Town Master's *Comercio*. Mockups: M75 (the first
 > pass, beside the two directions not taken, M74 and M76), M77, M78 (this
-> design). It is a **proposal**: nothing here is built.
+> design). **Built**: the live design is
+> [`../features/15-social.md`](../features/15-social.md) §2.4.
 
 ## 1. What trades
 

@@ -1,7 +1,7 @@
-// THE INBOX (Docs/features/15-social.md §2.3): the friends screen's second
+// THE INBOX (Docs/features/15-social.md §2.3): the friends screen's third
 // tab. What other kingdoms have sent — a request to be friends, answered
-// here as on the list, and the answers to the player's own — under New and
-// Old. Opening the tab reads what is new; it moves under Old on the next
+// here as on the list, the answers to the player's own, and the wish board's
+// news (§2.4) — under New and Old. Opening the tab reads what is new; it moves under Old on the next
 // visit, not while the player is looking. Delete read clears Old.
 
 import type { Game } from '../../game';
@@ -9,6 +9,7 @@ import type { MessageView } from '../../socialServer/types';
 import { el, formatCountdown, formatExact } from '../format';
 import { btn, iconEl, knob, sectionHead } from '../kit';
 import { crestEl, roundKnob } from './kingdomBits';
+import { lotArt, lotWords } from './lotArt';
 
 export function inboxPane(game: Game): HTMLElement[] {
   const f = game.friends;
@@ -67,6 +68,22 @@ function messageRow(game: Game, m: MessageView): HTMLElement {
       line = 'Declined your friend request';
       trailing = [outcome('declined')];
       break;
+    // The wish board (§2.4): what moved, on the message.
+    case 'wishFilled':
+      line = 'Filled your wish';
+      trailing = [lotArt(m.lots!.got)];
+      fine = `You got ${lotWords(m.lots!.got)}`;
+      break;
+    case 'filledWish':
+      line = 'You filled their wish';
+      trailing = [lotArt(m.lots!.got)];
+      fine = `You got ${lotWords(m.lots!.got)}`;
+      break;
+    case 'wishExpired':
+      line = 'Nobody filled your wish';
+      trailing = [lotArt(m.lots!.got)];
+      fine = `${lotWords(m.lots!.got)} came back`;
+      break;
   }
   // Read, a message says when it was read rather than when it came (§2.3).
   const stamp = m.readAt ?? m.at;
@@ -75,7 +92,7 @@ function messageRow(game: Game, m: MessageView): HTMLElement {
     el('div', { class: 'fr-who' },
       el('div', { class: 'fr-msg-head' }, el('span', { class: 'fr-name' }, who), el('span', { class: 'fr-msg-time' }, agoWords(stamp, now))),
       el('div', { class: 'fr-note' }, line),
-      ...(fine === null ? [] : [el('div', { class: 'fr-fine' }, fine)])),
+      ...(fine === null ? [] : [el('div', { class: `fr-fine${m.kind === 'request' ? '' : ' is-trade'}` }, fine)])),
     el('div', { class: 'fr-trail' }, ...trailing));
 }
 

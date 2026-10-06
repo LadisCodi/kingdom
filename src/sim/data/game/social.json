@@ -5,5 +5,11 @@
     "requestRows": 3,
     "requestHours": 48,
     "messageDays": 30
+  },
+  "trade": {
+    "materialLot": 5,
+    "wishes": 3,
+    "wishHours": 48,
+    "fillsPerDay": 5
   }
 }

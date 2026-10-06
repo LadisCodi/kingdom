@@ -979,6 +979,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Owned: state.kingdom.survey.owned,
         },
         Profile: { Nickname: state.kingdom.profile.nickname, Crest: state.kingdom.profile.crest },
+        Trade: { Seq: state.kingdom.trade.seq },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -1372,6 +1373,9 @@ export function deserialize(
       nickname: typeof profile?.Nickname === 'string' ? profile.Nickname : null,
       crest: parseCrest(profile?.Crest) === null ? null : profile!.Crest!,
     };
+    // Additive (v99): a kingdom from before trading has applied no delivery.
+    const trade = kingdomDto.Trade as { Seq?: number } | undefined;
+    state.kingdom.trade = { seq: Number.isInteger(trade?.Seq) ? trade!.Seq! : 0 };
   }
 
   const fogDto = modules['kingdom.fogOfWar'];

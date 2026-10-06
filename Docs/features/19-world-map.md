@@ -16,7 +16,7 @@
 > `worldCamps`; Dungeons
 > and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
-> camps, trade on the Exchange (§7.5), man a Fortress and now and then
+> camps, man a Fortress and now and then
 > attack on their own.
 > The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
@@ -466,22 +466,10 @@ gates them; *Cartography* opens the first explorer.
   - every dungeon room pays one (§8.1), and every fifth Portal floor
     (§10.4).
 
-### 7.5 The Exchange
+### 7.5 Trading
 
-- **A sheet on the world board**, from the *Exchange* chip under the
-  explorers: what the player holds of the three, the offers standing, and an
-  offer to make.
-- **An offer gives so many of one material for so many of another.** What
-  it gives leaves the player's goods when it is made; the server holds it.
-- **Taken by a player**: the taker pays what it wants and receives what it
-  gives at once; its maker is paid what it wanted.
-- **A fair offer — one for one — is taken by a rival** that yields what it
-  wants, `botTakeHours` after it is made. An uneven one waits for a player.
-- **Withdrawn**, or after `offerHours` with nobody taking it, it comes back
-  whole.
-- Up to `maxOffers` standing per player.
-- **Each rival keeps one offer up**: `botOfferAmount` of its own material,
-  one for one, for one of the other two.
+- **The materials are traded between friends**, on the wish board
+  ([`15-social.md`](15-social.md) §2.4) — never on the world map.
 
 ### 7.6 What they buy
 
