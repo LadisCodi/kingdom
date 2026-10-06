@@ -5521,17 +5521,16 @@ export class Game {
     // lair's picture above its own ground — its pixels, not its box, so the
     // cells round its edges still answer as themselves.
     const normal = this.mode.kind === 'normal';
-    // A sleeping Shrine's Mana bubble wakes its relic (M84).
+    // A sleeping Shrine's Mana bubble floats over other cells too: a tap on
+    // it is a tap on its Shrine, which opens the Shrine's card. A tap on a
+    // building never costs Mana — the price is paid by Activate, in the card.
     const sleeper = normal ? shrineBubbleAt(sx, sy) : null;
-    if (sleeper !== null) {
-      this.doActivateRelic(sleeper);
-      return;
-    }
-    const lairBubble = normal ? lairBubbleAt(sx, sy) : null;
-    const storeCell = normal && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
-    const lair = lairBubble ?? (normal && storeCell === null ? lairArtAt(sx, sy) : null);
-    const cell = lair !== null ? LAIRS[lair].location
-      : storeCell ?? this.camera.screenToCell(sx, sy);
+    const shrineCell = sleeper === null ? null : hostOf(this.state, sleeper)?.location ?? null;
+    const lairBubble = normal && shrineCell === null ? lairBubbleAt(sx, sy) : null;
+    const storeCell = normal && shrineCell === null && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
+    const lair = lairBubble ?? (normal && shrineCell === null && storeCell === null ? lairArtAt(sx, sy) : null);
+    const cell = shrineCell ?? (lair !== null ? LAIRS[lair].location
+      : storeCell ?? this.camera.screenToCell(sx, sy));
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {

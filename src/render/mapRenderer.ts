@@ -1705,8 +1705,8 @@ export function drawMap(
   }
 
   // Pass 4.6: A SLEEPING SHRINE'S MANA BUBBLE (M84) — the price of waking
-  // its relic, over its roof. A tap on it wakes the relic, so its rect is
-  // kept (render/shrineBubbles.ts).
+  // its relic, over its roof. A tap on it opens the Shrine's card, so its
+  // rect is kept (render/shrineBubbles.ts).
   clearShrineBubbles();
   for (const held of markers.shrineRelics) {
     if (held.awake) { bubbles.forget(`shrine:${held.districtId}`); continue; }
