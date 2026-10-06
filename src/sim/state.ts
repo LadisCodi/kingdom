@@ -567,6 +567,11 @@ export interface GameState {
       claimedPaid: number[];
       owned: boolean;
     };
+    /** WHO THE KINGDOM IS TO OTHER PLAYERS (Docs/features/15-social.md §2):
+     *  the nickname the world board seated it under — null until it first
+     *  goes out — and the crest it chose (sim/crest.ts), null while it wears
+     *  its nickname's. The servers hold copies; this is the player's own. */
+    profile: { nickname: string | null; crest: string | null };
   };
   player: {
     wallet: Wallet;

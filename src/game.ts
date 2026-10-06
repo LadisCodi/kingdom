@@ -2,6 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import { recordEvent } from './sim/events';
+import { crestId, crestOf, type Crest } from './sim/crest';
 import type { ItemStock } from './sim/rewards';
 import {
   BAG_TABS, CHEST_COINS, bagTabOf, chestValue, heldItems, itemCount, markBagOpened, markItemSeen, runningBoosts, useItem,
@@ -228,7 +229,9 @@ export type OverlayName =
   | 'nickname'
   // The friends list, from the header, and a friend's profile over it
   // (Docs/features/15-social.md §2.1).
-  | 'friends' | 'friendProfile';
+  | 'friends' | 'friendProfile'
+  // The shield editor, from the pencil on the player's own card (§2.2).
+  | 'crestEditor';
 
 /** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -322,7 +325,7 @@ export interface SpeedupScreen {
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
-  friends: 'friends', friendProfile: 'friends',
+  friends: 'friends', friendProfile: 'friends', crestEditor: 'friends',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -733,6 +736,7 @@ export class Game {
       if (this.worldTicks % every === 0) void this.refreshWorld();
     }
     this.friends.tick();
+    this.maybeAskName();
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
     }
@@ -3063,9 +3067,10 @@ export class Game {
         const { at: _at, ...snap } = f.snap ?? { at: 0 };
         return JSON.stringify([
           snap, f.found, f.tab, f.openCode, f.confirmingRemove, [...f.busy], f.searching, f.naming,
-          f.nicknameRefused, Math.floor(this.now() / 60_000),
+          f.nicknameRefused, this.state.kingdom.profile.crest, Math.floor(this.now() / 60_000),
         ]);
       }
+      case 'crestEditor': return JSON.stringify([this.friends.crestDraft, this.state.kingdom.profile]);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -4885,6 +4890,42 @@ export class Game {
     }
   }
 
+  /** The crest last sent to the world board, so a board that has not
+   *  caught up yet is not told twice. `undefined`: nothing sent. */
+  private crestSentToWorld: string | null | undefined = undefined;
+
+  /** The crest the player's kingdom wears (sim/crest.ts). */
+  myCrest(): Crest {
+    const p = this.state.kingdom.profile;
+    return crestOf(p.nickname ?? '', p.crest);
+  }
+
+  /** The shield editor's Save: the save first, then both servers. */
+  setMyCrest(crest: Crest): void {
+    const id = crestId(crest);
+    if (this.state.kingdom.profile.crest === id) return;
+    this.state.kingdom.profile.crest = id;
+    this.track('crest_changed', { tincture: crest.tincture, charge: crest.charge });
+    this.crestSentToWorld = id;
+    if (this.worldSeated === true) void this.worldServer?.setCrest(id);
+    void this.friends.hello();
+    this.notify();
+  }
+
+  /** The name is asked for once a session, the moment the world opens —
+   *  after its splash and its scene, never over a sheet (§2.1). */
+  private askedName = false;
+  private maybeAskName(): void {
+    if (this.askedName || this.worldServer === null || this.state.kingdom.profile.nickname !== null) return;
+    if (!this.doorOpen('world') || this.openOverlay !== null || this.unlockQueue.length > 0) return;
+    if (this.scene !== 'province' || this.battle !== null || this.gachaReveal !== null) return;
+    if (SCENES.some((s) => s.id === 'world') && this.state.tutorial.seen['scene:world'] !== true) return;
+    this.askedName = true;
+    void this.connectWorld().then(() => {
+      if (this.worldSeated === false && this.openOverlay === null) this.setOverlay('nickname');
+    });
+  }
+
   /** The nickname sheet's state: what was typed, why the server refused it,
    *  and whether a join is on its way. */
   nicknameDraft = '';
@@ -4933,6 +4974,15 @@ export class Game {
    *  meaningless, so it starts again; the Sanctuaries held set the Mana
    *  ceiling. */
   private applyWorldSnapshot(snap: WorldSnapshot): void {
+    // Who the board knows the player as: the save keeps the name (it opens
+    // the friends list), and the board is told the crest until it agrees.
+    const you = snap.seats.find((s) => s.you);
+    const profile = this.state.kingdom.profile;
+    if (you !== undefined && profile.nickname === null) profile.nickname = you.name;
+    if (you !== undefined && (you.crest ?? null) !== profile.crest && this.crestSentToWorld !== profile.crest) {
+      this.crestSentToWorld = profile.crest;
+      void this.worldServer?.setCrest(profile.crest);
+    }
     const mine = this.state.world.board;
     if (snap.board.id !== mine.id || snap.board.seed !== mine.seed || snap.board.seat !== mine.seat) {
       this.state.world.board = { ...snap.board };

@@ -1,19 +1,22 @@
 // THE FRIENDS LIST (Docs/features/15-social.md §2.1), opened from its knob
 // under the header.
 //
-// Top to bottom, as the player meets it: the requests (received, sent,
-// suggested), a search, the invitation with the player's own code, the list
-// of friends ranked by how far each has come. The first visit without a name asks for one, and the rest arrives.
+// Top to bottom, as the player meets it: the player's own kingdom, pinned
+// under the title with the pencil that opens the shield editor; then, in
+// the one scroller, the requests (received, sent, suggested), a search, the
+// invitation with the player's code, and the friends ranked by how far each
+// has come. The door opens only once the kingdom has a name, so the screen
+// never asks for one: the world board's is taken over on the first hello.
 //
 // Everything here reads `game.friends` (friendsClient.ts) and calls it.
 
 import type { Game } from '../../game';
 import { lastSeenWords, type RankedKingdom, type RequestsTab } from '../../friendsClient';
 import { FRIENDS } from '../../sim/data/definitions';
+import { crestId } from '../../sim/crest';
 import type { KingdomView } from '../../socialServer/types';
-import { NICKNAME_MAX, nicknameProblem } from '../../worldServer/nickname';
 import { el, formatExact } from '../format';
-import { btn, iconEl, knob, sectionHead, sheet } from '../kit';
+import { btn, knob, sectionHead, sheet } from '../kit';
 import { crestEl, townhallTag } from './kingdomBits';
 
 /** Accept and decline: the kit's painted knob, drawn a size up. */
@@ -21,10 +24,10 @@ const roundKnob = (b: HTMLButtonElement): HTMLButtonElement => { b.classList.add
 
 export function renderFriendsSheet(game: Game): HTMLElement {
   const f = game.friends;
+  const ready = f.server !== null && f.snap !== null && f.named();
   const body = (): HTMLElement[] => {
     if (f.server === null) return [el('p', { class: 'fr-empty' }, 'Friends need the messengers, and none can be reached.')];
-    if (f.snap === null) return [el('p', { class: 'fr-empty' }, 'Sending for news of your friends…')];
-    if (!f.named()) return [nameStep(game)];
+    if (!ready) return [el('p', { class: 'fr-empty' }, 'Sending for news of your friends…')];
     return [
       requestsPanel(game),
       searchPanel(game),
@@ -33,56 +36,34 @@ export function renderFriendsSheet(game: Game): HTMLElement {
     ];
   };
   // The sections come in one after another the first time they are drawn
-  // after opening — and after a name is taken (§2.1) — never on a rebuild.
+  // after opening, never on a rebuild.
   const settled = f.settled;
-  if (f.named()) f.settled = true;
-  // The whole screen however little it holds (`is-panes`, kit.css), the
-  // list under the title the one scroller.
+  if (ready) f.settled = true;
+  // The whole screen however little it holds (`is-panes`, kit.css): the
+  // player's own kingdom stays put, and everything under it scrolls.
   const surface = sheet({ title: 'Friends', onClose: () => game.dismiss(), tall: true },
-    el('div', { class: `fr${f.named() ? ' is-named' : ''}${settled ? ' is-settled' : ''}`, 'data-keep-scroll': 'friends' }, ...body()));
+    ...(ready ? [ownCard(game)] : []),
+    el('div', { class: `fr${ready ? ' is-named' : ''}${settled ? ' is-settled' : ''}`, 'data-keep-scroll': 'friends' }, ...body()));
   surface.classList.add('is-panes');
   return surface;
 }
 
-// ------------------------------------------------------------ the name
+// ------------------------------------------------------------ the player
 
-/** The first visit: a name before anything else — the same name the world
- *  board will know the kingdom by. */
-function nameStep(game: Game): HTMLElement {
+/** The player's own kingdom: their place among their friends, their crest,
+ *  name and code, how far they have come — and the pencil. */
+function ownCard(game: Game): HTMLElement {
   const f = game.friends;
-  const input = el('input', {
-    class: 'nick-field', type: 'text', maxlength: String(NICKNAME_MAX + 4), autocomplete: 'off',
-    autocapitalize: 'words', spellcheck: 'false', placeholder: 'Your name', 'aria-label': 'Your name',
-  }) as HTMLInputElement;
-  input.value = f.nicknameDraft;
-  const hint = el('div', { class: 'nick-hint' });
-  const showHint = (): void => {
-    const line = f.nicknameRefused ?? (f.nicknameDraft === '' ? null : nicknameProblem(f.nicknameDraft));
-    hint.textContent = line ?? 'Three to sixteen letters, numbers or spaces';
-    hint.classList.toggle('is-refused', line !== null);
-  };
-  showHint();
-  const go = (): void => void f.takeName(input.value);
-  input.addEventListener('input', () => {
-    f.nicknameDraft = input.value;
-    f.nicknameRefused = null;
-    showHint();
-  });
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-  globalThis.requestAnimationFrame?.(() => input.focus());
-  return el('div', { class: 'nick fr-name' },
-    el('div', { class: 'nick-lede' },
-      iconEl('crest', { size: 'lg' }),
-      el('div', {},
-        el('p', {}, 'Before you call on friends, tell them who you are.'),
-        el('p', {}, 'Other kingdoms will know you by this name, here and on the world map.'))),
-    input,
-    hint,
-    btn({
-      label: f.naming ? 'Sending…' : 'Confirm', kind: 'primary', onClick: go,
-      ...(f.naming ? { disabledReason: 'Sending' } : {}),
-    }),
-    el('div', { class: 'nick-fine' }, iconEl('padlock', { size: 'sm' }), 'The name is for good: it cannot be changed later.'));
+  const me = f.ranked().find((k) => k.isMe)!;
+  const edit = knob('✎', () => f.openCrestEditor(), { label: 'Change your crest', kind: 'primary' });
+  edit.classList.add('fr-edit');
+  return el('div', { class: 'fr-me' },
+    rankRibbon(me.rank),
+    el('span', { class: 'fr-me-crest' }, crestEl(me.nickname, crestId(game.myCrest()), 'lg')),
+    el('div', { class: 'fr-who' },
+      el('div', { class: 'fr-name' }, me.nickname),
+      el('div', { class: 'fr-sub' }, townhallTag(me.townhall), el('span', { class: 'fr-me-code' }, me.code))),
+    edit);
 }
 
 // ------------------------------------------------------------ requests
@@ -190,18 +171,19 @@ function invitePanel(game: Game): HTMLElement {
 
 function friendsPanel(game: Game): HTMLElement {
   const f = game.friends;
-  const ranked = f.ranked();
-  const friends = ranked.length - 1;
-  const rows = ranked.map((k) => kingdomRow(k, {
+  // The player is ranked with their friends, but drawn pinned above: the
+  // list holds only the friends, their places counting the player's.
+  const rows = f.ranked().filter((k) => !k.isMe).map((k) => kingdomRow(k, {
     rank: k,
-    onTap: k.isMe ? undefined : () => f.openProfile(k.code),
-    trailing: [el('span', { class: `fr-seen${!k.isMe && lastSeenWords(k.seenAt, game.now()) === 'Online now' ? ' is-online' : ''}` },
-      k.isMe ? 'You' : lastSeenWords(k.seenAt, game.now()))],
+    onTap: () => f.openProfile(k.code),
+    trailing: [el('span', { class: `fr-seen${lastSeenWords(k.seenAt, game.now()) === 'Online now' ? ' is-online' : ''}` },
+      lastSeenWords(k.seenAt, game.now()))],
   }));
   return el('section', { class: 'fr-list' },
-    sectionHead(`Friends ${formatExact(friends)}/${formatExact(FRIENDS.max)}`),
-    el('div', { class: 'fr-rows' }, ...rows),
-    ...(friends === 0 ? [el('p', { class: 'fr-empty' }, 'Add a kingdom above, or invite a friend with your code.')] : []));
+    sectionHead(`Friends ${formatExact(rows.length)}/${formatExact(FRIENDS.max)}`),
+    ...(rows.length > 0
+      ? [el('div', { class: 'fr-rows' }, ...rows)]
+      : [el('p', { class: 'fr-empty' }, 'Add a kingdom above, or invite a friend with your code.')]));
 }
 
 // ------------------------------------------------------------ a row
@@ -210,14 +192,13 @@ function kingdomRow(
   k: KingdomView,
   opts: { rank?: RankedKingdom; trailing?: Node[]; onTap?: () => void; note?: string },
 ): HTMLElement {
-  const me = opts.rank?.isMe === true;
   const tappable = opts.onTap !== undefined;
   const row = el(tappable ? 'button' : 'div', {
-    class: `fr-row${me ? ' is-me' : ''}${tappable ? ' is-tappable' : ''}`,
+    class: `fr-row${tappable ? ' is-tappable' : ''}`,
     ...(tappable ? { type: 'button', 'aria-label': `${k.nickname}, open their profile` } : {}),
   },
   ...(opts.rank === undefined ? [] : [rankRibbon(opts.rank.rank)]),
-  crestEl(k.nickname, k.code),
+  crestEl(k.nickname, k.crest),
   el('div', { class: 'fr-who' },
     el('div', { class: 'fr-name' }, k.nickname),
     el('div', { class: 'fr-sub' }, townhallTag(k.townhall), ...(opts.note === undefined ? [] : [el('span', { class: 'fr-note' }, opts.note)]))),

@@ -64,8 +64,9 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   // The first item held, or the first relic fragment — relics are kept in
   // the Bag (Docs/art/ui-inventory.md §3.1, §3.6).
   bag: (state) => Object.keys(state.bag.held).length > 0 || ARTIFACT_ORDER.some((id) => isMet(state, id)),
-  // Friends open with the Store (Docs/features/15-social.md §2.1).
-  friends: (state) => townhall(state).level >= 2,
+  // Friends need a name others can read: the world board's, so the world
+  // first (Docs/features/15-social.md §2.1).
+  friends: (state) => watchtowerClaimed(state) && state.kingdom.profile.nickname !== null,
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —
@@ -81,7 +82,7 @@ export const DOOR_HINT: Record<DoorId, string> = {
   survey: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
   bag: 'Find a chest to open this.',
-  friends: 'Raise the Townhall to level 2 to open this.',
+  friends: 'Choose your name on the world map to open this.',
 };
 
 /** The door's key in `tutorial.seen`. */

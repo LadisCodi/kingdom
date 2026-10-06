@@ -258,7 +258,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     knob.classList.toggle('is-active', game.openOverlay === 'settings');
     // Absent until its door opens, like the Knowledge tab.
     friendsKnob.hidden = !game.doorOpen('friends');
-    friendsKnob.classList.toggle('is-active', game.openOverlay === 'friends' || game.openOverlay === 'friendProfile');
+    friendsKnob.classList.toggle('is-active', game.openOverlay === 'friends' || game.openOverlay === 'friendProfile'
+      || game.openOverlay === 'crestEditor');
     setCta(friendsKnob, friendsKnob.hidden ? 0 : game.friends.badge());
 
     const k = game.knowledgeInfo();

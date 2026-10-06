@@ -11,6 +11,9 @@ export interface KingdomView {
   /** How far it has come: its Townhall's level, then its cells revealed. */
   townhall: number;
   cells: number;
+  /** The crest it chose (`<tincture>.<charge>`, sim/crest.ts); null while
+   *  it wears its nickname's. */
+  crest: string | null;
   /** When it was last in the game, epoch ms; null if never. */
   seenAt: number | null;
 }
@@ -36,10 +39,13 @@ export interface SocialSnapshot {
   suggestions: KingdomView[];
 }
 
-/** How far a kingdom has come, reported by its own client. */
+/** How far a kingdom has come, and the crest it wears, reported by its
+ *  own client. A client from before crests sends none, and leaves the
+ *  profile's as it was. */
 export interface SocialProgress {
   townhall: number;
   cells: number;
+  crest?: string | null;
 }
 
 /** Why a command was refused. */

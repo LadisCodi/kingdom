@@ -6,7 +6,7 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity and the friends list built (§2, §2.1); the rest
+> **Status: identity, the friends list and the crest built (§2–§2.2); the rest
 > designed, not built.** Prototype population is five to ten named
 > playtesters.
 
@@ -63,9 +63,9 @@
   *just play* path survives.
 - A **friend code**: eight letters in two fours (`K7QD-M2XA`), handed out by
   the server the first time anyone needs it; no 0/O or 1/I.
-- A **crest**: one of eight painted shields, picked from the friend code, so
-  a kingdom wears the same one everywhere.
-- Not in scope: chosen avatars, chat, moderation.
+- A **crest**, chosen by the player (§2.2); until then the one its nickname
+  picks, the same everywhere.
+- Not in scope: avatars, chat, moderation.
 
 ### 2.1 The friends list
 
@@ -73,13 +73,18 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 [`../art/ui/mockups/m73-friends.png`](../art/ui/mockups/m73-friends.png).
 
 - **The door:** a knob hanging under the header, left of Settings. It opens
-  with Townhall 2 (the `friends` door). A red orb counts requests to answer.
+  once the world map is open and the kingdom has a nickname (the `friends`
+  door). A red orb counts requests to answer.
 - **The cap:** 10 friends, held on both sides. At most 10 requests waiting
   for an answer at once.
-- **The name first:** without a nickname the screen asks for one, then the
-  rest of it comes in. It is the world board's nickname: one name, unique,
-  never changed. A kingdom that went out onto the board first already has it.
+- **The name first:** the name is asked for the moment the world map opens,
+  after its splash and its scene ([`19-world-map.md`](19-world-map.md)
+  §1.3); taking it seats the kingdom on a board. One name, unique, never
+  changed, the save keeps it. The friends list never asks.
 - **The screen, top to bottom:**
+  - **The player's own card**, pinned: their place among their friends
+    (ribbon), crest, name, Townhall tag, friend code, and a pencil that opens
+    the crest editor (§2.2). It stays put; everything under it scrolls.
   - **Requests**, three tabs: *Received* (accept / decline), *Sent*
     (cancel), *Suggested* (add). A red seal counts the received and the sent.
   - **Search** by friend code or by the start of a nickname; up to five found.
@@ -87,12 +92,11 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
     *Invite*, which shares a message with the code and a link
     (`?friend=<code>`) through the phone's share sheet, else the clipboard.
     Opening the link searches the code the first time the list can.
-  - **Friends n/10**, the player included, ranked by Townhall level, then by
-    cells revealed. The first three wear a gold, silver or bronze ribbon with
-    their place; the rest a plain one. Each row: crest, name, Townhall tag,
-    last seen.
-- **The screen** takes the whole height between the header and the nav; the
-  list under the title scrolls.
+  - **Friends n/10**, ranked with the player by Townhall level, then by cells
+    revealed; the player's own place is on their card, not in the list. The
+    first three wear a gold, silver or bronze ribbon with their place; the
+    rest a plain one. Each row: crest, name, Townhall tag, last seen.
+- **The screen** takes the whole height between the header and the nav.
 - **The Townhall tag:** the Townhall icon and level on a pill coloured by
   band of two levels — 1-2 green, 3-4 teal, 5-6 blue, 7-8 purple, 9-10 orange.
 - **Last seen**, roughly: *Online now* (under five minutes), *Today*,
@@ -109,6 +113,23 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
   cells revealed) and shown to friends as is (§1.1).
 - **Reads:** a hello every 10 s while the screen is open, every 60 s
   elsewhere once the door is open.
+
+### 2.2 The crest
+
+- A blank shield in one of **8 tinctures** with one of **12 charges** on it:
+  - tinctures: red, blue, green, purple, black, orange, teal, wine;
+  - charges: lion, lily, oak, crown, tower, star, eagle, key, swords,
+    dragon, stag, ship.
+- **Every combination is free.**
+- **The editor:** the crest large, the 8 fields (each with the current
+  charge), the 12 charges (each on the current field), *Save*. A tap changes
+  the preview; the close X leaves the crest as it was.
+- **Where it shows:** the player's card, every row of the friends screens,
+  a friend's profile, and the plank under each city on the world map
+  ([`19-world-map.md`](19-world-map.md) §1.3).
+- **Where it lives:** the save is the player's own; the social server's
+  profile gets it with every hello, the world board's seat with a
+  `setCrest` command until the board agrees.
 
 | Dial, in the order to reach for them | Where |
 |---|---|
@@ -235,7 +256,7 @@ Submitted as they happen:
 ## 9. Deliberately not in this design
 
 - Chat
-- Chosen avatars; a crest is derived, not picked
+- Avatars and frames; crests locked behind progress or sold
 - A leaderboard at prototype population
 - Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §5)
 - Writing into another player's save

@@ -10,6 +10,7 @@
 // is one friendship — so a retry needs no command id.
 
 import { FRIENDS } from '../sim/data/definitions';
+import { parseCrest } from '../sim/crest';
 import { randInt } from '../sim/rng';
 import { nicknameProblem, normalNickname } from '../worldServer/nickname';
 import type {
@@ -25,6 +26,7 @@ export interface ProfileRow {
   code: string | null;
   townhall: number;
   cells: number;
+  crest: string | null;
   seenAt: number | null;
 }
 
@@ -113,6 +115,7 @@ export function badSocialBody(body: unknown): string | null {
       if (p === null || typeof p !== 'object') return 'progress';
       const count = (v: unknown, max: number) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max;
       if (!count(p.townhall, 100) || !count(p.cells, 1_000_000)) return 'progress';
+      if (p.crest !== undefined && p.crest !== null && parseCrest(p.crest) === null) return 'crest';
       return null;
     }
     case 'name': return short(cmd.nickname, 64) ? null : 'nickname';
@@ -275,7 +278,9 @@ async function viewOf(store: SocialStore, row: ProfileRow): Promise<KingdomView>
     if (await store.setCode(row.userId, next)) code = next;
   }
   row.code = code;
-  return { code: code ?? '', nickname: row.nickname, townhall: row.townhall, cells: row.cells, seenAt: row.seenAt };
+  return {
+    code: code ?? '', nickname: row.nickname, townhall: row.townhall, cells: row.cells, crest: row.crest, seenAt: row.seenAt,
+  };
 }
 
 // ------------------------------------------------------------ in memory
@@ -314,7 +319,7 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
       if (mine !== undefined) return mine.nickname;
       const lower = nickname.toLowerCase();
       if (Object.values(t.profiles).some((r) => r.nickname.toLowerCase() === lower)) return null;
-      t.profiles[id] = { userId: id, nickname, code: null, townhall: 1, cells: 0, seenAt: null };
+      t.profiles[id] = { userId: id, nickname, code: null, townhall: 1, cells: 0, crest: null, seenAt: null };
       return nickname;
     },
     async setCode(id, code) {
@@ -327,6 +332,7 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
       if (r === undefined) return;
       r.townhall = progress.townhall;
       r.cells = progress.cells;
+      if (progress.crest !== undefined) r.crest = progress.crest;
       r.seenAt = now;
     },
     async links(id) {

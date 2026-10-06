@@ -24,6 +24,7 @@ import { syncHeroBoons } from './heroes';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
+import { parseCrest } from './crest';
 import { isStoreFull } from './storage';
 import { freshWorld } from './world/explorers';
 import { readBits } from './world/fogBits';
@@ -970,6 +971,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           ClaimedPaid: state.kingdom.survey.claimedPaid,
           Owned: state.kingdom.survey.owned,
         },
+        Profile: { Nickname: state.kingdom.profile.nickname, Crest: state.kingdom.profile.crest },
         Pass: {
           Season: state.kingdom.pass.season,
           Xp: state.kingdom.pass.xp,
@@ -1376,6 +1378,13 @@ export function deserialize(
       claimedFree: [...(survey?.ClaimedFree ?? [])],
       claimedPaid: [...(survey?.ClaimedPaid ?? [])],
       owned: survey?.Owned === true,
+    };
+    // Additive (v97): a kingdom from before it had a profile learns its
+    // nickname from the world board the next time it connects.
+    const profile = kingdomDto.Profile as { Nickname?: string | null; Crest?: string | null } | undefined;
+    state.kingdom.profile = {
+      nickname: typeof profile?.Nickname === 'string' ? profile.Nickname : null,
+      crest: parseCrest(profile?.Crest) === null ? null : profile!.Crest!,
     };
     const pass = kingdomDto.Pass as {
       Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];

@@ -21,7 +21,7 @@ export interface Seat {
   index: number;
   /** Whose city it is, and the name every player reads under it: the
    *  player's nickname, or a rival's (19 §1.3). */
-  owner: { you: true; name: string } | { you: false; name: string; rival: number };
+  owner: { you: true; name: string; crest?: string | null } | { you: false; name: string; rival: number; crest?: string | null };
 }
 
 /** A held or claimed hex as the server describes it (worldServer/types.ts
@@ -134,7 +134,7 @@ export function localWorld(ref: BoardRef, name = 'Your kingdom'): WorldSource {
  *  hex it says is held or being claimed. */
 export function snapshotWorld(snap: {
   board: BoardRef;
-  seats: ReadonlyArray<{ seat: number; name: string; you: boolean }>;
+  seats: ReadonlyArray<{ seat: number; name: string; you: boolean; crest?: string | null }>;
   hexes: ReadonlyArray<HexControl & { index: number }>;
   armies?: readonly ArmyControl[];
   delves?: Readonly<Record<number, number>>;
@@ -148,7 +148,7 @@ export function snapshotWorld(snap: {
   const seats: Seat[] = snap.seats.map((s) => ({
     seat: s.seat,
     index: SEAT_INDICES[s.seat],
-    owner: s.you ? { you: true, name: s.name } : { you: false, name: s.name, rival: rival++ },
+    owner: s.you ? { you: true, name: s.name, crest: s.crest ?? null } : { you: false, name: s.name, rival: rival++, crest: s.crest ?? null },
   }));
   const hexes = new Map(snap.hexes.map((h) => [h.index, h]));
   return {
