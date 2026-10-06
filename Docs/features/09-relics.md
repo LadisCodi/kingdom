@@ -107,7 +107,8 @@ never a discount, because a discount dies at 100%.
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
   - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a
     relic and wakes it.
-  - The Shrine's card holds **one slot, drawn as its altar**: the niche
+  - The Shrine's card holds **one slot, drawn as a painting of the chapel
+    inside** (the lair cards' 16:9 format): its altar's golden cradle
     carved with a **+** while it waits (with the CTA when a relic in the Bag
     could go there), the relic set in it once placed. A tap opens the relic
     picker — the hero picker's flow: the restored city relics as cards, each

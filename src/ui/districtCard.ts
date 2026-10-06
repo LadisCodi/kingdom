@@ -208,8 +208,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }
 
     // A SHRINE holds one city relic, whose effect reaches its aura while it
-    // is activated (sim/hosts.ts). THE SLOT IS THE ALTAR (assets/shrine-altar*):
-    // its niche carved with a + while it waits, the relic set in it once
+    // is activated (sim/hosts.ts). THE SLOT IS THE CHAPEL'S PAINTING
+    // (assets/shrine-interior*.jpg, the lairs' 16:9 format): its altar's
+    // golden cradle carved with a + while it waits, the relic set in it once
     // placed — dim asleep, lit awake. A tap opens the relic picker
     // (ui/relicPicker.ts), the hero picker's flow; the CTA says a relic in
     // the Bag could go there. Its activation follows.
@@ -219,10 +220,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         const held = view.holds === null ? null : game.relicCard(view.holds);
         const placeable = held === null && game.relicPickList().some((r) => r.status === 'bag');
         const altar = el('button', {
-          class: `dc-altar${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
+          class: `dc-chapel k-section${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
           'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
         },
-          ...(held === null ? [] : [relicArt(held, 'dc-altar-relic'), ...(held.status === 'asleep' ? [restMarks()] : [])]),
+          ...(held === null ? [] : [el('span', { class: 'dc-chapel-relic' },
+            relicArt(held, 'dc-chapel-relic-art'), ...(held.status === 'asleep' ? [restMarks()] : []))]),
           ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []));
         altar.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
         return el('div', { class: 'dc-shrine rl-page' },

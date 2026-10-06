@@ -453,38 +453,37 @@
 .rl-awake-row > .icon { flex: none; --icon-size: calc(var(--px) * 28); }
 .rl-awake-row > .k-trough { flex: 1 1 auto; }
 
-/* THE SHRINE'S SLOT IS ITS ALTAR (assets/shrine-altar-empty.png with the
- * carved +, shrine-altar.png once a relic stands in it; 400×469, one size so
- * the niche never moves). The relic is set in the niche — its foot on the
- * niche's floor, 43% down the art — dim asleep, lit awake. */
-.dc-altar {
+/* THE SHRINE'S SLOT IS ITS CHAPEL (assets/shrine-interior-empty.jpg with the
+ * cradle carved with a +, shrine-interior.jpg once a relic stands in it):
+ * the lair card's 16:9 painting on a kit section, the whole card's width.
+ * The relic is set in the altar's golden cradle — centred, 36% down the
+ * painting — dim asleep, lit awake. */
+.dc-chapel.k-section {
   position: relative;
-  align-self: center;
-  width: calc(var(--px) * 180);
-  aspect-ratio: 400 / 469;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   padding: 0;
-  border: none;
-  background: url('../../assets/shrine-altar-empty.png') center / contain no-repeat;
+  overflow: hidden;
+  background: url('../../assets/shrine-interior-empty.jpg') center / cover no-repeat;
   cursor: pointer;
-  --zzz-size: calc(var(--px) * 16);
 }
-.dc-altar.is-held { background-image: url('../../assets/shrine-altar.png'); }
-.dc-altar:active { translate: 0 calc(var(--px) * 2); }
-.dc-altar:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 4); border-radius: var(--radius); }
-.dc-altar-relic {
+.dc-chapel.k-section.is-held { background-image: url('../../assets/shrine-interior.jpg'); }
+.dc-chapel:active { translate: 0 calc(var(--px) * 2); }
+.dc-chapel:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 2); }
+.dc-chapel-relic {
   position: absolute;
   left: 50%;
-  bottom: 57%;
-  width: 40%;
-  height: auto;
+  top: 36%;
+  width: 15%;
   aspect-ratio: 1;
-  translate: -50% 0;
-  object-fit: contain;
+  translate: -50% -50%;
+  --zzz-size: calc(var(--px) * 14);
 }
-.dc-altar.is-asleep .dc-altar-relic { filter: saturate(0.45) brightness(0.88); }
-.dc-altar.is-awake .dc-altar-relic { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 214, 110, 0.95)); }
-.dc-altar > .k-zzz { top: 8%; right: 22%; }
-.dc-altar > .k-cta { top: 6%; right: 6%; }
+.dc-chapel-relic-art { width: 100%; height: 100%; object-fit: contain; }
+.dc-chapel.is-asleep .dc-chapel-relic-art { filter: saturate(0.45) brightness(0.85); }
+.dc-chapel.is-awake .dc-chapel-relic-art { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 230, 150, 0.95)); }
+.dc-chapel > .k-cta { top: calc(var(--px) * 6); right: calc(var(--px) * 6); }
 .dc-shrine > .dc-shrine-says { align-items: center; text-align: center; }
 
 /* AN EMPTY RELIC SLOT: the hero slot's dashed gold well (heroPicker.css
