@@ -110,8 +110,11 @@ never a discount, because a discount dies at 100%.
   - The Shrine's card holds **one slot, drawn as its altar**: the niche
     carved with a **+** while it waits (with the CTA when a relic in the Bag
     could go there), the relic set in it once placed. A tap opens the relic
-    picker — the hero picker's flow: the restored city relics as cards, the
-    Shrine's slot under them, and **Select**. Emptying the slot and selecting
+    picker — the hero picker's flow: the restored city relics as cards, each
+    with **what it does** (`+20% tax`) and the **Shrine mark** when it is
+    already in one, the Shrine's slot under them, and **Select**. Selecting a
+    relic that stands in another Shrine asks first — *Move it to this one?*
+    Cancel / Move. Emptying the slot and selecting
     takes the relic out; closing changes nothing.
   - The relic's sheet and its Shrine's card: a grey **Asleep** seal beside
     Activate, or an **Awake** ribbon and a gold bar running down the window.

@@ -137,4 +137,38 @@ describe('choosing a Shrine\'s relic', () => {
     game.relicPickConfirm();
     expect(shrine().hosts).toBeUndefined();
   });
+
+  // A RELIC IN ANOTHER SHRINE ASKS FIRST: Select opens the confirmation;
+  // Cancel goes back to the picker as it was, Move moves it.
+  it('asks before moving a relic out of another Shrine', () => {
+    const { state, game } = crowned();
+    state.city.districts.push({
+      uniqueId: 'shrine_b', definitionId: 'Shrine', ordinal: 2, level: 1, assignedWorkers: 0,
+      location: { x: 6, y: 6 }, state: 'Built', visualVariant: 1,
+    });
+    const host = (id: string) => state.city.districts.find((d) => d.uniqueId === id)!.hosts;
+    expect(game.relicCard('GildedLedger').effect).toBe('+30% tax');
+    game.openRelicPicker('shrine_b');
+    expect(game.relicPickHosted('GildedLedger')).toBe(true);
+    game.relicPickToggle('GildedLedger');
+    game.relicPickConfirm();
+    expect(game.openOverlay).toBe('relicMoveConfirm');
+    expect(game.relicMoveSubject()).toBe('GildedLedger');
+    expect(host('shrine_a')).toBe('GildedLedger');
+    game.relicMoveCancel();
+    expect(game.openOverlay).toBe('relicPicker');
+    expect(game.relicPick?.slot).toBe('GildedLedger');
+    game.relicPickConfirm();
+    game.relicMoveAccept();
+    expect(game.openOverlay).toBeNull();
+    expect(host('shrine_b')).toBe('GildedLedger');
+    expect(host('shrine_a')).toBeUndefined();
+  });
+
+  it('does not ask for the relic this Shrine already holds', () => {
+    const { game } = crowned();
+    game.openRelicPicker('shrine_a');
+    game.relicPickConfirm();
+    expect(game.openOverlay).toBeNull();
+  });
 });
