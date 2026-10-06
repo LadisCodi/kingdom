@@ -36,6 +36,19 @@
       "min": 0,
       "doc": "Hero slots it opens in every party for good. Held back from sale at the ceiling."
     },
+    "nextDayGems": {
+      "type": "int",
+      "min": 0,
+      "doc": "Gems it hands over the day after it is bought, claimed by the player."
+    },
+    "nextDayHeroXp": { "type": "int", "min": 0, "doc": "Hero XP it hands over the day after." },
+    "nextDayFragments": { "type": "int", "min": 0, "doc": "Fragments of its `hero` it hands over the day after." },
+    "nextDayItems": {
+      "type": "map",
+      "of": { "type": "int", "min": 1 },
+      "keysRef": "item",
+      "doc": "Items it hands over the day after."
+    },
     "opensOn": {
       "type": "text",
       "options": ["always", "door", "after", "townhall", "manaLow", "buildersBusy"],
@@ -76,6 +89,10 @@
       "type": "int",
       "min": 0,
       "doc": "manaLow, buildersBusy, townhall: hours after a window closes before the trigger can open it again."
+    },
+    "splash": {
+      "type": "bool",
+      "doc": "An offer shown full screen at the start of every session while it is on sale, from the session after its window opened."
     }
   }
 }

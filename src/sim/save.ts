@@ -1234,6 +1234,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           OpenedAtUtc: iso(w!.opened), ClosesAtUtc: w!.closes === null ? null : iso(w!.closes), Bought: w!.bought,
         }])),
         Townhall: state.player.offers.townhall,
+        NextDay: state.player.offers.nextDay.map((d) => ({ SKU: d.sku, ClaimableAtUtc: iso(d.claimableAt) })),
       },
       'meta.region': state.regionId,
       'meta.seed': state.seed,
@@ -1759,6 +1760,7 @@ export function deserialize(
   const offersDto = modules['player.offers'] as {
     Windows?: Record<string, { OpenedAtUtc?: string; ClosesAtUtc?: string | null; Bought?: number }>;
     Townhall?: number;
+    NextDay?: Array<{ SKU?: string; ClaimableAtUtc?: string }>;
   } | null | undefined;
   if (offersDto) {
     for (const [sku, w] of Object.entries(offersDto.Windows ?? {})) {
@@ -1771,6 +1773,9 @@ export function deserialize(
       };
     }
     if (Number.isInteger(offersDto.Townhall)) state.player.offers.townhall = offersDto.Townhall!;
+    state.player.offers.nextDay = (offersDto.NextDay ?? [])
+      .filter((d) => typeof d.SKU === 'string' && d.SKU in STORE && typeof d.ClaimableAtUtc === 'string')
+      .map((d) => ({ sku: d.SKU as StoreSkuId, claimableAt: ms(d.ClaimableAtUtc!) }));
   }
 
   // A save written before the seed existed keeps the fresh one newGame just

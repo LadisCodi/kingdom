@@ -91,7 +91,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   // The Bag (Docs/plans/relics-and-bag.md): what the player holds and uses.
   { id: 'items', label: 'Items', domain: 'Progression', view: 'table', noun: 'item', source: 'items' },
   { id: 'banners', label: 'Banners', domain: 'Store', view: 'table', noun: 'banner', source: 'banners' },
-  { id: 'monetization', label: 'Ads, payers & offers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer', 'offers', 'firstPurchase'] },
+  { id: 'monetization', label: 'Ads, payers & offers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer', 'offers'] },
 ];
 
 export const collectionById = (id: string): CollectionDef | undefined =>
@@ -689,6 +689,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
       const items = Object.values((s.items ?? {}) as Record<string, unknown>).some((n) => num(n) > 0);
       const slots = num(s.builders) + num(s.explorers) + num(s.heroSlots) > 0;
       const grants = items || slots || s.hero !== null || num(s.gems) > 0;
+      if (num(s.nextDayFragments) > 0 && s.hero === null) push(id, ['nextDayFragments'], 'fragments of which hero? It hands over none');
+      if (s.splash === true && s.shelf !== 'offer') push(id, ['splash'], 'only an offer is shown full screen');
       if (s.shelf === 'gems' && (items || slots || s.hero !== null)) push(id, ['shelf'], 'a Gem pack grants Gems and nothing else');
       if (s.shelf === 'gems' && !(num(s.gems) > 0)) push(id, ['gems'], 'a Gem pack with no Gems');
       if (s.shelf === 'survey' && id !== 'Survey') push(id, ['shelf'], 'only the Survey is sold on the Survey');

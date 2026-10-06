@@ -131,7 +131,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | the whole map — terrain, features, landmark and lair placement and properties — at `?dev=data#map` | a new terrain/feature id, or a sixth lair (`LairId` is a union) |
 | the whole quest chain — **list order is chain order**, reordered by dragging | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
-| **any product sold for money** — a Gem pack, a bundle, an **offer** or a **daily offer** = an entry in `store`, whole: name, art, price, Gems, items, a hero, slots for good, its trigger, window, limit and cooldown; the first-purchase reward = `firstPurchase`; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a new offer trigger (`OfferTrigger`, `sim/offers.ts`), a new kind of thing a product hands over |
+| **any product sold for money** — a Gem pack, a bundle, an **offer** or a **daily offer** = an entry in `store`, whole: name, art, price, Gems, items, a hero, slots for good, its trigger, window, limit and cooldown, a next-day part and whether it is shown full screen (`splash`); a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a new offer trigger (`OfferTrigger`, `sim/offers.ts`), a new kind of thing a product hands over |
 | a seasonal hero = one `heroes` entry + one `banners` entry; **how many bands a book has and what each asks for** — the tree editor creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
 | **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, slot, requirements (prose only for a `mechanic`) — at `?dev=data#tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
@@ -247,7 +247,7 @@ than the build is rejected rather than downgraded.
   `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
-  (10) · **the battle playback (90)** · the stage (95) · the unlock splash (97) · the gacha reveal (100) · the rewarded
+  (10) · **the battle playback (90)** · the stage (95) · the offer splash (96) · the unlock splash (97) · the gacha reveal (100) · the rewarded
   video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
   the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header — **which is the design, not a

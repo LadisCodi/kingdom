@@ -30,24 +30,6 @@
           "doc": "How many daily offers the store shows each day, drawn from the shelf-daily products."
         }
       }
-    },
-    "firstPurchase": {
-      "type": "object",
-      "fields": {
-        "hero": {
-          "type": "text",
-          "nullable": true,
-          "ref": "hero",
-          "doc": "The hero the first purchase of anything hands over, on top of what was bought."
-        },
-        "gems": { "type": "int", "min": 0, "doc": "Gems the first purchase adds." },
-        "items": {
-          "type": "map",
-          "of": { "type": "int", "min": 1 },
-          "keysRef": "item",
-          "doc": "Items the first purchase adds to the Bag."
-        }
-      }
     }
   }
 }

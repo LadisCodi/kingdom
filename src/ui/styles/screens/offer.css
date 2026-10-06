@@ -1,0 +1,200 @@
+/* THE OFFER SPLASH (ui/offerSplash.ts, Docs/features/14-monetization.md §2.6),
+ * after Docs/art/ui/mockups/m86b-offer-first-purchase.png: no window, the
+ * game dimmed behind; a red cloth ribbon with the offer's name, the hero on a
+ * golden burst, two parchment panels in nailed wood frames, and the price on
+ * a gold button. */
+
+.ofs-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 44) calc(var(--px) * 12) calc(var(--px) * 18);
+  background: rgba(16, 10, 5, 0.86);
+  overflow-y: auto;
+  animation: ofs-veil 250ms ease-out both;
+}
+@keyframes ofs-veil { from { opacity: 0; } }
+#ui:has(> #offersplash:not(:empty)) > #stage { visibility: hidden; }
+
+.ofs-screen > .ofs-close { position: absolute; top: calc(var(--px) * 10); right: calc(var(--px) * 10); left: auto; z-index: 2; }
+
+/* A red cloth ribbon, its tails folded back behind it. */
+.ofs-ribbon {
+  position: relative;
+  align-self: center;
+  z-index: 1;
+  padding: calc(var(--px) * 8) calc(var(--px) * 26);
+  background: linear-gradient(#c43a2c, #8e2219);
+  border-top: calc(var(--px) * 2) solid #e7b347;
+  border-bottom: calc(var(--px) * 2) solid #e7b347;
+  box-shadow: 0 calc(var(--px) * 3) 0 rgba(40, 10, 5, 0.45);
+  color: #fbe6c8;
+  font-family: var(--font-display, var(--font-body));
+  font-size: calc(var(--px) * 24);
+  font-weight: var(--weight-strong);
+  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.6);
+  white-space: nowrap;
+}
+.ofs-ribbon::before,
+.ofs-ribbon::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * 8);
+  width: calc(var(--px) * 22);
+  height: 100%;
+  background: #7a1c14;
+  z-index: -1;
+}
+.ofs-ribbon::before { left: calc(var(--px) * -16); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 35% 50%); }
+.ofs-ribbon::after { right: calc(var(--px) * -16); clip-path: polygon(0 0, 100% 0, 65% 50%, 100% 100%, 0 100%); }
+
+/* The hero, on light. */
+.ofs-hero {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: calc(var(--px) * 220);
+  display: grid;
+  place-items: end center;
+  margin-top: calc(var(--px) * -14);
+}
+.ofs-burst {
+  position: absolute;
+  inset: 4% 8% 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(255, 214, 110, 0.75), rgba(242, 178, 51, 0.25) 60%, transparent),
+    repeating-conic-gradient(from 0deg, rgba(255, 220, 130, 0.22) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  animation: ofs-spin 60s linear infinite;
+}
+@keyframes ofs-spin { to { transform: rotate(360deg); } }
+.ofs-hero-art {
+  position: relative;
+  height: 100%;
+  max-height: calc(var(--px) * 360);
+  max-width: 70%;
+  object-fit: contain;
+  justify-self: start;
+  margin-left: 4%;
+}
+.ofs-hero-name {
+  position: absolute;
+  right: calc(var(--px) * 4);
+  top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  color: #fff7e6;
+  font-family: var(--font-display, var(--font-body));
+  font-size: calc(var(--px) * 26);
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 20, 6, 0.8);
+  max-width: 40%;
+}
+.ofs-rarity {
+  padding: calc(var(--px) * 3) calc(var(--px) * 12);
+  background: linear-gradient(#f4cf63, #d79e2c);
+  border: calc(var(--px) * 2) solid #8a5a1c;
+  border-radius: calc(var(--px) * 3);
+  color: #5a3510;
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+/* A parchment panel in a nailed wood frame, a wooden plaque for its title. */
+.ofs-panel {
+  position: relative;
+  padding: calc(var(--px) * 20) calc(var(--px) * 10) calc(var(--px) * 10);
+  margin-top: calc(var(--px) * 10);
+  background: var(--parchment);
+  border: calc(var(--px) * 5) solid var(--wood);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 calc(var(--px) * 3) 0 rgba(30, 16, 6, 0.4);
+}
+.ofs-panel-head {
+  position: absolute;
+  top: calc(var(--px) * -16);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 4) calc(var(--px) * 22);
+  background: linear-gradient(#a2683a, #7b4a24);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 4);
+  color: #fbe6c8;
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 16);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+.ofs-lock { display: inline-flex; gap: calc(var(--px) * 1); }
+.ofs-tiles { display: flex; justify-content: center; gap: calc(var(--px) * 6); }
+.ofs-tile {
+  position: relative;
+  flex: 0 1 calc(var(--px) * 74);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: var(--parchment-shade);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 4);
+  overflow: hidden;
+}
+.ofs-tile.is-hero {
+  border-color: #c9962b;
+  background: radial-gradient(circle, #ffe7a0, #e9b94c);
+  box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 205, 96, 0.8);
+}
+/* No avatar is drawn for every hero: the full figure, cropped to the face. */
+.ofs-tile-hero { width: 88%; height: auto; aspect-ratio: 1; transform: scale(1.9); transform-origin: 52% 30%; object-fit: cover; object-position: 50% 0%; border-radius: calc(var(--px) * 3); }
+.ofs-tile-count {
+  position: absolute;
+  z-index: 1;
+  right: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 2);
+  color: var(--ink);
+  font-size: calc(var(--px) * 14);
+  font-weight: var(--weight-strong);
+  text-shadow: 0 0 calc(var(--px) * 3) var(--parchment);
+}
+.ofs-tile > .hero-frag { --icon-size: 82%; width: 82%; height: 82%; }
+/* Tomorrow's panel waits, a little dimmed, until its day. */
+.ofs-panel.is-locked .ofs-tiles { opacity: 0.82; }
+
+.ofs-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  margin-top: calc(var(--px) * 8);
+}
+.ofs-actions > .k-btn { min-width: 60%; font-size: calc(var(--px) * 22); }
+.ofs-note { color: #e9dcc4; font-size: var(--text-helper); }
+.ofs-wait {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8) calc(var(--px) * 16);
+  background: var(--parchment);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-weight: var(--weight-strong);
+}
+
+/* The next-day pill: the ad tab's slab, with a countdown or "Claim". */
+.nd-tab-label { font-size: calc(var(--px) * 12); white-space: nowrap; }
+.nd-tab.is-ready { animation: nd-glow 1.6s ease-in-out infinite; }
+@keyframes nd-glow { 50% { filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 205, 96, 0.9)); } }

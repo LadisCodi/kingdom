@@ -1,8 +1,5 @@
 // The store (Docs/features/14-monetization.md §2, §3), top to bottom:
 //
-//   * The first-purchase reward, while nothing has been bought: what the
-//     first purchase of ANYTHING adds. A notice, not a product — it has no
-//     price of its own.
 //   * Offers — the packs with a window (sim/offers.ts): each with its value,
 //     its countdown and what is left of it. Then today's daily offers.
 //   * Heroes — the banner itself. A call for aid is a purchase, so the
@@ -45,7 +42,7 @@ function offerRow(game: Game, offer: OfferCard): HTMLElement {
       formatCountdown(Math.max(0, Math.ceil((offer.closesAt - now) / 1000))))]),
     ...(offer.left === null ? [] : [el('span', { class: 'store-offer-left' }, `Left: ${formatExact(offer.left)}`)]),
   ];
-  return el('div', { class: 'store-offer' },
+  const row = el('div', { class: `store-offer${STORE[offer.id].splash ? ' is-splash' : ''}` },
     card({ art, name: offer.name, desc: offer.description },
       el('div', { class: 'store-bundle-lines' },
         ...(offer.gems > 0 ? [el('div', { class: 'store-bundle-line' },
@@ -66,6 +63,14 @@ function offerRow(game: Game, offer: OfferCard): HTMLElement {
       ? el('span', { class: 'store-value', 'aria-label': `${formatExact(offer.valuePercent)}% value` },
         `${formatExact(offer.valuePercent)}%`)
       : '');
+  // An offer with a splash opens it from its row: the price still buys.
+  if (STORE[offer.id].splash) {
+    row.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      game.openOfferSplash(offer.id);
+    });
+  }
+  return row;
 }
 
 export function renderStoreSheet(game: Game): HTMLElement {
@@ -179,17 +184,6 @@ export function renderStoreSheet(game: Game): HTMLElement {
     return pack;
   });
 
-  // ---- the first-purchase reward, while nothing has been bought
-  const first = game.firstPurchaseOffer();
-  const firstCard = first === null ? null : el('div', { class: 'store-first' },
-    card({
-      art: el('span', { class: 'store-art is-GoldKey', role: 'img', 'aria-label': 'reward' }),
-      name: 'First purchase reward',
-      desc: 'Buy anything in the store, and this comes with it.',
-    }, el('div', { class: 'store-bundle-lines' },
-      ...first.lines.map((line) => el('div', { class: 'store-bundle-line' },
-        iconEl('tick', { size: 'sm' }), el('span', {}, line))))));
-
   // ---- offers, and today's
   const offers = game.offerCards().map((o) => offerRow(game, o));
   const daily = game.dailyCards();
@@ -224,7 +218,6 @@ export function renderStoreSheet(game: Game): HTMLElement {
       }));
 
   const body = el('div', { class: 'store' },
-    ...(firstCard === null ? [] : [firstCard]),
     ...(offers.length === 0 ? [] : [el('div', { class: 'store-section' }, el('span', {}, 'Offers')), ...offers]),
     ...(dailyRows.length === 0 ? [] : [
       el('div', { class: 'store-section' }, el('span', {}, 'Today'),

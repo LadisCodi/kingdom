@@ -25,7 +25,7 @@
 // first time a price moved.
 
 import {
-  BANNERS, BANNER_ORDER, DAILY_POOL, GEM_PACK_ORDER, HEROES, ITEMS, KINGDOM_DEF, MANA, OFFERS,
+  BANNERS, BANNER_ORDER, DAILY_POOL, GEM_PACK_ORDER, HERO_LADDER, HEROES, ITEMS, KINGDOM_DEF, MANA, OFFERS,
   OFFER_ORDER, PARTY, STORE, WORLD, type StoreSkuDef,
 } from './data/definitions';
 import { track } from './analytics';
@@ -33,12 +33,13 @@ import { builderGemCost } from './commands';
 import { dayIndex, DAY_MS } from './day';
 import { isDoorOpen } from './doors';
 import { adOfferEligible } from './adOffers';
-import { heroSlotGemCost, heroSlots } from './heroes';
+import { addHeroXp, heroSlotGemCost, heroSlots } from './heroes';
+import { grantItem } from './bag';
 import { knowledgeGemPrice } from './knowledge';
 import { rand } from './rng';
 import { gemsToFinish } from './rush';
 import { explorerGemCost } from './world/explorers';
-import { townhall, type GameState, type HeroId, type ItemId, type OfferWindow, type StoreSkuId } from './state';
+import { addToWallet, townhall, type GameState, type HeroId, type ItemId, type OfferWindow, type StoreSkuId } from './state';
 
 const HOUR_MS = 3_600_000;
 
@@ -140,6 +141,50 @@ export function recordOfferPurchase(state: GameState, sku: StoreSkuId, now: numb
   }
 }
 
+// --------------------------------------------------------------- next day
+
+/** Does this product hand anything over the day after it is bought? */
+export const hasNextDay = (sku: StoreSkuId): boolean => {
+  const s = STORE[sku];
+  return s.nextDayGems + s.nextDayHeroXp + s.nextDayFragments > 0
+    || Object.values(s.nextDayItems).some((n) => (n ?? 0) > 0);
+};
+
+/** A purchase with a next-day part: it waits for the start of the next day,
+ *  UTC, and then for the player to claim it. */
+export function scheduleNextDay(state: GameState, sku: StoreSkuId, now: number): void {
+  if (!hasNextDay(sku)) return;
+  state.player.offers.nextDay.push({ sku, claimableAt: (dayIndex(now) + 1) * DAY_MS });
+}
+
+/** The next-day deliveries the player can claim now. */
+export const nextDayReady = (state: GameState, now: number): StoreSkuId[] =>
+  state.player.offers.nextDay.filter((d) => now >= d.claimableAt).map((d) => d.sku);
+
+/** A bought product's next-day part still waiting for its day. */
+export const nextDayWaiting = (state: GameState, now: number): Array<{ sku: StoreSkuId; claimableAt: number }> =>
+  state.player.offers.nextDay.filter((d) => now < d.claimableAt);
+
+export type ClaimNextDayResult = 'Claimed' | 'NotYet' | 'Nothing';
+
+/** Claim a product's next-day part: its Gems, Hero XP, fragments of its hero
+ *  and items. */
+export function claimNextDay(state: GameState, sku: StoreSkuId, now: number): ClaimNextDayResult {
+  const at = state.player.offers.nextDay.findIndex((d) => d.sku === sku);
+  if (at < 0) return 'Nothing';
+  if (now < state.player.offers.nextDay[at].claimableAt) return 'NotYet';
+  state.player.offers.nextDay.splice(at, 1);
+  const s = STORE[sku];
+  addToWallet(state.player.wallet, 'Gems', s.nextDayGems);
+  if (s.nextDayHeroXp > 0) addHeroXp(state, s.nextDayHeroXp);
+  if (s.hero !== null && s.nextDayFragments > 0) {
+    state.heroes.fragments[s.hero] = (state.heroes.fragments[s.hero] ?? 0) + s.nextDayFragments;
+  }
+  for (const [id, n] of Object.entries(s.nextDayItems) as Array<[ItemId, number]>) grantItem(state, id, n);
+  track(state, 'next_day_claimed', { sku });
+  return 'Claimed';
+}
+
 // ------------------------------------------------------------------ daily
 
 /** When today's draw ends and the next one begins. */
@@ -214,12 +259,16 @@ export function heroGemWorth(id: HeroId): number {
   return prices.length === 0 ? 0 : Math.min(...prices);
 }
 
-/** Everything a product hands over, in Gems. */
+/** Everything a product hands over, in Gems — the next day's part too. A
+ *  fragment is a tenth of its hero, since ten recruit one; Hero XP has no
+ *  Gem price and counts nothing. */
 export function skuGemWorth(state: GameState, sku: StoreSkuId): number {
   const s = STORE[sku];
-  const items = (Object.entries(s.items) as Array<[ItemId, number]>)
-    .reduce((sum, [id, n]) => sum + itemGemWorth(id) * n, 0);
-  return s.gems + items
+  const worth = (items: Partial<Record<ItemId, number>>): number =>
+    (Object.entries(items) as Array<[ItemId, number]>).reduce((sum, [id, n]) => sum + itemGemWorth(id) * n, 0);
+  const fragment = s.hero === null ? 0 : heroGemWorth(s.hero) / HERO_LADDER.fragmentsPerTierBase;
+  return s.gems + worth(s.items) + s.nextDayGems + worth(s.nextDayItems)
+    + Math.round(fragment * s.nextDayFragments)
     + (s.hero === null ? 0 : heroGemWorth(s.hero))
     + s.builders * builderGemCost(state)
     + s.heroSlots * heroSlotGemCost(state)

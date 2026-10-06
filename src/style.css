@@ -75,6 +75,12 @@ body {
 /* The unlock splash (ui/unlockSplash.ts), just under the reveal and over the
    stage (95): it covers a line that is still on screen, and a scene about
    the same thing waits for it. Same mount argument, same `:empty` rule. */
+/* The offer splash (ui/offerSplash.ts), just under the unlock splash and
+   over the stage: an offer shown at the start of a session, over the header
+   too. Same mount argument, same `:empty` rule. */
+#offersplash:empty { display: none; }
+#offersplash { position: absolute; inset: 0; z-index: 96; }
+
 #unlock:empty { display: none; }
 #unlock { position: absolute; inset: 0; z-index: 97; }
 

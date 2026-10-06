@@ -103,9 +103,19 @@ export interface OfferWindow {
   bought: number;
 }
 
+/** What a product bought hands over the next day, waiting to be claimed
+ *  (sim/offers.ts `claimNextDay`). */
+export interface NextDayDelivery {
+  sku: StoreSkuId;
+  /** The start of the day after the purchase, UTC. */
+  claimableAt: number;
+}
+
 export interface OffersState {
   windows: Partial<Record<StoreSkuId, OfferWindow>>;
   townhall: number;
+  /** The next-day deliveries not claimed yet. */
+  nextDay: NextDayDelivery[];
 }
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
