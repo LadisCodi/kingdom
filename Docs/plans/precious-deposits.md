@@ -149,8 +149,8 @@ Decided with the user on 2026-10-06, after 0.10.0 shipped.
 - A rival's size is the ground it holds now: in a world of 41 rivals, one
   whose ground was taken grows again rather than standing empty.
 - With the whole world revealed, the strategic zoom is crowded with labels;
-  the camera stops at one board across and the minimap shows the world.
-  Thinning the labels at the far zoom is still to do.
+  the camera stops at one board across, the minimap shows the world, and
+  the labels thin out by importance as the camera goes out (19 §1.2).
 
 ### 3.2 Steps
 
