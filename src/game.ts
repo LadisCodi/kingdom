@@ -6033,7 +6033,7 @@ function relicShortEffect(id: ArtifactId, value: number): string {
 
 const RELIC_SHORT: Record<ArtifactId, string> = {
   DowsingRod: 'recovery',
-  VerdantSeal: 'per swing',
+  VerdantSeal: 'resources',
   ForemansSigil: 'crew speed',
   GildedLedger: 'tax',
   WanderersCompass: 'Stardust',
@@ -6045,7 +6045,7 @@ const RELIC_SHORT: Record<ArtifactId, string> = {
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
   DowsingRod: 'Forests, crops and stone recover',
-  VerdantSeal: 'A node holds, and a swing takes',
+  VerdantSeal: 'Natural resources and extraction speed',
   ForemansSigil: 'Your crews swing and walk',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',

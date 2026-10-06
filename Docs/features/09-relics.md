@@ -58,7 +58,7 @@ never a discount, because a discount dies at 100%.
 | Relic | Effect | Moves |
 |---|---|---|
 | **Staff of Renewal** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
-| **Sickle of Plenty** | a node **holds +X more** and a swing **takes +X more** | `harvestStock` and `harvestUnitsPerStrike` |
+| **Sickle of Plenty** | **natural resources +X%** (what a node holds) and **extraction speed +X%** (what a swing takes) | `harvestStock` and `harvestUnitsPerStrike`, both multipliers |
 | **The Winged Hammer** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
 | **The Tribute Crown** | tax rate **+X%** | `taxRate` |
 | **The Stargazer's Orb** | Stardust from rooms **+X%** | `stardustYield` |
