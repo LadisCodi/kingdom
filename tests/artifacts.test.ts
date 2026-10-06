@@ -128,8 +128,8 @@ describe('a relic is a permanent passive with no ceiling', () => {
     }
   });
 
-  // ONE NUMBER, TWO CALL SITES. The Sickle's `+1` has to reach the thumb and the
-  // crew, or half the relic is a sentence on a card.
+  // ONE NUMBER, TWO CALL SITES. The Sickle's percent has to reach the thumb
+  // and the crew, or half the relic is a sentence on a card.
   it('the Sickle pays the thumb and the crew from one number', () => {
     const shed = { location: FOREST, definitionId: 'Sawmill', level: 1 } as District;
     const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST);
@@ -137,9 +137,14 @@ describe('a relic is a permanent passive with no ceiling', () => {
     const held = effectiveStock(state, map, FOREST, HARVEST.Forest);
     grantArtifactLevel(state, 'VerdantSeal');
     host(state, 'VerdantSeal');
-    expect(effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST)).toBe(tap + 1);
-    expect(effectiveWorkerStrike(state, HARVEST.Forest, shed)).toBe(crew + 1);
-    expect(effectiveStock(state, map, FOREST, HARVEST.Forest)).toBe(held + 1);
+    const x = passiveValueAtLevel('VerdantSeal', 1);
+    expect(x).toBeGreaterThan(1);
+    expect(effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST)).toBeCloseTo(tap * x);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest, shed)).toBeCloseTo(crew * x);
+    // The depot is rounded once, on the unrounded figure: within a unit of it.
+    const richer = effectiveStock(state, map, FOREST, HARVEST.Forest);
+    expect(richer).toBeGreaterThan(held);
+    expect(Math.abs(richer - held * x)).toBeLessThanOrEqual(1);
   });
 
   // And the Hammer's one number has to reach both halves of a round trip.

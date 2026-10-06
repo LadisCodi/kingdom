@@ -16,8 +16,8 @@
   "VerdantSeal": {
     "kind": "city",
     "door": "Harpies",
-    "passiveBase": 1,
-    "passivePerLevel": 1,
+    "passiveBase": 1.2,
+    "passivePerLevel": 0.2,
     "activeManaCost": 20,
     "activeDurationSeconds": 0,
     "activeRadius": 2,

@@ -89,7 +89,7 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec, at: Coord | null = null): number {
   // The tree's term is a PERCENT (`harvestYield`, +10% a rank): the same
   // share of a Forest's one unit and an iron vein's five. The relic's term is
-  // flat and rides on top. One number reaches the thumb (`tapDraw`) and the
+  // a percent too, and rides on top. One number reaches the thumb (`tapDraw`) and the
   // crew (`effectiveWorkerStrike`) from this one place — a fraction, which
   // both of them carry.
   // AT THE CELL when there is one: a Sickle of Plenty's aura is a place

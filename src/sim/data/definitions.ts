@@ -1359,8 +1359,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     passiveText: 'Richer ground, and more out of every swing',
     passive: {
       stats: [
-        { stat: 'harvestStock', scope: null, op: 'add' },
-        { stat: 'harvestUnitsPerStrike', scope: null, op: 'add' },
+        { stat: 'harvestStock', scope: null, op: 'mul' },
+        { stat: 'harvestUnitsPerStrike', scope: null, op: 'mul' },
       ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
