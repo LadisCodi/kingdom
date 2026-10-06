@@ -97,7 +97,7 @@ export const fund = (state: GameState, wallet: Record<string, number>): void => 
  *  is inside the Townhall's opening REVEAL any more — the map puts them one
  *  ring out, so the player explores toward what they can see. Tests that are
  *  about what happens after the fog use `canGather`. */
-export const FOREST: Coord = { x: 1, y: 3 };
+export const FOREST: Coord = { x: 3, y: -1 };
 export const BERRIES: Coord = { x: -2, y: 1 };
 export const ANIMALS: Coord = { x: -1, y: -2 };
 

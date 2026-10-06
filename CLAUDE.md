@@ -139,7 +139,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | **a Bag item** — a chest, speed-up, boost, flask, tome or key — = an `items` entry; an item bundle = a `store` row with `items`; which source pays which item = its `rewardItems`, `freeItems`/`paidItems` or `treasure.items` | a new item `kind` (what using it does: `sim/bag.ts`, `sim/speedups.ts`) |
-| a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs, the forge and the Restorer's chest = `relics.fragments` | a new world source that drops fragments |
+| a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs, the forge and the store's fragment pack = `relics.fragments` | a new world source that drops fragments |
 | the friends list's caps and its reward path — milestones, Gems, items, the Townhall a friend must reach — at `?dev=data` › Friends (`social.json`) | what a friend's progress IS (Townhall + cells, `friendsClient.ts`), a new social command (`src/socialServer/serve.ts`) |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
@@ -185,7 +185,11 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 99; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 100; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+**Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 100) — the boot
+discards any older save and starts a fresh kingdom. To restart every tester
+again, bump `SAVE_VERSION` and raise it to match. **It must go before
+production**, where a kingdom is never discarded and every change migrates.
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.

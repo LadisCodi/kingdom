@@ -16,7 +16,7 @@ import {
 } from '../src/sim/upgrades';
 import { resolve, resolveAt } from '../src/sim/modifiers';
 import type { ArtifactId, District, GameState } from '../src/sim/state';
-import { addBuilt, FOREST, freshGame, map } from './helpers';
+import { addBuilt, freshGame, map } from './helpers';
 
 /** A cell an aura covers, and one far from it. */
 const AT = { x: 1, y: 3 };
@@ -131,18 +131,18 @@ describe('a relic is a permanent passive with no ceiling', () => {
   // ONE NUMBER, TWO CALL SITES. The Sickle's percent has to reach the thumb
   // and the crew, or half the relic is a sentence on a card.
   it('the Sickle pays the thumb and the crew from one number', () => {
-    const shed = { location: FOREST, definitionId: 'Sawmill', level: 1 } as District;
-    const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST);
+    const shed = { location: AT, definitionId: 'Sawmill', level: 1 } as District;
+    const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, AT);
     const crew = effectiveWorkerStrike(state, HARVEST.Forest, shed);
-    const held = effectiveStock(state, map, FOREST, HARVEST.Forest);
+    const held = effectiveStock(state, map, AT, HARVEST.Forest);
     grantArtifactLevel(state, 'VerdantSeal');
     host(state, 'VerdantSeal');
     const x = passiveValueAtLevel('VerdantSeal', 1);
     expect(x).toBeGreaterThan(1);
-    expect(effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST)).toBeCloseTo(tap * x);
+    expect(effectiveUnitsPerStrike(state, HARVEST.Forest, AT)).toBeCloseTo(tap * x);
     expect(effectiveWorkerStrike(state, HARVEST.Forest, shed)).toBeCloseTo(crew * x);
     // The depot is rounded once, on the unrounded figure: within a unit of it.
-    const richer = effectiveStock(state, map, FOREST, HARVEST.Forest);
+    const richer = effectiveStock(state, map, AT, HARVEST.Forest);
     expect(richer).toBeGreaterThan(held);
     expect(Math.abs(richer - held * x)).toBeLessThanOrEqual(1);
   });

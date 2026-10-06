@@ -103,6 +103,13 @@ never a discount, because a discount dies at 100%.
 - **The close is a boundary**: offline replay ends it at the same instant as
   live ticking, and rent inside the aura is repriced there.
 - **On screen** (mockups M80–M85):
+  - **More fragments are the store's**: the sheet's foot is one **Store**
+    button; the store sells a **Relic fragments** pack for Gems — 5 bound
+    fragments of the relics already found, at random (900 Gems,
+    `relics.fragments.fragmentPackGems` · `fragmentPackSize`).
+    It opens on the **gacha's reveal**, one piece a tile, keystones last in
+    gold; closing it, the pieces **fly to the nav's Bag** — as everything that
+    lands in the Bag does, from wherever it was claimed.
   - **Every fragment has its own art**: a broken piece of that relic, the
     keystone its heart in a gold rim (`<sprite>_frag<slot>`). A held slot
     shows its piece; a missing one, the piece's silhouette in chalk.

@@ -243,22 +243,17 @@ export function forgeReplica(state: GameState, id: ArtifactId, slot: number, wit
   return 'Forged';
 }
 
-export type RestorerChestResult = { kind: 'Opened'; drops: FragmentDrop[] } | { kind: 'NotRestored' } | { kind: 'NotEnoughGems' };
+export type FragmentPackResult = { kind: 'Opened'; drops: FragmentDrop[] } | { kind: 'NothingMet' } | { kind: 'NotEnoughGems' };
 
-/** The Restorer's chest (§9): `restorerChestSize` bound fragments of a
- *  chosen restored relic, for Gems, at the published odds — the keystone one
- *  time in `keystoneOneIn`. */
-export function openRestorerChest(state: GameState, id: ArtifactId): RestorerChestResult {
-  if (!isRestored(state, id)) return { kind: 'NotRestored' };
-  if (getWallet(state.player.wallet, 'Gems') < RELIC_RULES.restorerChestGems) return { kind: 'NotEnoughGems' };
-  addToWallet(state.player.wallet, 'Gems', -RELIC_RULES.restorerChestGems);
+/** THE FRAGMENT PACK, sold in the store: `fragmentPackSize` bound fragments
+ *  of the relics the player has met, at random, for Gems — the keystone one
+ *  time in `keystoneOneIn`, like every drop. Never a relic not yet found. */
+export function openFragmentPack(state: GameState): FragmentPackResult {
+  if (rollable(state, 'any').length === 0) return { kind: 'NothingMet' };
+  if (getWallet(state.player.wallet, 'Gems') < RELIC_RULES.fragmentPackGems) return { kind: 'NotEnoughGems' };
+  addToWallet(state.player.wallet, 'Gems', -RELIC_RULES.fragmentPackGems);
   const n = (state.relics.chests += 1);
-  const drops: FragmentDrop[] = [];
-  for (let i = 0; i < RELIC_RULES.restorerChestSize; i++) {
-    const slot = rollSlot(state.seed, ['chest', id, n, i]);
-    own(state, id).bound[slot] += 1;
-    drops.push({ relic: id, slot });
-  }
-  track(state, 'relic_chest', { relic: id });
+  const drops = dropFragments(state, 'any', RELIC_RULES.fragmentPackSize, ['pack', n], true);
+  track(state, 'fragment_pack', { gems: RELIC_RULES.fragmentPackGems, n: drops.length });
   return { kind: 'Opened', drops };
 }

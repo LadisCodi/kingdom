@@ -20,7 +20,11 @@ import { playSfx } from '../audio/sfx';
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { hold, release } from './hudHold';
-import { currencyIcon } from './kit';
+import { currencyIcon, iconEl } from './kit';
+import { itemIcon } from './itemArt';
+import { fragmentArt } from './relicSheet';
+import { ARTIFACTS } from '../sim/data/definitions';
+import type { ArtifactId, ItemId } from '../sim/state';
 
 /** The beat between one fragment and the next leaving. */
 const STAGGER_MS = 70;
@@ -212,4 +216,90 @@ export function mountRewardFly(game: Game, layer: HTMLElement): void {
     flash(from);
     flights.forEach(([c, n, icon], k) => fly(c, n, from, icon, k * BETWEEN_KINDS_MS, tap));
   });
+
+  // ------------------------------------------------------------ to the Bag
+  //
+  // ANYTHING THAT LANDS IN THE BAG FLIES TO IT: an item (a chest, a speed-up,
+  // a key…) or a relic fragment, however it was paid — a quest, the Survey,
+  // the store, a treasure. The presenter does not announce these one by
+  // one, so the screen watches the Bag itself: a count that rose since the
+  // last look flies its art from where it was claimed to the nav's Bag tab.
+  //
+  // It waits its turn. While a reveal deals (the gacha screen) it holds what
+  // it saw — the reveal is the show — and while a menu hides the nav it
+  // holds the flights until the tab is back in sight.
+  const bagTab = (): HTMLElement | null => {
+    const tab = document.querySelector<HTMLElement>('[data-coach="nav:bag"]');
+    if (tab === null) return null;
+    const r = tab.getBoundingClientRect();
+    const frame = layer.getBoundingClientRect();
+    return r.width > 0 && r.top < frame.bottom - 4 && r.bottom > frame.top ? tab : null;
+  };
+  const counts = (): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const [id, n] of Object.entries(game.state.bag.held)) if ((n ?? 0) > 0) m.set(`item:${id}`, n!);
+    for (const [relic, f] of Object.entries(game.state.relics.held)) {
+      if (f === undefined) continue;
+      for (let slot = 0; slot < 6; slot++) {
+        const n = (f.found[slot] ?? 0) + (f.bound[slot] ?? 0);
+        if (n > 0) m.set(`frag:${relic}:${slot}`, n);
+      }
+    }
+    return m;
+  };
+  const artOf = (key: string): Node => {
+    const [kind, id, slot] = key.split(':');
+    if (kind === 'item') return iconEl(itemIcon(id as ItemId), { size: 'sm' });
+    return fragmentArt(ARTIFACTS[id as ArtifactId].sprite, Number(slot), 'rf-bag-art');
+  };
+  let seen: Map<string, number> | null = null;
+  let pending: Array<{ key: string; n: number; from: Point }> = [];
+  let revealWasOpen = false;
+  const flyToBag = (tab: HTMLElement) => {
+    const batch = pending;
+    pending = [];
+    let i = 0;
+    batch.forEach(({ key, n, from }) => {
+      for (let k = 0; k < Math.min(n, 4); k++) {
+        const delay = i++ * STAGGER_MS * 1.6;
+        window.setTimeout(() => {
+          const node = spawn('rf-frag is-bag', from, artOf(key));
+          node.animate(path(from, centreOf(tab)), { duration: BURST_MS + FLY_MS, fill: 'both' })
+            .finished.then(() => {
+              node.remove();
+              pulse(tab);
+              sparks(centreOf(tab));
+              playSfx('rewardPop', { rate: 1 + k * 0.035, group: 'rewardLand', limit: 4 });
+            }, () => node.remove());
+        }, delay);
+      }
+    });
+  };
+  const watchBag = (): void => {
+    const now = counts();
+    const revealOpen = game.gachaReveal !== null;
+    if (seen === null) { seen = now; return; }
+    if (revealOpen) { revealWasOpen = true; return; } // the reveal is the show; look after it
+    // Out of a reveal, from where its tiles were dealt — the screen's middle.
+    const frame = layer.getBoundingClientRect();
+    const from = revealWasOpen ? { x: frame.width / 2, y: frame.height * 0.42 } : origin();
+    revealWasOpen = false;
+    for (const [key, n] of now) {
+      const gain = n - (seen.get(key) ?? 0);
+      if (gain > 0) pending.push({ key, n: gain, from });
+    }
+    seen = now;
+    if (pending.length === 0) return;
+    if (calm() || !game.doorOpen('bag')) { pending = []; return; }
+    const tab = bagTab();
+    if (tab !== null) flyToBag(tab);
+  };
+  game.onChange(watchBag);
+  // A nav that steps back in (a menu closed) carries no change of the Bag:
+  // look for the tab now and then while flights wait.
+  window.setInterval(() => {
+    if (pending.length === 0) return;
+    const tab = bagTab();
+    if (tab !== null) flyToBag(tab);
+  }, 400);
 }

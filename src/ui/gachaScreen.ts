@@ -19,7 +19,8 @@
 // different size of event from four fragments and must not be a tile the
 // player's thumb is already moving past.
 
-import { HEROES } from '../sim/data/definitions';
+import { ARTIFACTS, HEROES } from '../sim/data/definitions';
+import { fragmentArt } from './relicSheet';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
@@ -46,6 +47,13 @@ function portrait(id: HeroId, cls: string): HTMLElement {
  *  same reason it colours the roster: the ladder should read before a label
  *  does. A currency has no rarity, so it gets parchment. */
 function prizeTile(prize: GachaPrize): HTMLElement {
+  if (prize.kind === 'relicFragment') {
+    const def = ARTIFACTS[prize.relic];
+    return el('div', { class: `gr-tile is-relic${prize.slot === 5 ? ' is-keystone' : ''}`, 'data-bag-fly': '' },
+      fragmentArt(def.sprite, prize.slot, 'gr-art'),
+      el('span', { class: 'gr-tag' }, def.name.replace(/^The /, '')),
+      ...(prize.amount > 1 ? [el('span', { class: 'gr-count' }, formatExact(prize.amount))] : []));
+  }
   if (prize.kind === 'currency') {
     return el('div', { class: 'gr-tile is-currency' },
       iconEl(prize.currency, { size: 'lg' }),

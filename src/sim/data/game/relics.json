@@ -15,8 +15,8 @@
     "replicaSpares": 3,
     "replicaGemsPiece": 1000,
     "replicaGemsKeystone": 3000,
-    "restorerChestGems": 900,
-    "restorerChestSize": 5,
+    "fragmentPackGems": 900,
+    "fragmentPackSize": 5,
     "treasureEvery": 6,
     "perLairTier": [1, 1, 2, 2, 3],
     "perPackTier": { "Green": 1, "Yellow": 1, "Rose": 2, "Blue": 2, "Purple": 3, "Golden": 4 }

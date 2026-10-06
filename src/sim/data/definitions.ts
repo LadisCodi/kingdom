@@ -1499,7 +1499,7 @@ export const RELIC_RULES = balance.fragments as {
   keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
   replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
   replicaGemsPiece: number; replicaGemsKeystone: number;
-  restorerChestGems: number; restorerChestSize: number;
+  fragmentPackGems: number; fragmentPackSize: number;
   treasureEvery: number; perLairTier: number[]; perPackTier: Record<string, number>;
 };
 
@@ -2422,4 +2422,6 @@ export const GAME_VERSION: string = pkg.version;
 // v97: the season pass goes — `Pass` leaves the kingdom (a migrator).
 // v98: the kingdom's nickname and crest (`Profile` on the kingdom), additive.
 // v99: trading with friends (`Trade` on the kingdom), additive.
-export const SAVE_VERSION = 99;
+// v100: no change of shape — the PROTOTYPE fresh start (`PROTOTYPE_FRESH_START`,
+// save.ts): every save written before it is discarded on boot.
+export const SAVE_VERSION = 100;

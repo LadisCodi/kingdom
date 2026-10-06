@@ -102,6 +102,25 @@ interface WorkshopDto {
 
 export const MIN_MIGRATABLE_VERSION = 16;
 
+/**
+ * PROTOTYPE ONLY. A save older than this is thrown away on boot and the
+ * player starts a fresh kingdom, however well it would migrate: the opening
+ * map and the economy have moved too far for an old kingdom to be worth
+ * playing on. Raise it to `SAVE_VERSION` (bumping that) to restart every
+ * tester again.
+ *
+ * Not acceptable in production, where a player's kingdom is never discarded:
+ * before launch this goes, and every change ships with its migrator.
+ *
+ * Checked by the boot (`main.ts`), not by `migrate()`, so the migrator chain
+ * stays tested end to end.
+ */
+export const PROTOTYPE_FRESH_START = 100;
+
+/** True when the boot should discard this save (`PROTOTYPE_FRESH_START`). */
+export const isPrototypeStale = (save: SaveFile): boolean =>
+  (save.SaveVersion ?? 1) < PROTOTYPE_FRESH_START;
+
 interface Migration {
   /** The version this migrator produces. */
   to: number;

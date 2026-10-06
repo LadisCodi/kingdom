@@ -469,7 +469,7 @@ them, to be found and repaired.
 | **the old House** | ring 3, past the first forest |
 | **two old plots** (FarmLands) | by the berries |
 | **the old Farm** | beside the old plots, working both |
-| **the old Sawmill** | ring 3, in the thickest trees |
+| **the old Sawmill** | ring 3, at the edge of a wood, clear of the Townhall |
 
 - **Every abandoned building can be repaired at the Townhall level whose reach
   first covers it**: the count cap at that level leaves room for every

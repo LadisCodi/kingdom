@@ -71,9 +71,9 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500, Knowledge: 500 });
-    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('InvalidCell'); // behind Saws
+    expect(enqueueBuild(state, map, 'Sawmill', { x: 2, y: -1 })).toBe('InvalidCell'); // behind Saws
     completeTech(state, 'Saws');
-    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Sawmill', { x: 2, y: -1 })).toBe('Started');
     expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('NoBuilderFree');
     tickAt(state, now);
     expect(finishWithGems(state, map, state.city.queue[0].uniqueId, now)).toBe('Success');
@@ -225,7 +225,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(armyCap(state)).toBe(armyBefore); // unchanged — it is a city decision
 
     // --- Two more houses at TH2, then queue BOTH new villagers up front.
-    for (const cell of [{ x: -1, y: -1 }, { x: 2, y: 1 }]) {
+    for (const cell of [{ x: -1, y: -1 }, { x: 3, y: 0 }]) {
       expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
       now += 120_000;
