@@ -691,6 +691,7 @@ export const RULES: Readonly<Record<string, Rule>> = {
       const grants = items || slots || s.hero !== null || num(s.gems) > 0;
       if (num(s.nextDayFragments) > 0 && s.hero === null) push(id, ['nextDayFragments'], 'fragments of which hero? It hands over none');
       if (s.splash === true && s.shelf !== 'offer') push(id, ['splash'], 'only an offer is shown full screen');
+      if (s.widget === true && s.shelf !== 'offer') push(id, ['widget'], 'only an offer has a widget on the map');
       if (s.shelf === 'gems' && (items || slots || s.hero !== null)) push(id, ['shelf'], 'a Gem pack grants Gems and nothing else');
       if (s.shelf === 'gems' && !(num(s.gems) > 0)) push(id, ['gems'], 'a Gem pack with no Gems');
       if (s.shelf === 'survey' && id !== 'Survey') push(id, ['shelf'], 'only the Survey is sold on the Survey');

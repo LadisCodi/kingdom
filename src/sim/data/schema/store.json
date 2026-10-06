@@ -93,6 +93,10 @@
     "splash": {
       "type": "bool",
       "doc": "An offer shown full screen at the start of every session while it is on sale, from the session after its window opened."
+    },
+    "widget": {
+      "type": "bool",
+      "doc": "An offer shown as a floating icon on the map, under the Survey, while it is on sale or its next-day part waits; a tap opens its splash. Its icon is `sprite`."
     }
   }
 }

@@ -248,13 +248,40 @@ describe('the offer splash', () => {
 
       // Bought: tomorrow's part shows on the pill, then claims from the splash.
       expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, next.now())).toBe('Purchased');
-      expect(next.nextDayPill()?.ready).toBe(false);
+      expect(next.offerWidgets().map((w) => w.state)).toEqual(['waiting']);
       vi.setSystemTime(dailyResetsAt(T0 + HOUR));
       const later = freshPresenter(state);
       expect(later.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'claim' });
       later.doClaimNextDay('FirstPurchase' as StoreSkuId);
       expect(later.offerSplashOnScreen()).toBeNull();
-      expect(later.nextDayPill()).toBeNull();
+      expect(later.offerWidgets()).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('the offer widget', () => {
+  it('floats while its offer is on sale, then counts down to tomorrow, then asks for the claim', async () => {
+    const { vi } = await import('vitest');
+    const { freshPresenter } = await import('./helpers');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(T0);
+      const state = shop();
+      const game = freshPresenter(state);
+      expect(game.offerWidgets()).toEqual([]);
+      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      refreshOffers(state, game.now());
+      expect(game.offerWidgets().map((w) => [w.sku, w.state])).toEqual([['FirstPurchase', 'sale']]);
+      expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, game.now())).toBe('Purchased');
+      expect(game.offerWidgets().map((w) => w.state)).toEqual(['waiting']);
+      // A widget says it on the map, so the edge pill stays away.
+      expect(game.nextDayPill()).toBeNull();
+      vi.setSystemTime(dailyResetsAt(T0));
+      expect(game.offerWidgets().map((w) => w.state)).toEqual(['ready']);
+      game.doClaimNextDay('FirstPurchase' as StoreSkuId);
+      expect(game.offerWidgets()).toEqual([]);
     } finally {
       vi.useRealTimers();
     }

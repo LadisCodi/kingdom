@@ -2242,6 +2242,8 @@ export interface StoreSkuDef {
   cooldownHours: number;
   /** Shown full screen at the start of every session while on sale. */
   splash: boolean;
+  /** Shown as a floating icon on the map while on sale (ui/offerWidget.ts). */
+  widget: boolean;
 }
 
 export const STORE = Object.fromEntries(
