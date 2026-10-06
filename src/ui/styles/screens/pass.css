@@ -24,9 +24,7 @@
    100% lands exactly between them and hides nothing; the strip is an EXTRA
    band of map, and every pixel of it comes straight out of the two panes. On a
    phone frame the difference is a whole row in each. */
-.k-sheet.is-tall.is-panes { height: 100%; max-height: 100%; }
-/* The sheet's own scroller is off: nothing here may scroll but the two panes. */
-.k-sheet.is-panes > .k-panel > .k-sheet-body { overflow-y: hidden; }
+(`is-panes`, kit.css.)
 
 /* THE SHEET DOES NOT SCROLL. It is tall, so it has a height; this fills it,
    and the two panes below split what is left after the clock and the bar.

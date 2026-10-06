@@ -855,6 +855,11 @@
 .k-sheet.is-centred { max-width: calc(var(--px) * 340); max-height: 78%; margin-left: auto; margin-right: auto; }
 /* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
 .k-sheet.is-tall { height: auto; max-height: calc(100% - calc(var(--px) * 96)); margin-top: auto; }
+/* A PANED sheet (`is-panes`, the caller's class) takes the whole box between
+ * the header and the nav whatever its content, and its body does not scroll:
+ * a pane inside it does. The tabs or the clock above that pane stay put. */
+.k-sheet.is-tall.is-panes { height: 100%; max-height: 100%; }
+.k-sheet.is-panes > .k-panel > .k-sheet-body { overflow-y: hidden; }
 
 /* The materials page. A specimen sits on a CHECKERBOARD, not on the page's
  * brown: a frame whose corner is transparent where it should be opaque, or
