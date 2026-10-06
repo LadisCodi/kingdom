@@ -42,8 +42,8 @@ describe('a city relic acts where a Shrine holds it', () => {
   it('reaches the footprint and the ring round it, and no further', () => {
     expect(hostRelic(state, 'GildedLedger', 'a', T0)).toBe('Hosted');
     expect(relicAura(state, 'taxRate', { x: 1, y: 1 }).mul).toBeGreaterThan(1);
-    expect(relicAura(state, 'taxRate', { x: 3, y: 3 }).mul).toBeGreaterThan(1);
-    expect(relicAura(state, 'taxRate', { x: 4, y: 4 }).mul).toBe(1);
+    expect(relicAura(state, 'taxRate', { x: 2, y: 2 }).mul).toBeGreaterThan(1);
+    expect(relicAura(state, 'taxRate', { x: 3, y: 3 }).mul).toBe(1);
   });
 
   it('has one host: hosting it again moves it', () => {
@@ -63,11 +63,11 @@ describe('a city relic acts where a Shrine holds it', () => {
   // RULE 2: where one relic's auras overlap the stronger counts — never both.
   it('counts once where two of its auras would overlap', () => {
     hostRelic(state, 'GildedLedger', 'a', T0);
-    const once = relicAura(state, 'taxRate', { x: 3, y: 1 }).mul;
+    const once = relicAura(state, 'taxRate', { x: 2, y: 1 }).mul;
     // A second Shrine wrongly claiming the same relic still adds nothing.
     shrine(state, 'c', { x: 4, y: 0 });
     state.city.districts.find((d) => d.uniqueId === 'c')!.hosts = 'GildedLedger';
-    expect(relicAura(state, 'taxRate', { x: 3, y: 1 }).mul).toBe(once);
+    expect(relicAura(state, 'taxRate', { x: 2, y: 1 }).mul).toBe(once);
   });
 
   // RULE 4: rent is priced house by house, so a house inside the aura pays more.

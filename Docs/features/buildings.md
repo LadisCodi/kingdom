@@ -58,7 +58,7 @@
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
 | **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
 | **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
-| **Shrine** | 2×2 | Sacred Grounds | 1 at TH9 → 2 | **1** | supplies 40 Harmony |
+| **Shrine** | 1×1 | Sacred Grounds | 1 at TH9 → 2 | **1** | supplies 40 Harmony |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall
