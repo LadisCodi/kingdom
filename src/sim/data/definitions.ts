@@ -562,7 +562,7 @@ export type SceneCondition =
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
   | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing'
-  | 'relicPicked' | 'relicHosted';
+  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
   speaker: string;

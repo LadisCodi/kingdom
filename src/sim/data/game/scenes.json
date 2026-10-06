@@ -688,6 +688,107 @@
     ]
   },
   {
+    "id": "chest",
+    "trigger": "holdsItem",
+    "triggerTarget": "WoodChest1h",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "villager",
+        "side": "right",
+        "text": "I nearly forgot, Your Majesty! I brought something home from the road — a whole chest of good timber.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "mainScreen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Into the Bag with it — that’s where I keep what the townsfolk give us. Open it, Your Majesty.",
+        "box": "auto",
+        "point": "ui:nav:bag",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "bag",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "A chest holds hours of the town’s work, packed for later. Tap it.",
+        "box": "auto",
+        "point": "ui:bag-item:WoodChest1h",
+        "lock": "target",
+        "until": "ui",
+        "untilTarget": "bag-use",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Use it, and the wood is ours — just when we need it most.",
+        "box": "auto",
+        "point": "ui:bag-use",
+        "lock": "target",
+        "until": "itemUsed",
+        "untilTarget": "WoodChest1h",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Good timber, that. Keep the next ones for when you’re short — chests don’t rot.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the Bag and put that wood to work.",
+        "box": "auto",
+        "point": "back",
+        "lock": "target",
+        "until": "noOverlay",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
     "id": "secondHouse",
     "trigger": "questReached",
     "triggerTarget": "GrowingTown",

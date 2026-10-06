@@ -15,13 +15,14 @@
 // portrait that is rebuilt re-enters, and a box that is rebuilt re-types.
 
 import {
-  DISTRICTS, HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
+  DISTRICTS, HELP, ITEMS, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
 import { playSfx, playVoice } from '../../audio/sfx';
 import { spriteUrl } from '../../render/sprites';
 import { CAMERA_GLIDE_MS } from '../../render/camera';
-import type { Coord } from '../../sim/state';
+import type { Coord, ItemId } from '../../sim/state';
+import { bagTabOf } from '../../sim/bag';
 import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
@@ -58,7 +59,12 @@ const TICK_EVERY = 3;
 /** Scroll a control into its scroller when it sits clipped outside it — the
  *  build menu's row, a long list. Only when clipped, so a visible control
  *  never jitters. */
-function bringIntoView(key: string): void {
+function bringIntoView(game: Game, key: string): void {
+  // An item in the Bag is on its own tab: the Bag opens to it.
+  if (key.startsWith('bag-item:') && game.openOverlay === 'bag') {
+    const id = key.slice('bag-item:'.length) as ItemId;
+    if (ITEMS[id] !== undefined) game.openBagTab(bagTabOf(id));
+  }
   const node = uiNode(key);
   if (node === null) return;
   const r = node.getBoundingClientRect();
@@ -757,7 +763,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           // A control scrolled out of its row — the fourth card of the build
           // menu — is brought into view, or the lock holds the player in
           // front of something they cannot reach.
-          if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
+          if (playing.target?.kind === 'ui') bringIntoView(game, playing.target.key);
           fitCast();
           if (lineHolds(l)) { graced(); next(); }
         }
