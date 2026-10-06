@@ -17,8 +17,8 @@
   list, by the same rules.
 - **No effect twice within a rarity.** An effect may appear in several
   rarities, stronger in the higher one.
-- **A skill has five RANKS**, bought with Stardust once the hero's level
-  allows (§5).
+- **A skill has five RANKS**, bought with Stardust and a precious material
+  once the hero's level allows (§5).
 
 ## 2. The kinds
 
@@ -106,25 +106,56 @@ Five kinds in code; their variants are data.
 ## 5. Ranks
 
 - **Five ranks.** Rank 1 comes with the hero.
-- **A rank UNLOCKS at a level** and is then **BOUGHT with Stardust**. It is
-  never raised on its own.
+- **A rank UNLOCKS at a level** and is then **BOUGHT with Stardust and a
+  precious material**. It is never raised on its own.
 - The unlock levels sit past a tier cap, so each rank asks for an
   **ascension and levels**:
 
-  | Rank | Unlocks at level | Needs tier | Stardust |
-  |---|---|---|---|
-  | 1 | — (recruited) | 1 | — |
-  | 2 | 15 | 2 | 100 |
-  | 3 | 25 | 3 | 200 |
-  | 4 | 35 | 4 | 400 |
-  | 5 | 45 | 5 | 800 |
+  | Rank | Unlocks at level | Needs tier | Stardust | Material |
+  |---|---|---|---|---|
+  | 1 | — (recruited) | 1 | — | — |
+  | 2 | 15 | 2 | 100 | 2 |
+  | 3 | 25 | 3 | 200 | 4 |
+  | 4 | 35 | 4 | 400 | 8 |
+  | 5 | 45 | 5 | 800 | 12 |
+
+- **The material is the skill's family's**, so the 3/2/1 deal
+  ([`../features/19-world-map.md`](../features/19-world-map.md) §7.4) leans
+  a player towards some skills, and trading with friends evens it out:
+
+  | Family | Material |
+  |---|---|
+  | Strike | Starmetal |
+  | Heal · Shield | Moonglass |
+  | Rally · Daze · Spoils | Heartwood |
+
+- **While the world is shut** (no Watchtower yet), a rank asks for Stardust
+  alone — the rule every price follows (19 §7.6).
 
 - **Each rank adds 25% of the rank-1 value**: rank 5 is twice rank 1. What
   grows is the X — the hit, the heal, the shield, the delay, the bonus;
   never how often it fires.
-- **1,500 Stardust** ranks one hero to the top — a second Stardust sink
-  beside ascension's 750 (**OQ-78**).
-- Dials: `heroLadder.skillRankLevels`, `skillRankStardust`, `skillRankStep`.
+- **1,500 Stardust and 26 of one material** rank one hero to the top — a
+  second Stardust sink beside ascension's 750 (**OQ-78**), and a use for
+  precious material beside building and research.
+- **Each axis of a hero has its own key**: a level is Hero XP, an ascension
+  is Fragments and Stardust, a rank is Stardust and material.
+- Dials: `heroLadder.skillRankLevels`, `skillRankStardust`,
+  `skillRankMaterial`, `skillRankStep`; the family's material in `heroes`'
+  skill settings.
+
+### 5.1 Where the XP comes from
+
+- The city's lairs pay Hero XP **once** — there are five. **The world pays it
+  for good**: every dungeon room (a whole dungeon ≈ 1,000, back every
+  12–24 h), every camp (30–240), every Portal floor (≈ 3,900 for the forty)
+  and the scouting rewards.
+- Against the ladder: rank 2 (level 15) is **2,837 XP**, about three
+  dungeons; rank 4 (level 35) about **21,000**; rank 5 (level 45) about
+  **52,500** — weeks, on one kingdom counter shared by every hero. The
+  Tavern, the Vampire Lord's boon and **Seasoned** speed it up.
+- The world's rate stays as it is (`worldDungeon.heroXp` 10) until the
+  harness has run the ranks (**OQ-79**).
 
 ## 6. The screens
 
@@ -162,7 +193,8 @@ Five kinds in code; their variants are data.
    golden battle test is rewritten, on purpose.
 3. **Spoils**: read where a won fight pays out.
 4. **Ranks**: `state.heroes.skillRank` per hero (an additive save field, no
-   migrator), the buy command and its Stardust price.
+   migrator), the buy command and its price — Stardust, and the family's
+   material once the world is open.
 5. **UI**: the card's Skill section and Upgrade, the roster pips, the
    playback's skill pop, the villain's skill on the attack sheet.
 6. **Docs**: 10-heroes §2.5 becomes the skill, combat §9 gains §9.3; this
