@@ -82,6 +82,8 @@ export interface WorldRequest<K extends WorldCommandKind = WorldCommandKind> {
   /** Server only, never from a client: what a board this join has to open
    *  is called. */
   newBoard?: { id: string; seed: number };
+  /** Server only: the player's friends' ids, whose seats the answer marks. */
+  friends?: readonly string[];
   cmd: WorldCommand<K>;
 }
 
@@ -113,7 +115,7 @@ export function handleWorld<K extends WorldCommandKind>(w: ServerWorld, req: Wor
     }
     const { board, seat } = join(w, { id: req.playerId, name: normalNickname(cmd.nickname), fresh: req.newBoard }, now);
     resolveTo(board, now);
-    const snapshot = deliver(board, seat, req.ack, true, snapshotOf(board, seat, now)) as WorldSnapshot;
+    const snapshot = deliver(board, seat, req.ack, true, snapshotOf(board, seat, now), req.friends) as WorldSnapshot;
     return { ok: true, snapshot } as WorldReply<K>;
   }
   const mine = seatOf(w, req.playerId);
@@ -123,7 +125,7 @@ export function handleWorld<K extends WorldCommandKind>(w: ServerWorld, req: Wor
   const seat = req.asSeat ?? mine.seat;
   if (cmd.kind === 'snapshot') {
     resolveTo(board, now);
-    return deliver(board, mine.seat, req.ack, own, snapshotOf(board, seat, now)) as WorldReply<K>;
+    return deliver(board, mine.seat, req.ack, own, snapshotOf(board, seat, now), req.friends) as WorldReply<K>;
   }
   // Acknowledged effects are forgotten before anything new is owed.
   if (own) owedTo(board, seat, req.ack);
@@ -131,14 +133,14 @@ export function handleWorld<K extends WorldCommandKind>(w: ServerWorld, req: Wor
   const seen = ops.find((o) => o.id === req.opId);
   if (seen !== undefined) {
     resolveTo(board, now);
-    return answerAgain(board, seat, req.ack, own, seen.reply, now) as WorldReply<K>;
+    return answerAgain(board, seat, req.ack, own, seen.reply, now, req.friends) as WorldReply<K>;
   }
   const reply = run(board, seat, cmd, now);
   if (!READS.has(cmd.kind)) {
     ops.push({ id: req.opId, reply: withoutSnapshot(reply) });
     if (ops.length > OPS_KEPT) ops.splice(0, ops.length - OPS_KEPT);
   }
-  return deliver(board, seat, req.ack, own, reply) as WorldReply<K>;
+  return deliver(board, seat, req.ack, own, reply, req.friends) as WorldReply<K>;
 }
 
 function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknown {
@@ -170,19 +172,26 @@ function refusedFor(kind: WorldCommandKind): unknown {
 }
 
 /** What the server owes the player rides out with every answer to them —
- *  never with one made for another seat. */
-function deliver(b: ServerBoard, seat: number, ack: number, own: boolean, reply: unknown): unknown {
+ *  never with one made for another seat — and which seats are their
+ *  friends'. */
+function deliver(b: ServerBoard, seat: number, ack: number, own: boolean, reply: unknown, friends: readonly string[] = []): unknown {
   const snap = snapshotIn(reply);
-  if (own && snap !== null) snap.effects = owedTo(b, seat, ack);
+  if (own && snap !== null) {
+    snap.effects = owedTo(b, seat, ack);
+    for (const s of snap.seats) {
+      const id = b.seats[s.seat]?.playerId;
+      if (id !== undefined && friends.includes(id)) s.friend = true;
+    }
+  }
   return reply;
 }
 
 /** A command already run: its first answer, with the board as it is now. */
-function answerAgain(b: ServerBoard, seat: number, ack: number, own: boolean, stored: unknown, t: number): unknown {
+function answerAgain(b: ServerBoard, seat: number, ack: number, own: boolean, stored: unknown, t: number, friends?: readonly string[]): unknown {
   if (stored === null || typeof stored !== 'object') return stored;
   const r = structuredClone(stored) as Record<string, unknown>;
   if (r.ok === true) r.snapshot = snapshotOf(b, seat, t);
-  return deliver(b, seat, ack, own, r);
+  return deliver(b, seat, ack, own, r, friends);
 }
 
 function snapshotIn(reply: unknown): WorldSnapshot | null {

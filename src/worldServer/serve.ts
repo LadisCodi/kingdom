@@ -8,6 +8,7 @@
 // board, answers it with `handleWorld`, and writes it back only if nobody
 // wrote it in between; if somebody did, it starts again on the newer board.
 
+import { SEATS } from '../sim/world/board';
 import { newBoardSeed } from './core';
 import { handleWorld, type WorldCommandKind, type WorldRequest } from './handle';
 import { nicknameProblem, normalNickname } from './nickname';
@@ -30,6 +31,8 @@ export interface BoardStore {
   /** Reserve a nickname for a player: the one they already have if any,
    *  else this one; null if another player has it, whatever its case. */
   claimNickname(userId: string, nickname: string): Promise<string | null>;
+  /** The player's friends' ids (15 §2.1). */
+  friendsOf(userId: string): Promise<string[]>;
 }
 
 /** What a client sends: a request without the player — that is the
@@ -55,7 +58,7 @@ export function badBody(body: unknown): string | null {
   const b = body as Record<string, unknown>;
   if (typeof b.opId !== 'string' || b.opId.length === 0 || b.opId.length > 64) return 'opId';
   if (!Number.isInteger(b.ack) || (b.ack as number) < 0) return 'ack';
-  if (b.asSeat !== undefined && (!Number.isInteger(b.asSeat) || (b.asSeat as number) < 0 || (b.asSeat as number) > 5)) return 'asSeat';
+  if (b.asSeat !== undefined && (!Number.isInteger(b.asSeat) || (b.asSeat as number) < 0 || (b.asSeat as number) >= SEATS.length)) return 'asSeat';
   const cmd = b.cmd as Record<string, unknown> | null;
   if (cmd === null || typeof cmd !== 'object' || !KINDS.has(cmd.kind as WorldCommandKind)) return 'cmd';
   if (cmd.kind === 'join' && typeof cmd.nickname !== 'string') return 'nickname';
@@ -68,7 +71,7 @@ export async function serveWorld(store: BoardStore, userId: string, body: unknow
   const bad = badBody(body);
   if (bad !== null) return { status: 400, error: `bad request: ${bad}` };
   const { opId, ack, asSeat, cmd } = body as WorldBody;
-  const req: WorldRequest = { opId, ack, asSeat, cmd, playerId: userId };
+  const req: WorldRequest = { opId, ack, asSeat, cmd, playerId: userId, friends: await store.friendsOf(userId) };
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     const boardId = await store.boardOf(userId);
     if (boardId === null) {
@@ -125,10 +128,12 @@ export function memoryBoards(): BoardStore & {
   boards: Map<string, { doc: string; version: number; at: number }>;
   seats: Map<string, string>;
   nicknames: Map<string, string>;
+  friends: Map<string, string[]>;
 } {
   const boards = new Map<string, { doc: string; version: number; at: number }>();
   const seats = new Map<string, string>();
   const nicknames = new Map<string, string>();
+  const friends = new Map<string, string[]>();
   let made = 0;
   const write = (id: string, doc: ServerBoard, version: number) =>
     boards.set(id, { doc: JSON.stringify(doc), version: version + 1, at: boards.get(id)!.at });
@@ -136,6 +141,8 @@ export function memoryBoards(): BoardStore & {
     boards,
     seats,
     nicknames,
+    friends,
+    async friendsOf(userId) { return friends.get(userId) ?? []; },
     async boardOf(userId) { return seats.get(userId) ?? null; },
     async load(id) {
       const r = boards.get(id);

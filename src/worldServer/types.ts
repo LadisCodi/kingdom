@@ -280,6 +280,8 @@ export interface SeatView {
   bot: boolean;
   /** The crest its kingdom chose; null while it wears its nickname's. */
   crest?: string | null;
+  /** A friend of the player's (15 §2.1): their city shows through the fog. */
+  friend?: boolean;
 }
 
 export interface PortalView {
