@@ -6,7 +6,7 @@ import { artifactLevel } from '../src/sim/artifacts';
 import { ARTIFACT_ORDER, RELIC_RULES, relicDoor, relicKind } from '../src/sim/data/definitions';
 import { claimLair } from '../src/sim/expeditions';
 import {
-  canRestore, distinctHeld, dropFragments, forgeReplica, isMet, KEYSTONE, levelCost, levelUpRelic,
+  canRestore, distinctHeld, dropFragments, forgeReplica, isMet, KEYSTONE, levelStardust, levelUpRelic,
   openRelicDoor, openRestorerChest, replicaPrice, restoreRelic, slotCount, spareWorth,
 } from '../src/sim/relics';
 import { deserialize, serialize } from '../src/sim/save';
@@ -57,8 +57,8 @@ describe('a relic is met at its door', () => {
 });
 
 describe('restoring and levelling', () => {
-  // THE GATE: six distinct fragments restore, spares level.
-  it('six distinct fragments restore it at level 1; spares level it', () => {
+  // THE GATE: six distinct fragments restore it.
+  it('six distinct fragments restore it at level 1', () => {
     const state = freshGame();
     const id = ARTIFACT_ORDER[0];
     hold(state, id, [1, 1, 1, 1, 1, 0]);
@@ -69,15 +69,38 @@ describe('restoring and levelling', () => {
     expect(spareWorth(state, id)).toBe(2);
     expect(restoreRelic(state, id)).toBe('Restored');
     expect(artifactLevel(state, id)).toBe(1);
-    // What is left are spares: two pieces.
-    expect(spareWorth(state, id)).toBe(2);
-    expect(levelCost(1)).toBe(RELIC_RULES.levelCostBase);
-    expect(levelUpRelic(state, id)).toBe('Levelled');
-    expect(artifactLevel(state, id)).toBe(2);
-    expect(levelUpRelic(state, id)).toBe('NotEnoughSpares');
   });
 
-  it('a spare keystone counts for more', () => {
+  // EVERY LEVEL IS A WHOLE SET AND ITS STARDUST — one of each slot, always.
+  it('takes one fragment of each slot and the level\'s Stardust, every level', () => {
+    const state = freshGame();
+    const id = ARTIFACT_ORDER[0];
+    state.artifacts.levels[id] = 1;
+    hold(state, id, [2, 1, 1, 1, 1, 1]);
+    state.kingdom.wallet.Stardust = levelStardust(1) - 1;
+    expect(levelUpRelic(state, id)).toBe('NotEnoughStardust');
+    expect(distinctHeld(state, id)).toBe(6);
+    state.kingdom.wallet.Stardust = levelStardust(1) + levelStardust(2);
+    expect(levelUpRelic(state, id)).toBe('Levelled');
+    expect(artifactLevel(state, id)).toBe(2);
+    expect(state.kingdom.wallet.Stardust).toBe(levelStardust(2));
+    // One of each went: the spare piece is all that is left, so no set.
+    expect(levelUpRelic(state, id)).toBe('MissingFragments');
+    expect(artifactLevel(state, id)).toBe(2);
+    expect(state.kingdom.wallet.Stardust).toBe(levelStardust(2));
+  });
+
+  it('a level-up spends a bound fragment before a found one', () => {
+    const state = freshGame();
+    const id = ARTIFACT_ORDER[0];
+    state.artifacts.levels[id] = 1;
+    state.relics.held[id] = { found: [1, 1, 1, 1, 1, 1], bound: [1, 0, 0, 0, 0, 0] };
+    state.kingdom.wallet.Stardust = levelStardust(1);
+    expect(levelUpRelic(state, id)).toBe('Levelled');
+    expect(state.relics.held[id]).toEqual({ found: [1, 0, 0, 0, 0, 0], bound: [0, 0, 0, 0, 0, 0] });
+  });
+
+  it('a spare keystone counts for more towards a replica', () => {
     const state = freshGame();
     const id = ARTIFACT_ORDER[0];
     hold(state, id, [1, 1, 1, 1, 1, 2]);
@@ -85,8 +108,10 @@ describe('restoring and levelling', () => {
     expect(spareWorth(state, id)).toBe(RELIC_RULES.keystoneWorth);
   });
 
-  it('the level cost climbs, one more every few levels', () => {
-    expect(levelCost(1 + RELIC_RULES.levelCostEvery)).toBe(RELIC_RULES.levelCostBase + 1);
+  it('the Stardust climbs every level, rounded like every curve', () => {
+    expect(levelStardust(1)).toBe(RELIC_RULES.levelStardustBase);
+    expect(levelStardust(3)).toBeGreaterThan(levelStardust(2));
+    expect(levelStardust(2)).toBeGreaterThan(levelStardust(1));
   });
 });
 

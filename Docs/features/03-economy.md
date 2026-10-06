@@ -200,9 +200,6 @@ running. Research already worked this way.
 - A collect pops `+N` per currency at the building and flies the haul to the
   header. Rent and hauls landing in a store pop nothing.
 
-**The Tithe bypasses the store**: its taps pay rent straight into the wallet,
-and a full house does not stop it ([`09-relics.md`](09-relics.md) §2.1).
-
 **Raids take from the stores, never from the wallet**
 ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §4). Collecting is
 the defence.
@@ -313,8 +310,7 @@ and research**.
 - Generators and vaults.
 - An offline cap: the stores are what bound an absence (§3.2).
 - A Townhall level that multiplies the houses' rent: its Gold is its own.
-- A tap that pulls rent forward. Only the Tithe does it
-  ([`09-relics.md`](09-relics.md) §2.1).
+- A tap that pulls rent forward.
 - Silver.
 - A library district or a scholar assignment as Knowledge sources.
 - A Townhall tap that hurries villager training.

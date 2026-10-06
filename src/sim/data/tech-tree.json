@@ -972,7 +972,7 @@
       "name": "Farsight II", "glyph": "🔭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 0,
       "requires": ["FarsightI"],
-      "gold": 1500, "knowledge": 4,
+      "gold": 1500, "knowledge": 4, "goods": {"Heartwood":2},
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -981,7 +981,7 @@
       "name": "Scouts II", "glyph": "🧭", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 2,
       "requires": ["ScoutsI"],
-      "gold": 4000, "knowledge": 5,
+      "gold": 4000, "knowledge": 5, "goods": {"Starmetal":2},
       "effects": [
         {"stat":"explorerSlots","op":"flat","value":1}
       ]
@@ -990,7 +990,7 @@
       "name": "Pathfinding", "glyph": "🥾", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 3, "col": 1,
       "requires": ["ScoutsII"],
-      "gold": 8000, "knowledge": 7,
+      "gold": 8000, "knowledge": 7, "goods": {"Moonglass":2},
       "effects": [
         {"stat":"worldRevealRadius","op":"flat","value":1}
       ]

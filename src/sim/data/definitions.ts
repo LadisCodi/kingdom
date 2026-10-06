@@ -781,9 +781,9 @@ export interface DistrictDef {
   /** Holds one city relic, whose passive and spell act over its aura
    *  (Docs/proposals/relic-restoration.md §5.1): the Shrine. */
   hostsRelic: boolean;
-  /** A host's aura, by level: cells within this many of its footprint
-   *  (Chebyshev). */
-  auraRadiusPerLevel: readonly number[];
+  /** A host's window, by level: the minutes one activation of the relic it
+   *  holds lasts. The aura's reach is the relic's (`auraRadiusAt`). */
+  relicWindowMinutesPerLevel: readonly number[];
 }
 
 /**
@@ -1160,11 +1160,11 @@ export type PackTier = 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden
 export const HERO_LADDER = balance.heroLadder;
 
 /**
- * What a relic waits before its ability can be cast again — counted from the
- * moment the WINDOW CLOSES, never from the cast (Docs/features/09-relics.md
- * §2.1).
+ * What a world relic waits before its spell can be cast again — counted from
+ * the moment the spell CLOSES, never from the cast (Docs/features/09-relics.md
+ * §2.2). A city relic's activation has none.
  *
- * Flat across all eight relics and at every level. A cooldown that shrank with
+ * Flat across the spells and at every level. A cooldown that shrank with
  * the level would be a discount wearing a hat, and a relic that did more AND
  * did it more often would grow on two axes at once.
  */
@@ -1172,23 +1172,14 @@ export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
 
 /**
  * THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the same
- * three rungs on every relic (Docs/features/09-relics.md §2.1).
+ * three rungs on every relic — a city relic's aura and a world relic's spell
+ * alike (Docs/features/09-relics.md §2.1, §2.2).
  *
  * The one number of an active that does NOT creep. A Chebyshev radius covers
  * `(2r+1)²` cells, so each rung roughly DOUBLES the ground — and a number that
  * doubles cannot creep, but it makes a superb milestone.
  */
 export const ARTIFACT_RADIUS_STEPS: readonly number[] = balance.artifactRadiusSteps;
-
-/**
- * HOW FAST AN AUTO-TAP ABILITY SPENDS ITS BUDGET, taps a second.
- *
- * It buys no Mana of its own — the cast already paid — so this decides only
- * how long the run takes to WATCH. Holding a finger does 2 a second at 1 Mana
- * each, so the spell is twice the speed at a fraction of the price, and the
- * player can always see which of the two they would rather spend.
- */
-export const ARTIFACT_AUTO_TAP_PER_SECOND = balance.artifactAutoTapPerSecond;
 
 /** The Knowledge bar — its drip, its cap, what a landmark and a lair
  *  pay into it, and what a point costs to buy (07-research.md §3). */
@@ -1248,22 +1239,19 @@ export const ABANDONED: readonly AbandonedDef[] = ((regionMap as {
 }));
 
 /**
- * A relic: ONE permanent kingdom passive, always on, whose number rises with
- * its level and has no ceiling (Docs/features/09-relics.md §1-§2).
+ * A relic: ONE effect whose number rises with its level and has no ceiling
+ * (Docs/features/09-relics.md §1-§2).
  *
  * Every effect is a speed or a yield, never a discount, because a discount
  * dies at 100%. Hand-authored, one legible effect each, no random rolls —
  * which is what keeps a collection system cozy rather than a spreadsheet.
  *
- * A relic has no battlefield stats and nothing carries one anywhere: the only
- * question a relic asks is which album the player finishes.
- *
- * `active` is the ONE piece of the old model still standing. The four
- * abilities are designed to become Magic-tome SPELLS
- * (Docs/features/07-research.md §6) and that is not built, so they stay on the
- * relic that discovers them, gated on owning it rather than on a socket —
- * deleting them would remove working content in exchange for a doc that
- * already says where they are going.
+ * A CITY RELIC IS ACTIVATED, a world relic is held. A city relic does nothing
+ * until a Shrine holds it AND the player pays its `activation` in Mana; then
+ * its effect reaches the aura for the Shrine's window. Its level is the
+ * POWER — the number and the aura's reach — and the Shrine's level is the
+ * DURATION. A world relic acts while a Chapel holds it, and may carry a
+ * spell (`active`).
  */
 export interface ArtifactDef {
   id: ArtifactId;
@@ -1288,8 +1276,13 @@ export interface ArtifactDef {
     base: number;
     perLevel: number;
   };
-  /** A spell in waiting (see the type docblock); null = it never had one. */
+  /** A world relic's spell; null on every city relic and on a world relic
+   *  without one. */
   active: ArtifactActive | null;
+  /** A CITY relic's activation in its Shrine: the Mana it costs, and how far
+   *  the aura reaches at level 1 — one ring more at each of
+   *  `ARTIFACT_RADIUS_STEPS`. Null on a world relic. */
+  activation: { manaCost: number; radius: number } | null;
   /**
    * WHY THIS RELIC'S NUMBER DOES NOTHING YET, or null when it works.
    *
@@ -1302,8 +1295,7 @@ export interface ArtifactDef {
   pending: string | null;
 }
 
-export type ArtifactActiveId =
-  | 'Divining' | 'Reap' | 'Haste' | 'Tithe' | 'Survey' | 'Lamplight';
+export type ArtifactActiveId = 'Survey' | 'Lamplight';
 
 export interface ArtifactActive {
   id: ArtifactActiveId;
@@ -1319,13 +1311,8 @@ export interface ArtifactActive {
    *  is how long they last. */
   durationPerLevel: number;
   /** Area effects only; 0 = the target cell alone. The LADDER's base — the
-   *  levelled reach is `activeRadiusAt` (Docs/features/09-relics.md §2.1). */
+   *  levelled reach is `activeRadiusAt` (Docs/features/09-relics.md §2.2). */
   radius: number;
-  /** AUTO-TAP ABILITIES ONLY: taps bought per Mana of the cast, at level 1,
-   *  and what a level adds. 0 means this ability does not buy taps at all —
-   *  not that it buys none. */
-  tapsPerMana: number;
-  tapsPerManaPerLevel: number;
   /** HOW HARD IT HITS, for the abilities whose growing axis is power: a
    *  multiplier read inside the zone while the window lasts. 0 = not one. */
   power: number;
@@ -1340,13 +1327,16 @@ type ArtifactBalance = {
   kind: RelicKind; door: string;
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
-  activeTapsPerMana: number; activeTapsPerManaPerLevel: number;
   activePower: number; activePowerPerLevel: number;
   activeDurationPerLevel: number;
   activeCharges: number; activeChargesPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
+/** A city relic's activation, from its row: the cast's Mana and radius
+ *  columns are what activating it costs and how far its aura reaches. */
+const activation = (id: ArtifactId): ArtifactDef['activation'] =>
+  ({ manaCost: ab(id).activeManaCost, radius: ab(id).activeRadius });
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
@@ -1356,27 +1346,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
-    // A RELIC IS ONE IDEA AT TWO SPEEDS, and this one's idea is RECOVERY. Its
-    // ability used to pay a cell's reveal cost, which is a fine spell about a
-    // different subject — the passive was about ground coming back and the
-    // active was about fog. The fog is the Orb's, and always was.
-    //
-    // THE REFILL MUST LAND BEFORE THE ZONE MATTERS. A recovery wait is stamped
-    // when the cell EXHAUSTS, not read each tick, so a faster-recovery zone
-    // only reaches cells that empty inside it — which is exactly what emptying
-    // the waiting list first arranges.
-    active: {
-      id: 'Divining', name: 'Divining', targeted: true,
-      manaCost: ab('DowsingRod').activeManaCost,
-      durationSeconds: ab('DowsingRod').activeDurationSeconds,
-      radius: ab('DowsingRod').activeRadius,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0,
-      power: ab('DowsingRod').activePower,
-      powerPerLevel: ab('DowsingRod').activePowerPerLevel,
-      durationPerLevel: ab('DowsingRod').activeDurationPerLevel,
-      charges: 0, chargesPerLevel: 0,
-      text: 'Wakes every tired node nearby at once, and keeps them coming back',
-    },
+    active: null,
+    activation: activation('DowsingRod'),
     pending: null,
   },
   VerdantSeal: {
@@ -1389,19 +1360,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
-    // THE SPELL IS AN EXCHANGE RATE (Docs/proposals/relic-effects.md §3.2).
-    // It used to clear exhaustion, which was a worse version of the passive
-    // said twice; now it BUYS TAPS with the Mana of the cast, and what the
-    // level moves is how many each Mana is worth.
-    active: {
-      id: 'Reap', name: 'Reap', targeted: true,
-      manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
-      radius: ab('VerdantSeal').activeRadius,
-      tapsPerMana: ab('VerdantSeal').activeTapsPerMana,
-      tapsPerManaPerLevel: ab('VerdantSeal').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
-      text: 'Harvests every node nearby, over and over, for free',
-    },
+    active: null,
+    activation: activation('VerdantSeal'),
     pending: null,
   },
   ForemansSigil: {
@@ -1414,26 +1374,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
-    // A ZONE ON BUILDINGS, not a kingdom-wide hour. It used to double
-    // `workerYield` everywhere for 60 minutes, which is a relic that asks
-    // nothing of the player but the press — there is no wrong place to put a
-    // global. Placing it makes it a question: which crews, for five minutes?
-    //
-    // AND IT IS PLACED ON BUILDINGS, never on workers. A worker walks, so a
-    // zone asking where it stood would flicker as it crossed the edge — and
-    // travel is Euclidean while a zone is Chebyshev.
-    active: {
-      id: 'Haste', name: 'Haste', targeted: true,
-      manaCost: ab('ForemansSigil').activeManaCost,
-      durationSeconds: ab('ForemansSigil').activeDurationSeconds,
-      radius: ab('ForemansSigil').activeRadius,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0,
-      power: ab('ForemansSigil').activePower,
-      powerPerLevel: ab('ForemansSigil').activePowerPerLevel,
-      durationPerLevel: ab('ForemansSigil').activeDurationPerLevel,
-      charges: 0, chargesPerLevel: 0,
-      text: 'The crews of every building nearby work much faster for a while',
-    },
+    active: null,
+    activation: activation('ForemansSigil'),
     pending: null,
   },
   GildedLedger: {
@@ -1443,19 +1385,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Sickle's
-    // because the ground is: a node empties and stops paying, so the Sickle's
-    // run hits a wall, where a house always has rent to pay forward and the
-    // Crown's run always spends the whole budget (OQ-99).
-    active: {
-      id: 'Tithe', name: 'Tithe', targeted: true,
-      manaCost: ab('GildedLedger').activeManaCost, durationSeconds: 0,
-      radius: ab('GildedLedger').activeRadius,
-      tapsPerMana: ab('GildedLedger').activeTapsPerMana,
-      tapsPerManaPerLevel: ab('GildedLedger').activeTapsPerManaPerLevel,
-      power: 0, powerPerLevel: 0, durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
-      text: 'Collects from every house nearby, over and over, for free',
-    },
+    active: null,
+    activation: activation('GildedLedger'),
     pending: null,
   },
   DelversLantern: {
@@ -1474,7 +1405,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: {
       id: 'Lamplight', name: 'Lamplight', targeted: false,
       manaCost: ab('DelversLantern').activeManaCost, durationSeconds: 0, radius: 0,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0,
       power: ab('DelversLantern').activePower,
       powerPerLevel: ab('DelversLantern').activePowerPerLevel,
       durationPerLevel: 0,
@@ -1482,6 +1412,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       chargesPerLevel: ab('DelversLantern').activeChargesPerLevel,
       text: 'The next rooms you clear pay double \u2014 cast it before you go down',
     },
+    activation: null,
     pending: null,
   },
   MusterHorn: {
@@ -1493,6 +1424,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('MusterHorn').passiveBase, perLevel: ab('MusterHorn').passivePerLevel,
     },
     active: null,
+    activation: null,
     pending: null,
   },
   BailiffsTally: {
@@ -1506,6 +1438,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     active: null,
     // The Sawmill, the Farm and the Quarry are authored in
     // Docs/features/19-world-map.md and the map itself is not built.
+    activation: null,
     pending: 'when the world map opens',
   },
   WanderersCompass: {
@@ -1520,16 +1453,17 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     // the Sickle of Plenty's subject wearing a seer's glass; what a seeing orb
     // is FOR is ground you have not seen.
     //
-    // RADIUS IS ITS WHOLE GROWTH (§2.1) — for a reveal, more ground IS the
+    // RADIUS IS ITS WHOLE GROWTH (09-relics.md §2.2) — for a reveal, more ground IS the
     // effect, so it needs no second axis and has none.
     active: {
       id: 'Survey', name: 'Survey', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0,
       radius: ab('WanderersCompass').activeRadius,
-      tapsPerMana: 0, tapsPerManaPerLevel: 0, power: 0, powerPerLevel: 0,
+      power: 0, powerPerLevel: 0,
       durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
       text: 'Clears the fog around a cell you hold, free of gold',
     },
+    activation: null,
     pending: null,
   },
 };
@@ -1551,13 +1485,14 @@ export const relicKind = (id: ArtifactId): RelicKind => ab(id).kind;
  *  city relic, a world source for a world one. */
 export const relicDoor = (id: ArtifactId): string => ab(id).door;
 
-/** The Shrines (`relics.json`'s `shrines`): the Mana each adds, and the
- *  Gems each premium Shrine costs — as many premium Shrines as prices. */
-export const SHRINE_RULES = balance.shrines as { manaCap: number; premiumGems: number[] };
+/** The Shrines (`relics.json`'s `shrines`): the Gems each premium Shrine
+ *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
+ *  own: it holds and wakes a relic (09-relics.md §2.1). */
+export const SHRINE_RULES = balance.shrines as { premiumGems: number[] };
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
-  keystoneOneIn: number; keystoneWorth: number; levelCostBase: number; levelCostEvery: number;
+  keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
   replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
   replicaGemsPiece: number; replicaGemsKeystone: number;
   restorerChestGems: number; restorerChestSize: number;
@@ -2077,12 +2012,18 @@ export interface WorldDef {
   rivals: readonly string[];
 }
 
-export interface WorldHexDef { terrain: WorldTerrain; features: readonly WorldFeature[] }
+/** An inner-ring hex: its terrain. Its feature is the deposit dealt to it. */
+export interface WorldHexDef { terrain: WorldTerrain }
+
+/** Where a seat's deposits stand, as places of the wedge (`k:j`), by the
+ *  rank of the material on them (Docs/plans/precious-deposits.md §1.2). */
+export interface WorldDepositsDef { strong: readonly string[]; middle: readonly string[]; weak: readonly string[] }
 
 /** How a board is rolled (19 §9). */
 export interface WorldGenDef {
   /** East first, on round in HEX_DIRS order. */
   innerRing: readonly WorldHexDef[];
+  deposits: WorldDepositsDef;
   terrainWeights: Record<RolledRole, Partial<Record<WorldTerrain, number>>>;
   featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
   /** Where each feature may roll, and what it never shares a hex with. */
@@ -2226,22 +2167,17 @@ export interface WorldScoutingDef {
 
 export const WORLD_SCOUTING = balance.worldScouting as unknown as WorldScoutingDef;
 
-/** Precious materials on the world board (19 §7.4). */
+/** Precious materials on the world board (Docs/plans/precious-deposits.md). */
 export interface WorldPreciousDef {
-  richFeatureShare: number;
-  richDesertShare: number;
+  /** What a deposit's district yields a day. */
   perDay: number;
   storeDays: number;
-  ownShare: number;
   campPerPower: number;
 }
 
 export const WORLD_PRECIOUS = balance.worldPrecious as unknown as WorldPreciousDef;
 
-/** The Exchange (19 §7.5). */
-export interface WorldExchangeDef { offerHours: number; maxOffers: number; botTakeHours: number; botOfferAmount: number }
 
-export const WORLD_EXCHANGE = balance.worldExchange as unknown as WorldExchangeDef;
 
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
@@ -2351,6 +2287,14 @@ export const FRIENDS = balance.friends as {
   requestRows: number;
   requestHours: number;
   messageDays: number;
+};
+
+/** Trading with friends — Docs/features/15-social.md §2.4: the wish board. */
+export const TRADE = balance.trade as {
+  materialLot: number;
+  wishes: number;
+  wishHours: number;
+  fillsPerDay: number;
 };
 
 // ------------------------------------------------------------ the timeline
@@ -2466,4 +2410,5 @@ export const GAME_VERSION: string = pkg.version;
 // v96: the friends' reward path (`Friends` on the kingdom), additive.
 // v97: the season pass goes — `Pass` leaves the kingdom (a migrator).
 // v98: the kingdom's nickname and crest (`Profile` on the kingdom), additive.
-export const SAVE_VERSION = 98;
+// v99: trading with friends (`Trade` on the kingdom), additive.
+export const SAVE_VERSION = 99;

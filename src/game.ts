@@ -38,7 +38,11 @@ import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
 import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
-import { auraOf, castHosted, hostOf, hostRelic, shrines, unhostRelic } from './sim/hosts';
+import {
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, buildingInAura, hostOf, hostRelic,
+  isAwake, shrines, unhostRelic, windowMsOf,
+} from './sim/hosts';
+import { shrineBubbleAt } from './render/shrineBubbles';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
@@ -49,13 +53,12 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  canRestore, forgeReplica, isMet, levelCost, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
+  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
   dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
 } from './sim/relics';
 import {
-  activeRadius, buildingsIn, cast, castBlock, castState, chargesLeft,
-  divinationSaving, reapCells, surveyCells, tapBudget, tapRunSeconds,
-  validCastCells, type CastPhase,
+  activeRadius, cast, castBlock, castState, chargesLeft,
+  divinationSaving, surveyCells, validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -152,7 +155,7 @@ import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
-import { PRECIOUS, type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
+import { type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
@@ -201,15 +204,16 @@ export type OverlayName =
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
   | 'heroPicker'
+  // Choosing the city relic a Shrine holds (`openRelicPicker`), over its card.
+  | 'relicPicker'
+  // "It is in another Shrine — move it here?", over the picker.
+  | 'relicMoveConfirm'
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
   | 'world'
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
   | 'army'
-  // The Exchange: precious materials traded between the board's players
-  // (Docs/features/19-world-map.md §7.5).
-  | 'exchange'
   // A world dungeon's descent: its rooms, the race, the army camped there
   // (Docs/features/19-world-map.md §8.2).
   | 'delve'
@@ -222,7 +226,9 @@ export type OverlayName =
   // The shield editor, from the pencil on the player's own card (§2.2).
   | 'crestEditor'
   // Asking a kingdom by its name or code, from the requests list (§2.1).
-  | 'friendSearch';
+  | 'friendSearch'
+  // The wish board (§2.4): a wish made in two steps, and a fill's window.
+  | 'wishNeed' | 'wishGive' | 'wishFilled';
 
 /** Fragments that landed, as one line: "A piece of the Staff of Renewal". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -248,14 +254,14 @@ export interface RelicView {
   level: number; restored: boolean; met: boolean;
   /** Fragments held per slot: five pieces, then the keystone. */
   slots: number[];
-  /** What the spares are worth in levels. */
+  /** Copies past the first of each slot, worth what a replica asks. */
   spares: number;
-  /** Spares the next level asks. */
-  levelCost: number;
+  /** Stardust the next level asks; it also takes one fragment of each slot. */
+  levelStardust: number;
+  /** Every slot holds a fragment — the set a level takes. */
+  hasSet: boolean;
   canRestore: boolean;
   now: string; next: string;
-  /** Where its fragments drop. */
-  foundIn: string;
   pending: string | null;
   cast: { phase: CastPhase; leftMs: number; charges: number };
   /** The replica offer for its first missing fragment, or null. */
@@ -265,7 +271,16 @@ export interface RelicView {
   /** A restored city relic's Shrine, and the Shrines it could move to; null
    *  for a world relic or one not restored (sim/hosts.ts). */
   host: { at: string | null; shrines: ShrineOption[] } | null;
+  /** The one word its card in the Bag says about it (M80). */
+  status: RelicStatus;
+  /** What it does now, in two words — `+20% tax`. */
+  effect: string;
 }
+
+/** Where a relic stands, as its card says it: a city relic awake or asleep in
+ *  its Shrine, or restored and in the Bag; a world relic in a Chapel or not;
+ *  either still in fragments. */
+export type RelicStatus = 'awake' | 'asleep' | 'bag' | 'chapel' | 'broken';
 
 /** A Shrine a relic could be hosted in. */
 export interface ShrineOption {
@@ -275,11 +290,35 @@ export interface ShrineOption {
   holds: string | null;
 }
 
+/** A city relic's activation in its Shrine (sim/hosts.ts). */
+export interface RelicActivationView {
+  hosted: boolean;
+  /** Its window is open: its effect reaches the aura. */
+  awake: boolean;
+  /** What is left of the open window, derived from its end every frame. */
+  leftMs: number;
+  /** How long an activation in its Shrine lasts — the Shrine's level. */
+  windowMs: number;
+  cost: number;
+  affordable: boolean;
+  /** How far the aura reaches round the Shrine — the relic's level. */
+  radius: number;
+  block: string | null;
+  /** Mana the pool gains an hour, and how long until it holds the price —
+   *  null when it already does (M83). */
+  regenPerHour: number;
+  readyInMs: number | null;
+  /** The smallest Mana flask in the Bag, for a player short of the price. */
+  flask: { id: ItemId; count: number } | null;
+}
+
 /** A Shrine's card section: what it holds and what it could. */
 export interface ShrineView {
   holds: ArtifactId | null;
-  /** How far round its footprint the aura reaches. */
+  /** How far round its footprint the aura reaches — its relic's level. */
   radius: number;
+  /** How long one activation lasts here — this Shrine's level. */
+  windowMs: number;
   /** Every restored city relic it could host instead, and where each is now. */
   candidates: Array<{ id: ArtifactId; name: string; at: string | null }>;
 }
@@ -317,6 +356,7 @@ const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
   friends: 'friends', friendProfile: 'friends', crestEditor: 'friends', friendSearch: 'friends',
+  wishNeed: 'friends', wishGive: 'friends', wishFilled: 'friends',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -488,6 +528,9 @@ export class Game {
   partyHeroes: HeroId[] = [];
   /** The hero picker, while it is open (`openHeroPicker`). */
   heroPick: HeroPick | null = null;
+  /** The relic picker, while it is open (`openRelicPicker`): the Shrine it
+   *  chooses for, and the one slot as it stands — null is empty. */
+  relicPick: { shrineId: string; slot: ArtifactId | null } | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -725,6 +768,10 @@ export class Game {
     this.maybeAskName();
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
+    }
+    // A relic whose window closed — here or while away — asks to be woken.
+    for (const r of result.relicsAsleep) {
+      if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
     // An explorer home says what it found; the board already shows where.
     // The target's promise, if it kept one, is paid and named (19 §3.2).
@@ -1340,17 +1387,6 @@ export class Game {
       this.notify();
       return;
     }
-    // A CITY RELIC IS CAST WHERE IT IS HOSTED: its Shrine's aura is the
-    // target, so there is no cell to pick (sim/hosts.ts).
-    if (relicKind(artifactId) === 'city') {
-      if (hostOf(this.state, artifactId) === null) {
-        this.toast('Host it in a Shrine first');
-        this.notify();
-        return;
-      }
-      this.doCast(artifactId, null);
-      return;
-    }
     if (!active.targeted) {
       this.doCast(artifactId, null);
       return;
@@ -1389,15 +1425,11 @@ export class Game {
   }
 
   private doCast(artifactId: ArtifactId, picked: Coord | null): void {
-    const host = hostOf(this.state, artifactId);
-    const report = relicKind(artifactId) === 'city'
-      ? castHosted(this.state, this.map, artifactId, this.now())
-      : cast(this.state, this.map, artifactId, picked, this.now());
-    // Where the floaters rise: the cell picked, or the Shrine cast from.
-    const target = picked ?? host?.location ?? null;
+    const report = cast(this.state, this.map, artifactId, picked, this.now());
+    const target = picked;
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
-      else if (report.result === 'NotHosted') this.toast('Host it in a Shrine first');
+      else if (report.result === 'NotHosted') this.toast('Hold it in a Chapel first');
       else this.toast('That cannot be cast there');
       this.notify();
       return;
@@ -1408,17 +1440,160 @@ export class Game {
     if (report.goldSaved > 0 && target) {
       this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
     }
-    if (report.activeId === 'Reap' && target) {
-      this.floaters.add(target, `${report.taps} taps, free`);
-    }
-    if (report.activeId === 'Haste' && target) {
-      this.floaters.add(target, `${report.affected.length} crews hurried`);
-    }
-    if (report.activeId === 'Tithe' && target) {
-      this.floaters.add(target, `+${formatExact(Math.round(report.goldSaved))}`, 'Gold');
-    }
-    if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
+  }
+
+  /**
+   * ACTIVATE A CITY RELIC in its Shrine (sim/hosts.ts): Mana paid, and its
+   * effect reaches the aura for the Shrine's window.
+   */
+  doActivateRelic(id: ArtifactId): void {
+    const result = activateRelic(this.state, id, this.now());
+    if (result !== 'Activated') {
+      if (result === 'NotEnoughMana') this.shake(['Mana']);
+      else if (result === 'NotHosted') this.toast('Host it in a Shrine first');
+      else if (result === 'Active') this.toast(`${ARTIFACTS[id].name} is already awake`);
+      this.notify();
+      return;
+    }
+    playSfx('research');
+    this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
+    const host = hostOf(this.state, id);
+    if (host !== null) {
+      const aura = auraOf(this.state, host, id);
+      for (const c of this.map.cells.filter((c) => areaCovers(aura, c))) {
+        this.tapFx.add(coordKey(c));
+      }
+      // What it does and for how long, over the Shrine, and the Mana it
+      // took (M85).
+      const window = formatDuration(Math.round(windowMsOf(host) / 1000));
+      this.floaters.add(host.location, `${relicShortEffect(id, passiveValue(this.state, id))} \u00b7 ${window}`);
+      this.floaters.add({ x: host.location.x, y: host.location.y - 1 }, `\u2212${formatExact(activationCost(this.state, id))}`, 'Mana');
+      this.relicBursts.push({
+        centre: host.location, size: DISTRICTS[host.definitionId].size, radius: aura.radius, at: performance.now(),
+      });
+    }
+    // A faster crew starts its next leg faster: wake the idle ones now.
+    wakeIdleWorkersAt(this.state, this.now());
+    this.notify();
+  }
+
+  /** A city relic's activation as its card and its Shrine's card read it. */
+  relicActivation(id: ArtifactId): RelicActivationView | null {
+    const def = ARTIFACTS[id];
+    if (def.activation === null) return null;
+    const host = hostOf(this.state, id);
+    const now = this.now();
+    const awake = isAwake(this.state, id);
+    const endsAt = this.state.artifacts.casts[id]?.endsAt ?? now;
+    const cost = activationCost(this.state, id);
+    return {
+      hosted: host !== null,
+      awake,
+      leftMs: awake ? Math.max(0, endsAt - now) : 0,
+      windowMs: host === null ? 0 : windowMsOf(host),
+      cost,
+      affordable: mana(this.state) >= cost,
+      radius: auraRadiusAt(id, artifactLevel(this.state, id)),
+      block: activateBlock(this.state, id),
+      regenPerHour: manaProduction(this.state),
+      readyInMs: (() => {
+        const short = cost - mana(this.state);
+        const rate = manaProduction(this.state);
+        if (short <= 0) return null;
+        return rate > 0 ? Math.ceil((short / rate) * 3_600_000) : Infinity;
+      })(),
+      flask: this.smallestFlask(),
+    };
+  }
+
+  /** The smallest Mana flask the Bag holds, or null. */
+  private smallestFlask(): { id: ItemId; count: number } | null {
+    const held = (Object.keys(ITEMS) as ItemId[])
+      .filter((i) => ITEMS[i].kind === 'flask' && itemCount(this.state, i) > 0)
+      .sort((a, b) => ITEMS[a].value - ITEMS[b].value);
+    return held.length === 0 ? null : { id: held[0]!, count: itemCount(this.state, held[0]!) };
+  }
+
+  /** Drink the smallest Mana flask, from a relic short of its price. */
+  doUseFlaskFor(id: ArtifactId): void {
+    const flask = this.relicActivation(id)?.flask ?? null;
+    if (flask !== null) this.doUseItem(flask.id, 1);
+  }
+
+  /**
+   * THE RELICS THAT FELL ASLEEP since the player last looked (M85): their
+   * windows closed, live or while away, and nobody has woken them or opened
+   * them since. The right-edge pill reads this; it is the presenter's, not
+   * the save's, so a reload forgets it.
+   */
+  private asleepNotices: ArtifactId[] = [];
+
+  /** The pill's subject: the first relic asleep, how many are, and what the
+   *  first one costs to wake. Null while there is nothing to say. */
+  asleepNotice(): { relic: ArtifactId; count: number; cost: number; affordable: boolean } | null {
+    this.asleepNotices = this.asleepNotices.filter((r) => hostOf(this.state, r) !== null && !isAwake(this.state, r));
+    const relic = this.asleepNotices[0];
+    if (relic === undefined) return null;
+    const cost = activationCost(this.state, relic);
+    return { relic, count: this.asleepNotices.length, cost, affordable: mana(this.state) >= cost };
+  }
+
+  /** The pill's body: the one relic's sheet, or the Bag's Relics for many. */
+  openAsleepNotice(): void {
+    const n = this.asleepNotice();
+    if (n === null) return;
+    if (n.count === 1) this.openRelic(n.relic);
+    else {
+      this.asleepNotices = [];
+      this.closeRelic();
+    }
+  }
+
+  /** A woken relic's flourish on the map (M85), on the wall clock: a ring
+   *  sweeping out over its aura for a second and a half. */
+  private relicBursts: Array<{ centre: Coord; size: { x: number; y: number }; radius: number; at: number }> = [];
+
+  /** Every Shrine holding a relic, for the map (M84). */
+  private shrineRelics(): MarkerLayer['shrineRelics'] {
+    const have = mana(this.state);
+    return shrines(this.state).flatMap((d) => {
+      const relic = d.hosts;
+      if (relic === undefined || artifactLevel(this.state, relic) < 1) return [];
+      const cost = activationCost(this.state, relic);
+      return [{
+        relic, districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size,
+        sprite: ARTIFACTS[relic].sprite,
+        awake: isAwake(this.state, relic), cost, affordable: have >= cost,
+      }];
+    });
+  }
+
+  /**
+   * WHAT AN AWAKE AURA PAYS THE BUILDINGS IN IT (M84), one badge a roof — on
+   * what the relic actually moves: the Crown's houses with residents, the
+   * Hammer's buildings with a crew. The Staff and the Sickle move the GROUND,
+   * which the tint already says.
+   */
+  private auraBadges(): MarkerLayer['auraBadges'] {
+    const out: MarkerLayer['auraBadges'] = [];
+    for (const host of shrines(this.state)) {
+      const relic = host.hosts;
+      if (relic === undefined || !isAwake(this.state, relic)) continue;
+      const reaches = relic === 'GildedLedger'
+        ? (d: District) => residentsOf(this.state, d) > 0
+        : relic === 'ForemansSigil'
+          ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
+          : null;
+      if (reaches === null) continue;
+      const text = `+${relicPercent(passiveValue(this.state, relic))}`;
+      const aura = auraOf(this.state, host, relic);
+      for (const d of this.state.city.districts) {
+        if (d.state !== 'Built' || d === host || !reaches(d) || !buildingInAura(aura, d)) continue;
+        out.push({ districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size, text });
+      }
+    }
+    return out;
   }
 
   /**
@@ -1440,7 +1615,24 @@ export class Game {
     for (const m of activeZones(this.state)) {
       byCast.set(`${m.area!.relic}:${m.area!.since}`, m);
     }
-    return [...byCast.values()].map((m) => {
+    // An awake city relic's aura, its wheel counting the Shrine's window down.
+    const awake = shrines(this.state).flatMap((host) => {
+      const relic = host.hosts;
+      if (relic === undefined || !isAwake(this.state, relic)) return [];
+      const c = this.state.artifacts.casts[relic]!;
+      const span = Math.max(1, windowMsOf(host));
+      const area = auraOf(this.state, host, relic);
+      return [{
+        relic,
+        glyph: ARTIFACTS[relic].glyph,
+        sprite: ARTIFACTS[relic].sprite,
+        centre: host.location,
+        cells: this.map.cells.filter((cell) => areaCovers(area, cell)),
+        left: Math.max(0, Math.min(1, (c.endsAt - now) / span)),
+        leftMs: Math.max(0, c.endsAt - now),
+      }];
+    });
+    return [...awake, ...[...byCast.values()].map((m) => {
       const { centre, radius, relic, since } = m.area!;
       const area = m.area!;
       const ends = m.expiresAt ?? now;
@@ -1456,30 +1648,13 @@ export class Game {
         left: Math.max(0, Math.min(1, (ends - now) / span)),
         leftMs: Math.max(0, ends - now),
       };
-    });
-  }
-
-  /** The buildings a zone would cover — every one for Haste, the inhabited
-   *  houses for Tithe, which is what each actually reaches. */
-  private zoneTargets(id: ArtifactId, active: 'Haste' | 'Tithe', centre: Coord): Coord[] {
-    // A PREVIEW is not a cast, so the relic and the instant are only there to
-    // satisfy the shape: nothing reads them off an area that never lands.
-    const area = { centre, radius: activeRadius(this.state, id), relic: id, since: 0 };
-    return buildingsIn(this.state, area)
-      .filter((d) => d.state === 'Built'
-        && (active === 'Haste' || residentsOf(this.state, d) > 0))
-      .map((d) => d.location);
+    })];
   }
 
   /** The cast preview the panel and the renderer both read. */
   castInfo(): {
     artifactId: ArtifactId; cell: Coord | null; manaCost: number; affordable: boolean;
     saving: number;
-    /** An auto-tap ability's preview: how many nodes the zone covers, how many
-     *  taps the cast buys and how long the run takes to watch. */
-    reap: { nodes: number; taps: number; seconds: number } | null;
-    /** Buildings a non-tapping zone would cover. */
-    zone: number | null;
   } | null {
     if (this.mode.kind !== 'casting') return null;
     const { artifactId, selected } = this.mode;
@@ -1494,21 +1669,6 @@ export class Game {
         ? surveyCells(this.state, this.map, selected, activeRadius(this.state, artifactId))
           .reduce((n, c) => n + divinationSaving(this.state, this.map, c), 0)
         : 0,
-      reap: (active.id === 'Reap' || active.id === 'Tithe') && selected
-        ? {
-          nodes: active.id === 'Reap'
-            ? reapCells(this.state, this.map, selected,
-              activeRadius(this.state, artifactId)).length
-            : this.zoneTargets(artifactId, 'Tithe', selected).length,
-          taps: tapBudget(this.state, artifactId),
-          seconds: tapRunSeconds(this.state, artifactId),
-        }
-        : null,
-      // A zone that is not an auto-tap still owes the same answer: how much of
-      // the kingdom the cast would actually touch.
-      zone: active.id === 'Haste' && selected
-        ? this.zoneTargets(artifactId, 'Haste', selected).length
-        : null,
     };
   }
 
@@ -1536,10 +1696,10 @@ export class Game {
     return {
       id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
       level, restored, met: isMet(this.state, id), slots, spares,
-      levelCost: levelCost(level), canRestore: canRestore(this.state, id),
+      levelStardust: levelStardust(Math.max(1, level)), hasSet: slots.every((n) => n > 0),
+      canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
-      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the Survey' : 'the world: dungeons, the Portal, scouting',
       pending: def.pending,
       cast: this.castPhase(id),
       forge,
@@ -1562,6 +1722,11 @@ export class Game {
           holds: d.hosts === undefined ? null : ARTIFACTS[d.hosts].name,
         })),
       } : null,
+      effect: relicShortEffect(id, passiveValue(this.state, id)),
+      status: !restored ? 'broken'
+        : relicKind(id) === 'world' ? (this.state.world.chapels.includes(id) ? 'chapel' : 'bag')
+          : isAwake(this.state, id) ? 'awake'
+            : hostOf(this.state, id) !== null ? 'asleep' : 'bag',
     };
   }
 
@@ -1575,7 +1740,8 @@ export class Game {
   shrineView(district: District): ShrineView {
     return {
       holds: district.hosts ?? null,
-      radius: levelIndexed(DISTRICTS[district.definitionId].auraRadiusPerLevel, district.level),
+      radius: auraRadiusAt(district.hosts ?? 'GildedLedger', district.hosts === undefined ? 1 : artifactLevel(this.state, district.hosts)),
+      windowMs: windowMsOf(district),
       candidates: ARTIFACT_ORDER
         .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1 && id !== district.hosts)
         .map((id) => ({ id, name: ARTIFACTS[id].name, at: this.hostLabel(id) })),
@@ -1663,12 +1829,13 @@ export class Game {
   }
 
   doLevelRelic(id: ArtifactId): void {
-    if (levelUpRelic(this.state, id) === 'Levelled') {
+    const result = levelUpRelic(this.state, id);
+    if (result === 'Levelled') {
       playSfx('questComplete');
       // A world relic in a Chapel acts at the level the server holds: send it.
       const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
       if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
-    } else this.shake([]);
+    } else this.shake(result === 'NotEnoughStardust' ? ['Stardust'] : []);
     this.notify();
   }
 
@@ -1714,6 +1881,7 @@ export class Game {
 
   /** Open a relic's sheet, over the Bag it was opened from. */
   openRelic(id: ArtifactId): void {
+    this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
     this.openRelicId = id;
     this.setOverlay('relic');
   }
@@ -2918,6 +3086,10 @@ export class Game {
       // as the player types (ui/friends/friendSearch.ts).
       case 'friendSearch': return JSON.stringify([this.friends.searchStage, this.friends.searchRefused, this.friends.sentTo]);
       case 'crestEditor': return JSON.stringify([this.friends.crestDraft, this.state.kingdom.profile]);
+      // A wish being made reads the player's goods as well as the picks.
+      case 'wishNeed': case 'wishGive':
+        return JSON.stringify([this.friends.wishNeed, this.friends.wishGive, this.state.relics.held, this.state.city.goods]);
+      case 'wishFilled': return JSON.stringify(this.friends.justFilled);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -3693,6 +3865,105 @@ export class Game {
     this.notify();
   }
 
+  // ----------------------------------------------------------- relic picker
+
+  /**
+   * OPEN THE RELIC PICKER for a Shrine, over its card — the hero picker's
+   * flow (`openHeroPicker`): the restored city relics as cards, the Shrine's
+   * one slot fixed under them, and Select. A tap on a relic seats it, a tap
+   * on the filled slot empties it, and closing without Select changes
+   * nothing.
+   */
+  openRelicPicker(shrineId: string): void {
+    const shrine = shrines(this.state).find((d) => d.uniqueId === shrineId);
+    if (shrine === undefined) return;
+    this.relicPick = { shrineId, slot: shrine.hosts ?? null };
+    playSfx('click');
+    this.setOverlay('relicPicker');
+  }
+
+  /** The relics the picker offers: every restored city relic, in order. */
+  relicPickList(): RelicView[] {
+    return ARTIFACT_ORDER
+      .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1)
+      .map((id) => this.relicCard(id));
+  }
+
+  /** Is this relic already in a Shrine — this one or another? Its card in
+   *  the picker wears the Shrine mark. */
+  relicPickHosted(id: ArtifactId): boolean {
+    return hostOf(this.state, id) !== null;
+  }
+
+  /** The relic the move confirmation asks about, while it is open. */
+  relicMoveSubject(): ArtifactId | null {
+    return this.openOverlay === 'relicMoveConfirm' ? this.relicPick?.slot ?? null : null;
+  }
+
+  /** A TAP ON A RELIC: into the slot, or out of it if it is the one there. */
+  relicPickToggle(id: ArtifactId): void {
+    if (this.relicPick === null) return;
+    this.relicPick.slot = this.relicPick.slot === id ? null : id;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** A tap on the filled slot empties it. */
+  relicPickClear(): void {
+    if (this.relicPick === null || this.relicPick.slot === null) return;
+    this.relicPick.slot = null;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** SELECT: the Shrine holds what the slot holds — hosted, swapped or taken
+   *  out — and its card comes back. A relic already in ANOTHER Shrine asks
+   *  first (`relicMoveConfirm`): moving it ends its window there. */
+  relicPickConfirm(): void {
+    const pick = this.relicPick;
+    if (pick === null) return;
+    const from = pick.slot === null ? null : hostOf(this.state, pick.slot);
+    if (from !== null && from.uniqueId !== pick.shrineId) {
+      playSfx('click');
+      this.setOverlay('relicMoveConfirm');
+      return;
+    }
+    this.applyRelicPick();
+  }
+
+  /** The confirmation's Move: the relic leaves its Shrine for this one. */
+  relicMoveAccept(): void {
+    this.applyRelicPick();
+  }
+
+  /** The confirmation's Cancel: back to the picker, the choice as it was. */
+  relicMoveCancel(): void {
+    this.setOverlay(this.relicPick === null ? null : 'relicPicker');
+  }
+
+  private applyRelicPick(): void {
+    const pick = this.relicPick;
+    if (pick === null) return;
+    this.relicPick = null;
+    this.setOverlay(null);
+    const shrine = shrines(this.state).find((d) => d.uniqueId === pick.shrineId);
+    this.inspectedDistrictId = pick.shrineId;
+    if (shrine !== undefined && shrine.hosts !== (pick.slot ?? undefined)) {
+      if (pick.slot !== null) this.doHostRelic(pick.slot, pick.shrineId);
+      else if (shrine.hosts !== undefined) this.doUnhostRelic(shrine.hosts);
+    }
+    this.notify();
+  }
+
+  /** The window's close: nothing changes, and the Shrine's card comes back. */
+  relicPickCancel(): void {
+    const pick = this.relicPick;
+    this.relicPick = null;
+    this.setOverlay(null);
+    if (pick !== null) this.inspectedDistrictId = pick.shrineId;
+    this.notify();
+  }
+
   // ------------------------------------------------------------ hero picker
 
   /**
@@ -4118,7 +4389,7 @@ export class Game {
     this.openOverlay = name;
     // The picker and the shortfall are sheets over the card they were opened
     // from: the card stays.
-    if (name !== null && name !== 'speedup' && name !== 'shortfall') {
+    if (name !== null && name !== 'speedup' && name !== 'shortfall' && name !== 'relicPicker' && name !== 'relicMoveConfirm') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
@@ -4244,9 +4515,12 @@ export class Game {
     const key = `${this.notifies}|${JSON.stringify(this.mode)}|${this.ghostHeld}|${this.inspectedDistrictId}`;
     if (this.markerCache?.key !== key) this.markerCache = { key, layer: this.buildMarkers() };
     // The two that run on the clock: the hint's expiry, the wheels' sweep.
+    const clock = performance.now();
+    this.relicBursts = this.relicBursts.filter((b) => clock - b.at < RELIC_BURST_MS);
     return {
       ...this.markerCache.layer,
       spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+      relicBursts: this.relicBursts.map((b) => ({ ...b, t: (clock - b.at) / RELIC_BURST_MS })),
     };
   }
 
@@ -4267,6 +4541,9 @@ export class Game {
       inspectedDistrictId: this.inspectedDistrictId,
       spellZones: [],
       tutorialFocus: null,
+      shrineRelics: this.shrineRelics(),
+      auraBadges: this.auraBadges(),
+      relicBursts: [],
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -4369,18 +4646,6 @@ export class Game {
       layer.selected = this.mode.selected;
       layer.selectedSize = { x: 1, y: 1 };
       if (this.mode.selected) {
-        if (active.id === 'Reap') {
-          layer.influenceCells = reapCells(
-            this.state, this.map, this.mode.selected,
-            activeRadius(this.state, this.mode.artifactId));
-        }
-        // A ZONE ON BUILDINGS lights the BUILDINGS, not the ground: what the
-        // cast will touch is the answer the preview owes, and a lit square of
-        // empty grass would promise something it cannot pay.
-        if (active.id === 'Haste' || active.id === 'Tithe') {
-          layer.influenceCells = this.zoneTargets(
-            this.mode.artifactId, active.id, this.mode.selected);
-        }
         // A SURVEY LIGHTS THE FOG IT WOULD LIFT, each cell labelled with what
         // it would have cost — the decision is Gold against Mana, and the
         // grid is where that question gets answered.
@@ -4395,12 +4660,6 @@ export class Game {
             tone: 'good' as const,
           }));
         }
-        // The nodes a Divining would wake, which is what it is FOR.
-        if (active.id === 'Divining') {
-          layer.influenceCells = reapCells(
-            this.state, this.map, this.mode.selected,
-            activeRadius(this.state, this.mode.artifactId));
-        }
       }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
@@ -4409,8 +4668,11 @@ export class Game {
       if (district) {
         if (district.state === 'Built' && DISTRICTS[district.definitionId].hostsRelic) {
           // A Shrine's area is its aura, in gold (sim/hosts.ts).
-          const aura = auraOf(district, district.hosts ?? 'GildedLedger');
-          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura, c));
+          // Gold while it sleeps or stands empty — where it WOULD reach; an
+          // awake one is already drawn in violet, with its wheel (M82).
+          const awake = district.hosts !== undefined && isAwake(this.state, district.hosts);
+          const aura = auraOf(this.state, district, district.hosts ?? 'GildedLedger');
+          layer.influenceCells = awake ? [] : this.map.cells.filter((c) => areaCovers(aura, c));
           layer.influenceIsAura = true;
         } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
@@ -4931,8 +5193,6 @@ export class Game {
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',
-      NoSuchOffer: 'That offer is gone', OwnOffer: 'That offer is yours',
-      TooManyOffers: 'You have as many offers up as you may', BadOffer: 'That is not an offer anyone can take',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
@@ -5205,81 +5465,6 @@ export class Game {
     this.notify();
   }
 
-  /** What the player is about to offer on the Exchange. */
-  exchangeDraft: { give: PreciousId; giveN: number; want: PreciousId; wantN: number } = {
-    give: 'Starmetal', giveN: 10, want: 'Heartwood', wantN: 10,
-  };
-
-  /** Open the Exchange, the player's own material offered first. */
-  openExchange(): void {
-    const own = this.worldSource().board().materials[this.worldSeat()];
-    if (own !== undefined && this.exchangeDraft.give !== own) {
-      this.exchangeDraft = { ...this.exchangeDraft, give: own, want: PRECIOUS.find((p) => p !== own)! };
-    }
-    this.setOverlay('exchange');
-  }
-
-  /** Put the draft up: what it gives leaves the city's goods now. */
-  async doPostOffer(): Promise<void> {
-    if (this.worldServer === null) return;
-    const d = this.exchangeDraft;
-    if (getGood(this.state.city.goods, d.give) < d.giveN) {
-      this.toast(`Not enough ${d.give}`);
-      this.notify();
-      return;
-    }
-    addGood(this.state.city.goods, d.give, -d.giveN);
-    const r = await this.worldServer.postOffer({ id: d.give, amount: d.giveN }, { id: d.want, amount: d.wantN });
-    if (!r.ok) {
-      addGood(this.state.city.goods, d.give, d.giveN);
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    playSfx('click');
-    this.toast('Your offer is up on the Exchange');
-    this.applyWorldSnapshot(r.snapshot);
-  }
-
-  /** Take an offer: pay what it wants, receive what it gives. */
-  async doTakeOffer(offerId: string): Promise<void> {
-    if (this.worldServer === null) return;
-    const o = this.worldView?.offers?.find((x) => x.id === offerId);
-    if (o === undefined) return;
-    if (getGood(this.state.city.goods, o.want.id) < o.want.amount) {
-      this.toast(`Not enough ${o.want.id}`);
-      this.notify();
-      return;
-    }
-    addGood(this.state.city.goods, o.want.id, -o.want.amount);
-    const r = await this.worldServer.takeOffer(offerId);
-    if (!r.ok) {
-      addGood(this.state.city.goods, o.want.id, o.want.amount);
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    if (r.received !== null) {
-      addGood(this.state.city.goods, r.received.id, r.received.amount);
-      this.toast(`+${formatCount(r.received.amount)} ${r.received.id}`);
-    }
-    playSfx('click');
-    this.applyWorldSnapshot(r.snapshot);
-  }
-
-  /** Take one's own offer down: what it held comes back. */
-  async doWithdrawOffer(offerId: string): Promise<void> {
-    if (this.worldServer === null) return;
-    const r = await this.worldServer.withdrawOffer(offerId);
-    if (!r.ok) {
-      this.toast(this.worldRefusal(r.why));
-      this.notify();
-      return;
-    }
-    if (r.received !== null) addGood(this.state.city.goods, r.received.id, r.received.amount);
-    this.applyWorldSnapshot(r.snapshot);
-  }
-
   /** Pay a camp off with its tribute: the camp is beaten for the player,
    *  and pays nothing (19 §5.4). */
   async doTributeCamp(index: number): Promise<void> {
@@ -5341,8 +5526,11 @@ export class Game {
     if (this.worldServer !== null && this.worldSeated !== true) {
       void this.connectWorld().then(() => {
         if (this.worldSeated === true) this.goOutToWorld();
-        // A name taken on the friends list is the one the board knows too.
-        else if (this.worldSeated === false && this.friends.snap?.me) void this.doJoinWorld(this.friends.snap.me.nickname);
+        // A kingdom with a name — taken on a board the world has since
+        // replaced, or on the friends list — sits down under it again.
+        else if (this.worldSeated === false && this.state.kingdom.profile.nickname !== null) {
+          void this.doJoinWorld(this.state.kingdom.profile.nickname);
+        } else if (this.worldSeated === false && this.friends.snap?.me) void this.doJoinWorld(this.friends.snap.me.nickname);
         else if (this.worldSeated === false) this.setOverlay('nickname');
         else this.toast(this.worldRefusal('Offline'));
         this.notify();
@@ -5446,11 +5634,16 @@ export class Game {
     // lair's picture above its own ground — its pixels, not its box, so the
     // cells round its edges still answer as themselves.
     const normal = this.mode.kind === 'normal';
-    const lairBubble = normal ? lairBubbleAt(sx, sy) : null;
-    const storeCell = normal && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
-    const lair = lairBubble ?? (normal && storeCell === null ? lairArtAt(sx, sy) : null);
-    const cell = lair !== null ? LAIRS[lair].location
-      : storeCell ?? this.camera.screenToCell(sx, sy);
+    // A sleeping Shrine's Mana bubble floats over other cells too: a tap on
+    // it is a tap on its Shrine, which opens the Shrine's card. A tap on a
+    // building never costs Mana — the price is paid by Activate, in the card.
+    const sleeper = normal ? shrineBubbleAt(sx, sy) : null;
+    const shrineCell = sleeper === null ? null : hostOf(this.state, sleeper)?.location ?? null;
+    const lairBubble = normal && shrineCell === null ? lairBubbleAt(sx, sy) : null;
+    const storeCell = normal && shrineCell === null && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
+    const lair = lairBubble ?? (normal && shrineCell === null && storeCell === null ? lairArtAt(sx, sy) : null);
+    const cell = shrineCell ?? (lair !== null ? LAIRS[lair].location
+      : storeCell ?? this.camera.screenToCell(sx, sy));
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
@@ -5819,6 +6012,27 @@ function relicEffectText(id: ArtifactId, value: number): string {
     ? `${RELIC_SUBJECT[id]} ${pct} faster`
     : `${RELIC_SUBJECT[id]} +${pct}`;
 }
+
+/** How long a woken relic's ring takes to sweep its aura (M85). */
+const RELIC_BURST_MS = 1500;
+
+/** A relic's effect in two words, for the floater a wake raises: `+30% tax`. */
+function relicShortEffect(id: ArtifactId, value: number): string {
+  const { op } = ARTIFACTS[id].passive.stats[0]!;
+  const what = RELIC_SHORT[id];
+  return op === 'mul' ? `+${relicPercent(value)} ${what}` : `+${formatNumber(value, 1)} ${what}`;
+}
+
+const RELIC_SHORT: Record<ArtifactId, string> = {
+  DowsingRod: 'recovery',
+  VerdantSeal: 'per swing',
+  ForemansSigil: 'crew speed',
+  GildedLedger: 'tax',
+  WanderersCompass: 'Stardust',
+  DelversLantern: 'room haul',
+  MusterHorn: 'army',
+  BailiffsTally: 'district yield',
+};
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {

@@ -39,6 +39,7 @@ export function newGame(map: MapData, now: number): GameState {
       wallet: kingdomWallet,
       survey: { claimedFree: [], claimedPaid: [], owned: false },
       profile: { nickname: null, crest: null },
+      trade: { seq: 0 },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
       utcOffsetMinutes: 0,

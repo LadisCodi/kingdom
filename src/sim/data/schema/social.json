@@ -19,6 +19,16 @@
         "requestHours": { "type": "int", "min": 1, "doc": "Hours a friend request waits for an answer before it expires." },
         "messageDays": { "type": "int", "min": 1, "doc": "Days an Inbox message is kept." }
       }
+    },
+    "trade": {
+      "type": "object",
+      "doc": "Trading with friends on the wish board (Docs/features/15-social.md §2.4). A piece and a keystone always trade one at a time.",
+      "fields": {
+        "materialLot": { "type": "int", "min": 1, "doc": "How much of a precious material one lot is." },
+        "wishes": { "type": "int", "min": 1, "doc": "How many wishes a player may have pinned at once." },
+        "wishHours": { "type": "int", "min": 1, "doc": "Hours a wish stands before its stake comes back." },
+        "fillsPerDay": { "type": "int", "min": 1, "doc": "How many friends' wishes a player may fill in any 24 hours." }
+      }
     }
   }
 }

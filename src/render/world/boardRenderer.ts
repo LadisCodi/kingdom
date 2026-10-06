@@ -19,7 +19,7 @@
 // edge of a tile, and nothing upright is hidden or under a rim.
 
 import type { GameState } from '../../sim/state';
-import { lumpMaterial, materialAt, type BoardHex } from '../../sim/world/board';
+import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
@@ -29,7 +29,7 @@ import { crestOf, type Crest } from '../../sim/crest';
 import { chargeUrl, fieldUrl } from '../../ui/crestArt';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
-import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
+import { depositMaterial, type WorldDistrict, type WorldTerrain } from '../../sim/world/types';
 import { formatCount, formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
@@ -64,6 +64,9 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
   ],
   Sanctuary: [{ sprite: 'landmark_leyspring', size: 0.5, dx: 0, dy: 0.3 }],
   Landmark: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
+  HeartwoodGrove: [{ sprite: 'forest_3', size: 0.8, dx: 0, dy: 0.3 }],
+  StarfallCrater: [{ sprite: 'mountain', size: 0.5, dx: 0, dy: 0.3 }],
+  MoonglassSpires: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
 };
 
 /** Until a district has its own art, a province building stands in for it,
@@ -71,6 +74,7 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
 const DISTRICT_STAND_IN: Record<WorldDistrict, string> = {
   Rural: 'housing_l1', LoggingCamp: 'sawmill_l1', Quarry: 'quarry_l1', FarmLands: 'farm_l1',
   HuntingGrounds: 'housing_l1', Observatory: 'housing_l1', Shrine: 'housing_l1',
+  GroveCamp: 'sawmill_l1', StarmetalDig: 'quarry_l1', SpireQuarry: 'quarry_l1',
 };
 
 /** Hex art's foot line: the bottom of its canvas, a little in front of the
@@ -242,15 +246,30 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // hex stands over it (19 §7.1).
   if (groundStale) drawRoads(ground, camera, frame, states);
 
-  // Burnt districts: fire at their foot and smoke rising in columns; and on
-  // the player's own districts a camp will raid, crossed swords (19 §5.5).
+  // Burnt districts: fire at their foot and smoke rising in columns (19 §5.5).
+  // A raid to come is an arc from the camp to each district of the player's
+  // it will raid, its dashes running towards it, and the time left on the camp:
+  // "this camp raids this district in this time".
+  const raids: Array<{ camp: number; target: number }> = [];
+  const raidAt = new Map<number, number>();
   for (const bh of board.hexes) {
     const hc = source.hexOf(bh.index);
     if (hc === null || states[bh.index] !== 'Revealed') continue;
-    const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
-    if (hc.burnt) drawFire(ctx, camera, c, bh.index, clock);
-    else if (hc.threat != null) drawThreat(ctx, camera, c.x - camera.hexWidth * 0.28, c.y - r * 0.4);
+    if (hc.burnt) {
+      const c = camera.hexToScreen(bh.hex);
+      if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
+      drawFire(ctx, camera, c, bh.index, clock);
+    } else if (hc.threat != null) {
+      for (const camp of hc.threat.camps) {
+        raids.push({ camp, target: bh.index });
+        raidAt.set(camp, Math.min(raidAt.get(camp) ?? Infinity, hc.threat.nextRaidAt));
+      }
+    }
+  }
+  for (const { camp, target } of raids) {
+    const from = camera.hexToScreen(board.hexes[camp].hex);
+    const to = camera.hexToScreen(board.hexes[target].hex);
+    drawRaidArc(ctx, camera, from, to, clock + camp * 211 + target * 97);
   }
 
   // Over every camp the player can see, how hard it is against the
@@ -261,8 +280,13 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    // Its power, in the units of the player's own army, coloured by how it
+    // compares with the strongest party they could send.
     const difficulty = campDifficulty(bh.camp.power, party);
-    drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+    drawCampPower(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, formatCount(bh.camp.power), DIFFICULTY_COLOR[difficulty]);
+    // A camp about to raid: the time left, under its difficulty.
+    const at = raidAt.get(bh.index);
+    if (at !== undefined) drawRaidTimer(ctx, camera, c.x - camera.hexWidth * 0.14, c.y + r * 0.22, formatCountdown(Math.max(0, (at - now) / 1000)));
   }
 
   // A dungeon: how far the player has gone in it, as a ring and "13/24",
@@ -277,11 +301,11 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawProgressRing(ctx, camera, c.x, c.y - r * 0.55, source.delved(bh.index), total, camped);
   }
 
-  // A rich hex: a sparkle and its material's icon at its right corner
-  // (19 §7.4), on ground the player has explored.
+  // A deposit: a sparkle and its material's icon at its right corner
+  // (Docs/plans/precious-deposits.md), on ground the player has explored.
   for (const bh of board.hexes) {
-    if (!bh.rich || states[bh.index] !== 'Revealed') continue;
-    const material = materialAt(board, bh.index);
+    if (states[bh.index] !== 'Revealed') continue;
+    const material = depositMaterial(bh.features);
     if (material === null) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
@@ -1058,18 +1082,113 @@ function drawFire(ctx: CanvasRenderingContext2D, camera: HexCamera, c: { x: numb
   ctx.restore();
 }
 
-/** A district a camp will raid: a small red disc with crossed swords. */
-function drawThreat(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number): void {
-  const size = Math.max(14, camera.hexWidth * 0.14);
+/**
+ * A raid to come: a dashed red arc from the camp to the district, high in
+ * the middle like a thrown spear, its dashes running towards the arrowhead
+ * where it lands.
+ */
+function drawRaidArc(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, from: { x: number; y: number }, to: { x: number; y: number }, clock: number,
+): void {
+  const lift = camera.hexRadius * 0.25;
+  const p0 = { x: from.x, y: from.y - lift };
+  const p2 = { x: to.x, y: to.y - lift };
+  const span = Math.hypot(p2.x - p0.x, p2.y - p0.y);
+  const ctl = { x: (p0.x + p2.x) / 2, y: (p0.y + p2.y) / 2 - span * 0.55 };
+  const at = (t: number) => ({
+    x: (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * ctl.x + t * t * p2.x,
+    y: (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * ctl.y + t * t * p2.y,
+  });
+  // The arc stops short of the district, so the arrowhead lands on it.
+  const head = Math.max(8, camera.hexWidth * 0.08);
+  const end = 1 - Math.min(0.2, head / Math.max(1, span * 1.2));
+  const tip = at(1);
+  const back = at(end);
+  const width = Math.max(2, camera.hexWidth * 0.022);
   ctx.save();
+  ctx.lineCap = 'round';
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    // The curve to `end`: the same parabola, its control point pulled in.
+    const c1 = { x: p0.x + (ctl.x - p0.x) * end, y: p0.y + (ctl.y - p0.y) * end };
+    ctx.quadraticCurveTo(c1.x, c1.y, back.x, back.y);
+  };
+  // A dark groove under the red, so it reads on grass, sand and snow.
+  path();
+  ctx.strokeStyle = 'rgba(40, 8, 4, 0.55)';
+  ctx.lineWidth = width + 3;
+  ctx.stroke();
+  path();
+  ctx.strokeStyle = '#d23a2a';
+  ctx.lineWidth = width;
+  ctx.setLineDash([width * 3, width * 2]);
+  ctx.lineDashOffset = -clock / 40;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // The arrowhead, along the curve's last direction.
+  const ang = Math.atan2(tip.y - back.y, tip.x - back.x);
+  ctx.translate(tip.x, tip.y);
+  ctx.rotate(ang);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-head, head * 0.55);
+  ctx.lineTo(-head * 0.7, 0);
+  ctx.lineTo(-head, -head * 0.55);
+  ctx.closePath();
+  ctx.fillStyle = '#d23a2a';
+  ctx.strokeStyle = 'rgba(40, 8, 4, 0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** A camp's power: the power icon and the number on a parchment pill,
+ *  written in its difficulty's colour. */
+function drawCampPower(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string, ink: string): void {
+  const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
+  const icon = fs * 1.3;
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(text).width + fs * 1.4 + icon;
+  const ph = fs * 1.7;
+  ctx.fillStyle = '#f4e3bc';
+  ctx.strokeStyle = '#2e1c0e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
+  ctx.fill();
+  ctx.stroke();
+  drawIcon(ctx, 'power', x - pw / 2 + fs * 0.45, y - icon / 2, icon);
+  ctx.fillStyle = ink;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + icon / 2, y + 0.5);
+  ctx.restore();
+}
+
+/** The time left before a camp raids: a red pill with crossed swords, on
+ *  the camp. */
+function drawRaidTimer(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string): void {
+  const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
+  const icon = fs * 1.3;
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(text).width + fs * 1.4 + icon;
+  const ph = fs * 1.7;
   ctx.fillStyle = '#a8231d';
   ctx.strokeStyle = '#3d0c08';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(x, y, size * 0.62, 0, Math.PI * 2);
+  ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
   ctx.fill();
   ctx.stroke();
-  drawIcon(ctx, 'atk', x - size / 2, y - size / 2, size);
+  drawIcon(ctx, 'atk', x - pw / 2 + fs * 0.45, y - icon / 2, icon);
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + icon / 2, y + 0.5);
   ctx.restore();
 }
 

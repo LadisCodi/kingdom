@@ -16,13 +16,13 @@ import type { Board } from '../sim/battle';
 import type { ArtifactId, HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
-  claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, join, owedTo, postOffer, recall, repair, reportSeen, resolveTo,
-  sendArmy, setBoost, setCrest, snapshotOf, takeOffer, tribute, unhostRelic, upgrade, withdrawOffer,
+  claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, join, owedTo, recall, repair, reportSeen, resolveTo,
+  sendArmy, setBoost, setCrest, snapshotOf, tribute, unhostRelic, upgrade,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
 import type {
-  ArmyPurpose, CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerBoard,
-  ServerWorld, TradeResult, WorldSnapshot,
+  ArmyPurpose, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard,
+  ServerWorld, WorldSnapshot,
 } from './types';
 
 /** A join: the seat, or why there is none. */
@@ -51,9 +51,6 @@ export interface WorldCommands {
   hurry: { cmd: { index: number; seconds: number }; reply: CommandResult };
   collect: { cmd: { index: number }; reply: CollectResult };
   reportSeen: { cmd: { indices: number[] }; reply: CommandResult };
-  postOffer: { cmd: { give: Lot; want: Lot }; reply: TradeResult };
-  takeOffer: { cmd: { offerId: string }; reply: TradeResult };
-  withdrawOffer: { cmd: { offerId: string }; reply: TradeResult };
   sendArmy: { cmd: { req: SendArmyRequest }; reply: SendResult };
   recall: { cmd: { armyId: string }; reply: CommandResult };
   delveRoom: { cmd: { armyId: string }; reply: DelveResult };
@@ -154,9 +151,6 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'hurry': return hurry(b, seat, cmd.index, cmd.seconds, t);
     case 'collect': return collect(b, seat, cmd.index, t);
     case 'reportSeen': return reportSeen(b, seat, cmd.indices, t);
-    case 'postOffer': return postOffer(b, seat, cmd.give, cmd.want, t);
-    case 'takeOffer': return takeOffer(b, seat, cmd.offerId, t);
-    case 'withdrawOffer': return withdrawOffer(b, seat, cmd.offerId, t);
     case 'sendArmy': return sendArmy(b, seat, cmd.req, t);
     case 'recall': return recall(b, seat, cmd.armyId, t);
     case 'delveRoom': return delveRoom(b, seat, cmd.armyId, t);

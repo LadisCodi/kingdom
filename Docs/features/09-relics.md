@@ -31,8 +31,8 @@
 
 - A relic is a **permanent kingdom passive**: one effect, one number, and the
   number rises with the relic's **level**. There is no ceiling.
-- **Every relic the player has is always on.** Nothing is worn, socketed or
-  swapped, and nothing carries one anywhere.
+- **A relic is hosted, never worn.** A city relic acts from a Shrine while
+  activated, a world relic from a Chapel; nothing carries one anywhere.
 - **A relic is unlocked and levelled by completing its album** (§4). The
   first time a player closes it, the relic arrives at level 1; every close
   after, **+1 level**. Which album levels which relic **rotates a step a
@@ -42,10 +42,10 @@
   in **laps** (§5.1) — but never ahead of the others: an album cannot close a
   second time until all eight have closed once.
 - The relic itself never drops. Ruins pay **card packs** (§6), not relics.
-- **A relic is one idea at two speeds** (§2.1): the passive is that idea
-  always on, and the **active** is the same idea as a placed zone, for a
-  window, bought with Mana. Every relic has one, and it is cast from the relic
-  that owns it. The Magic tome holds no spells
+- **A city relic is activated** (§2.1): hosted in a Shrine, it does nothing
+  until the player pays its Mana; then its effect reaches the Shrine's aura
+  for the Shrine's window. A world relic acts while a Chapel holds it, and
+  two carry a spell (§2.2). The Magic tome holds no spells
   ([`07-research.md`](07-research.md) §6).
 - The nav tab is **Relics** (§11.2). It is padlocked until the player holds
   a pack or a card.
@@ -80,99 +80,75 @@ never a discount, because a discount dies at 100%.
   nothing — a bigger swing empties a node it cannot exceed, and a crew that
   swung faster and walked at the old pace would be half a relic.
 
-### 2.1 The active
+### 2.1 Activation — the city relics
 
-Every relic's ability is **the passive's idea, concentrated**: what the relic
-does everywhere all the time, it does much harder in one place for a while.
+- **Hosting is free; activating costs Mana.** A city relic in a Shrine sleeps
+  until the player activates it. Then its effect reaches every cell of the
+  Shrine's aura for a window.
+- **The relic's level is the POWER**: its number (`X` below) and its reach.
+  The aura is the Shrine's cell and **`activeRadius` cells round it**
+  (Chebyshev), plus **one ring at relic levels 5, 10 and 20**.
+- **The Shrine's level is the DURATION**: **5 min · 30 min · 1 h · 4 h · 8 h**
+  at levels 1 to 5. A top Shrine covers a night away.
+- **One activation, one price**: `activeManaCost` per relic (**20** on all
+  four), whatever the window. A higher Shrine is more minutes for the same
+  Mana.
+- **No cooldown and no stacking.** It can be activated again the moment the
+  window closes, never while it is open.
+- **The window is priced when it opens.** A Shrine that climbs mid-window
+  does not stretch it.
+- **The window survives everything but leaving the Shrine.** It runs while
+  the player is away and through a save; it follows a Shrine that is moved.
+  Taking the relic out, or hosting it elsewhere, ends it.
+- **The close is a boundary**: offline replay ends it at the same instant as
+  live ticking, and rent inside the aura is repriced there.
+- **On screen** (mockups M80–M85):
+  - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
+    with its own Activate, **In the Bag**, or its fragments as a silhouette.
+  - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a
+    relic and wakes it.
+  - The Shrine's card holds **one slot, drawn as its altar**: the niche
+    carved with a **+** while it waits (with the CTA when a relic in the Bag
+    could go there), the relic set in it once placed. A tap opens the relic
+    picker — the hero picker's flow: the restored city relics as cards, each
+    with **what it does** (`+20% tax`) and the **Shrine mark** when it is
+    already in one, the Shrine's slot under them, and **Select**. Selecting a
+    relic that stands in another Shrine asks first — *Move it to this one?*
+    Cancel / Move. Emptying the slot and selecting
+    takes the relic out; closing changes nothing.
+  - The relic's sheet and its Shrine's card: a grey **Asleep** seal beside
+    Activate, or an **Awake** ribbon and a gold bar running down the window.
+    Short of the price, how soon the pool holds it, and the smallest Mana
+    flask in the Bag.
+  - On the map, an awake relic floats over its Shrine and the aura wears the
+    zone's tint and wheel; a sleeping one rests dim on the altar under a
+    **Mana bubble** with its price. A tap on the bubble, like a tap on the
+    Shrine, opens its card and costs nothing; Activate there pays the Mana.
+  - Houses an awake Crown pays, and buildings with crews an awake Hammer
+    speeds, wear a **+X%** badge.
+  - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
+  - A window that closes raises a tab on the right edge — **The Tribute Crown
+    is asleep** · Activate — one tab for all of them (*2 relics are asleep*).
 
-| | |
-|---|---|
-| **What it is** | a **placed zone** — select-then-place, the idiom placement already uses, with the grid lighting what the zone would cover before a tap is spent |
-| **What it costs** | **Mana**, per relic, and nothing else. No slot, no equip, no charges, no upkeep |
-| **How often** | **ACTIVE → COOLDOWN → READY**, a flat **5-minute** cooldown counted from when the window **closes** |
-| **How it grows** | **exactly one** of power, duration and taps-per-Mana grows every level; **radius steps** at 5, 10 and 20; **cooldown never moves** |
+### 2.2 The world relics' spells
 
-The eight, and which one axis each grows:
+Two world relics carry a spell, cast from the relic's card with Mana while a
+Chapel holds it.
 
-| Relic | Its ability | Cast on | Grows |
+| Relic | Its spell | Cast on | Grows |
 |---|---|---|---|
-| **Staff of Renewal** | **Divining** — wakes every tired node in the zone at once, then keeps them coming back faster | a centre | **duration** |
-| **Sickle of Plenty** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
-| **The Winged Hammer** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
-| **The Tribute Crown** | **Tithe** — pulls rent forward from every house in the zone, over and over, straight into the wallet, free | a centre | **taps per Mana** |
 | **The Stargazer's Orb** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
 | **The Wisp Lantern** | **Lamplight** — the next rooms you clear pay double | nothing; it is lit and carried | **rooms** |
-| **Warhorn of the Host** | — *waits on the world map* | a fortification | — |
-| **The Steward's Signet** | — *waits on the world map* | a tile you hold | — |
 
-- **A relic is one idea at two speeds, and two of the five had to change
-  subject to obey it.** The Staff's ability paid a cell's reveal cost while its
-  passive was about ground coming back; the Orb called a resource back
-  while its passive was about Stardust. The fog is the Orb's — what a
-  seeing orb is FOR is ground you have not seen — and recovery is the Staff's.
-- **A zone's growing axis is a WINDOW when its effect is a rate** (how much
-  recovers inside it is time) **and POWER when its effect is a multiplier**
-  (a crew either works faster or it does not, and a longer window is just a
-  longer wait). Exactly one of the two moves per relic.
+- **ACTIVE → COOLDOWN → READY**: a flat **5-minute** cooldown, counted from
+  when the spell **closes**, that never moves with level.
 - **`Survey` buys the GOLD, never the ladder.** The Townhall's reach still
-  gates every cell, so the fog grows out of what the player holds rather than
-  appearing as islands.
-- **AN ABILITY MAY BE COUNTED IN EVENTS RATHER THAN IN SECONDS.** Lamplight is
-  a handful of ROOMS, not a window of minutes: the only clock a delve has is
-  the player opening the next door, so minutes would be a timer running while
-  nothing happens — and a lantern lit before a delve would burn out in the
-  party screen.
-  - It has **no clock at all**. A charge cannot expire, so a lantern lit and
-    not spent stays lit and the relic stays ACTIVE until the last room takes
-    the last use.
-  - **The last charge is the close**, and the cooldown counts from there — a
-    charged ability has no window to end, so the moment it runs out IS the
-    end.
-  - It is **untargeted**: a delve is the place, and the player casting it is
-    already standing in it.
-- **The two auto-tap abilities are an EXCHANGE RATE**, and the rate is what
-  the level moves. A tap they land **costs no Mana**. Holding a finger on the
-  ground does 2 a second at a Mana each; a spell does 4 a second for nothing.
-- **A Tithe tap pulls `tap.workSeconds` of that house's rent straight into the
-  wallet**, past the house's store
-  ([`03-economy.md`](03-economy.md) §3.2). It mints Gold, and a full house
-  does not stop it. It is the only way rent is pulled forward.
-- **The budget is spent round robin, nearest first.** The budget is the
-  decision and the area is only where it is spent, so a zone over five nodes
-  means all five.
-- **It all lands at the cast**, and the window is a thing to watch rather than
-  a clock the sim keeps: the cells, the budget and the rate are all fixed the
-  moment the spell is paid for, so a player who casts and closes the app still
-  gets what they paid for. The window is **derived** — the budget over the
-  rate — and never authored.
-- **The nodes run dry and the houses do not.** Reap's run hits a wall when the
-  ground is empty; Tithe's always spends the whole budget, because a house
-  with residents always has rent to pull forward. That is the asymmetry the
-  cooldown exists to hold, and the number to watch first — **OQ-99**.
-
-- **The cooldown counts from the window's close, never from the cast.** A
-  10-minute window on a 5-minute cooldown counted from the cast is 100%
-  uptime, which is no cooldown at all.
-- **A cooldown that shrank with level would be a discount wearing a hat**, and
-  a relic that did more *and* did it more often would grow on two axes at once.
-- **Zones overlap freely.** The cooldown is what stops a player carpeting the
-  map, so an overlap is a real choice: an area taking two effects is an area
-  somewhere else taking none. There is no popup asking whether to overwrite.
-- **Radius is the one number that steps rather than creeps** — the authored
-  base, then **one more ring at levels 5, 10 and 20**, the same three rungs on
-  every relic. A Chebyshev radius covers `(2r+1)²` cells, so each rung roughly
-  **doubles the ground**: a number that doubles cannot creep, but it makes a
-  superb milestone, and a player two cards from level 5 knows exactly what
-  those two cards buy. It **stops at the last rung** — a relic at level 500 is
-  not a relic that covers the map.
-- **Three of the eight are cast on their own pillar** rather than on the city
-  grid: the Lantern on a ruin before a delve, the Horn on a world-map
-  fortification, the Signet on a tile the player holds.
-- The relic's card shows which of the three states it is in, and the countdown
-  derives from a timestamp rather than a decremented integer, so a throttled
-  tab comes back correct.
-- Full design, level by level:
-  [`../proposals/relic-effects.md`](../proposals/relic-effects.md).
+  gates every cell, so the fog grows out of what the player holds.
+- **Lamplight is counted in ROOMS, not minutes.** A charge cannot expire; the
+  last one used is the close, and the cooldown counts from there. It is
+  untargeted.
+- **Radius steps** at levels 5, 10 and 20, one ring each, and stops there.
+- The card shows the state, and the countdown derives from a timestamp.
 
 - **Every passive keeps this rule**: a
   speed the call site divides by, a multiplier above 1, or a flat term on a
@@ -615,8 +591,10 @@ Top to bottom:
   again, which is a promise of a change that is not coming.
   - **No heading over it.** The sentence above already named the passive, and
     the section that does need naming is the one under it.
-- **A section named SPELL**, carrying the ability's name, what it does, **the
-  same band of tiles** and the **cast button**. A level moves what the relic
+- **For a city relic, its activation** (§2.1): the aura's reach, *Asleep* with
+  the **Activate** button and its Mana, or *Awake* with the time left.
+- **For a world relic, a section named SPELL**, carrying the ability's name,
+  what it does, **the same band of tiles** and the **cast button**. A level moves what the relic
   does all the time AND what its ability does for a minute, so a player should
   not have to learn two ways of reading the same kind of fact.
   - Its tiles are the questions in the order they are asked: **what it costs**,
@@ -673,8 +651,9 @@ Top to bottom:
 
 ### 11.6 A spell on the map
 
-A zone is the only thing a relic puts **on the world**, so the map has to say
-two different things about it.
+An awake city relic's aura and a placed zone are the only things a relic puts
+**on the world**, and both are drawn this way, the wheel on the Shrine counting
+its window down. The map has to say two different things about them.
 
 - **THE TINT SAYS *THERE IS MAGIC HERE*, AND THE WHEEL SAYS FOR HOW LONG**, and
   they are drawn on different things on purpose. The tint covers **every cell**
@@ -712,14 +691,14 @@ Every number below is a **proposal until it is authored**; the ones marked
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.albumGems`, `collection.prizeGems` |
 | Sends a day | **3, fixed**; gold never | `collection.sendsPerDay` |
 | A relic's `passiveBase` and `passivePerLevel` | per relic | `artifacts` |
-| What an ability costs, lasts and reaches | per relic | `artifacts`, `activeManaCost` · `activeDurationSeconds` · `activeRadius` |
-| Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `artifacts`, `activeTapsPerMana` · `…PerLevel` |
-| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Hammer; **×5.00 flat** on the Staff | `artifacts`, `activePower` · `activePowerPerLevel` |
-| Seconds a level adds to a window | **+60** on the Staff, from a five-minute base | `artifacts`, `activeDurationPerLevel` |
-| Uses an event-counted ability buys | **3 rooms, +1 a level** on the Lantern | `artifacts`, `activeCharges` · `activeChargesPerLevel` |
-| How fast an auto-tap run is watched | **4 taps a second** | `artifactAutoTapPerSecond` |
-| An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifactCooldownSeconds` |
-| Where an ability's radius steps up | **levels 5, 10 and 20**, one ring each, the same on all eight | `artifactRadiusSteps` |
+| What a level-up costs | **one fragment of each of the six slots**, every level, and **Stardust**: 100, ×1.5 a level (100 · 150 · 225 · 340…) | `relics.fragments`, `levelStardustBase` · `levelStardustGrowth` |
+| How long a city relic stays awake, by Shrine level | **5 · 30 · 60 · 240 · 480 min** | `buildings`, Shrine `relicWindowMinutesPerLevel` |
+| What activating a city relic costs | **20 Mana** each | `artifacts`, `activeManaCost` |
+| How far a city relic's aura reaches at level 1 | **2** cells round the Shrine | `artifacts`, `activeRadius` |
+| What a world spell costs and reaches | per relic | `artifacts`, `activeManaCost` · `activeRadius` |
+| Uses an event-counted spell buys | **3 rooms, +1 a level** on the Lantern | `artifacts`, `activeCharges` · `activeChargesPerLevel` |
+| A world spell's cooldown | **5 min, flat**, counted from its close | `artifactCooldownSeconds` |
+| Where a reach steps up | **levels 5, 10 and 20**, one ring each — a city relic's aura and a world spell alike | `artifactRadiusSteps` |
 | Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.albumHours` |
 | Keys an album pays | **silver ×5, then gold ×3** — one key a page | `collection.albumSilverKeys`, `…GoldKeys` |
 | Rarity per slot, per album | authored | seasons file |
@@ -747,9 +726,11 @@ Every number below is a **proposal until it is authored**; the ones marked
 - **A level cap, or a tier.** A relic's level is one number with no top.
 - **A discount as a relic effect.** Speeds and yields only.
 - **A relic carried into a fight**, or one that is worn, slotted or equipped.
-- **An active that is instant**, or one that is not placed. The zone is the
-  decision, and an ability that resolved the moment it was bought would be a
-  button rather than a choice.
+- **A city relic that is always on.** Its effect is bought in Mana, a window
+  at a time.
+- **A city relic spell.** The activation is the one thing a city relic is
+  pressed for.
+- **A cooldown on an activation**, or a window that stacks.
 - **An ability that lives in a tome** ([`07-research.md`](07-research.md) §6).
 - **A separate album screen.** A relic and its nine cards are one page
   (§11.3), and the button that spends them is on it.
@@ -785,5 +766,5 @@ Every number below is a **proposal until it is authored**; the ones marked
   wildcard is a card in waiting, which is why they go with the cards instead.
 - Random stat rolls, standalone equipment, duplicate fusion.
 
-**Open questions:** OQ-88, OQ-89, OQ-90, OQ-99, OQ-100, OQ-102, OQ-113 in
+**Open questions:** OQ-88, OQ-89, OQ-90, OQ-100, OQ-102, OQ-113 in
 [`../open-questions.md`](../open-questions.md).

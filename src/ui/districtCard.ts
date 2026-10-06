@@ -32,7 +32,7 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
-import { spell } from './relicSheet';
+import { activation, relicArt } from './relicSheet';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -45,7 +45,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
 import { coach, el, formatDuration, formatExact, formatShort } from './format';
-import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, restMarks, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -207,28 +207,30 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       }
     }
 
-    // A SHRINE holds one city relic, whose passive and spell reach its aura
-    // (sim/hosts.ts): what it holds, its spell, and what it could hold.
+    // A SHRINE holds one city relic, whose effect reaches its aura while it
+    // is activated (sim/hosts.ts). THE SLOT IS THE ALTAR (assets/shrine-altar*):
+    // its niche carved with a + while it waits, the relic set in it once
+    // placed — dim asleep, lit awake. A tap opens the relic picker
+    // (ui/relicPicker.ts), the hero picker's flow; the CTA says a relic in
+    // the Bag could go there. Its activation follows.
     if (def.hostsRelic) {
       const shrine = () => {
         const view = game.shrineView(district);
         const held = view.holds === null ? null : game.relicCard(view.holds);
+        const placeable = held === null && game.relicPickList().some((r) => r.status === 'bag');
+        const altar = el('button', {
+          class: `dc-altar${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
+          'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
+        },
+          ...(held === null ? [] : [relicArt(held, 'dc-altar-relic'), ...(held.status === 'asleep' ? [restMarks()] : [])]),
+          ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []));
+        altar.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
         return el('div', { class: 'dc-shrine rl-page' },
-          el('div', { class: `rl-line${held === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
-            el('span', {}, held === null
-              ? 'Empty — host a city relic and it acts over this Shrine\u2019s aura'
-              : `${held.name}, level ${formatExact(held.level)}: ${held.now}`)),
-          el('div', { class: 'rl-line is-muted' }, iconEl('compass', { size: 'sm' }),
-            el('span', {}, `The aura reaches ${formatExact(view.radius)} cells round the Shrine`)),
-          ...(held === null ? [] : [spell(game, held.id, held)].filter((x): x is HTMLElement => x !== null)),
-          ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
-            el('div', { class: 'rl-forge' },
-              ...view.candidates.map((c) => btn({
-                label: 'Host',
-                note: c.at === null ? c.name : `${c.name} · from ${c.at}`,
-                onClick: () => game.doHostRelic(c.id, district.uniqueId),
-              })),
-              ...(held === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(held.id) })])))]),
+          altar,
+          ...(held === null ? [] : [el('div', { class: 'dc-shrine-says' },
+            el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
+            el('span', {}, held.now))]),
+          ...(held === null ? [] : [activation(game, held.id)].filter((x): x is HTMLElement => x !== null)),
         );
       };
       body.append(sectionHead('Relic'), part(() => {

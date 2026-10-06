@@ -68,14 +68,8 @@
         "innerRing": {
           "type": "list",
           "length": { "exact": 6 },
-          "doc": "The six hexes round the Portal, east first and on round the compass. Authored, never rolled or turned.",
-          "of": {
-            "type": "object",
-            "fields": {
-              "terrain": { "type": "text", "ref": "worldTerrain" },
-              "features": { "type": "list", "of": { "type": "text", "ref": "worldFeature" } }
-            }
-          }
+          "doc": "The terrain of the six hexes round the Portal, east first and on round the compass. Each holds the deposit of the weak material of the seat it faces (worldGen.deposits); a terrain that deposit never stands on gives way to one it does.",
+          "of": { "type": "object", "fields": { "terrain": { "type": "text", "ref": "worldTerrain" } } }
         },
         "terrainWeights": {
           "type": "object",
@@ -151,6 +145,15 @@
           "min": 0,
           "max": 3,
           "doc": "A rolled hex keeps at most this many features, in the order they are listed."
+        },
+        "deposits": {
+          "type": "object",
+          "doc": "Where each seat's deposits stand, 3/2/1 (Docs/plans/precious-deposits.md §1.2): places of the wedge as ring:step, on the corridor. A place belongs to the seat whose city is nearest; which material sits on it is the seat's strong, middle or weak one, dealt from a bag of the six orders.",
+          "fields": {
+            "strong": { "type": "list", "of": { "type": "text" }, "doc": "The places of the seat's strong material." },
+            "middle": { "type": "list", "of": { "type": "text" }, "doc": "The places of its middle material." },
+            "weak": { "type": "list", "of": { "type": "text" }, "doc": "The places of its weak material." }
+          }
         }
       }
     },
@@ -181,7 +184,18 @@
               "name": { "type": "text" },
               "feature": {
                 "type": "text",
-                "options": ["None", "Forest", "Mountain", "FertileLand", "Game", "Landmark", "Sanctuary"],
+                "options": [
+                  "None",
+                  "Forest",
+                  "Mountain",
+                  "FertileLand",
+                  "Game",
+                  "Landmark",
+                  "Sanctuary",
+                  "HeartwoodGrove",
+                  "StarfallCrater",
+                  "MoonglassSpires"
+                ],
                 "doc": "The feature a hex holds for this to be its district; None for bare ground."
               },
               "produces": {
@@ -687,53 +701,18 @@
     },
     "worldPrecious": {
       "type": "object",
-      "doc": "Precious materials: what a rich hex yields, and the lumps camps and scouting pay (Docs/features/19-world-map.md §7.4).",
+      "doc": "Precious materials: what a deposit's district yields, and the lumps camps pay (Docs/plans/precious-deposits.md).",
       "fields": {
-        "richFeatureShare": {
-          "type": "float",
-          "min": 0,
-          "max": 1,
-          "doc": "The share of Forest and Mountain hexes that are rich."
-        },
-        "richDesertShare": { "type": "float", "min": 0, "max": 1, "doc": "The share of bare Desert hexes that are rich." },
         "perDay": {
           "type": "float",
           "min": 0,
-          "doc": "What a rich district yields a day of its wedge’s material — the inner ring multiplies it."
+          "doc": "What a deposit's district yields a day of its material — the inner ring multiplies it."
         },
         "storeDays": { "type": "float", "min": 0, "doc": "How many days of yield its precious store holds." },
-        "ownShare": {
-          "type": "float",
-          "min": 0,
-          "max": 1,
-          "doc": "How often a camp’s or a scouting lump is the player’s own material; otherwise one of the other two."
-        },
         "campPerPower": {
           "type": "float",
           "min": 0,
           "doc": "Precious material a beaten camp pays, per point of its power."
-        }
-      }
-    },
-    "worldExchange": {
-      "type": "object",
-      "doc": "The Exchange: offers of one precious material for another between the players of a board (Docs/features/19-world-map.md §7.5).",
-      "fields": {
-        "offerHours": {
-          "type": "float",
-          "min": 0,
-          "doc": "How long an offer stands before it comes back to whoever made it."
-        },
-        "maxOffers": { "type": "int", "min": 1, "doc": "How many offers a player may have standing at once." },
-        "botTakeHours": {
-          "type": "float",
-          "min": 0,
-          "doc": "How long a stand-in rival takes to take a fair offer of the material it yields."
-        },
-        "botOfferAmount": {
-          "type": "int",
-          "min": 1,
-          "doc": "How much of its own material a stand-in rival offers, one for one."
         }
       }
     }

@@ -308,9 +308,6 @@ describe('a decoration is bought like anything else', () => {
     const state = gardenCity();
     const cell = validPlacementCells(state, map, 'Garden')[0]!;
     expect(placementBlock(state, map, 'Garden', cell)).toBe(null);
-    // And the gate is the count cap, which IS the Townhall gate: the Shrine
-    // opens at 9 and this city is at 6, so no cell on the map takes one.
-    expect(validPlacementCells(state, map, 'Shrine')).toEqual([]);
   });
 });
 

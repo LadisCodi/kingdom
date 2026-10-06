@@ -92,8 +92,8 @@ export type WorldEffect = { seq?: number } & (
     heroes: Array<{ id: HeroId; hp: number }>;
   }
   | { kind: 'report'; at: number; text: string; good: boolean }
-  /** Precious material the server hands back or over: an offer taken, or
-   *  one that came back (19 §7.5). */
+  /** Precious material the server hands back: an offer the closed
+   *  Exchange still held. */
   | { kind: 'goods'; at: number; lot: Lot; text: string }
   /** What a cleared dungeon room paid (11-expeditions.md §7). */
   | {
@@ -184,26 +184,19 @@ export interface ServerBoard {
   /** The lurking camps each seat has seen, as its client reported them:
    *  only a camp the player has seen raids them (19 §5.5). */
   seenCamps?: Record<number, number[]>;
-  /** The Exchange's standing offers (19 §7.5). */
+  /** Offers the closed Exchange still holds; handed back to their makers
+   *  the next time the board is resolved (core.ts `closeExchange`). */
   offers?: Offer[];
 }
 
 /** An amount of one precious material. */
 export interface Lot { id: PreciousId; amount: number }
 
-/** An offer on the Exchange: `give` is held by the server from the moment
- *  it is made until it is taken, withdrawn, or comes back. */
+/** An offer the closed Exchange held, as old boards still carry it. */
 export interface Offer {
   id: string;
   seat: number;
   give: Lot;
-  want: Lot;
-  at: number;
-  /** When it comes back to whoever made it. */
-  expiresAt: number;
-  /** When a stand-in rival takes it — set on a fair offer of what one
-   *  yields; null otherwise. */
-  takeAt: number | null;
 }
 
 /** A sixth's dungeon (19 §8.1): standing on a hex, or closed and coming
@@ -222,7 +215,7 @@ export interface ServerDungeon {
 }
 
 export interface ServerWorld {
-  version: 3;
+  version: 4;
   boards: ServerBoard[];
   /** The stand-in's nicknames, by player. The real server keeps them in a
    *  table of their own: they are unique across every board. */
@@ -322,8 +315,6 @@ export interface WorldSnapshot {
   portal: PortalView;
   /** What the server owed the player, delivered with this snapshot. */
   effects: WorldEffect[];
-  /** Every standing offer on the Exchange. */
-  offers?: OfferView[];
 }
 
 /** A standing dungeon as a player reads it (19 §8.1). */
@@ -340,20 +331,13 @@ export interface DungeonView {
 }
 
 /** An offer as a player sees it: whose, and whether it is theirs. */
-export interface OfferView { id: string; seat: number; mine: boolean; give: Lot; want: Lot; expiresAt: number }
-
-/** An Exchange command: what the player received at once, if anything. */
-export type TradeResult =
-  | { ok: true; received: Lot | null; snapshot: WorldSnapshot }
-  | { ok: false; why: Refusal };
-
 /** Why a command was refused, in a word the client turns into a line. */
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
-  | 'NoSuchOffer' | 'OwnOffer' | 'TooManyOffers' | 'BadOffer'
+
   /** A world relic's host (relic-restoration.md §5.2). */
   | 'NoChapel' | 'TooManyChapels' | 'NotAWorldRelic'
   /** The dev tool asked to play a seat that is not a rival's. */

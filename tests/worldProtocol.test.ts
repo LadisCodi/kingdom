@@ -4,7 +4,6 @@
 // retried command runs once, and what the server owes a player is sent until
 // the player has saved it.
 import { describe, expect, it } from 'vitest';
-import { WORLD_EXCHANGE } from '../src/sim/data/definitions';
 import { PRECIOUS } from '../src/sim/state';
 import { deserialize, serialize } from '../src/sim/save';
 import { generateBoard, SEAT_INDICES } from '../src/sim/world/board';
@@ -19,7 +18,7 @@ import { freshGame, freshPresenter, map, T0 } from './helpers';
 
 const HOUR = 3_600_000;
 const SEED = 0x5eed;
-const own = generateBoard('x', SEED).materials[0];
+const own = generateBoard('x', SEED).deposits[0].strong;
 const other = PRECIOUS.find((p) => p !== own)!;
 
 /** A world with the player seated on board 'x' and the rivals asleep. */
@@ -34,9 +33,12 @@ function req<K extends WorldCommandKind>(opId: string, cmd: WorldCommand<K>, ack
   return { opId, playerId: 'me', ack, cmd };
 }
 
-/** An offer a rival takes: the server then owes the player what it wanted. */
-const fairOffer: WorldCommand<'postOffer'> = { kind: 'postOffer', give: { id: own, amount: 10 }, want: { id: other, amount: 10 } };
-const TAKEN = T0 + WORLD_EXCHANGE.botTakeHours * HOUR;
+/** Something the server owes the player: an offer the closed Exchange
+ *  still held on their board, handed back the next time it is resolved. */
+const heldOffer = (w: ServerWorld, seat = 0): void => {
+  w.boards[0].offers = [{ id: 'old', seat, give: { id: other, amount: 10 } }];
+};
+const TAKEN = T0 + HOUR;
 
 describe('a retried command', () => {
   it('runs once, and is answered again with its first answer', () => {
@@ -66,7 +68,7 @@ describe('a retried command', () => {
 describe('what the server owes', () => {
   it('is sent with every answer until the player acknowledges it', () => {
     const w = seated();
-    handleWorld(w, req('offer', fairOffer), T0);
+    heldOffer(w);
     const first = handleWorld(w, req('s1', { kind: 'snapshot' }), TAKEN)!;
     expect(first.effects.map((e) => e.kind)).toEqual(['goods']);
     const seq = first.effects[0].seq!;
@@ -80,7 +82,7 @@ describe('what the server owes', () => {
 
   it('is never sent with an answer made for another seat', () => {
     const w = seated();
-    handleWorld(w, req('offer', fairOffer), T0);
+    heldOffer(w);
     const asRival = handleWorld(w, { ...req('s', { kind: 'snapshot' }), asSeat: 2 }, TAKEN)!;
     expect(asRival.effects).toEqual([]);
     expect(handleWorld(w, req('s2', { kind: 'snapshot' }), TAKEN)!.effects).toHaveLength(1);
@@ -107,8 +109,7 @@ describe('the client', () => {
 
   it('applies what it is owed once, however often it is sent, and saves before it acknowledges', async () => {
     const { game, clock, server, order } = await deaf();
-    const r = await server.postOffer({ id: own, amount: 10 }, { id: other, amount: 10 });
-    expect(r.ok).toBe(true);
+    heldOffer((server as unknown as { world: ServerWorld }).world, game.state.world.board.seat);
     const before = game.state.city.goods[other] ?? 0;
     clock.t = TAKEN;
     await game.refreshWorld();
@@ -123,7 +124,7 @@ describe('the client', () => {
 
   it('keeps the last effect it applied across a save', async () => {
     const { game, clock, server } = await deaf();
-    await server.postOffer({ id: own, amount: 10 }, { id: other, amount: 10 });
+    heldOffer((server as unknown as { world: ServerWorld }).world, game.state.world.board.seat);
     clock.t = TAKEN;
     await game.refreshWorld();
     const back = deserialize(serialize(game.state, TAKEN), map, TAKEN)!;

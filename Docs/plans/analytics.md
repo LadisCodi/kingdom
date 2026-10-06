@@ -74,6 +74,7 @@ Every event is one row:
 | `relic_forged` · `relic_chest` | `relic`, `slot` and `gems` on a forge |
 | `premium_shrine` | `n` (which), `gems` |
 | `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
+| `relic_activated` | `relic`, `level`, `shrine_level`, `mana` — a city relic woken in its Shrine |
 | `item_used` | `item`, `count` — one Use, ×N counted once; `job` (`queue`, `training`, `workshop`, `explorer`, `hex`) for a speed-up, `coin` for a choice chest |
 
 ### 3.3 The playtest signals
@@ -89,6 +90,8 @@ Every event is one row:
 | `crest_changed` | `tincture`, `charge` |
 | `friend_request` · `friend_accept` · `friend_decline` · `friend_remove` | — (only those that took); `from: 'search'` on a request from the search popup |
 | `inbox_cleared` | — |
+| `wish_pinned` · `wish_filled` | `need`, `give` (lot keys: `m:Starmetal`, `f:<relic>:<slot>`) |
+| `friend_withdrawWish` | — |
 
 ### 3.4 The store
 

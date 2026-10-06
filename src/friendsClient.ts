@@ -9,15 +9,16 @@
 
 import type { Game } from './game';
 import type { Crest } from './sim/crest';
+import { fillProblem, giveProblem, lotKey, pairs, receiveLot, takeLot, type TradeLot } from './sim/trade';
 import { townhall } from './sim/state';
 import type { SocialServerApi } from './socialServer/local';
-import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot } from './socialServer/types';
+import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot, WishView } from './socialServer/types';
 import { nicknameProblem } from './worldServer/nickname';
 import { normalCode } from './socialServer/serve';
 import { formatExact } from './ui/format';
 
-/** The friends screen's two tabs. */
-export type FriendsTab = 'list' | 'inbox';
+/** The friends screen's three tabs. */
+export type FriendsTab = 'list' | 'trade' | 'inbox';
 
 /** Where the search popup stands: being typed, sending, or answered. */
 export type SearchStage = 'typing' | 'sending' | 'sent';
@@ -41,7 +42,22 @@ export const REFUSAL_WORDS: Record<SocialRefusal, string> = {
   TheirFull: 'Their friends list is full',
   TooManySent: 'Too many requests are waiting for an answer',
   Offline: 'The messengers could not get through. Try again soon',
+  BadWish: 'Those two cannot be traded for each other',
+  TooManyWishes: 'You have as many wishes pinned as you may',
+  SameWish: 'You already wish for that',
+  WishGone: 'That wish is gone',
+  OwnWish: 'That wish is your own',
+  NotFriends: 'Only friends can fill each other\'s wishes',
+  NoFillsLeft: 'No fills left today',
 };
+
+/** Why the player cannot fill a wish, in words (sim/trade.ts `fillProblem`). */
+export const FILL_WORDS = {
+  NotEnough: 'You don\'t have it',
+  OnlyOne: 'You have only one',
+  Bound: 'Only found fragments can be given',
+  Unmet: 'You have not found this relic yet',
+} as const;
 
 /** How often the client says hello: on the screen, and anywhere else. */
 const HELLO_OPEN_S = 10;
@@ -57,6 +73,11 @@ export class FriendsClient {
   searchStage: SearchStage = 'typing';
   searchRefused: string | null = null;
   sentTo: KingdomView | null = null;
+  /** The wish being made: what is needed (step 1), what is given (step 2). */
+  wishNeed: TradeLot | null = null;
+  wishGive: TradeLot | null = null;
+  /** The wish the player just filled, for its window. */
+  justFilled: { owner: KingdomView; gave: TradeLot; got: TradeLot } | null = null;
   /** Messages read on this visit to the Inbox: they stay under New until
    *  the player leaves it, rather than jumping as they are read. */
   readThisVisit = new Set<string>();
@@ -114,13 +135,21 @@ export class FriendsClient {
     return (this.snap?.inbox ?? []).filter((m) => m.readAt === null).length;
   }
 
-  /** What the header button's dot counts: requests to answer, and any
-   *  other message not yet read (a request is both, and counts once). */
+  /** Friends' wishes the player can fill now. */
+  fillable(): WishView[] {
+    const snap = this.snap;
+    if (snap === null || snap.fillsLeft <= 0) return [];
+    return snap.friendWishes.filter((w) => fillProblem(this.game.state, w.need, w.give) === null);
+  }
+
+  /** What the header button's dot counts: requests to answer, any other
+   *  message not yet read (a request is both, and counts once), and
+   *  friends' wishes the player can fill. */
   badge(): number {
     const snap = this.snap;
     if (snap === null) return 0;
     const otherUnread = snap.inbox.filter((m) => m.readAt === null && m.state !== 'pending').length;
-    return snap.incoming.length + otherUnread;
+    return snap.incoming.length + otherUnread + this.fillable().length;
   }
 
   // ------------------------------------------------------------ the clock
@@ -141,7 +170,10 @@ export class FriendsClient {
       const s = this.game.state;
       await this.send({
         kind: 'hello',
-        progress: { townhall: townhall(s).level, cells: Object.keys(s.fog.revealed).length, crest: s.kingdom.profile.crest },
+        progress: {
+          townhall: townhall(s).level, cells: Object.keys(s.fog.revealed).length, crest: s.kingdom.profile.crest,
+          ack: s.kingdom.trade.seq,
+        },
       });
     } finally {
       this.saying = false;
@@ -298,6 +330,102 @@ export class FriendsClient {
     this.game.track('inbox_cleared');
   }
 
+  // ------------------------------------------------------------ the wish board
+
+  /** Step 1: what the player needs. */
+  openWishNeed(): void {
+    this.wishNeed = null;
+    this.wishGive = null;
+    this.game.setOverlay('wishNeed');
+  }
+
+  /** A need picked: on to step 2. */
+  pickNeed(l: TradeLot): void {
+    this.wishNeed = l;
+    this.wishGive = null;
+    this.game.setOverlay('wishGive');
+  }
+
+  pickGive(l: TradeLot): void {
+    this.wishGive = l;
+    this.game.notify();
+  }
+
+  /** Back to the Trade tab, the wish unmade. */
+  closeWish(): void {
+    this.wishNeed = null;
+    this.wishGive = null;
+    this.tab = 'trade';
+    this.game.setOverlay('friends');
+  }
+
+  /** Pin the wish: its stake leaves the player's goods now, and comes back
+   *  if the server says no. */
+  async pinWish(): Promise<void> {
+    const need = this.wishNeed;
+    const give = this.wishGive;
+    if (need === null || give === null || !pairs(need, give) || giveProblem(this.game.state, give) !== null) return;
+    takeLot(this.game.state, give);
+    const r = await this.send({ kind: 'pinWish', need, give });
+    if (r === null || !r.ok) {
+      receiveLot(this.game.state, give);
+      if (r !== null && !r.ok && r.why !== 'Offline') this.game.toast(REFUSAL_WORDS[r.why]);
+      this.game.notify();
+      return;
+    }
+    this.game.track('wish_pinned', { need: lotKey(need), give: lotKey(give) });
+    this.closeWish();
+  }
+
+  /** Take a wish down: its stake comes back as a delivery. */
+  async withdrawWish(id: string): Promise<void> {
+    await this.act(id, { kind: 'withdrawWish', id }, null);
+  }
+
+  /** Fill a friend's wish: what it needs leaves the player's goods once the
+   *  server has said yes; its stake comes as a delivery. */
+  async fillWish(w: WishView): Promise<void> {
+    const problem = fillProblem(this.game.state, w.need, w.give);
+    if (problem !== null) {
+      this.game.toast(FILL_WORDS[problem]);
+      return;
+    }
+    if (this.busy.has(w.id)) return;
+    this.busy.add(w.id);
+    this.game.notify();
+    const r = await this.send({ kind: 'fillWish', id: w.id });
+    this.busy.delete(w.id);
+    if (r === null || !r.ok) {
+      if (r !== null && !r.ok && r.why !== 'Offline') this.game.toast(REFUSAL_WORDS[r.why]);
+      this.game.notify();
+      return;
+    }
+    takeLot(this.game.state, w.need);
+    this.game.track('wish_filled', { need: lotKey(w.need), give: lotKey(w.give) });
+    this.justFilled = { owner: w.owner, gave: w.need, got: w.give };
+    this.game.setOverlay('wishFilled');
+  }
+
+  closeFilled(): void {
+    this.justFilled = null;
+    this.tab = 'trade';
+    this.game.setOverlay('friends');
+  }
+
+  /** What the server hands over — applied once each, in order, saved, and
+   *  acknowledged with the next hello. */
+  private applyDeliveries(): void {
+    const s = this.game.state;
+    const fresh = (this.snap?.deliveries ?? []).filter((d) => d.seq > s.kingdom.trade.seq);
+    if (fresh.length === 0) return;
+    for (const d of fresh) {
+      receiveLot(s, d.lot);
+      s.kingdom.trade.seq = d.seq;
+    }
+    this.game.persist?.();
+    this.game.notify();
+  }
+
   /** Share the player's code — through the phone's own share sheet where
    *  there is one, else onto the clipboard. */
   async invite(): Promise<void> {
@@ -353,7 +481,10 @@ export class FriendsClient {
   private async send(cmd: SocialCommand) {
     if (this.server === null) return null;
     const r = await this.server.send(cmd);
-    if (r.snapshot !== null) this.snap = r.snapshot;
+    if (r.snapshot !== null) {
+      this.snap = r.snapshot;
+      this.applyDeliveries();
+    }
     if (!r.ok && r.why === 'Offline' && cmd.kind !== 'hello') this.game.toast(REFUSAL_WORDS.Offline);
     this.game.notify();
     return r;

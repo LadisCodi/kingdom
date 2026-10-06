@@ -1,8 +1,10 @@
-// What the social server says and is asked (Docs/features/15-social.md §2.1).
+// What the social server says and is asked (Docs/features/15-social.md §2).
 //
 // A kingdom is known to other players by its FRIEND CODE, never by the
 // account behind it: every view and every command names a code, so no
 // client ever holds another player's user id.
+
+import type { TradeLot } from '../sim/trade';
 
 /** Another kingdom as the friends screen draws it. */
 export interface KingdomView {
@@ -23,12 +25,15 @@ export interface RequestView extends KingdomView {
   at: number;
 }
 
-/** What an Inbox message is about. A friend's trade offer will be one more. */
+/** What an Inbox message is about. */
 export type MessageKind =
   /** Someone asks to be friends: answered here as on the list. */
   | 'request'
   /** A request the player sent was accepted, or declined. */
-  | 'accepted' | 'declined';
+  | 'accepted' | 'declined'
+  /** A friend filled the player's wish; the player filled a friend's; a
+   *  wish of the player's stood its hours unfilled (§2.4). */
+  | 'wishFilled' | 'filledWish' | 'wishExpired';
 
 /** Where a request message stands. */
 export type RequestState = 'pending' | 'accepted' | 'declined' | 'expired';
@@ -46,9 +51,32 @@ export interface MessageView {
   readAt: number | null;
   /** A request's: null for any other kind. */
   state: RequestState | null;
+  /** A trade's: what the player got and gave (a wish that expired got its
+   *  stake back and gave nothing). */
+  lots?: { got: TradeLot; gave: TradeLot | null };
   /** When it goes: a pending request's answer is due then; anything else
    *  is deleted then. */
   expiresAt: number;
+}
+
+/** A wish on the board (§2.4): what its owner needs, what they give for it
+ *  — held by the server — and until when. */
+export interface WishView {
+  id: string;
+  owner: KingdomView;
+  need: TradeLot;
+  give: TradeLot;
+  at: number;
+  expiresAt: number;
+}
+
+/** Goods the server hands the player: what a filled wish needed, a filled
+ *  wish's stake, or a wish's stake back. Sent until acknowledged (`ack` on
+ *  a hello); the client applies each once, by `seq`. */
+export interface DeliveryView {
+  seq: number;
+  lot: TradeLot;
+  why: 'filled' | 'youFilled' | 'withdrawn' | 'expired';
 }
 
 /** The friends screen's whole state, as the server sees it now. */
@@ -68,6 +96,14 @@ export interface SocialSnapshot {
   suggestions: KingdomView[];
   /** The Inbox, newest first. */
   inbox: MessageView[];
+  /** The player's own open wishes, oldest first. */
+  wishes: WishView[];
+  /** Every friend's open wishes, newest first. */
+  friendWishes: WishView[];
+  /** Friends' wishes the player may still fill in this 24 hours. */
+  fillsLeft: number;
+  /** Goods the server owes the player, oldest first. */
+  deliveries: DeliveryView[];
 }
 
 /** How far a kingdom has come, and the crest it wears, reported by its
@@ -77,12 +113,17 @@ export interface SocialProgress {
   townhall: number;
   cells: number;
   crest?: string | null;
+  /** The last delivery the client has applied and saved: the server stops
+   *  sending it, and every one before it. */
+  ack?: number;
 }
 
 /** Why a command was refused. */
 export type SocialRefusal =
   | 'NoName' | 'BadNickname' | 'NicknameTaken' | 'NotFound' | 'Self' | 'AlreadyFriends'
-  | 'Full' | 'TheirFull' | 'TooManySent' | 'Offline';
+  | 'Full' | 'TheirFull' | 'TooManySent' | 'Offline'
+  /** Trading (§2.4). */
+  | 'BadWish' | 'TooManyWishes' | 'SameWish' | 'WishGone' | 'OwnWish' | 'NotFriends' | 'NoFillsLeft';
 
 /** Everything a client can ask of the social server. */
 export type SocialCommand =
@@ -101,7 +142,14 @@ export type SocialCommand =
   /** These messages have been seen. */
   | { kind: 'read'; ids: string[] }
   /** Clear every read message that waits for nothing. */
-  | { kind: 'deleteRead' };
+  | { kind: 'deleteRead' }
+  /** Pin a wish; its stake has already left the player's goods. */
+  | { kind: 'pinWish'; need: TradeLot; give: TradeLot }
+  /** Take one's own wish down: its stake comes back as a delivery. */
+  | { kind: 'withdrawWish'; id: string }
+  /** Fill a friend's wish; what it needs has already left the player's
+   *  goods, and its stake comes as a delivery. */
+  | { kind: 'fillWish'; id: string };
 
 export type SocialCommandKind = SocialCommand['kind'];
 

@@ -979,6 +979,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Owned: state.kingdom.survey.owned,
         },
         Profile: { Nickname: state.kingdom.profile.nickname, Crest: state.kingdom.profile.crest },
+        Trade: { Seq: state.kingdom.trade.seq },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -1372,6 +1373,9 @@ export function deserialize(
       nickname: typeof profile?.Nickname === 'string' ? profile.Nickname : null,
       crest: parseCrest(profile?.Crest) === null ? null : profile!.Crest!,
     };
+    // Additive (v99): a kingdom from before trading has applied no delivery.
+    const trade = kingdomDto.Trade as { Seq?: number } | undefined;
+    state.kingdom.trade = { seq: Number.isInteger(trade?.Seq) ? trade!.Seq! : 0 };
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -1695,7 +1699,7 @@ export function deserialize(
   // AFTER the modifier stack is restored: the relic passives are re-derived
   // from the levels and the legendary boons from the roster, so a save written
   // before either curve was rebalanced loads correct rather than stale — while
-  // everything genuinely stateful (a Haste still running, a season's cards)
+  // everything genuinely stateful (a zone still standing, a season's cards)
   // comes back from the file untouched. Neither needs a migrator for the same
   // reason: both are DERIVED, and a save that predates them re-derives to the
   // right answer on the first load.

@@ -32,6 +32,9 @@ const MIX: Record<WorldFeature | 'None', Mix> = {
   Landmark: { count: 6, kinds: [['rock', 2], ['flowers', 2], ['tuft', 2]], inner: 0.6 },
   Sanctuary: { count: 6, kinds: [['flowers', 3], ['rock', 1], ['tuft', 2]], inner: 0.6 },
   Dungeon: { count: 6, kinds: [['rock', 3], ['tuft', 2], ['bush', 1]], inner: 0.6 },
+  HeartwoodGrove: { count: 7, kinds: [['tree', 3], ['flowers', 2], ['bush', 2]], inner: 0.55 },
+  StarfallCrater: { count: 6, kinds: [['rock', 4], ['tuft', 2]], inner: 0.6 },
+  MoonglassSpires: { count: 6, kinds: [['rock', 3], ['tuft', 2], ['flowers', 1]], inner: 0.6 },
 };
 
 /** The farthest a decoration stands from the middle, as a share of the

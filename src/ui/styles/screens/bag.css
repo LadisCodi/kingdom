@@ -301,7 +301,7 @@
 .rl-card.is-world { border-color: rgba(79, 163, 199, 0.6); }
 .rl-card-art { display: grid; place-items: center; width: calc(var(--px) * 72); height: calc(var(--px) * 72); }
 .rl-art, .rl-hero-art { width: 100%; height: 100%; object-fit: contain; }
-.rl-art.is-glyph, .rl-hero-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 40); }
+.rl-art.is-glyph, .rl-hero-art.is-glyph { display: grid; place-items: center; }
 .rl-card-name { font-weight: var(--weight-title); text-align: center; line-height: 1.1; }
 .rl-card-ready { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--leaf-dark); }
 /* The level: a blue wax seal, cracked grey before the relic is restored. */
@@ -361,13 +361,218 @@
 /* Up to five Shrines to choose from: they wrap two to a row. */
 .rl-host .rl-forge { flex-wrap: wrap; }
 .rl-host .rl-forge > .k-btn { flex: 1 1 40%; }
-.rl-spell, .rl-chest, .rl-host {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--px) * 8);
-  padding-top: calc(var(--px) * 10);
-  border-top: calc(var(--px) * 2) solid var(--section-line);
-}
+
 .rl-shrines { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 10); font-weight: var(--weight-strong); color: var(--ink); }
 .rl-shrines .icon { --icon-size: calc(var(--px) * 24); }
 .rl-shrines > .k-btn { margin-left: auto; }
+
+/* WHERE A RELIC STANDS, on its card (M80). Awake: the card is lit and a
+ * gold plank carries the time. Asleep: the art dims under the kit's resting
+ * Zs, and the card's own priced Activate sits under the name. In the Bag or a
+ * Chapel: one muted line. In fragments: the art is a silhouette. */
+.rl-card-art { position: relative; --zzz-size: calc(var(--px) * 13); }
+.rl-card-where { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--ink-muted); }
+.rl-card-count { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.rl-card.is-awake {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 calc(var(--px) * 12) rgba(242, 178, 51, 0.75), 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.35);
+}
+.rl-card.is-awake .rl-card-art { filter: drop-shadow(0 0 calc(var(--px) * 8) rgba(255, 214, 110, 0.95)); }
+.rl-card.is-asleep .rl-art { filter: saturate(0.45) brightness(0.88); }
+.rl-card.is-broken .rl-art { filter: brightness(0) opacity(0.55); }
+.rl-card:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 2); }
+
+/* THE GOLD PLANK (assets/plank-gold.png, 765×169, three-sliced at 115 like
+ * the head panel's — its nails live in the ends): an awake relic's time on
+ * its card, and — over the art — its sheet's AWAKE. Painted wood, dark ink. */
+.rl-awake-plate {
+  --plate-h: calc(var(--px) * 26);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  height: var(--plate-h);
+  box-sizing: border-box;
+  padding: 0 calc(var(--px) * 2);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--plate-h) * 115 / 169);
+  border-image: url('../../assets/plank-gold.png') 0 115 fill / 0 calc(var(--plate-h) * 115 / 169) stretch;
+  color: var(--wood-dark);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rl-awake-plate .icon { --icon-size: calc(var(--px) * 16); }
+.rl-awake-plate.is-ribbon {
+  position: absolute;
+  top: calc(var(--px) * -4);
+  left: 50%;
+  translate: -50% 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.rl-hero { --zzz-size: calc(var(--px) * 22); }
+.rl-hero.is-awake .rl-hero-art { filter: drop-shadow(0 0 calc(var(--px) * 14) rgba(255, 214, 110, 0.95)); }
+.rl-hero.is-asleep .rl-hero-art { filter: saturate(0.45) brightness(0.88); }
+
+/* A RELIC'S SHEET takes the whole box between the header and the nav. */
+.k-sheet.is-tall.is-relic { height: 100%; max-height: 100%; }
+
+/* THE LEVEL SECTION: the level, the six slots and the press, on one kit
+ * section — they are one decision. */
+.rl-level { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 10); padding: calc(var(--px) * 10) calc(var(--px) * 8); }
+.rl-level-head { display: flex; align-items: baseline; justify-content: space-between; align-self: stretch; padding-inline: calc(var(--px) * 4); }
+.rl-level-head > b { font-size: var(--text-body); font-weight: var(--weight-title); color: var(--ink); }
+.rl-level-head > span { font-size: var(--text-desc); color: var(--ink-muted); }
+
+/* THE SHEET'S BLOCKS, each under its kit section heading: no rules of
+ * their own, the heading is the separator. */
+.rl-block { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
+.rl-note { margin: 0; text-align: center; font-size: var(--text-desc); color: var(--ink-muted); }
+/* The building card's tiles, two to a row: a relic's tile carries its next
+ * value too (`+30% → +40%`), which the card's 112 px was never sized for. */
+.rl-stats > .dc-stat.k-section { width: min(calc(var(--px) * 164), calc((100% - var(--stat-gap)) / 2)); }
+
+/* THE ACTIVATION (M81–M83): the plain wax seal (assets/seal-plain.png, the
+ * Survey's "ahead") stamped ASLEEP beside the priced Activate; awake, the
+ * kit's blue timer bar running down the window. */
+.rl-sleep-row { display: flex; align-items: center; justify-content: center; gap: calc(var(--px) * 12); }
+.rl-wax {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--px) * 64);
+  height: calc(var(--px) * 64);
+  background: url('../../assets/seal-plain.png') center / contain no-repeat;
+  color: var(--wood-dark);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-title);
+}
+.rl-awake-row { display: flex; align-items: center; gap: calc(var(--px) * 8); }
+.rl-awake-row > .icon { flex: none; --icon-size: calc(var(--px) * 28); }
+.rl-awake-row > .k-trough { flex: 1 1 auto; }
+
+/* THE SHRINE'S SLOT IS ITS ALTAR (assets/shrine-altar-empty.png with the
+ * carved +, shrine-altar.png once a relic stands in it; 400×469, one size so
+ * the niche never moves). The relic is set in the niche — its foot on the
+ * niche's floor, 43% down the art — dim asleep, lit awake. */
+.dc-altar {
+  position: relative;
+  align-self: center;
+  width: calc(var(--px) * 180);
+  aspect-ratio: 400 / 469;
+  padding: 0;
+  border: none;
+  background: url('../../assets/shrine-altar-empty.png') center / contain no-repeat;
+  cursor: pointer;
+  --zzz-size: calc(var(--px) * 16);
+}
+.dc-altar.is-held { background-image: url('../../assets/shrine-altar.png'); }
+.dc-altar:active { translate: 0 calc(var(--px) * 2); }
+.dc-altar:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 4); border-radius: var(--radius); }
+.dc-altar-relic {
+  position: absolute;
+  left: 50%;
+  bottom: 57%;
+  width: 40%;
+  height: auto;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  object-fit: contain;
+}
+.dc-altar.is-asleep .dc-altar-relic { filter: saturate(0.45) brightness(0.88); }
+.dc-altar.is-awake .dc-altar-relic { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 214, 110, 0.95)); }
+.dc-altar > .k-zzz { top: 8%; right: 22%; }
+.dc-altar > .k-cta { top: 6%; right: 6%; }
+.dc-shrine > .dc-shrine-says { align-items: center; text-align: center; }
+
+/* AN EMPTY RELIC SLOT: the hero slot's dashed gold well (heroPicker.css
+ * `.hc.is-empty`), square, for a relic card's size. */
+.rl-empty {
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 88);
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) dashed color-mix(in srgb, var(--gold-dark) 60%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, var(--parchment-shade));
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.25);
+  padding: 0;
+  cursor: pointer;
+}
+.hp-slots > .rl-empty { width: var(--hc-w); }
+/* In the picker: the relic cards at the hero cards' width, the chosen one
+ * ringed gold and checked (the hero picker's `hero-check`). */
+.rl-card.is-pick { width: var(--hc-w); padding-inline: calc(var(--px) * 4); }
+.rl-card.is-pick .rl-card-art { width: calc(var(--hc-w) * 0.62); height: calc(var(--hc-w) * 0.62); }
+.rl-card.is-pick .rl-card-name { font-size: var(--text-desc); }
+/* What a relic does, under its name in the picker — what the choice is about. */
+.rl-card-effect { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--leaf-dark); text-align: center; line-height: 1.15; }
+/* Already in a Shrine: the Shrine mark on the art's bottom-right corner. */
+.rl-pick-host { position: absolute; top: calc(var(--hc-w) * 0.42); right: calc(var(--px) * 4); --icon-size: calc(var(--px) * 26); filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1) rgba(40, 22, 10, 0.5)); }
+/* The move confirmation: the relic, the question, Cancel and Move. */
+.rl-move { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 10); text-align: center; }
+.rl-move-art { display: grid; place-items: center; width: calc(var(--px) * 96); height: calc(var(--px) * 96); }
+.rl-move > p { margin: 0; }
+/* The check sits top-left: the level seal holds the top-right corner. */
+.rl-card.is-pick .hc-check { right: auto; left: calc(var(--hc-w) * -0.05); }
+.rl-card.is-picked { border-color: var(--gold-dark); box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold), 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.35); }
+
+/* A SHRINE'S RELIC ON ITS PLINTH, in the Shrine's card (M82). */
+.dc-shrine-plinth {
+  position: relative;
+  --zzz-size: calc(var(--px) * 14);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--px) * 72);
+  height: calc(var(--px) * 72);
+  border-radius: calc(var(--px) * 10);
+  background: radial-gradient(ellipse at 50% 85%, rgba(92, 58, 30, 0.35), transparent 65%);
+}
+.dc-shrine-art { width: 100%; height: 100%; object-fit: contain; }
+.dc-shrine-art.is-glyph { display: grid; place-items: center; }
+.dc-shrine-plinth.is-asleep .dc-shrine-art { filter: saturate(0.45) brightness(0.85); }
+.dc-shrine-plinth.is-awake .dc-shrine-art { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 214, 110, 0.95)); }
+.dc-shrine-says { display: flex; flex-direction: column; gap: calc(var(--px) * 2); min-width: 0; color: var(--ink); }
+.dc-shrine-says > span { color: var(--ink-muted); font-size: var(--text-desc); }
+
+/* THE ASLEEP TAB on the map's right edge (M85): a wooden slab with the
+ * relic's art, its line and an Activate chip, sliding in like the ad tab. */
+.rs-tab {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8) calc(var(--px) * 6) calc(var(--px) * 6);
+  background: url('../../assets/tex-wood.jpg') 0 0 / calc(var(--px) * 256) calc(var(--px) * 256);
+  border: var(--outline) solid var(--wood-dark);
+  border-right: none;
+  border-radius: calc(var(--px) * 12) 0 0 calc(var(--px) * 12);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 3) 0 var(--wood-dark);
+  transform: translateX(110%);
+}
+.rs-tab.is-in { animation: ad-tab-in var(--motion-sheet) ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .rs-tab { transform: none; }
+  .rs-tab.is-in { animation: none; }
+}
+.rs-tab-body {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  max-width: calc(var(--px) * 150);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink-inverse);
+  font: inherit;
+  font-weight: var(--weight-strong);
+  font-size: var(--text-desc);
+  line-height: 1.15;
+  text-align: left;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 18, 8, 0.6);
+  cursor: pointer;
+}
+.rs-tab-art { display: grid; place-items: center; flex: none; width: calc(var(--px) * 40); height: calc(var(--px) * 40); }
+.rs-tab-img { width: 100%; height: 100%; object-fit: contain; filter: saturate(0.5) brightness(0.9); }

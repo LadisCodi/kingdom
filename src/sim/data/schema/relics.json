@@ -2,16 +2,23 @@
   "type": "object",
   "fields": {
     "artifactCooldownSeconds": { "type": "int" },
-    "artifactAutoTapPerSecond": { "type": "int" },
     "artifactRadiusSteps": { "type": "list", "of": { "type": "int" } },
     "fragments": {
       "type": "object",
       "doc": "Fragments and restoration (Docs/proposals/relic-restoration.md §2, §4, §9, §11).",
       "fields": {
         "keystoneOneIn": { "type": "int", "min": 1, "doc": "A fragment that drops is the keystone one time in this many." },
-        "keystoneWorth": { "type": "int", "min": 1, "doc": "What a spare keystone counts for in levels." },
-        "levelCostBase": { "type": "int", "min": 1, "doc": "Spares the first level-up costs." },
-        "levelCostEvery": { "type": "int", "min": 1, "doc": "One more spare every this many levels." },
+        "keystoneWorth": { "type": "int", "min": 1, "doc": "What a spare keystone counts for towards a replica's spares." },
+        "levelStardustBase": {
+          "type": "int",
+          "min": 1,
+          "doc": "Stardust the first level-up costs (level 1 to 2). Every level-up also takes one fragment of each of the six slots."
+        },
+        "levelStardustGrowth": {
+          "type": "float",
+          "min": 1,
+          "doc": "Each level-up costs this many times the one before, rounded to three figures."
+        },
         "replicaFreeSparesPiece": { "type": "int", "min": 1, "doc": "Spares that forge a missing piece without Gems." },
         "replicaFreeSparesKeystone": { "type": "int", "min": 1, "doc": "Spares that forge the missing keystone without Gems." },
         "replicaSpares": { "type": "int", "min": 0, "doc": "Spares the Gem forge takes besides its Gems." },
@@ -40,7 +47,6 @@
       "type": "object",
       "doc": "The Shrines (relic-restoration.md §5.1).",
       "fields": {
-        "manaCap": { "type": "int", "min": 0, "doc": "Max Mana each Shrine standing adds." },
         "premiumGems": {
           "type": "list",
           "of": { "type": "int", "min": 0 },

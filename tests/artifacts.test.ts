@@ -1,5 +1,6 @@
-// Relics as passives (Docs/features/09-relics.md §1, §2): a restored relic
-// is always on and has no ceiling. How a relic is found and restored is
+// Relics as passives (Docs/features/09-relics.md §1, §2): a restored relic's
+// number has no ceiling — a world relic's while a Chapel holds it, a city
+// relic's while it is awake in its Shrine. How a relic is found and restored is
 // tests/relics.test.ts.
 
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -28,12 +29,15 @@ const chapels = (state: GameState): GameState => {
   return state;
 };
 
-/** A Shrine at level 5 (radius 4) beside `AT`, holding `relic`. */
+/** A Shrine beside `AT`, holding `relic` and awake — its window open for a
+ *  day, as an activation would leave it (sim/hosts.ts). */
 function host(state: GameState, relic: ArtifactId): void {
   state.city.districts.push({
     uniqueId: `shrine_${relic}`, definitionId: 'Shrine', ordinal: 9, level: 5, assignedWorkers: 0,
     location: { x: 0, y: 2 }, state: 'Built', visualVariant: 1, hosts: relic,
   });
+  const endsAt = state.lastAdvance + 86_400_000;
+  state.artifacts.casts[relic] = { endsAt, readyAt: endsAt };
 }
 
 describe('a relic is a permanent passive with no ceiling', () => {

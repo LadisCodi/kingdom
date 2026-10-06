@@ -25,19 +25,20 @@ import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtCells,
-  type HarvestSourceId,
+  type ArtifactId, type HarvestSourceId,
   type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
+import { drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble, drawManaBubble } from './collectBubbleArt';
+import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
-  drawIcon, drawSprite, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
+  drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
@@ -87,7 +88,21 @@ export interface MarkerLayer {
    *  cells each one covers, and how much of its window is left. */
   spellZones: Array<{
     glyph: string; centre: Coord; cells: Coord[]; left: number;
+    /** The relic's own art for the wheel's face, when it has one. */
+    sprite?: string;
   }>;
+  /** EVERY SHRINE HOLDING A RELIC (09-relics.md §11.6, M84): the relic's art
+   *  floats over an awake one and rests on the altar of a sleeping one, which
+   *  carries a Mana bubble with its price. */
+  shrineRelics: Array<{
+    relic: ArtifactId; districtId: string; location: Coord; size: { x: number; y: number }; sprite: string;
+    awake: boolean; cost: number; affordable: boolean;
+  }>;
+  /** What an awake aura pays a building inside it, on a small coin badge
+   *  over its roof: `+30%` (M84). */
+  auraBadges: Array<{ districtId: string; location: Coord; size: { x: number; y: number }; text: string }>;
+  /** A relic just woken: a ring sweeping over its aura, `t` 0 → 1 (M85). */
+  relicBursts: Array<{ centre: Coord; size: { x: number; y: number }; radius: number; t: number }>;
 }
 
 /**
@@ -1455,10 +1470,37 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.spellBorder;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.font = `${Math.round(r)}px ${labelFace()}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(zone.glyph, cx, cy + r * 0.05);
+    // The relic's own art on the face when it has landed; its glyph until.
+    if (zone.sprite === undefined
+      || !drawSprite(ctx, zone.sprite, cx - r * 0.8, cy - r * 0.8, r * 1.6, r * 1.6)) {
+      ctx.font = `${Math.round(r)}px ${labelFace()}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(zone.glyph, cx, cy + r * 0.05);
+    }
+    ctx.restore();
+  }
+
+  // Pass 3a-ii: A RELIC JUST WOKEN (M85) — a bright ring sweeping out from the
+  // Shrine to the aura's edge, fading as it lands. On the wall clock, like
+  // every other flourish: nothing in the sim waits for it.
+  for (const burst of markers.relicBursts) {
+    const plot = camera.plotBox(burst.centre, burst.size);
+    const cx = plot.x + plot.w / 2;
+    const cy = plot.y + plot.h / 2;
+    // The aura's half-width on screen: its rings plus half the footprint.
+    const reach = (burst.radius + burst.size.x / 2) * plot.w / burst.size.x;
+    const ease = 1 - (1 - burst.t) ** 3;
+    ctx.save();
+    ctx.globalAlpha = (1 - burst.t) * 0.9;
+    ctx.strokeStyle = PALETTE.spellGlow;
+    ctx.lineWidth = Math.max(3, size * 0.12 * (1 - burst.t));
+    ctx.shadowColor = PALETTE.spellBorder;
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    // The ground is a diamond on screen, so the ring is an ellipse half as tall.
+    ctx.ellipse(cx, cy, Math.max(1, reach * ease), Math.max(1, reach * ease * 0.5), 0, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -1591,6 +1633,43 @@ export function drawMap(
   }
   }
 
+  // Pass 3c: THE RELIC IN ITS SHRINE (09-relics.md §11.6, M84). Awake, its
+  // art floats over the roof with a glow and a slow bob — the one sign on the
+  // building itself that the aura round it is working; asleep, it rests small
+  // and dim on the altar.
+  const relicClock = performance.now();
+  for (const held of markers.shrineRelics) {
+    const art = artOf.get(held.districtId);
+    if (!art) continue;
+    const plot = camera.plotBox(held.location, held.size);
+    if (held.awake) {
+      const s = plot.w * 0.5;
+      const bob = reducedMotion?.matches ? 0 : Math.sin(relicClock / 700) * s * 0.06;
+      const x = art.x + art.w / 2 - s / 2;
+      const y = art.y + art.h * 0.12 - s * 0.95 + bob;
+      // The halo first, the art over it; without the halo it still floats.
+      drawSpriteGlow(ctx, held.sprite, x, y, s, s, s * 0.12, PALETTE.spellGlow);
+      drawSprite(ctx, held.sprite, x, y, s, s);
+    } else {
+      const s = plot.w * 0.3;
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.filter = 'saturate(0.35) brightness(0.8)';
+      drawSprite(ctx, held.sprite, plot.x + plot.w / 2 - s / 2, plot.y + plot.h * 0.5 - s * 0.9, s, s);
+      ctx.restore();
+    }
+  }
+
+  // Pass 3d: WHAT AN AWAKE AURA PAYS, a small parchment tag over each roof
+  // it reaches (M84) — `+30%` beside the coin it is about.
+  for (const badge of markers.auraBadges) {
+    const art = artOf.get(badge.districtId);
+    if (!art) continue;
+    const plot = camera.plotBox(badge.location, badge.size);
+    drawAuraBadge(ctx, badge.text, labelFace(), art.x + art.w / 2, art.y + art.h * 0.18,
+      wholePx(Math.max(11, plot.w * 0.13), 11));
+  }
+
   // Pass 4: COLLECT BUBBLES — over the whole world, under the UI. One per
   // building with something in its store (render/collectBubbles.ts).
   const clock = performance.now();
@@ -1623,6 +1702,19 @@ export function drawMap(
     markLairBubble(id, drawLairBubble(ctx, bubbles, `lair:${id}`, LAIR_AVATAR[id], countdown,
       labelFace(), art.x + art.w / 2, top + size * 0.1,
       Math.max(28, Math.min(64, size * 0.62)), clock));
+  }
+
+  // Pass 4.6: A SLEEPING SHRINE'S MANA BUBBLE (M84) — the price of waking
+  // its relic, over its roof. A tap on it opens the Shrine's card, so its
+  // rect is kept (render/shrineBubbles.ts).
+  clearShrineBubbles();
+  for (const held of markers.shrineRelics) {
+    if (held.awake) { bubbles.forget(`shrine:${held.districtId}`); continue; }
+    const art = artOf.get(held.districtId);
+    if (!art) continue;
+    markShrineBubble(held.relic, drawManaBubble(ctx, bubbles, `shrine:${held.districtId}`,
+      formatExact(held.cost), held.affordable, labelFace(),
+      art.x + art.w / 2, art.y + art.h * 0.12, Math.max(26, Math.min(56, size * 0.5)), clock));
   }
 
   // Pass 5: floaters.

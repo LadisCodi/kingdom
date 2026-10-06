@@ -1,0 +1,37 @@
+WORLD HEX SPRITES — THE PRECIOUS DEPOSITS for the game "Kingdom" (Docs/plans/precious-deposits.md §1.1).
+Attached: ref-hexes.png (a montage of shipped hex sprites: forest, mountain, sanctuary, landmark; logging camp, stone pit, hunting grounds, homestead) and ref-precious.png (the three precious materials as the game's icons: Heartwood, Starmetal, Moonglass).
+
+=== SHARED PREAMBLE (every sheet) ===
+GENERATE NEW IMAGES. Do not edit or export the attached files: they are ONLY style references.
+- ref-hexes.png = hex sprites that already ship in the game. THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same scale of trees, rocks, houses, same camera. Your sprites sit next to these on the same board: match them exactly.
+- ref-precious.png = the three precious materials. Each deposit must make its material instantly recognisable: HEARTWOOD = logs whose cut ends glow warm amber-orange with a spiral; STARMETAL = a silver-blue star-ore with a glowing white star at its heart; MOONGLASS = pale lavender-blue crystals with a soft glow.
+
+WHAT A SPRITE IS
+- The CONTENT of one hex of the world board, standing on a separate ground tile the game draws under it. NO ground plate, NO base, NO hex outline, NO drop shadow. Only the objects, on full transparency. Small tufts of grass, bushes and short dirt paths between objects are fine, as in ref-hexes.png.
+- Camera: from a little south of overhead, objects seen from a high three-quarter angle, standing upright.
+- Footprint: a hex tile seen at this tilt has a top face like an elongated hexagon, about 1.4 times wider than tall. Every object stands inside it; things may rise above it.
+- Draw as if shown about 130 px wide on a phone: big readable shapes, no tiny details.
+- Districts INCLUDE the deposit they work, as the logging camp includes its forest. Blue roofs, cream walls and stone, golden timber, as in ref-hexes.png.
+
+EACH SHEET: one landscape image, 1536x1024, FOUR sprites in a 2x2 grid (top-left, top-right, bottom-left, bottom-right). Nothing may cross the vertical or the horizontal midline: keep a clear 60 px band of transparency along both midlines. Every sprite about the same size relative to its quadrant as in ref-hexes.png.
+
+End of every request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG. Do not re-render to fix a prop count.
+
+=== SHEET 1 — THE DEPOSITS ===
+TL: HEARTWOOD GROVE — an enchanted grove: a few old broad trees whose exposed heartwood glows warm amber, a couple of felled logs with glowing amber spiral ends, soft golden motes of light floating, bushes and grass. Magical but cozy. No buildings.
+TR: STARFALL CRATER — a small round crater where a star fell, its scorched rim of dark rocks, and in its centre a big silver-blue star-ore lump glowing white-blue, a few smaller shards around it and faint sparkles. On desert sand: a few dry rocks. No buildings.
+BL: MOONGLASS SPIRES — a cluster of tall pale lavender-blue crystal spires and needles rising from the ground, softly glowing, a few small crystals and grey rocks at their foot, some grass. No buildings.
+BR: HEARTWOOD GROVE v2 — the same kind of place with a different arrangement: one huge ancient glowing-heart tree in the middle and smaller trees round it.
+
+=== SHEET 2 — THE DISTRICTS ===
+TL: GROVE CAMP — the HEARTWOOD GROVE with a small woodcutters' hut (blue roof, cream walls, golden timber), a neat stack of glowing amber heartwood logs, a sawhorse, the enchanted trees around.
+TR: STARMETAL DIG — the STARFALL CRATER with a wooden winch scaffold over the glowing ore, a small blue-roofed shed and an ore cart full of silver-blue star-ore.
+BL: SPIRE QUARRY — the MOONGLASS SPIRES with a small blue-roofed cutters' shed, wooden crates filled with cut moonglass crystals, a ladder against a spire.
+BR: STARFALL CRATER v2 — the same kind of place with a different arrangement: an oval crater with the ore split in two glowing pieces.
+
+=== RESULTS (2026-10-06) ===
+Both sheets in two parallel ChatGPT chats, first try, true alpha (corner srgba(0,0,0,0)); raw in originals/deposits-sheet1.png, deposits-sheet2.png.
+Detached specks and tufts under 2% of a quadrant's largest blob were dropped before cutting (they floated the foot line), then norm_hex.py --fill 0.9:
+- sheet 1: TL whex_heartwood_grove, TR whex_starfall_crater, BL whex_moonglass_spires, BR whex_heartwood_grove_2
+- sheet 2: TL whex_grove_camp, TR whex_starmetal_dig, BL whex_spire_quarry, BR whex_starfall_crater_2
+The crater sprites carry their own patch of sand under the rim (drawn on Desert anyway).

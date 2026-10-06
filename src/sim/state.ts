@@ -479,6 +479,10 @@ export interface GameState {
      *  goes out — and the crest it chose (sim/crest.ts), null while it wears
      *  its nickname's. The servers hold copies; this is the player's own. */
     profile: { nickname: string | null; crest: string | null };
+    /** TRADING WITH FRIENDS (sim/trade.ts): the last of the social server's
+     *  deliveries applied — goods a fill, a withdrawn or an expired wish
+     *  sends — so each lands once however often it is sent. */
+    trade: { seq: number };
   };
   player: {
     wallet: Wallet;

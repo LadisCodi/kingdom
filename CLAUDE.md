@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 123 suites, keep them all green
+npm test             # vitest run — 124 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -185,7 +185,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 98; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 99; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.
@@ -235,8 +235,9 @@ than the build is rejected rather than downgraded.
 - **Every tap on the ground costs 1 Mana** (trees, berries, crops, rocks,
   mountains, shoals); paying fog costs Gold. **A tap on a building never costs
   Mana**: a ready store is collected free, otherwise the building opens.
-  There is no house tap — only the Tithe pulls rent forward. Nothing else
-  draws against the pool; artifact upkeep was removed.
+  There is no house tap, and nothing pulls rent forward. Beyond taps, Mana
+  pays a city relic's activation in its Shrine and a world relic's spell;
+  artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
   `adOfferPill.ts`. They hide behind any sheet.

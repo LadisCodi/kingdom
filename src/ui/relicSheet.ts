@@ -11,13 +11,15 @@ import type { Game, RelicView } from '../game';
 import { ARTIFACTS, RELIC_RULES } from '../sim/data/definitions';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
-import { el, formatDuration, formatExact } from './format';
-import { btn, iconEl, sheet } from './kit';
+import { el, formatCountdown, formatDuration, formatExact } from './format';
+import { btn, iconEl, progress, restMarks, sectionHead, sheet } from './kit';
+import { relicStatChanges } from './relicStats';
 
-/** The relic's own art, or its glyph while the art has not landed. */
-const relicArt = (view: RelicView, cls: string): HTMLElement => {
+/** The relic's own art, or the Relics mark while the art has not landed —
+ *  an atlas icon, never an emoji (tests/icons.test.ts). */
+export const relicArt = (view: { sprite: string }, cls: string): HTMLElement => {
   const url = spriteUrl(view.sprite);
-  return url ? spriteImgAt(url, cls) : el('span', { class: `${cls} is-glyph` }, view.glyph);
+  return url ? spriteImgAt(url, cls) : el('span', { class: `${cls} is-glyph` }, iconEl('relics', { size: 'lg' }));
 };
 
 /** The six slots in a row: a shard where a fragment is held (with the count
@@ -38,15 +40,67 @@ const seal = (view: RelicView): HTMLElement =>
   el('span', { class: `rl-seal${view.restored ? '' : ' is-broken'}` },
     view.restored ? `Lv ${formatExact(view.level)}` : '—');
 
-/** One relic's card in the Bag: two a row (M72). */
+/** What a card says under its name about where the relic stands (M80). In
+ *  fragments, its slots; awake, a gold plank with its time; asleep, its own
+ *  Activate (the Zs are on the art); otherwise one muted line. */
+function cardStatus(game: Game, view: RelicView): HTMLElement[] {
+  switch (view.status) {
+    case 'broken':
+      return [slotRow(view, false),
+        view.canRestore
+          ? el('span', { class: 'rl-card-ready' }, 'Ready to restore')
+          : el('span', { class: 'rl-card-count' },
+            `${formatExact(view.slots.filter((n) => n > 0).length)} / ${formatExact(view.slots.length)}`)];
+    case 'awake': {
+      const a = game.relicActivation(view.id);
+      const left = formatCountdown(Math.ceil((a?.leftMs ?? 0) / 1000));
+      return [el('span', { class: 'rl-awake-plate' }, iconEl('hourglass', { size: 'sm' }), `Awake · ${left}`)];
+    }
+    case 'asleep': {
+      const button = activateButton(game, view.id);
+      // A press of its own, not a tap on the card under it.
+      button.addEventListener('click', (e) => e.stopPropagation());
+      return [button];
+    }
+    case 'chapel':
+      return [el('span', { class: 'rl-card-where' }, 'In a Chapel')];
+    case 'bag':
+      return [el('span', { class: 'rl-card-where' }, 'In the Bag')];
+  }
+}
+
+/** ACTIVATE: the one press that wakes a city relic, wherever it is offered
+ *  — its card, its sheet, its Shrine's card. A spell is a magical action, so
+ *  it is the emerald stone (§3.3), with its Mana inside it (§6.4). */
+export function activateButton(game: Game, id: ArtifactId): HTMLButtonElement {
+  const a = game.relicActivation(id);
+  return btn({
+    label: 'Activate',
+    kind: 'primary',
+    finish: 'gem',
+    costExtra: [{ icon: 'Mana', amount: formatExact(a?.cost ?? 0), short: !(a?.affordable ?? false) }],
+    onClick: () => game.doActivateRelic(id),
+  });
+}
+
+/** One relic's card in the Bag: two a row (M72, M80). */
 export function relicCardTile(game: Game, view: RelicView): HTMLElement {
-  const b = el('button', { class: `rl-card is-${view.kind}`, type: 'button', 'aria-label': view.name },
-    el('span', { class: 'rl-card-art' }, relicArt(view, 'rl-art')),
-    seal(view),
+  // A div acting as the button, because an asleep card carries a button of
+  // its own and a button may not hold another.
+  const b = el('div', {
+    class: `rl-card is-${view.kind} is-${view.status}`, role: 'button', tabindex: '0', 'aria-label': view.name,
+  },
+    el('span', { class: 'rl-card-art' }, relicArt(view, 'rl-art'),
+      ...(view.status === 'asleep' ? [restMarks()] : [])),
+    ...(view.restored ? [seal(view)] : []),
     el('span', { class: 'rl-card-name' }, view.name),
-    slotRow(view, false),
-    ...(view.canRestore ? [el('span', { class: 'rl-card-ready' }, 'Ready to restore')] : []));
+    ...cardStatus(game, view));
   b.addEventListener('click', () => game.openRelic(view.id));
+  b.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    game.openRelic(view.id);
+  });
   return b;
 }
 
@@ -58,7 +112,7 @@ function shrineRow(game: Game): HTMLElement {
     iconEl('Shrine', { size: 'sm' }),
     el('span', {}, `Shrines ${formatExact(offer.standing)} / ${formatExact(offer.max)}`),
     ...(offer.gems === null ? [] : [btn({
-      label: 'Build a Shrine',
+      label: 'Build',
       kind: 'gem',
       cost: { Gems: offer.gems },
       have: (c) => game.walletValue(c),
@@ -77,7 +131,7 @@ export function relicTab(game: Game): HTMLElement[] {
   for (const kind of ['city', 'world'] as const) {
     const of = rows.filter((r) => r.kind === kind);
     if (of.length === 0) continue;
-    out.push(el('div', { class: 'k-section-head' }, kind === 'city' ? 'City' : 'World'));
+    out.push(sectionHead(kind === 'city' ? 'City' : 'World'));
     out.push(el('div', { class: 'rl-grid' }, ...of.map((r) => relicCardTile(game, r))));
   }
   return out;
@@ -89,11 +143,11 @@ function hostLines(game: Game, view: RelicView): HTMLElement[] {
   const host = view.host;
   if (host === null) return [];
   const world = view.kind === 'world';
-  return [el('div', { class: 'rl-host' },
+  return [el('div', { class: 'rl-block rl-host' },
     el('div', { class: `rl-line${host.at === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
       el('span', {}, host.at !== null ? `Hosted in ${host.at}`
         : world ? 'Not hosted — it acts only from a Chapel on the world map'
-          : 'Not hosted — it acts only inside a Shrine\u2019s aura')),
+          : 'Not hosted — host it in a Shrine, then activate it')),
     host.shrines.length === 0 && host.at === null
       ? el('div', { class: 'rl-line is-muted' }, el('span', {}, world
         ? 'Build a Chapel into a district you hold to host it'
@@ -107,9 +161,52 @@ function hostLines(game: Game, view: RelicView): HTMLElement[] {
         ...(host.at === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(view.id) })])))];
 }
 
-/** The spell, once restored: cast it, or how long until it can be. A city
- *  relic's is cast over its Shrine's aura, so it waits for one. */
-export function spell(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {
+/**
+ * A CITY RELIC'S ACTIVATION, once it is hosted (sim/hosts.ts; M81–M83):
+ * asleep, a grey seal, the Activate button and what a window buys; short of
+ * Mana, how soon the pool holds the price and a flask from the Bag; awake, a
+ * gold bar running down the window. The relic's level sets the power and
+ * reach; its Shrine's level, the window.
+ */
+export function activation(game: Game, id: ArtifactId): HTMLElement | null {
+  const a = game.relicActivation(id);
+  if (a === null || !a.hosted) return null;
+  const window = formatDuration(Math.ceil(a.windowMs / 1000));
+  const reach = `${formatExact((2 * a.radius + 1) ** 2)} cells round its Shrine`;
+  if (a.awake) {
+    // A TIMER is the blue bar (kit/stats.ts `ProgressTone`).
+    const bar = progress('blue');
+    const left = formatCountdown(Math.ceil(a.leftMs / 1000));
+    bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${left} left`);
+    return el('div', { class: 'rl-block rl-activation is-awake' },
+      el('div', { class: 'rl-awake-row' }, iconEl('hourglass'), bar.root),
+      el('p', { class: 'rl-note' }, `Awake over ${reach}. Taking it out ends the window.`));
+  }
+  const short = !a.affordable;
+  return el('div', { class: 'rl-block rl-activation' },
+    el('div', { class: 'rl-sleep-row' },
+      el('span', { class: 'rl-wax', role: 'img', 'aria-label': 'Asleep' }, 'Asleep'),
+      activateButton(game, id)),
+    el('p', { class: 'rl-note' }, `Awake for ${window} over ${reach}`),
+    ...(!short ? [] : [
+      el('p', { class: 'rl-note' },
+        `Mana refills ${formatExact(Math.round(a.regenPerHour))} an hour`
+        + (a.readyInMs !== null && Number.isFinite(a.readyInMs)
+          ? `: ${formatExact(a.cost)} in ${formatCountdown(Math.ceil(a.readyInMs / 1000))}` : '')),
+      ...(a.flask === null ? [] : [btn({
+        label: 'Use',
+        kind: 'blue',
+        icon: 'manaFlask',
+        note: `Mana flask ×${formatExact(a.flask.count)}`,
+        onClick: () => game.doUseFlaskFor(id),
+      })]),
+    ]));
+}
+
+/** A world relic's spell, once restored: cast it, or how long until it can
+ *  be. A city relic has none — it is activated (`activation`). */
+export function spellSection(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {
+  if (view.kind === 'city') return activation(game, id);
   const active = ARTIFACTS[id].active;
   if (active === null || !view.restored) return null;
   if (view.host !== null && view.host.at === null) return null;
@@ -118,48 +215,78 @@ export function spell(game: Game, id: ArtifactId, view: RelicView): HTMLElement 
   const running = charges > 0
     ? `${active.name} is lit — ${charges} ${charges === 1 ? 'room' : 'rooms'} left`
     : `${active.name} is running — ${left} left`;
-  return el('div', { class: 'rl-spell' },
+  return el('div', { class: 'rl-block rl-spell' },
     el('div', { class: 'rl-line' }, iconEl('Mana', { size: 'sm' }), el('span', {}, `${active.name}: ${active.text}`)),
     phase === 'Ready'
-      ? btn({ label: `Cast ${active.name}`, kind: 'primary', finish: 'gem', onClick: () => game.startCast(id) })
+      ? btn({ label: 'Cast', kind: 'primary', finish: 'gem', onClick: () => game.startCast(id) })
       : el('div', { class: 'rl-line is-muted' }, iconEl('hourglass', { size: 'sm' }),
         el('span', {}, phase === 'Active' ? running : `Ready again in ${left}`)));
 }
 
-/** The one primary action for the relic's state, and the forge's two. */
-function actions(game: Game, view: RelicView): HTMLElement[] {
+/** The spares a press takes, as a price inside its button (§6.4): Fragments
+ *  are not a wallet currency, so the term reads `have / needed`. */
+const sparesTerm = (have: number, need: number) =>
+  ({ icon: 'shard' as const, amount: `${formatExact(have)} / ${formatExact(need)}`, short: have < need });
+
+/**
+ * THE LEVEL SECTION (one `.k-section`): the relic's level, its six slots and
+ * the press that moves it — Restore while it is in fragments, then Level up,
+ * which takes one fragment of each slot and the level's Stardust, every
+ * level. A missing piece is forged here too. ONE GREEN ACTION A SCREEN
+ * (§2.2): while an asleep relic's Activate is on the page, Level up steps
+ * down to wood.
+ */
+function levelSection(game: Game, view: RelicView): HTMLElement {
+  const held = view.slots.filter((n) => n > 0).length;
+  const head = el('div', { class: 'rl-level-head' },
+    el('b', {}, view.restored ? `Level ${formatExact(view.level)}` : 'Not restored'),
+    ...(view.restored ? [] : [el('span', {}, `${formatExact(view.spares)} spares`)]));
+  const press: HTMLElement[] = [];
   if (view.restored) {
-    return [btn({
+    press.push(btn({
       label: 'Level up',
-      kind: 'primary',
-      note: `${formatExact(view.levelCost)} spares`,
-      disabledReason: view.spares < view.levelCost ? `${formatExact(view.levelCost)} spares — you have ${formatExact(view.spares)}` : undefined,
+      kind: view.status === 'asleep' ? 'secondary' : 'primary',
+      cost: { Stardust: view.levelStardust },
+      have: (c) => game.walletValue(c),
+      costExtra: [{ icon: 'shard', amount: `${formatExact(held)} / ${formatExact(view.slots.length)}`, short: !view.hasSet }],
       onClick: () => game.doLevelRelic(view.id),
-    })];
+    }));
+  } else if (view.canRestore) {
+    press.push(btn({ label: 'Restore', kind: 'primary', onClick: () => game.doRestoreRelic(view.id) }));
+  } else if (view.forge !== null) {
+    const f = view.forge;
+    const what = f.slot === 5 ? 'the keystone' : 'a missing piece';
+    press.push(
+      el('p', { class: 'rl-note' }, `Forge ${what} as a replica`),
+      el('div', { class: 'rl-forge' },
+        btn({
+          label: 'Forge',
+          costExtra: [sparesTerm(view.spares, f.freeSpares)],
+          onClick: () => game.doForgeReplica(view.id, false),
+        }),
+        btn({
+          label: 'Forge',
+          kind: 'gem',
+          cost: { Gems: f.gems },
+          have: (c) => game.walletValue(c),
+          costExtra: [sparesTerm(view.spares, f.spares)],
+          onClick: () => game.doForgeReplica(view.id, true),
+        })));
   }
-  if (view.canRestore) return [btn({ label: 'Restore', kind: 'primary', onClick: () => game.doRestoreRelic(view.id) })];
-  const f = view.forge;
-  if (f === null) return [];
-  const what = f.slot === 5 ? 'the keystone' : 'a missing piece';
-  return [
-    el('div', { class: 'rl-line is-muted' }, el('span', {}, `Forge ${what} as a replica:`)),
-    el('div', { class: 'rl-forge' },
-      btn({
-        label: 'Forge',
-        note: `${formatExact(f.freeSpares)} spares`,
-        disabledReason: f.canFree ? undefined : `${formatExact(f.freeSpares)} spares — you have ${formatExact(view.spares)}`,
-        onClick: () => game.doForgeReplica(view.id, false),
-      }),
-      btn({
-        label: 'Forge',
-        kind: 'gem',
-        note: `${formatExact(f.spares)} spares`,
-        disabledReason: f.canGems ? undefined : `${formatExact(f.spares)} spares — you have ${formatExact(view.spares)}`,
-        cost: { Gems: f.gems },
-        have: (c) => game.walletValue(c),
-        onClick: () => game.doForgeReplica(view.id, true),
-      })),
-  ];
+  return el('div', { class: 'rl-level k-section' }, head, slotRow(view, true), ...press);
+}
+
+/** What the relic is worth now and at the next level, as the building
+ *  card's band of tiles (09-relics.md §11.3): one tile a number, its next
+ *  value after an arrow when the level moves it. */
+function statBand(view: RelicView): HTMLElement {
+  const level = Math.max(1, view.level);
+  return el('div', { class: 'dc-stats rl-stats' }, ...relicStatChanges(view.id, level).map((s) =>
+    el('div', { class: 'dc-stat k-section', title: s.label, 'aria-label': `${s.label} ${s.value}` },
+      iconEl(s.icon),
+      el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
+        el('div', { class: 'dc-stat-label' }, s.label),
+        el('b', { class: 'dc-stat-value' }, view.restored && s.changed ? `${s.value} → ${s.to}` : s.value)))));
 }
 
 export function renderRelicSheet(game: Game): HTMLElement {
@@ -167,31 +294,30 @@ export function renderRelicSheet(game: Game): HTMLElement {
   const close = () => game.closeRelic();
   if (id === null) return sheet({ title: 'Relic', onClose: close, tall: true });
   const view = game.relicCard(id);
-  const effect = view.restored
-    ? `${view.now} → ${view.next}`
-    : `Restored: ${view.now}`;
+  const spell = spellSection(game, id, view);
   const body = el('div', { class: 'rl-page' },
-    el('div', { class: 'rl-hero' }, relicArt(view, 'rl-hero-art'), seal(view)),
-    slotRow(view, true),
-    el('div', { class: 'rl-lines' },
-      el('div', { class: 'rl-line' }, iconEl('arrowUp', { size: 'sm' }), el('span', {}, effect)),
-      ...(view.pending !== null ? [el('div', { class: 'rl-line is-muted' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, view.pending))] : []),
-      el('div', { class: 'rl-line is-muted' }, iconEl('compass', { size: 'sm' }), el('span', {}, `Found in: ${view.foundIn}`)),
-      el('div', { class: 'rl-line' }, iconEl('shard', { size: 'sm' }),
-        el('span', {}, `Spares: ${formatExact(view.spares)}${view.restored ? '' : ' (copies past the first)'}`))),
-    ...actions(game, view),
-    ...hostLines(game, view),
-    ...[spell(game, id, view)].filter((x): x is HTMLElement => x !== null),
-    ...(view.chest === null ? [] : [el('div', { class: 'rl-chest' },
-      el('div', { class: 'rl-line is-muted' }, el('span', {},
-        `Restorer's chest: ${formatExact(view.chest.size)} fragments of this relic — the keystone one time in ${formatExact(RELIC_RULES.keystoneOneIn)}`)),
+    el('div', { class: `rl-hero is-${view.status}` },
+      relicArt(view, 'rl-hero-art'),
+      ...(view.status === 'awake' ? [el('span', { class: 'rl-awake-plate is-ribbon' }, 'Awake')] : []),
+      ...(view.status === 'asleep' ? [restMarks()] : [])),
+    statBand(view),
+    ...(view.pending !== null ? [el('p', { class: 'rl-note' }, view.pending)] : []),
+    levelSection(game, view),
+    ...(view.host === null ? [] : [sectionHead(view.kind === 'city' ? 'Shrine' : 'Chapel'), ...hostLines(game, view)]),
+    ...(spell === null ? [] : [...(view.host === null ? [sectionHead('Spell')] : []), spell]),
+    ...(view.chest === null ? [] : [sectionHead("Restorer's chest"), el('div', { class: 'rl-block rl-chest' },
+      el('p', { class: 'rl-note' },
+        `${formatExact(view.chest.size)} fragments of this relic — the keystone one time in ${formatExact(RELIC_RULES.keystoneOneIn)}`),
       btn({
-        label: "Restorer's chest",
+        label: 'Buy',
         kind: 'gem',
         cost: { Gems: view.chest.gems },
         have: (c) => game.walletValue(c),
         onClick: () => game.doRestorerChest(view.id),
       }))]),
   );
-  return sheet({ title: view.name, onClose: close, tall: true }, body);
+  // The whole height between the header and the nav, whatever it holds.
+  const surface = sheet({ title: view.name, onClose: close, tall: true }, body);
+  surface.classList.add('is-relic');
+  return surface;
 }

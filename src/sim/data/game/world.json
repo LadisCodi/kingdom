@@ -14,12 +14,12 @@
   },
   "worldGen": {
     "innerRing": [
-      { "terrain": "Grassland", "features": ["Forest"] },
-      { "terrain": "Grassland", "features": ["Mountain"] },
-      { "terrain": "Grassland", "features": ["FertileLand"] },
-      { "terrain": "Grassland", "features": ["Forest"] },
-      { "terrain": "Grassland", "features": ["Mountain"] },
-      { "terrain": "Plains", "features": [] }
+      { "terrain": "Grassland" },
+      { "terrain": "Grassland" },
+      { "terrain": "Grassland" },
+      { "terrain": "Grassland" },
+      { "terrain": "Grassland" },
+      { "terrain": "Plains" }
     ],
     "terrainWeights": {
       "corridor": { "Grassland": 4, "Plains": 3, "Desert": 1 },
@@ -58,35 +58,148 @@
     "featureRules": {
       "Forest": {
         "terrains": ["Grassland", "Plains"],
-        "excludes": ["Mountain", "FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
+        "excludes": [
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "Mountain": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "FertileLand", "Game", "Dungeon", "Sanctuary", "Landmark"]
+        "excludes": [
+          "Forest",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "FertileLand": {
         "terrains": ["Grassland", "Plains"],
-        "excludes": ["Forest", "Mountain", "Game", "Dungeon", "Sanctuary", "Landmark"]
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "Game": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "Mountain", "FertileLand", "Dungeon", "Sanctuary", "Landmark"]
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "Dungeon": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Sanctuary", "Landmark"]
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "Sanctuary": {
         "terrains": ["Grassland", "Plains"],
-        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Dungeon", "Landmark"]
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
       },
       "Landmark": {
         "terrains": ["Grassland", "Plains", "Desert"],
-        "excludes": ["Forest", "Mountain", "FertileLand", "Game", "Dungeon", "Sanctuary"]
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "HeartwoodGrove",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
+      },
+      "HeartwoodGrove": {
+        "terrains": ["Grassland", "Plains"],
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "StarfallCrater",
+          "MoonglassSpires"
+        ]
+      },
+      "StarfallCrater": {
+        "terrains": ["Desert"],
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "MoonglassSpires"
+        ]
+      },
+      "MoonglassSpires": {
+        "terrains": ["Plains"],
+        "excludes": [
+          "Forest",
+          "Mountain",
+          "FertileLand",
+          "Game",
+          "Dungeon",
+          "Sanctuary",
+          "Landmark",
+          "HeartwoodGrove",
+          "StarfallCrater"
+        ]
       }
     },
     "placedPerWedge": { "Dungeon": 1, "Sanctuary": 1 },
-    "maxFeaturesPerHex": 1
+    "maxFeaturesPerHex": 1,
+    "deposits": { "strong": ["3:0", "4:1", "4:3"], "middle": ["3:1", "3:2"], "weak": ["2:0"] }
   },
   "worldBuild": {
     "claim": { "gold": 1000, "goldGrowth": 1.35, "buildSeconds": 1800 },
@@ -103,7 +216,10 @@
         "perHour": 0.16666666666666666,
         "store": 8
       },
-      "Shrine": { "name": "Shrine", "feature": "Sanctuary", "produces": "", "perHour": 0, "store": 0 }
+      "Shrine": { "name": "Shrine", "feature": "Sanctuary", "produces": "", "perHour": 0, "store": 0 },
+      "GroveCamp": { "name": "Grove Camp", "feature": "HeartwoodGrove", "produces": "", "perHour": 0, "store": 0 },
+      "StarmetalDig": { "name": "Starmetal Dig", "feature": "StarfallCrater", "produces": "", "perHour": 0, "store": 0 },
+      "SpireQuarry": { "name": "Spire Quarry", "feature": "MoonglassSpires", "produces": "", "perHour": 0, "store": 0 }
     },
     "upgrades": {
       "Fortress": {
@@ -236,17 +352,8 @@
     }
   },
   "worldPrecious": {
-    "richFeatureShare": 0.2,
-    "richDesertShare": 0.25,
-    "perDay": 4,
+    "perDay": 2,
     "storeDays": 1,
-    "ownShare": 0.7,
     "campPerPower": 0.01
-  },
-  "worldExchange": {
-    "offerHours": 24,
-    "maxOffers": 3,
-    "botTakeHours": 2,
-    "botOfferAmount": 10
   }
 }

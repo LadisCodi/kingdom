@@ -1,13 +1,24 @@
-// A relic's host (sim/hosts.ts; Docs/plans/relics-and-bag.md step 6): a
-// restored city relic acts only over the aura of the Shrine that holds it.
+// A relic's host (sim/hosts.ts; Docs/features/09-relics.md §2): a restored
+// city relic acts over the aura of the Shrine that holds it, and only while
+// it is ACTIVATED — Mana paid, a window as long as the Shrine's level allows.
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { castState } from '../src/sim/casting';
 import { advance, moveDistrict } from '../src/sim/commands';
-import { castHosted, hostOf, hostRelic, relicAura, unhostRelic } from '../src/sim/hosts';
+import { ARTIFACT_RADIUS_STEPS, DISTRICTS } from '../src/sim/data/definitions';
+import {
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, hostOf, hostRelic,
+  isAwake, relicAura, unhostRelic,
+} from '../src/sim/hosts';
+import { mana } from '../src/sim/mana';
+import { areaCovers } from '../src/sim/modifiers';
 import { houseGoldPerMinute } from '../src/sim/population';
+import { deserialize, serialize } from '../src/sim/save';
 import { districtAt, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
+
+const MIN = 60_000;
+const WINDOWS = DISTRICTS.Shrine.relicWindowMinutesPerLevel;
 
 /** A built Shrine at `at`, at `level`. */
 function shrine(state: GameState, id: string, at: { x: number; y: number }, level = 1): void {
@@ -17,7 +28,7 @@ function shrine(state: GameState, id: string, at: { x: number; y: number }, leve
   });
 }
 
-describe('a city relic acts where a Shrine holds it', () => {
+describe('a city relic is hosted in a Shrine', () => {
   let state: GameState;
   beforeEach(() => {
     state = freshGame();
@@ -27,23 +38,11 @@ describe('a city relic acts where a Shrine holds it', () => {
     shrine(state, 'b', { x: 6, y: 0 });
   });
 
-  it('does nothing until it is hosted', () => {
-    expect(relicAura(state, 'taxRate', { x: 1, y: 1 })).toEqual({ add: 0, mul: 1 });
-    expect(castHosted(state, map, 'GildedLedger', T0).result).toBe('NotHosted');
-  });
-
   it('refuses a relic not restored, and a host that is not a Shrine', () => {
     expect(hostRelic(state, 'DowsingRod', 'a', T0)).toBe('NotRestored');
     state.artifacts.levels.MusterHorn = 1;
     expect(hostRelic(state, 'MusterHorn', 'a', T0)).toBe('NotACityRelic');
     expect(hostRelic(state, 'GildedLedger', 'nowhere', T0)).toBe('NotAShrine');
-  });
-
-  it('reaches the footprint and the ring round it, and no further', () => {
-    expect(hostRelic(state, 'GildedLedger', 'a', T0)).toBe('Hosted');
-    expect(relicAura(state, 'taxRate', { x: 1, y: 1 }).mul).toBeGreaterThan(1);
-    expect(relicAura(state, 'taxRate', { x: 3, y: 3 }).mul).toBeGreaterThan(1);
-    expect(relicAura(state, 'taxRate', { x: 4, y: 4 }).mul).toBe(1);
   });
 
   it('has one host: hosting it again moves it', () => {
@@ -53,64 +52,168 @@ describe('a city relic acts where a Shrine holds it', () => {
     expect(state.city.districts.find((d) => d.uniqueId === 'a')!.hosts).toBeUndefined();
   });
 
-  it('goes back to the Bag when it is taken out', () => {
+  // Hosting is free and does nothing on its own: the effect waits for Mana.
+  it('does nothing while it sleeps, hosted or not', () => {
+    expect(relicAura(state, 'taxRate', { x: 1, y: 1 })).toEqual({ add: 0, mul: 1 });
     hostRelic(state, 'GildedLedger', 'a', T0);
+    expect(isAwake(state, 'GildedLedger')).toBe(false);
+    expect(relicAura(state, 'taxRate', { x: 1, y: 1 })).toEqual({ add: 0, mul: 1 });
+  });
+});
+
+describe('activating a hosted relic', () => {
+  let state: GameState;
+  beforeEach(() => {
+    state = freshGame();
+    state.lastAdvance = T0;
+    state.artifacts.levels.GildedLedger = 1;
+    fund(state, { Mana: 999 });
+    shrine(state, 'a', { x: 0, y: 0 });
+    shrine(state, 'b', { x: 6, y: 0 }, 5);
+  });
+
+  it('needs a Shrine, and the Mana', () => {
+    expect(activateBlock(state, 'GildedLedger')).toBe('NotHosted');
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    fund(state, { Mana: -mana(state) });
+    const before = mana(state);
+    expect(activateRelic(state, 'GildedLedger', T0)).toBe('NotEnoughMana');
+    expect(mana(state)).toBe(before);
+    expect(isAwake(state, 'GildedLedger')).toBe(false);
+  });
+
+  it('charges its Mana once and wakes the aura', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    const before = mana(state);
+    expect(activateRelic(state, 'GildedLedger', T0)).toBe('Activated');
+    expect(mana(state)).toBe(before - activationCost(state, 'GildedLedger'));
+    expect(activationCost(state, 'GildedLedger')).toBeGreaterThan(0);
+    expect(relicAura(state, 'taxRate', { x: 1, y: 1 }).mul).toBeGreaterThan(1);
+    // Awake is awake: a second activation is refused, and charges nothing.
+    expect(activateRelic(state, 'GildedLedger', T0 + 1)).toBe('Active');
+    expect(mana(state)).toBe(before - activationCost(state, 'GildedLedger'));
+  });
+
+  // THE SHRINE'S LEVEL IS THE DURATION.
+  it('lasts the window of the Shrine it is in', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    activateRelic(state, 'GildedLedger', T0);
+    expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[0]! * MIN);
+    unhostRelic(state, 'GildedLedger', T0);
+    hostRelic(state, 'GildedLedger', 'b', T0);
+    activateRelic(state, 'GildedLedger', T0);
+    expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[4]! * MIN);
+  });
+
+  // Priced when it opens: a Shrine that climbs mid-window does not stretch it.
+  it('keeps the window it was priced at when its Shrine climbs', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    activateRelic(state, 'GildedLedger', T0);
+    state.city.districts.find((d) => d.uniqueId === 'a')!.level = 5;
+    expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[0]! * MIN);
+  });
+
+  // THE RELIC'S LEVEL IS THE POWER: its number, and how far the aura reaches.
+  it('reaches further and hits harder as the relic climbs', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    activateRelic(state, 'GildedLedger', T0);
+    const r1 = auraRadiusAt('GildedLedger', 1);
+    const edge = { x: r1 + 1, y: 0 };
+    const weak = relicAura(state, 'taxRate', { x: 1, y: 0 }).mul;
+    expect(relicAura(state, 'taxRate', edge).mul).toBe(1);
+    state.artifacts.levels.GildedLedger = ARTIFACT_RADIUS_STEPS[0]!;
+    expect(auraRadiusAt('GildedLedger', ARTIFACT_RADIUS_STEPS[0]!)).toBe(r1 + 1);
+    expect(relicAura(state, 'taxRate', edge).mul).toBeGreaterThan(1);
+    expect(relicAura(state, 'taxRate', { x: 1, y: 0 }).mul).toBeGreaterThan(weak);
+  });
+
+  it('reaches its Shrine and the ring round it, and no further', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    activateRelic(state, 'GildedLedger', T0);
+    const r = auraRadiusAt('GildedLedger', 1);
+    expect(relicAura(state, 'taxRate', { x: r, y: r }).mul).toBeGreaterThan(1);
+    expect(relicAura(state, 'taxRate', { x: r + 1, y: r + 1 }).mul).toBe(1);
+  });
+
+  // RULE 3: a relic that leaves its Shrine loses the window it had running.
+  it('falls asleep when it is taken out', () => {
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    activateRelic(state, 'GildedLedger', T0);
     expect(unhostRelic(state, 'GildedLedger', T0)).toBe(true);
-    expect(hostOf(state, 'GildedLedger')).toBeNull();
+    expect(isAwake(state, 'GildedLedger')).toBe(false);
     expect(relicAura(state, 'taxRate', { x: 1, y: 1 }).mul).toBe(1);
   });
 
   // RULE 2: where one relic's auras overlap the stronger counts — never both.
   it('counts once where two of its auras would overlap', () => {
     hostRelic(state, 'GildedLedger', 'a', T0);
-    const once = relicAura(state, 'taxRate', { x: 3, y: 1 }).mul;
+    activateRelic(state, 'GildedLedger', T0);
+    const once = relicAura(state, 'taxRate', { x: 2, y: 1 }).mul;
     // A second Shrine wrongly claiming the same relic still adds nothing.
     shrine(state, 'c', { x: 4, y: 0 });
     state.city.districts.find((d) => d.uniqueId === 'c')!.hosts = 'GildedLedger';
-    expect(relicAura(state, 'taxRate', { x: 3, y: 1 }).mul).toBe(once);
-  });
-
-  // RULE 4: rent is priced house by house, so a house inside the aura pays more.
-  it('raises the rent of a house inside the aura, not one outside', () => {
-    addBuilt(state, 'Housing', { x: 2, y: 2 });
-    addBuilt(state, 'Housing', { x: 12, y: 12 });
-    state.city.population = 8;
-    const near = districtAt(state, { x: 2, y: 2 })!;
-    const far = districtAt(state, { x: 12, y: 12 })!;
-    const [n0, f0] = [houseGoldPerMinute(state, near), houseGoldPerMinute(state, far)];
-    hostRelic(state, 'GildedLedger', 'a', T0);
-    expect(houseGoldPerMinute(state, near)).toBeGreaterThan(n0);
-    expect(houseGoldPerMinute(state, far)).toBe(f0);
+    expect(relicAura(state, 'taxRate', { x: 2, y: 1 }).mul).toBe(once);
   });
 });
 
-describe('a hosted spell lands on the aura', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = freshGame();
+describe('a window is a boundary', () => {
+  /** A Tribute Crown awake over one house, in a Shrine clear of the Townhall. */
+  const crowned = (): GameState => {
+    const state = freshGame();
     state.lastAdvance = T0;
-    state.artifacts.levels.ForemansSigil = 1;
+    state.artifacts.levels.GildedLedger = 1;
     fund(state, { Mana: 999 });
-    reveal(state, [{ x: 0, y: 0 }, { x: 5, y: 1 }, { x: 6, y: 1 }, { x: 5, y: 2 }, { x: 6, y: 2 }]);
-    shrine(state, 'a', { x: 0, y: 0 });
-    hostRelic(state, 'ForemansSigil', 'a', T0);
+    reveal(state, [{ x: 3, y: 3 }, { x: 4, y: 3 }]);
+    shrine(state, 'a', { x: 3, y: 3 });
+    addBuilt(state, 'Housing', { x: 4, y: 3 });
+    state.city.population = 8;
+    hostRelic(state, 'GildedLedger', 'a', T0);
+    expect(activateRelic(state, 'GildedLedger', T0)).toBe('Activated');
+    return state;
+  };
+
+  // RULE 4: rent is priced house by house, so a house inside the aura pays more
+  // — and only while the window is open.
+  it('raises the rent inside the aura until the window closes', () => {
+    const state = crowned();
+    const house = districtAt(state, { x: 4, y: 3 })!;
+    const awake = houseGoldPerMinute(state, house);
+    advance(state, map, T0 + WINDOWS[0]! * MIN + 1);
+    expect(isAwake(state, 'GildedLedger')).toBe(false);
+    expect(houseGoldPerMinute(state, house)).toBeLessThan(awake);
+    // No cooldown: it can be woken again at once.
+    expect(castState(state, 'GildedLedger', T0 + WINDOWS[0]! * MIN + 1).phase).toBe('Ready');
+    expect(activateRelic(state, 'GildedLedger', T0 + WINDOWS[0]! * MIN + 1)).toBe('Activated');
   });
 
-  it('casts with no target, over the Shrine’s aura', () => {
-    expect(castHosted(state, map, 'ForemansSigil', T0).result).toBe('Cast');
-    const zone = state.modifiers.find((m) => m.area?.relic === 'ForemansSigil');
-    expect(zone?.area?.centre).toEqual({ x: 0, y: 0 });
+  // INVARIANT 1: one call across the close equals stepped ticking. Minute
+  // steps, as tests/taxes.test.ts: rent's carry drifts a millisecond on
+  // steps that land on no whole Gold, with or without a relic.
+  it('closes at the same instant in one call and in steps', () => {
+    const end = T0 + 2 * WINDOWS[0]! * MIN;
+    const once = crowned();
+    advance(once, map, end);
+    const stepped = crowned();
+    for (let t = T0 + MIN; t < end; t += MIN) advance(stepped, map, t);
+    advance(stepped, map, end);
+    expect(serialize(stepped, end)).toEqual(serialize(once, end));
   });
 
-  // §6: MOVING A SHRINE ENDS ITS ACTIVE, and the cooldown keeps counting.
-  it('ends its spell when the Shrine moves, and keeps the cooldown', () => {
-    castHosted(state, map, 'ForemansSigil', T0);
-    const ready = state.artifacts.casts.ForemansSigil!.readyAt;
-    const now = T0 + 1000;
-    advance(state, map, now);
-    expect(castState(state, 'ForemansSigil', now).phase).toBe('Active');
-    expect(moveDistrict(state, map, 'a', { x: 5, y: 1 }, now)).toBe('Moved');
-    expect(state.modifiers.some((m) => m.area?.relic === 'ForemansSigil')).toBe(false);
-    expect(castState(state, 'ForemansSigil', now)).toEqual({ phase: 'Cooldown', until: ready });
+  it('survives a save', () => {
+    const state = crowned();
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(back.artifacts.casts.GildedLedger).toEqual(state.artifacts.casts.GildedLedger);
+    expect(isAwake(back, 'GildedLedger')).toBe(true);
+  });
+
+  // The aura is read from where the Shrine stands, so a move carries it,
+  // window and all.
+  it('follows its Shrine when it moves', () => {
+    const state = crowned();
+    reveal(state, [{ x: 3, y: 6 }]);
+    expect(moveDistrict(state, map, 'a', { x: 3, y: 6 }, T0 + 1000)).toBe('Moved');
+    expect(isAwake(state, 'GildedLedger')).toBe(true);
+    const host = hostOf(state, 'GildedLedger')!;
+    expect(areaCovers(auraOf(state, host, 'GildedLedger'), { x: 3, y: 6 })).toBe(true);
   });
 });

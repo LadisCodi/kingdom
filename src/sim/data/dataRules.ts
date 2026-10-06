@@ -16,7 +16,7 @@
 
 import techTree from './tech-tree.json';
 import regionMap from './region-map.json';
-import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
+import { DEPOSIT_OF, OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -52,7 +52,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
-  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious', 'worldExchange'] },
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -71,12 +71,12 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },
   { id: 'relics', label: 'Relic rules', domain: 'Magic', view: 'form', noun: 'setting',
-    groups: ['artifactCooldownSeconds', 'artifactAutoTapPerSecond', 'artifactRadiusSteps', 'fragments', 'shrines'] },
+    groups: ['artifactCooldownSeconds', 'artifactRadiusSteps', 'fragments', 'shrines'] },
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
-  // The friends list (Docs/features/15-social.md §2.1).
-  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends'] },
+  // The friends list and trading with friends (Docs/features/15-social.md §2).
+  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends', 'trade'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },
@@ -562,7 +562,7 @@ export const RULES: Readonly<Record<string, Rule>> = {
       // nothing: its whole contribution is its Harmony.
       if (num(b.harmonySupply) > 0) {
         if (!Number.isInteger(b.harmonySupply)) push(id, ['harmonySupply'], 'is not a whole number');
-        // A relic's host climbs levels for its aura (relic-restoration.md §5.1).
+        // A relic's host climbs levels for its window (09-relics.md §2).
         if (b.maxLevel !== 1 && b.hostsRelic !== true) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
         for (const f of ['maxWorkersPerLevel', 'populationCapacityPerLevel', 'armyCapPerLevel', 'bedsPerLevel', 'influenceRadiusPerLevel', 'queueLengthPerLevel']) {
           if (list(b[f]).length > 0) push(id, [f], 'a decoration has none');
@@ -571,8 +571,8 @@ export const RULES: Readonly<Record<string, Rule>> = {
         if (list(b.harmonyCostPerLevel).length > 0) push(id, ['harmonyCostPerLevel'], 'a decoration supplies Harmony; it does not demand it');
       }
       neverFalls(push, id, 'harmonyCostPerLevel', b.harmonyCostPerLevel);
-      if ((b.hostsRelic === true) !== (list(b.auraRadiusPerLevel).length > 0)) {
-        push(id, ['auraRadiusPerLevel'], 'a relic\'s host needs its aura, and only a host has one');
+      if ((b.hostsRelic === true) !== (list(b.relicWindowMinutesPerLevel).length > 0)) {
+        push(id, ['relicWindowMinutesPerLevel'], 'a relic\'s host needs its window, and only a host has one');
       }
       // The rent bonus is a house's ladder.
       if (list(b.taxBonusPerLevel).length > 0 && list(b.populationCapacityPerLevel).length === 0) {
@@ -745,18 +745,28 @@ export const RULES: Readonly<Record<string, Rule>> = {
     if (placedTotal > OUTER_SITE_ROOM) {
       push(null, ['worldGen', 'placedPerWedge'], `${placedTotal} sites, but a wedge's outer ring has room for ${OUTER_SITE_ROOM} away from the city`);
     }
-    list(gen.innerRing).forEach((h, i) => {
-      const hex = (h ?? {}) as Record<string, unknown>;
-      const held = list(hex.features) as string[];
-      held.forEach((f, n) => {
-        const rule = rules[f];
-        if (rule === undefined) return;
-        if (!list(rule.terrains).includes(hex.terrain)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never stands on ${String(hex.terrain)}`);
-        for (const other of held.slice(0, n)) {
-          if (excludes(f).includes(other)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never shares a hex with ${other}`);
-        }
+    // The deposits are dealt, never rolled: their places on the corridor,
+    // each once (Docs/plans/precious-deposits.md §1.2).
+    for (const f of Object.values(DEPOSIT_OF)) {
+      for (const [role, row] of Object.entries(chances)) {
+        if (num(row?.[f]) > 0) push(null, ['worldGen', 'featureChance', role, f], `a ${f} is dealt (worldGen.deposits), not rolled — its chance is 0`);
+      }
+      if (num(placed[f]) > 0) push(null, ['worldGen', 'placedPerWedge', f], `a ${f} is dealt (worldGen.deposits), not placed`);
+    }
+    const deposits = (gen.deposits ?? {}) as Record<string, unknown>;
+    const seen = new Set<string>();
+    for (const rank of ['strong', 'middle', 'weak']) {
+      const places = list(deposits[rank]) as unknown[];
+      if (places.length === 0) push(null, ['worldGen', 'deposits', rank], 'names no place — every seat has some of each');
+      places.forEach((p, i) => {
+        const m = /^(\d+):(\d+)$/.exec(String(p));
+        const k = m === null ? 0 : Number(m[1]);
+        const j = m === null ? 0 : Number(m[2]);
+        if (m === null || k < 2 || k > 4 || j >= k) push(null, ['worldGen', 'deposits', rank, i], 'is not a corridor place (ring:step, rings 2–4)');
+        else if (seen.has(String(p))) push(null, ['worldGen', 'deposits', rank, i], 'holds another deposit already');
+        seen.add(String(p));
       });
-    });
+    }
     const weights = (gen.terrainWeights ?? {}) as Record<string, Record<string, unknown> | undefined>;
     for (const [role, row] of Object.entries(weights)) {
       if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
