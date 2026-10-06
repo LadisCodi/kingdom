@@ -28,7 +28,7 @@ import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration, formatExact, coach } from './format';
-import { action, btn, iconEl, progress, withTooltip, type LiveParts } from './kit';
+import { action, btn, holdToRepeat, iconEl, isShort, progress, withTooltip, type LiveParts } from './kit';
 import { timerButton } from './speedupSheet';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
@@ -216,6 +216,18 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       }), 'card:finish-training'))));
 }
 
+/** Why Train is dead right now, in a few words; undefined when it is not.
+ *  Being short of coin is not a gate (§6.4). */
+function gateOf(game: Game, trainee: TrainableId): string | undefined {
+  const unit = trainee === 'Villager' ? null : UNITS[trainee];
+  const army = game.armyRoom();
+  return unit === null
+    ? (game.trainingInfo().atMax ? 'No house to live in' : undefined)
+    : unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)
+      ? `Needs ${TECHNOLOGIES[unit.requiredTech].name}`
+      : army.used + 1 > army.cap ? 'Max army reached' : undefined;
+}
+
 /** The panel for the building's one trainee: portrait, tags, flavour, the
  *  priced Train button (its training time is the building's own stat), a
  *  soldier's four numbers in a row of their own, and the batch at the foot. */
@@ -226,19 +238,24 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   // A GATE keeps the button and disables it: where the price would be, the
   // priced frame says in a few words why it cannot be pressed. Being short of
   // coin is not a gate: the price stays, and its red term says so (§6.4).
-  const army = game.armyRoom();
-  const gate = unit === null
-    ? (game.trainingInfo().atMax ? 'No house to live in' : undefined)
-    : unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)
-      ? `Needs ${TECHNOLOGIES[unit.requiredTech].name}`
-      : army.used + 1 > army.cap ? 'Max army reached' : undefined;
+  const gate = gateOf(game, trainee);
   const buy = btn({
     label: 'Train',
     kind: 'primary',
-    onClick: () => game.doTrain(trainee, district),
+    onClick: () => { game.doTrain(trainee, district); },
     ...(gate === undefined
       ? { cost, have: (c) => game.walletValue(c) }
       : { costExtra: [{ icon: 'padlock', amount: gate, short: true }] }),
+  });
+  // HELD, Train presses itself, faster the longer the finger stays — and
+  // stops where a tap would find the button dead: a gate, or the purse
+  // short. The card is rebuilt by every press, so the hold is keyed by the
+  // building, not by this node (kit/holdRepeat.ts).
+  holdToRepeat(buy, `train:${district.uniqueId}:${trainee}`, () => {
+    const here = game.state.city.districts.find((d) => d.uniqueId === district.uniqueId);
+    if (here === undefined || gateOf(game, trainee) !== undefined) return false;
+    if (isShort(trainCost(game.state, trainee), (c) => game.walletValue(c))) return false;
+    return game.doTrain(trainee, here) === 'Queued';
   });
   buy.dataset.coach = 'card:train';
   if (gate !== undefined) buy.classList.add('is-gated');

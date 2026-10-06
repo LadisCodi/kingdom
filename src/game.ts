@@ -64,7 +64,7 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
-import { availableRoster } from './sim/army';
+import { availableRoster, type TrainResult } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
@@ -4685,7 +4685,7 @@ export class Game {
     return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
 
-  doTrain(unitId: TrainableId, at?: District): void {
+  doTrain(unitId: TrainableId, at?: District): TrainResult {
     const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') {
@@ -4704,6 +4704,7 @@ export class Game {
       this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
     this.notify();
+    return result;
   }
 
   /** Queue one of this workshop's good. The crew does the rest. */
