@@ -304,9 +304,10 @@ accident.**
   A camp never comes back.
 - **Seen or lurking.** A standing camp shows on a Sensed hex as a silhouette;
   a lurking one (`lurkingShare`) shows only once the hex is Revealed. On
-  explored ground a pill over the camp says how hard it is against the
-  strongest party the player could send: **Very easy · Easy · Fair · Hard ·
-  Deadly**.
+  explored ground a pill over the camp shows its **power** — the units the
+  player's own army is measured in — written in the colour of how hard it is
+  against the strongest party they could send: Very easy (green) · Easy ·
+  Fair · Hard · Deadly (red). The camp's sheet names the difficulty.
 - **Fighting it**: an army sent to *clear* it — the party screen, march and
   slot of an attack (§4) — fights on arrival.
   - Won: the camp is beaten for that player, and pays Gold

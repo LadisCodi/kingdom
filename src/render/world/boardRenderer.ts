@@ -280,8 +280,10 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    // Its power, in the units of the player's own army, coloured by how it
+    // compares with the strongest party they could send.
     const difficulty = campDifficulty(bh.camp.power, party);
-    drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+    drawCampPower(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, formatCount(bh.camp.power), DIFFICULTY_COLOR[difficulty]);
     // A camp about to raid: the time left, under its difficulty.
     const at = raidAt.get(bh.index);
     if (at !== undefined) drawRaidTimer(ctx, camera, c.x - camera.hexWidth * 0.14, c.y + r * 0.22, formatCountdown(Math.max(0, (at - now) / 1000)));
@@ -1139,6 +1141,30 @@ function drawRaidArc(
   ctx.lineWidth = 1.5;
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
+}
+
+/** A camp's power: the power icon and the number on a parchment pill,
+ *  written in its difficulty's colour. */
+function drawCampPower(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string, ink: string): void {
+  const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
+  const icon = fs * 1.3;
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(text).width + fs * 1.4 + icon;
+  const ph = fs * 1.7;
+  ctx.fillStyle = '#f4e3bc';
+  ctx.strokeStyle = '#2e1c0e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
+  ctx.fill();
+  ctx.stroke();
+  drawIcon(ctx, 'power', x - pw / 2 + fs * 0.45, y - icon / 2, icon);
+  ctx.fillStyle = ink;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + icon / 2, y + 0.5);
   ctx.restore();
 }
 
