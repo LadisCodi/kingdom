@@ -6,6 +6,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DISTRICTS } from '../src/sim/data/definitions';
 import { hostRelic } from '../src/sim/hosts';
+import { mana } from '../src/sim/mana';
+import { clearShrineBubbles, markShrineBubble } from '../src/render/shrineBubbles';
 import type { Game } from '../src/game';
 import type { GameState } from '../src/sim/state';
 import { addBuilt, freshGame, freshPresenter, fund, reveal, T0 } from './helpers';
@@ -61,6 +63,19 @@ describe('the relic activation on screen', () => {
     expect(layer.shrineRelics[0]!.awake).toBe(true);
     expect(layer.auraBadges).toEqual([expect.objectContaining({ location: { x: 4, y: 3 }, text: '+30%' })]);
     expect(layer.relicBursts).toHaveLength(1);
+  });
+
+  // A TAP ON A BUILDING NEVER COSTS MANA: the bubble opens the Shrine's card,
+  // and Activate there is what pays.
+  it('opens the Shrine card from its Mana bubble, and spends nothing', () => {
+    const { state, game } = crowned();
+    const before = mana(state);
+    markShrineBubble('GildedLedger', { x: 10, y: 10, w: 40, h: 30 });
+    game.handleTap(20, 20);
+    clearShrineBubbles();
+    expect(game.inspectedDistrictId).toBe('shrine_a');
+    expect(mana(state)).toBe(before);
+    expect(game.relicCard('GildedLedger').status).toBe('asleep');
   });
 
   // M85: a window that closes raises the tab; waking the relic lowers it.

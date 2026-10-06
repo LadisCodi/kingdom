@@ -309,7 +309,7 @@ export function drawClaimBubble(
  * A SLEEPING SHRINE'S BUBBLE (Docs/features/09-relics.md §11.6, M84): the
  * collect bubble's parchment and rim, holding the Mana orb and what waking
  * its relic costs — the price inked red while the pool is short of it.
- * Returns its rect, so a tap on it wakes the relic.
+ * Returns its rect, so a tap on it opens the Shrine's card.
  */
 export function drawManaBubble(
   ctx: CanvasRenderingContext2D,

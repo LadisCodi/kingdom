@@ -111,7 +111,8 @@ never a discount, because a discount dies at 100%.
     flask in the Bag.
   - On the map, an awake relic floats over its Shrine and the aura wears the
     zone's tint and wheel; a sleeping one rests dim on the altar under a
-    **Mana bubble** with its price — a tap on the bubble wakes it.
+    **Mana bubble** with its price. A tap on the bubble, like a tap on the
+    Shrine, opens its card and costs nothing; Activate there pays the Mana.
   - Houses an awake Crown pays, and buildings with crews an awake Hammer
     speeds, wear a **+X%** badge.
   - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
