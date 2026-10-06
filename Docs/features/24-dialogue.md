@@ -29,11 +29,20 @@
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
   Warden green, Bess red, Tom and Hob brown, Grukk crimson.
-- **Three places**: `bottom`, `top`, `middle`, or `auto`. Every authored
-  line is `auto`.
-- **`auto`**: the bottom, where the cast stands on the box — unless the box
-  there, or anyone standing on it, would cover what the line points at; only
-  then the top.
+- **Places**: `bottom`, `top`, `middle`, or `auto`. Every authored line is
+  `auto`.
+- **`auto` keeps the speaker and what the line is about both in sight.** It
+  tries, in order, and takes the first where neither the box nor anyone
+  standing on it covers the target, and the cast fits under the header:
+  1. **a little below the middle of the screen** — the default;
+  2. the bottom, above the quest scroll;
+  3. high, with room above for the cast;
+  4. the very top, with no room for the cast — only when nothing else
+     clears the target.
+- A map target is judged at the middle of the screen, where the camera
+  flies it. A target still arriving (a sheet unrolling) is judged again
+  until it settles; after that the box moves only to stop covering it, or to
+  make room for the cast again.
 - **A box already on screen moves** to a new place in 0.32 s with a slight
   overshoot (OutBack), rather than jumping there.
 - **One size, always**: three lines of text at the box's type. A line too
@@ -102,8 +111,6 @@
     does the lock let the target take a tap. The next line brings the box
     back, its speaker walking on again.
 - A line that waits for a tap is read only: it never shows the hand.
-- A line that asks for an action sits at the bottom, with its speaker,
-  whatever it points at.
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
 - **A blue magic glow** marks it: a control's own silhouette lit blue
