@@ -340,9 +340,12 @@ accident.**
   build time and `repairCostShare` (10%) of what a claim costs now; Gems
   finish it like any wait.
 - **On the map**: a burnt district is charred, with fire at its foot and
-  smoke rising; a district a camp will raid carries crossed swords. Its sheet
-  says who raids it and when; the camp's sheet says which districts it
-  raids.
+  smoke rising. A raid to come is a dashed red arc from the camp to each of
+  the player's districts it will raid, high in the middle and landing on an
+  arrowhead, with a glowing pulse running along it from the camp to the
+  district; the camp carries the time left on a red pill with crossed
+  swords. The district's sheet says who raids it and when; the camp's sheet
+  says which districts it raids.
 - The stand-in rivals are never raided.
 
 ## 6. Attacking
