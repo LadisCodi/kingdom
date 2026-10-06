@@ -21,9 +21,13 @@ export function lotArt(l: TradeLot): HTMLElement {
   if (l.kind === 'material') return el('span', { class: 'wb-art' }, iconEl(l.id, { size: 'lg' }));
   const def = ARTIFACTS[l.relic];
   const url = spriteUrl(def.sprite);
+  // The fragment's own piece of the relic (relicSheet `fragmentArt`); the
+  // relic with the generic shard while it has none.
+  const piece = spriteUrl(`${def.sprite}_frag${l.slot}`);
   return el('span', { class: `wb-art is-fragment${l.slot === KEYSTONE ? ' is-keystone' : ''}` },
-    url ? spriteImgAt(url, 'wb-relic') : el('span', { class: 'wb-relic is-glyph' }, def.glyph),
-    el('span', { class: 'wb-shard' }, iconEl('shard', { size: 'sm' })));
+    ...(piece !== null ? [spriteImgAt(piece, 'wb-relic')] : [
+      url ? spriteImgAt(url, 'wb-relic') : el('span', { class: 'wb-relic is-glyph' }, def.glyph),
+      el('span', { class: 'wb-shard' }, iconEl('shard', { size: 'sm' }))]));
 }
 
 /** The lot as a tile: its picture, its name, and a line under it. */

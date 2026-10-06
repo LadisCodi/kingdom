@@ -504,6 +504,8 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 }
 .wb-slot.is-keystone { --slot: calc(var(--px) * 40); border-color: var(--gold-dark); }
 .wb-slot .icon { --icon-size: calc(var(--slot) * 0.8); }
+.wb-frag { width: 90%; height: 90%; object-fit: contain; }
+.wb-slot.is-missing .wb-frag { filter: brightness(0) invert(0.35); opacity: 0.28; }
 .wb-slot.is-held { opacity: 0.55; }
 /* A missing fragment: a chalk outline, pressable. */
 .wb-slot.is-missing { border-style: dashed; background: none; cursor: pointer; }

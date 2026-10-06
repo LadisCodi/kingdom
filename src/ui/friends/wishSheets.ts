@@ -8,6 +8,7 @@
 //     once, greyed with why. Pin wish.
 // And the window a fill opens: who, what went, what came.
 
+import { fragmentArt } from '../relicSheet';
 import type { Game } from '../../game';
 import { ARTIFACT_ORDER, ARTIFACTS, TRADE } from '../../sim/data/definitions';
 import { KEYSTONE, SLOTS, isMet, isRestored, slotCount } from '../../sim/relics';
@@ -36,11 +37,11 @@ export function renderWishNeed(game: Game): HTMLElement {
       const lot: TradeLot = { kind: 'fragment', relic, slot };
       const held = slotCount(s, relic, slot);
       const cls = `wb-slot${slot === KEYSTONE ? ' is-keystone' : ''}${held > 0 ? ' is-held' : ''}`;
-      if (held > 0) return el('span', { class: cls, 'aria-label': `${slot === KEYSTONE ? 'Keystone' : `Piece ${slot + 1}`}: held` }, iconEl('shard', { size: 'sm' }));
+      if (held > 0) return el('span', { class: cls, 'aria-label': `${slot === KEYSTONE ? 'Keystone' : `Piece ${slot + 1}`}: held` }, fragmentArt(def.sprite, slot, 'wb-frag'));
       const b = el('button', {
         class: `${cls} is-missing`, type: 'button',
         'aria-label': `Wish for ${def.name} ${slot === KEYSTONE ? 'keystone' : `piece ${slot + 1}`}`,
-      }) as HTMLButtonElement;
+      }, fragmentArt(def.sprite, slot, 'wb-frag')) as HTMLButtonElement;
       if (pickable(lot)) b.addEventListener('click', () => f.pickNeed(lot));
       else b.disabled = true;
       return b;
