@@ -97,11 +97,11 @@ Three stacked sections, in the order of how often they change:
 
 ### An unfound relic is a signpost, not a locked box
 
-`Dowsing Rod — waiting in Hollow Barrow`, greyed, with a padlock. The point of
+`Staff of Renewal — waiting in Hollow Barrow`, greyed, with a padlock. The point of
 listing what you do not have is to give the fog somewhere specific to go. A
 row that says only "???" gives the player nothing to want.
 
-### The Gilded Ledger's empty ability line is a feature
+### The Tribute Crown's empty ability line is a feature
 
 It has no active at all, and the card says so: *"No ability — it simply works,
 always."* Hiding that would make it look broken; stating it is the clearest

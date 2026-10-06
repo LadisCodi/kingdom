@@ -122,7 +122,7 @@ describe('a world relic in a Chapel', () => {
     expect(b.hexes[target].owner).toBe(seat);
     expect(b.hexes[target].relic).toBeNull();
     expect(hasChapel(b, target)).toBe(true);
-    expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.text.includes('Muster Horn'))).toBe(true);
+    expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.text.includes('Warhorn of the Host'))).toBe(true);
     // The rival's client: the relic is no longer in a Chapel, and its level
     // is untouched — it was never taken out of the save.
     const theirs = freshGame();

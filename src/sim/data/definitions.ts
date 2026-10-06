@@ -1275,8 +1275,8 @@ export interface ArtifactDef {
   /**
    * ONE IDEA, sometimes spread over more than one number.
    *
-   * The Verdant Seal moves a node's stock and what a strike takes out of it,
-   * and the Foreman's Sigil moves a crew's swing and its walk: in both cases
+   * The Sickle of Plenty moves a node's stock and what a strike takes out of it,
+   * and the Winged Hammer moves a crew's swing and its walk: in both cases
    * half the pair alone saturates or reads as nothing, so they are one passive
    * with two stats rather than two passives (Docs/proposals/relic-effects.md
    * §4.2). They share one `base` and one `per_level`, which is not a
@@ -1350,7 +1350,7 @@ const ab = (id: ArtifactId): ArtifactBalance =>
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
-    id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
+    id: 'DowsingRod', name: 'Staff of Renewal', glyph: '🪄', sprite: 'artifact_staff_of_renewal',
     passiveText: 'Forests, crops and stone recover faster',
     passive: {
       stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
@@ -1359,7 +1359,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     // A RELIC IS ONE IDEA AT TWO SPEEDS, and this one's idea is RECOVERY. Its
     // ability used to pay a cell's reveal cost, which is a fine spell about a
     // different subject — the passive was about ground coming back and the
-    // active was about fog. The fog is the Compass's, and always was.
+    // active was about fog. The fog is the Orb's, and always was.
     //
     // THE REFILL MUST LAND BEFORE THE ZONE MATTERS. A recovery wait is stamped
     // when the cell EXHAUSTS, not read each tick, so a faster-recovery zone
@@ -1380,7 +1380,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   VerdantSeal: {
-    id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
+    id: 'VerdantSeal', name: 'Sickle of Plenty', glyph: '🌾', sprite: 'artifact_sickle_of_plenty',
     passiveText: 'Richer ground, and more out of every swing',
     passive: {
       stats: [
@@ -1405,7 +1405,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   ForemansSigil: {
-    id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
+    id: 'ForemansSigil', name: 'The Winged Hammer', glyph: '🔨', sprite: 'artifact_winged_hammer',
     passiveText: 'Your crews swing and walk faster',
     passive: {
       stats: [
@@ -1437,16 +1437,16 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   GildedLedger: {
-    id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
+    id: 'GildedLedger', name: 'The Tribute Crown', glyph: '👑', sprite: 'artifact_tribute_crown',
     passiveText: 'Your villagers pay more tax',
     passive: {
       stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Seal's
-    // because the ground is: a node empties and stops paying, so the Seal's
+    // THE OTHER EXCHANGE RATE. Its Mana price is dearer than the Sickle's
+    // because the ground is: a node empties and stops paying, so the Sickle's
     // run hits a wall, where a house always has rent to pay forward and the
-    // Ledger's run always spends the whole budget (OQ-99).
+    // Crown's run always spends the whole budget (OQ-99).
     active: {
       id: 'Tithe', name: 'Tithe', targeted: true,
       manaCost: ab('GildedLedger').activeManaCost, durationSeconds: 0,
@@ -1459,8 +1459,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   DelversLantern: {
-    id: 'DelversLantern', name: 'The Delver\u2019s Lantern', glyph: '\u{1F3EE}',
-    sprite: 'artifact_delvers_lantern',
+    id: 'DelversLantern', name: 'The Wisp Lantern', glyph: '\u{1F3EE}',
+    sprite: 'artifact_wisp_lantern',
     passiveText: 'Every room pays more gold and stone',
     passive: {
       stats: [{ stat: 'roomHaul', scope: null, op: 'mul' }],
@@ -1485,8 +1485,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   MusterHorn: {
-    id: 'MusterHorn', name: 'The Muster Horn', glyph: '\u{1F4EF}',
-    sprite: 'artifact_muster_horn',
+    id: 'MusterHorn', name: 'Warhorn of the Host', glyph: '\u{1F4EF}',
+    sprite: 'artifact_warhorn',
     passiveText: 'Your halls field a bigger army',
     passive: {
       stats: [{ stat: 'armyCap', scope: null, op: 'mul' }],
@@ -1496,8 +1496,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   BailiffsTally: {
-    id: 'BailiffsTally', name: 'The Bailiff\u2019s Tally', glyph: '\u{1F9FE}',
-    sprite: 'artifact_bailiffs_tally',
+    id: 'BailiffsTally', name: 'The Steward\u2019s Signet', glyph: '\u{1F48D}',
+    sprite: 'artifact_stewards_signet',
     passiveText: 'Every improvement you hold pays more an hour',
     passive: {
       stats: [{ stat: 'worldImprovementYield', scope: null, op: 'mul' }],
@@ -1509,16 +1509,16 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: 'when the world map opens',
   },
   WanderersCompass: {
-    id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
-    sprite: 'artifact_wanderers_compass',
+    id: 'WanderersCompass', name: 'The Stargazer’s Orb', glyph: '🔮',
+    sprite: 'artifact_stargazers_orb',
     passiveText: 'Rooms pay more Stardust',
     passive: {
       stats: [{ stat: 'stardustYield', scope: null, op: 'mul' }],
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
-    // THE FOG IS THE COMPASS'S. It called a depleted resource back, which is
-    // the Verdant Seal's subject wearing a compass; what a compass is FOR is
-    // ground you have not seen.
+    // THE FOG IS THE ORB'S. It called a depleted resource back, which is
+    // the Sickle of Plenty's subject wearing a seer's glass; what a seeing orb
+    // is FOR is ground you have not seen.
     //
     // RADIUS IS ITS WHOLE GROWTH (§2.1) — for a reveal, more ground IS the
     // effect, so it needs no second axis and has none.

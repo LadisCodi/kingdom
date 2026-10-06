@@ -79,8 +79,8 @@ export function syncArtifactModifiers(state: GameState): void {
     // (sim/hosts.ts); a world relic only while a Chapel holds it.
     if (relicKind(id) === 'city' || !state.world.chapels.includes(id)) continue;
     const value = passiveValue(state, id);
-    // A relic may move more than one number with one value — the Seal's stock
-    // and swing, the Sigil's swing and walk. The id carries the stat so two
+    // A relic may move more than one number with one value — the Sickle's stock
+    // and swing, the Hammer's swing and walk. The id carries the stat so two
     // entries from one relic cannot collide, and the filter above still takes
     // both away.
     for (const { stat, scope, op } of ARTIFACTS[id].passive.stats) {

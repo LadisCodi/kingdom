@@ -83,7 +83,7 @@
 - Residents are auto-assigned: houses fill in build order as population grows.
   The only effect is which house their rent is stored in.
 - Roofless villagers pay nothing; empty minutes are never banked.
-- **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
+- **TradeRoutes** raises the rate +10%/level. The **Tribute Crown** relic adds
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel`, 2 at level 1 and
   2 more a level, to 20 at level 10 (OQ-46).

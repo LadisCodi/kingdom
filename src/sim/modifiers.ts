@@ -42,7 +42,7 @@ export type ModifierStat =
   | 'manaCap'         // the ceiling of the pool
   | 'claimCost'       // Gold to claim a landmark
   // TODO(OQ-113): NOTHING READS `stardustYield` since the depths were retired
-  // — the rooms were its only payer. The Wanderer's Compass passive and the
+  // — the rooms were its only payer. The Stargazer's Orb passive and the
   // Prospecting ranks still name it and move nothing.
   | 'stardustYield'   // Stardust a room paid — NOT READ
   // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
@@ -70,7 +70,7 @@ export type ModifierStat =
   | 'worldRevealSpeed' // how fast an explorer marches (sim/world/explorers.ts)
   | 'unitHp'          // multiplies every unit's HP, on the board and in the estimate
   // THE GROUND. Both are FLAT on a base the workbook authors and never grows,
-  // so flat cannot go stale here the way it does on a rate. The Verdant Seal
+  // so flat cannot go stale here the way it does on a rate. The Sickle of Plenty
   // moves the two together — a node gets richer as fast as the swing gets
   // bigger — because either alone saturates: a bigger swing empties a node it
   // cannot exceed, and a richer node nobody can drain faster is just a longer
@@ -79,7 +79,7 @@ export type ModifierStat =
   | 'harvestStock'    // units a cell holds before it is spent
   // TODO(OQ-113): NOTHING READS `roomHaul`. It moved a ROOM's Gold and Stone,
   // and the rooms were retired with the depths; it stays defined so the
-  // Delver's Lantern that names it still loads. The Lantern needs a new
+  // Wisp Lantern that names it still loads. The Lantern needs a new
   // effect (Docs/open-questions.md OQ-113, Docs/proposals/relic-effects.md).
   | 'roomHaul'        // a room's Gold and Stone — NOT READ
   | 'worldImprovementYield'; // what a world-map district grants an hour — NOT READ YET
@@ -118,7 +118,7 @@ export interface ModifierArea {
    * it. They are here for the map, which has to draw *"there is magic here"*
    * and a wheel counting the window down, and cannot do either from an
    * expiry alone: a countdown needs the length it is counting, and one cast
-   * that places two modifiers (the Sigil's swing and walk) must draw ONE
+   * that places two modifiers (the Hammer's swing and walk) must draw ONE
    * wheel, which is what the pair identifies.
    */
   relic: ArtifactId;

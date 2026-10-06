@@ -440,26 +440,6 @@
    ]
   },
   {
-   "file": "sheets/spr-c-relics.png",
-   "grid": {
-    "rows": 2,
-    "cols": 3
-   },
-   "fill": 0.9,
-   "names": [
-    "artifact_dowsing_rod",
-    "artifact_verdant_seal",
-    "artifact_foremans_sigil",
-    "artifact_gilded_ledger",
-    "artifact_wanderers_compass",
-    null
-   ],
-   "gravity": "center",
-   "evenGrid": true,
-   "note": "Repainted 2026-09-11 (C3, Docs/art/ui-menus-redesign.md \u00a77.26): the relic card draws these at 170px on parchment, so they are smooth objects rather than map pixel art. evenGrid because the rod lies diagonally across its cell's edge.",
-   "spriteSize": 256
-  },
-  {
    "file": "sheets/spr-d-heroes.png",
    "grid": {
     "rows": 2,

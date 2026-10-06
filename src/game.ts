@@ -224,7 +224,7 @@ export type OverlayName =
   // Asking a kingdom by its name or code, from the requests list (§2.1).
   | 'friendSearch';
 
-/** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
+/** Fragments that landed, as one line: "A piece of the Staff of Renewal". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
   if (drops.length === 1) {
     const d = drops[0];
@@ -1424,7 +1424,7 @@ export class Game {
   /**
    * EVERY SPELL STANDING ON THE MAP, for the renderer (§11.6).
    *
-   * ONE ENTRY PER CAST, not per modifier: the Foreman's Sigil places two —
+   * ONE ENTRY PER CAST, not per modifier: the Winged Hammer places two —
    * the swing and the walk — and two wheels counting down the same window on
    * the same cell would read as two spells. They are grouped by the relic and
    * the instant it was cast, which is exactly what identifies a cast.
@@ -5806,7 +5806,7 @@ function trainerName(unitId: UnitId): string {
  * the card prints the same sentence twice — now, and at the next level.
  */
 function relicEffectText(id: ArtifactId, value: number): string {
-  // A relic's stats all share one op — the pair the Seal and the Sigil carry
+  // A relic's stats all share one op — the pair the Sickle and the Hammer carry
   // move together by construction — so the first one says how to read it.
   const { stat, op } = ARTIFACTS[id].passive.stats[0]!;
   if (op !== 'mul') return `${RELIC_SUBJECT[id]} +${formatNumber(value, 1)}`;

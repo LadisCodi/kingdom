@@ -11,7 +11,7 @@
 //
 // It replaced two lines of prose (*"Now — forests recover 30% faster"* and
 // *"At level 4 — 40% faster"*). The prose was one sentence for a relic that
-// moves TWO numbers, so the Verdant Seal and the Foreman's Sigil each had to
+// moves TWO numbers, so the Sickle of Plenty and the Winged Hammer each had to
 // fold their pair into a single phrase — and neither said which half was
 // which. A box apiece says it without a sentence.
 
