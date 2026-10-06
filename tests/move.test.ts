@@ -196,7 +196,10 @@ describe('the crew comes with it', () => {
   const staffedSawmill = () => {
     const state = freshGame();
     completeTech(state, 'Saws'); // the Sawmill is gated on it
-    reveal(state, [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 0, y: 3 }, { x: 2, y: 3 }, { x: 2, y: 2 }]);
+    const trees = [{ x: 1, y: 3 }, { x: 0, y: 3 }, { x: 2, y: 3 }];
+    // Planted, not read off the map: the opening's trees may move.
+    for (const c of trees) state.features[coordKey(c)] = 'Trees';
+    reveal(state, [{ x: 1, y: 2 }, ...trees, { x: 2, y: 2 }]);
     addBuilt(state, 'Sawmill', { x: 1, y: 2 });
     const mill = state.city.districts[state.city.districts.length - 1];
     state.city.population = 2;

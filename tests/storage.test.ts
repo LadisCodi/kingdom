@@ -15,7 +15,7 @@ import { tally } from '../src/sim/events';
 import {
   collectThreshold, isStoreFull, productionPerSecond, readyToCollect, storageCapacity, storedOf, storedTotal,
 } from '../src/sim/storage';
-import { getWallet, type GameState } from '../src/sim/state';
+import { coordKey, getWallet, type GameState } from '../src/sim/state';
 import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const SAWMILL_CELL = { x: 3, y: 1 };
@@ -30,6 +30,8 @@ function crewedSawmill(): { state: GameState; mill: GameState['city']['districts
   fund(state, { Gold: 500, Wood: 500 });
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
+  // Planted, not read off the map: the opening's trees may move.
+  state.features[coordKey(FOREST)] = 'Trees';
   state.fog.revealed = {};
   state.fog.discovered = {};
   reveal(state, [SAWMILL_CELL, FOREST]);

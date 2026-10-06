@@ -18,10 +18,11 @@ import {
   addAllTrainers, addBuilt, canGather, completeTech, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
 
-// Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
-// — the adjacent one. Every other tree in range stays under fog unless this
-// fixture reveals it, which is what lets each test below hand the sawmill a
-// precise number of workable cells.
+// Sawmill at (3,1), its three trees planted by the fixture rather than read
+// off the map, so clearing the opening's ground never moves them. Its own
+// completion re-reveals exactly ONE tree — the adjacent one. Every other tree
+// in range stays under fog unless this fixture reveals it, which is what lets
+// each test below hand the sawmill a precise number of workable cells.
 const SAWMILL_CELL = { x: 3, y: 1 };
 const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes it
 const FOREST_B = { x: 2, y: 3 }; // radius 2 — needs a level-2 sawmill
@@ -43,6 +44,7 @@ const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 
   // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
+  for (const c of [FOREST_A, FOREST_B, FOREST_C]) state.features[coordKey(c)] = 'Trees';
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.
   // (The sawmill's own completion re-reveals its radius-1 ring.)
