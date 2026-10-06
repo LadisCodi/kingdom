@@ -514,7 +514,7 @@
     "name": "A company",
     "goalType": "TrainArmy",
     "goalTarget": null,
-    "goalAmount": 24,
+    "goalAmount": 30,
     "goalLevel": null,
     "reward": { "Gold": 400 },
     "rewardGems": 0,

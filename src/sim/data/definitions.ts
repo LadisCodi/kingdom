@@ -1548,6 +1548,10 @@ export interface GuardDef {
   /** Minutes from DISCOVERY to the first raid. Every raid after it follows
    *  the daily schedule (`RAID`, Docs/proposals/lairs.md §4.1). */
   warningMinutes: number;
+  /** WHAT IT FIELDS, as weights by unit type: the Orcs are warriors with a
+   *  few spears, the Harpies archers with a few riders. Absent = the threat
+   *  takes the lion's share and the rest is split evenly (combat.md §11). */
+  mix?: Partial<Record<UnitId, number>>;
 }
 
 const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1575,7 +1579,7 @@ const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph'
 
 const lairBalance = regionMap.lairs as Record<LairId, {
   x: number; y: number; size?: number; tier: number; radius: number; sight: number; flavour: string;
-  guard: { threat: string; power: number; warningMinutes: number };
+  guard: { threat: string; power: number; warningMinutes: number; mix?: Record<string, number> };
 }>;
 
 /** Every lair the code knows about. LairId is a union, so the roster is fixed
@@ -1597,7 +1601,11 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
       radius: b.radius,
       sight: b.sight,
       flavour: b.flavour,
-      guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
+      guard: {
+        ...b.guard,
+        threat: b.guard.threat as GuardDef['threat'],
+        ...(b.guard.mix ? { mix: b.guard.mix as GuardDef['mix'] } : {}),
+      },
     }];
   }),
 ) as Record<LairId, LairDef>;

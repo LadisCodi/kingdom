@@ -38,7 +38,7 @@ export interface RegionMapDoc {
      *  (Docs/features/01-map-and-fog.md §4.1). 0 = never. */
     sight: number;
     /** The garrison that holds it, and the warning before its first raid. */
-    guard: { threat: string; power: number; warningMinutes: number };
+    guard: { threat: string; power: number; warningMinutes: number; mix?: Record<string, number> };
     /** The card's line over its painting, two lines at most (§6). */
     flavour: string;
   }>;
@@ -228,6 +228,14 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       if (!isCount(g.power) || g.power < 1) err(`${what}'s guard needs a power of 1 or more`, r);
       if (!isCount(g.warningMinutes) || g.warningMinutes < 1) {
         err(`${what}'s guard needs a warning of 1 minute or more`, r);
+      }
+      if (g.mix !== undefined) {
+        const entries = Object.entries(g.mix);
+        for (const [u, w] of entries) {
+          if (!(UNIT_ORDER as string[]).includes(u)) err(`${what}'s guard mix names "${u}", which is not a unit`, r);
+          if (typeof w !== 'number' || !(w >= 0)) err(`${what}'s guard mix weight for ${u} must be 0 or more`, r);
+        }
+        if (!entries.some(([, w]) => typeof w === 'number' && w > 0)) err(`${what}'s guard mix fields nothing`, r);
       }
     }
     if (!isCount(r.radius) || r.radius > MAX_LAIR_RADIUS) {

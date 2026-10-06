@@ -10,7 +10,7 @@ import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf, targetingFor,
   type BattleEvent, type FighterSpec, type SquadSpec,
 } from '../src/sim/battle';
-import { COMBAT, UNITS, VILLAINS } from '../src/sim/data/definitions';
+import { COMBAT, LAIRS, UNITS, VILLAINS } from '../src/sim/data/definitions';
 import type { UnitId } from '../src/sim/state';
 
 /** A fighter with no passive, so a test about bodies is about bodies. */
@@ -318,5 +318,28 @@ describe('determinism', () => {
                 ? `${e.tick} ${e.from.side[0]}${e.from.id} ${e.skill}`
                 : `${e.tick} ${e.at.side[0]}${e.at.id} ${e.kind}`));
     expect(shape).toMatchSnapshot();
+  });
+});
+
+// A lair's authored mix (18-garrisons-and-raids.md §2): its types alone,
+// the heaviest first, and the budget still spent.
+describe('an authored mix', () => {
+  it('fields only the types it names, by weight', () => {
+    const plan = generateEnemy({
+      seed: 3, parts: ['mix'], budget: 300, affinity: 'Archer', mix: { Archer: 7, Cavalry: 3 },
+    });
+    const types = new Set(plan.squads.map((s) => s.unitId));
+    expect([...types].sort()).toEqual(['Archer', 'Cavalry']);
+    const power = (u: UnitId) => plan.squads.filter((s) => s.unitId === u)
+      .reduce((n, s) => n + s.count * UNITS[u].power, 0);
+    expect(power('Archer')).toBeGreaterThan(power('Cavalry'));
+  });
+
+  it('gives the Orcs and the Harpies their own armies', () => {
+    for (const [id, want] of [['Orcs', ['Lancer', 'Warrior']], ['Harpies', ['Archer', 'Cavalry']]] as const) {
+      const g = LAIRS[id].guard;
+      const plan = generateEnemy({ seed: 1, parts: [id], budget: g.power, affinity: g.threat, mix: g.mix });
+      expect([...new Set(plan.squads.map((s) => s.unitId))].sort(), id).toEqual(want);
+    }
   });
 });

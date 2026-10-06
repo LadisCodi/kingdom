@@ -6436,6 +6436,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   AlreadyCleared: 'That lair is already cleared',
   AlreadyDefeated: 'They are beaten — claim what they left behind',
   EmptyParty: 'Pick who goes in',
+  NoSoldiers: 'A lair wants soldiers — a hero cannot go in alone',
   NoHero: 'Pick a hero to lead them',
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',

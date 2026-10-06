@@ -25,8 +25,8 @@
 
 - Every fight fields **troop slots and hero slots**: lairs, dungeon rooms,
   bosses, armies on the world board. There is no hero-only mode.
-- **A lair needs someone on the player's side** — soldiers, a hero, or
-  both; an army on the world map needs a hero
+- **A lair needs soldiers** — alone or with heroes, never a hero alone;
+  an army on the world map needs a hero
   ([`10-heroes.md`](10-heroes.md) §2.7).
 
 ## 3. Board
@@ -113,8 +113,8 @@ tier.
     a middling one: its extra troops are reserve that buys time.
 - Heroes and villains are scaled with them (10-heroes.md §2.3): health ×3,
   damage ×0.3, so a hero stays a body worth a share of a squad.
-- The first lair, the Orcs, is the exception: ten orcs against the chain's
-  twenty-four Warriors last six to nine seconds.
+- The first lair, the Orcs — twenty orcs against the chain's thirty
+  Warriors — lasts about fifteen seconds.
 
 What one soldier costs to recruit (`units.recruitCost`), Gold first because
 Gold is what an army is mostly paid in:

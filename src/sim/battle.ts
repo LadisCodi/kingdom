@@ -559,6 +559,8 @@ export function generateEnemy(opts: {
   parts: readonly RngPart[];
   budget: number;
   affinity: UnitId | 'Any';
+  /** What it fields, by weight — overrides the affinity's shares. */
+  mix?: Partial<Record<UnitId, number>>;
   villainPool?: readonly VillainId[];
   /** A boss's villain is authored and always present — never rolled. */
   boss?: VillainId | null;
@@ -609,9 +611,17 @@ export function generateEnemy(opts: {
   // rest is split evenly: a party that hard-counters the affinity should
   // still meet something awkward.
   const types = Object.keys(BEATS) as UnitId[];
-  const order = affinity === 'Any' ? types : [affinity, ...types.filter((t) => t !== affinity)];
+  const mixed = opts.mix === undefined ? [] : types
+    .filter((t) => (opts.mix![t] ?? 0) > 0)
+    .sort((a, b) => (opts.mix![b] ?? 0) - (opts.mix![a] ?? 0) || types.indexOf(a) - types.indexOf(b));
+  const order = mixed.length > 0 ? mixed
+    : affinity === 'Any' ? types : [affinity, ...types.filter((t) => t !== affinity)];
   const share = new Map<UnitId, number>();
-  if (affinity === 'Any') {
+  if (mixed.length > 0) {
+    // AN AUTHORED MIX: its types alone, by weight, the heaviest first.
+    const total = mixed.reduce((sum, t) => sum + (opts.mix![t] ?? 0), 0);
+    for (const t of mixed) share.set(t, (budget * (opts.mix![t] ?? 0)) / total);
+  } else if (affinity === 'Any') {
     for (const t of types) share.set(t, budget / types.length);
   } else {
     const lion = Math.round(budget * 0.6);
@@ -636,7 +646,7 @@ export function generateEnemy(opts: {
   // Whatever the shares left on the table goes to the affinity, while there
   // is a slot to put it in. Budget a board cannot hold is budget a room
   // cannot field — which is the ceiling the authored ladder lives under.
-  const filler = affinity === 'Any' ? order[0]! : affinity;
+  const filler = mixed.length > 0 ? mixed[0]! : affinity === 'Any' ? order[0]! : affinity;
   while (squads.length < wanted && left >= UNITS[filler].power) {
     add(filler, Math.floor(left / UNITS[filler].power));
   }
