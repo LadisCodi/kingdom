@@ -507,6 +507,14 @@
 .rl-card.is-pick { width: var(--hc-w); padding-inline: calc(var(--px) * 4); }
 .rl-card.is-pick .rl-card-art { width: calc(var(--hc-w) * 0.62); height: calc(var(--hc-w) * 0.62); }
 .rl-card.is-pick .rl-card-name { font-size: var(--text-desc); }
+/* What a relic does, under its name in the picker — what the choice is about. */
+.rl-card-effect { font-size: var(--text-desc); font-weight: var(--weight-strong); color: var(--leaf-dark); text-align: center; line-height: 1.15; }
+/* Already in a Shrine: the Shrine mark on the art's bottom-right corner. */
+.rl-pick-host { position: absolute; top: calc(var(--hc-w) * 0.42); right: calc(var(--px) * 4); --icon-size: calc(var(--px) * 26); filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1) rgba(40, 22, 10, 0.5)); }
+/* The move confirmation: the relic, the question, Cancel and Move. */
+.rl-move { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 10); text-align: center; }
+.rl-move-art { display: grid; place-items: center; width: calc(var(--px) * 96); height: calc(var(--px) * 96); }
+.rl-move > p { margin: 0; }
 /* The check sits top-left: the level seal holds the top-right corner. */
 .rl-card.is-pick .hc-check { right: auto; left: calc(var(--hc-w) * -0.05); }
 .rl-card.is-picked { border-color: var(--gold-dark); box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold), 0 calc(var(--px) * 2) 0 rgba(40, 22, 10, 0.35); }

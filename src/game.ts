@@ -206,6 +206,8 @@ export type OverlayName =
   | 'heroPicker'
   // Choosing the city relic a Shrine holds (`openRelicPicker`), over its card.
   | 'relicPicker'
+  // "It is in another Shrine — move it here?", over the picker.
+  | 'relicMoveConfirm'
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
   | 'world'
@@ -271,6 +273,8 @@ export interface RelicView {
   host: { at: string | null; shrines: ShrineOption[] } | null;
   /** The one word its card in the Bag says about it (M80). */
   status: RelicStatus;
+  /** What it does now, in two words — `+20% tax`. */
+  effect: string;
 }
 
 /** Where a relic stands, as its card says it: a city relic awake or asleep in
@@ -1718,6 +1722,7 @@ export class Game {
           holds: d.hosts === undefined ? null : ARTIFACTS[d.hosts].name,
         })),
       } : null,
+      effect: relicShortEffect(id, passiveValue(this.state, id)),
       status: !restored ? 'broken'
         : relicKind(id) === 'world' ? (this.state.world.chapels.includes(id) ? 'chapel' : 'bag')
           : isAwake(this.state, id) ? 'awake'
@@ -3884,10 +3889,15 @@ export class Game {
       .map((id) => this.relicCard(id));
   }
 
-  /** Where a relic is now, for its card in the picker: its Shrine's name,
-   *  or null in the Bag. */
-  relicPickWhere(id: ArtifactId): string | null {
-    return this.hostLabel(id);
+  /** Is this relic already in a Shrine — this one or another? Its card in
+   *  the picker wears the Shrine mark. */
+  relicPickHosted(id: ArtifactId): boolean {
+    return hostOf(this.state, id) !== null;
+  }
+
+  /** The relic the move confirmation asks about, while it is open. */
+  relicMoveSubject(): ArtifactId | null {
+    return this.openOverlay === 'relicMoveConfirm' ? this.relicPick?.slot ?? null : null;
   }
 
   /** A TAP ON A RELIC: into the slot, or out of it if it is the one there. */
@@ -3907,8 +3917,31 @@ export class Game {
   }
 
   /** SELECT: the Shrine holds what the slot holds — hosted, swapped or taken
-   *  out — and its card comes back. */
+   *  out — and its card comes back. A relic already in ANOTHER Shrine asks
+   *  first (`relicMoveConfirm`): moving it ends its window there. */
   relicPickConfirm(): void {
+    const pick = this.relicPick;
+    if (pick === null) return;
+    const from = pick.slot === null ? null : hostOf(this.state, pick.slot);
+    if (from !== null && from.uniqueId !== pick.shrineId) {
+      playSfx('click');
+      this.setOverlay('relicMoveConfirm');
+      return;
+    }
+    this.applyRelicPick();
+  }
+
+  /** The confirmation's Move: the relic leaves its Shrine for this one. */
+  relicMoveAccept(): void {
+    this.applyRelicPick();
+  }
+
+  /** The confirmation's Cancel: back to the picker, the choice as it was. */
+  relicMoveCancel(): void {
+    this.setOverlay(this.relicPick === null ? null : 'relicPicker');
+  }
+
+  private applyRelicPick(): void {
     const pick = this.relicPick;
     if (pick === null) return;
     this.relicPick = null;
@@ -4356,7 +4389,7 @@ export class Game {
     this.openOverlay = name;
     // The picker and the shortfall are sheets over the card they were opened
     // from: the card stays.
-    if (name !== null && name !== 'speedup' && name !== 'shortfall' && name !== 'relicPicker') {
+    if (name !== null && name !== 'speedup' && name !== 'shortfall' && name !== 'relicPicker' && name !== 'relicMoveConfirm') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }

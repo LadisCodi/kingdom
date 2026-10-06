@@ -3,7 +3,7 @@
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
 import { renderHeroPicker } from './ui/heroPicker';
-import { renderRelicPicker } from './ui/relicPicker';
+import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
@@ -310,6 +310,7 @@ async function boot(): Promise<void> {
     lair: renderLairSheet,
     heroPicker: renderHeroPicker,
     relicPicker: renderRelicPicker,
+    relicMoveConfirm: renderRelicMoveConfirm,
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
