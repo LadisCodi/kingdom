@@ -97,7 +97,7 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands; one with a splash opens it from its row | the monthly budget |
+| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands; a row opens the offer's splash | the monthly budget |
 | **Today** | the day's offers (§2.5), with the time to the next draw | the monthly budget |
 | **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
 | **For the Bag** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
@@ -175,14 +175,14 @@
 
 - Opening is decided by the live game, not by `advance()`: an offer produces
   nothing, and a trigger met only inside a replayed absence opens nothing.
-- **The Offers screen**: one tab an offer on sale (its icon `sprite` over its
-  `short` name), the open one's card under them — its name and pitch, its
-  step in a chain (*I / III*), its picture (`art`), its Gems beside a sack
-  with its value on a red wax seal, a tile for everything else (a tap says
-  what it is), a green **GIFT** strip for each slot it opens for good, its
-  countdown and purchase limit, and its price. An offer with a splash has no
-  tab: its splash is its screen. A tap on an offer's row in the store opens
-  its tab, or its splash.
+- **Every offer is shown the same way** (§2.6): a widget on the map opens
+  its full-screen splash. What stands in its light is its `art` — a cut-out
+  with no background — or its hero. Beside it, a hero's name and rarity, or
+  the pack's own words and its step in a chain (*I / III*). Its rewards are
+  tiles in a framed panel — over four, the Gems take a row of their own with
+  a sack — with its value on a red wax seal; each slot it opens for good has
+  a green **GIFT** panel; under the price, its countdown and *Once per
+  kingdom* or what is left. A tap on its row in the store opens its splash.
 
 ### 2.5 Daily offers
 

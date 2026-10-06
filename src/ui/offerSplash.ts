@@ -19,11 +19,11 @@ import { boonText } from '../sim/heroes';
 import type { CurrencyId, HeroId, ItemId, StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { playSfx } from '../audio/sfx';
-import type { Game, OfferTile } from '../game';
+import type { Game, OfferSale, OfferTile } from '../game';
 import { itemIcon } from './itemArt';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
-import { btn, closeKnob, currencyIcon, iconEl, withTooltip } from './kit';
+import { btn, closeKnob, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
 import { itemLine, itemName } from './itemText';
 
 /** A hero's round-cornered portrait, or its glyph while the art is missing. */
@@ -61,9 +61,8 @@ function tileTip(t: OfferTile): { title: string; text: string } {
   return { title: itemName(def), text: itemLine(def, t.worth ?? {}) };
 }
 
-/** One reward as a tile, with the tooltip saying what it is — the splash's
- *  panels and the Offers screen's card both draw these. */
-export function offerTile(t: OfferTile): HTMLElement {
+/** One reward as a tile, with the tooltip saying what it is. */
+function offerTile(t: OfferTile): HTMLElement {
   const art = t.kind === 'hero' ? heroArt(t.id as HeroId, 'ofs-tile-hero')
     : t.kind === 'fragments' ? heroFragmentIcon(t.id as HeroId, { size: 'lg' })
     : t.kind === 'coin' ? currencyIcon(t.id as CurrencyId, { size: 'lg' })
@@ -135,37 +134,69 @@ function ribbonTitle(text: string): SVGSVGElement {
   return svg;
 }
 
-function panel(title: string, tiles: OfferTile[], badge: HTMLElement | null, locked: boolean): HTMLElement {
-  return el('section', { class: `ofs-panel${locked ? ' is-locked' : ''}` },
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+/** The picture on a GIFT panel, by what the offer opens for good. */
+const GIFT_ICON: Record<OfferSale['gifts'][number]['icon'], IconName> = {
+  builder: 'build', explorer: 'compass', heroSlot: 'helmet',
+};
+
+/** A parchment panel in its nailed frame, a wooden plaque with its title. */
+function panel(title: string, badge: HTMLElement | null, cls: string, ...content: HTMLElement[]): HTMLElement {
+  return el('section', { class: `ofs-panel ${cls}` },
     el('div', { class: 'ofs-panel-head' }, ...(badge === null ? [] : [badge]), el('span', {}, title)),
-    el('div', { class: 'ofs-tiles' }, ...tiles.map(offerTile)));
+    ...content);
+}
+
+/** What lands now. Four rewards or fewer stand in a row of big tiles; more,
+ *  and the Gems take a row of their own — the sack, the count — over a row
+ *  of smaller tiles. A pack's value rides on its corner, a red wax seal. */
+function nowPanel(title: string, tiles: OfferTile[], seal: number | null): HTMLElement {
+  const gems = tiles.find((t) => t.kind === 'coin' && t.id === 'Gems');
+  const many = tiles.length > 4 && gems !== undefined;
+  const rest = many ? tiles.filter((t) => t !== gems) : tiles;
+  return panel(title, null, many ? 'is-many' : '',
+    ...(many ? [el('div', { class: 'ofs-gems' },
+      el('span', { class: 'ofs-sack', 'aria-hidden': 'true' }),
+      currencyIcon('Gems', { size: 'lg' }),
+      el('b', {}, formatExact(gems!.count)))] : []),
+    el('div', { class: 'ofs-tiles' }, ...rest.map(offerTile)),
+    ...(seal === null ? [] : [el('span', { class: 'ofs-seal', 'aria-label': `${formatExact(seal)}% value` }, `${formatExact(seal)}%`)]));
 }
 
 export function mountOfferSplash(game: Game, root: HTMLElement): void {
   /** What is on screen, so a notify — every tick — rebuilds only what moves. */
   let showing: string | null = null;
-  let timer: HTMLElement | null = null;
-  let waitUntil = 0;
+  /** Live countdowns: the element and the instant it counts to. */
+  let clocks: Array<[HTMLElement, number]> = [];
 
   const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting'): void => {
     const s = STORE[sku];
     const tiles = game.offerTiles(sku);
+    const sale = game.offerSale(sku);
     const hero = s.hero === null ? null : HEROES[s.hero];
     const close = closeKnob(() => game.closeOfferSplash());
     close.classList.add('ofs-close');
+    clocks = [];
+    const clock = (at: number): HTMLElement => {
+      const node = el('b', {}, '');
+      clocks.push([node, at]);
+      return node;
+    };
 
-    timer = null;
     let action: HTMLElement;
     if (mode === 'buy') {
       action = btn({ label: formatUsd(Math.round(s.priceUsd * 100)), kind: 'gold', finish: 'gem', onClick: () => game.buyFromSplash(sku) });
     } else if (mode === 'claim') {
       action = btn({ label: 'Claim', kind: 'gold', finish: 'gem', onClick: () => game.doClaimNextDay(sku) });
     } else {
-      const pill = game.nextDayPill();
-      waitUntil = pill?.at ?? 0;
-      timer = el('b', {}, '');
-      action = el('div', { class: 'ofs-wait' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, 'Tomorrow in '), timer);
+      action = el('div', { class: 'ofs-wait' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, 'Tomorrow in '), clock(sale.nextDayAt ?? 0));
     }
+    const notes = mode !== 'buy' ? [] : [
+      ...(sale.closesAt === null ? [] : [el('span', { class: 'ofs-timer' }, iconEl('hourglass', { size: 'sm' }), clock(sale.closesAt))]),
+      ...(sale.once ? [el('span', {}, 'Once per kingdom.')]
+        : sale.left === null ? [] : [el('span', {}, `Left: ${formatExact(sale.left)}`)]),
+    ];
 
     // The magic in the light: sparkles that come and go, each on its own
     // beat, so the burst never pulses as one.
@@ -173,25 +204,40 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
       class: 'ofs-sparkle', 'aria-hidden': 'true',
       style: `left:${x}%;top:${y}%;--s:${size};animation-delay:${delay}ms`,
     }));
-    const art = s.hero === null ? null : spriteUrl(HEROES[s.hero].sprite);
+    // What stands in the light: the offer's own cut-out, or its hero.
+    const art = s.art !== '' ? spriteUrl(s.art) : s.hero === null ? null : spriteUrl(HEROES[s.hero].sprite);
+    // Beside it: a hero's name and rarity; a pack's own words, and its step
+    // in a chain.
+    const aside = hero !== null
+      ? el('div', { class: 'ofs-hero-name' },
+        ornate(hero.name.replace(/^The /, ''), 'ofs-name-text'),
+        el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, hero.rarity))
+      : el('div', { class: 'ofs-hero-name is-pitch' },
+        ornate(s.description, 'ofs-pitch-text'),
+        ...(sale.chain === null ? [] : [el('span', { class: 'ofs-chain' },
+          `${ROMAN[sale.chain.at - 1] ?? sale.chain.at} / ${ROMAN[sale.chain.of - 1] ?? sale.chain.of}`)]));
+
     const screen = el('div', { class: 'ofs-screen', role: 'dialog', 'aria-modal': 'true', 'aria-label': s.name },
       close,
       el('div', { class: 'ofs-column' },
-        el('div', { class: 'ofs-hero', 'aria-hidden': 'true' },
+        el('div', { class: `ofs-hero${s.art !== '' ? ' is-cutout' : ''}`, 'aria-hidden': 'true' },
           el('div', { class: 'ofs-burst' }),
           ...(art === null ? [] : [spriteImgAt(art, 'ofs-hero-art')]),
           ...sparkles),
         el('div', { class: 'ofs-ribbon' }, ribbonTitle(s.name)),
-        ...(hero === null ? [] : [el('div', { class: 'ofs-hero-name' },
-          ornate(hero.name.replace(/^The /, ''), 'ofs-name-text'),
-          el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, hero.rarity))]),
+        aside,
         el('div', { class: 'ofs-panels' },
-          panel(mode === 'buy' ? 'Yours now' : 'Yours', tiles.now, null, false),
-          ...(tiles.nextDay.length === 0 ? [] : [panel('Tomorrow', tiles.nextDay,
+          nowPanel(mode === 'buy' ? 'Yours now' : 'Yours', tiles.now, hero === null && sale.valuePercent > 100 ? sale.valuePercent : null),
+          ...sale.gifts.map((g) => el('section', { class: 'ofs-gift' },
+            el('span', { class: 'ofs-gift-tag', 'aria-label': 'Gift' }),
+            el('span', { class: 'ofs-gift-art' }, iconEl(GIFT_ICON[g.icon], { size: 'lg' })),
+            el('div', {}, el('b', {}, `${g.title} — for good.`), el('span', {}, `${g.text}.`)))),
+          ...(tiles.nextDay.length === 0 ? [] : [panel('Tomorrow',
             mode === 'claim' ? null : el('span', { class: 'ofs-lock' }, iconEl('padlock', { size: 'lg' }), iconEl('hourglass', { size: 'lg' })),
-            mode !== 'claim')]),
+            mode === 'claim' ? '' : 'is-locked',
+            el('div', { class: 'ofs-tiles' }, ...tiles.nextDay.map(offerTile)))]),
           el('div', { class: 'ofs-actions' }, action,
-            ...(mode === 'buy' && s.limit === 1 ? [el('span', { class: 'ofs-note' }, 'Once per kingdom.')] : [])))));
+            ...(notes.length === 0 ? [] : [el('div', { class: 'ofs-note' }, ...notes)])))));
     root.replaceChildren(screen);
     const title = screen.querySelector<SVGSVGElement>('.ofs-ribbon-title');
     if (title !== null) fitRibbonTitle(title);
@@ -206,7 +252,10 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
       if (on === null) root.replaceChildren();
       else build(on.sku, on.mode);
     }
-    if (timer !== null) timer.textContent = formatCountdown(Math.max(0, Math.ceil((waitUntil - game.now()) / 1000)));
+    for (const [node, at] of clocks) {
+      const text = formatCountdown(Math.max(0, Math.ceil((at - game.now()) / 1000)));
+      if (node.textContent !== text) node.textContent = text;
+    }
   };
 
   game.onChange(refresh);

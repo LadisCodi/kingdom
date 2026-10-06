@@ -63,14 +63,12 @@ function offerRow(game: Game, offer: OfferCard): HTMLElement {
       ? el('span', { class: 'store-value', 'aria-label': `${formatExact(offer.valuePercent)}% value` },
         `${formatExact(offer.valuePercent)}%`)
       : '');
-  // An offer opens its own screen from its row — its splash, or its tab in
-  // the Offers screen; the price still buys.
+  // An offer opens its splash from its row; the price still buys.
   if (STORE[offer.id].shelf === 'offer') {
     row.classList.add('is-splash');
     row.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).closest('button')) return;
-      if (STORE[offer.id].splash) game.openOfferSplash(offer.id);
-      else game.openOffers(offer.id);
+      game.openOfferSplash(offer.id);
     });
   }
   return row;
