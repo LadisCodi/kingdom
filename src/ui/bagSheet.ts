@@ -227,8 +227,8 @@ export function renderBagSheet(game: Game): HTMLElement {
   const view = game.bagScreen();
   // The Relics tab holds no items: the relics met, and their fragments.
   if (view.tab === 'Relics') {
-    return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
-      tabRow(game, view), ...relicTab(game));
+    return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+      tabRow(game, view), pane(...relicTab(game))));
   }
   const grid = el('div', { class: 'bag-grid' });
   if (view.items.length === 0) {
@@ -243,6 +243,16 @@ export function renderBagSheet(game: Game): HTMLElement {
       if (i === rowEnd) grid.append(popover(game, view.items[at], (at % COLUMNS) + 1));
     });
   }
-  return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
-    tabRow(game, view), ...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid);
+  return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+    tabRow(game, view), pane(...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid)));
 }
+
+/** The Bag takes the whole screen however little it holds (`is-panes`):
+ *  the tabs stay put and only what is under them scrolls. */
+function panes(surface: HTMLElement): HTMLElement {
+  surface.classList.add('is-panes');
+  return surface;
+}
+
+const pane = (...children: Node[]): HTMLElement =>
+  el('div', { class: 'bag-pane', 'data-keep-scroll': 'bag-pane' }, ...children);

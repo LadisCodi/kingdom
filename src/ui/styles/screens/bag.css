@@ -9,6 +9,11 @@
   padding-top: calc(var(--px) * 8);
   margin-bottom: calc(var(--px) * 10);
 }
+/* The tabs keep their height; the pane under them takes the rest of the
+ * screen and is the only thing that scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bag-tabs { flex: none; }
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bag-pane { flex: 1 1 0; }
+.bag-pane { min-height: 0; overflow-y: auto; overflow-x: clip; }
 /* A tab with nothing in it is still there, greyed — the wood gone dull. */
 .bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
 /* Something new in it: a small red wax dot at the plate's corner. */
