@@ -263,3 +263,28 @@ describe('the game on the real server', () => {
     expect(game.state.army).toHaveLength(before + 3);
   });
 });
+
+describe('friends on the board (15 §2.1)', () => {
+  it('marks a friend\'s seat in every answer, and nobody else\'s', async () => {
+    const store = memoryBoards();
+    const a = await joined(store, 'u1', 'Ada');
+    const b = await joined(store, 'u2', 'Bea');
+    const c = await joined(store, 'u3', 'Cid');
+    store.friends.set('u1', ['u2']);
+    const r = await serveWorld(store, 'u1', { opId: 's', ack: 0, cmd: { kind: 'snapshot' } }, T0 + 1);
+    const seats = (r.status === 200 ? r.reply as { seats: Array<{ seat: number; friend?: boolean }> } : null)!.seats;
+    expect(seats.filter((s) => s.friend).map((s) => s.seat)).toEqual([b.seat]);
+    expect(seats[c.seat].friend).toBeUndefined();
+    expect(seats[a.seat].friend).toBeUndefined();
+    const claimed = await serveWorld(store, 'u1', claimBeside(a.seat, 'c'), T0 + 2);
+    const snap = (claimed.status === 200 ? claimed.reply as { snapshot: { seats: Array<{ friend?: boolean }> } } : null)!.snapshot;
+    expect(snap.seats[b.seat].friend).toBe(true);
+  });
+
+  it('takes a dev seat number anywhere in a world of seven', async () => {
+    const store = memoryBoards();
+    await joined(store, 'u1', 'Ada');
+    const r = await serveWorld(store, 'u1', { opId: 's', ack: 0, asSeat: SEAT_INDICES.length - 1, cmd: { kind: 'snapshot' } }, T0 + 1);
+    expect(r.status).toBe(200);
+  });
+});

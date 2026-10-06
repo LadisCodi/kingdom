@@ -80,6 +80,9 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 - **The cap:** 10 friends, held on both sides. At most 10 requests waiting
   for an answer at once.
 - **Requests expire** after 48 hours unanswered, on both sides.
+- **On the world map:** a friend on the same world has their city, name
+  and ground shown through the fog ([`19-world-map.md`](19-world-map.md)
+  §1.3).
 - **The name first:** the name is asked for the moment the world map opens,
   after its splash and its scene ([`19-world-map.md`](19-world-map.md)
   §1.3); taking it seats the kingdom on a board. One name, unique, never

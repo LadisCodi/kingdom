@@ -155,7 +155,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   const board = source.board();
   const fog = worldFogAt(state, now);
   const r = camera.hexRadius;
-  const states = board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog));
+  const states = withFriends(source, board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog)));
   const clock = performance.now();
   const motion = motionOf(canvas);
   // THE GROUND, KEPT: plates, their blends, seams and roads change only with
@@ -351,7 +351,8 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // at the plank's left end (15 §2.2). The player's own is the save's, which
   // the board may not have heard yet.
   for (const seat of source.seats()) {
-    if (!seat.owner.you && (states[seat.index] === 'Unknown' || !shows('rival'))) continue;
+    const friend = !seat.owner.you && seat.owner.friend === true;
+    if (!seat.owner.you && (states[seat.index] === 'Unknown' || (!friend && !shows('rival')))) continue;
     const c = camera.hexToScreen(hexAt(seat.index));
     if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 2 || c.y > h + r * 3) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
@@ -372,6 +373,17 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     // Only the player's own armies show the way they are taking.
     if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now, seat?.owner.you === true, routeAlpha);
   }
+}
+
+/** A friend's city and the ground it holds show through the fog
+ *  (15 §2.1): seen as explored, though the player has not explored it. */
+export function withFriends(source: WorldSource, states: FogState[]): FogState[] {
+  for (const seat of source.seats()) {
+    if (seat.owner.you || seat.owner.friend !== true) continue;
+    states[seat.index] = 'Revealed';
+    for (const bh of source.board().hexes) if (source.hexOf(bh.index)?.owner === seat.seat) states[bh.index] = 'Revealed';
+  }
+  return states;
 }
 
 /** Where an army stands at `now`: between two hexes of its path, `f` of the
