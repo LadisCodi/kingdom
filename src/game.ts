@@ -39,9 +39,10 @@ import {
 } from './sim/grid';
 import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
 import {
-  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, hostOf, hostRelic, isAwake,
-  shrines, unhostRelic, windowMsOf,
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, buildingInAura, hostOf, hostRelic,
+  isAwake, shrines, unhostRelic, windowMsOf,
 } from './sim/hosts';
+import { shrineBubbleAt } from './render/shrineBubbles';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
@@ -266,7 +267,14 @@ export interface RelicView {
   /** A restored city relic's Shrine, and the Shrines it could move to; null
    *  for a world relic or one not restored (sim/hosts.ts). */
   host: { at: string | null; shrines: ShrineOption[] } | null;
+  /** The one word its card in the Bag says about it (M80). */
+  status: RelicStatus;
 }
+
+/** Where a relic stands, as its card says it: a city relic awake or asleep in
+ *  its Shrine, or restored and in the Bag; a world relic in a Chapel or not;
+ *  either still in fragments. */
+export type RelicStatus = 'awake' | 'asleep' | 'bag' | 'chapel' | 'broken';
 
 /** A Shrine a relic could be hosted in. */
 export interface ShrineOption {
@@ -290,6 +298,12 @@ export interface RelicActivationView {
   /** How far the aura reaches round the Shrine — the relic's level. */
   radius: number;
   block: string | null;
+  /** Mana the pool gains an hour, and how long until it holds the price —
+   *  null when it already does (M83). */
+  regenPerHour: number;
+  readyInMs: number | null;
+  /** The smallest Mana flask in the Bag, for a player short of the price. */
+  flask: { id: ItemId; count: number } | null;
 }
 
 /** A Shrine's card section: what it holds and what it could. */
@@ -745,6 +759,10 @@ export class Game {
     this.maybeAskName();
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
+    }
+    // A relic whose window closed — here or while away — asks to be woken.
+    for (const r of result.relicsAsleep) {
+      if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
     // An explorer home says what it found; the board already shows where.
     // The target's promise, if it kept one, is paid and named (19 §3.2).
@@ -1430,11 +1448,21 @@ export class Game {
       return;
     }
     playSfx('research');
+    this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
     const host = hostOf(this.state, id);
     if (host !== null) {
-      for (const c of this.map.cells.filter((c) => areaCovers(auraOf(this.state, host, id), c))) {
+      const aura = auraOf(this.state, host, id);
+      for (const c of this.map.cells.filter((c) => areaCovers(aura, c))) {
         this.tapFx.add(coordKey(c));
       }
+      // What it does and for how long, over the Shrine, and the Mana it
+      // took (M85).
+      const window = formatDuration(Math.round(windowMsOf(host) / 1000));
+      this.floaters.add(host.location, `${relicShortEffect(id, passiveValue(this.state, id))} \u00b7 ${window}`);
+      this.floaters.add({ x: host.location.x, y: host.location.y - 1 }, `\u2212${formatExact(activationCost(this.state, id))}`, 'Mana');
+      this.relicBursts.push({
+        centre: host.location, size: DISTRICTS[host.definitionId].size, radius: aura.radius, at: performance.now(),
+      });
     }
     // A faster crew starts its next leg faster: wake the idle ones now.
     wakeIdleWorkersAt(this.state, this.now());
@@ -1459,7 +1487,104 @@ export class Game {
       affordable: mana(this.state) >= cost,
       radius: auraRadiusAt(id, artifactLevel(this.state, id)),
       block: activateBlock(this.state, id),
+      regenPerHour: manaProduction(this.state),
+      readyInMs: (() => {
+        const short = cost - mana(this.state);
+        const rate = manaProduction(this.state);
+        if (short <= 0) return null;
+        return rate > 0 ? Math.ceil((short / rate) * 3_600_000) : Infinity;
+      })(),
+      flask: this.smallestFlask(),
     };
+  }
+
+  /** The smallest Mana flask the Bag holds, or null. */
+  private smallestFlask(): { id: ItemId; count: number } | null {
+    const held = (Object.keys(ITEMS) as ItemId[])
+      .filter((i) => ITEMS[i].kind === 'flask' && itemCount(this.state, i) > 0)
+      .sort((a, b) => ITEMS[a].value - ITEMS[b].value);
+    return held.length === 0 ? null : { id: held[0]!, count: itemCount(this.state, held[0]!) };
+  }
+
+  /** Drink the smallest Mana flask, from a relic short of its price. */
+  doUseFlaskFor(id: ArtifactId): void {
+    const flask = this.relicActivation(id)?.flask ?? null;
+    if (flask !== null) this.doUseItem(flask.id, 1);
+  }
+
+  /**
+   * THE RELICS THAT FELL ASLEEP since the player last looked (M85): their
+   * windows closed, live or while away, and nobody has woken them or opened
+   * them since. The right-edge pill reads this; it is the presenter's, not
+   * the save's, so a reload forgets it.
+   */
+  private asleepNotices: ArtifactId[] = [];
+
+  /** The pill's subject: the first relic asleep, how many are, and what the
+   *  first one costs to wake. Null while there is nothing to say. */
+  asleepNotice(): { relic: ArtifactId; count: number; cost: number; affordable: boolean } | null {
+    this.asleepNotices = this.asleepNotices.filter((r) => hostOf(this.state, r) !== null && !isAwake(this.state, r));
+    const relic = this.asleepNotices[0];
+    if (relic === undefined) return null;
+    const cost = activationCost(this.state, relic);
+    return { relic, count: this.asleepNotices.length, cost, affordable: mana(this.state) >= cost };
+  }
+
+  /** The pill's body: the one relic's sheet, or the Bag's Relics for many. */
+  openAsleepNotice(): void {
+    const n = this.asleepNotice();
+    if (n === null) return;
+    if (n.count === 1) this.openRelic(n.relic);
+    else {
+      this.asleepNotices = [];
+      this.closeRelic();
+    }
+  }
+
+  /** A woken relic's flourish on the map (M85), on the wall clock: a ring
+   *  sweeping out over its aura for a second and a half. */
+  private relicBursts: Array<{ centre: Coord; size: { x: number; y: number }; radius: number; at: number }> = [];
+
+  /** Every Shrine holding a relic, for the map (M84). */
+  private shrineRelics(): MarkerLayer['shrineRelics'] {
+    const have = mana(this.state);
+    return shrines(this.state).flatMap((d) => {
+      const relic = d.hosts;
+      if (relic === undefined || artifactLevel(this.state, relic) < 1) return [];
+      const cost = activationCost(this.state, relic);
+      return [{
+        relic, districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size,
+        sprite: ARTIFACTS[relic].sprite,
+        awake: isAwake(this.state, relic), cost, affordable: have >= cost,
+      }];
+    });
+  }
+
+  /**
+   * WHAT AN AWAKE AURA PAYS THE BUILDINGS IN IT (M84), one badge a roof — on
+   * what the relic actually moves: the Crown's houses with residents, the
+   * Hammer's buildings with a crew. The Staff and the Sickle move the GROUND,
+   * which the tint already says.
+   */
+  private auraBadges(): MarkerLayer['auraBadges'] {
+    const out: MarkerLayer['auraBadges'] = [];
+    for (const host of shrines(this.state)) {
+      const relic = host.hosts;
+      if (relic === undefined || !isAwake(this.state, relic)) continue;
+      const reaches = relic === 'GildedLedger'
+        ? (d: District) => residentsOf(this.state, d) > 0
+        : relic === 'ForemansSigil'
+          ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
+          : null;
+      if (reaches === null) continue;
+      const text = `+${relicPercent(passiveValue(this.state, relic))}`;
+      const aura = auraOf(this.state, host, relic);
+      for (const d of this.state.city.districts) {
+        if (d.state !== 'Built' || d === host || !reaches(d) || !buildingInAura(aura, d)) continue;
+        out.push({ districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size, text });
+      }
+    }
+    return out;
   }
 
   /**
@@ -1491,6 +1616,7 @@ export class Game {
       return [{
         relic,
         glyph: ARTIFACTS[relic].glyph,
+        sprite: ARTIFACTS[relic].sprite,
         centre: host.location,
         cells: this.map.cells.filter((cell) => areaCovers(area, cell)),
         left: Math.max(0, Math.min(1, (c.endsAt - now) / span)),
@@ -1587,6 +1713,10 @@ export class Game {
           holds: d.hosts === undefined ? null : ARTIFACTS[d.hosts].name,
         })),
       } : null,
+      status: !restored ? 'broken'
+        : relicKind(id) === 'world' ? (this.state.world.chapels.includes(id) ? 'chapel' : 'bag')
+          : isAwake(this.state, id) ? 'awake'
+            : hostOf(this.state, id) !== null ? 'asleep' : 'bag',
     };
   }
 
@@ -1740,6 +1870,7 @@ export class Game {
 
   /** Open a relic's sheet, over the Bag it was opened from. */
   openRelic(id: ArtifactId): void {
+    this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
     this.openRelicId = id;
     this.setOverlay('relic');
   }
@@ -4274,9 +4405,12 @@ export class Game {
     const key = `${this.notifies}|${JSON.stringify(this.mode)}|${this.ghostHeld}|${this.inspectedDistrictId}`;
     if (this.markerCache?.key !== key) this.markerCache = { key, layer: this.buildMarkers() };
     // The two that run on the clock: the hint's expiry, the wheels' sweep.
+    const clock = performance.now();
+    this.relicBursts = this.relicBursts.filter((b) => clock - b.at < RELIC_BURST_MS);
     return {
       ...this.markerCache.layer,
       spellZones: this.spellZones(), tutorialFocus: this.tutorialFocus,
+      relicBursts: this.relicBursts.map((b) => ({ ...b, t: (clock - b.at) / RELIC_BURST_MS })),
     };
   }
 
@@ -4297,6 +4431,9 @@ export class Game {
       inspectedDistrictId: this.inspectedDistrictId,
       spellZones: [],
       tutorialFocus: null,
+      shrineRelics: this.shrineRelics(),
+      auraBadges: this.auraBadges(),
+      relicBursts: [],
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -4421,8 +4558,11 @@ export class Game {
       if (district) {
         if (district.state === 'Built' && DISTRICTS[district.definitionId].hostsRelic) {
           // A Shrine's area is its aura, in gold (sim/hosts.ts).
+          // Gold while it sleeps or stands empty — where it WOULD reach; an
+          // awake one is already drawn in violet, with its wheel (M82).
+          const awake = district.hosts !== undefined && isAwake(this.state, district.hosts);
           const aura = auraOf(this.state, district, district.hosts ?? 'GildedLedger');
-          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura, c));
+          layer.influenceCells = awake ? [] : this.map.cells.filter((c) => areaCovers(aura, c));
           layer.influenceIsAura = true;
         } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
@@ -5381,6 +5521,12 @@ export class Game {
     // lair's picture above its own ground — its pixels, not its box, so the
     // cells round its edges still answer as themselves.
     const normal = this.mode.kind === 'normal';
+    // A sleeping Shrine's Mana bubble wakes its relic (M84).
+    const sleeper = normal ? shrineBubbleAt(sx, sy) : null;
+    if (sleeper !== null) {
+      this.doActivateRelic(sleeper);
+      return;
+    }
     const lairBubble = normal ? lairBubbleAt(sx, sy) : null;
     const storeCell = normal && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
     const lair = lairBubble ?? (normal && storeCell === null ? lairArtAt(sx, sy) : null);
@@ -5754,6 +5900,27 @@ function relicEffectText(id: ArtifactId, value: number): string {
     ? `${RELIC_SUBJECT[id]} ${pct} faster`
     : `${RELIC_SUBJECT[id]} +${pct}`;
 }
+
+/** How long a woken relic's ring takes to sweep its aura (M85). */
+const RELIC_BURST_MS = 1500;
+
+/** A relic's effect in two words, for the floater a wake raises: `+30% tax`. */
+function relicShortEffect(id: ArtifactId, value: number): string {
+  const { op } = ARTIFACTS[id].passive.stats[0]!;
+  const what = RELIC_SHORT[id];
+  return op === 'mul' ? `+${relicPercent(value)} ${what}` : `+${formatNumber(value, 1)} ${what}`;
+}
+
+const RELIC_SHORT: Record<ArtifactId, string> = {
+  DowsingRod: 'recovery',
+  VerdantSeal: 'per swing',
+  ForemansSigil: 'crew speed',
+  GildedLedger: 'tax',
+  WanderersCompass: 'Stardust',
+  DelversLantern: 'room haul',
+  MusterHorn: 'army',
+  BailiffsTally: 'district yield',
+};
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {

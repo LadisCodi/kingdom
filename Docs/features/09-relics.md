@@ -102,8 +102,21 @@ never a discount, because a discount dies at 100%.
   Taking the relic out, or hosting it elsewhere, ends it.
 - **The close is a boundary**: offline replay ends it at the same instant as
   live ticking, and rent inside the aura is repriced there.
-- The relic's card and its Shrine's card both carry the **Activate** button
-  with its Mana price, and while it is awake, the time left.
+- **On screen** (mockups M80–M85):
+  - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
+    with its own Activate, **In the Bag**, or its fragments as a silhouette.
+  - The relic's sheet and its Shrine's card: a grey **Asleep** seal beside
+    Activate, or an **Awake** ribbon and a gold bar running down the window.
+    Short of the price, how soon the pool holds it, and the smallest Mana
+    flask in the Bag.
+  - On the map, an awake relic floats over its Shrine and the aura wears the
+    zone's tint and wheel; a sleeping one rests dim on the altar under a
+    **Mana bubble** with its price — a tap on the bubble wakes it.
+  - Houses an awake Crown pays, and buildings with crews an awake Hammer
+    speeds, wear a **+X%** badge.
+  - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
+  - A window that closes raises a tab on the right edge — **The Tribute Crown
+    is asleep** · Activate — one tab for all of them (*2 relics are asleep*).
 
 ### 2.2 The world relics' spells
 
