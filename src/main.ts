@@ -65,6 +65,7 @@ import { LocalWorldServer, browserStore } from './worldServer/local';
 import { RemoteWorldServer } from './worldServer/remote';
 import { renderNicknameSheet } from './ui/world/nicknameSheet';
 import { renderCrestEditor } from './ui/friends/crestEditor';
+import { renderFriendSearch } from './ui/friends/friendSearch';
 import { renderFriendProfile, renderFriendsSheet } from './ui/friends/friendsSheet';
 import { LocalSocialServer, LOCAL_SOCIAL_KEY, browserSocialStore } from './socialServer/local';
 import { RemoteSocialServer } from './socialServer/remote';
@@ -322,6 +323,7 @@ async function boot(): Promise<void> {
     friends: renderFriendsSheet,
     friendProfile: renderFriendProfile,
     crestEditor: renderCrestEditor,
+    friendSearch: renderFriendSearch,
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
@@ -438,7 +440,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'relic', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {

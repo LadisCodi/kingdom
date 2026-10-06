@@ -3,7 +3,7 @@
   "fields": {
     "friends": {
       "type": "object",
-      "doc": "The friends list (Docs/features/15-social.md §2.1).",
+      "doc": "The friends list and its Inbox (Docs/features/15-social.md §2.1, §2.3).",
       "fields": {
         "max": { "type": "int", "min": 1, "doc": "How many friends a player may have." },
         "maxSent": {
@@ -11,7 +11,13 @@
           "min": 1,
           "doc": "How many friend requests a player may have waiting for an answer at once."
         },
-        "suggestions": { "type": "int", "min": 0, "doc": "How many suggested kingdoms the requests panel offers." }
+        "requestRows": {
+          "type": "int",
+          "min": 0,
+          "doc": "Rows the requests list fills with suggestions, counting the requests already in it."
+        },
+        "requestHours": { "type": "int", "min": 1, "doc": "Hours a friend request waits for an answer before it expires." },
+        "messageDays": { "type": "int", "min": 1, "doc": "Days an Inbox message is kept." }
       }
     }
   }

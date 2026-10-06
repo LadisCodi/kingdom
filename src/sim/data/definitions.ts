@@ -2341,12 +2341,16 @@ export const SURVEY = balance.survey as {
   paidItems: string[];
 };
 
-/** The friends list — Docs/features/15-social.md §2.1: the caps the
- *  social server holds a player to. */
+/** The friends list and its Inbox — Docs/features/15-social.md §2.1,
+ *  §2.3: the caps the social server holds a player to, and how long a
+ *  request and a message last. */
 export const FRIENDS = balance.friends as {
   max: number;
   maxSent: number;
-  suggestions: number;
+  /** Rows the requests list fills with suggestions, requests included. */
+  requestRows: number;
+  requestHours: number;
+  messageDays: number;
 };
 
 // ------------------------------------------------------------ the timeline
