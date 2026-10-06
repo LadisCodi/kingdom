@@ -205,7 +205,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
       }));
   const slot = game.heroSlotOffer();
   const heroSlotCard = !game.doorOpen('heroes') ? null : card({
-    art: el('span', { class: 'store-art is-hero-slot', role: 'img', 'aria-label': 'hero slot' }),
+    art: iconEl('helmet', { size: 'lg', label: 'hero slot' }),
     name: 'Another hero slot',
     desc: slot.slots >= slot.ceiling
       ? `${formatExact(slot.ceiling)} heroes is the whole board.`

@@ -9,6 +9,7 @@ nothing to go wrong offline.
 | `nunito-700-latin.woff2` | **Nunito** Bold | `--weight-strong` | buttons, amounts, names |
 | `nunito-600-latin.woff2` | **Nunito** SemiBold | `--weight-body` | ordinary prose — the default on `<body>` |
 | `nunito-400-latin.woff2` | **Nunito** Regular | `--weight-small` | the small description under it |
+| `alegreya-900-latin.woff2` | **Alegreya** Black | `--font-ornate` | the big painted titles of a splash — an offer's ribbon and its hero's name (m86b) |
 
 Declared in [`../styles/tokens.css`](../styles/tokens.css) behind
 `--font-body`, `--font-display` and the four `--weight-*` tokens.
