@@ -11,6 +11,7 @@ import type { Game } from './game';
 import type { Crest } from './sim/crest';
 import { fillProblem, giveProblem, lotKey, pairs, receiveLot, takeLot, type TradeLot } from './sim/trade';
 import { townhall } from './sim/state';
+import { helpMana, payHelper, receiveGift } from './sim/friendHelp';
 import type { SocialServerApi } from './socialServer/local';
 import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot, WishView } from './socialServer/types';
 import { nicknameProblem } from './worldServer/nickname';
@@ -49,6 +50,8 @@ export const REFUSAL_WORDS: Record<SocialRefusal, string> = {
   OwnWish: 'That wish is your own',
   NotFriends: 'Only friends can fill each other\'s wishes',
   NoFillsLeft: 'No fills left today',
+  AlreadyHelped: 'You have helped them today',
+  NoHelpsLeft: 'No helps left today',
 };
 
 /** Why the player cannot fill a wish, in words (sim/trade.ts `fillProblem`). */
@@ -406,6 +409,33 @@ export class FriendsClient {
     this.game.setOverlay('wishFilled');
   }
 
+  /** Help a friend (§3): paid on the server's yes, once a day each. */
+  async help(code: string): Promise<void> {
+    if (this.busy.has(code)) return;
+    this.busy.add(code);
+    this.game.notify();
+    const r = await this.send({ kind: 'help', code });
+    this.busy.delete(code);
+    if (r === null || !r.ok) {
+      if (r !== null && !r.ok && r.why !== 'Offline') this.game.toast(REFUSAL_WORDS[r.why]);
+      this.game.notify();
+      return;
+    }
+    const banked = payHelper(this.game.state);
+    this.game.track('friend_helped', { mana: banked });
+    this.game.toast(banked > 0 ? `Helped · +${formatExact(banked)} Mana` : 'Helped · your Mana is full');
+    this.game.persist?.();
+    this.game.notify();
+  }
+
+  /** When a friend may be helped again, or null if they may be now. */
+  helpedAt(code: string): number | null {
+    return this.snap?.helped.find((h) => h.code === code)?.at ?? null;
+  }
+
+  /** What a help pays the player now. */
+  helpPay(): number { return helpMana(this.game.state); }
+
   closeFilled(): void {
     this.justFilled = null;
     this.tab = 'trade';
@@ -419,7 +449,8 @@ export class FriendsClient {
     const fresh = (this.snap?.deliveries ?? []).filter((d) => d.seq > s.kingdom.trade.seq);
     if (fresh.length === 0) return;
     for (const d of fresh) {
-      receiveLot(s, d.lot);
+      if (d.lot.kind === 'gift') receiveGift(s, d.lot.item);
+      else receiveLot(s, d.lot);
       s.kingdom.trade.seq = d.seq;
     }
     this.game.persist?.();

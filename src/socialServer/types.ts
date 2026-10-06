@@ -4,6 +4,7 @@
 // account behind it: every view and every command names a code, so no
 // client ever holds another player's user id.
 
+import type { ItemId } from '../sim/state';
 import type { TradeLot } from '../sim/trade';
 
 /** Another kingdom as the friends screen draws it. */
@@ -33,7 +34,9 @@ export type MessageKind =
   | 'accepted' | 'declined'
   /** A friend filled the player's wish; the player filled a friend's; a
    *  wish of the player's stood its hours unfilled (§2.4). */
-  | 'wishFilled' | 'filledWish' | 'wishExpired';
+  | 'wishFilled' | 'filledWish' | 'wishExpired'
+  /** A friend helped the player, and left a gift in their Bag (§3). */
+  | 'helped';
 
 /** Where a request message stands. */
 export type RequestState = 'pending' | 'accepted' | 'declined' | 'expired';
@@ -70,13 +73,16 @@ export interface WishView {
   expiresAt: number;
 }
 
+/** What a friend's help leaves in the player's Bag (§3). */
+export interface GiftLot { kind: 'gift'; item: ItemId }
+
 /** Goods the server hands the player: what a filled wish needed, a filled
- *  wish's stake, or a wish's stake back. Sent until acknowledged (`ack` on
- *  a hello); the client applies each once, by `seq`. */
+ *  wish's stake, a wish's stake back, or a friend's gift. Sent until
+ *  acknowledged (`ack` on a hello); the client applies each once, by `seq`. */
 export interface DeliveryView {
   seq: number;
-  lot: TradeLot;
-  why: 'filled' | 'youFilled' | 'withdrawn' | 'expired';
+  lot: TradeLot | GiftLot;
+  why: 'filled' | 'youFilled' | 'withdrawn' | 'expired' | 'helped';
 }
 
 /** The friends screen's whole state, as the server sees it now. */
@@ -104,6 +110,10 @@ export interface SocialSnapshot {
   fillsLeft: number;
   /** Goods the server owes the player, oldest first. */
   deliveries: DeliveryView[];
+  /** Friends the player has helped in this 24 hours, by code, and when (§3). */
+  helped: Array<{ code: string; at: number }>;
+  /** Friends the player may still help in this 24 hours. */
+  helpsLeft: number;
 }
 
 /** How far a kingdom has come, and the crest it wears, reported by its
@@ -123,7 +133,9 @@ export type SocialRefusal =
   | 'NoName' | 'BadNickname' | 'NicknameTaken' | 'NotFound' | 'Self' | 'AlreadyFriends'
   | 'Full' | 'TheirFull' | 'TooManySent' | 'Offline'
   /** Trading (§2.4). */
-  | 'BadWish' | 'TooManyWishes' | 'SameWish' | 'WishGone' | 'OwnWish' | 'NotFriends' | 'NoFillsLeft';
+  | 'BadWish' | 'TooManyWishes' | 'SameWish' | 'WishGone' | 'OwnWish' | 'NotFriends' | 'NoFillsLeft'
+  /** Daily help (§3). */
+  | 'AlreadyHelped' | 'NoHelpsLeft';
 
 /** Everything a client can ask of the social server. */
 export type SocialCommand =
@@ -149,7 +161,10 @@ export type SocialCommand =
   | { kind: 'withdrawWish'; id: string }
   /** Fill a friend's wish; what it needs has already left the player's
    *  goods, and its stake comes as a delivery. */
-  | { kind: 'fillWish'; id: string };
+  | { kind: 'fillWish'; id: string }
+  /** Help a friend, once in any 24 hours: the helper is paid on the yes,
+   *  the friend finds a gift (§3). */
+  | { kind: 'help'; code: string };
 
 export type SocialCommandKind = SocialCommand['kind'];
 

@@ -6,8 +6,8 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity, the friends list, the crest, the Inbox and the wish
-> board built (§2–§2.4); the rest
+> **Status: identity, email linking, the friends list, the crest, the
+> Inbox, the wish board and daily help built (§2–§3); the rest
 > designed, not built.** Prototype population is five to ten named
 > playtesters.
 
@@ -247,24 +247,27 @@ Inbox message.
 | How long a request waits, a message is kept | `friends.requestHours`, `friends.messageDays` |
 | Rows the requests list fills with suggestions | `friends.requestRows` |
 
-## 3. Neighbours and daily help
+## 3. Daily help
 
-- Needs no guild; it runs on a list.
-- **The list:** the player's guild plus a rotating handful of other active
-  players, served by the server. The client never enumerates the user table.
-- **The cap:** one help per target per 24 h, five targets per day. Enforced
-  server-side, idempotent.
-- **The helper is paid immediately:** Mana, priced in seconds of the helper's
-  own production, plus event points while an event is running.
-- **The target receives a gift:** a pending effect drained at next load (§1.2),
-  applied as a **build-speed modifier** for a fixed window.
+- **Who:** the player's friends (§2.1). Needs no guild.
+- **Where:** a **Help** button on each friend's row in the List; the head
+  of the friends section counts the helps left (*Helps 4/5*). A friend
+  helped shows *Helped · again in …*.
+- **The cap:** each friend once in any 24 hours; five friends in any 24
+  hours. Enforced by the server.
+- **The helper is paid on the server's yes:** Mana, ten minutes of their
+  own Mana regeneration, at least 1, up to the pool's ceiling.
+- **The friend gets a gift:** a construction speed-up (5 min) in the Bag,
+  and an Inbox note (*Helped your kingdom*). The gift is a delivery
+  (§1.2): applied once, at the next answer from the server.
+- **Dials** (`?dev=data` › Friends › friendHelp): `perDay`,
+  `helperManaMinutes`, `giftItem`.
 
 ### 3.1 Only your own state, plus a queued gift
 
 - Helping changes only the helper's state and queues a gift for the target.
 - No presence required. A gift is not instant.
-- Build speed is a modifier stat ([`13-events.md`](13-events.md) §1).
-- **OQ-34.**
+- **OQ-34**, closed.
 
 ## 4. The guild
 
@@ -374,4 +377,4 @@ Submitted as they happen:
 - A live-presence requirement
 - The sim on the server
 
-**Open questions:** OQ-89, OQ-33, OQ-34, OQ-36, OQ-37, OQ-38, OQ-39.
+**Open questions:** OQ-89, OQ-33, OQ-36, OQ-37, OQ-38, OQ-39.

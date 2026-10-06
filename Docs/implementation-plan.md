@@ -78,7 +78,7 @@ yet inside it.
 | The store, the payer profile, three ad placements | [`14`](features/14-monetization.md) | the other placements and SKUs, the telemetry pipeline (§4 Step 4) |
 | Workshops and refined goods | [`17`](features/17-workshops-and-goods.md) | — |
 | Garrisons, raids and lairs | [`18`](features/18-garrisons-and-raids.md) | — |
-| The world board — explorers, claims, chains, improvements, armies, conquest, the Dark Portal | [`19`](features/19-world-map.md) | districts on a radius-6 board ([`plans/world-districts.md`](plans/world-districts.md)); a real world server — today it runs against a local stand-in with five rivals |
+| The world board — explorers, claims, chains, improvements, armies, conquest, the Portals, a world of seven boards on the real server | [`19`](features/19-world-map.md) | the season (OQ-3) |
 | Harmony and the decorations | [`21`](features/21-harmony.md) | — |
 | Progression doors, tutorials, the dialogue stage | [`22`](features/22-progression.md), [`23`](features/23-tutorials.md), [`24`](features/24-dialogue.md) | the advisor's portrait |
 | The Royal Survey | [`25`](features/25-the-survey.md) | the seal that flies to the pill (§4) |
@@ -155,16 +155,16 @@ remaining SKUs, and the telemetry that makes a retention read-out possible.
 Ordered so each step is playable before the next exists. Step 5.1 is worth
 shipping on its own: **the save stops evaporating.**
 
-1. Profiles and a display name, with optional account linking. **Built**:
-   the nickname, the friend code and the friends list
-   (15 §2, §2.1); account linking is not.
-2. Neighbours, daily help with a cap, gifts drained at load.
+1. Profiles and a display name, with optional account linking. **Built**
+   (15 §2, §2.1).
+2. Daily help with a cap, gifts drained at load. **Built**, between
+   friends (15 §3).
 3. Guilds and membership.
 4. The guild week: the bar, contributions, threshold chests.
 5. The siege — the world board's co-op encounter.
 
 - **Design:** [`15-social.md`](features/15-social.md).
-- **Blocked on:** **OQ-33**, **OQ-34**, **OQ-36**, **OQ-38**, **OQ-39**, and
+- **Blocked on:** **OQ-33**, **OQ-36**, **OQ-38**, **OQ-39**, and
   **OQ-89** if card trading ships with it.
 - **Depends on:** Step 3's build-speed modifier.
 - **Gate:** two playtesters in one guild each see the bar move because of what
@@ -220,9 +220,6 @@ timer hatches a creature that joins the party in a slot of its own.
 
 Named here so nobody rediscovers them, and so they stay out of scope.
 
-- **The real world server.** The board runs against a local stand-in, through
-  the same door the real server will run (`handleWorld`); the steps are
-  [`plans/online-server.md`](plans/online-server.md).
 - **A guild league.** Small once the bar exists, and meaningless at prototype
   population (OQ-33).
 - **Cosmetics as a pipeline**, if and only if the probe ranks (OQ-26).

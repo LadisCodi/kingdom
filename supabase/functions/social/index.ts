@@ -199,6 +199,15 @@ const store = {
     if (error) throw error;
     return count ?? 0;
   },
+  async helpsSince(userId: string, since: number) {
+    return rows<{ from_id: string; to_id: string; at: string }>(
+      await admin.from('helps').select('from_id, to_id, at').eq('from_id', userId).gt('at', iso(since)),
+    ).map((r) => ({ from: r.from_id, to: r.to_id, at: Date.parse(r.at) }));
+  },
+  async addHelp(row: { from: string; to: string; at: number }) {
+    const { error } = await admin.from('helps').insert({ from_id: row.from, to_id: row.to, at: iso(row.at) });
+    if (error) throw error;
+  },
   async deliver(userId: string, lot: unknown, why: string) {
     const { error } = await admin.from('deliveries').insert({ user_id: userId, lot, why });
     if (error) throw error;

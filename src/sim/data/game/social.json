@@ -11,5 +11,10 @@
     "wishes": 3,
     "wishHours": 48,
     "fillsPerDay": 5
+  },
+  "friendHelp": {
+    "perDay": 5,
+    "helperManaMinutes": 10,
+    "giftItem": "ConstructionSpeedup5m"
   }
 }

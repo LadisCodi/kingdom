@@ -173,7 +173,7 @@ describe('the client', () => {
   }
   const base = {
     at: T0, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [],
-    wishes: [], friendWishes: [], fillsLeft: TRADE.fillsPerDay,
+    wishes: [], friendWishes: [], fillsLeft: TRADE.fillsPerDay, helped: [], helpsLeft: 0,
   };
 
   it('applies a delivery once however often it comes, and saves it', async () => {

@@ -9,7 +9,8 @@
 // so a request left waiting can be. On the wish board they keep a wish up
 // each, and a friend among them fills the player's within a minute or two.
 // They act through `serveSocial` like any player, so what they do lands in
-// the player's Inbox as it would.
+// the player's Inbox as it would. Each friend among them helps the player
+// once a day.
 
 import { ARTIFACT_ORDER } from '../sim/data/definitions';
 import { randInt } from '../sim/rng';
@@ -164,6 +165,14 @@ export class LocalSocialServer implements SocialServerApi {
       const by = friends[randInt(0x50c1a1, Math.max(1, friends.length), 'fill', w.id)];
       if (by === undefined || now < w.at + 30_000 + randInt(0x50c1a1, 60_000, 'fillAt', w.id)) continue;
       await as(by, { kind: 'fillWish', id: w.id });
+    }
+    // Daily help (§3): each friend among them helps the player once a day,
+    // a little while after they became friends; the server refuses a second.
+    for (const id of friends) {
+      const since = t.friendships[`${id}>${me}`] ?? now;
+      if (now < since + 20_000 + randInt(0x50c1a1, 40_000, 'help', id)) continue;
+      if ((await store.helpsSince(id, now - 24 * 3_600_000)).some((h) => h.to === me)) continue;
+      await as(id, { kind: 'help', code });
     }
   }
 }
