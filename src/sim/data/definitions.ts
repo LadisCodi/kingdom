@@ -2301,6 +2301,13 @@ export const TRADE = balance.trade as {
   fillsPerDay: number;
 };
 
+/** Daily help between friends — Docs/features/15-social.md §3. */
+export const FRIEND_HELP = balance.friendHelp as {
+  perDay: number;
+  helperManaMinutes: number;
+  giftItem: ItemId;
+};
+
 // ------------------------------------------------------------ the timeline
 
 /**

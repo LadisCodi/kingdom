@@ -9,13 +9,13 @@
 // idempotent by what it says — asking twice is one request, accepting twice
 // is one friendship — so a retry needs no command id.
 
-import { FRIENDS, TRADE } from '../sim/data/definitions';
+import { FRIEND_HELP, FRIENDS, TRADE } from '../sim/data/definitions';
 import { parseCrest } from '../sim/crest';
 import { randInt } from '../sim/rng';
 import { nicknameProblem, normalNickname } from '../worldServer/nickname';
 import { lotKey, pairs, validLot, type TradeLot } from '../sim/trade';
 import type {
-  DeliveryView, KingdomView, MessageKind, RequestState, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
+  DeliveryView, GiftLot, KingdomView, MessageKind, RequestState, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
   SocialSnapshot,
 } from './types';
 
@@ -63,7 +63,10 @@ export interface WishRow {
 }
 
 /** Goods owed to one player, numbered in the order they were owed. */
-export interface DeliveryRow { userId: string; seq: number; lot: TradeLot; why: DeliveryView['why'] }
+export interface DeliveryRow { userId: string; seq: number; lot: TradeLot | GiftLot; why: DeliveryView['why'] }
+
+/** One friend helped by one player (§3). */
+export interface HelpRow { from: string; to: string; at: number }
 
 /** Where profiles and links live: tables on the server, maps in the tests
  *  and in the stand-in. */
@@ -109,7 +112,10 @@ export interface SocialStore {
   /** How many wishes this player has filled since `since`. */
   fillsSince(userId: string, since: number): Promise<number>;
   /** Owe a player a lot; the next number in their queue. */
-  deliver(userId: string, lot: TradeLot, why: DeliveryRow['why']): Promise<void>;
+  deliver(userId: string, lot: TradeLot | GiftLot, why: DeliveryRow['why']): Promise<void>;
+  /** The friends a player has helped since `since` (§3). */
+  helpsSince(userId: string, since: number): Promise<HelpRow[]>;
+  addHelp(row: HelpRow): Promise<void>;
   deliveriesOf(userId: string): Promise<DeliveryRow[]>;
   /** Forget what the player has applied: every delivery up to `seq`. */
   dropDeliveries(userId: string, upTo: number): Promise<void>;
@@ -121,7 +127,7 @@ export type SocialServed =
 
 const KINDS: ReadonlySet<SocialCommandKind> = new Set<SocialCommandKind>([
   'hello', 'name', 'request', 'accept', 'decline', 'cancel', 'remove', 'read', 'deleteRead',
-  'pinWish', 'withdrawWish', 'fillWish',
+  'pinWish', 'withdrawWish', 'fillWish', 'help',
 ]);
 
 const HOUR = 3600_000;
@@ -293,6 +299,17 @@ async function answer(store: SocialStore, userId: string, cmd: SocialCommand, no
     case 'remove':
       await store.unfriend(userId, other);
       return done(null);
+    case 'help': {
+      // A friend, once in any 24 hours, within the helps left (§3).
+      if (!isFriend) return done('NotFriends');
+      const helped = await store.helpsSince(userId, now - DAY);
+      if (helped.some((h) => h.to === other)) return done('AlreadyHelped');
+      if (helped.length >= FRIEND_HELP.perDay) return done('NoHelpsLeft');
+      await store.addHelp({ from: userId, to: other, at: now });
+      await store.deliver(other, { kind: 'gift', item: FRIEND_HELP.giftItem }, 'helped');
+      await store.putMessage({ userId: other, id: `help:${userId}:${now}`, kind: 'helped', fromId: userId, at: now, readAt: null, state: null });
+      return done(null);
+    }
   }
 }
 
@@ -395,7 +412,7 @@ const refused = (why: SocialRefusal, snapshot: SocialSnapshot | null): SocialRep
 
 const emptySnapshot = (now: number): SocialSnapshot => ({
   at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [],
-  wishes: [], friendWishes: [], fillsLeft: 0, deliveries: [],
+  wishes: [], friendWishes: [], fillsLeft: 0, deliveries: [], helped: [], helpsLeft: 0,
 });
 
 /** Everything the friends screen shows, as it stands. */
@@ -440,6 +457,7 @@ async function snapshotFor(store: SocialStore, userId: string, now: number): Pro
     };
   })));
   const mine = await viewOf(store, me);
+  const helps = await store.helpsSince(userId, now - DAY);
   const wishView = async (w: WishRow) => {
     const row = w.userId === userId ? me : view(w.userId);
     return row === undefined ? null : {
@@ -459,6 +477,11 @@ async function snapshotFor(store: SocialStore, userId: string, now: number): Pro
     friendWishes: present(await Promise.all(theirWishes.map(wishView))),
     fillsLeft: Math.max(0, TRADE.fillsPerDay - await store.fillsSince(userId, now - DAY)),
     deliveries: (await store.deliveriesOf(userId)).sort((a, b) => a.seq - b.seq).map((d) => ({ seq: d.seq, lot: d.lot, why: d.why })),
+    helped: helps.flatMap((h) => {
+      const code = view(h.to)?.code;
+      return code ? [{ code, at: h.at }] : [];
+    }),
+    helpsLeft: Math.max(0, FRIEND_HELP.perDay - helps.length),
   };
 }
 
@@ -516,6 +539,8 @@ export interface SocialTables {
   /** Goods owed, by player; `seq` counts across all of them. */
   deliveries?: Record<string, DeliveryRow[]>;
   seq?: number;
+  /** Every help given (§3). */
+  helps?: HelpRow[];
 }
 
 export const emptyTables = (): SocialTables => ({
@@ -614,6 +639,8 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
     async fillsSince(id, since) {
       return Object.values(t.wishes ??= {}).filter((w) => w.filledBy === id && (w.filledAt ?? 0) > since).length;
     },
+    async helpsSince(id, since) { return (t.helps ?? []).filter((h) => h.from === id && h.at > since).map((h) => ({ ...h })); },
+    async addHelp(row) { (t.helps ??= []).push({ ...row }); },
     async deliver(id, lot, why) {
       t.seq = (t.seq ?? 0) + 1;
       ((t.deliveries ??= {})[id] ??= []).push({ userId: id, seq: t.seq, lot, why });

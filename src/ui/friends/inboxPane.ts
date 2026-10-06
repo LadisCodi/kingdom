@@ -10,6 +10,8 @@ import { el, formatCountdown, formatExact } from '../format';
 import { btn, iconEl, knob, sectionHead } from '../kit';
 import { crestEl, roundKnob } from './kingdomBits';
 import { lotArt, lotWords } from './lotArt';
+import { FRIEND_HELP, ITEMS } from '../../sim/data/definitions';
+import { tileArt } from '../itemArt';
 
 export function inboxPane(game: Game): HTMLElement[] {
   const f = game.friends;
@@ -78,6 +80,12 @@ function messageRow(game: Game, m: MessageView): HTMLElement {
       line = 'You filled their wish';
       trailing = [lotArt(m.lots!.got)];
       fine = `You got ${lotWords(m.lots!.got)}`;
+      break;
+    // Daily help (§3): the gift is in the Bag already.
+    case 'helped':
+      line = 'Helped your kingdom';
+      trailing = [el('span', { class: 'wb-art is-gift' }, ...tileArt(FRIEND_HELP.giftItem, ''))];
+      fine = `${ITEMS[FRIEND_HELP.giftItem].name} in your Bag`;
       break;
     case 'wishExpired':
       line = 'Nobody filled your wish';
