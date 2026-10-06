@@ -5416,8 +5416,11 @@ export class Game {
     if (this.worldServer !== null && this.worldSeated !== true) {
       void this.connectWorld().then(() => {
         if (this.worldSeated === true) this.goOutToWorld();
-        // A name taken on the friends list is the one the board knows too.
-        else if (this.worldSeated === false && this.friends.snap?.me) void this.doJoinWorld(this.friends.snap.me.nickname);
+        // A kingdom with a name — taken on a board the world has since
+        // replaced, or on the friends list — sits down under it again.
+        else if (this.worldSeated === false && this.state.kingdom.profile.nickname !== null) {
+          void this.doJoinWorld(this.state.kingdom.profile.nickname);
+        } else if (this.worldSeated === false && this.friends.snap?.me) void this.doJoinWorld(this.friends.snap.me.nickname);
         else if (this.worldSeated === false) this.setOverlay('nickname');
         else this.toast(this.worldRefusal('Offline'));
         this.notify();

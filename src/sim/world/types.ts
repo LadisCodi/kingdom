@@ -4,12 +4,17 @@
 // is code, because something has to draw it and something has to read it.
 // The data editor names them through `STATIC_IDS` (dataRules.ts).
 
+import type { PreciousId } from '../state';
+
 export const WORLD_TERRAINS = ['Grassland', 'Plains', 'Desert'] as const;
 export type WorldTerrain = typeof WORLD_TERRAINS[number];
 
 /** What a held hex is (19 §7): the claim builds it, and the hex's feature
  *  decides which — `worldBuild.districts` says which feature each takes. */
-export const WORLD_DISTRICTS = ['Rural', 'LoggingCamp', 'Quarry', 'FarmLands', 'HuntingGrounds', 'Observatory', 'Shrine'] as const;
+export const WORLD_DISTRICTS = [
+  'Rural', 'LoggingCamp', 'Quarry', 'FarmLands', 'HuntingGrounds', 'Observatory', 'Shrine',
+  'GroveCamp', 'StarmetalDig', 'SpireQuarry',
+] as const;
 export type WorldDistrict = typeof WORLD_DISTRICTS[number];
 
 /** What can be built into a district that stands (19 §7.2). */
@@ -19,8 +24,28 @@ export type WorldUpgrade = typeof WORLD_UPGRADES[number];
 /** In the order a hex rolls them: the first to roll and fit is the one it
  *  keeps (`maxFeaturesPerHex`, 19 §9). A Mountain is a feature, as in the
  *  province, standing on a terrain like any other. */
-export const WORLD_FEATURES = ['Forest', 'Mountain', 'FertileLand', 'Game', 'Dungeon', 'Sanctuary', 'Landmark'] as const;
+export const WORLD_FEATURES = [
+  'Forest', 'Mountain', 'FertileLand', 'Game', 'Dungeon', 'Sanctuary', 'Landmark',
+  'HeartwoodGrove', 'StarfallCrater', 'MoonglassSpires',
+] as const;
 export type WorldFeature = typeof WORLD_FEATURES[number];
+
+/** THE DEPOSITS (Docs/plans/precious-deposits.md §1): the feature each
+ *  precious material comes from. Dealt to the seats (`worldGen.deposits`),
+ *  never rolled; the district a deposit takes yields only its material. */
+export const DEPOSIT_OF: Readonly<Record<PreciousId, WorldFeature>> = {
+  Heartwood: 'HeartwoodGrove',
+  Starmetal: 'StarfallCrater',
+  Moonglass: 'MoonglassSpires',
+};
+
+/** The material a hex's deposit yields, if it holds one. */
+export function depositMaterial(features: readonly string[]): PreciousId | null {
+  for (const [id, f] of Object.entries(DEPOSIT_OF) as Array<[PreciousId, WorldFeature]>) {
+    if (features.includes(f)) return id;
+  }
+  return null;
+}
 
 /** How many outer-ring places of a wedge a placed site can take — the six
  *  of ring 6 less the three beside a city (`siteRoom` in board.ts; the test

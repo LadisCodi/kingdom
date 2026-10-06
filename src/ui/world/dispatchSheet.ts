@@ -7,7 +7,7 @@
 // holds it, a Sensed one is shapes in the mist, an Unknown one nothing.
 
 import type { Game } from '../../game';
-import { materialAt, type BoardHex } from '../../sim/world/board';
+import type { BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
   returnsAt, revealsAt, tripRevealing, type FogState,
@@ -15,14 +15,14 @@ import {
 import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
-import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
-import { ARTIFACTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL } from '../../sim/data/definitions';
+import { depositMaterial, type WorldFeature, type WorldTerrain } from '../../sim/world/types';
+import { ARTIFACTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import { el, formatCount, formatCountdown, formatDuration } from '../format';
+import { el, formatCount, formatCountdown, formatDuration, formatExact } from '../format';
 import { action, btn, progress, sheet, stat } from '../kit';
 import { timerButton } from '../speedupSheet';
 import type { SpeedJob } from '../../sim/speedups';
@@ -37,6 +37,7 @@ const TERRAIN_NAME: Record<WorldTerrain, string> = {
 const FEATURE_NAME: Record<WorldFeature, string> = {
   Forest: 'Forest', Mountain: 'Mountains', FertileLand: 'Fertile land', Game: 'Wild game',
   Dungeon: 'Dungeon', Sanctuary: 'Sanctuary', Landmark: 'Landmark',
+  HeartwoodGrove: 'Heartwood Grove', StarfallCrater: 'Starfall Crater', MoonglassSpires: 'Moonglass Spires',
 };
 
 const ROLE_NAME: Record<BoardHex['role'], string> = {
@@ -299,6 +300,17 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     ? 'Your province, seen from the world'
     : `${FOG_NAME[fog]} · ${ROLE_NAME[bh.role]} · ${formatCount(distance)} ${distance === 1 ? 'hex' : 'hexes'} away`;
   lines.push(el('p', { class: 'wd-where' }, where));
+  // At home, what the kingdom's ground is rich in: its deal of deposits,
+  // 3/2/1 (Docs/plans/precious-deposits.md §1.2).
+  if (index === home) {
+    const deal = game.worldSource().board().deposits[state.world.board.seat];
+    if (deal !== undefined) {
+      const n = (rank: 'strong' | 'middle' | 'weak') => formatExact(WORLD_GEN.deposits[rank].length);
+      lines.push(el('p', { class: 'wd-line' },
+        `Your deposits: ${deal.strong} ×${n('strong')} · ${deal.middle} ×${n('middle')} · ${deal.weak} ×${n('weak')}`
+        + ` — trade with friends for more ${deal.weak}`));
+    }
+  }
 
   if (bh.role === 'portal') {
     lines.push(el('p', { class: 'wd-line' }, 'Nobody holds it, and nobody ever will.'));
@@ -308,9 +320,9 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     const holds = [TERRAIN_NAME[bh.terrain ?? 'Grassland'], ...bh.features.map((f) => FEATURE_NAME[f])];
     // Bare ground is already its own title; say what it holds only past that.
     if (holds.length > 1) lines.push(el('p', { class: 'wd-line' }, holds.join(' · ')));
-    // A rich hex: what its district will yield besides (19 §7.4).
-    const material = bh.rich ? materialAt(game.worldSource().board(), index) : null;
-    if (material !== null) lines.push(el('p', { class: 'wd-line' }, `Rich in ${material}`));
+    // A deposit: the precious material its district yields.
+    const material = depositMaterial(bh.features);
+    if (material !== null) lines.push(el('p', { class: 'wd-line' }, `Yields ${material}`));
   } else if (fog === 'Sensed') {
     lines.push(el('p', { class: 'wd-line' }, 'Shapes in the mist. Explore it before anything can be done there.'));
     // What an explorer sent here brings home (19 §3.2), priced as of now.

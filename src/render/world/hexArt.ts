@@ -8,6 +8,7 @@ import type { WorldDistrict, WorldFeature, WorldTerrain } from '../../sim/world/
 /** Every feature's drawing (world-hex-art.md §2): a hex holds one at most. */
 export const HEX_COMBOS = [
   'Forest', 'FertileLand', 'Game', 'Mountain', 'MountainDungeon', 'Sanctuary', 'Landmark',
+  'HeartwoodGrove', 'StarfallCrater', 'MoonglassSpires',
 ] as const;
 export type HexCombo = typeof HEX_COMBOS[number];
 
@@ -20,6 +21,9 @@ export const COMBO_SPRITE: Record<HexCombo, string> = {
   MountainDungeon: 'whex_mountain_dungeon',
   Sanctuary: 'whex_sanctuary',
   Landmark: 'whex_landmark',
+  HeartwoodGrove: 'whex_heartwood_grove',
+  StarfallCrater: 'whex_starfall_crater',
+  MoonglassSpires: 'whex_moonglass_spires',
 };
 
 /** The ground under everything: the province's own textures — one terrain
@@ -51,6 +55,9 @@ export function comboOf(_terrain: WorldTerrain, features: readonly WorldFeature[
   if (has('Mountain')) return 'Mountain';
   if (has('Sanctuary')) return 'Sanctuary';
   if (has('Landmark')) return 'Landmark';
+  if (has('HeartwoodGrove')) return 'HeartwoodGrove';
+  if (has('StarfallCrater')) return 'StarfallCrater';
+  if (has('MoonglassSpires')) return 'MoonglassSpires';
   if (has('Forest')) return 'Forest';
   if (has('FertileLand')) return 'FertileLand';
   if (has('Game')) return 'Game';
@@ -68,6 +75,9 @@ export const DISTRICT_SPRITE: Record<WorldDistrict, string> = {
   HuntingGrounds: 'whex_hunting_grounds',
   Observatory: 'whex_observatory',
   Shrine: 'whex_shrine',
+  GroveCamp: 'whex_grove_camp',
+  StarmetalDig: 'whex_starmetal_dig',
+  SpireQuarry: 'whex_spire_quarry',
 };
 
 /** The Fortress's mark at the hex's rear corner, by level: the shipped

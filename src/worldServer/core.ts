@@ -24,12 +24,12 @@ import {
 import { parseCrest } from '../sim/crest';
 import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
-import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import { SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
-import { WORLD_DISTRICTS, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
+import { WORLD_DISTRICTS, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
   ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
   SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
@@ -38,7 +38,7 @@ import type {
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
-export const emptyWorld = (): ServerWorld => ({ version: 3, boards: [] });
+export const emptyWorld = (): ServerWorld => ({ version: 4, boards: [] });
 
 /** The seed of a board the server opens, from its name. */
 export const newBoardSeed = (id: string): number => randInt(0x5eed, 0x1_0000_0000, 'board', id);
@@ -90,14 +90,15 @@ export function districtRate(
 
 const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
 
-/** What a rich district yields an hour of its wedge's precious material and
- *  how much its precious store holds (19 §7.4); nothing on other ground. The
- *  inner ring and a seat's research move it as they move the district. */
+/** What a deposit's district yields an hour of its material and how much
+ *  its precious store holds (Docs/plans/precious-deposits.md); nothing on
+ *  other ground. The inner ring and a seat's research move it as they move
+ *  any district. */
 export function preciousRate(
   board: Board, index: number, boost: SeatBoost = NO_BOOST,
 ): { id: PreciousId | null; perHour: number; cap: number } {
   const bh = board.hexes[index];
-  const id = bh.rich && districtOf(bh) !== null ? materialAt(board, index) : null;
+  const id = districtOf(bh) !== null ? depositMaterial(bh.features) : null;
   if (id === null) return { id: null, perHour: 0, cap: 0 };
   const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
   return {

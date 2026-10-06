@@ -1,5 +1,6 @@
-// The board: what each of its 127 hexes holds, and where the six cities stand
-// (Docs/features/19-world-map.md §1, §2, §9).
+// The board: what each of its 127 hexes holds, where the six cities stand,
+// and which precious deposits each seat is dealt (Docs/features/19-world-map.md
+// §1, §2, §9; Docs/plans/precious-deposits.md).
 //
 // A board is a pure function of its seed and the data — `generateBoard`
 // below — so the save never carries its contents, only which board and
@@ -7,17 +8,17 @@
 // board of the same shape; only `source.ts` changes then.
 
 import {
-  WORLD_CAMPS, WORLD_GEN, WORLD_PRECIOUS, WORLD_SCOUTING, type ScoutRewardDef, type WorldCampsDef, type WorldGenDef,
-  type WorldPreciousDef, type WorldScoutingDef,
+  WORLD_CAMPS, WORLD_GEN, WORLD_SCOUTING, type ScoutRewardDef, type WorldCampsDef, type WorldGenDef,
+  type WorldScoutingDef,
 } from '../data/definitions';
 import { PRECIOUS, type LairId, type PreciousId } from '../state';
 import { rand } from '../rng';
 import {
-  BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexIndex, hexNeighbors, hexScale, ringOf, rotateBy,
+  BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexDistance, hexIndex, hexNeighbors, hexScale, ringOf, rotateBy,
   type Hex,
 } from './hex';
 import {
-  WORLD_FEATURES, WORLD_TERRAINS,
+  DEPOSIT_OF, WORLD_FEATURES, WORLD_TERRAINS,
   type HexRole, type RolledRole, type WorldFeature, type WorldTerrain,
 } from './types';
 
@@ -36,9 +37,6 @@ export interface BoardHex {
   /** What exploring it pays the player who sends an explorer to it
    *  (19 §3.2), or null on a city, the Portal and a dungeon. */
   scout: ScoutRewardDef | null;
-  /** A rich hex: its district also yields its wedge's precious material
-   *  (19 §7.4). */
-  rich: boolean;
 }
 
 /** A monster camp: which creature, how strong, and whether it can be seen
@@ -50,74 +48,40 @@ export interface Board {
   id: string;
   seed: number;
   hexes: BoardHex[];
-  /** Each seat's precious material, by seat: two seats each, shuffled by
-   *  the seed. Every rich hex in a seat's wedge yields it (19 §7.4). */
-  materials: PreciousId[];
+  /** Each seat's deal of the precious materials, by seat: which is its
+   *  strong, middle and weak one (Docs/plans/precious-deposits.md §1.2). */
+  deposits: DepositDeal[];
 }
 
-/** The six seats' materials: each of the three twice, in an order the
- *  seed shuffles. */
-export function dealMaterials(seed: number): PreciousId[] {
-  const deck = [...PRECIOUS, ...PRECIOUS];
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(rand(seed, 'materials', i) * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+/** A seat's three materials, by how many deposits of each it has: 3, 2, 1. */
+export interface DepositDeal { strong: PreciousId; middle: PreciousId; weak: PreciousId }
+
+/** The six orders of the three materials — one per seat, so every material
+ *  is strong for two seats, middle for two and weak for two — dealt in an
+ *  order the seed shuffles (the bag). */
+export function dealDeposits(seed: number): DepositDeal[] {
+  const [a, b, c] = PRECIOUS;
+  const bag: DepositDeal[] = [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]]
+    .map(([strong, middle, weak]) => ({ strong, middle, weak }));
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(rand(seed, 'deposits', i) * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
   }
-  return deck;
+  return bag;
 }
 
-/** The material a rich hex yields: its wedge's seat's. The Portal is in no
- *  wedge and yields nothing. */
-export const materialAt = (board: Board, index: number): PreciousId | null => {
-  const wedge = wedgeIndexOf(BOARD_HEXES[index]);
-  return wedge === null ? null : board.materials[wedge] ?? null;
+/** Which material a lump is: any of the three alike, rolled under the
+ *  event's own parts (Docs/plans/precious-deposits.md §1.2). */
+export function lumpMaterial(board: Board, ...parts: Array<string | number>): PreciousId {
+  return PRECIOUS[Math.min(PRECIOUS.length - 1, Math.floor(rand(board.seed, 'lump', ...parts) * PRECIOUS.length))];
+}
+
+/** The seat whose city is nearest a hex — a deposit's owner. */
+const nearestSeat = (h: Hex): number => {
+  let best = 0;
+  SEATS.forEach((s, i) => { if (hexDistance(h, s) < hexDistance(h, SEATS[best])) best = i; });
+  return best;
 };
-
-/** Which material a lump paid to `seat` is: mostly its own (`ownShare`),
- *  otherwise one of the other two — rolled under the event's own parts. */
-export function lumpMaterial(board: Board, seat: number, ...parts: Array<string | number>): PreciousId {
-  const own = board.materials[seat] ?? PRECIOUS[0];
-  if (rand(board.seed, 'lump', ...parts) < WORLD_PRECIOUS.ownShare) return own;
-  const others = PRECIOUS.filter((p) => p !== own);
-  return others[Math.floor(rand(board.seed, 'lumpOther', ...parts) * others.length)] ?? own;
-}
-
-/** Which kind of rich ground these contents could be, if any. */
-const richKind = (c: { terrain: WorldTerrain | null; features: readonly string[] }): 'feature' | 'desert' | null =>
-  c.features.includes('Forest') || c.features.includes('Mountain') ? 'feature'
-    : c.terrain === 'Desert' && c.features.length === 0 ? 'desert' : null;
-
-/** An inner hex is rich by its own roll: the inner ring is authored per
- *  wedge, so it has no count to keep. */
-function rollRich(seed: number, wedge: number, c: { terrain: WorldTerrain | null; features: readonly string[] }, precious: WorldPreciousDef): boolean {
-  const kind = richKind(c);
-  const share = kind === 'feature' ? precious.richFeatureShare : kind === 'desert' ? precious.richDesertShare : 0;
-  return share > 0 && rand(seed, 'rich', 1, wedge) < share;
-}
-
-/**
- * Wedge 0's rich places: of each kind of ground, its share of the places —
- * at least one while there is any — taken by the lowest rolls, so every
- * board has rich ground and every wedge the same count (19 §7.4).
- */
-function richPlaces(seed: number, local: Map<string, Contents>, precious: WorldPreciousDef): Set<string> {
-  const out = new Set<string>();
-  for (const [kind, share] of [['feature', precious.richFeatureShare], ['desert', precious.richDesertShare]] as const) {
-    const places: Array<{ key: string; roll: number }> = [];
-    for (let k = 2; k <= BOARD_RADIUS; k++) {
-      for (let j = 0; j < k; j++) {
-        const key = localKey(k, j);
-        if (key === localKey(HOME_RING, 0) || richKind(local.get(key)!) !== kind) continue;
-        places.push({ key, roll: rand(seed, 'rich', k, j) });
-      }
-    }
-    if (share <= 0 || places.length === 0) continue;
-    const count = Math.max(1, Math.round(places.length * share));
-    places.sort((a, b) => a.roll - b.roll).slice(0, count).forEach((p) => out.add(p.key));
-  }
-  return out;
-}
-
 
 /** The ring the cities stand on: one inside the rim, five hexes apart. */
 export const HOME_RING = BOARD_RADIUS - 1;
@@ -369,39 +333,45 @@ function rollCamps(seed: number, local: Map<string, Contents>, camps: WorldCamps
 /** A board from its seed. Pure: the same seed and data give the same board. */
 export function generateBoard(
   id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS,
-  scouting: WorldScoutingDef = WORLD_SCOUTING, precious: WorldPreciousDef = WORLD_PRECIOUS,
+  scouting: WorldScoutingDef = WORLD_SCOUTING,
 ): Board {
   const local = rollWedge(seed, gen);
   const wedgeCamps = rollCamps(seed, local, camps);
-  const rich = richPlaces(seed, local, precious);
+  const deal = dealDeposits(seed);
+  const rank = new Map<string, keyof DepositDeal>();
+  for (const r of ['strong', 'middle', 'weak'] as const) for (const key of gen.deposits[r]) rank.set(key, r);
+  /** A deposit of this material on this ground: the ground gives way to a
+   *  terrain the deposit stands on when it does not already. */
+  const deposit = (id: PreciousId, terrain: WorldTerrain): Contents => {
+    const f = DEPOSIT_OF[id];
+    const terrains = gen.featureRules[f]?.terrains ?? [];
+    return { terrain: terrains.includes(terrain) ? terrain : (terrains[0] ?? terrain), features: [f] };
+  };
   const hexes = BOARD_HEXES.map((hex, index): BoardHex => {
     const role = roleOf(hex);
     const seat = SEAT_INDICES.indexOf(index);
     const base = { index, hex, role, seat: seat >= 0 ? seat : null };
-    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null, rich: false };
+    if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null };
     const at = wedgeOf(hex)!;
     if (role === 'inner') {
-      // Every inner hex is held by the strongest camp: its +200% is earned.
-      const authored = gen.innerRing[at.wedge];
+      // Every inner hex is a deposit of the weak material of the seat it
+      // faces, held by the strongest camp: its +200% is earned.
+      const authored = deposit(deal[nearestSeat(hex)].weak, gen.innerRing[at.wedge].terrain);
       const camp: Camp = {
         creature: pick(camps.creatures.inner, rand(seed, 'campCreature', 1, at.wedge)),
         power: campPower(seed, 1, at.wedge, camps),
         lurking: false,
       };
       const scout = rollScout(seed, 'inner', 1, at.wedge, scouting, authored.features);
-      return {
-        ...base, terrain: authored.terrain, features: [...authored.features], camp, scout,
-        rich: rollRich(seed, at.wedge, authored, precious),
-      };
+      return { ...base, terrain: authored.terrain, features: [...authored.features], camp, scout };
     }
     const key = localKey(at.k, at.j);
-    const c = local.get(key)!;
+    const r = rank.get(key);
+    // A deposit's place: the material its owner's deal puts there.
+    const c = r === undefined ? local.get(key)! : deposit(deal[nearestSeat(hex)][r], local.get(key)!.terrain);
     const camp = wedgeCamps.get(key);
     const scout = seat >= 0 ? null : rollScout(seed, role as RolledRole, at.k, at.j, scouting, c.features);
-    return {
-      ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout,
-      rich: seat < 0 && rich.has(key),
-    };
+    return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout };
   });
-  return { id, seed, hexes, materials: dealMaterials(seed) };
+  return { id, seed, hexes, deposits: deal };
 }

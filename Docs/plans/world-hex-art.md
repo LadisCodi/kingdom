@@ -46,6 +46,9 @@ its district's.
 | Dungeon (a cave in its own rock) | 3 |
 | Sanctuary | 3 |
 | Landmark | 3 |
+| Heartwood Grove (a deposit, Docs/plans/precious-deposits.md) | 2 |
+| Starfall Crater — carries its own sand (it stands on Desert) | 2 |
+| Moonglass Spires | 1 |
 
 - **Variants:** `name`, `name_2`, `name_3`…; a hex picks one by a hash of its
   index, so the same hex always draws the same one. Adding a variant is
@@ -74,6 +77,9 @@ its district's.
 | Hunting Grounds | a log cabin, a drying rack, game nearby | 2 |
 | Observatory | the landmark's stones and a domed stargazer's tower | 1 |
 | Shrine | the sanctuary's spring and a small chapel | 1 |
+| Grove Camp | the heartwood grove with a woodcutters' hut and glowing logs | 1 |
+| Starmetal Dig | the crater with a winch and ore carts | 1 |
+| Spire Quarry | the moonglass spires with a cutters' shed and crates | 1 |
 
 - **A district going up** draws faint, at 45 %.
 - **Until a district has art**, its feature is drawn with a province building

@@ -42,11 +42,23 @@ describe('a precious price', () => {
     expect(resolvePrice(state, {}, 5)).toEqual({ Starmetal: 5 });
   });
 
-  it('asks a few of any at level 5, and each of the three late on', () => {
+  it('asks a few of one by name at levels 4 and 5, the three alike, and each of the three late on', () => {
     const state = worldOpen();
+    const early: Record<string, number> = {};
+    for (const def of Object.values(DISTRICTS)) {
+      if (def.maxLevel < 5) continue;
+      for (const level of [4, 5]) {
+        const asked = PRECIOUS.filter((p) => (upgradeGoodsCost(state, def.id, level)[p] ?? 0) > 0);
+        if (asked.length === 0) continue;
+        expect(asked, `${def.id} level ${level}`).toHaveLength(1);
+        const n = upgradeGoodsCost(state, def.id, level)[asked[0]]!;
+        expect(n).toBeLessThanOrEqual(5);
+        early[asked[0]] = (early[asked[0]] ?? 0) + n;
+      }
+    }
+    const totals = PRECIOUS.map((p) => early[p] ?? 0);
+    expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(5);
     for (const id of ['Sawmill', 'Barracks', 'Townhall'] as const) {
-      const five = upgradeGoodsCost(state, id, 5);
-      expect(PRECIOUS.reduce((s, p) => s + (five[p] ?? 0), 0)).toBe(DISTRICTS[id].costPerLevel[4].anyPrecious);
       const ten = upgradeGoodsCost(state, id, 10);
       for (const p of PRECIOUS) expect(ten[p] ?? 0).toBeGreaterThan(0);
     }

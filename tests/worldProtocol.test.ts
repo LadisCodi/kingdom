@@ -18,7 +18,7 @@ import { freshGame, freshPresenter, map, T0 } from './helpers';
 
 const HOUR = 3_600_000;
 const SEED = 0x5eed;
-const own = generateBoard('x', SEED).materials[0];
+const own = generateBoard('x', SEED).deposits[0].strong;
 const other = PRECIOUS.find((p) => p !== own)!;
 
 /** A world with the player seated on board 'x' and the rivals asleep. */
