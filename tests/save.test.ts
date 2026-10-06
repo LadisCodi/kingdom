@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { HARVEST, QUESTS, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import {
-  deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
+  deserialize, isPrototypeStale, migrate, serialize, MIN_MIGRATABLE_VERSION, PROTOTYPE_FRESH_START,
 } from '../src/sim/save';
 import { getWallet, parseCoordKey, type DistrictId } from '../src/sim/state';
 import { isStoreFull } from '../src/sim/storage';
@@ -139,6 +139,16 @@ describe('save versions', () => {
     const save = serialize(freshGame(), T0);
     save.SaveVersion = MIN_MIGRATABLE_VERSION - 1;
     expect(deserialize(save, map, T0)).toBeNull();
+  });
+
+  // PROTOTYPE ONLY: the boot discards a save from before the fresh start,
+  // and never one the build itself writes.
+  it('marks a save from before the prototype fresh start, and never a current one', () => {
+    const save = serialize(freshGame(), T0);
+    expect(PROTOTYPE_FRESH_START).toBeLessThanOrEqual(SAVE_VERSION);
+    expect(isPrototypeStale(save)).toBe(false);
+    save.SaveVersion = PROTOTYPE_FRESH_START - 1;
+    expect(isPrototypeStale(save)).toBe(true);
   });
 
   it('carries a current save through the chain unchanged', () => {

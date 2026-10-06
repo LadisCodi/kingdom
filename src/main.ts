@@ -26,7 +26,7 @@ import { GOOD_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey, districtById, districtSize, type Coord } from './sim/state';
 import { newGame } from './sim/newGame';
-import { deserialize, type CatchUpReport } from './sim/save';
+import { deserialize, isPrototypeStale, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
 import { mountRewardFly } from './ui/rewardFly';
@@ -167,7 +167,9 @@ async function boot(): Promise<void> {
   // blank page is not.
   let catchUp: CatchUpReport | null = null;
   let restored = null;
-  if (savedFile) {
+  if (savedFile && isPrototypeStale(savedFile)) {
+    console.info(`kingdom: save v${String(savedFile.SaveVersion)} predates the prototype's fresh start — starting a new kingdom`);
+  } else if (savedFile) {
     try {
       restored = deserialize(savedFile, map, now, (r) => { catchUp = r; });
     } catch (err) {
@@ -234,7 +236,7 @@ async function boot(): Promise<void> {
   game.persist = () => saveManager.save(game.state, game.now());
   void game.connectWorld();
 
-  if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
+  if (!restored) saveManager.save(state, now); // brand-new game: save immediately
 
   // ------------------------------------------------------------------- UI
   // Let the type land before the first mount. The display face's metrics are
