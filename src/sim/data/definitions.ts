@@ -562,7 +562,7 @@ export type SceneCondition =
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
   | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing'
-  | 'relicPicked' | 'relicHosted';
+  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
   speaker: string;
@@ -1937,6 +1937,9 @@ export interface BannerDef {
   legendaryPityAt: number;
   weights: Record<HeroRarity, number>;
   duplicateFragments: number;
+  /** The store stands a hero of its rarest rarity on this banner, a new one
+   *  each visit; false → its key. */
+  showsHero: boolean;
   fragmentsPerMiss: number;
   pullStardust: number;
   /** Free pulls a day for a rewarded ad, and how long between them. */
@@ -2211,10 +2214,8 @@ export type OfferTrigger = 'always' | 'door' | 'after' | 'townhall' | 'manaLow' 
 export interface StoreSkuDef {
   id: StoreSkuId;
   name: string;
-  /** An offer's name on its tab ('' → `name`). */
-  short: string;
   description: string;
-  /** An offer card's illustration, `render/assets/<art>.png` ('' → none). */
+  /** What stands in an offer splash's light, a cut-out ('' → its hero). */
   art: string;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */

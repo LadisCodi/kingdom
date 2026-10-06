@@ -1,266 +1,237 @@
-// The store (Docs/features/14-monetization.md §2, §3), top to bottom:
+// THE STORE (Docs/features/14-monetization.md §2.1), after the mockups
+// Docs/art/ui/mockups/m95–m98: a screen of its own — a magic merchant's shop
+// behind it, soft and out of focus, so the wares are what the eye finds —
+// with its title plank, its close and a strip of wooden tabs:
 //
-//   * Offers — the packs with a window (sim/offers.ts): each with its value,
-//     its countdown and what is left of it. Then today's daily offers.
-//   * Heroes — the banner itself. A call for aid is a purchase, so the
-//     gacha is pulled from HERE.
-//   * For the Bag — the item bundles, always on sale.
-//   * Relics, Keys — Gem-priced, the shapes the store shows without owning.
-//   * Crew — the slots for good, in Gems: a builder (the purchase the
-//     refused-build offer raises), an explorer, a hero slot.
-//   * Gems — the real-money packs, last: a 3×2 grid of upright cards.
+//   * Offers (while there is one): a banner each, its figure, its name, a
+//     summary of what it gives and its price — a tap opens its splash — and,
+//     at the foot, today's offers with the time to the next draw;
+//   * Heroes: the two calls (ui/storeHeroes.ts);
+//   * Supplies: the Bag's bundles, the relic fragments, the crew's slots;
+//   * Gems: the six packs.
 //
-// Every price in dollars opens the confirmation sheet; nothing is granted
-// from here. A layout stand-in: the store's redesign (Kingshot's one tab an
-// offer) comes once every offer kind is in.
+// Every price in dollars opens the confirmation; nothing is granted from
+// here. THE STORE DOES NOT KNOW IT IS SIMULATED: no budget line, no SIMULADO,
+// no price greyed out for a short allowance — the confirmation is where the
+// price meets the budget (iapSheet.ts).
 //
-// THE STORE DOES NOT KNOW IT IS SIMULATED. No budget line, no SIMULADO mark,
-// no price greyed out because the allowance is short: a playtester browsing
-// here sees exactly what a paying player would, and only learns about the
-// budget when they go to pay (iapSheet.ts). That is what keeps the intent
-// signal honest — the store measures desire, the confirmation measures it
-// against a wallet.
+// The store is rebuilt only when what it shows moves (`Game.overlaySignature`):
+// its countdowns tick in place, so its pictures and the heroes' carousel are
+// never torn down by the clock.
 
-import type { Game, OfferCard } from '../game';
-import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
+import type { Game, OfferCard, StoreTab } from '../game';
+import { GEM_PACK_ORDER, HEROES, KINGDOM_DEF, STORE } from '../sim/data/definitions';
+import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
-import { bannerPanel } from './bannerPanel';
-import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
-import { btn, card, currencyIcon, iconEl, sheet } from './kit';
+import { btn, closeKnob, currencyIcon, iconEl, sheet, type IconName } from './kit';
+import { offerTile } from './offerSplash';
+import { kindIcon } from './offerWidget';
+import { heroesTab } from './storeHeroes';
 
-/** One offer: its art, what it holds line by line, its value, how long it
- *  lasts and how many are left, and its price. */
-function offerRow(game: Game, offer: OfferCard): HTMLElement {
-  const url = spriteUrl(offer.sprite);
-  const art = url
-    ? spriteImgAt(url, 'store-pack-row-art')
-    : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('chest', { size: 'lg' }));
-  const now = game.now();
-  const meta = [
-    ...(offer.closesAt === null ? [] : [el('span', { class: 'store-offer-timer' }, iconEl('hourglass', { size: 'sm' }),
-      formatCountdown(Math.max(0, Math.ceil((offer.closesAt - now) / 1000))))]),
-    ...(offer.left === null ? [] : [el('span', { class: 'store-offer-left' }, `Left: ${formatExact(offer.left)}`)]),
-  ];
-  const row = el('div', { class: `store-offer${STORE[offer.id].splash ? ' is-splash' : ''}` },
-    card({ art, name: offer.name, desc: offer.description },
-      el('div', { class: 'store-bundle-lines' },
-        ...(offer.gems > 0 ? [el('div', { class: 'store-bundle-line' },
-          currencyIcon('Gems', { size: 'sm' }), el('span', {}, `${formatExact(offer.gems)} Gems`))] : []),
-        ...offer.lines.map((line) => el('div', { class: 'store-bundle-line' },
-          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
-      el('div', { class: 'store-price-col' },
-        ...(meta.length === 0 ? [] : [el('div', { class: 'store-offer-meta' }, ...meta)]),
-        btn({
-          label: offer.left === 0 ? 'Sold out' : formatUsd(offer.priceCents),
-          kind: 'primary',
-          finish: 'gem',
-          onClick: () => game.openIap(offer.id),
-          disabledReason: offer.left === 0 ? 'Back tomorrow' : undefined,
-        }))),
-    // The value is a wax seal pressed on the card's corner.
-    offer.valuePercent > 100
-      ? el('span', { class: 'store-value', 'aria-label': `${formatExact(offer.valuePercent)}% value` },
-        `${formatExact(offer.valuePercent)}%`)
-      : '');
-  // An offer opens its own screen from its row — its splash, or its tab in
-  // the Offers screen; the price still buys.
-  if (STORE[offer.id].shelf === 'offer') {
-    row.classList.add('is-splash');
-    row.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('button')) return;
-      if (STORE[offer.id].splash) game.openOfferSplash(offer.id);
-      else game.openOffers(offer.id);
-    });
-  }
-  return row;
+// ------------------------------------------------------------- countdowns
+
+/** One clock for every countdown on the store: an element carrying
+ *  `data-until` (epoch ms) shows the time left, written in place each second
+ *  — the screen around it is not rebuilt for it. */
+let ticking: number | null = null;
+function tickCountdowns(game: Game): void {
+  if (ticking !== null) return;
+  const write = (): void => {
+    const nodes = document.querySelectorAll<HTMLElement>('.stx [data-until]');
+    if (nodes.length === 0) {
+      window.clearInterval(ticking!);
+      ticking = null;
+      return;
+    }
+    for (const n of nodes) {
+      const text = formatCountdown(Math.max(0, Math.ceil((Number(n.dataset.until) - game.now()) / 1000)));
+      if (n.textContent !== text) n.textContent = text;
+    }
+  };
+  ticking = window.setInterval(write, 1000);
+  queueMicrotask(write);
 }
 
-export function renderStoreSheet(game: Game): HTMLElement {
-  const close = () => game.dismiss();
+const countdown = (until: number): HTMLElement => el('b', { 'data-until': String(until) }, '');
 
-  // ---- builders
-  const offer = game.builderOffer();
-  const atCeiling = offer.builders >= offer.ceiling;
-  const builders = card({
-    art: el('span', { class: 'store-art is-hammer', role: 'img', 'aria-label': 'builders' }),
-    name: 'Another builder',
-    desc: atCeiling
-      ? `${offer.ceiling} is as large as a crew gets.`
-      : `Build two things at once. ${offer.builders} of ${KINGDOM_DEF.maxBuilders} hired.`,
-  }, atCeiling
-    ? el('span', { class: 'store-owned' }, iconEl('tick', { size: 'sm' }), 'Full crew')
-    : btn({
-        label: 'Hire',
-        kind: 'gem',
-        onClick: () => game.doBuyBuilder({ closeSheet: false }),
-        cost: { Gems: offer.cost },
-        have: (c) => game.walletValue(c),
-      }));
+// ------------------------------------------------------------------- tabs
 
-  // ---- keys: one card per banner. A Gem-priced non-SKU, the shape the
-  // second builder already uses — the store shows it without owning it.
-  const keys = BANNER_ORDER.map((banner) => {
-    const offer = game.keyOffer(banner);
-    const def = BANNERS[banner];
-    return card({
-      art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': String(offer.key) }),
-      name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
-      desc: `One call on ${def.name.toLowerCase()}. You hold ${formatExact(offer.held)}.`,
-    }, btn({
-      label: 'Buy',
-      kind: 'gem',
-      onClick: () => game.doBuyKeys(banner),
-      cost: { Gems: offer.cost },
-      have: (c) => game.walletValue(c),
-    }));
-  });
+const TAB: Record<StoreTab, { label: string; icon: IconName }> = {
+  offers: { label: 'Offers', icon: 'chest' },
+  heroes: { label: 'Heroes', icon: 'helmet' },
+  supplies: { label: 'Supplies', icon: 'bag' },
+  gems: { label: 'Gems', icon: 'Gems' as IconName },
+};
 
-  // ---- relic fragments: a Gem-priced pack of random fragments of the
-  // relics already met (sim/relics.ts `openFragmentPack`).
-  const frag = game.fragmentPackOffer();
-  const fragments = !frag.available ? null : card({
-    art: el('span', { class: 'store-art is-fragments', role: 'img', 'aria-label': 'relic fragments' }),
-    name: 'Relic fragments',
-    desc: `${formatExact(frag.size)} fragments of the relics you have found, at random.`,
-  }, btn({
-    label: 'Buy',
-    kind: 'gem',
-    onClick: () => game.doBuyFragmentPack(),
-    cost: { Gems: frag.gems },
-    have: (c) => game.walletValue(c),
+function tabStrip(game: Game, tabs: StoreTab[], open: StoreTab): HTMLElement {
+  // A dot where something waits: an offer to see, a free call to take.
+  const news = (t: StoreTab): boolean =>
+    t === 'offers' ? game.offerCards().length > 0
+      : t === 'heroes' ? game.doorOpen('banner') && (['basic', 'advanced'] as const).some((b) => game.freePull(b).ready || game.pullPrice(b).amount === 0)
+        : false;
+  return el('div', { class: 'stx-tabs', role: 'tablist' }, ...tabs.map((t) => {
+    const b = el('button', {
+      class: `stx-tab${t === open ? ' is-open' : ''}`, type: 'button', role: 'tab',
+      'aria-selected': t === open ? 'true' : 'false',
+    }, iconEl(TAB[t].icon, { size: 'lg' }), el('span', {}, TAB[t].label),
+    ...(news(t) && t !== open ? [el('span', { class: 'stx-dot', 'aria-hidden': 'true' })] : []));
+    b.addEventListener('click', () => game.setStoreTab(t));
+    return b;
   }));
+}
 
-  // ---- the Bag's bundles: a row each, what lands in the Bag
-  // listed, and the speed-ups' Gem worth at the rush price — what the shelf
-  // exists to compare.
-  const itemBundles = game.itemBundleOffers().map((bundle) => {
-    const url = spriteUrl(bundle.sprite);
-    const art = url
-      ? spriteImgAt(url, 'store-pack-row-art')
-      : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('bag', { size: 'lg' }));
-    return card({
-      art,
-      name: bundle.name,
-      desc: bundle.gemValue > 0
-        ? `${formatExact(bundle.gemValue)} gems' worth of time, at the Finish price`
-        : 'Into the Bag, to open when you need it',
-    },
-      el('div', { class: 'store-bundle-lines' },
-        ...bundle.lines.map((line) => el('div', { class: 'store-bundle-line' },
-          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
-      btn({
-        label: formatUsd(bundle.priceCents),
-        kind: 'primary',
-        finish: 'gem',
-        onClick: () => game.openIap(bundle.id),
-      }));
+/** A section's name on a red cloth ribbon. */
+const ribbon = (text: string, extra?: HTMLElement): HTMLElement =>
+  el('div', { class: 'stx-ribbon' }, el('span', {}, text), ...(extra === undefined ? [] : [extra]));
+
+// ----------------------------------------------------------------- offers
+
+/** What stands on an offer's banner: its cut-out, its hero, or its icon. */
+function offerFigure(id: StoreSkuId): HTMLElement {
+  const s = STORE[id];
+  const url = (s.art !== '' ? spriteUrl(s.art) : null)
+    ?? (s.hero !== null ? spriteUrl(HEROES[s.hero].sprite) : null)
+    ?? spriteUrl(s.sprite);
+  return url === null ? el('span', { class: 'stx-offer-figure is-empty' }, iconEl(kindIcon(id), { size: 'lg' }))
+    : spriteImgAt(url, 'stx-offer-figure');
+}
+
+function offerBanner(game: Game, card: OfferCard): HTMLElement {
+  const tiles = game.offerTiles(card.id).now;
+  const shown = tiles.slice(0, tiles.length > 4 ? 3 : 4);
+  const more = tiles.length - shown.length;
+  const open = (): void => game.openOfferSplash(card.id, true);
+  const node = el('article', { class: 'stx-offer' },
+    offerFigure(card.id),
+    el('div', { class: 'stx-offer-body' },
+      el('div', { class: 'stx-offer-name' }, el('span', {}, card.name)),
+      el('p', { class: 'stx-offer-pitch' }, card.description),
+      el('div', { class: 'stx-offer-tiles' }, ...shown.map(offerTile),
+        ...(more > 0 ? [el('span', { class: 'stx-more' }, `+${formatExact(more)}`)] : [])),
+      el('div', { class: 'stx-offer-foot' },
+        ...(card.closesAt === null ? [] : [el('span', { class: 'stx-timer' }, iconEl('hourglass', { size: 'sm' }), countdown(card.closesAt))]),
+        btn({ label: formatUsd(card.priceCents), kind: 'gold', finish: 'gem', onClick: open }))),
+    ...(card.valuePercent > 100 ? [el('span', { class: 'stx-seal' }, `${formatExact(card.valuePercent)}%`)] : []));
+  node.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    open();
   });
+  return node;
+}
 
-  // ---- gem packs: upright cards, count over art over price
-  // GEM_PACK_ORDER, not every SKU: the Survey is a Store row because the
-  // budget has to see it, but it is sold on the Survey where the ladder beside
-  // it explains the price (Docs/features/25-the-survey.md §6).
-  const packs = GEM_PACK_ORDER.map((id) => {
-    const sku = STORE[id];
-    // Each pack has its own art, dropped into render/assets as
-    // `<sprite>.png`; until it lands the Gems icon stands in.
-    const url = spriteUrl(sku.sprite);
-    const art = url
-      ? spriteImgAt(url, 'store-pack-art')
-      : el('span', { class: 'store-pack-art is-fallback' }, currencyIcon('Gems', { size: 'lg' }));
-    // Art over count over price, as M5 stacks it.
-    const pack = el('div', { class: 'store-pack' },
-      art,
-      el('div', { class: 'store-pack-count' }, `${formatExact(sku.gems)} gems`),
-      btn({
-        label: formatUsd(Math.round(sku.priceUsd * 100)),
-        kind: 'primary',
-        finish: 'gem',
-        onClick: () => game.openIap(id),
-      }));
-    // The whole card is the target; the button is where the eye lands.
-    pack.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('button')) return;
-      game.openIap(id);
-    });
-    return pack;
-  });
+function dailyCard(game: Game, card: OfferCard): HTMLElement {
+  const tiles = game.offerTiles(card.id).now.slice(0, 2);
+  return el('article', { class: 'stx-daily' },
+    el('b', { class: 'stx-daily-name' }, card.name),
+    el('div', { class: 'stx-daily-tiles' }, ...tiles.map(offerTile)),
+    btn({
+      label: card.left === 0 ? 'Sold out' : formatUsd(card.priceCents),
+      kind: 'gold', finish: 'gem',
+      onClick: () => game.openIap(card.id, 'store'),
+      disabledReason: card.left === 0 ? 'Back tomorrow' : undefined,
+    }));
+}
 
-  // ---- offers, and today's
-  const offers = game.offerCards().map((o) => offerRow(game, o));
+function offersTab(game: Game): HTMLElement {
+  const offers = game.offerCards();
   const daily = game.dailyCards();
-  const dailyRows = daily.cards.map((o) => offerRow(game, o));
+  return el('div', { class: 'stx-list' },
+    ...offers.map((c) => offerBanner(game, c)),
+    ...(daily.cards.length === 0 ? [] : [
+      ribbon('Today', el('span', { class: 'stx-timer' }, iconEl('hourglass', { size: 'sm' }), countdown(daily.resetsAt))),
+      el('div', { class: 'stx-dailies' }, ...daily.cards.map((c) => dailyCard(game, c))),
+    ]));
+}
 
-  // ---- the crew's other slots, for Gems
+// --------------------------------------------------------------- supplies
+
+function bundleCard(game: Game, b: ReturnType<Game['itemBundleOffers']>[number]): HTMLElement {
+  const url = spriteUrl(b.sprite);
+  return el('article', { class: 'stx-card' },
+    el('b', { class: 'stx-card-name' }, b.name),
+    url === null ? el('span', { class: 'stx-card-art is-empty' }, iconEl('bag', { size: 'lg' })) : spriteImgAt(url, 'stx-card-art'),
+    el('div', { class: 'stx-card-lines' }, ...b.lines.map((l) => el('span', {}, l))),
+    btn({ label: formatUsd(b.priceCents), kind: 'gold', finish: 'gem', onClick: () => game.openIap(b.id, 'store') }));
+}
+
+/** A slot for good, sold for Gems: its picture, how many are open, its
+ *  price — or, at the ceiling, that the crew is whole. */
+function crewCard(
+  game: Game, name: string, art: HTMLElement, line: string, full: boolean, cost: number, buy: () => void,
+): HTMLElement {
+  return el('article', { class: 'stx-wide is-crew' },
+    el('span', { class: 'stx-wide-art is-icon' }, art),
+    el('div', {}, el('b', {}, name), el('span', {}, line)),
+    full
+      ? el('span', { class: 'stx-owned' }, iconEl('tick', { size: 'sm' }), 'All open')
+      : btn({ label: 'Hire', kind: 'gem', onClick: buy, cost: { Gems: cost }, have: (c) => game.walletValue(c) }));
+}
+
+function suppliesTab(game: Game): HTMLElement {
+  const bundles = game.doorOpen('bag') ? game.itemBundleOffers() : [];
+  const frag = game.fragmentPackOffer();
+  const builder = game.builderOffer();
   const explorer = game.explorerOffer();
-  const explorerCard = explorer.slots === 0 ? null : card({
-    art: iconEl('compass', { size: 'lg' }),
-    name: 'Another explorer',
-    desc: explorer.bought >= explorer.forSale
-      ? 'Every explorer for sale is yours.'
-      : `Explore with one more at once. ${formatExact(explorer.slots)} out at once now.`,
-  }, explorer.bought >= explorer.forSale
-    ? el('span', { class: 'store-owned' }, iconEl('tick', { size: 'sm' }), 'All hired')
-    : btn({
-        label: 'Hire', kind: 'gem', onClick: () => game.doBuyExplorer(),
-        cost: { Gems: explorer.cost }, have: (c) => game.walletValue(c),
-      }));
   const slot = game.heroSlotOffer();
-  const heroSlotCard = !game.doorOpen('heroes') ? null : card({
-    art: iconEl('helmet', { size: 'lg', label: 'hero slot' }),
-    name: 'Another hero slot',
-    desc: slot.slots >= slot.ceiling
-      ? `${formatExact(slot.ceiling)} heroes is the whole board.`
-      : `One more hero in every party. ${formatExact(slot.slots)} of ${formatExact(slot.ceiling)} open.`,
-  }, slot.slots >= slot.ceiling
-    ? el('span', { class: 'store-owned' }, iconEl('tick', { size: 'sm' }), 'All open')
-    : btn({
-        label: 'Open', kind: 'gem', onClick: () => game.doBuyHeroSlot(),
-        cost: { Gems: slot.cost }, have: (c) => game.walletValue(c),
-      }));
+  return el('div', { class: 'stx-list' },
+    ...(bundles.length === 0 ? [] : [ribbon('For the Bag'), el('div', { class: 'stx-grid' }, ...bundles.map((b) => bundleCard(game, b)))]),
+    ...(!frag.available ? [] : [
+      ribbon('Relics'),
+      el('article', { class: 'stx-wide', 'data-coach': 'store-fragments' },
+        el('span', { class: 'store-art is-fragments stx-wide-art', role: 'img', 'aria-label': 'relic fragments' }),
+        el('div', {}, el('b', {}, `Relic fragments ×${formatExact(frag.size)}`),
+          el('span', {}, 'Of the relics you have found, at random.')),
+        btn({ label: 'Buy', kind: 'gem', onClick: () => game.doBuyFragmentPack(), cost: { Gems: frag.gems }, have: (c) => game.walletValue(c) })),
+    ]),
+    ribbon('Crew'),
+    el('div', { class: 'stx-list is-tight' },
+      crewCard(game, 'Another builder', iconEl('build', { size: 'lg' }),
+        `${formatExact(builder.builders)} of ${formatExact(KINGDOM_DEF.maxBuilders)} hired`,
+        builder.builders >= builder.ceiling, builder.cost, () => game.doBuyBuilder({ closeSheet: false })),
+      ...(explorer.slots === 0 ? [] : [crewCard(game, 'Another explorer', iconEl('compass', { size: 'lg' }),
+        `${formatExact(explorer.bought)} of ${formatExact(explorer.forSale)} bought`,
+        explorer.bought >= explorer.forSale, explorer.cost, () => game.doBuyExplorer())]),
+      ...(!game.doorOpen('heroes') ? [] : [crewCard(game, 'Another hero slot', iconEl('helmet', { size: 'lg' }),
+        `${formatExact(slot.slots)} of ${formatExact(slot.ceiling)} open`,
+        slot.slots >= slot.ceiling, slot.cost, () => game.doBuyHeroSlot())])));
+}
 
-  const body = el('div', { class: 'store' },
-    ...(offers.length === 0 ? [] : [el('div', { class: 'store-section' }, el('span', {}, 'Offers')), ...offers]),
-    ...(dailyRows.length === 0 ? [] : [
-      el('div', { class: 'store-section' }, el('span', {}, 'Today'),
-        el('span', { class: 'store-balance' }, iconEl('hourglass', { size: 'sm' }),
-          formatCountdown(Math.max(0, Math.ceil((daily.resetsAt - game.now()) / 1000))))),
-      ...dailyRows,
-    ]),
-    el('div', { class: 'store-section' }, el('span', {}, 'Heroes')),
-    // The banner hangs in the Tavern; until one stands, its place in the
-    // store is padlocked (Docs/features/22-progression.md §3).
-    game.doorOpen('banner') ? bannerPanel(game)
-      : el('div', { class: 'store-banner-locked' }, iconEl('padlock'),
-        el('span', {}, 'Build a Tavern to call heroes.')),
-    // The Bag's own shelf, once the Bag is open.
-    ...(itemBundles.length === 0 || !game.doorOpen('bag') ? [] : [
-      el('div', { class: 'store-section' }, el('span', {}, 'For the Bag')),
-      ...itemBundles,
-    ]),
-    ...(fragments === null ? [] : [
-      el('div', { class: 'store-section', 'data-coach': 'store-fragments' },
-        el('span', {}, 'Relics'),
-        el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-          formatExact(game.walletValue('Gems')))),
-      fragments,
-    ]),
-    el('div', { class: 'store-section' },
-      el('span', {}, 'Keys'),
-      el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        formatExact(game.walletValue('Gems')))),
-    ...keys,
-    el('div', { class: 'store-section' },
-      el('span', {}, 'Crew'),
-      el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
-        formatExact(game.walletValue('Gems')))),
-    builders,
-    ...(explorerCard === null ? [] : [explorerCard]),
-    ...(heroSlotCard === null ? [] : [heroSlotCard]),
-    el('div', { class: 'store-section' }, el('span', {}, 'Gems')),
-    el('div', { class: 'store-packs' }, ...packs),
-  );
+// ------------------------------------------------------------------- gems
 
-  return sheet({ title: 'Store', onClose: close }, body);
+function gemsTab(game: Game): HTMLElement {
+  return el('div', { class: 'stx-list' },
+    ribbon('Gem packs'),
+    el('div', { class: 'stx-grid is-three' }, ...GEM_PACK_ORDER.map((id) => {
+      const sku = STORE[id];
+      const url = spriteUrl(sku.sprite);
+      const pack = el('article', { class: 'stx-card is-gems' },
+        el('b', { class: 'stx-card-name' }, formatExact(sku.gems), currencyIcon('Gems', { size: 'sm' })),
+        url === null ? el('span', { class: 'stx-card-art is-empty' }, currencyIcon('Gems', { size: 'lg' })) : spriteImgAt(url, 'stx-card-art'),
+        btn({ label: formatUsd(Math.round(sku.priceUsd * 100)), kind: 'gold', finish: 'gem', onClick: () => game.openIap(id, 'store') }));
+      pack.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        game.openIap(id, 'store');
+      });
+      return pack;
+    })));
+}
+
+// ------------------------------------------------------------------ screen
+
+export function renderStoreSheet(game: Game): HTMLElement {
+  const { tabs, open } = game.storeTabs();
+  const page = open === 'offers' ? offersTab(game)
+    : open === 'heroes' ? heroesTab(game)
+      : open === 'supplies' ? suppliesTab(game)
+        : gemsTab(game);
+  const close = closeKnob(() => game.dismiss(), 'Close the store');
+  const body = el('div', { class: 'stx' },
+    el('header', { class: 'stx-head' }, el('h1', { class: 'stx-title' }, 'Store'), close),
+    tabStrip(game, tabs, open),
+    el('div', { class: 'stx-page', 'data-keep-scroll': `store-${open}` }, page));
+  tickCountdowns(game);
+  const screen = sheet({ title: 'Store', onClose: () => game.dismiss(), tall: true, bare: true }, body);
+  screen.classList.add('is-store');
+  return screen;
 }

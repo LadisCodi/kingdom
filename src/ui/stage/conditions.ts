@@ -7,7 +7,7 @@
 // odometer reading it started from.
 
 import {
-  ABANDONED, DISTRICTS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
+  ABANDONED, DISTRICTS, ITEMS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
 } from '../../sim/data/definitions';
 import { isDoorOpen, type DoorId } from '../../sim/doors';
 import { tally } from '../../sim/events';
@@ -18,7 +18,7 @@ import { fogState } from '../../sim/fog';
 import { sightedThings } from '../../sim/sight';
 import { woundedCount } from '../../sim/army';
 import {
-  buildQueueCapacity, busyBuilders, type LairId, type TechId, type TomeId,
+  buildQueueCapacity, busyBuilders, type ItemId, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
 import type { Game } from '../../game';
 
@@ -39,6 +39,11 @@ const questIndex = (id: string): number => QUESTS.findIndex((q) => q.id === id);
 /** Treasures picked up, ever: every one placed that is no longer on the map. */
 const treasuresPicked = (state: Game['state']): number =>
   state.fog.treasuresPlaced - Object.keys(state.fog.treasures).length;
+
+/** How many of an item — or of every item of a kind — the Bag holds. */
+const itemsHeld = (state: Game['state'], target: string): number =>
+  Object.entries(state.bag.held).reduce((n, [id, count]) =>
+    n + (id === target || ITEMS[id as ItemId]?.kind === target ? count ?? 0 : 0), 0);
 
 /** Is `kind(target, amount)` true right now? `tap` never is: a tap is the
  *  stage's own event. */
@@ -169,6 +174,10 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     // A Shrine holds it (or any relic, when '').
     case 'relicHosted':
       return state.city.districts.some((d) => d.hosts !== undefined && (c.target === '' || d.hosts === c.target));
+    // The Bag: `amount` (at least one) of an item, or of an item kind, held —
+    // and none left of it, once it has been used.
+    case 'holdsItem': return itemsHeld(state, c.target) >= Math.max(1, c.amount);
+    case 'itemUsed': return itemsHeld(state, c.target) === 0;
     default: return false;
   }
 }

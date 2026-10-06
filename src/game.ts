@@ -199,8 +199,6 @@ export type OverlayName =
   // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
   | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
-  // The Offers screen: one tab an offer on sale (Docs/features/14-monetization.md §2.4).
-  | 'offers'
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
@@ -545,15 +543,22 @@ export class Game {
   upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
   pendingSkuFrom: OverlayName | null = 'store';
-  /** The Offers screen's open tab; null → the first on sale. */
-  offersTab: StoreSkuId | null = null;
+  /** The store tab the player picked; null → the one it opens on. */
+  private storeTabPick: StoreTab | null = null;
+  /** Where a splash opened from a sheet goes back to when it is closed. */
+  private splashReturn: OverlayName | null = null;
+  private backFromSplash = false;
+  /** How many times the store has been opened this session — not counting a
+   *  return from its confirmation or a splash. The golden call's hero moves
+   *  on with it (ui/storeHeroes.ts). */
+  storeVisits = 0;
   /** When this session began: an offer splash shows from the session after
    *  its window opened (`offerSplash`). */
   sessionStartedAt = 0;
   /** The offer splashes this session has closed, as `buy:<sku>` / `claim:<sku>`. */
   private splashesClosed = new Set<string>();
   /** A splash opened on purpose — from the store or the pill. */
-  private offerSplashForced: { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null = null;
+  private offerSplashForced: OfferSplashView | null = null;
   /** What was asked for while the payer-profile sheet had the screen. The
    *  profile sheet is modal in the strong sense (14-monetization.md §3), so
    *  whatever wanted to open — the welcome report, chiefly — waits here and
@@ -1905,7 +1910,28 @@ export class Game {
 
   /** The relic sheet's way to more fragments: the store, at its pack. */
   openStoreForFragments(): void {
+    this.openStore('supplies');
+  }
+
+  /** The store, on a tab — or on the one it opens on: Offers when there are
+   *  any, else Heroes. */
+  openStore(tab?: StoreTab): void {
+    this.storeTabPick = tab ?? null;
     this.setOverlay('store');
+  }
+
+  setStoreTab(tab: StoreTab): void {
+    this.storeTabPick = tab;
+    this.notify();
+  }
+
+  /** The store's tabs, and the open one. Offers only while there is an offer
+   *  or a daily offer to show. */
+  storeTabs(): { tabs: StoreTab[]; open: StoreTab } {
+    const offers = this.offerCards().length > 0 || this.dailyCards().cards.length > 0;
+    const tabs: StoreTab[] = [...(offers ? ['offers' as const] : []), 'heroes', 'supplies', 'gems'];
+    const pick = this.storeTabPick;
+    return { tabs, open: pick !== null && tabs.includes(pick) ? pick : tabs[0] };
   }
 
   /** The three-state walk, as the card reads it. `leftMs` is derived from a
@@ -2047,29 +2073,36 @@ export class Game {
    * that shows it — and that this session has not closed yet. It waits for
    * the map to be free: no sheet, no fight, no reveal, no video, no unlock.
    */
-  offerSplash(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+  offerSplash(): OfferSplashView | null {
     if (this.payerDue() || this.openOverlay !== null) return null;
     if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
     if (this.unlockOnScreen() !== null) return null;
     const now = this.now();
     const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
-    if (ready !== undefined) return { sku: ready, mode: 'claim' };
+    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false };
     const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
       && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
-    return sku === undefined ? null : { sku, mode: 'buy' };
+    return sku === undefined ? null : { sku, mode: 'buy', browse: false };
   }
 
-  /** The offer splash again, from the store or the pill: the same screen,
-   *  whatever the session has closed. */
-  openOfferSplash(sku: StoreSkuId): void {
+  /** The offer splash again, from the store or the offers widget: the same
+   *  screen, whatever the session has closed. `browse` — opened from the
+   *  widget — adds the row of every offer on the map along its top, to step
+   *  from one to the next. */
+  openOfferSplash(sku: StoreSkuId, browse = false): void {
+    // From a sheet (the store), the splash goes back to it when closed.
+    if (this.openOverlay !== null) this.splashReturn = this.openOverlay;
     const ready = nextDayReady(this.state, this.now()).includes(sku);
     this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
-    this.offerSplashForced = { sku, mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy' };
+    this.offerSplashForced = {
+      sku, browse,
+      mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy',
+    };
     this.setOverlay(null);
   }
 
   /** What the splash mount draws: the one forced open, else the session's. */
-  offerSplashOnScreen(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+  offerSplashOnScreen(): OfferSplashView | null {
     if (this.offerSplashForced !== null) return this.offerSplashForced;
     return this.offerSplash();
   }
@@ -2078,6 +2111,13 @@ export class Game {
     const on = this.offerSplashOnScreen();
     if (on !== null) this.splashesClosed.add(`${on.mode === 'claim' ? 'claim' : 'buy'}:${on.sku}`);
     this.offerSplashForced = null;
+    const back = this.splashReturn;
+    this.splashReturn = null;
+    if (back !== null) {
+      this.backFromSplash = true;
+      this.setOverlay(back);
+      this.backFromSplash = false;
+    }
     this.notify();
   }
 
@@ -2086,7 +2126,9 @@ export class Game {
   buyFromSplash(sku: StoreSkuId): void {
     this.splashesClosed.add(`buy:${sku}`);
     this.offerSplashForced = null;
-    this.openIap(sku, null);
+    const back = this.splashReturn;
+    this.splashReturn = null;
+    this.openIap(sku, back);
   }
 
   doClaimNextDay(sku: StoreSkuId): void {
@@ -2101,46 +2143,31 @@ export class Game {
     this.notify();
   }
 
-  /** The Offers screen on an offer — or on the first on sale. */
-  openOffers(sku?: StoreSkuId): void {
-    this.offersTab = sku ?? null;
-    this.setOverlay('offers');
-  }
-
-  /** Change the Offers screen's tab. */
-  showOfferTab(sku: StoreSkuId): void {
-    this.offersTab = sku;
-    this.notify();
-  }
-
-  /** What the Offers screen draws: a tab an offer on sale, and the open one's
-   *  card — its value, window, chain step and what it opens for good. */
-  offersScreen(): OffersScreen {
-    const cards = this.offerCards().filter((c) => !STORE[c.id].splash);
-    const open = cards.find((c) => c.id === this.offersTab) ?? cards[0] ?? null;
-    if (open === null) return { tabs: [], card: null };
-    const s = STORE[open.id];
+  /** What an offer's splash draws beside its rewards: its window and what
+   *  is left of it, its value, its step in a chain ("I / III") and the slots
+   *  it opens for good. */
+  offerSale(sku: StoreSkuId): OfferSale {
+    const s = STORE[sku];
+    const w = offerWindow(this.state, sku);
     // The chain it belongs to: back along `after` to its first step, then
     // forward to its last.
-    let first: StoreSkuId = open.id;
+    let first: StoreSkuId = sku;
     while (STORE[first].after !== null) first = STORE[first].after!;
     const chain: StoreSkuId[] = [first];
     for (let next = OFFER_ORDER.find((id) => STORE[id].after === first); next !== undefined;
       next = OFFER_ORDER.find((id) => STORE[id].after === chain[chain.length - 1])) chain.push(next);
-    const gifts = [
-      ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder — for good.' : `${formatExact(s.builders)} builders — for good.`, text: 'Build two things at once.' }] : []),
-      ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer — for good.', text: 'Explore the world with one more at once.' }] : []),
-      ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot — for good.', text: 'One more hero in every party.' }] : []),
-    ];
     return {
-      tabs: cards.map((c) => ({ id: c.id, label: STORE[c.id].short || c.name, sprite: c.sprite, open: c.id === open.id })),
-      card: {
-        ...open,
-        art: s.art,
-        tiles: this.offerTiles(open.id).now.filter((t) => !(t.kind === 'coin' && t.id === 'Gems')),
-        chain: chain.length > 1 ? { at: chain.indexOf(open.id) + 1, of: chain.length } : null,
-        gifts,
-      },
+      closesAt: w?.closes ?? null,
+      left: s.limit > 0 ? Math.max(0, s.limit - (w?.bought ?? 0)) : null,
+      once: s.limit === 1 && (s.opensOn === 'always' || s.opensOn === 'door' || s.opensOn === 'after'),
+      valuePercent: skuValuePercent(this.state, sku),
+      chain: chain.length > 1 ? { at: chain.indexOf(sku) + 1, of: chain.length } : null,
+      gifts: [
+        ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder' : `${formatExact(s.builders)} builders`, text: 'Build two things at once' }] : []),
+        ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer', text: 'Explore the world with one more at once' }] : []),
+        ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot', text: 'One more hero in every party' }] : []),
+      ],
+      nextDayAt: nextDayWaiting(this.state, this.now()).find((d) => d.sku === sku)?.claimableAt ?? null,
     };
   }
 
@@ -2159,6 +2186,7 @@ export class Game {
    *  claim — counting down to it, or ready. */
   offerWidgets(): OfferWidget[] {
     const now = this.now();
+    const rank = { ready: 0, sale: 1, waiting: 2 } as const;
     return OFFER_ORDER.filter((id) => STORE[id].widget).flatMap((sku): OfferWidget[] => {
       const s = STORE[sku];
       const base = { sku, name: s.name, sprite: s.sprite, hero: s.hero };
@@ -2167,7 +2195,7 @@ export class Game {
       if (waiting !== undefined) return [{ ...base, state: 'waiting' as const, at: waiting.claimableAt }];
       const w = offerWindow(this.state, sku);
       return offerOn(this.state, sku, now) ? [{ ...base, state: 'sale' as const, at: w?.closes ?? 0 }] : [];
-    });
+    }).sort((a, b) => rank[a.state] - rank[b.state]);
   }
 
   /** The explorer the store sells for Gems: its price, how many are out at
@@ -3326,6 +3354,19 @@ export class Game {
    */
   overlaySignature(name: OverlayName): string | null {
     switch (name) {
+      // The store moves with its tab, what is on sale, the purses and the
+      // calls — never with its countdowns, which tick in place
+      // (ui/storeSheet.ts), so its pictures and the heroes' carousel stay.
+      case 'store': {
+        return JSON.stringify([
+          this.storeTabs(), this.offerCards().map((c) => [c.id, c.left]),
+          this.dailyCards().cards.map((c) => [c.id, c.left]),
+          this.state.player.wallet, this.state.bag.held, this.state.heroes,
+          this.state.kingdom.builders, this.state.world.explorersBought,
+          BANNER_ORDER.map((b) => [this.freePull(b).left, this.freePull(b).ready, this.pullPrice(b).amount]),
+          this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(), this.storeVisits,
+        ]);
+      }
       case 'heroes': return this.heroesSignature();
       // The picker moves with the choice and with a resting hero's minute.
       case 'heroPicker': return JSON.stringify([
@@ -4658,9 +4699,11 @@ export class Game {
       recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
       this.track('survey_opened');
     }
-    // Back from its own confirmation is not a new visit.
-    if (name === 'store' && this.openOverlay !== 'store' && this.openOverlay !== 'iapConfirm') {
+    // Back from its own confirmation, or from a splash opened from it, is
+    // not a new visit.
+    if (name === 'store' && this.openOverlay !== 'store' && this.openOverlay !== 'iapConfirm' && !this.backFromSplash) {
       this.track('store_opened', { from: this.openOverlay ?? this.scene });
+      this.storeVisits += 1;
     }
     if (name !== 'iapConfirm') this.iapDismissed();
     if (door !== undefined && !isDoorOpen(this.state, door)) {
@@ -6415,16 +6458,30 @@ export interface OfferWidget {
   at: number;
 }
 
-/** The Offers screen (`Game.offersScreen`). */
-export interface OffersScreen {
-  tabs: Array<{ id: StoreSkuId; label: string; sprite: string; open: boolean }>;
-  card: (OfferCard & {
-    art: string;
-    /** What lands, as tiles — the Gems are drawn on their own row. */
-    tiles: OfferTile[];
-    /** Its step in a chain of offers, "I / III". */
-    chain: { at: number; of: number } | null;
-    /** The slots it opens for good, the card's GIFT strip. */
-    gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
-  }) | null;
+/** An offer's sale, as its splash draws it (`Game.offerSale`). */
+export interface OfferSale {
+  /** When its window closes, or null if it waits until bought out. */
+  closesAt: number | null;
+  /** How many this window still sells, or null for no limit. */
+  left: number | null;
+  /** Sold once, ever — not once a window. */
+  once: boolean;
+  valuePercent: number;
+  /** Its step in a chain of offers, "I / III". */
+  chain: { at: number; of: number } | null;
+  /** The slots it opens for good, its GIFT panel. */
+  gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
+  /** Bought, and its next-day part not due yet: when it is. */
+  nextDayAt: number | null;
 }
+
+/** The offer splash on screen: which offer, in which mood, and whether it
+ *  was opened from the offers widget (the row of offers along its top). */
+export interface OfferSplashView {
+  sku: StoreSkuId;
+  mode: 'buy' | 'claim' | 'waiting';
+  browse: boolean;
+}
+
+/** The store's tabs (ui/storeSheet.ts). */
+export type StoreTab = 'offers' | 'heroes' | 'supplies' | 'gems';

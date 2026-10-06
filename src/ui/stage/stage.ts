@@ -15,13 +15,14 @@
 // portrait that is rebuilt re-enters, and a box that is rebuilt re-types.
 
 import {
-  DISTRICTS, HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
+  DISTRICTS, HELP, ITEMS, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
-import { playSfx } from '../../audio/sfx';
+import { playSfx, playVoice } from '../../audio/sfx';
 import { spriteUrl } from '../../render/sprites';
 import { CAMERA_GLIDE_MS } from '../../render/camera';
-import type { Coord } from '../../sim/state';
+import type { Coord, ItemId } from '../../sim/state';
+import { bagTabOf } from '../../sim/bag';
 import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
@@ -47,6 +48,10 @@ interface Playing {
   missingSince: number | null;
   /** The failsafe fired: the lock has let go for the rest of this line. */
   lockReleased: boolean;
+  /** A line that asks for an action is read first, then acted on: the box
+   *  and the cast leave and the hand comes, and only then does the target
+   *  take a tap (24-dialogue.md §4). False while it is being read. */
+  acting: boolean;
 }
 
 const sceneKey = (id: string): string => `scene:${id}`;
@@ -58,7 +63,12 @@ const TICK_EVERY = 3;
 /** Scroll a control into its scroller when it sits clipped outside it — the
  *  build menu's row, a long list. Only when clipped, so a visible control
  *  never jitters. */
-function bringIntoView(key: string): void {
+function bringIntoView(game: Game, key: string): void {
+  // An item in the Bag is on its own tab: the Bag opens to it.
+  if (key.startsWith('bag-item:') && game.openOverlay === 'bag') {
+    const id = key.slice('bag-item:'.length) as ItemId;
+    if (ITEMS[id] !== undefined) game.openBagTab(bagTabOf(id));
+  }
   const node = uiNode(key);
   if (node === null) return;
   const r = node.getBoundingClientRect();
@@ -258,11 +268,22 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     playing.typed = 0;
     playing.missingSince = null;
     playing.lockReleased = false;
+    // Back from acting: the box returns, and whoever speaks walks back on.
+    if (playing.acting || layer.classList.contains('is-acting')) {
+      layer.classList.remove('is-acting');
+      leave('left');
+      leave('right');
+    }
+    playing.acting = false;
     playing.target = resolveTarget(game, l.point, null);
     // The camera flies to a map target before the line appears.
     if (playing.target?.kind === 'cell') {
       game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
     }
+    // A speaker taking their turn says so — a little vocal emote in the
+    // line's mood — once, not on every line they speak in a row.
+    if (l.speaker !== voiced) playVoice(l.speaker, l.expression);
+    voiced = l.speaker;
     cast(l.side, l.speaker, l.expression);
     const other = l.side === 'left' ? 'right' : 'left';
     left.classList.toggle('is-lit', l.side === 'left');
@@ -319,8 +340,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   const start = (scene: SceneDef): void => {
+    voiced = null;
     playing = {
-      scene, index: 0, tapsAtStart: 0, typed: 0, target: null, missingSince: null, lockReleased: false,
+      scene, index: 0, tapsAtStart: 0, typed: 0, target: null, missingSince: null, lockReleased: false, acting: false,
     };
     // A SCENE RESUMES WHERE THE GAME IS (23-tutorials.md §3): after a reload
     // the player may already have done what its later lines ask, so it picks
@@ -340,29 +362,44 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     begin(resumeAt);
   };
 
+  /** Who spoke the line before, so a run of lines voices only its first. */
+  let voiced: string | null = null;
+
   /** The box has been placed in this scene, so a new place is a move. */
   let boxShown = false;
 
-  /** Where the box's top edge falls when it sits at the bottom. */
-  /** Would the box at the BOTTOM — or anyone standing on it — cover `r`?
+  /** The box at `where`, as the layout would have it: does it — or anyone
+   *  standing on it — cover `r`, and does the cast fit under the header?
    *  Read off the layout (offsets, not rects), so a box mid-move or a
    *  figure mid-entrance is judged where it will settle. */
-  const bottomCovers = (r: Rect): boolean => {
+  const judge = (where: string, r: Rect | null): { covers: boolean; castFits: boolean } => {
     const was = box.dataset.place;
-    box.dataset.place = 'bottom';
+    box.dataset.place = where;
     const f = frame.getBoundingClientRect();
     const l = layer.getBoundingClientRect();
     const b: Rect = {
       x: l.left - f.left + box.offsetLeft, y: l.top - f.top + box.offsetTop,
       w: box.offsetWidth, h: box.offsetHeight,
     };
-    const parts: Rect[] = [b, ...[left, right].filter((a) => a.childElementCount > 0).map((a) => ({
+    const actors = [left, right].filter((a) => a.childElementCount > 0);
+    const parts: Rect[] = [b, ...actors.map((a) => ({
       x: b.x + a.offsetLeft, y: b.y + a.offsetTop, w: a.offsetWidth, h: a.offsetHeight,
     }))];
     box.dataset.place = was ?? '';
+    const header = document.getElementById('header');
+    const limit = (header?.getBoundingClientRect().bottom ?? f.top) - f.top;
+    const castTop = Math.min(b.y, ...parts.slice(1).map((p) => p.y));
     // Touching is not covering: the box sits just above the quest scroll.
-    return parts.some((p) => r.x < p.x + p.w && p.x < r.x + r.w && r.y < p.y + p.h && p.y < r.y + r.h);
+    const covers = r !== null
+      && parts.some((p) => r.x < p.x + p.w && p.x < r.x + r.w && r.y < p.y + p.h && p.y < r.y + r.h);
+    return { covers, castFits: castTop >= limit };
   };
+
+  /** Where an `auto` box may sit, in the order it is tried: a little below
+   *  the middle of the screen first, then lower, then higher with the cast
+   *  still under the header — and only then the very top, with no room for
+   *  the cast (24-dialogue.md §2). */
+  const PLACES = ['low', 'bottom', 'high', 'top'] as const;
 
   /** The cast stands on the box; where that would put a figure above the
    *  header — off the screen — it is not shown. Read while the box is still,
@@ -381,23 +418,46 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  the box never flaps between the edges. */
   let boxMovedForHand = false;
 
-  /** Where the box sits: its own place, or away from the target. */
+  /** Where the box sits: its own place, or the first of `PLACES` where the
+   *  speaker and what the line is about are both in sight. */
   const place = (l: SceneLine): void => {
-    let where = l.box;
+    settleUntil = performance.now() + PLACE_SETTLE_MS;
+    setPlace(bestPlace(l));
+    boxMovedForHand = false;
+  };
+
+  /** A target can still be arriving when its line starts — a sheet
+   *  unrolling, a card sliding in — so the place is judged again until the
+   *  target has settled; after that, only to stop covering the target or to
+   *  make room for the cast again. */
+  const PLACE_SETTLE_MS = 700;
+  let settleUntil = 0;
+  const replace = (l: SceneLine): void => {
+    if (l.box !== 'auto' || box.getAnimations().length > 0) return;
+    const now = box.dataset.place ?? '';
+    const best = bestPlace(l);
+    if (best === now) return;
+    if (performance.now() < settleUntil) { setPlace(best); return; }
+    // Settled: move only to stop covering the target, or to bring back a
+    // cast that the current place has no room for.
+    const r = playing?.target ? targetRect(game, playing.target, frame) : null;
+    const here = judge(now, r);
+    if (here.covers || (!here.castFits && judge(best, r).castFits)) setPlace(best);
+  };
+
+  const bestPlace = (l: SceneLine): string => {
+    let where: string = l.box;
     if (where === 'auto') {
-      // BOTTOM, where the cast stands on it — unless the box, or someone
-      // standing on it, would cover the very thing the line points at. Only
-      // then the top, where there is no room for the cast.
       let r = playing?.target ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
       if (r !== null && playing?.target?.kind === 'cell') {
         r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
       }
-      where = r !== null && bottomCovers(r) ? 'top' : 'bottom';
+      const judged = PLACES.map((p) => ({ p, ...judge(p, r) }));
+      where = (judged.find((j) => !j.covers && j.castFits) ?? judged.find((j) => !j.covers) ?? judged[0]).p;
     }
-    boxMovedForHand = false;
-    setPlace(where);
+    return where;
   };
 
   /** The box goes to `where`. */
@@ -427,13 +487,24 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (l === null) return;
     if (playing.typed < l.text.length) { playing.typed = l.text.length; text.textContent = l.text; return; }
     if (l.until === 'tap') next();
+    else act();
+  };
+
+  /** The line has been read: the box and the cast step aside, the hand
+   *  comes, and the target is the player's to tap. */
+  const act = (): void => {
+    if (playing === null) return;
+    playing.acting = true;
+    playing.missingSince = null;
+    layer.classList.add('is-acting');
+    game.notify();
   };
   box.addEventListener('click', tapLine);
 
   /** A line that waits for a tap takes one ANYWHERE on the screen, as a
    *  visual novel does — and keeps it: the tap moves the dialogue on and
    *  reaches nothing behind it. Panning the map stays free. */
-  const waitsForTap = (): boolean => playing !== null && line()?.until === 'tap';
+  const waitsForTap = (): boolean => playing !== null && (line()?.until === 'tap' || !playing.acting);
 
   // ------------------------------------------------------------ the lock
   const lockNow = (): SceneLine['lock'] => {
@@ -464,7 +535,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (elNode === null) return false;
     // A reveal or a splash that lands mid-line takes its own taps: it sits
     // above the stage, so a lock that refused them could never be lifted.
-    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar, #unlock, #gacha') !== null) return true;
+    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar, #unlock, #gacha, #offersplash') !== null) return true;
     if (elNode.tagName === 'CANVAS') return true;
     const t = playing!.target;
     if (lock !== 'all' && t?.kind === 'ui') {
@@ -481,8 +552,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   frame.addEventListener('click', (e) => {
     if (!waitsForTap()) return;
     const node = e.target instanceof HTMLElement ? e.target : (e.target as Node | null)?.parentElement ?? null;
-    // An unlock splash or a pack reveal over a line takes its own tap.
-    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar, #unlock, #gacha') !== null) return;
+    // An unlock splash, an offer splash or a pack reveal over a line takes
+    // its own tap.
+    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar, #unlock, #gacha, #offersplash') !== null) return;
     const moved = downAt === null ? 0 : Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
     if (moved < TAP_SLOP_PX) tapLine();
     e.preventDefault();
@@ -600,15 +672,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // and the hand's size (a guess on the frame it first shows).
     const f = frame.getBoundingClientRect();
     const b = box.getBoundingClientRect();
-    const boxRect = b.width > 0 ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
+    // A box stepped aside for the player's turn is not in the hand's way.
+    const boxAside = playing === null || playing.acting;
+    const boxRect = b.width > 0 && !boxAside ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
     const hand = { w: arrow.offsetWidth || 48, h: arrow.offsetHeight || 56 };
     const isCell = pointed?.kind === 'cell';
     glow(show && !isCell && pointed?.kind === 'ui' ? uiNode(pointed.key) : null);
     game.tutorialFocus = show && pointed?.kind === 'cell'
       ? { cell: pointed.cell, span: pointed.span } : null;
     halo.hidden = glowing === null;
-    arrow.hidden = !show;
-    sparks.hidden = !show;
+    // The hand points only when it is the player's turn: never while a line
+    // is being read, so the eye is on the words or on the target, not both.
+    // The target's glow may light what the line talks about.
+    const pointing = show && (playing === null || playing.acting);
+    arrow.hidden = !pointing;
+    sparks.hidden = !pointing;
     if (!show) return;
     const pad = pointed?.kind === 'cell' ? 0 : 6;
     const padded = {
@@ -705,7 +783,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
             }
           }
         }
-        const moreHidden = !(l.until === 'tap' && playing.typed >= l.text.length);
+        const moreHidden = !(playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is
         // kept while it still fits.
         const was = playing.target;
@@ -734,7 +812,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         }
         // A LOCK NEVER STRANDS THE PLAYER: a target missing for a while lets
         // the lock go, and the line reads as a hint.
-        if ((l.lock === 'target' || l.lock === 'map') && r === null && l.point !== '') {
+        if (playing.acting && (l.lock === 'target' || l.lock === 'map') && r === null && l.point !== '') {
           playing.missingSince ??= now;
           if (now - playing.missingSince > HELP.lockFailsafeSeconds * 1000) playing.lockReleased = true;
         } else {
@@ -748,7 +826,8 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           // A control scrolled out of its row — the fourth card of the build
           // menu — is brought into view, or the lock holds the player in
           // front of something they cannot reach.
-          if (playing.target?.kind === 'ui') bringIntoView(playing.target.key);
+          if (playing.target?.kind === 'ui') bringIntoView(game, playing.target.key);
+          if (!playing.acting) replace(l);
           fitCast();
           if (lineHolds(l)) { graced(); next(); }
         }

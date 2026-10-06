@@ -28,12 +28,21 @@
   brass rivets — and a soft shadow that lifts it off the map behind.
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
-  Warden green, Bess red, the villager brown, Grukk crimson.
-- **Three places**: `bottom`, `top`, `middle`, or `auto`. Every authored
-  line is `auto`.
-- **`auto`**: the bottom, where the cast stands on the box — unless the box
-  there, or anyone standing on it, would cover what the line points at; only
-  then the top.
+  Warden green, Bess red, Tom and Hob brown, Grukk crimson.
+- **Places**: `bottom`, `top`, `middle`, or `auto`. Every authored line is
+  `auto`.
+- **`auto` keeps the speaker and what the line is about both in sight.** It
+  tries, in order, and takes the first where neither the box nor anyone
+  standing on it covers the target, and the cast fits under the header:
+  1. **a little below the middle of the screen** — the default;
+  2. the bottom, above the quest scroll;
+  3. high, with room above for the cast;
+  4. the very top, with no room for the cast — only when nothing else
+     clears the target.
+- A map target is judged at the middle of the screen, where the camera
+  flies it. A target still arriving (a sheet unrolling) is judged again
+  until it settles; after that the box moves only to stop covering it, or to
+  make room for the cast again.
 - **A box already on screen moves** to a new place in 0.32 s with a slight
   overshoot (OutBack), rather than jumping there.
 - **One size, always**: three lines of text at the box's type. A line too
@@ -93,11 +102,17 @@
 | `quest` | the quest pill |
 | `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
+- **Read, then act.** A line that asks for an action plays in two turns:
+  - **Reading**: the box and the cast are on screen and the line types; no
+    hand. The target may glow, so the player sees what the line is about. A
+    tap anywhere finishes the line, then moves to acting; nothing behind the
+    box takes it.
+  - **Acting**: the box and the cast fade out, the hand comes, and only now
+    does the lock let the target take a tap. The next line brings the box
+    back, its speaker walking on again.
+- A line that waits for a tap is read only: it never shows the hand.
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
-- **The hand never stands on the line box.** Where it would, it points
-  from the target's other side; where both sides meet the box, the box moves
-  to the other edge, once a line.
 - **A blue magic glow** marks it: a control's own silhouette lit blue
   (`--magic-glow-*`, the one cold light in a warm palette); a map plot as its
   own diamond in the same glow. Small motes of that light drift slowly off
@@ -135,6 +150,7 @@ which one a line waits on is data.
 | `featureSeen` | a cell with that feature is out of the dark |
 | `treasureRevealed` · `treasurePicked` | a treasure stands on revealed ground · `amount` picked up |
 | `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
+| `holdsItem` · `itemUsed` | the Bag holds `amount` (at least one) of that item or kind of item · holds none of it any more |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
 
@@ -145,7 +161,8 @@ which one a line waits on is data.
 | `advisor` | **Isolde** | the Royal Advisor — the royal librarian, advising because everyone else fled the fog: cheerful, a little nervous, unsure of herself, with a book for most things. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
 | `warden` | **the Warden** | captain of the guard; speaks at the first lair | `hero_warden` | full figure |
 | `cook` | **Bess** | runs the Tavern; speaks when it opens | `hero_cook` | full figure |
-| `villager` | **a villager** | the first settler | `portrait_villager` | full figure |
+| `woodcutter` | **Old Hob** | the woodcutter who never left the fog: gruff, superstitious, distrusts books, secretly proud of Isolde. Her foil | `portrait_hob` | full figure |
+| `villager` | **Tom Miller** | the Millers' son, the first villager home | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
 
 - **Isolde has five faces** — at rest, happy (eyes closed, a wide smile, the
@@ -154,6 +171,8 @@ which one a line waits on is data.
   never moves her. Claims and praise are happy; threats and shortfalls
   worried; what the fog gives up surprised; a new building or book to try,
   an idea.
+- **Hob and Tom have four faces** — at rest, happy, worried, surprised.
+  Hob's worried is a grumpy scowl, arms crossed.
 - **Every speaker is a full figure**: it stands on the box, cut at the waist
   by it. The figures share the heroes' style and frame (512×768); the
   tutorial's own three are cut from one sheet
@@ -161,6 +180,25 @@ which one a line waits on is data.
 - A **medallion** — a round avatar in a brass ring — is still drawn for a
   speaker whose `frame` says so, and a missing picture draws as a parchment
   medallion with the speaker's initial pressed into it, never an emoji.
+
+### 6.1 The voices
+
+- **A speaker taking their turn makes one short vocal emote** — a clear of
+  the throat, a giggle, a gasp, a grunt — as their line appears; never on
+  the next line they speak in a row. No words.
+- **The emote follows the face**: `<speaker>_<expression>` where the mood has
+  its own, the speaker's own otherwise; a speaker with none stays silent.
+- The files are `src/audio/sounds/voice/`, a second at most; the sound
+  toggle mutes them with every other effect.
+
+| Speaker | At rest | Happy | Worried | Surprised | Idea |
+|---|---|---|---|---|---|
+| Isolde | clears her throat | a giggle | — | a gasp | a soft cheer |
+| Hob | a smoker's cough | a smirking laugh | a sigh | "uhh?" | — |
+| Tom | "yah!" | "yehey!" | — | "ooh!" | — |
+| the Warden | a short shout | — | — | — | — |
+| Grukk | an orc grunt | — | — | — | — |
+| Bess | "yahoo!" | — | — | — | — |
 
 ## 7. Where it lives
 
@@ -172,7 +210,7 @@ which one a line waits on is data.
 
 ## 8. Deliberately not in this design
 
-- Lip flaps, voice, or an expression for a speaker who has no art for it.
+- Lip flaps, spoken words, or an expression for a speaker who has no art for it.
 - More than one character per side, or a third slot.
 - Choices, branching, or a line that changes the game.
 - A Skip button: a tap anywhere moves a line on, so a scene is over in a few taps.

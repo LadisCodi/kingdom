@@ -212,6 +212,37 @@ export interface PlayOptions {
 const voices = new Map<string, number>();
 
 export function playSfx(name: SfxName, opts: PlayOptions = {}): void {
+  playSpec(SOUNDS[name], opts);
+}
+
+// ------------------------------------------------------------------ voices
+// A speaker's little vocal emote as they start to talk (ui/stage/stage.ts):
+// `sounds/voice/<speaker>.ogg`, or `<speaker>_<expression>.ogg` where the
+// mood has its own — the same rule as the portraits. A file on disk is the
+// whole registration: a speaker without one stays silent.
+const VOICE_FILES = import.meta.glob('./sounds/voice/*.ogg', {
+  eager: true, query: '?url', import: 'default',
+}) as Record<string, string>;
+const VOICES = new Map<string, SoundSpec>(Object.entries(VOICE_FILES).map(([path, url]) => [
+  path.replace(/^.*\/(.*)\.ogg$/, '$1'),
+  { urls: one(url), volume: 0.5, jitter: 0.03 },
+]));
+for (const spec of VOICES.values()) {
+  for (const url of spec.urls) {
+    if (!downloads.has(url)) {
+      downloads.set(url, fetch(url).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0)));
+    }
+  }
+}
+
+/** Play `speaker`'s emote in `expression`'s mood, if they have one. */
+export function playVoice(speaker: string, expression: string): void {
+  const spec = (expression !== '' ? VOICES.get(`${speaker}_${expression}`) : undefined)
+    ?? VOICES.get(speaker);
+  if (spec !== undefined) playSpec(spec, { group: 'voice', limit: 1 });
+}
+
+function playSpec(spec: SoundSpec, opts: PlayOptions): void {
   if (sfxMuted()) return;
   const group = opts.group;
   if (group !== undefined && (voices.get(group) ?? 0) >= (opts.limit ?? 3)) return;
@@ -222,7 +253,6 @@ export function playSfx(name: SfxName, opts: PlayOptions = {}): void {
       warmAll();
     }
     if (ctx.state === 'suspended') void ctx.resume();
-    const spec = SOUNDS[name];
     const url = spec.urls[Math.floor(Math.random() * spec.urls.length)];
     const buffer = buffers.get(url);
     if (!buffer) return; // still decoding — only the very first moments

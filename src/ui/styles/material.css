@@ -422,9 +422,7 @@
 .k-toggles .k-btn.is-selected { --btn: url('../assets/btn-paint-green.png'); --btn-down: url('../assets/btn-paint-green-down.png'); --btn-hover: url('../assets/btn-paint-green-hover.png'); --btn-off: url('../assets/btn-paint-green-off.png'); --btn-ink: #2d5b0e; }
 /* Screens that recoloured a slab by hand now pick a material: the video
    till and the ad call are sapphire, the advanced banner's call topaz. */
-.mana-tills > .mana-till:first-child > .k-btn,
-.store-banner-calls > .k-btn:first-child { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
-.store-banner.is-advanced .store-banner-calls > .k-btn { --btn: url('../assets/btn-gold.png'); --btn-down: url('../assets/btn-gold-down.png'); --btn-hover: url('../assets/btn-gold-hover.png'); --btn-off: url('../assets/btn-gold-off.png'); --btn-ink: #885800; }
+.mana-tills > .mana-till:first-child > .k-btn { --btn: url('../assets/btn-blue.png'); --btn-down: url('../assets/btn-blue-down.png'); --btn-hover: url('../assets/btn-blue-hover.png'); --btn-off: url('../assets/btn-blue-off.png'); --btn-ink: #003785; }
 /* THE ROUND BUTTONS: the label buttons' materials in the round
    (sheets/ui-buttons2-round.png, ui-buttons4-round-paint.png) — wood by
    default, a colour `kind` painted or, with `.is-gem`, a stone —
@@ -529,16 +527,6 @@
 }
 
 
-
-/* ---- the store (M5): cards are parchment in wood, the vignettes lighter ---- */
-.store-banner,
-.store-pack {
-  background:
-    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
-    url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
-}
-.store-banner-art,
-.store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- settings and mana (M9): parchment cards ---- */
 .set-row,

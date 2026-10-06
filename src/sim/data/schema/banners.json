@@ -19,6 +19,10 @@
     "fragmentsPerMiss": { "type": "int" },
     "pullStardust": { "type": "int" },
     "freePerDay": { "type": "int" },
-    "freeCooldownSeconds": { "type": "int" }
+    "freeCooldownSeconds": { "type": "int" },
+    "showsHero": {
+      "type": "bool",
+      "doc": "The store's Heroes tab stands a hero on this banner: one of the rarest rarity it can call, a different one each time the store is opened, every one before any repeats. Off: the banner shows its key."
+    }
   }
 }

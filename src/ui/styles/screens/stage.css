@@ -16,6 +16,10 @@
 .stg { position: absolute; inset: 0; }
 /* The quest's "show me where": the hand and the glow, with no line. */
 .stg.is-hint .stg-box { display: none; }
+/* A line read and now acted on: the box and its cast step aside, quickly,
+ * so the target and the hand have the screen. */
+.stg .stg-box { transition: opacity 0.18s ease-out; }
+.stg.is-acting .stg-box { opacity: 0; pointer-events: none; }
 
 /* ---- the pointer: a gloved hand, and a blue magic glow ----
  * A CONTROL glows along its own silhouette (`.stg-glow`, on the control
@@ -131,6 +135,11 @@
   user-select: none;
   animation: stg-box-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
+/* The default: a little below the middle of the screen, so the cast stands
+   around the middle and the map target flown to the centre stays in sight. */
+.stg .stg-box[data-place='low'] { bottom: auto; top: 56%; }
+/* High, with room above for the cast to stand under the header. */
+.stg .stg-box[data-place='high'] { bottom: auto; top: calc(var(--hud-h) + var(--px) * 214); }
 .stg .stg-box[data-place='top'] { bottom: auto; top: calc(var(--hud-h) + var(--px) * 10); }
 .stg .stg-box[data-place='middle'] { bottom: auto; top: 50%; translate: 0 -50%; }
 .stg-box.is-waiting { cursor: default; }
@@ -185,6 +194,7 @@
 .stg-name[data-speaker='cook'] { --ribbon: url('../../assets/ribbon-red.png'); }
 .stg-name[data-speaker='villager'] { --ribbon: url('../../assets/ribbon-brown.png'); }
 .stg-name[data-speaker='orcChief'] { --ribbon: url('../../assets/ribbon-crimson.png'); }
+.stg-name[data-speaker='woodcutter'] { --ribbon: url('../../assets/ribbon-brown.png'); }
 .stg-name.is-right { left: auto; right: calc(var(--px) * 22); }
 .stg-text {
   flex: 1;

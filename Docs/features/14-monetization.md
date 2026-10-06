@@ -91,21 +91,21 @@
 
 ### 2.1 The store screen
 
-- One sheet, two doors: the **leftmost tab of the nav bar** and the **Gems
+- One screen, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
-- In this order:
+- Its own backdrop: a magic merchant's shop, soft and out of focus, under a
+  warm dark wash. A title plank, its close, and a strip of wooden tabs:
 
-| Section | Content | Paid with |
+| Tab | Content | Paid with |
 |---|---|---|
-| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands; one with a splash opens it from its row | the monthly budget |
-| **Today** | the day's offers (§2.5), with the time to the next draw | the monthly budget |
-| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
-| **For the Bag** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
-| **Relics** | the fragment pack | Gems |
-| **Keys** | one card per banner: what a key costs and how many the player holds | Gems |
-| **Crew** | a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands); at a ceiling it says so and sells nothing | Gems |
-| **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price. A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
+| **Offers** — only while there is an offer or a daily offer | a banner per offer on sale (§2.4): its figure, name, pitch, up to four reward tiles (+N), value seal, countdown, price — a tap opens its splash; under them **Today** (§2.5) with the time to the next draw | the monthly budget |
+| **Heroes** | the keys held, each with a **+** that buys one (Gems); **Call for aid** over a carousel of the roster — one hero at a time drifting right to left and fading into the next, every hero once before any repeats; **Odds** on a tap; a banner per call: the common call shows its silver key, the golden call (`showsHero`) a Legendary, a different one each time the store is opened, every one before any repeats; free calls today, *Call once* (free, an ad, or a key) and *Call ×10*, the pity. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | keys |
+| **Supplies** | the Bag's bundles (§2.3), the relic fragment pack, and the crew: a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands) — at a ceiling it says so | money · Gems |
+| **Gems** | six packs in a 3×2 grid — count over art over price. A tap opens the **confirmation** (§3.2) | the monthly budget |
 
+- It opens on **Offers**, or on **Heroes** when there is none; a door that
+  names a tab opens on it (a call for aid → Heroes, the Bag or a shortfall →
+  Supplies).
 - The store shows no budget line, no `SIMULADO` mark, and no price greyed out
   for a short allowance. The budget, the profile and the word `SIMULADO`
   appear in one place only: the confirmation (§3.2).
@@ -175,14 +175,14 @@
 
 - Opening is decided by the live game, not by `advance()`: an offer produces
   nothing, and a trigger met only inside a replayed absence opens nothing.
-- **The Offers screen**: one tab an offer on sale (its icon `sprite` over its
-  `short` name), the open one's card under them — its name and pitch, its
-  step in a chain (*I / III*), its picture (`art`), its Gems beside a sack
-  with its value on a red wax seal, a tile for everything else (a tap says
-  what it is), a green **GIFT** strip for each slot it opens for good, its
-  countdown and purchase limit, and its price. An offer with a splash has no
-  tab: its splash is its screen. A tap on an offer's row in the store opens
-  its tab, or its splash.
+- **Every offer is shown the same way** (§2.6): a widget on the map opens
+  its full-screen splash. What stands in its light is its `art` — a cut-out
+  with no background — or its hero. Beside it, a hero's name and rarity, or
+  the pack's own words and its step in a chain (*I / III*). Its rewards are
+  tiles in a framed panel — over four, the Gems take a row of their own with
+  a sack — with its value on a red wax seal; each slot it opens for good has
+  a green **GIFT** panel; under the price, its countdown and *Once per
+  kingdom* or what is left. A tap on its row in the store opens its splash.
 
 ### 2.5 Daily offers
 
@@ -211,12 +211,16 @@
   session with a part ready, the splash opens on it, and its button claims.
 - Any product may carry a next-day part (`nextDay*`); a hero's fragments
   need the product's `hero`.
-- An offer with `widget` floats on the map **under the Survey's widget**,
-  top left, while it is on sale or its next-day part waits: its icon
-  (`sprite`) over a small wooden sign whose words scroll — its name (and its
-  countdown, if its window closes), *Tomorrow in …*, then **Claim!** with a
-  red dot. A tap opens its splash. Such an offer's next-day part is shown
-  there, not on the right-edge pill.
+- The offers with `widget` float on the map as **one widget under the
+  Survey's**, top left: the icon (`sprite`) of the offer that leads — one
+  with something to claim, then those on sale, then those waiting for
+  tomorrow — a red badge counting them when there are two or more, and a
+  small wooden sign whose words scroll: the lead's name (and its countdown,
+  if its window closes), *Tomorrow in …*, then **Claim!** with a red dot.
+- A tap opens the lead's splash with **every offer in a row along its top**,
+  to step from one to the next. A splash opened by the session has no row.
+- A `widget` offer's next-day part is shown there, not on the right-edge
+  pill.
 
 ## 3. The simulated budget
 

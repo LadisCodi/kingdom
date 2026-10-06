@@ -1,24 +1,40 @@
-// The offers floating on the map (Docs/features/14-monetization.md §2.6): an
-// offer with `widget` stands under the Survey's widget, top left, as its own
-// icon over a small wooden sign whose words scroll by — the offer's name, the
-// time to tomorrow's part, or "Claim!". A tap opens the offer's splash.
+// The offers on the map (Docs/features/14-monetization.md §2.6), grouped as
+// one widget under the Survey's widget, top left: the icon of the offer that
+// leads — one with something to claim, else the first on sale — a red badge
+// counting them when there is more than one, and a small wooden sign whose
+// words scroll by: the lead's name, the time to tomorrow's part, or "Claim!".
+// A tap opens the lead's splash with every offer in a row along its top.
 //
 // Built again only when the set of offers changes; the sign's words are
 // written in place on every notify, so its scroll never restarts.
 
 import type { Game, OfferWidget } from '../game';
-import { HEROES } from '../sim/data/definitions';
+import { HEROES, STORE } from '../sim/data/definitions';
+import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
-import { el, formatCountdown } from './format';
+import { el, formatCount, formatCountdown } from './format';
 import { setHidden } from './domWrite';
+import { iconEl, type IconName } from './kit';
 
-/** The icon: the offer's own art, or — until it lands — its hero's bust on
- *  the gold reward tile. */
-function icon(w: OfferWidget): HTMLElement {
+/** A picture of what an offer is for, while it has no icon of its own. */
+export function kindIcon(sku: StoreSkuId): IconName {
+  const s = STORE[sku];
+  if (s.explorers > 0) return 'compass';
+  if (s.heroSlots > 0) return 'helmet';
+  if (s.opensOn === 'manaLow') return 'manaFlask';
+  if (s.opensOn === 'buildersBusy' || s.opensOn === 'townhall') return 'speedup';
+  return 'chest';
+}
+
+/** An offer's icon: its own art, or — until it lands — its hero's bust, or
+ *  a picture of what it is for, on the gold reward tile. The widget and the
+ *  splash's row of offers both draw it. */
+export function offerIcon(w: OfferWidget): HTMLElement {
   const url = spriteUrl(w.sprite);
   if (url !== null) return spriteImgAt(url, 'ofw-icon');
   const bust = w.hero === null ? null : spriteUrl(`${HEROES[w.hero].sprite}_avatar`);
-  return el('span', { class: 'ofw-icon is-fallback' }, ...(bust === null ? [] : [spriteImgAt(bust, 'ofw-bust')]));
+  return el('span', { class: 'ofw-icon is-fallback' },
+    bust === null ? iconEl(kindIcon(w.sku), { size: 'lg' }) : spriteImgAt(bust, 'ofw-bust'));
 }
 
 /** What the sign says. */
@@ -31,40 +47,38 @@ function words(game: Game, w: OfferWidget): string {
 
 export function mountOfferWidgets(game: Game, root: HTMLElement): void {
   let key = '';
-  let signs: Array<{ w: OfferWidget; texts: HTMLElement[]; node: HTMLElement }> = [];
-
-  const build = (list: OfferWidget[]): void => {
-    signs = list.map((w) => {
-      // The words twice, one after the other, so the scroll loops without a
-      // seam: the track moves by exactly one copy and starts again.
-      const texts = [el('span', { class: 'ofw-text' }, ''), el('span', { class: 'ofw-text', 'aria-hidden': 'true' }, '')];
-      const node = el('button', { class: 'ofw', type: 'button', 'aria-label': w.name },
-        icon(w),
-        el('span', { class: 'ofw-dot', 'aria-hidden': 'true' }),
-        el('span', { class: 'ofw-sign' }, el('span', { class: 'ofw-track' }, ...texts)));
-      node.addEventListener('click', () => game.openOfferSplash(w.sku));
-      return { w, texts, node };
-    });
-    root.replaceChildren(...signs.map((s) => s.node));
-  };
+  let lead: OfferWidget | null = null;
+  // The words twice, one after the other, so the scroll loops without a
+  // seam: the track moves by exactly one copy and starts again.
+  const texts = [el('span', { class: 'ofw-text' }, ''), el('span', { class: 'ofw-text', 'aria-hidden': 'true' }, '')];
+  const badge = el('span', { class: 'ofw-count', 'aria-hidden': 'true' }, '');
+  const iconSlot = el('span', { class: 'ofw-slot' });
+  const node = el('button', { class: 'ofw', type: 'button', 'aria-label': 'Offers' },
+    iconSlot,
+    el('span', { class: 'ofw-dot', 'aria-hidden': 'true' }),
+    badge,
+    el('span', { class: 'ofw-sign' }, el('span', { class: 'ofw-track' }, ...texts)));
+  node.addEventListener('click', () => { if (lead !== null) game.openOfferSplash(lead.sku, true); });
+  root.replaceChildren(node);
 
   const refresh = (): void => {
     const list = game.offerWidgets();
     const showing = list.length > 0 && !game.hasOpenSheet() && game.offerSplashOnScreen() === null;
     setHidden(root, !showing);
     if (!showing) return;
-    const next = list.map((w) => `${w.sku}:${w.state}`).join('|');
+    lead = list[0];
+    const next = `${lead.sku}:${lead.state}`;
     if (next !== key) {
       key = next;
-      build(list);
+      iconSlot.replaceChildren(offerIcon(lead));
     }
-    list.forEach((w, i) => {
-      const sign = signs[i];
-      if (sign === undefined) return;
-      const text = words(game, w);
-      for (const t of sign.texts) if (t.textContent !== text) t.textContent = text;
-      sign.node.classList.toggle('is-ready', w.state === 'ready');
-    });
+    const text = words(game, lead);
+    for (const t of texts) if (t.textContent !== text) t.textContent = text;
+    const count = formatCount(list.length);
+    if (badge.textContent !== count) badge.textContent = count;
+    badge.hidden = list.length < 2;
+    node.classList.toggle('is-ready', lead.state === 'ready');
+    node.setAttribute('aria-label', list.length > 1 ? `${formatCount(list.length)} offers` : lead.name);
   };
 
   game.onChange(refresh);

@@ -56,6 +56,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     type: 'button',
     'aria-label': `${itemName(item.def)}, ${formatExact(item.count)}`,
     'aria-expanded': picked ? 'true' : 'false',
+    'data-coach': `bag-item:${item.id}`,
   },
     ...tileArt(item.id, sizeLabel(item.def)),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
@@ -95,7 +96,7 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
     return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
       el('div', { class: 'bag-pop-name' }, itemName(item.def)),
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
-      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.setOverlay('store') })));
+      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.openStore('supplies') })));
   }
   // A speed-up is spent from a timer, so its popover goes to one (§3.5).
   if (item.def.kind === 'speedup') {
@@ -111,7 +112,7 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
   const worth = isChoice ? game.choiceWorth(item.id) : item.worth;
   const coin = isChoice ? [game.bagChoice, worth[game.bagChoice] ?? 0] as [CurrencyId, number] : chestCoin(worth);
   const total = el('div', { class: 'bag-total' });
-  const use = el('div', { class: 'bag-use' });
+  const use = el('div', { class: 'bag-use', 'data-coach': 'bag-use' });
   const draw = (n: number): void => {
     game.bagQty = n;
     if (coin !== null) {

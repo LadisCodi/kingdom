@@ -1,7 +1,6 @@
 {
   "GemsPouch": {
     "name": "Pouch of Gems",
-    "short": "",
     "description": "A handful — a builder, or a pull.",
     "sprite": "gems_pouch",
     "art": "",
@@ -29,7 +28,6 @@
   },
   "GemsPurse": {
     "name": "Purse of Gems",
-    "short": "",
     "description": "A few calls, or a couple of hires.",
     "sprite": "gems_purse",
     "art": "",
@@ -57,7 +55,6 @@
   },
   "GemsChest": {
     "name": "Chest of Gems",
-    "short": "",
     "description": "A crew's worth, with change.",
     "sprite": "gems_chest",
     "art": "",
@@ -85,7 +82,6 @@
   },
   "GemsVault": {
     "name": "Vault of Gems",
-    "short": "",
     "description": "Every slot the kingdom has, and then some.",
     "sprite": "gems_vault",
     "art": "",
@@ -113,7 +109,6 @@
   },
   "GemsHoard": {
     "name": "Hoard of Gems",
-    "short": "",
     "description": "A season of pulls.",
     "sprite": "gems_hoard",
     "art": "",
@@ -141,7 +136,6 @@
   },
   "GemsTreasury": {
     "name": "Treasury of Gems",
-    "short": "",
     "description": "The whole ladder, twice over.",
     "sprite": "gems_treasury",
     "art": "",
@@ -169,7 +163,6 @@
   },
   "Survey": {
     "name": "The Royal Survey",
-    "short": "",
     "description": "The Survey’s second column, for the whole province.",
     "sprite": "season_pass",
     "art": "",
@@ -197,7 +190,6 @@
   },
   "SpeedupSatchel": {
     "name": "A satchel of speed-ups",
-    "short": "",
     "description": "A few hours off whatever you are waiting for.",
     "sprite": "bundle_speed_s",
     "art": "",
@@ -225,7 +217,6 @@
   },
   "SpeedupCrate": {
     "name": "A crate of speed-ups",
-    "short": "",
     "description": "Most of a day off your timers.",
     "sprite": "bundle_speed_m",
     "art": "",
@@ -253,7 +244,6 @@
   },
   "SpeedupChest": {
     "name": "A chest of speed-ups",
-    "short": "",
     "description": "A long build, done tonight.",
     "sprite": "bundle_speed_l",
     "art": "",
@@ -281,7 +271,6 @@
   },
   "ResourceSack": {
     "name": "A sack of chests",
-    "short": "",
     "description": "Eight hours of the coin you pick.",
     "sprite": "bundle_res_s",
     "art": "",
@@ -309,7 +298,6 @@
   },
   "ResourceCart": {
     "name": "A cart of chests",
-    "short": "",
     "description": "A day of the coins you pick.",
     "sprite": "bundle_res_m",
     "art": "",
@@ -337,7 +325,6 @@
   },
   "BuildersCrate": {
     "name": "The builder's crate",
-    "short": "",
     "description": "Construction speed-ups and a chest for the materials.",
     "sprite": "bundle_builder",
     "art": "",
@@ -365,7 +352,6 @@
   },
   "FirstPurchase": {
     "name": "First Purchase Reward",
-    "short": "First buy",
     "description": "A Legendary hero to start with — and more tomorrow.",
     "sprite": "offer_first_purchase",
     "art": "",
@@ -393,10 +379,9 @@
   },
   "NovicePack1": {
     "name": "The novice's pack",
-    "short": "Novice",
     "description": "A strong start for a new lord.",
     "sprite": "offer_novice_1",
-    "art": "offer_novice_art",
+    "art": "offer_novice_cutout",
     "shelf": "offer",
     "priceUsd": 3.49,
     "gems": 1500,
@@ -423,14 +408,13 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "NovicePack2": {
     "name": "The squire's pack",
-    "short": "Squire",
     "description": "The second step: keys, chests and a day of speed-ups.",
-    "sprite": "offer_novice_2",
-    "art": "offer_novice_art",
+    "sprite": "offer_novice_1",
+    "art": "offer_novice_cutout",
     "shelf": "offer",
     "priceUsd": 9.99,
     "gems": 5000,
@@ -451,14 +435,13 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "NovicePack3": {
     "name": "The knight's pack",
-    "short": "Knight",
     "description": "The last step: a war chest for a kingdom on the rise.",
-    "sprite": "offer_novice_3",
-    "art": "offer_novice_art",
+    "sprite": "offer_novice_1",
+    "art": "offer_novice_cutout",
     "shelf": "offer",
     "priceUsd": 19.99,
     "gems": 10000,
@@ -479,11 +462,10 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "ExplorerPack": {
     "name": "A second explorer",
-    "short": "Explorer",
     "description": "One more explorer on the world map, for good.",
     "sprite": "offer_explorer",
     "art": "",
@@ -507,11 +489,10 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "HeroSlotPack": {
     "name": "A seat at the war table",
-    "short": "Hero slot",
     "description": "One more hero in every party, for good.",
     "sprite": "offer_hero_slot",
     "art": "",
@@ -535,11 +516,10 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "ManaPack": {
     "name": "A cask of Mana",
-    "short": "Mana",
     "description": "Every tap you were saving for.",
     "sprite": "offer_mana",
     "art": "",
@@ -563,11 +543,10 @@
     "limit": 1,
     "cooldownHours": 72,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "BuildPack": {
     "name": "Rush the works",
-    "short": "Build",
     "description": "Your crew, faster than legend.",
     "sprite": "offer_build",
     "art": "",
@@ -591,11 +570,10 @@
     "limit": 1,
     "cooldownHours": 168,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "TownhallPack": {
     "name": "The new charter",
-    "short": "Townhall",
     "description": "A Townhall raised — the next one, sooner.",
     "sprite": "offer_townhall",
     "art": "",
@@ -619,11 +597,10 @@
     "limit": 1,
     "cooldownHours": 0,
     "splash": false,
-    "widget": false
+    "widget": true
   },
   "DailyKeys": {
     "name": "A ring of keys",
-    "short": "",
     "description": "Six calls at the Tavern.",
     "sprite": "daily_keys",
     "art": "",
@@ -651,7 +628,6 @@
   },
   "DailySpeed": {
     "name": "A morning saved",
-    "short": "",
     "description": "Five hours off your timers.",
     "sprite": "daily_speed",
     "art": "",
@@ -679,7 +655,6 @@
   },
   "DailyChests": {
     "name": "Two full carts",
-    "short": "",
     "description": "A day of the coin you pick.",
     "sprite": "daily_chests",
     "art": "",
@@ -707,7 +682,6 @@
   },
   "DailyMana": {
     "name": "A pair of flasks",
-    "short": "",
     "description": "Four flasks, and the pool fills faster.",
     "sprite": "daily_mana",
     "art": "",
@@ -735,7 +709,6 @@
   },
   "DailyTomes": {
     "name": "Two old tomes",
-    "short": "",
     "description": "Knowledge for the next book.",
     "sprite": "daily_tomes",
     "art": "",
@@ -763,7 +736,6 @@
   },
   "DailyGold": {
     "name": "A golden key",
-    "short": "",
     "description": "Five calls on the golden banner.",
     "sprite": "daily_gold_key",
     "art": "",

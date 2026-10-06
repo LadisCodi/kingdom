@@ -168,6 +168,25 @@
   text-align: center;
 }
 .ofs-name-text { font-size: calc(var(--px) * 38); white-space: normal; line-height: 0.95; }
+/* A pack has no hero's name: its own words, smaller, and its step in a chain
+ * on a brass plate under them. */
+.ofs-hero-name.is-pitch { max-width: 44%; margin-top: calc(var(--px) * 74); }
+.ofs-pitch-text { font-size: calc(var(--px) * 24); white-space: normal; line-height: 1.05; }
+.ofs-chain {
+  display: grid;
+  place-items: center;
+  min-width: calc(var(--px) * 86);
+  height: calc(var(--px) * 26);
+  padding: 0 calc(var(--px) * 12);
+  background: url('../../assets/offer-chain-plate.png') center / 100% 100% no-repeat;
+  color: #4a2c0c;
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  font-size: calc(var(--px) * 14);
+}
+/* A cut-out (a figure with its props) is wider than a hero alone: it stands
+ * a little more to the centre. */
+.ofs-hero.is-cutout .ofs-hero-art { left: -3%; bottom: 13%; height: 80%; }
 .ofs-rarity {
   display: grid;
   place-items: center;
@@ -241,6 +260,72 @@
 }
 .ofs-tiles { display: flex; justify-content: center; gap: calc(var(--px) * 6); }
 
+/* More than four rewards: the Gems on their own row — sack, coin, count —
+ * and the rest in smaller tiles. */
+.ofs-gems { display: flex; align-items: center; justify-content: center; gap: calc(var(--px) * 6); margin-bottom: calc(var(--px) * 4); }
+.ofs-gems > b { color: var(--ink); font-size: calc(var(--px) * 28); font-weight: var(--weight-title); }
+.ofs-sack {
+  width: calc(var(--px) * 58);
+  height: calc(var(--px) * 46);
+  background: url('../../assets/offer-gem-sack.png') center / contain no-repeat;
+}
+.ofs-panel.is-many .ofs-tiles { gap: calc(var(--px) * 4); }
+.ofs-panel.is-many .ofs-tile { flex-basis: calc(var(--px) * 62); }
+.ofs-panel.is-many .ofs-tile > .icon { --icon-size: calc(var(--px) * 42); }
+.ofs-panel.is-many .ofs-tile-count { font-size: calc(var(--px) * 13); right: calc(var(--px) * 6); bottom: calc(var(--px) * 3); }
+
+/* A pack's value: a red wax seal pressed on the panel's corner. */
+.ofs-seal {
+  position: absolute;
+  top: calc(var(--px) * -34);
+  right: calc(var(--px) * -26);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 76);
+  aspect-ratio: 1;
+  background: url('../../assets/offer-seal.png') center / contain no-repeat;
+  color: #ffe9b8;
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  font-size: calc(var(--px) * 15);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(60, 10, 6, 0.8);
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+/* What it opens for good: a parchment strip under a green GIFT ribbon. */
+.ofs-gift {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 8) calc(var(--px) * 22);
+  border-style: solid;
+  border-width: calc(var(--px) * 14);
+  border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 14) / 0 stretch;
+  color: var(--ink);
+}
+.ofs-gift b { display: block; font-size: calc(var(--px) * 15); }
+.ofs-gift span:not([class]) { display: block; color: var(--ink-muted); font-size: calc(var(--px) * 13); }
+.ofs-gift-tag {
+  position: absolute;
+  left: calc(var(--px) * -22);
+  top: calc(var(--px) * -24);
+  width: calc(var(--px) * 64);
+  aspect-ratio: 256 / 188;
+  background: url('../../assets/offer-gift-tag.png') center / contain no-repeat;
+  pointer-events: none;
+}
+.ofs-gift-art {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--px) * 46);
+  height: calc(var(--px) * 46);
+  background: url('../../assets/offer-tile.png') center / 100% 100% no-repeat;
+}
+
 /* A reward: a parchment card with brass rivets; a legendary hero's is gold. */
 .ofs-tile {
   position: relative;
@@ -304,7 +389,8 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   font-size: calc(var(--px) * 30);
   font-weight: var(--weight-title);
 }
-.ofs-note { color: #e9dcc4; font-size: var(--text-helper); }
+.ofs-note { display: flex; gap: calc(var(--px) * 12); color: #e9dcc4; font-size: var(--text-helper); }
+.ofs-timer { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
 .ofs-wait {
   display: inline-flex;
   align-items: center;
@@ -413,195 +499,72 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   .ofw-icon, .ofw-track { animation: none; }
 }
 
-/* ------------------------------------------------------ the Offers screen */
+/* --------------------------------------------- the grouped offers widget */
 
-.k-sheet.is-tall.ofr-sheet { height: 100%; max-height: 100%; }
-
-/* The Offers screen (ui/offersSheet.ts), after m87: a strip of wooden tabs,
- * one an offer, and the open offer's card in a nailed frame. The column
- * keeps the iPhone X's width at most. */
-.ofr { display: flex; flex-direction: column; gap: calc(var(--px) * 8); max-width: calc(var(--px) * 390); margin: 0 auto; }
-.ofr-empty { padding: calc(var(--px) * 24); text-align: center; color: var(--ink-muted); }
-
-.ofr-tabs {
-  display: flex;
-  gap: calc(var(--px) * 4);
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: calc(var(--px) * 4) calc(var(--px) * 2) 0;
-}
-.ofr-tabs::-webkit-scrollbar { display: none; }
-.ofr-tab {
-  position: relative;
-  flex: 0 0 calc(var(--px) * 72);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 6) calc(var(--px) * 2) calc(var(--px) * 4);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 8) calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 4);
-  background: linear-gradient(var(--wood-light), var(--wood));
-  color: #fbe6c8;
-  font: inherit;
-  cursor: pointer;
-}
-.ofr-tab.is-open {
-  background: linear-gradient(#fff6dc, var(--parchment));
-  color: var(--ink);
-  transform: translateY(calc(var(--px) * 2));
-  box-shadow: 0 calc(var(--px) * 3) 0 var(--gold-dark);
-}
-.ofr-tab-icon { width: calc(var(--px) * 40); height: calc(var(--px) * 40); object-fit: contain; }
-.ofr-tab > .icon { --icon-size: calc(var(--px) * 40); }
-.ofr-tab-label {
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-title);
-  white-space: nowrap;
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 16, 4, 0.5);
-}
-.ofr-tab.is-open .ofr-tab-label { text-shadow: none; }
-
-.ofr-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--px) * 6);
-  padding: calc(var(--px) * 6) calc(var(--px) * 4) calc(var(--px) * 8);
-  border-style: solid;
-  border-width: calc(var(--px) * 22);
-  border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 22) / 0 stretch;
-}
-.ofr-head { display: flex; align-items: flex-start; gap: calc(var(--px) * 8); }
-.ofr-titles { flex: 1; min-width: 0; }
-.ofr-title {
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-ornate);
-  font-weight: var(--weight-ornate);
-  font-size: calc(var(--px) * 26);
-  line-height: 1;
-}
-.ofr-pitch { margin: calc(var(--px) * 4) 0 0; color: var(--ink-muted); font-size: var(--text-desc, calc(var(--px) * 14)); }
-.ofr-chain { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); }
-.ofr-chain-knob {
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 36);
-  height: calc(var(--px) * 36);
-  border-radius: 50%;
-  border: calc(var(--px) * 3) solid var(--wood-dark);
-  background: radial-gradient(circle at 40% 35%, var(--wood-light), var(--wood) 70%);
-  color: #fbe6c8;
-  font-size: calc(var(--px) * 20);
-  font-weight: var(--weight-title);
-}
-.ofr-chain-plate {
-  display: grid;
-  place-items: center;
-  min-width: calc(var(--px) * 62);
+/* How many offers wait behind the one widget: a red enamel badge on its
+ * corner (the dot stays for "something to claim"). */
+.ofw-slot { display: contents; }
+.ofw-count {
+  position: absolute;
+  top: 0;
+  left: calc(var(--px) * 2);
+  min-width: calc(var(--px) * 20);
   height: calc(var(--px) * 20);
-  padding: 0 calc(var(--px) * 8);
-  background: url('../../assets/offer-chain-plate.png') center / 100% 100% no-repeat;
-  color: #4a2c0c;
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 10);
+  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
+  border: calc(var(--px) * 2) solid #fff2dc;
+  color: #fff;
   font-size: calc(var(--px) * 11);
   font-weight: var(--weight-title);
+  line-height: calc(var(--px) * 16);
+  text-align: center;
 }
+.ofw-count[hidden] { display: none; }
 
-/* The picture, its edges fading into the parchment. */
-.ofr-art { margin: 0 calc(var(--px) * -4); }
-.ofr-art-img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 2 / 1;
-  object-fit: cover;
-  object-position: 50% 30%;
-  -webkit-mask-image: linear-gradient(#000 80%, transparent);
-  mask-image: linear-gradient(#000 80%, transparent);
-}
-
-/* The loot: a wooden tray, the Gems on their own row with the sack and the
- * value's wax seal, the other things in tiles under them. */
-.ofr-loot {
+/* The splash opened from it: every offer in a row along the top — small
+ * wooden squares, the one on screen raised in parchment, one with something
+ * to claim marked with the red dot. */
+.ofs-tabs {
   position: relative;
-  margin-top: calc(var(--px) * -30);
-  padding: calc(var(--px) * 2) calc(var(--px) * 2) calc(var(--px) * 4);
-  border-style: solid;
-  border-width: calc(var(--px) * 18);
-  border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 18) / 0 stretch;
-}
-.ofr-gems { display: flex; align-items: center; gap: calc(var(--px) * 6); padding-left: calc(var(--px) * 2); }
-.ofr-sack {
-  width: calc(var(--px) * 64);
-  height: calc(var(--px) * 52);
-  margin: calc(var(--px) * -10) 0 calc(var(--px) * -4);
-  background: url('../../assets/offer-gem-sack.png') center / contain no-repeat;
-}
-.ofr-gems-count { color: var(--ink); font-size: calc(var(--px) * 26); font-weight: var(--weight-title); }
-.ofr-seal {
-  position: absolute;
-  top: calc(var(--px) * -26);
-  right: calc(var(--px) * -24);
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 76);
-  aspect-ratio: 1;
-  background: url('../../assets/offer-seal.png') center / contain no-repeat;
-  color: #ffe9b8;
-  font-family: var(--font-ornate);
-  font-weight: var(--weight-ornate);
-  font-size: calc(var(--px) * 15);
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(60, 10, 6, 0.8);
-  transform: rotate(-12deg);
-  pointer-events: none;
-}
-.ofr-tiles { display: flex; justify-content: center; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 4); }
-.ofr-tiles > .ofs-tile { flex: 0 1 calc(var(--px) * 56); }
-.ofr-tiles > .ofs-tile > .icon { --icon-size: calc(var(--px) * 38); }
-.ofr-tiles .ofs-tile-count { font-size: calc(var(--px) * 13); right: calc(var(--px) * 6); bottom: calc(var(--px) * 3); }
-
-/* What it opens for good: a parchment strip under a green GIFT ribbon. */
-.ofr-gift {
-  position: relative;
+  z-index: 3;
   display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 10);
-  padding: calc(var(--px) * 6) calc(var(--px) * 10) calc(var(--px) * 6) calc(var(--px) * 18);
-  border: calc(var(--px) * 2) solid var(--section-line, var(--wood));
-  border-radius: calc(var(--px) * 6);
-  background: var(--parchment-shade);
-  color: var(--ink);
+  gap: calc(var(--px) * 6);
+  margin: calc(var(--px) * -18) calc(var(--px) * 44) calc(var(--px) * 10) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.ofr-gift b { display: block; font-size: calc(var(--px) * 14); }
-.ofr-gift span:not([class]) { display: block; color: var(--ink-muted); font-size: calc(var(--px) * 13); }
-.ofr-gift-tag {
-  position: absolute;
-  left: calc(var(--px) * -12);
-  top: calc(var(--px) * -12);
-  width: calc(var(--px) * 64);
-  aspect-ratio: 256 / 188;
-  background: url('../../assets/offer-gift-tag.png') center / contain no-repeat;
-  pointer-events: none;
-}
-.ofr-gift-art {
+.ofs-tabs::-webkit-scrollbar { display: none; }
+.ofs-tab {
+  position: relative;
+  flex: 0 0 calc(var(--px) * 50);
+  height: calc(var(--px) * 50);
   display: grid;
   place-items: center;
-  flex: none;
-  width: calc(var(--px) * 44);
-  height: calc(var(--px) * 44);
-  border-radius: calc(var(--px) * 6);
-  background: var(--parchment);
+  padding: calc(var(--px) * 2);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 8);
+  background: linear-gradient(var(--wood-light), var(--wood));
+  cursor: pointer;
 }
-
-.ofr-foot { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 6); }
-.ofr-meta { display: flex; gap: calc(var(--px) * 12); color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
-.ofr-timer { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
-.ofr-foot > .k-btn.k-btn:not(.k-knob):not(.has-cost) {
-  height: calc(var(--px) * 56);
-  min-height: calc(var(--px) * 56);
-  max-height: calc(var(--px) * 56);
-  min-width: calc(var(--px) * 220);
-  max-width: none;
+.ofs-tab.is-open {
+  background: linear-gradient(#fff6dc, var(--parchment));
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 205, 96, 0.8);
 }
-.ofr-foot > .k-btn .k-btn-label { font-size: calc(var(--px) * 26); font-weight: var(--weight-title); }
+.ofs-tab .ofw-icon { width: 100%; height: 100%; animation: none; filter: none; }
+.ofs-tab .ofw-icon.is-fallback { border-radius: calc(var(--px) * 6); }
+.ofs-tab .ofw-icon.is-fallback > .icon { --icon-size: calc(var(--px) * 30); }
+.ofs-tab.is-ready::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * -4);
+  right: calc(var(--px) * -4);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
+  border: calc(var(--px) * 2) solid #fff2dc;
+}
+/* The row takes the top: the light and its figure start lower. */
+.ofs-screen.has-tabs .ofs-hero { top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92); height: 60%; }

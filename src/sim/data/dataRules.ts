@@ -481,6 +481,12 @@ export const ADJACENCY_CLAMP = 0.25;
 const ABANDONED_IDS: readonly string[] = ((regionMap as { abandoned?: Array<{ id: string }> }).abandoned ?? [])
   .map((a) => a.id);
 
+/** The items authored, and their kinds: what a Bag condition may name. */
+const bagTargets = (doc: DataDoc): readonly string[] => {
+  const items = (doc.items ?? {}) as Record<string, { kind?: unknown }>;
+  return [...Object.keys(items), ...new Set(Object.values(items).map((i) => String(i.kind)))];
+};
+
 /** What a scene condition's target must name, by kind (Docs/features/24-dialogue.md §5). */
 const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   questReached: (doc) => list(doc.quests).map((q) => String((q as { id: unknown }).id)),
@@ -505,6 +511,9 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   // '' is any relic: chosen in the picker, or standing in a Shrine.
   relicPicked: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
   relicHosted: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
+  // An item, or a kind of item.
+  holdsItem: (doc) => bagTargets(doc),
+  itemUsed: (doc) => bagTargets(doc),
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {

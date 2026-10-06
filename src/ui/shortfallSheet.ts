@@ -26,6 +26,6 @@ export function renderShortfallSheet(game: Game): HTMLElement {
       // No chest of it in the Bag: one line, and the existing way to get one
       // — the store's bundles. Never a Gem price for a coin.
       el('p', { class: 'spd-none' }, `No chests of ${view.coin} in the Bag`),
-      el('div', { class: 'spd-finish' }, btn({ label: 'Store', icon: 'shop', onClick: () => game.setOverlay('store') })),
+      el('div', { class: 'spd-finish' }, btn({ label: 'Store', icon: 'shop', onClick: () => game.openStore('supplies') })),
     ]));
 }

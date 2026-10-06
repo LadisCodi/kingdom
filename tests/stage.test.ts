@@ -8,6 +8,7 @@ import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
+import { grantItem, useItem } from '../src/sim/bag';
 import { handPlace } from '../src/ui/stage/targets';
 import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
 import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
@@ -180,6 +181,20 @@ describe('the conditions read the kingdom', () => {
     game.state.quests.index = 1;
     expect(conditionHolds(game, args('questClaimed' as never, 'FirstSteps'))).toBe(true);
     expect(conditionHolds(game, args('questComplete' as never, 'FirstSteps'))).toBe(true);
+  });
+
+  it('sees what the Bag holds, by item or by kind, and when it is used', () => {
+    const game = freshPresenter(firstGame());
+    const holds = (t: string) => conditionHolds(game, args('holdsItem' as never, t));
+    const used = (t: string) => conditionHolds(game, args('itemUsed' as never, t));
+    expect(holds('WoodChest1h')).toBe(false);
+    grantItem(game.state, 'WoodChest1h');
+    expect(holds('WoodChest1h')).toBe(true);
+    expect(holds('chest')).toBe(true);
+    expect(used('WoodChest1h')).toBe(false);
+    useItem(game.state, 'WoodChest1h', 1, game.state.lastAdvance);
+    expect(used('WoodChest1h')).toBe(true);
+    expect(holds('chest')).toBe(false);
   });
 
   it('sees the lairs, the buildings and the doors', () => {
