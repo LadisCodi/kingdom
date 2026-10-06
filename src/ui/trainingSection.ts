@@ -218,7 +218,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
 
 /** The panel for the building's one trainee: portrait, tags, flavour, the
  *  priced Train button (its training time is the building's own stat), a
- *  soldier's three numbers in a row of their own, and the batch at the foot. */
+ *  soldier's four numbers in a row of their own, and the batch at the foot. */
 function detail(game: Game, district: District, trainee: TrainableId, batch: HTMLElement): HTMLElement {
   const cost = trainCost(game.state, trainee);
   const unit = trainee === 'Villager' ? null : UNITS[trainee];
@@ -252,11 +252,12 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   const owned = trainee === 'Villager'
     ? game.state.city.population
     : game.state.army.filter((u) => u.definitionId === trainee).length;
-  // A soldier's numbers: the three it is chosen on sit under its picture and
+  // A soldier's numbers: the four it is chosen on sit under its picture and
   // blurb, beside Train; any more would take a row of their own under both,
   // the same tiles, four to the row.
   const figures = unit === null ? [] : [
-    stat('atk', 'Attack', unit.dmg),
+    stat('atk', 'Attack', unit.atk),
+    stat('dmg', 'Damage', unit.dmg),
     stat('def', 'Defence', unit.def),
     stat('hp', 'Health', unit.hp),
   ];
@@ -269,8 +270,8 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
       el('div', { class: 'tr-tags' }, ...tags),
       el('div', { class: 'tr-desc' }, unit === null ? VILLAGER.description : unit.description)),
     el('div', { class: 'tr-buy' }, buy),
-    ...(figures.length === 0 ? [] : [el('div', { class: 'tr-stats' }, ...figures.slice(0, 3))]),
-    ...(figures.length <= 3 ? [] : [el('div', { class: 'tr-stats is-more' }, ...figures.slice(3))]),
+    ...(figures.length === 0 ? [] : [el('div', { class: 'tr-stats' }, ...figures.slice(0, 4))]),
+    ...(figures.length <= 4 ? [] : [el('div', { class: 'tr-stats is-more' }, ...figures.slice(4))]),
     batch,
   );
 }

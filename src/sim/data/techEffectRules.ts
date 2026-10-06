@@ -432,7 +432,7 @@ export const TECH_STATS = {
   unitAtk: {
     what: 'the share more a unit hits for',
     ops: ['percent'], targets: ['global', 'unitTag'], unit: '×',
-    says: { percent: '{v} attack for every[ {target}] unit' },
+    says: { percent: '{v} damage for every[ {target}] unit' },
     reads: 'expeditions.ts#drillOf',
   },
   unitDef: {

@@ -311,9 +311,9 @@
 .tr-tag.has-tip-open { box-shadow: 0 0 0 calc(var(--px) * 2) var(--gold); }
 
 /* A SOLDIER'S NUMBERS: small tiles — the mark and the number, the name
-   under them. The three it is chosen on sit under the picture and blurb,
-   beside Train, which runs down past them; any more take a row of their own
-   under both, the same tiles, four to the row. */
+   under them. The four it is chosen on — Attack, Damage, Defence, Health —
+   sit in one row under the picture and blurb, beside Train, which runs down
+   past them; they share that row, so they shrink before they wrap. */
 /* The tiles sit at the foot of their row, and Train runs down both rows, so
    their feet line up with Train's whenever the bust and the blurb leave room. */
 .tr-info.has-stats { row-gap: calc(var(--px) * 5); }
@@ -325,22 +325,23 @@
 .tr-stats {
   grid-column: 1 / 3;
   display: flex;
-  gap: calc(var(--px) * 7);
+  gap: calc(var(--px) * 4);
 }
 .tr-stats.is-more { grid-column: 1 / -1; }
 .tr-stat.k-section {
-  flex: none;
-  width: calc(var(--px) * 66);
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: calc(var(--px) * 66);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--px) * 2) calc(var(--px) * 4) calc(var(--px) * 3);
+  padding: calc(var(--px) * 2) calc(var(--px) * 2) calc(var(--px) * 3);
   background: var(--parchment);
 }
-.tr-stat-top { display: flex; align-items: center; gap: calc(var(--px) * 4); }
-.tr-stat-top > .icon { --icon-size: calc(var(--px) * 22); flex: none; }
+.tr-stat-top { display: flex; align-items: center; gap: calc(var(--px) * 3); }
+.tr-stat-top > .icon { --icon-size: calc(var(--px) * 18); flex: none; }
 .tr-stat-value { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
-.tr-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); color: var(--ink-muted); line-height: 1.1; }
+.tr-stat-label { font-size: calc(var(--px) * 11); font-weight: var(--weight-strong); color: var(--ink-muted); line-height: 1.1; }
 
 /* THE BATCH, at the foot of the panel: the unit and its count, the bar and
    time left for the one in training, the batch's total time, and Finish. */

@@ -294,7 +294,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
   const s = heroStats(game.state, id);
   const owned = view.owned;
 
-  const statTile = (icon: 'atk' | 'def' | 'hp', label: string, value: number) =>
+  const statTile = (icon: 'atk' | 'dmg' | 'def' | 'hp', label: string, value: number) =>
     el('div', { class: 'hd-stat k-section' },
       iconEl(icon),
       el('div', { class: 'hd-stat-text' },
@@ -315,8 +315,9 @@ function detail(game: Game, id: HeroId): HTMLElement {
     sectionHead('Stats'),
     el('div', { class: 'hd-stats' },
       statTile('atk', 'Attack', s.atk),
-      statTile('def', 'Defense', s.def),
-      statTile('hp', 'HP', s.hp)),
+      statTile('dmg', 'Damage', s.dmg),
+      statTile('def', 'Defence', s.def),
+      statTile('hp', 'Health', s.hp)),
     sectionHead('Skill'),
     skill(game, id, owned),
     ...(boon !== null ? [sectionHead('Kingdom boon'),

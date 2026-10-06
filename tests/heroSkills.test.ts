@@ -17,7 +17,7 @@ import { addAllTrainers, freshGame, fund, map, reveal, T0 } from './helpers';
 import { LAIRS } from '../src/sim/data/definitions';
 
 const body = (over: Partial<FighterSpec> = {}): FighterSpec => ({
-  id: 'test', name: 'Test', type: 'Warrior', dmg: 40, def: 2, hp: 600, cooldown: 12, power: 0,
+  id: 'test', name: 'Test', type: 'Warrior', atk: 2, dmg: 40, def: 2, hp: 600, cooldown: 12, power: 0,
   troopDmgMult: 1, troopHpMult: 1, troopDefBonus: 0, ...over,
 });
 

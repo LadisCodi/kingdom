@@ -1,8 +1,9 @@
 {
   "Warrior": {
     "power": 3,
-    "dmg": 8,
-    "def": 3,
+    "atk": 4,
+    "dmg": 5,
+    "def": 6,
     "hp": 60,
     "squadSize": 100,
     "frontage": 15,
@@ -12,8 +13,9 @@
   },
   "Lancer": {
     "power": 4,
-    "dmg": 10,
-    "def": 2,
+    "atk": 6,
+    "dmg": 8,
+    "def": 4,
     "hp": 48,
     "squadSize": 100,
     "frontage": 15,
@@ -23,8 +25,9 @@
   },
   "Archer": {
     "power": 4,
-    "dmg": 7,
-    "def": 1,
+    "atk": 6,
+    "dmg": 6,
+    "def": 2,
     "hp": 30,
     "squadSize": 80,
     "frontage": 20,
@@ -34,8 +37,9 @@
   },
   "Cavalry": {
     "power": 7,
-    "dmg": 22,
-    "def": 2,
+    "atk": 8,
+    "dmg": 20,
+    "def": 3,
     "hp": 72,
     "squadSize": 60,
     "frontage": 8,

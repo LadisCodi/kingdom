@@ -39,10 +39,10 @@ export type UiIconName =
   // art is a person and a relic is not one. (Hero XP needs no name here: it
   // is a `CurrencyId`, so it is already an `IconName`.)
   | 'ascension' | 'fragment'
-  // The three a hero fights with. They were borrowing `army`, `padlock` and
-  // `population` — a shield for attack, a padlock for defence and a crowd for
-  // health — which is three wrong pictures in one row.
-  | 'atk' | 'def' | 'hp'
+  // The four a fighter is read by: Attack, Damage, Defence and Health
+  // (combat.md §7). `atk` is the sword — the rating; `dmg` is the blow
+  // landing — what one of it takes off.
+  | 'atk' | 'dmg' | 'def' | 'hp'
   // A side's total strength — the crossed swords on an army's header.
   | 'power'
   // What a hero fights as, as a symbol — the hero card's corner and the hero
@@ -129,7 +129,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅', skull: '💀',
   pack: '🎴', cards: '🃏', vault: '🔐', crest: '🌾',
   // a hero's three numbers
-  atk: '🗡️', def: '🛡️', hp: '❤️', power: '⚔️',
+  atk: '🗡️', dmg: '💥', def: '🛡️', hp: '❤️', power: '⚔️',
   typeWarrior: '🗡️', typeLancer: '🔱', typeArcher: '🏹', typeCavalry: '🐴',
   // the upgrade popup
   cross: '✗', arrowUp: '⬆', compass: '🧭', bed: '🛏️',
