@@ -109,9 +109,10 @@ export class LocalWorldServer implements WorldServerApi {
     } catch { world = null; }
     // A store of another version is thrown away: v2's board is radius 6, so
     // a v1 board's hexes are numbered for a board that no longer exists,
-    // v3's hexes are districts, and v4's precious materials are deposits
-    // dealt 3/2/1 — a fresh world (Docs/plans/precious-deposits.md §1.5).
-    this.world = world?.version === 4 ? world : emptyWorld();
+    // v3's hexes are districts, v4's precious materials are deposits dealt
+    // 3/2/1 (Docs/plans/precious-deposits.md §1.5), and v5's world is seven
+    // boards (§3): each a fresh world.
+    this.world = world?.version === 5 ? world : emptyWorld();
     // A board kept from before armies existed.
     for (const b of this.world.boards) {
       b.armies ??= [];

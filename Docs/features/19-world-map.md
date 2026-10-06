@@ -1,6 +1,6 @@
 # 19 · The world map — the shared board
 
-> **Scope.** The hex board six players share: how it is shaped, how it is
+> **Scope.** The hex world 42 players share: how it is shaped, how it is
 > explored, how ground is claimed, held, lost and taken, what it produces, and
 > the Dark Portal that opens on it every week. The province is
 > [`01`](01-map-and-fog.md) and [`05`](05-city-and-districts.md); who is
@@ -8,24 +8,29 @@
 > fight goes through is [`combat.md`](combat.md).
 >
 > **Status: built against a local stand-in for the world server**:
-> the board of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
+> the world of seven boards of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
 > the explorers and their scouting rewards (§3, §3.2); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
 > `worldCamps`; Dungeons
 > and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
-> days, its numbers in `worldPortal`. Five stand-in rivals claim, build, beat
+> days, its numbers in `worldPortal`. Stand-in rivals in every free seat claim, build, beat
 > camps, man a Fortress and now and then
 > attack on their own.
 > The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
 
-- **A pointy-top hex board, radius 6 from the centre: 127 hexes.**
-- **Six players a board.** A seventh player opens a new instance; for the
-  prototype that is enough.
-- **A player joins when they first go out onto the board** (§1.3).
+- **A world is seven boards** — one in the middle, six round it, in a
+  honeycomb: 42 seats, 889 hexes. To the player it is one board: claims,
+  armies, explorers and fog cross from one to the next as anywhere else.
+- **Every board is a pointy-top hex board, radius 6 from its centre: 127
+  hexes**, with its own Portal at the centre, six seats, and its own roll
+  (§9). Rings, wedges and roles are counted on a hex's own board.
+- **Where two boards touch**, their outer rings lie side by side: twice the
+  dungeons and sanctuaries, a frontier two neighbourhoods contest.
+- **A player joins when they first go out onto the world** (§1.3).
 - Rings are roles, not decoration:
 
 | Ring | Hexes | Its job |
@@ -62,7 +67,11 @@
 - The jump between registers is ~3×. The strategic register is a planning
   surface, not an overview, and ships with the board.
 - 3–4 content elements are legible on a tactical hex.
-- **The board opens on your city**, in the tactical register.
+- **The board opens on your city**, in the tactical register. The camera
+  goes out as far as one board across; **the minimap** in the bottom-left
+  corner shows the whole world — mist, explored ground, every kingdom's
+  ground in its colour, the cities, the Portals and the camera's frame — and
+  a tap there moves the camera.
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**
@@ -81,11 +90,13 @@
 - The name is asked for the moment the world map opens, after its splash
   and its scene, or on the first tap of the world button if dismissed.
 - The server then seats them:
-  - **in a rival's city on the newest board that still has a rival.** The
-    rival leaves with its armies, offers and claims under way; its districts
-    stand on, nobody's, their stores empty;
-  - **else on a new board of their own**, with five rivals.
-- A board with no rival left is full.
+  - **in a rival's city on the newest world that still has a rival** — on
+    the board of that world with the most players, the middle one first, so
+    a world fills board by board. The rival leaves with its armies and claims
+    under way; its districts stand on, nobody's, their stores empty;
+  - **else in a new world of their own**, its other 41 seats rivals (named
+    from `world.rivals`, numbered past the list: *Lady Maren VII*).
+- A world with no rival left is full.
 
 ## 2. The anatomy of a hex
 
@@ -656,9 +667,12 @@ Contents are rolled at board creation, under rules:
 
 ## 10. The Dark Portal
 
-A recurring timed event on the centre hex. The reference is Infinity Kingdom's
-Endless Tower, not Rise of Kingdoms — this is a depth ladder, and the genre's
-usual siege is not what the centre is for.
+A recurring timed event on the centre hex of every board — seven Portals a
+world, on one clock. A player dives **any Portal their army reaches**; the
+floors, the milestones and the ranking are **the world's**, one for all
+seven. The reference is Infinity Kingdom's Endless Tower, not Rise of
+Kingdoms — this is a depth ladder, and the genre's usual siege is not what
+the centre is for.
 
 ### 10.1 The hex
 
@@ -697,7 +711,7 @@ finishing instantly.
   Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
   This is the main line.
 - **Every `preciousEvery` (5) floors, a lump of precious material** —
-  `precious` on the floors' scale, mostly the player's own (§7.4). The
+  `precious` on the floors' scale, any of the three (§7.4). The
   Descend button says when the next floor pays one.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.

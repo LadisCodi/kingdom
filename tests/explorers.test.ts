@@ -12,9 +12,9 @@ import {
 import { RUSH } from '../src/sim/data/definitions';
 import { boardOf } from '../src/sim/world/source';
 import { homeboundMs, outboundMs, stepTimes } from '../src/sim/world/travel';
-import { bitIndices, bitsFrom, hasBit, setBit } from '../src/sim/world/fogBits';
+import { bitIndices, bitsFrom, countBits, hasBit, setBit } from '../src/sim/world/fogBits';
 import {
-  BOARD_RADIUS, BOARD_SIZE, HEX_DIRS, PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, hexIndex,
+  BOARD_RADIUS, BOARD_SIZE, HEX_DIRS, PORTAL_INDEX, PORTAL_INDICES, boardNeighbors, boardWithin, hexAt, hexDistance, hexIndex,
 } from '../src/sim/world/hex';
 import { grantHero } from '../src/sim/heroes';
 import { HEROES } from '../src/sim/data/definitions';
@@ -52,13 +52,14 @@ const sent = (state: GameState, target: number, now: number) => {
 };
 
 /** The Portal, from the player's city: four hexes away. */
-const portal = PORTAL_INDEX;
+/** What every player always sees: every Portal. */
+const portals = [...PORTAL_INDICES];
 
 describe('a new kingdom on the board', () => {
   it('sees its own city and the Portal, and nothing else', () => {
     const state = freshGame();
-    expect(bitIndices(worldFogAt(state, T0))).toEqual([homeIndex(state), portal].sort((a, b) => a - b));
-    expect(state.world.revealed).toEqual([0, 0, 0, 0]);
+    expect(bitIndices(worldFogAt(state, T0))).toEqual([homeIndex(state), ...portals].sort((a, b) => a - b));
+    expect(countBits(state.world.revealed)).toBe(0);
     expect(SEAT_INDICES).toContain(homeIndex(state));
   });
 
@@ -66,7 +67,7 @@ describe('a new kingdom on the board', () => {
     const state = freshGame();
     for (const n of boardNeighbors(homeIndex(state))) expect(fogStateOf(state, n, T0)).toBe('Sensed');
     for (const d of HEX_DIRS) expect(fogStateOf(state, hexIndex(d), T0)).toBe('Unknown');
-    expect(fogStateOf(state, portal, T0)).toBe('Revealed');
+    expect(fogStateOf(state, PORTAL_INDEX, T0)).toBe('Revealed');
   });
 
   it('has its board and seat from its own seed', () => {
@@ -107,7 +108,7 @@ describe('sending an explorer', () => {
     expect(fogStateOf(state, far, T0)).toBe('Unknown');
     expect(dispatchExplorer(state, far, T0).kind).toBe('NoRoute');
     seenMost(state);
-    expect(dispatchExplorer(state, portal, T0).kind).toBe('Explored');
+    expect(dispatchExplorer(state, PORTAL_INDEX, T0).kind).toBe('Explored');
     const edge = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, T0) === 'Sensed')!;
     expect(dispatchExplorer(state, edge.index, T0).kind).toBe('Sent');
   });
@@ -117,7 +118,7 @@ describe('sending an explorer', () => {
     const trip = sent(state, nextDoor(state), T0);
     advance(state, map, returnsAt(trip));
     expect(dispatchExplorer(state, nextDoor(state), returnsAt(trip)).kind).toBe('Explored');
-    expect(dispatchExplorer(state, portal, returnsAt(trip)).kind).toBe('Explored');
+    expect(dispatchExplorer(state, PORTAL_INDEX, returnsAt(trip)).kind).toBe('Explored');
   });
 
   it('takes the quickest way through explored ground, every hex timed as it is left', () => {
@@ -158,7 +159,7 @@ describe('sending an explorer', () => {
     const state = exploring();
     const near = nextDoor(state);
     expect(exploreWorkMs(state, near)).toBe((WORLD.exploreWorkSeconds + WORLD.exploreWorkSecondsPerHex) * 1000);
-    expect(exploreWorkMs(state, portal)).toBe((WORLD.exploreWorkSeconds + HOME_RING * WORLD.exploreWorkSecondsPerHex) * 1000);
+    expect(exploreWorkMs(state, PORTAL_INDEX)).toBe((WORLD.exploreWorkSeconds + HOME_RING * WORLD.exploreWorkSecondsPerHex) * 1000);
     expect(sent(state, near, T0).workMs).toBe(exploreWorkMs(state, near));
   });
 
@@ -181,9 +182,9 @@ describe('what a march reveals', () => {
     const target = nextDoor(state);
     const trip = sent(state, target, T0);
     const start = bitIndices(worldFogAt(state, T0));
-    expect(start).toEqual([homeIndex(state), portal].sort((a, b) => a - b));
+    expect(start).toEqual([homeIndex(state), ...portals].sort((a, b) => a - b));
 
-    const disc = [...new Set([homeIndex(state), portal, ...boardWithin(target, trip.radius)])].sort((a, b) => a - b);
+    const disc = [...new Set([homeIndex(state), ...portals, ...boardWithin(target, trip.radius)])].sort((a, b) => a - b);
     expect(bitIndices(worldFogAt(state, arrivesAt(trip)))).toEqual(start);
     expect(bitIndices(worldFogAt(state, revealsAt(trip) - 1))).toEqual(start);
     expect(bitIndices(worldFogAt(state, revealsAt(trip)))).toEqual(disc);
@@ -204,10 +205,10 @@ describe('what a march reveals', () => {
     expect(state.world.explorers).toHaveLength(0);
     expect(r.explorersHome).toHaveLength(1);
     expect(r.explorersHome[0]).toMatchObject({ id: trip.id, target: nextDoor(state) });
-    expect(r.explorersHome[0].revealed).toBe(bitIndices(seen).length - 2);
+    expect(r.explorersHome[0].revealed).toBe(bitIndices(seen).length - 1 - portals.length);
     expect(worldFogAt(state, returnsAt(trip) + HOUR)).toEqual(seen);
     // The city and the Portal are never stored.
-    expect(bitIndices(state.world.revealed)).not.toContain(portal);
+    expect(bitIndices(state.world.revealed)).not.toContain(PORTAL_INDEX);
     expect(bitIndices(state.world.revealed)).not.toContain(homeIndex(state));
     const further = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, returnsAt(trip)) === 'Sensed')!;
     expect(dispatchExplorer(state, further.index, returnsAt(trip)).kind).toBe('Sent');

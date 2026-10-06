@@ -322,3 +322,23 @@
   font-weight: var(--weight-small);
   line-height: 1.3;
 }
+
+/* THE MINIMAP: the whole world in the corner opposite the way home, in a
+   carved wooden frame on parchment (Docs/plans/precious-deposits.md §3.1). */
+#worldmini {
+  position: absolute;
+  left: calc(var(--rpx) * 25);
+  bottom: calc(var(--nav-h) + var(--rpx) * 20);
+  z-index: 3;
+}
+#worldmini[hidden] { display: none; }
+.wmini {
+  width: calc(var(--rpx) * 300);
+  height: calc(var(--rpx) * 270);
+  padding: calc(var(--rpx) * 12);
+  border-radius: calc(var(--rpx) * 26);
+  border: calc(var(--rpx) * 6) solid #6b4324;
+  background: radial-gradient(circle at 50% 40%, #f3e2b8, #dcc48e);
+  box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(255, 255, 255, 0.35), 0 calc(var(--rpx) * 6) calc(var(--rpx) * 10) rgba(30, 18, 8, 0.45);
+}
+.wmini-canvas { display: block; width: 100%; height: 100%; cursor: pointer; touch-action: none; }

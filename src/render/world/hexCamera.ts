@@ -25,6 +25,10 @@ export class HexCamera {
 
   constructor(private canvas: Viewport) {}
 
+  /** The viewport's size on the page — what the minimap frames. */
+  get viewWidth(): number { return this.canvas.clientWidth; }
+  get viewHeight(): number { return this.canvas.clientHeight; }
+
   /** The backing scale: the screen's, but never past the province's
    *  `MAX_DPR` — a 3× phone gains no detail, only 2.25 times the pixels. */
   get dpr(): number {
@@ -35,7 +39,8 @@ export class HexCamera {
   readonly maxZoom = 1;
 
   /** As far as it goes: the strategic register, or further if that is what
-   *  it takes to see all eleven hexes across. */
+   *  it takes to see one board across. The whole world is the minimap's —
+   *  further out, every label would bury the land. */
   get minZoom(): number {
     const fit = this.canvas.clientWidth / ((2 * BOARD_RADIUS + 1.3) * HEX_W);
     return Math.max(0.1, Math.min(STRATEGIC_W / HEX_W, fit));

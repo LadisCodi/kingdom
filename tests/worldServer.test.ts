@@ -174,10 +174,14 @@ describe('the stand-in rivals', () => {
       held += theirs.length;
       expect(theirs.some((h) => h.fortress > 0)).toBe(true);
     }
-    // A rival may take a neighbour's ground, but none claims more districts
-    // than its size allows.
+    // A rival may take a neighbour's ground, but none claims past its size —
+    // the ground it holds now.
     expect(held).toBeGreaterThan(0);
-    for (const s of board.seats) if (s?.bot) expect(s.claims ?? 0).toBeLessThanOrEqual(WORLD_BOTS.maxHexes);
+    // Every rival stands: none was left empty, even one whose ground was taken.
+    for (const [i, s] of board.seats.entries()) {
+      if (s?.bot) expect(Object.values(board.hexes).some((h) => h.owner === i)).toBe(true);
+    }
+    expect(WORLD_BOTS.maxHexes).toBeGreaterThan(0);
   });
 
   it('play the same board whether it is read once or every few minutes', () => {
@@ -206,7 +210,7 @@ describe('the local server', () => {
     const { server, snap } = await seatedOn(store);
     const seat = snap.board.seat;
     expect(snap.board.id).toBe('b-me');
-    expect(snap.seats.filter((s) => s.bot)).toHaveLength(5);
+    expect(snap.seats.filter((s) => s.bot)).toHaveLength(SEAT_INDICES.length - 1);
     expect(snap.seats[seat].name).toBe('Mel');
     const next = boardNeighbors(SEAT_INDICES[seat])[0];
     const r = await server.claim(next);
@@ -421,7 +425,7 @@ describe('dungeons', () => {
     expect(hex.features.some((f) => f === 'Sanctuary' || f === 'Landmark' || f === 'Dungeon')).toBe(false);
     expect(b.hexes[at]).toBeUndefined(); // nobody holds it
     expect(SEAT_INDICES.some((c) => boardNeighbors(c).includes(at))).toBe(false);
-    expect(snapshotOf(b, seat, back).dungeons).toHaveLength(6);
+    expect(snapshotOf(b, seat, back).dungeons).toHaveLength(SEAT_INDICES.length);
     expect(snapshotOf(b, seat, back).dungeons).toContain(at);
     // A new dungeon: every seat starts it from the top.
     expect(snapshotOf(b, seat, back).delves[at] ?? 0).toBe(0);

@@ -38,7 +38,7 @@ import type {
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
-export const emptyWorld = (): ServerWorld => ({ version: 4, boards: [] });
+export const emptyWorld = (): ServerWorld => ({ version: 5, boards: [] });
 
 /** The seed of a board the server opens, from its name. */
 export const newBoardSeed = (id: string): number => randInt(0x5eed, 0x1_0000_0000, 'board', id);
@@ -48,7 +48,21 @@ const generated = (b: ServerBoard): Board => boardOf({ id: b.id, seed: b.seed, s
 
 /** The board as it stands: the generated one with the dungeons where they
  *  are now (19 §8.1). Every rule reads this one. */
-const boardData = (b: ServerBoard): Board => withDungeons(generated(b), standingDungeons(b));
+/** The board with its dungeons where they stand now, kept per board until
+ *  one of them moves: it is read thousands of times an event, and a world
+ *  has 42 dungeons. */
+const LIVE_DATA = new WeakMap<ServerBoard, { gen: Board; at: Array<number | null>; live: Board }>();
+function boardData(b: ServerBoard): Board {
+  const gen = generated(b);
+  const ds = dungeonsOf(b);
+  const kept = LIVE_DATA.get(b);
+  if (kept !== undefined && kept.gen === gen && kept.at.length === ds.length && ds.every((d, i) => d.index === kept.at[i])) {
+    return kept.live;
+  }
+  const live = withDungeons(gen, standingDungeons(b));
+  LIVE_DATA.set(b, { gen, at: ds.map((d) => d.index), live });
+  return live;
+}
 
 /** The sixths' dungeons; a board stored before they moved reads them from
  *  its generated board. */
@@ -1258,17 +1272,22 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
       done = true;
     }
   }
-  if (!done && (s.claims ?? 0) < WORLD_BOTS.maxHexes) {
+  // Its size is the ground it holds now: a rival whose ground was taken
+  // grows again rather than standing empty for good.
+  if (!done && mine.length < WORLD_BOTS.maxHexes) {
+    // Only ground beside its own can be claimed or be in its way: its
+    // frontier, in index order — the same list a walk of the whole world
+    // gives, without walking it (a world of seven boards is 889 hexes).
+    const frontier = [...new Set([SEAT_INDICES[seat], ...mine.map(([i]) => i)].flatMap(boardNeighbors))].sort((x, y) => x - y);
     // A rival beats a camp in its way after a while, by the camp's power,
     // without a fight being played out (19 §5.4).
     const pending = ((b.botCamps ??= {})[seat] ??= {});
-    for (let i = 0; i < data.hexes.length; i++) {
+    for (const i of frontier) {
       if (claimRefusal(b, seat, i, t) !== 'Guarded') continue;
       pending[i] ??= t + Math.round((campAt(b, i)!.power / 1000) * WORLD_CAMPS.botHoursPer1000Power * HOUR);
       if (pending[i] <= t) beat(b, seat, i);
     }
-    const open: number[] = [];
-    for (let i = 0; i < data.hexes.length; i++) if (claimRefusal(b, seat, i, t) === null) open.push(i);
+    const open = frontier.filter((i) => claimRefusal(b, seat, i, t) === null);
     if (open.length > 0) {
       startClaim(b, seat, open[roll('claim', open.length)], t);
       s.claims = (s.claims ?? 0) + 1;

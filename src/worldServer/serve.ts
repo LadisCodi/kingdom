@@ -79,7 +79,7 @@ export async function serveWorld(store: BoardStore, userId: string, body: unknow
     }
     const row = await store.load(boardId);
     if (row === null) return { status: 409, error: 'the board is gone' };
-    const world: ServerWorld = { version: 4, boards: [row.doc] };
+    const world: ServerWorld = { version: 5, boards: [row.doc] };
     // Dev "play as" is for the rivals the server plays, never another player.
     if (req.asSeat !== undefined && row.doc.seats[req.asSeat]?.bot !== true) {
       return { status: 200, reply: refusal(cmd.kind, 'NotARival') };
@@ -106,7 +106,7 @@ async function seatNewPlayer(store: BoardStore, req: WorldRequest, nickname: str
   const join: WorldRequest = { ...req, cmd: { kind: 'join', nickname: name }, newBoard: { id, seed: newBoardSeed(id) } };
   const open = await store.openBoard();
   const row = open === null ? null : await store.load(open);
-  const world: ServerWorld = { version: 4, boards: row === null ? [] : [row.doc] };
+  const world: ServerWorld = { version: 5, boards: row === null ? [] : [row.doc] };
   const reply = handleWorld(world, join, now);
   const board = world.boards[0];
   const seat = board.seats.findIndex((s) => s?.playerId === req.playerId);
