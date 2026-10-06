@@ -18,7 +18,6 @@
 | The world board — claims, armies, dungeons ([`19-world-map.md`](19-world-map.md)) | **server** |
 | Save | per-player |
 | Friends, neighbours, guilds, help, collective bars | **server** |
-| The friends' reward path — what was taken | client (save) |
 | Purchase-intent log, telemetry | **server** |
 
 - Shared tables are readable but never directly writable.
@@ -74,8 +73,7 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 [`../art/ui/mockups/m73-friends.png`](../art/ui/mockups/m73-friends.png).
 
 - **The door:** a knob hanging under the header, left of Settings. It opens
-  with Townhall 2 (the `friends` door). A red orb counts requests to answer
-  plus rewards to take.
+  with Townhall 2 (the `friends` door). A red orb counts requests to answer.
 - **The cap:** 10 friends, held on both sides. At most 10 requests waiting
   for an answer at once.
 - **The name first:** without a nickname the screen asks for one, then the
@@ -93,7 +91,8 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
     cells revealed. The first three wear a gold, silver or bronze ribbon with
     their place; the rest a plain one. Each row: crest, name, Townhall tag,
     last seen.
-  - **Friend rewards** at the foot (§2.2).
+- **The screen** takes the whole height between the header and the nav; the
+  list under the title scrolls.
 - **The Townhall tag:** the Townhall icon and level on a pill coloured by
   band of two levels — 1-2 green, 3-4 teal, 5-6 blue, 7-8 purple, 9-10 orange.
 - **Last seen**, roughly: *Online now* (under five minutes), *Today*,
@@ -111,21 +110,9 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 - **Reads:** a hello every 10 s while the screen is open, every 60 s
   elsewhere once the door is open.
 
-### 2.2 The friends' reward path
-
-- A reward at 1, 3, 5 and 10 friends who **count**: those whose Townhall has
-  reached level 2.
-- Each pays Gems and one Bag item; the last is the biggest. A reached reward
-  glows until tapped; any other shows what it holds on a tap.
-- Taken once each, kept in the save. A friend removed and added again pays
-  nothing twice. The path is put away once every reward is taken.
-- The count is the server's last word; the claim is the client's (§1.1).
-
 | Dial, in the order to reach for them | Where |
 |---|---|
-| Milestones, their Gems and items | `?dev=data` › Friends (`friends.milestones`, `gems`, `items`) |
-| The Townhall a friend must reach to count | `friends.countsFromTownhall` |
-| The cap on friends, on requests waiting | `friends.max`, `friends.maxSent` |
+| The cap on friends, on requests waiting | `?dev=data` › Friends (`friends.max`, `friends.maxSent`) |
 | How many suggestions | `friends.suggestions` |
 
 ## 3. Neighbours and daily help

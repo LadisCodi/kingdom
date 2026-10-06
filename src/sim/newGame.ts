@@ -42,7 +42,6 @@ export function newGame(map: MapData, now: number): GameState {
         live: [], lastWindow: -1, issuedThisWeek: {}, week: -1,
       },
       survey: { claimedFree: [], claimedPaid: [], owned: false },
-      friends: { claimed: [] },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
       utcOffsetMinutes: 0,

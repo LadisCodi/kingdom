@@ -5,10 +5,9 @@
 //
 // The friends are server state. The client keeps the last snapshot, says
 // hello now and then — more often while the screen is open — and redraws on
-// every answer. Only the reward path lives in the save (sim/friends.ts).
+// every answer. Nothing of it lives in the save.
 
 import type { Game } from './game';
-import { claimableFriendRewards, claimFriendReward, friendCounts, friendMilestones, friendPathDone } from './sim/friends';
 import { townhall } from './sim/state';
 import type { SocialServerApi } from './socialServer/local';
 import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot } from './socialServer/types';
@@ -67,8 +66,6 @@ export class FriendsClient {
   /** The screen has come in since it was opened: a rebuild does not play
    *  the entrance again. */
   settled = false;
-  /** Rewards that just landed: they play their pop once. */
-  justClaimed = new Set<number>();
   private ticks = 0;
   private saying = false;
 
@@ -79,11 +76,6 @@ export class FriendsClient {
   /** The player has a name the server knows them by. */
   named(): boolean {
     return this.snap?.me !== null && this.snap?.me !== undefined;
-  }
-
-  /** Friends who count toward the reward path. */
-  counting(): number {
-    return (this.snap?.friends ?? []).filter((f) => friendCounts(f.townhall)).length;
   }
 
   /** The player and their friends, furthest on first; the first three on
@@ -102,21 +94,9 @@ export class FriendsClient {
     return this.ranked().find((k) => !k.isMe && k.code === this.openCode) ?? null;
   }
 
-  /** Rewards waiting to be taken. */
-  claimable(): number[] {
-    return claimableFriendRewards(this.game.state, this.counting());
-  }
-
-  /** The reward path, or null once every reward is taken. */
-  path(): { milestones: ReturnType<typeof friendMilestones>; counting: number; claimed: number[] } | null {
-    if (friendPathDone(this.game.state)) return null;
-    return { milestones: friendMilestones(), counting: this.counting(), claimed: this.game.state.kingdom.friends.claimed };
-  }
-
-  /** What the header button's dot counts: requests to answer and rewards to
-   *  take. */
+  /** What the header button's dot counts: requests to answer. */
   badge(): number {
-    return (this.snap?.incoming.length ?? 0) + this.claimable().length;
+    return this.snap?.incoming.length ?? 0;
   }
 
   // ------------------------------------------------------------ the clock
@@ -226,13 +206,6 @@ export class FriendsClient {
     this.openCode = null;
     this.confirmingRemove = false;
     this.game.setOverlay('friends');
-  }
-
-  /** Take a reward off the path. */
-  claim(index: number): void {
-    if (claimFriendReward(this.game.state, index, this.counting()) !== 'Claimed') return;
-    this.justClaimed.add(index);
-    this.game.paidFriendReward(friendMilestones()[index].reward);
   }
 
   /** Share the player's code — through the phone's own share sheet where

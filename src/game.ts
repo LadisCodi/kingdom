@@ -154,7 +154,6 @@ import type { Analytics, AnalyticsContext } from './analytics/analytics';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
 import { nicknameProblem } from './worldServer/nickname';
 import { FriendsClient } from './friendsClient';
-import type { Grant } from './sim/rewards';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
@@ -3064,7 +3063,7 @@ export class Game {
         const { at: _at, ...snap } = f.snap ?? { at: 0 };
         return JSON.stringify([
           snap, f.found, f.tab, f.openCode, f.confirmingRemove, [...f.busy], f.searching, f.naming,
-          f.nicknameRefused, this.state.kingdom.friends.claimed, Math.floor(this.now() / 60_000),
+          f.nicknameRefused, Math.floor(this.now() / 60_000),
         ]);
       }
       case 'iapConfirm':
@@ -4784,15 +4783,6 @@ export class Game {
     return this.worldView?.seats.find((s) => s.you)?.name ?? null;
   }
 
-  /** A reward off the friends' path, already paid: it flies to the header,
-   *  and what went into the Bag is said. */
-  paidFriendReward(reward: Grant): void {
-    playSfx('questComplete');
-    const items = Object.entries(reward.items).filter(([, n]) => (n ?? 0) > 0) as Array<[ItemId, number]>;
-    if (items.length > 0) this.toast(`${items.map(([id]) => itemWords(id)).join(', ')} — it is in the Bag`);
-    this.notify();
-    this.reward(reward.wallet);
-  }
   /** The dev tool's "play as": the seat world commands are made for, or
    *  null for the player's own. A rival's commands cost the player nothing. */
   actingSeat: number | null = null;

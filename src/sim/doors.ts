@@ -64,8 +64,7 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   // The first item held, or the first relic fragment — relics are kept in
   // the Bag (Docs/art/ui-inventory.md §3.1, §3.6).
   bag: (state) => Object.keys(state.bag.held).length > 0 || ARTIFACT_ORDER.some((id) => isMet(state, id)),
-  // Friends open with the Store: the Townhall a friend must reach to count
-  // toward the reward path (Docs/features/15-social.md §2.1).
+  // Friends open with the Store (Docs/features/15-social.md §2.1).
   friends: (state) => townhall(state).level >= 2,
 };
 
