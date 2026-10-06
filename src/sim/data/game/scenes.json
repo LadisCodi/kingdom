@@ -1098,7 +1098,7 @@
         "side": "right",
         "text": "Grrr. Your town smells of bread and gold. We come for both.",
         "box": "auto",
-        "point": "lair:Orcs",
+        "point": "",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

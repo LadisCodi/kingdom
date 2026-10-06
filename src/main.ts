@@ -529,8 +529,10 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', () => startMusic());
 
   // Interacting with the hinted element retires its arrow (capture phase, so
-  // it works no matter what the element's own handler does).
-  document.addEventListener('pointerdown', (e) => {
+  // it works no matter what the element's own handler does). On the click,
+  // not the press: retiring it re-renders the menu, and a button replaced
+  // between press and release never receives its click.
+  document.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest?.('.hinted')) game.clearHint();
   }, true);
 
