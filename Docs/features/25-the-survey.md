@@ -3,8 +3,8 @@
 > **Scope.** The kingdom's **Survey**: one ladder over the whole province,
 > climbed by the cells revealed, with a free column and a paid one. It is what
 > the game sells of its column, the treasure hunt in the fog
-> ([`../overview.md`](../overview.md) § *The fantasies*). The other ladder
-> is the season pass ([`20-season-pass.md`](20-season-pass.md)).
+> ([`../overview.md`](../overview.md) § *The fantasies*). It is the game's
+> only reward ladder.
 >
 > **Status: built**, but for the seal that flies to the pill (§4).
 
@@ -15,13 +15,6 @@
 - **Two columns**, free and paid. The paid column is one purchase, `Survey`,
   **$9.99, once per kingdom**.
 - **It never resets and never expires.** A level reached stays reached.
-
-**The split against the season pass**, one sentence each:
-
-| Ladder | Climbs on | Pays for |
-|---|---|---|
-| The season pass | mission XP | playing |
-| **The Survey** | **cells revealed** | **exploring** |
 
 ## 2. What climbs it
 
@@ -51,20 +44,20 @@
 
 | Column | Pays |
 |---|---|
-| Free | a purse of Gold (3 → 20 minutes up the ladder) and, on about one level in three, one more: a Green or Yellow pack, a gold key, Knowledge, or a silver key |
-| Paid | Gems, rising, and one more: a gold key every third level, Stardust, or a Blue, Purple or Golden pack |
+| Free | a purse of Gold (3 → 20 minutes up the ladder) and, on about one level in three, one more: a relic fragment, a gold key, Knowledge, a silver key or a Bag item |
+| Paid | Gems, rising, and one more: a gold key every third level, Stardust, relic fragments or a choice chest |
 | **Level 36** | the grand prize: 500 Gems and a gold key free; 10,000 Gems and five gold keys paid |
 
 ## 4. Claiming
 
 - **Every cell is its own claim**, out of order, at the player's pace; no
-  claim-all, as on the season pass.
+  claim-all.
 - **Buying the Survey opens every level already reached**: a column of cells
   to tap, not a payout.
 - **A level reached is a moment on the map**: the reveal that crosses it
   sends a small seal from the cell to the Survey's pill *(not built)*; the
   pill glows while a cell waits.
-- A pack opens itself in the card reveal ([`09-relics.md`](09-relics.md) §6).
+- Fragments are rolled onto the relics as they land ([`09-relics.md`](09-relics.md)).
 
 ## 5. The door
 

@@ -15,7 +15,6 @@ import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
-import { seasonEndsAt, seasonAt } from './sim/seasonClock';
 import { dropFragments, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
 import { LAIR_ORDER } from './sim/data/definitions';
@@ -37,9 +36,7 @@ import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
 import { renderKnowledgeSheet } from './ui/knowledgeSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
-import { renderPassSheet } from './ui/passSheet';
 import { renderSurveySheet } from './ui/surveySheet';
-import { mountSeasonPill } from './ui/seasonPill';
 import { mountSurveyPill } from './ui/surveyPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
@@ -255,7 +252,6 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
-  mountSeasonPill(game, document.getElementById('season')!);
   mountSurveyPill(game, document.getElementById('survey')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
@@ -318,7 +314,6 @@ async function boot(): Promise<void> {
     exchange: renderExchangeSheet,
     delve: renderDelveScreen,
     builder: renderBuilderSheet,
-    pass: renderPassSheet,
     survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
@@ -355,7 +350,6 @@ async function boot(): Promise<void> {
     // so that view IS what it is drawn from.
     purse: () => JSON.stringify(game.state.city.wallet),
     bag: () => bagSignature(game),
-    pass: () => JSON.stringify(game.passScreen()),
     survey: () => JSON.stringify(game.surveyScreen()),
     upgrade: () => {
       const d = game.upgradeDistrict();
@@ -743,23 +737,6 @@ async function boot(): Promise<void> {
       for (const id of ITEM_ORDER) grantItem(game.state, id, 3);
       runTick();
     };
-    // THE SEASON ROLLOVER, on demand.
-    //
-    // The warp above moves the STATE backwards, which is how an absence is
-    // demoed — but a season ends at an absolute instant on a shared calendar,
-    // and no amount of moving the state back reaches a boundary that is still
-    // in the future. So this one moves the CLOCK forwards instead: a dev-only
-    // offset on `game.now()`, which is the one place the UI reads the time.
-    // The sim is untouched — it is still handed a `now` (invariant 3) — and
-    // pressing it twice walks two whole seasons, so the cycle can be watched
-    // rather than argued about.
-    let clockOffset = 0;
-    const realNow = game.now.bind(game);
-    game.now = () => realNow() + clockOffset;
-    const endSeason = () => {
-      clockOffset += Math.max(0, seasonEndsAt(seasonAt(game.now())) - game.now()) + 1_000;
-      runTick();
-    };
     // "Warp then reload" is the only way to exercise the offline report: the
     // in-place time warp above never goes through deserialize().
     const warpReload = (minutes: number) => {
@@ -827,7 +804,7 @@ async function boot(): Promise<void> {
       button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
-      button('🧩 fragments', someFragments), button('🎒 items', someItems), button('🗓 end season', endSeason),
+      button('🧩 fragments', someFragments), button('🎒 items', someItems),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {

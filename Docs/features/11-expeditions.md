@@ -120,18 +120,11 @@ A boss room pays `bossRewardMultiplier` (3) times the formula.
 `rewardBase(D)` continues the previous depth's curve. Individual rooms may be
 overridden by hand.
 
-**A room pays no card pack.** The ruins clear once, so a pack per room was a
-welcome rather than a supply; the packs are the season pass's two columns
-([`20-season-pass.md`](20-season-pass.md) §4). What the dungeon feeds the
-collection is the pass missions a delve completes — *clear X rooms*, *complete
-X depths*.
-
 ### 7.2 Boss — authored chest
 
 Ignores the formula. Contains a Gem lump and **hero fragments** from a
-per-boss pool ([`10-heroes.md`](10-heroes.md) §5). Neither a relic nor a card
-pack drops: a relic comes only from its album
-([`09-relics.md`](09-relics.md) §1) and the packs are the pass's.
+per-boss pool ([`10-heroes.md`](10-heroes.md) §5). No relic fragment drops
+([`09-relics.md`](09-relics.md) §1).
 
 ### 7.3 Depth completion — permanent generation
 

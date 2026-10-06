@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, MISSIONS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, SAVE_VERSION, TECHNOLOGIES, UNITS,
   ARTIFACTS, relicKind,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
@@ -35,7 +35,7 @@ import {
   type ArtifactId, type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type LairId, type UnitId, type MissionKind, type MissionReward, type CurrencyId,
+  type LairId, type UnitId, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -844,6 +844,16 @@ const MIGRATIONS: readonly Migration[] = [
       lm.Claimed = lm.Claimed.filter((id) => !gone.includes(id));
     },
   },
+  {
+    // v97: THE SEASON PASS GOES, missions and both columns with it. Nothing
+    // it held carries over: an unclaimed cell or an unfinished mission is
+    // simply gone.
+    to: 97,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Pass?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Pass;
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
@@ -963,30 +973,12 @@ export function serialize(state: GameState, now: number): SaveFile {
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         KnowledgeBoughtWithGold: state.kingdom.knowledgeBoughtWithGold,
         UtcOffsetMinutes: state.kingdom.utcOffsetMinutes,
-        // The season pass (sim/pass.ts). The BOARD travels whole: a mission
-        // is its odometer key plus what that odometer read when it was
-        // issued, so dropping one loses the only record of where it started.
         Survey: {
           ClaimedFree: state.kingdom.survey.claimedFree,
           ClaimedPaid: state.kingdom.survey.claimedPaid,
           Owned: state.kingdom.survey.owned,
         },
         Profile: { Nickname: state.kingdom.profile.nickname, Crest: state.kingdom.profile.crest },
-        Pass: {
-          Season: state.kingdom.pass.season,
-          Xp: state.kingdom.pass.xp,
-          ClaimedFree: state.kingdom.pass.claimedFree,
-          ClaimedPaid: state.kingdom.pass.claimedPaid,
-          PaidSeason: state.kingdom.pass.paidSeason,
-          LastWindow: state.kingdom.pass.lastWindow,
-          Week: state.kingdom.pass.week,
-          IssuedThisWeek: state.kingdom.pass.issuedThisWeek,
-          Live: state.kingdom.pass.live.map((m) => ({
-            UniqueID: m.uniqueId, Kind: m.kind, Meter: m.meter, Base: m.base,
-            Target: m.target, Subject: m.subject, Window: m.window, Slot: m.slot,
-            Reward: m.reward,
-          })),
-        },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -1051,10 +1043,8 @@ export function serialize(state: GameState, now: number): SaveFile {
         Rush: state.quests.rush === undefined ? undefined
           : { Index: state.quests.rush.index, AtUtc: isoOrNull(state.quests.rush.at) },
       },
-      // The lifetime odometers the missions read (sim/events.ts). A plain
-      // key→count map, written whole: every live mission stores a BASE
-      // reading of one of these, so losing them would silently complete or
-      // un-complete the whole board.
+      // The lifetime odometers (sim/events.ts). A plain key→count map,
+      // written whole.
       'kingdom.tallies': { Counts: state.tallies },
       'kingdom.discoveries': {
         Keys: Object.keys(state.discoveries),
@@ -1366,10 +1356,6 @@ export function deserialize(
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     state.kingdom.knowledgeBoughtWithGold = kingdomDto.KnowledgeBoughtWithGold ?? 0;
     state.kingdom.utcOffsetMinutes = Number.isFinite(kingdomDto.UtcOffsetMinutes) ? kingdomDto.UtcOffsetMinutes : 0;
-    // Additive: a save from before the pass has no Pass block, and
-    // `Season: -1` matches no real season — so it reads as an empty pass
-    // rather than as season 0's, and the first live tick fills the board from
-    // the window it lands in.
     // Additive (v82): a kingdom from before the Survey opens it with nothing
     // taken — its level is read off the cells it has already revealed.
     const survey = kingdomDto.Survey as
@@ -1379,44 +1365,13 @@ export function deserialize(
       claimedPaid: [...(survey?.ClaimedPaid ?? [])],
       owned: survey?.Owned === true,
     };
-    // Additive (v97): a kingdom from before it had a profile learns its
+    // Additive (v98): a kingdom from before it had a profile learns its
     // nickname from the world board the next time it connects.
     const profile = kingdomDto.Profile as { Nickname?: string | null; Crest?: string | null } | undefined;
     state.kingdom.profile = {
       nickname: typeof profile?.Nickname === 'string' ? profile.Nickname : null,
       crest: parseCrest(profile?.Crest) === null ? null : profile!.Crest!,
     };
-    const pass = kingdomDto.Pass as {
-      Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
-      PaidSeason?: number | null; LastWindow?: number; Week?: number;
-      IssuedThisWeek?: Record<string, number>;
-      Live?: Array<Record<string, any>>;
-    };
-    if (pass) {
-      state.kingdom.pass.season = pass.Season ?? -1;
-      state.kingdom.pass.xp = pass.Xp ?? 0;
-      state.kingdom.pass.claimedFree = [...(pass.ClaimedFree ?? [])];
-      state.kingdom.pass.claimedPaid = [...(pass.ClaimedPaid ?? [])];
-      state.kingdom.pass.paidSeason = pass.PaidSeason ?? null;
-      state.kingdom.pass.lastWindow = pass.LastWindow ?? -1;
-      state.kingdom.pass.week = pass.Week ?? -1;
-      state.kingdom.pass.issuedThisWeek = { ...(pass.IssuedThisWeek ?? {}) };
-      state.kingdom.pass.live = (pass.Live ?? []).map((m) => ({
-        uniqueId: String(m.UniqueID),
-        kind: m.Kind as MissionKind,
-        meter: String(m.Meter),
-        base: m.Base ?? 0,
-        target: m.Target ?? 1,
-        subject: (m.Subject ?? null) as CurrencyId | null,
-        // A mission from before the rewards varied read as the Gem one — the
-        // amount is the authored one, so an old board pays exactly what a new
-        // board's Gem missions pay rather than nothing.
-        reward: (m.Reward ?? { kind: 'Gems', amount: MISSIONS.rewardGems }) as MissionReward,
-        window: m.Window ?? -1,
-        slot: m.Slot ?? 0,
-        claimed: false,
-      }));
-    }
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -1798,11 +1753,9 @@ export function deserialize(
   // stops its own production when it is full, in the same `advance()` the
   // live tick runs, so a day away and a day of stepping agree exactly.
   //
-  // THE WHOLE CATCH-UP RUNS WITH THE MISSION ODOMETER HELD STILL
-  // (sim/events.ts). The season pass's missions are active-play only, which is
-  // the one thing in this codebase that is meant to read differently in replay
-  // than live; everything else in `advance()` is untouched by the flag, so
-  // invariant 1 still holds.
+  // THE WHOLE CATCH-UP RUNS WITH THE ODOMETER HELD STILL (sim/events.ts):
+  // the tallies count active play only. Everything else in `advance()` is
+  // untouched by the flag, so invariant 1 still holds.
   const report = withoutTallies(state, () => advance(state, map, now));
   // A footprint may have grown in the data since this city was built: put
   // every building back on ground it may stand on (commands.ts).

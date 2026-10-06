@@ -26,7 +26,7 @@ const COLUMNS = 4;
 const EMPTY_LINE: Record<BagTab, string> = {
   Resources: 'Chests turn up in the fog and in quests',
   'Speed ups': 'Speed-ups turn up in lairs and quests',
-  Boosts: 'Boosts turn up on the season pass',
+  Boosts: 'Boosts turn up in quests, lairs and the Survey',
   Relics: 'Relic fragments turn up in lairs and in the fog',
   Other: 'Keys and flasks turn up as rewards',
 };

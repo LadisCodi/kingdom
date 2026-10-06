@@ -39,7 +39,7 @@ describe('numbers the game prints', () => {
   });
 
   it('prices in one currency, through one formatter', () => {
-    // The pass sheet and another ladder sheet each wrote their own
+    // Two ladder sheets each wrote their own
     // `€${x.priceUsd.toFixed(2)}` — a euro sign over a field named USD,
     // contradicting their own data and the $ every other price uses. The
     // game prices in dollars and `formatUsd` is where that is decided, so

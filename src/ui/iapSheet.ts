@@ -21,8 +21,8 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
   const price = priceCents(id);
   const remaining = payer?.remainingCents ?? 0;
   const affordable = payer !== null && remaining >= price;
-  // Back to wherever the price was tapped — the store for a pack, the pass for
-  // its paid column.
+  // Back to wherever the price was tapped — the store for a pack, the Survey
+  // for its paid column.
   const back = () => game.setOverlay(game.iapReturn());
 
   const row = (label: string, value: string, cls = '') =>
