@@ -31,7 +31,7 @@ import {
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble, drawManaBubble } from './collectBubbleArt';
+import { drawAsleepBubble, drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
 import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
@@ -1704,16 +1704,16 @@ export function drawMap(
       Math.max(28, Math.min(64, size * 0.62)), clock));
   }
 
-  // Pass 4.6: A SLEEPING SHRINE'S MANA BUBBLE (M84) — the price of waking
-  // its relic, over its roof. A tap on it opens the Shrine's card, so its
+  // Pass 4.6: A SLEEPING SHRINE'S BUBBLE — its relic, drained and resting
+  // under Zs: there, and off. A tap on it opens the Shrine's card, so its
   // rect is kept (render/shrineBubbles.ts).
   clearShrineBubbles();
   for (const held of markers.shrineRelics) {
     if (held.awake) { bubbles.forget(`shrine:${held.districtId}`); continue; }
     const art = artOf.get(held.districtId);
     if (!art) continue;
-    markShrineBubble(held.relic, drawManaBubble(ctx, bubbles, `shrine:${held.districtId}`,
-      formatExact(held.cost), held.affordable, labelFace(),
+    markShrineBubble(held.relic, drawAsleepBubble(ctx, bubbles, `shrine:${held.districtId}`,
+      held.sprite, labelFace(),
       art.x + art.w / 2, art.y + art.h * 0.12, Math.max(26, Math.min(56, size * 0.5)), clock));
   }
 

@@ -1,4 +1,4 @@
-// WHERE EACH SLEEPING SHRINE'S MANA BUBBLE LANDED on the last frame, in canvas
+// WHERE EACH SLEEPING SHRINE'S BUBBLE LANDED on the last frame, in canvas
 // CSS pixels (Docs/features/09-relics.md §11.6). The bubble floats over the
 // Shrine and may sit over other cells, so a tap on it is resolved here — to
 // its Shrine, whose card holds Activate — before the tap becomes a cell. The
