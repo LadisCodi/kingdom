@@ -32,7 +32,8 @@ describe('the Shrine', () => {
     expect(DISTRICTS.Shrine.hostsRelic).toBe(true);
   });
 
-  it('is repaired once the Orcs are gone, and adds max Mana once it stands', () => {
+  // A SHRINE HAS NO PASSIVE: it holds and wakes a relic, and nothing else.
+  it('is repaired once the Orcs are gone, and adds no Mana and no Harmony', () => {
     const state = freshGame();
     const ruin = ABANDONED.find((a) => a.id === 'ThornedShrine')!;
     reveal(state, cellsOfRect(ruin.location, DISTRICTS.Shrine.size));
@@ -41,7 +42,9 @@ describe('the Shrine', () => {
     const cap = manaCap(state);
     expect(repairAbandoned(state, map, ruin.id)).toBe('Started');
     advance(state, map, T0 + 365 * 86_400_000);
-    expect(manaCap(state)).toBe(cap + SHRINE_RULES.manaCap);
+    expect(state.city.districts.some((d) => d.definitionId === 'Shrine' && d.state === 'Built')).toBe(true);
+    expect(manaCap(state)).toBe(cap);
+    expect(DISTRICTS.Shrine.harmonySupply).toBe(0);
   });
 
   it('is built anywhere for Gems, each dearer than the last, and the ladder ends', () => {

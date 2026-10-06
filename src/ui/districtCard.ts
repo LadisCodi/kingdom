@@ -33,7 +33,6 @@ import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { activation, relicArt } from './relicSheet';
-import { emptyRelicSlot } from './relicPicker';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -209,31 +208,28 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }
 
     // A SHRINE holds one city relic, whose effect reaches its aura while it
-    // is activated (sim/hosts.ts). THE SLOT is one widget: the relic on its
-    // plinth — dim asleep, lit awake — or an empty well, and under it the
-    // press that opens the relic picker (ui/relicPicker.ts), the hero
-    // picker's flow. Its activation follows.
+    // is activated (sim/hosts.ts). THE SLOT IS THE ALTAR (assets/shrine-altar*):
+    // its niche carved with a + while it waits, the relic set in it once
+    // placed — dim asleep, lit awake. A tap opens the relic picker
+    // (ui/relicPicker.ts), the hero picker's flow; the CTA says a relic in
+    // the Bag could go there. Its activation follows.
     if (def.hostsRelic) {
       const shrine = () => {
         const view = game.shrineView(district);
         const held = view.holds === null ? null : game.relicCard(view.holds);
-        const choose = () => game.openRelicPicker(district.uniqueId);
-        const slot = held === null
-          ? emptyRelicSlot({ onClick: choose, label: 'Choose a relic for this Shrine' })
-          : el('button', { class: `dc-shrine-plinth is-${held.status}`, type: 'button', 'aria-label': `Change ${held.name}` },
-            relicArt(held, 'dc-shrine-art'), ...(held.status === 'asleep' ? [restMarks()] : []));
-        if (held !== null) slot.addEventListener('click', choose);
+        const placeable = held === null && game.relicPickList().some((r) => r.status === 'bag');
+        const altar = el('button', {
+          class: `dc-altar${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
+          'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
+        },
+          ...(held === null ? [] : [relicArt(held, 'dc-altar-relic'), ...(held.status === 'asleep' ? [restMarks()] : [])]),
+          ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []));
+        altar.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
         return el('div', { class: 'dc-shrine rl-page' },
-          el('div', { class: 'dc-shrine-slot k-section' },
-            slot,
-            held === null
-              ? el('p', { class: 'rl-note' }, 'Place a city relic here, then activate it')
-              : el('div', { class: 'dc-shrine-says' },
-                el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
-                el('span', {}, held.now)),
-            ...(view.candidates.length === 0 && held === null
-              ? [el('p', { class: 'rl-note' }, 'No city relic is restored yet')]
-              : [btn({ label: held === null ? 'Place' : 'Change', onClick: choose })])),
+          altar,
+          ...(held === null ? [] : [el('div', { class: 'dc-shrine-says' },
+            el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
+            el('span', {}, held.now))]),
           ...(held === null ? [] : [activation(game, held.id)].filter((x): x is HTMLElement => x !== null)),
         );
       };

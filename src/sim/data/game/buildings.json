@@ -1509,7 +1509,7 @@
     "strikeSpeedPerLevel": [],
     "produces": null,
     "queueLengthPerLevel": [],
-    "harmonySupply": 40,
+    "harmonySupply": 0,
     "harmonyCostPerLevel": [],
     "hostsRelic": true,
     "relicWindowMinutesPerLevel": [5, 30, 60, 240, 480]

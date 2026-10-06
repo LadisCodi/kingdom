@@ -453,11 +453,39 @@
 .rl-awake-row > .icon { flex: none; --icon-size: calc(var(--px) * 28); }
 .rl-awake-row > .k-trough { flex: 1 1 auto; }
 
-/* THE SHRINE'S SLOT, in its card: one section — the relic on its plinth or
- * the empty well, what it does, and the press that opens the picker. */
-.dc-shrine-slot { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 8); padding: calc(var(--px) * 10) calc(var(--px) * 8); text-align: center; }
-.dc-shrine-slot > .dc-shrine-says { align-items: center; }
-button.dc-shrine-plinth { border: none; padding: 0; cursor: pointer; }
+/* THE SHRINE'S SLOT IS ITS ALTAR (assets/shrine-altar-empty.png with the
+ * carved +, shrine-altar.png once a relic stands in it; 400×469, one size so
+ * the niche never moves). The relic is set in the niche — its foot on the
+ * niche's floor, 43% down the art — dim asleep, lit awake. */
+.dc-altar {
+  position: relative;
+  align-self: center;
+  width: calc(var(--px) * 180);
+  aspect-ratio: 400 / 469;
+  padding: 0;
+  border: none;
+  background: url('../../assets/shrine-altar-empty.png') center / contain no-repeat;
+  cursor: pointer;
+  --zzz-size: calc(var(--px) * 16);
+}
+.dc-altar.is-held { background-image: url('../../assets/shrine-altar.png'); }
+.dc-altar:active { translate: 0 calc(var(--px) * 2); }
+.dc-altar:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 4); border-radius: var(--radius); }
+.dc-altar-relic {
+  position: absolute;
+  left: 50%;
+  bottom: 57%;
+  width: 40%;
+  height: auto;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  object-fit: contain;
+}
+.dc-altar.is-asleep .dc-altar-relic { filter: saturate(0.45) brightness(0.88); }
+.dc-altar.is-awake .dc-altar-relic { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 214, 110, 0.95)); }
+.dc-altar > .k-zzz { top: 8%; right: 22%; }
+.dc-altar > .k-cta { top: 6%; right: 6%; }
+.dc-shrine > .dc-shrine-says { align-items: center; text-align: center; }
 
 /* AN EMPTY RELIC SLOT: the hero slot's dashed gold well (heroPicker.css
  * `.hc.is-empty`), square, for a relic card's size. */

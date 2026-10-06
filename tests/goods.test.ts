@@ -121,8 +121,9 @@ describe('a building level priced in goods', () => {
     for (const def of Object.values(DISTRICTS)) {
       if (def.maxLevel < LATE_FROM) {
         // A short ladder is priced in raw resources alone — except a
-        // decoration, whose whole point is the workshop queue.
-        if (def.harmonySupply > 0) continue;
+        // decoration, whose whole point is the workshop queue, and a relic's
+        // host, whose window is bought with cut stone and runestone.
+        if (def.harmonySupply > 0 || def.hostsRelic) continue;
         for (let level = 1; level <= def.maxLevel; level++) {
           expect(refinedOf(goodsCostForLevel(def, level)), `${def.id} stops early, level ${level}`)
             .toEqual({});

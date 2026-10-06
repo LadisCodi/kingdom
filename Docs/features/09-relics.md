@@ -105,8 +105,11 @@ never a discount, because a discount dies at 100%.
 - **On screen** (mockups M80–M85):
   - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
-  - The Shrine's card holds **one slot**: the relic on its plinth, or an
-    empty well, with **Place** (or **Change**) under it. It opens the relic
+  - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a
+    relic and wakes it.
+  - The Shrine's card holds **one slot, drawn as its altar**: the niche
+    carved with a **+** while it waits (with the CTA when a relic in the Bag
+    could go there), the relic set in it once placed. A tap opens the relic
     picker — the hero picker's flow: the restored city relics as cards, the
     Shrine's slot under them, and **Select**. Emptying the slot and selecting
     takes the relic out; closing changes nothing.
