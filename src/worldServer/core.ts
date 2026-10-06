@@ -21,6 +21,7 @@ import {
   ARTIFACTS, LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_EXCHANGE, WORLD_PORTAL, WORLD_PRECIOUS,
   relicKind,
 } from '../sim/data/definitions';
+import { parseCrest } from '../sim/crest';
 import { rand, randInt } from '../sim/rng';
 import { PRECIOUS, type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEAT_INDICES, lumpMaterial, materialAt, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
@@ -111,6 +112,15 @@ export function preciousRate(
  *  a free hex. */
 const boostOf = (b: ServerBoard, owner: number | null): SeatBoost =>
   (owner === null ? undefined : b.seats[owner]?.boost) ?? NO_BOOST;
+
+/** The crest a seat's kingdom chose, or null for its nickname's. Nothing
+ *  on the board turns on it: it is only drawn. */
+export function setCrest(b: ServerBoard, seat: number, crest: string | null): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined) return;
+  if (parseCrest(crest) === null) delete s.crest;
+  else s.crest = crest!;
+}
 
 /**
  * Take a seat's multipliers on its districts' output and stores. A rate
@@ -1490,7 +1500,9 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
   return {
     board: { id: b.id, seed: b.seed, seat },
     at: t,
-    seats: b.seats.map((s, i) => ({ seat: i, name: s?.name ?? 'A free city', you: i === seat, bot: s?.bot ?? false })),
+    seats: b.seats.map((s, i) => ({
+      seat: i, name: s?.name ?? 'A free city', you: i === seat, bot: s?.bot ?? false, crest: s?.crest ?? null,
+    })),
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },

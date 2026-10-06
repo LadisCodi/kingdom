@@ -8,6 +8,7 @@
 // every answer. Nothing of it lives in the save.
 
 import type { Game } from './game';
+import type { Crest } from './sim/crest';
 import { townhall } from './sim/state';
 import type { SocialServerApi } from './socialServer/local';
 import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot } from './socialServer/types';
@@ -51,6 +52,9 @@ export class FriendsClient {
   tab: RequestsTab = 'received';
   /** The friend whose profile is open, by code. */
   openCode: string | null = null;
+  /** The shield editor's crest, picked and not yet saved; null when it
+   *  shows the one the kingdom wears. */
+  crestDraft: Crest | null = null;
   /** The profile's remove, waiting for its confirmation. */
   confirmingRemove = false;
   /** Codes with a command on its way: their buttons wait. */
@@ -83,7 +87,9 @@ export class FriendsClient {
   ranked(): RankedKingdom[] {
     const me = this.snap?.me;
     if (me === null || me === undefined) return [];
-    const all = [{ ...me, isMe: true }, ...this.snap!.friends.map((f) => ({ ...f, isMe: false }))]
+    // The player's own crest is the save's: the server may not have heard
+    // the latest yet.
+    const all = [{ ...me, crest: this.game.state.kingdom.profile.crest, isMe: true }, ...this.snap!.friends.map((f) => ({ ...f, isMe: false }))]
       .sort((a, b) => b.townhall - a.townhall || b.cells - a.cells || Number(b.isMe) - Number(a.isMe)
         || a.nickname.localeCompare(b.nickname));
     return all.map((k, i) => ({ ...k, rank: all.length > 1 && i < 3 ? i + 1 : null }));
@@ -115,13 +121,16 @@ export class FriendsClient {
     this.saying = true;
     try {
       const s = this.game.state;
-      await this.send({ kind: 'hello', progress: { townhall: townhall(s).level, cells: Object.keys(s.fog.revealed).length } });
+      await this.send({
+        kind: 'hello',
+        progress: { townhall: townhall(s).level, cells: Object.keys(s.fog.revealed).length, crest: s.kingdom.profile.crest },
+      });
     } finally {
       this.saying = false;
     }
     // A kingdom that went out onto the world board has a name already: the
     // friends list takes the same one rather than asking again.
-    const worldName = this.game.worldNickname();
+    const worldName = this.game.worldNickname() ?? this.game.state.kingdom.profile.nickname;
     if (this.snap !== null && this.snap.me === null && worldName !== null && !this.naming) await this.takeName(worldName);
     if (this.named() && this.invitedBy !== null) {
       const code = this.invitedBy;
@@ -200,6 +209,21 @@ export class FriendsClient {
     this.openCode = code;
     this.confirmingRemove = false;
     this.game.setOverlay('friendProfile');
+  }
+
+  openCrestEditor(): void {
+    this.crestDraft = null;
+    this.game.setOverlay('crestEditor');
+  }
+
+  closeCrestEditor(): void {
+    this.crestDraft = null;
+    this.game.setOverlay('friends');
+  }
+
+  saveCrest(): void {
+    if (this.crestDraft !== null) this.game.setMyCrest(this.crestDraft);
+    this.closeCrestEditor();
   }
 
   closeProfile(): void {

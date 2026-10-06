@@ -86,6 +86,7 @@ Every event is one row:
 | `return_tap` | `kind` |
 | `survey_opened` · `survey_claimed` | `level`, `paid` on a claim |
 | `friends_named` · `friends_invited` | — |
+| `crest_changed` | `tincture`, `charge` |
 | `friend_request` · `friend_accept` · `friend_decline` · `friend_cancel` · `friend_remove` | — (only those that took) |
 
 ### 3.4 The store

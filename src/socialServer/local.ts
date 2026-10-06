@@ -103,7 +103,10 @@ export class LocalSocialServer implements SocialServerApi {
     const t: LocalTables = this.store.load() ?? emptyTables();
     for (const p of PEOPLE) {
       const id = botId(p.name);
-      t.profiles[id] ??= { userId: id, nickname: p.name, code: friendCodeFor(id, 0), townhall: p.townhall, cells: p.cells, seenAt: null };
+      t.profiles[id] ??= {
+        userId: id, nickname: p.name, code: friendCodeFor(id, 0), townhall: p.townhall, cells: p.cells, crest: null, seenAt: null,
+      };
+      t.profiles[id].crest ??= null; // tables kept from before crests
       // Each keeps its own distance from now, so a week-old absence stays a
       // week old however long the stand-in has been kept.
       t.profiles[id].seenAt = now - p.awayMin * 60_000;

@@ -2461,4 +2461,5 @@ export const GAME_VERSION: string = pkg.version;
 // `H` on a modifier's area), additive.
 // v96: the friends' reward path (`Friends` on the kingdom), additive.
 // v97: the season pass goes — `Pass` leaves the kingdom (a migrator).
-export const SAVE_VERSION = 97;
+// v98: the kingdom's nickname and crest (`Profile` on the kingdom), additive.
+export const SAVE_VERSION = 98;

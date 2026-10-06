@@ -1,14 +1,31 @@
-/* The friends list (Docs/features/15-social.md §2.1, mockup M73): requests
- * under three wooden tabs, a search, the player's code on a brass plate, the
- * ranked list — all on the window's
- * parchment, each kingdom a parchment card in a thin wood border. */
+/* The friends list (Docs/features/15-social.md §2.1, mockup M73): the
+ * player's own kingdom pinned on a gilded card, then requests under three
+ * wooden tabs, a search, the player's code on a brass plate, the ranked
+ * list — all on the window's parchment, each kingdom a parchment card in a
+ * thin wood border. */
 
-/* The whole screen (`is-panes`): the list fills what the title leaves and
-   is the only thing that scrolls. */
+/* The whole screen (`is-panes`): the player's card keeps its height, and
+   the list under it fills what is left and is the only thing that scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .fr-me { flex: none; }
 .k-sheet.is-panes > .k-panel > .k-sheet-body > .fr { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: clip; }
 
-/* The name step: the words wrap beside the crest. */
-.fr-name .nick-lede > div { flex: 1; min-width: 0; }
+/* THE PLAYER'S OWN KINGDOM: the row's card warmed toward gold and a size
+   up, the crest large, the pencil a round painted knob at its end. */
+.fr-me {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  margin-bottom: calc(var(--px) * 10);
+  padding: calc(var(--px) * 6) calc(var(--px) * 10) calc(var(--px) * 6) calc(var(--px) * 6);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid var(--gold-dark);
+  background: linear-gradient(#fbe7a8, #f2d27f);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.45), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.25);
+}
+.fr-me-crest { flex: none; display: grid; }
+.fr-me .fr-name { font-size: calc(var(--px) * 19); }
+.fr-me-code { font-size: var(--text-helper); font-weight: var(--weight-strong); letter-spacing: 0.08em; color: var(--ink-muted); }
+.k-btn.k-knob.fr-edit { --knob-size: calc(var(--px) * 44); flex: none; }
 
 /* Once named, the sections come in one after another (§2.1, "the rest of the
    screen appears with an animation"). */
@@ -74,8 +91,6 @@
 }
 button.fr-row { cursor: pointer; }
 button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.25); }
-/* The player's own row: the same card, warmed toward gold. */
-.fr-row.is-me { background: #f7dc93; border-color: var(--gold-dark); }
 .fr-who { flex: 1; min-width: 0; }
 .fr-name {
   font-size: calc(var(--px) * 16);
@@ -91,26 +106,19 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 .fr-trail .k-btn:not(.k-knob) { min-height: calc(var(--px) * 36); }
 .fr-state { font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); padding: 0 calc(var(--px) * 4); }
 
-/* THE CREST: a painted shield, one of eight, picked by the friend code; the
-   kingdom's initial over its charge only where no art is there yet. */
+/* THE CREST: a blank shield in the kingdom's tincture with its charge laid
+   on it (sim/crest.ts) — two pictures on one canvas, stacked. */
 .fr-crest {
   position: relative;
   flex: none;
-  display: grid;
-  place-items: center;
+  display: block;
   width: calc(var(--px) * 44);
   height: calc(var(--px) * 48);
-  background: center / contain no-repeat;
 }
+.fr-crest.is-sm { width: calc(var(--px) * 36); height: calc(var(--px) * 40); }
 .fr-crest.is-lg { width: calc(var(--px) * 72); height: calc(var(--px) * 78); }
-.fr-crest.is-gules { background-image: url('../../assets/crest-gules.png'); }
-.fr-crest.is-azure { background-image: url('../../assets/crest-azure.png'); }
-.fr-crest.is-vert { background-image: url('../../assets/crest-vert.png'); }
-.fr-crest.is-purpure { background-image: url('../../assets/crest-purpure.png'); }
-.fr-crest.is-sable { background-image: url('../../assets/crest-sable.png'); }
-.fr-crest.is-tenne { background-image: url('../../assets/crest-tenne.png'); }
-.fr-crest.is-celeste { background-image: url('../../assets/crest-celeste.png'); }
-.fr-crest.is-murrey { background-image: url('../../assets/crest-murrey.png'); }
+.fr-crest.is-xl { width: calc(var(--px) * 100); height: calc(var(--px) * 111); }
+.fr-crest-field, .fr-crest-charge { position: absolute; inset: 0; background: center / contain no-repeat; }
 /* The initial is spoken, not drawn: the charge on the shield is the mark. */
 .fr-crest-letter { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
@@ -163,7 +171,6 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 .fr-seen::before { content: ''; width: calc(var(--px) * 9); height: calc(var(--px) * 9); border-radius: 50%; background: #9c8c76; box-shadow: inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.2); }
 .fr-seen.is-online { color: var(--leaf-dark); }
 .fr-seen.is-online::before { background: var(--leaf); }
-.fr-row.is-me .fr-seen::before { display: none; }
 
 /* Accept and decline: round painted knobs, the mark carved into them. */
 .k-btn.k-knob.fr-round { --knob-size: calc(var(--px) * 40); }
@@ -285,3 +292,36 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 .hud-knob.is-friends { right: calc(var(--rpx) * 148); }
 .hud-knob.is-friends[hidden] { display: none; }
 .hud-knob.is-friends > .k-cta { top: calc(var(--rpx) * -6); right: calc(var(--rpx) * -6); }
+
+/* THE SHIELD EDITOR: the crest large on a glow, then its two choices — the
+   fields as blank shields, the charges each on the field picked — and Save. */
+.fr-crest-ed { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
+.fr-crest-ed-preview {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: calc(var(--px) * 2) 0;
+  background: radial-gradient(closest-side, rgba(255, 226, 140, 0.75), rgba(255, 226, 140, 0));
+}
+.fr-crest-ed-name { font-size: calc(var(--px) * 18); font-weight: var(--weight-title); }
+.fr-crest-ed .k-section-head { align-self: stretch; }
+.fr-picks { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--px) * 6); align-self: stretch; }
+.fr-picks.is-charges { grid-template-columns: repeat(6, 1fr); }
+.fr-pick {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--px) * 2) 0;
+  border-radius: var(--radius-sm);
+  border: calc(var(--px) * 2) solid transparent;
+  background: rgba(226, 204, 160, 0.55);
+  cursor: pointer;
+}
+.fr-pick:active { transform: translateY(calc(var(--px) * 1)); }
+/* The one chosen: pressed into the parchment, ringed in brass. */
+.fr-pick.is-picked {
+  border-color: var(--gold-dark);
+  background: #f7dc93;
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.25);
+}
+.fr-crest-ed > .k-btn { margin-top: calc(var(--px) * 6); align-self: stretch; }
+.fr-crest-ed .k-section-head { margin: calc(var(--px) * 2) 0; }

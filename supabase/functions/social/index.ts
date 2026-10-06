@@ -20,12 +20,14 @@ const CORS = {
 const json = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-const PROFILE = 'user_id, nickname, code, townhall, cells, seen_at';
+const PROFILE = 'user_id, nickname, code, townhall, cells, crest, seen_at';
 
-interface Row { user_id: string; nickname: string; code: string | null; townhall: number; cells: number; seen_at: string | null }
+interface Row {
+  user_id: string; nickname: string; code: string | null; townhall: number; cells: number; crest: string | null; seen_at: string | null;
+}
 
 const profileOf = (r: Row) => ({
-  userId: r.user_id, nickname: r.nickname, code: r.code, townhall: r.townhall, cells: r.cells,
+  userId: r.user_id, nickname: r.nickname, code: r.code, townhall: r.townhall, cells: r.cells, crest: r.crest,
   seenAt: r.seen_at === null ? null : Date.parse(r.seen_at),
 });
 
@@ -67,9 +69,12 @@ const store = {
     if (error) throw error;
     return true;
   },
-  async touch(userId: string, progress: { townhall: number; cells: number }, now: number) {
+  async touch(userId: string, progress: { townhall: number; cells: number; crest?: string | null }, now: number) {
     const { error } = await admin.from('profiles')
-      .update({ townhall: progress.townhall, cells: progress.cells, seen_at: iso(now) }).eq('user_id', userId);
+      .update({
+        townhall: progress.townhall, cells: progress.cells, seen_at: iso(now),
+        ...(progress.crest === undefined ? {} : { crest: progress.crest }),
+      }).eq('user_id', userId);
     if (error) throw error;
   },
   async links(userId: string) {

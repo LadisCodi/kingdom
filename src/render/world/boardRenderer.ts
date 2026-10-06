@@ -25,6 +25,8 @@ import {
 } from '../../sim/world/explorers';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
+import { crestOf, type Crest } from '../../sim/crest';
+import { chargeUrl, fieldUrl } from '../../ui/crestArt';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
 import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
@@ -311,13 +313,16 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
 
   // Under every city the player can see, its kingdom's name on a plank
-  // (19 §1.3): the nickname a player chose, or a rival's.
+  // (19 §1.3): the nickname a player chose, or a rival's — its crest hung
+  // at the plank's left end (15 §2.2). The player's own is the save's, which
+  // the board may not have heard yet.
   for (const seat of source.seats()) {
     if (!seat.owner.you && states[seat.index] === 'Unknown') continue;
     const c = camera.hexToScreen(hexAt(seat.index));
     if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 2 || c.y > h + r * 3) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
-    drawNameplate(ctx, camera, c.x, c.y + r * 0.62, seat.owner.name, color, seat.owner.you);
+    const crest = crestOf(seat.owner.name, seat.owner.you ? state.kingdom.profile.crest : seat.owner.crest);
+    drawNameplate(ctx, camera, c.x, c.y + r * 0.62, seat.owner.name, color, seat.owner.you, crest);
   }
 
   // A route fades as it goes into the bank.
@@ -1201,6 +1206,7 @@ function drawPill(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y
  */
 function drawNameplate(
   ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, name: string, color: string, you: boolean,
+  crest: Crest,
 ): void {
   const fs = Math.max(10, Math.min(15, camera.hexWidth * 0.1));
   ctx.save();
@@ -1245,6 +1251,13 @@ function drawNameplate(
   ctx.fillText(name, x, ty + 1);
   ctx.fillStyle = '#fff3d6';
   ctx.fillText(name, x, ty);
+  // The crest, hung over the plank's left end: its field, then its charge.
+  const ch = ph * 1.7;
+  const cw = ch * (144 / 160);
+  for (const url of [fieldUrl(crest.tincture), chargeUrl(crest.charge)]) {
+    const art = url === null ? null : loadImage(url);
+    if (art?.ready) ctx.drawImage(art.img, px - cw * 0.55, y - ch * 0.55, cw, ch);
+  }
   ctx.restore();
 }
 
