@@ -2097,13 +2097,30 @@ export class Game {
     this.notify();
   }
 
-  /** The pill for a bought product's next-day part: ready, or when. */
+  /** The pill for a bought product's next-day part: ready, or when. A
+   *  product with a widget on the map says it there instead. */
   nextDayPill(): { sku: StoreSkuId; ready: boolean; at: number } | null {
     const now = this.now();
-    const ready = nextDayReady(this.state, now)[0];
+    const ready = nextDayReady(this.state, now).find((sku) => !STORE[sku].widget);
     if (ready !== undefined) return { sku: ready, ready: true, at: now };
-    const waiting = nextDayWaiting(this.state, now)[0];
+    const waiting = nextDayWaiting(this.state, now).find((d) => !STORE[d.sku].widget);
     return waiting === undefined ? null : { sku: waiting.sku, ready: false, at: waiting.claimableAt };
+  }
+
+  /** The offers floating on the map under the Survey (ui/offerWidget.ts):
+   *  each `widget` offer on sale, or bought with its next-day part still to
+   *  claim — counting down to it, or ready. */
+  offerWidgets(): OfferWidget[] {
+    const now = this.now();
+    return OFFER_ORDER.filter((id) => STORE[id].widget).flatMap((sku): OfferWidget[] => {
+      const s = STORE[sku];
+      const base = { sku, name: s.name, sprite: s.sprite, hero: s.hero };
+      if (nextDayReady(this.state, now).includes(sku)) return [{ ...base, state: 'ready' as const, at: now }];
+      const waiting = nextDayWaiting(this.state, now).find((d) => d.sku === sku);
+      if (waiting !== undefined) return [{ ...base, state: 'waiting' as const, at: waiting.claimableAt }];
+      const w = offerWindow(this.state, sku);
+      return offerOn(this.state, sku, now) ? [{ ...base, state: 'sale' as const, at: w?.closes ?? 0 }] : [];
+    });
   }
 
   /** The explorer the store sells for Gems: its price, how many are out at
@@ -6337,4 +6354,16 @@ export interface OfferTile {
   count: number;
   /** An item: what one is worth now (a chest's coin), for its tooltip. */
   worth?: Wallet;
+}
+
+/** An offer floating on the map (`Game.offerWidgets`). */
+export interface OfferWidget {
+  sku: StoreSkuId;
+  name: string;
+  sprite: string;
+  hero: HeroId | null;
+  /** On sale; bought and counting down to its next-day part; or that part ready. */
+  state: 'sale' | 'waiting' | 'ready';
+  /** When the window closes (0: never) or the next-day part is due. */
+  at: number;
 }

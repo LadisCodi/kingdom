@@ -203,6 +203,12 @@
   session with a part ready, the splash opens on it, and its button claims.
 - Any product may carry a next-day part (`nextDay*`); a hero's fragments
   need the product's `hero`.
+- An offer with `widget` floats on the map **under the Survey's widget**,
+  top left, while it is on sale or its next-day part waits: its icon
+  (`sprite`) over a small wooden sign whose words scroll — its name (and its
+  countdown, if its window closes), *Tomorrow in …*, then **Claim!** with a
+  red dot. A tap opens its splash. Such an offer's next-day part is shown
+  there, not on the right-edge pill.
 
 ## 3. The simulated budget
 

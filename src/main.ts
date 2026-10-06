@@ -82,6 +82,7 @@ import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
 import { mountNextDayPill, mountOfferSplash } from './ui/offerSplash';
+import { mountOfferWidgets } from './ui/offerWidget';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
@@ -267,6 +268,7 @@ async function boot(): Promise<void> {
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountNextDayPill(game, document.getElementById('nextday')!);
+  mountOfferWidgets(game, document.getElementById('offerwidgets')!);
   mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
