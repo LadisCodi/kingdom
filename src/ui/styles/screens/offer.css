@@ -498,3 +498,73 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 @media (prefers-reduced-motion: reduce) {
   .ofw-icon, .ofw-track { animation: none; }
 }
+
+/* --------------------------------------------- the grouped offers widget */
+
+/* How many offers wait behind the one widget: a red enamel badge on its
+ * corner (the dot stays for "something to claim"). */
+.ofw-slot { display: contents; }
+.ofw-count {
+  position: absolute;
+  top: 0;
+  left: calc(var(--px) * 2);
+  min-width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 10);
+  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
+  border: calc(var(--px) * 2) solid #fff2dc;
+  color: #fff;
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  line-height: calc(var(--px) * 16);
+  text-align: center;
+}
+.ofw-count[hidden] { display: none; }
+
+/* The splash opened from it: every offer in a row along the top — small
+ * wooden squares, the one on screen raised in parchment, one with something
+ * to claim marked with the red dot. */
+.ofs-tabs {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: calc(var(--px) * 6);
+  margin: calc(var(--px) * -18) calc(var(--px) * 44) calc(var(--px) * 10) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ofs-tabs::-webkit-scrollbar { display: none; }
+.ofs-tab {
+  position: relative;
+  flex: 0 0 calc(var(--px) * 50);
+  height: calc(var(--px) * 50);
+  display: grid;
+  place-items: center;
+  padding: calc(var(--px) * 2);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 8);
+  background: linear-gradient(var(--wood-light), var(--wood));
+  cursor: pointer;
+}
+.ofs-tab.is-open {
+  background: linear-gradient(#fff6dc, var(--parchment));
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 205, 96, 0.8);
+}
+.ofs-tab .ofw-icon { width: 100%; height: 100%; animation: none; filter: none; }
+.ofs-tab .ofw-icon.is-fallback { border-radius: calc(var(--px) * 6); }
+.ofs-tab .ofw-icon.is-fallback > .icon { --icon-size: calc(var(--px) * 30); }
+.ofs-tab.is-ready::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--px) * -4);
+  right: calc(var(--px) * -4);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
+  border: calc(var(--px) * 2) solid #fff2dc;
+}
+/* The row takes the top: the light and its figure start lower. */
+.ofs-screen.has-tabs .ofs-hero { top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92); height: 60%; }

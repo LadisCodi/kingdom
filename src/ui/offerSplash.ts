@@ -19,7 +19,8 @@ import { boonText } from '../sim/heroes';
 import type { CurrencyId, HeroId, ItemId, StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { playSfx } from '../audio/sfx';
-import type { Game, OfferSale, OfferTile } from '../game';
+import type { Game, OfferSale, OfferTile, OfferWidget } from '../game';
+import { offerIcon } from './offerWidget';
 import { itemIcon } from './itemArt';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
@@ -170,7 +171,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
   /** Live countdowns: the element and the instant it counts to. */
   let clocks: Array<[HTMLElement, number]> = [];
 
-  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting'): void => {
+  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting', browse: OfferWidget[]): void => {
     const s = STORE[sku];
     const tiles = game.offerTiles(sku);
     const sale = game.offerSale(sku);
@@ -217,9 +218,20 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
         ...(sale.chain === null ? [] : [el('span', { class: 'ofs-chain' },
           `${ROMAN[sale.chain.at - 1] ?? sale.chain.at} / ${ROMAN[sale.chain.of - 1] ?? sale.chain.of}`)]));
 
-    const screen = el('div', { class: 'ofs-screen', role: 'dialog', 'aria-modal': 'true', 'aria-label': s.name },
+    // Opened from the offers widget: every offer in a row along the top, the
+    // one on screen raised, one with something to claim marked.
+    const tabs = browse.length < 2 ? null : el('div', { class: 'ofs-tabs', role: 'tablist' }, ...browse.map((w) => {
+      const tab = el('button', {
+        class: `ofs-tab${w.sku === sku ? ' is-open' : ''}${w.state === 'ready' ? ' is-ready' : ''}`,
+        type: 'button', role: 'tab', 'aria-selected': w.sku === sku ? 'true' : 'false', 'aria-label': w.name,
+      }, offerIcon(w));
+      tab.addEventListener('click', () => game.openOfferSplash(w.sku, true));
+      return tab;
+    }));
+    const screen = el('div', { class: `ofs-screen${tabs === null ? '' : ' has-tabs'}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': s.name },
       close,
       el('div', { class: 'ofs-column' },
+        ...(tabs === null ? [] : [tabs]),
         el('div', { class: `ofs-hero${s.art !== '' ? ' is-cutout' : ''}`, 'aria-hidden': 'true' },
           el('div', { class: 'ofs-burst' }),
           ...(art === null ? [] : [spriteImgAt(art, 'ofs-hero-art')]),
@@ -246,11 +258,12 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
 
   const refresh = (): void => {
     const on = game.offerSplashOnScreen();
-    const key = on === null ? null : `${on.mode}:${on.sku}`;
+    const browse = on?.browse === true ? game.offerWidgets() : [];
+    const key = on === null ? null : `${on.mode}:${on.sku}:${browse.map((w) => `${w.sku}.${w.state}`).join(',')}`;
     if (key !== showing) {
       showing = key;
       if (on === null) root.replaceChildren();
-      else build(on.sku, on.mode);
+      else build(on.sku, on.mode, browse);
     }
     for (const [node, at] of clocks) {
       const text = formatCountdown(Math.max(0, Math.ceil((at - game.now()) / 1000)));
