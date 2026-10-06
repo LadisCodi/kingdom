@@ -11,7 +11,8 @@
     "fragmentsPerMiss": 3,
     "pullStardust": 50,
     "freePerDay": 5,
-    "freeCooldownSeconds": 300
+    "freeCooldownSeconds": 300,
+    "featuredHero": null
   },
   "advanced": {
     "key": "GoldKey",
@@ -25,6 +26,7 @@
     "fragmentsPerMiss": 6,
     "pullStardust": 150,
     "freePerDay": 1,
-    "freeCooldownSeconds": 0
+    "freeCooldownSeconds": 0,
+    "featuredHero": "Pharao"
   }
 }

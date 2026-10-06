@@ -17,7 +17,7 @@ import { setHidden } from './domWrite';
 import { iconEl, type IconName } from './kit';
 
 /** A picture of what an offer is for, while it has no icon of its own. */
-function kindIcon(sku: StoreSkuId): IconName {
+export function kindIcon(sku: StoreSkuId): IconName {
   const s = STORE[sku];
   if (s.explorers > 0) return 'compass';
   if (s.heroSlots > 0) return 'helmet';

@@ -87,7 +87,7 @@ function grid(game: Game): HTMLElement {
     // (Docs/features/14-monetization.md §2.1), so the roster POINTS at it
     // rather than holding a copy of it.
     el('div', { class: 'hp-go' },
-      btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.setOverlay('store') })),
+      btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') })),
   );
 }
 
@@ -223,7 +223,7 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
     enough ? priceLine([{ icon: 'fragment', art: heroFragmentIcon(id), amount: formatExact(need) }]) : null,
     enough
       ? btn({ label: 'Recruit', kind: 'primary', onClick: () => game.doUnlockHero(id) })
-      : btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.setOverlay('store') }),
+      : btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') }),
   ));
 }
 

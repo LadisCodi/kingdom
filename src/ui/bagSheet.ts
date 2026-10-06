@@ -96,7 +96,7 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
     return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
       el('div', { class: 'bag-pop-name' }, itemName(item.def)),
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
-      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.setOverlay('store') })));
+      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.openStore('supplies') })));
   }
   // A speed-up is spent from a timer, so its popover goes to one (§3.5).
   if (item.def.kind === 'speedup') {

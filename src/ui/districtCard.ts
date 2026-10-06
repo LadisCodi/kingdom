@@ -170,7 +170,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         }),
         el('span', { 'data-coach': 'card:call' }, btn({
           label: 'Call', kind: 'gem', icon: 'star',
-          onClick: () => game.setOverlay('store'),
+          onClick: () => game.openStore('heroes'),
         }))));
     }
 

@@ -91,21 +91,21 @@
 
 ### 2.1 The store screen
 
-- One sheet, two doors: the **leftmost tab of the nav bar** and the **Gems
+- One screen, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
-- In this order:
+- Its own backdrop: a magic merchant's shop, soft and out of focus, under a
+  warm dark wash. A title plank, its close, and a strip of wooden tabs:
 
-| Section | Content | Paid with |
+| Tab | Content | Paid with |
 |---|---|---|
-| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands; a row opens the offer's splash | the monthly budget |
-| **Today** | the day's offers (§2.5), with the time to the next draw | the monthly budget |
-| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
-| **For the Bag** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
-| **Relics** | the fragment pack | Gems |
-| **Keys** | one card per banner: what a key costs and how many the player holds | Gems |
-| **Crew** | a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands); at a ceiling it says so and sells nothing | Gems |
-| **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price. A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
+| **Offers** — only while there is an offer or a daily offer | a banner per offer on sale (§2.4): its figure, name, pitch, up to four reward tiles (+N), value seal, countdown, price — a tap opens its splash; under them **Today** (§2.5) with the time to the next draw | the monthly budget |
+| **Heroes** | the keys held, each with a **+** that buys one (Gems); **Call for aid** over a carousel of the roster — one hero at a time drifting right to left and fading into the next, every hero once before any repeats; **Odds** on a tap; a banner per call: the common call shows its silver key, the golden call its featured Legendary (`featuredHero`); free calls today, *Call once* (free, an ad, or a key) and *Call ×10*, the pity. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | keys |
+| **Supplies** | the Bag's bundles (§2.3), the relic fragment pack, and the crew: a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands) — at a ceiling it says so | money · Gems |
+| **Gems** | six packs in a 3×2 grid — count over art over price. A tap opens the **confirmation** (§3.2) | the monthly budget |
 
+- It opens on **Offers**, or on **Heroes** when there is none; a door that
+  names a tab opens on it (a call for aid → Heroes, the Bag or a shortfall →
+  Supplies).
 - The store shows no budget line, no `SIMULADO` mark, and no price greyed out
   for a short allowance. The budget, the profile and the word `SIMULADO`
   appear in one place only: the confirmation (§3.2).
