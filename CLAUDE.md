@@ -235,8 +235,9 @@ than the build is rejected rather than downgraded.
 - **Every tap on the ground costs 1 Mana** (trees, berries, crops, rocks,
   mountains, shoals); paying fog costs Gold. **A tap on a building never costs
   Mana**: a ready store is collected free, otherwise the building opens.
-  There is no house tap — only the Tithe pulls rent forward. Nothing else
-  draws against the pool; artifact upkeep was removed.
+  There is no house tap, and nothing pulls rent forward. Beyond taps, Mana
+  pays a city relic's activation in its Shrine and a world relic's spell;
+  artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
   `adOfferPill.ts`. They hide behind any sheet.

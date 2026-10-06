@@ -1695,7 +1695,7 @@ export function deserialize(
   // AFTER the modifier stack is restored: the relic passives are re-derived
   // from the levels and the legendary boons from the roster, so a save written
   // before either curve was rebalanced loads correct rather than stale — while
-  // everything genuinely stateful (a Haste still running, a season's cards)
+  // everything genuinely stateful (a zone still standing, a season's cards)
   // comes back from the file untouched. Neither needs a migrator for the same
   // reason: both are DERIVED, and a save that predates them re-derives to the
   // right answer on the first load.

@@ -20,6 +20,7 @@ import {
   activeChargesAt, activeDurationMsAt, activePowerAt, activeRadiusAt,
 } from '../sim/casting';
 import { passiveValueAtLevel } from '../sim/artifacts';
+import { auraRadiusAt } from '../sim/hosts';
 import { formatDuration, formatExact, formatNumber } from './format';
 import type { ModifierStat } from '../sim/modifiers';
 import type { ArtifactId } from '../sim/state';
@@ -96,6 +97,12 @@ export function relicStatsAt(id: ArtifactId, level: number): RelicStat[] {
     const face = STAT_FACE[s.stat];
     if (face === undefined) continue;
     out.push({ key: s.stat, icon: face.icon, label: face.label, value: say(s.op, value) });
+  }
+  // A CITY RELIC'S LEVEL IS ITS POWER, and its reach is part of that: the
+  // aura round its Shrine widens a ring at each step (sim/hosts.ts).
+  if (ARTIFACTS[id].activation !== null) {
+    const radius = auraRadiusAt(id, level);
+    out.push({ key: 'aura', icon: 'compass', label: 'Aura', value: `${radius} \u00b7 ${(2 * radius + 1) ** 2} cells` });
   }
   return out;
 }

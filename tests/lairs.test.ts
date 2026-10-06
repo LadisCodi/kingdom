@@ -29,7 +29,6 @@ import { standingLairAt, cellHasSite } from '../src/sim/sites';
 import { harvestBlock } from '../src/sim/harvest';
 import { placementBlock } from '../src/sim/districts';
 import { workableCells } from '../src/sim/workers';
-import { reapCells } from '../src/sim/casting';
 import { formationPower } from '../src/sim/combat';
 import { attackLair, claimLair, lairBlock, partyBoard, partyOf, previewLair } from '../src/sim/expeditions';
 import { grantHero } from '../src/sim/heroes';
@@ -356,14 +355,6 @@ describe('the zone', () => {
     expect(workableCells(state, map, quarry)).toContainEqual(MOUNTAIN);
     advance(state, map, T0);
     expect(workableCells(state, map, quarry)).not.toContainEqual(MOUNTAIN);
-  });
-
-  it('is skipped by a spell', () => {
-    const state = earningKingdom();
-    reveal(state, [MOUNTAIN]);
-    expect(reapCells(state, map, MOUNTAIN, 1)).toContainEqual(MOUNTAIN);
-    advance(state, map, T0);
-    expect(reapCells(state, map, MOUNTAIN, 1)).not.toContainEqual(MOUNTAIN);
   });
 });
 

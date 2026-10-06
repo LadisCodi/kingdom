@@ -5,12 +5,10 @@ import { roundPrice } from './roundPrice';
 import { relicAuraOver } from './hosts';
 import { CITY_DEF, DISTRICTS, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
-import { recordResourceDiscovery } from './discovery';
-import { recordEvent } from './events';
 import { techMultiplier, techValue } from './techEffects';
-import { effectiveTaxRate, tapWorkSeconds } from './upgrades';
+import { effectiveTaxRate } from './upgrades';
 import { storageSpace, storeInto } from './storage';
-import { addToWallet, type District, type GameState } from './state';
+import type { District, GameState } from './state';
 
 /**
  * Capacity of ONE district at its CURRENT level (0 = houses nobody).
@@ -256,23 +254,4 @@ function accrueRent(state: GameState, d: District, toTime: number): number {
   storeInto(d, 'Gold', units);
   d.rentAnchor = anchor + units * msPerGold;
   return units;
-}
-
-/**
- * THE TITHE's pull (Docs/features/09-relics.md §2.1): one tap's worth of this
- * house's rent — `tap.workSeconds` of it — paid straight into the wallet.
- *
- * A house needs no tap to be collected any more, so this is the one place
- * rent is still paid forward, and it mints: an advance against a
- * continuous accrual. It bypasses the store, so a full house is no reason
- * for the spell to fizzle.
- */
-export function pullHouseForward(state: GameState, district: District): number {
-  const rate = houseGoldPerMinute(state, district);
-  if (rate <= 0) return 0;
-  const gold = Math.max(1, roundPrice((tapWorkSeconds(state) * rate) / 60));
-  addToWallet(state.city.wallet, 'Gold', gold);
-  recordResourceDiscovery(state, 'Gold');
-  recordEvent(state, { kind: 'collect', currency: 'Gold', amount: gold });
-  return gold;
 }

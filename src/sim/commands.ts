@@ -13,7 +13,7 @@ import {
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { dropFragments } from './relics';
 import { lairHolding } from './lairZone';
-import { endHostedSpell } from './hosts';
+import { closeRelicWindows, nextRelicWindowEnd } from './hosts';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
@@ -47,7 +47,7 @@ import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, cellsOfRect, completesAt, districtById,
   districtOccupies, getWallet,
   districtCells, newId, remainingSeconds, townhall,
-  type Coord, type District, type DistrictId, type GameState,
+  type ArtifactId, type Coord, type District, type DistrictId, type GameState,
   type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
@@ -309,9 +309,8 @@ function relocateDistrict(
   state: GameState, map: MapData, district: District, cell: Coord, now: number,
 ): boolean {
   const from = district.location;
-  // A Shrine carries its relic's aura with it, so the spell running in the
-  // old one ends here; the cooldown keeps counting (sim/hosts.ts).
-  if (district.hosts !== undefined) endHostedSpell(state, district.hosts, now);
+  // A Shrine carries its relic's aura with it, window and all: the aura is
+  // read from where the Shrine stands, and the reprice below covers both ends.
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
   });
@@ -649,9 +648,11 @@ export interface AdvanceResult {
   completedItems: QueueItem[];
   goldEarned: number; // rent that landed in the houses' stores in this window
   trainedPopulation: number; // villagers who finished training
-  /** Modifiers whose window closed inside this advance — the "your Haste ran
-   *  out while you were away" half of the offline report. */
+  /** Modifiers whose window closed inside this advance — the "it ran out
+   *  while you were away" half of the offline report. */
   expiredModifiers: Modifier[];
+  /** City relics whose activation window closed inside this advance. */
+  relicsAsleep: ArtifactId[];
   manaEarned: number;
   knowledgeEarned: number;
   /** Units that finished training in this window. */
@@ -671,7 +672,7 @@ export interface AdvanceResult {
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
-  trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
+  trainedPopulation: 0, expiredModifiers: [], relicsAsleep: [], manaEarned: 0, knowledgeEarned: 0,
   trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
   explorersHome: [],
   worldBuildsDone: [],
@@ -695,6 +696,8 @@ function applyDueAt(
       out.completedItems.push(item);
     }
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
+    // A relic's window closing changes what its aura pays, rent included.
+    out.relicsAsleep.push(...closeRelicWindows(state, t));
     // One line, two kinds of trainee: villagers land on the population, units
     // in the army, and the caller is told about each separately.
     for (const trainee of advanceTraining(state, t)) {
@@ -758,6 +761,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
     if (item.startedAt !== null) consider(completesAt(item));
   }
   consider(nextModifierExpiry(state, after));
+  consider(nextRelicWindowEnd(state, after));
   consider(nextTrainingCompletion(state, after));
   consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
