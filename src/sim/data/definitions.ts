@@ -1491,7 +1491,7 @@ export const SHRINE_RULES = balance.shrines as { manaCap: number; premiumGems: n
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
-  keystoneOneIn: number; keystoneWorth: number; levelCostBase: number; levelCostEvery: number;
+  keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
   replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
   replicaGemsPiece: number; replicaGemsKeystone: number;
   restorerChestGems: number; restorerChestSize: number;

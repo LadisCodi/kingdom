@@ -3,8 +3,9 @@
 //
 // A relic is six fragments — five pieces and one keystone. Fragments are
 // found where the game already pays; six distinct ones restore the relic at
-// level 1, and every fragment past that is a spare that levels it, with no
-// ceiling. Rules this file keeps:
+// level 1, and every level after takes one of each of the six again, and
+// Stardust, with no ceiling. Copies past the first of a slot are spares,
+// which forge a missing one. Rules this file keeps:
 //
 //  1. THE FIRST FRAGMENT IS FOUND BY PLAY, at the relic's door — a lair's
 //     prize for a city relic, a world source for a world one. A drop never
@@ -22,6 +23,7 @@ import {
   ARTIFACT_ORDER, RELIC_RULES, relicDoor, relicKind, type RelicKind,
 } from './data/definitions';
 import { rand } from './rng';
+import { roundPrice } from './roundPrice';
 import { addToWallet, getWallet, type ArtifactId, type GameState } from './state';
 
 /** Slots 0–4 are the pieces, 5 the keystone. */
@@ -73,10 +75,10 @@ export function spareWorth(state: GameState, id: ArtifactId): number {
   return worth;
 }
 
-/** Spares the next level asks: `levelCostBase`, one more every
- *  `levelCostEvery` levels (§11: 2, +1 every 2 levels). */
-export const levelCost = (level: number): number =>
-  RELIC_RULES.levelCostBase + Math.floor(Math.max(0, level - 1) / Math.max(1, RELIC_RULES.levelCostEvery));
+/** Stardust the next level-up asks, from `level`: `levelStardustBase`, times
+ *  `levelStardustGrowth` a level, rounded as every curve's price is. */
+export const levelStardust = (level: number): number =>
+  roundPrice(RELIC_RULES.levelStardustBase * RELIC_RULES.levelStardustGrowth ** Math.max(0, level - 1));
 
 /**
  * Spend spares worth at least `worth`: bound before found (the found are
@@ -117,13 +119,32 @@ export function restoreRelic(state: GameState, id: ArtifactId): RestoreResult {
   return 'Restored';
 }
 
-export type LevelUpResult = 'Levelled' | 'NotRestored' | 'NotEnoughSpares';
+export type LevelUpResult = 'Levelled' | 'NotRestored' | 'MissingFragments' | 'NotEnoughStardust';
 
-/** Spend spares for the next level. */
-export function levelUpRelic(state: GameState, id: ArtifactId): LevelUpResult {
+/** Why the next level is out of reach, or null when it is not. */
+export function levelUpBlock(state: GameState, id: ArtifactId): Exclude<LevelUpResult, 'Levelled'> | null {
   if (!isRestored(state, id)) return 'NotRestored';
+  if (distinctHeld(state, id) < SLOTS) return 'MissingFragments';
+  if (getWallet(state.kingdom.wallet, 'Stardust') < levelStardust(artifactLevel(state, id))) return 'NotEnoughStardust';
+  return null;
+}
+
+/**
+ * A LEVEL IS A WHOLE SET AND ITS STARDUST: one fragment of EACH of the six
+ * slots — bound before found, since the found are what can be sent — and the
+ * level's Stardust. Every level, always; nothing is spent when either falls
+ * short.
+ */
+export function levelUpRelic(state: GameState, id: ArtifactId): LevelUpResult {
+  const block = levelUpBlock(state, id);
+  if (block !== null) return block;
   const level = artifactLevel(state, id);
-  if (!spendSpares(state, id, levelCost(level))) return 'NotEnoughSpares';
+  const f = own(state, id);
+  for (let s = 0; s < SLOTS; s++) {
+    if (f.bound[s] > 0) f.bound[s] -= 1;
+    else f.found[s] -= 1;
+  }
+  addToWallet(state.kingdom.wallet, 'Stardust', -levelStardust(level));
   grantArtifactLevel(state, id);
   track(state, 'relic_levelled', { relic: id, level: level + 1 });
   return 'Levelled';

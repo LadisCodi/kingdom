@@ -8,8 +8,8 @@
   "fragments": {
     "keystoneOneIn": 8,
     "keystoneWorth": 3,
-    "levelCostBase": 2,
-    "levelCostEvery": 2,
+    "levelStardustBase": 100,
+    "levelStardustGrowth": 1.5,
     "replicaFreeSparesPiece": 6,
     "replicaFreeSparesKeystone": 12,
     "replicaSpares": 3,

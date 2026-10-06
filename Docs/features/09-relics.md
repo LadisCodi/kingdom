@@ -680,6 +680,7 @@ Every number below is a **proposal until it is authored**; the ones marked
 | Gems an album pays · the collection prize | **2,000 each, 25,000 at the end, fixed** — 16,000 across the eight, **first lap only** | `collection.albumGems`, `collection.prizeGems` |
 | Sends a day | **3, fixed**; gold never | `collection.sendsPerDay` |
 | A relic's `passiveBase` and `passivePerLevel` | per relic | `artifacts` |
+| What a level-up costs | **one fragment of each of the six slots**, every level, and **Stardust**: 100, ×1.5 a level (100 · 150 · 225 · 340…) | `relics.fragments`, `levelStardustBase` · `levelStardustGrowth` |
 | How long a city relic stays awake, by Shrine level | **5 · 30 · 60 · 240 · 480 min** | `buildings`, Shrine `relicWindowMinutesPerLevel` |
 | What activating a city relic costs | **20 Mana** each | `artifacts`, `activeManaCost` |
 | How far a city relic's aura reaches at level 1 | **2** cells round the Shrine | `artifacts`, `activeRadius` |
