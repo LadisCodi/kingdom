@@ -176,3 +176,5 @@ export function memoryBoards(): BoardStore & {
 
 // The bundle's whole surface: the edge function needs the server and its door.
 export { handleWorld };
+// …and the friends list's, which the `social` function runs from the same bundle.
+export { serveSocial } from '../socialServer/serve';

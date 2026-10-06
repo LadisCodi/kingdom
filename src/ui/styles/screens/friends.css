@@ -1,0 +1,398 @@
+/* The friends list (Docs/features/15-social.md §2.1, mockup M73): requests
+ * under three wooden tabs, a search, the player's code on a brass plate, the
+ * ranked list, and the reward path at the foot — all on the window's
+ * parchment, each kingdom a parchment card in a thin wood border. */
+
+/* The name step: the words wrap beside the crest. */
+.fr-name .nick-lede > div { flex: 1; min-width: 0; }
+
+/* Once named, the sections come in one after another (§2.1, "the rest of the
+   screen appears with an animation"). */
+.fr.is-named > * { animation: fr-in 320ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+.fr.is-named > :nth-child(2) { animation-delay: 60ms; }
+.fr.is-named > :nth-child(3) { animation-delay: 120ms; }
+.fr.is-named > :nth-child(4) { animation-delay: 180ms; }
+.fr.is-named > :nth-child(5) { animation-delay: 240ms; }
+@keyframes fr-in {
+  from { opacity: 0; transform: translateY(calc(var(--px) * 10)); }
+  to { opacity: 1; transform: none; }
+}
+/* …but only the first time: a screen rebuilt by an answer stays put. */
+.fr.is-settled > * { animation: none; }
+
+.fr > section + section { margin-top: var(--space-section); }
+.fr-empty {
+  margin: calc(var(--px) * 6) 0;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-small);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* THE TABS: the Build menu's wooden plates, three across, with a red wax
+   seal of a count on their corner. */
+.fr-tabs { margin-bottom: calc(var(--px) * 8); }
+.fr-count {
+  position: absolute;
+  top: calc(var(--px) * -6);
+  right: calc(var(--px) * -4);
+  display: grid;
+  place-items: center;
+  min-width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 10);
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-title);
+  color: #fff6e0;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(60, 10, 4, 0.7);
+  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
+  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
+}
+.fr-count:not(.is-asking) { filter: saturate(0.5) brightness(0.9); }
+
+/* A KINGDOM'S ROW: a parchment card in a thin wood border, lit from above
+   (the Settings rows' material). */
+.fr-rows { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.fr-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  width: 100%;
+  min-height: calc(var(--px) * 56);
+  padding: calc(var(--px) * 5) calc(var(--px) * 8);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.55);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.26), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.18);
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+}
+button.fr-row { cursor: pointer; }
+button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.25); }
+/* The player's own row: the same card, warmed toward gold. */
+.fr-row.is-me { background: #f7dc93; border-color: var(--gold-dark); }
+.fr-who { flex: 1; min-width: 0; }
+.fr-name {
+  font-size: calc(var(--px) * 16);
+  font-weight: var(--weight-title);
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fr-sub { display: flex; align-items: center; gap: calc(var(--px) * 6); margin-top: calc(var(--px) * 3); flex-wrap: wrap; }
+.fr-note { font-size: var(--text-helper); color: var(--ink-muted); font-weight: var(--weight-small); }
+.fr-trail { display: flex; align-items: center; gap: calc(var(--px) * 6); flex: none; }
+.fr-trail .k-btn:not(.k-knob) { min-height: calc(var(--px) * 36); }
+.fr-state { font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); padding: 0 calc(var(--px) * 4); }
+
+/* THE CREST: a painted shield, one of eight, picked by the friend code; the
+   kingdom's initial over its charge only where no art is there yet. */
+.fr-crest {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 48);
+  background: center / contain no-repeat;
+}
+.fr-crest.is-lg { width: calc(var(--px) * 72); height: calc(var(--px) * 78); }
+.fr-crest.is-gules { background-image: url('../../assets/crest-gules.png'); }
+.fr-crest.is-azure { background-image: url('../../assets/crest-azure.png'); }
+.fr-crest.is-vert { background-image: url('../../assets/crest-vert.png'); }
+.fr-crest.is-purpure { background-image: url('../../assets/crest-purpure.png'); }
+.fr-crest.is-sable { background-image: url('../../assets/crest-sable.png'); }
+.fr-crest.is-tenne { background-image: url('../../assets/crest-tenne.png'); }
+.fr-crest.is-celeste { background-image: url('../../assets/crest-celeste.png'); }
+.fr-crest.is-murrey { background-image: url('../../assets/crest-murrey.png'); }
+/* The initial is spoken, not drawn: the charge on the shield is the mark. */
+.fr-crest-letter { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* HOW FAR IT HAS COME: the Townhall on a coloured pill, one colour a band of
+   two levels (kingdomBits.ts `townhallBand`). */
+.fr-th {
+  --band: #3aa729;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 3);
+  height: calc(var(--px) * 20);
+  padding: 0 calc(var(--px) * 8) 0 calc(var(--px) * 3);
+  border-radius: calc(var(--px) * 10);
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-title);
+  color: #fffaf0;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.45);
+  white-space: nowrap;
+  background: linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.12)), var(--band);
+  box-shadow: inset 0 0 0 calc(var(--px) * 1.5) rgba(30, 20, 10, 0.28);
+}
+.fr-th .icon { --icon-size: calc(var(--px) * 18); }
+.fr-th.is-band-0 { --band: #3aa729; }
+.fr-th.is-band-1 { --band: #0aa082; }
+.fr-th.is-band-2 { --band: #1785e9; }
+.fr-th.is-band-3 { --band: #7a5be0; }
+.fr-th.is-band-4 { --band: #de8a00; }
+
+/* THE PODIUM: a hanging ribbon, gold, silver and bronze with the place
+   painted on it, plain wood past the third. */
+.fr-rank {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 30);
+  height: calc(var(--px) * 40);
+  padding-bottom: calc(var(--px) * 8);
+  font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
+  color: #fffaf0;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.6), 0 0 calc(var(--px) * 2) rgba(30, 20, 10, 0.5);
+  background: center / contain no-repeat;
+}
+.fr-rank.is-gold { background-image: url('../../assets/rank-gold.png'); }
+.fr-rank.is-silver { background-image: url('../../assets/rank-silver.png'); }
+.fr-rank.is-bronze { background-image: url('../../assets/rank-bronze.png'); }
+.fr-rank.is-plain { background-image: url('../../assets/rank-wood.png'); opacity: 0.85; }
+
+.fr-seen { display: inline-flex; align-items: center; gap: calc(var(--px) * 5); font-size: var(--text-helper); font-weight: var(--weight-body); color: var(--ink-muted); white-space: nowrap; }
+.fr-seen::before { content: ''; width: calc(var(--px) * 9); height: calc(var(--px) * 9); border-radius: 50%; background: #9c8c76; box-shadow: inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.2); }
+.fr-seen.is-online { color: var(--leaf-dark); }
+.fr-seen.is-online::before { background: var(--leaf); }
+.fr-row.is-me .fr-seen::before { display: none; }
+
+/* Accept and decline: round painted knobs, the mark carved into them. */
+.k-btn.k-knob.fr-round { --knob-size: calc(var(--px) * 40); }
+
+/* THE SEARCH: a parchment field with the magnifier set into it, and a
+   wooden button. */
+.fr-search-row { display: flex; gap: calc(var(--px) * 8); align-items: center; }
+.fr-field {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--px) * 42);
+  padding: 0 calc(var(--px) * 12) 0 calc(var(--px) * 36);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.55);
+  background: url('../../assets/fr-search.png') calc(var(--px) * 9) center / calc(var(--px) * 20) no-repeat, #fbf1da;
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.18);
+  font: inherit;
+  font-size: calc(var(--px) * 15);
+  font-weight: var(--weight-body);
+  color: var(--ink);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fr-field::placeholder { color: var(--ink-muted); font-weight: var(--weight-body); }
+.fr-field::-webkit-search-cancel-button { display: none; }
+.fr-field:focus { outline: none; border-color: var(--wood-light); }
+.fr-found { margin-top: calc(var(--px) * 8); }
+
+/* THE INVITATION: the player's code on a brass plate — a tap copies it — and
+   the green button that shares it. */
+.fr-invite {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
+  background: rgba(226, 204, 160, 0.55);
+}
+.fr-code {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--px) * 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.fr-code-label { font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); }
+.fr-code-value {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+  height: calc(var(--px) * 36);
+  padding: 0 calc(var(--px) * 30) 0 calc(var(--px) * 10);
+  border-radius: var(--radius-sm);
+  border: calc(var(--px) * 2) solid #8a5a17;
+  background:
+    url('../../assets/fr-copy.png') right calc(var(--px) * 8) center / calc(var(--px) * 18) no-repeat,
+    linear-gradient(#f8d675, #e0a93a 55%, #c88a22);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 250, 220, 0.6), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3);
+  font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
+  letter-spacing: 0.08em;
+  color: #4a2a08;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 240, 190, 0.6);
+  white-space: nowrap;
+}
+.fr-code:active .fr-code-value { transform: translateY(calc(var(--px) * 1)); }
+.fr-invite > .k-btn { flex: none; }
+.fr-invite > .k-btn .k-btn-label::before {
+  content: '';
+  width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  margin-right: calc(var(--px) * 6);
+  background: url('../../assets/fr-share.png') center / contain no-repeat;
+}
+.fr-invite > .k-btn .k-btn-label { display: inline-flex; align-items: center; }
+
+/* THE REWARD PATH: a track filling green with the friends who count, its
+   rewards standing on their rings — taken ones ticked, a reached one glowing
+   until it is tapped. */
+.fr-path {
+  padding: calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 6);
+  border-radius: var(--radius);
+  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
+  background: rgba(226, 204, 160, 0.55);
+}
+.fr-path-head { display: flex; justify-content: space-between; align-items: baseline; font-size: calc(var(--px) * 15); }
+.fr-path-head b { font-weight: var(--weight-title); color: var(--wood-dark); }
+.fr-path-head span { font-weight: var(--weight-strong); color: var(--ink-muted); }
+.fr-track {
+  position: relative;
+  height: calc(var(--px) * 96);
+  margin: 0 calc(var(--px) * 14) 0 calc(var(--px) * 6);
+}
+.fr-track-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--px) * 26);
+  height: calc(var(--px) * 12);
+  border-radius: calc(var(--px) * 6);
+  background: linear-gradient(#7a5532, #5c3a1e);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(20, 10, 4, 0.45), 0 calc(var(--px) * 1) 0 rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+.fr-track-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(#a6e36e, var(--leaf) 45%, var(--leaf-dark));
+  transition: width 400ms var(--ease-out, ease-out);
+}
+.fr-node {
+  position: absolute;
+  left: calc(var(--at) * 100%);
+  bottom: 0;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.fr-node::before {
+  /* The ring on the track the reward stands on. */
+  content: '';
+  order: 2;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  margin-top: calc(var(--px) * -2);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3d0 0 32%, #c98a16 34% 56%, #7a4d0e 58%);
+  box-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.4);
+}
+.fr-node-count { order: 3; font-size: calc(var(--px) * 14); font-weight: var(--weight-title); line-height: 1.1; }
+.fr-node-art { order: 1; position: relative; display: grid; place-items: center; height: calc(var(--px) * 46); }
+.fr-node-art .icon { --icon-size: calc(var(--px) * 40); }
+.fr-node.is-last .fr-node-art .icon { --icon-size: calc(var(--px) * 52); }
+.fr-node:not(.is-ready):not(.is-claimed) .fr-node-art { filter: saturate(0.75); }
+.fr-node.is-claimed .fr-node-art .icon:first-child { filter: saturate(0.5) brightness(0.92); }
+.fr-node-tick {
+  position: absolute;
+  right: calc(var(--px) * -6);
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a6e36e, var(--leaf-dark));
+  box-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.45);
+}
+.fr-node-tick .icon { --icon-size: calc(var(--px) * 14); filter: brightness(0) invert(1); }
+.fr-node.is-ready .fr-node-art { animation: fr-ready 1.4s ease-in-out infinite; }
+.fr-node.is-ready .fr-node-art::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--px) * -10);
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 220, 110, 0.95), rgba(255, 190, 60, 0.45) 45%, rgba(255, 190, 60, 0) 70%);
+  animation: fr-glow 1.4s ease-in-out infinite;
+}
+.fr-node.is-ready::before { background: radial-gradient(circle, #fff7d8 0 32%, #f2b233 34% 56%, #a9700f 58%); box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 200, 80, 0.9); }
+@keyframes fr-ready {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(calc(var(--px) * -3)) scale(1.06); }
+}
+@keyframes fr-glow {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.fr-node.is-popping .fr-node-art { animation: fr-pop 420ms var(--ease-out, ease-out); }
+@keyframes fr-pop {
+  0% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+/* A reward's tooltip opens ABOVE it — the path is the foot of the screen —
+   and the last one's is anchored to its right, off the window's edge. */
+.fr-node .k-tip { top: auto; bottom: calc(100% + var(--px) * 6); left: 50%; translate: -50% 0; text-align: left; }
+.fr-node .k-tip::after { top: 100%; bottom: auto; left: 50%; translate: -50% 0; border-bottom-color: transparent; border-top-color: var(--section-line); }
+.fr-node.is-last .k-tip { left: auto; right: calc(var(--px) * -4); translate: none; }
+.fr-node.is-last .k-tip::after { left: auto; right: calc(var(--px) * 22); translate: none; }
+.fr-node:first-of-type .k-tip { left: calc(var(--px) * -10); translate: none; }
+.fr-node:first-of-type .k-tip::after { left: calc(var(--px) * 22); translate: none; }
+.fr-path-note { margin: calc(var(--px) * 2) 0 0; text-align: center; font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
+
+/* A FRIEND'S PROFILE: the crest large beside the name and code, the facts
+   as a ledger, room for what friends do together, and Remove in the corner. */
+.fr-profile-head { display: flex; align-items: center; gap: calc(var(--px) * 12); margin-bottom: calc(var(--px) * 10); }
+.fr-profile-head .fr-name { font-size: calc(var(--px) * 22); }
+.fr-profile-code { margin-top: calc(var(--px) * 2); font-size: var(--text-helper); font-weight: var(--weight-strong); letter-spacing: 0.08em; color: var(--ink-muted); }
+.fr-facts { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
+.fr-fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 8);
+  min-height: calc(var(--px) * 34);
+  padding: 0 calc(var(--px) * 10);
+  border-radius: var(--radius-sm);
+  background: rgba(226, 204, 160, 0.55);
+  font-size: calc(var(--px) * 14);
+}
+.fr-fact-label { color: var(--ink-muted); font-weight: var(--weight-body); }
+.fr-fact > b { font-weight: var(--weight-title); }
+.fr-actions { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 8); justify-content: center; margin: calc(var(--px) * 10) 0 calc(var(--px) * 4); }
+.fr-actions .fr-empty { margin: calc(var(--px) * 4) 0; }
+.fr-profile-foot { display: flex; justify-content: flex-end; margin-top: calc(var(--px) * 8); }
+.fr-profile-foot > .k-btn { flex: none; width: auto; }
+
+.fr-confirm { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 6); text-align: center; }
+.fr-confirm p { margin: 0; font-size: var(--text-body); }
+.fr-confirm .fr-confirm-fine { font-size: var(--text-helper); color: var(--ink-muted); font-weight: var(--weight-small); }
+.fr-confirm-buttons { display: flex; gap: calc(var(--px) * 10); margin-top: calc(var(--px) * 8); }
+
+/* THE KNOB under the header that opens it all, hanging on its own rope
+   left of Settings, with the red orb when someone asks or a reward waits. */
+.hud-knob.is-friends { right: calc(var(--rpx) * 148); }
+.hud-knob.is-friends[hidden] { display: none; }
+.hud-knob.is-friends > .k-cta { top: calc(var(--rpx) * -6); right: calc(var(--rpx) * -6); }

@@ -20,7 +20,7 @@ import { townhall, type District, type GameState } from './state';
 /** Every door the UI draws padlocked until it opens. */
 export type DoorId =
   | 'research' | 'build' | 'heroes' | 'relics' | 'store' | 'world'
-  | 'knowledge' | 'banner' | 'survey' | 'bag';
+  | 'knowledge' | 'banner' | 'survey' | 'bag' | 'friends';
 
 /** Has the chain reached this quest — is it active, or past? */
 const questReached = (state: GameState, id: string): boolean => {
@@ -64,6 +64,9 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   // The first item held, or the first relic fragment — relics are kept in
   // the Bag (Docs/art/ui-inventory.md §3.1, §3.6).
   bag: (state) => Object.keys(state.bag.held).length > 0 || ARTIFACT_ORDER.some((id) => isMet(state, id)),
+  // Friends open with the Store: the Townhall a friend must reach to count
+  // toward the reward path (Docs/features/15-social.md §2.1).
+  friends: (state) => townhall(state).level >= 2,
 };
 
 /** What a padlocked door says when tapped: the one thing that opens it —
@@ -79,6 +82,7 @@ export const DOOR_HINT: Record<DoorId, string> = {
   survey: 'Raise the Townhall to level 2 to open this.',
   world: 'Claim the Watchtower to open this.',
   bag: 'Find a chest to open this.',
+  friends: 'Raise the Townhall to level 2 to open this.',
 };
 
 /** The door's key in `tutorial.seen`. */

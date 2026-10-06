@@ -4,7 +4,7 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: step 3 built.** The game uses the real server
+> **Status: steps 3 and 5 built.** The game uses the real server
 > when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
@@ -15,7 +15,8 @@
 | 2 | **The world server** | a `world` edge function and a `boards` table on the Supabase project the cloud saves already use; `RemoteWorldServer` beside the stand-in; the client picks one by env |
 | 3 | **Seating** | a player is on no board until they first go out; then a nickname, and a rival's city on a shared board (19 §1.3) |
 | 4 | **Accounts** | optional email linking (15 §2) |
-| 5 | **Neighbours and help** | 15 §3 |
+| 5 | **Friends** | the `social` edge function and its tables; the friends list (15 §2.1) |
+| 5b | **Neighbours and help** | 15 §3 |
 | 6 | **Guilds** | 15 §4 |
 | 7 | **The guild week** | 15 §5 |
 
@@ -68,6 +69,25 @@
 - **Access:** neither table is readable by the client. Everything goes
   through the function, which answers with a snapshot cut for that seat.
 
+## 3.1 The social server
+
+- **Runtime:** the `social` edge function wraps `serveSocial`
+  (`src/socialServer/serve.ts`), bundled into the same
+  `supabase/functions/_shared/world.js` as the world's.
+- **Storage:** `profiles` gains `code` (unique), `townhall`, `cells`,
+  `seen_at`; `friend_requests (from_id, to_id)` one way;
+  `friendships (user_id, friend_id)` kept both ways.
+- **A request** is `{ cmd }`: the user from the JWT, `serveSocial` at the
+  function's clock. Every command is idempotent by what it says, so a retry
+  needs no command id.
+- **The cap holds under a race:** `befriend` locks both profiles in a fixed
+  order before it counts.
+- **Access:** RLS on, no policy; only the function reads or writes.
+- **The client** (`src/socialServer/remote.ts`) tries a request three times;
+  one that never gets through is refused as `Offline`. Without a cloud, or
+  with `?world=local`, a stand-in in the browser peoples the list with a
+  dozen made-up kingdoms (`src/socialServer/local.ts`).
+
 ## 4. The client
 
 - `RemoteWorldServer` (`src/worldServer/remote.ts`) sends each command with
@@ -88,6 +108,7 @@
 npx supabase db push            # the tables
 npm run server:bundle
 npx supabase functions deploy world
+npx supabase functions deploy social
 ```
 
 - Anonymous sign-ins on (Authentication → Sign In / Up).

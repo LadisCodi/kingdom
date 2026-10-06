@@ -3,6 +3,7 @@
 
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError, createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { WorldCall } from '../worldServer/remote';
+import type { SocialCall } from '../socialServer/remote';
 import type { AnalyticsSend } from '../analytics/analytics';
 import type { SaveFile } from '../sim/save';
 
@@ -74,10 +75,18 @@ export async function cloudSave(save: SaveFile): Promise<boolean> {
 /** One request to the `world` edge function (worldServer/remote.ts). A
  *  network failure, a relay failure, a server error or a board written
  *  under the request is worth another try; anything else is not. */
-export const cloudWorldCall: WorldCall = async (body) => {
+export const cloudWorldCall: WorldCall = (body) => invokeFunction('world', body);
+
+/** One request to the `social` edge function (socialServer/remote.ts), on
+ *  the same terms as the world's. */
+export const cloudSocialCall: SocialCall = (body) => invokeFunction('social', body);
+
+async function invokeFunction(
+  name: string, body: object,
+): Promise<{ ok: true; data: unknown } | { ok: false; retry: boolean; error: string }> {
   if (!client || !userId) return { ok: false, retry: false, error: 'no session' };
   try {
-    const { data, error } = await client.functions.invoke('world', { body });
+    const { data, error } = await client.functions.invoke(name, { body });
     if (!error) return { ok: true, data };
     if (error instanceof FunctionsHttpError) {
       const status = (error.context as Response).status;
@@ -88,7 +97,7 @@ export const cloudWorldCall: WorldCall = async (body) => {
   } catch (err) {
     return { ok: false, retry: true, error: String(err) };
   }
-};
+}
 
 /** A batch of analytics events into `analytics_events`
  *  (Docs/plans/analytics.md §5). A row already there is skipped, so a batch

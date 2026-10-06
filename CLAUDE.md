@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 122 suites, keep them all green
+npm test             # vitest run — 127 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -140,6 +140,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | **a Bag item** — a chest, speed-up, boost, flask, tome or key — = an `items` entry; an item bundle = a `store` row with `items`; which source pays which item = its `rewardItems`, `freeItems`/`paidItems` or `treasure.items` | a new item `kind` (what using it does: `sim/bag.ts`, `sim/speedups.ts`) |
 | a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs, the forge and the Restorer's chest = `relics.fragments` | a new world source that drops fragments |
+| the friends list's caps and its reward path — milestones, Gems, items, the Townhall a friend must reach — at `?dev=data` › Friends (`social.json`) | what a friend's progress IS (Townhall + cells, `friendsClient.ts`), a new social command (`src/socialServer/serve.ts`) |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
@@ -174,7 +175,7 @@ PR, merged with a merge commit.
   ```bash
   npx supabase db push --dry-run   # read what will apply
   npx supabase db push             # the migrations in supabase/migrations/
-  npm run server:bundle && npx supabase functions deploy world
+  npm run server:bundle && npx supabase functions deploy world && npx supabase functions deploy social
   ```
   The project is the one `supabase link` points at (`supabase/.temp/`,
   never committed — a fresh worktree links again). A migration must keep
@@ -184,7 +185,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 95; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 96; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Check the constant in `src/sim/data/definitions.ts` before quoting it** — this
 line drifted fifteen versions once.
 `MIGRATIONS` is ordered, gapless and append-only.

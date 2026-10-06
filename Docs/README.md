@@ -81,7 +81,7 @@ One file per feature, in the order a player meets them.
 | 12 | [Quests and onboarding](features/12-quests.md) | the quest chain and the authored onboarding it carries | built |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built, **catalogue empty** |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, six ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
-| 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
+| 15 | [The social layer](features/15-social.md) | identity, the friends list, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | friends built; the rest designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — the province's lairs: the minute-scale counter discovery starts, the bounded and recoverable raids it makes while it stands, and the fight that clears it: the doorway to combat | built |
