@@ -133,7 +133,6 @@
   background: var(--section-fill);
 }
 .k-portrait-mask {
-  container-type: inline-size;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -148,7 +147,7 @@
   translate: -50% -50%;
   object-fit: cover;
 }
-.k-portrait-mask > .icon { position: absolute; inset: 0; margin: auto; --icon-size: 60cqi; }
+.k-portrait-mask > .icon { position: absolute; inset: 0; margin: auto; --icon-size: calc(var(--portrait-size) * 0.6); }
 
 /* THE TOOLTIP (kit/tooltip.ts): a parchment bubble under its anchor, its
    arrow pointing up at it. It fades and scales in from the arrow, and out
