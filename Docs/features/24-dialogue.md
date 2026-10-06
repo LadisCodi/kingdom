@@ -135,6 +135,7 @@ which one a line waits on is data.
 | `featureSeen` | a cell with that feature is out of the dark |
 | `treasureRevealed` · `treasurePicked` | a treasure stands on revealed ground · `amount` picked up |
 | `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
+| `holdsItem` · `itemUsed` | the Bag holds `amount` (at least one) of that item or kind of item · holds none of it any more |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
 

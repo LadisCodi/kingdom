@@ -16,8 +16,8 @@
    anything the active quest does not.
 2. **Scripted stretches**: the First Morning, quests 1–7, about ten
    minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
-   first buildings that work for the player, and Stone, when the House's
-   second story first asks for it. They are the only places
+   first buildings that work for the player; the first chest, used from the
+   Bag; and Stone, when the House's second story first asks for it. They are the only places
    input is locked.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
@@ -153,6 +153,12 @@ Beats, as the First Morning's, each on its quest.
 | | | **Tom:** *The Farm stands — and nobody's working it. Open it, Your Majesty!* | the Farm | the Farm | its card is open |
 | | | **Tom:** *Send me! I know every furrow. Each pair of hands walks to a plot, reaps it and carries the crop home.* | the card's **+** | none | the quest completes |
 | | | *Look at them go! The harvest piles up in the Farm's barn — gather it when it's ready. A full barn stops the work.* | the Farm | all | tap |
+| `chest` | the first Wood chest held (`SecondVillager`'s gift) | **Tom:** *I nearly forgot, Your Majesty! I brought something home from the road — a whole chest of good timber.* | — | all | tap |
+| | | *Into the Bag with it — that's where I keep what the townsfolk give us. Open it, Your Majesty.* | **Bag** | the tab | the Bag is open |
+| | | *A chest holds hours of the town's work, packed for later. Tap it.* | the Wood chest | the tile | its **Use** is on screen |
+| | | *Use it, and the wood is ours — just when we need it most.* | **Use** | the button | the chest is used |
+| | | **Hob:** *Good timber, that. Keep the next ones for when you're short — chests don't rot.* | — | all | tap |
+| | | *Let's close the Bag and put that wood to work.* | the close knob | the knob | the Bag is shut |
 | `secondHouse` | `GrowingTown` | *Word's spreading on the roads, and Tom's house is full. The fog kept no other… so we'll raise one of our own!* | **Build** (its padlock breaks) | the tab | the build menu is open |
 | | | **Hob:** *New house wants more wood than you've got. Here — been stacking it all winter. Don't make a fuss.* (only while the Wood is short; he makes up the difference) | nothing | all | tap |
 | | | *Builders want their wood up front — it says so in the guild charter. Choose the House.* | the Housing card | the card | placing |
