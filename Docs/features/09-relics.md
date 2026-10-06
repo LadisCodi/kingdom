@@ -105,6 +105,11 @@ never a discount, because a discount dies at 100%.
 - **On screen** (mockups M80–M85):
   - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
+  - The Shrine's card holds **one slot**: the relic on its plinth, or an
+    empty well, with **Place** (or **Change**) under it. It opens the relic
+    picker — the hero picker's flow: the restored city relics as cards, the
+    Shrine's slot under them, and **Select**. Emptying the slot and selecting
+    takes the relic out; closing changes nothing.
   - The relic's sheet and its Shrine's card: a grey **Asleep** seal beside
     Activate, or an **Awake** ribbon and a gold bar running down the window.
     Short of the price, how soon the pool holds it, and the smallest Mana

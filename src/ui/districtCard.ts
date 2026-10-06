@@ -33,6 +33,7 @@ import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { activation, relicArt } from './relicSheet';
+import { emptyRelicSlot } from './relicPicker';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -208,34 +209,32 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     }
 
     // A SHRINE holds one city relic, whose effect reaches its aura while it
-    // is activated (sim/hosts.ts): what it holds, its activation, and what it
-    // could hold.
+    // is activated (sim/hosts.ts). THE SLOT is one widget: the relic on its
+    // plinth — dim asleep, lit awake — or an empty well, and under it the
+    // press that opens the relic picker (ui/relicPicker.ts), the hero
+    // picker's flow. Its activation follows.
     if (def.hostsRelic) {
       const shrine = () => {
         const view = game.shrineView(district);
         const held = view.holds === null ? null : game.relicCard(view.holds);
-        // The relic on its plinth, dim while it sleeps and lit while it is
-        // awake, beside its name and what it does (M82). How long a window
-        // lasts here is the card's own "Relic awake for" tile.
+        const choose = () => game.openRelicPicker(district.uniqueId);
+        const slot = held === null
+          ? emptyRelicSlot({ onClick: choose, label: 'Choose a relic for this Shrine' })
+          : el('button', { class: `dc-shrine-plinth is-${held.status}`, type: 'button', 'aria-label': `Change ${held.name}` },
+            relicArt(held, 'dc-shrine-art'), ...(held.status === 'asleep' ? [restMarks()] : []));
+        if (held !== null) slot.addEventListener('click', choose);
         return el('div', { class: 'dc-shrine rl-page' },
-          held === null
-            ? el('div', { class: 'rl-line is-muted' }, iconEl('Shrine', { size: 'sm' }),
-              el('span', {}, 'Empty — host a city relic, then activate it'))
-            : el('div', { class: `dc-shrine-held is-${held.status}` },
-              el('span', { class: 'dc-shrine-plinth k-section' }, relicArt(held, 'dc-shrine-art'),
-                ...(held.status === 'asleep' ? [restMarks()] : [])),
-              el('div', { class: 'dc-shrine-says' },
+          el('div', { class: 'dc-shrine-slot k-section' },
+            slot,
+            held === null
+              ? el('p', { class: 'rl-note' }, 'Place a city relic here, then activate it')
+              : el('div', { class: 'dc-shrine-says' },
                 el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
-                el('span', {}, held.now))),
+                el('span', {}, held.now)),
+            ...(view.candidates.length === 0 && held === null
+              ? [el('p', { class: 'rl-note' }, 'No city relic is restored yet')]
+              : [btn({ label: held === null ? 'Place' : 'Change', onClick: choose })])),
           ...(held === null ? [] : [activation(game, held.id)].filter((x): x is HTMLElement => x !== null)),
-          ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
-            el('div', { class: 'rl-forge' },
-              ...view.candidates.map((c) => btn({
-                label: 'Host',
-                note: c.at === null ? c.name : `${c.name} · from ${c.at}`,
-                onClick: () => game.doHostRelic(c.id, district.uniqueId),
-              })),
-              ...(held === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(held.id) })])))]),
         );
       };
       body.append(sectionHead('Relic'), part(() => {
