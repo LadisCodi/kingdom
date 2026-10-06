@@ -977,7 +977,6 @@ export function serialize(state: GameState, now: number): SaveFile {
           ClaimedPaid: state.kingdom.survey.claimedPaid,
           Owned: state.kingdom.survey.owned,
         },
-        Friends: { Claimed: state.kingdom.friends.claimed },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -1364,10 +1363,6 @@ export function deserialize(
       claimedPaid: [...(survey?.ClaimedPaid ?? [])],
       owned: survey?.Owned === true,
     };
-    // Additive (v96): a kingdom from before the friends list has taken none
-    // of its rewards.
-    const friends = kingdomDto.Friends as { Claimed?: number[] } | undefined;
-    state.kingdom.friends = { claimed: [...(friends?.Claimed ?? [])] };
   }
 
   const fogDto = modules['kingdom.fogOfWar'];

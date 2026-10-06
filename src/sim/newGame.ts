@@ -38,7 +38,6 @@ export function newGame(map: MapData, now: number): GameState {
       builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
       survey: { claimedFree: [], claimedPaid: [], owned: false },
-      friends: { claimed: [] },
       lastKnowledgeAt: now,
       knowledgeBoughtWithGold: 0,
       utcOffsetMinutes: 0,

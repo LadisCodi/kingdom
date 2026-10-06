@@ -2342,17 +2342,11 @@ export const SURVEY = balance.survey as {
 };
 
 /** The friends list — Docs/features/15-social.md §2.1: the caps the
- *  social server holds a player to, and the reward path. `milestones`,
- *  `gems` and `items` are parallel lists, one entry a reward. */
+ *  social server holds a player to. */
 export const FRIENDS = balance.friends as {
   max: number;
   maxSent: number;
-  countsFromTownhall: number;
   suggestions: number;
-  milestones: number[];
-  gems: number[];
-  /** An item a milestone puts in the Bag, or '' for none. */
-  items: string[];
 };
 
 // ------------------------------------------------------------ the timeline
