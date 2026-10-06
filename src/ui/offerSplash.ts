@@ -88,6 +88,51 @@ function ornate(text: string, cls: string): HTMLElement {
   return el('span', { class: `ofs-ornate ${cls}`, 'data-text': text }, text);
 }
 
+/** A textPath draws nothing past the end of its arc, so a title longer than
+ *  the band is squeezed onto it. Measured once the svg is in the page, and
+ *  again when the ornate face has loaded. */
+function fitRibbonTitle(svg: SVGSVGElement): void {
+  const fit = (): void => {
+    const arc = svg.querySelector('path');
+    const text = svg.querySelector('text');
+    const path = svg.querySelector('textPath');
+    if (arc === null || text === null || path === null || !svg.isConnected) return;
+    path.removeAttribute('textLength');
+    const room = arc.getTotalLength() * 0.96;
+    if (text.getComputedTextLength() > room) {
+      path.setAttribute('textLength', String(Math.round(room)));
+      path.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+    }
+  };
+  fit();
+  void document.fonts?.ready.then(fit);
+}
+
+/** The ribbon's title, bent along the cloth: an SVG text on an arc through
+ *  the middle of offer-ribbon.png's red band (its centre falls from y 73 at
+ *  the middle to y 96 at x 200 and x 824, in the art's own 1024×250). The
+ *  outline is the stroke painted under the fill (`paint-order`). A title
+ *  too long for the band is squeezed to it rather than run onto the tails. */
+function ribbonTitle(text: string): SVGSVGElement {
+  const NS = 'http://www.w3.org/2000/svg';
+  const make = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] => {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  };
+  const svg = make('svg', { class: 'ofs-ribbon-title', viewBox: '0 0 1024 250', 'aria-hidden': 'true' });
+  const defs = make('defs', {});
+  const grad = make('linearGradient', { id: 'ofs-title-fill', x1: '0', y1: '0', x2: '0', y2: '1' });
+  grad.append(make('stop', { offset: '0.3', 'stop-color': '#fffaf0' }), make('stop', { offset: '0.9', 'stop-color': '#f8dc93' }));
+  defs.append(grad, make('path', { id: 'ofs-title-arc', d: 'M 180 102 Q 512 46 844 102' }));
+  const words = make('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+  const path = make('textPath', { href: '#ofs-title-arc', startOffset: '50%' });
+  path.textContent = text;
+  words.append(path);
+  svg.append(defs, words);
+  return svg;
+}
+
 function panel(title: string, tiles: OfferTile[], badge: HTMLElement | null, locked: boolean): HTMLElement {
   return el('section', { class: `ofs-panel${locked ? ' is-locked' : ''}` },
     el('div', { class: 'ofs-panel-head' }, ...(badge === null ? [] : [badge]), el('span', {}, title)),
@@ -110,9 +155,9 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     timer = null;
     let action: HTMLElement;
     if (mode === 'buy') {
-      action = btn({ label: formatUsd(Math.round(s.priceUsd * 100)), kind: 'gold', onClick: () => game.buyFromSplash(sku) });
+      action = btn({ label: formatUsd(Math.round(s.priceUsd * 100)), kind: 'gold', finish: 'gem', onClick: () => game.buyFromSplash(sku) });
     } else if (mode === 'claim') {
-      action = btn({ label: 'Claim', kind: 'gold', onClick: () => game.doClaimNextDay(sku) });
+      action = btn({ label: 'Claim', kind: 'gold', finish: 'gem', onClick: () => game.doClaimNextDay(sku) });
     } else {
       const pill = game.nextDayPill();
       waitUntil = pill?.at ?? 0;
@@ -134,7 +179,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
           el('div', { class: 'ofs-burst' }),
           ...(art === null ? [] : [spriteImgAt(art, 'ofs-hero-art')]),
           ...sparkles),
-        el('div', { class: 'ofs-ribbon' }, ornate(s.name, 'ofs-ribbon-text')),
+        el('div', { class: 'ofs-ribbon' }, ribbonTitle(s.name)),
         ...(hero === null ? [] : [el('div', { class: 'ofs-hero-name' },
           ornate(hero.name.replace(/^The /, ''), 'ofs-name-text'),
           el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, hero.rarity))]),
@@ -146,6 +191,8 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
           el('div', { class: 'ofs-actions' }, action,
             ...(mode === 'buy' && s.limit === 1 ? [el('span', { class: 'ofs-note' }, 'Once per kingdom.')] : [])))));
     root.replaceChildren(screen);
+    const title = screen.querySelector<SVGSVGElement>('.ofs-ribbon-title');
+    if (title !== null) fitRibbonTitle(title);
     if (mode !== 'waiting') playSfx('unlock');
   };
 
