@@ -16,6 +16,10 @@
 .stg { position: absolute; inset: 0; }
 /* The quest's "show me where": the hand and the glow, with no line. */
 .stg.is-hint .stg-box { display: none; }
+/* A line read and now acted on: the box and its cast step aside, quickly,
+ * so the target and the hand have the screen. */
+.stg .stg-box { transition: opacity 0.18s ease-out; }
+.stg.is-acting .stg-box { opacity: 0; pointer-events: none; }
 
 /* ---- the pointer: a gloved hand, and a blue magic glow ----
  * A CONTROL glows along its own silhouette (`.stg-glow`, on the control

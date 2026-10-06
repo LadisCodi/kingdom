@@ -39,7 +39,7 @@
 
 | Kind | Blocks | Moves on | Used for |
 |---|---|---|---|
-| **Beat** | everything but its target | when its condition is met | the First Morning |
+| **Beat** | everything while read; then everything but its target, with the box gone and the hand on it ([`24-dialogue.md`](24-dialogue.md) §4) | when its condition is met | the First Morning |
 | **Introduction** | everything, until tapped through | a tap per line | a door opening, a first event |
 | **Hint** | nothing | the player acts, or it times out | the quest pill, idle help |
 
