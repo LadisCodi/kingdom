@@ -26,7 +26,7 @@ const COLUMNS = 4;
 const EMPTY_LINE: Record<BagTab, string> = {
   Resources: 'Chests turn up in the fog and in quests',
   'Speed ups': 'Speed-ups turn up in lairs and quests',
-  Boosts: 'Boosts turn up on the season pass',
+  Boosts: 'Boosts turn up in quests, lairs and the Survey',
   Relics: 'Relic fragments turn up in lairs and in the fog',
   Other: 'Keys and flasks turn up as rewards',
 };
@@ -103,8 +103,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     'aria-label': `${itemName(item.def)}, ${formatExact(item.count)}`,
     'aria-expanded': picked ? 'true' : 'false',
   },
-    el('span', { class: 'bag-tile-size' }, sizeLabel(item.def)),
-    ...tileArt(item.id),
+    ...tileArt(item.id, sizeLabel(item.def)),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
     ...(item.fresh ? [el('span', { class: 'bag-tile-new' }, iconEl('sparkle', { size: 'sm' }))] : []),
   );
@@ -228,8 +227,8 @@ export function renderBagSheet(game: Game): HTMLElement {
   const view = game.bagScreen();
   // The Relics tab holds no items: the relics met, and their fragments.
   if (view.tab === 'Relics') {
-    return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
-      tabRow(game, view), ...relicTab(game));
+    return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+      tabRow(game, view), pane(...relicTab(game))));
   }
   const grid = el('div', { class: 'bag-grid' });
   if (view.items.length === 0) {
@@ -244,6 +243,16 @@ export function renderBagSheet(game: Game): HTMLElement {
       if (i === rowEnd) grid.append(popover(game, view.items[at], (at % COLUMNS) + 1));
     });
   }
-  return sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
-    tabRow(game, view), ...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid);
+  return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+    tabRow(game, view), pane(...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid)));
 }
+
+/** The Bag takes the whole screen however little it holds (`is-panes`):
+ *  the tabs stay put and only what is under them scrolls. */
+function panes(surface: HTMLElement): HTMLElement {
+  surface.classList.add('is-panes');
+  return surface;
+}
+
+const pane = (...children: Node[]): HTMLElement =>
+  el('div', { class: 'bag-pane', 'data-keep-scroll': 'bag-pane' }, ...children);

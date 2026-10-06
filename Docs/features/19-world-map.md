@@ -74,8 +74,12 @@
   - 3–16 letters, numbers, spaces, `_` or `-`;
   - unique across the game, whatever its case;
   - never changed. It is the name every other player reads on the board,
-    on a wooden plank under the city, banded in the kingdom's colour. A
-    rival's city carries its name the same way, once it is out of the fog.
+    on a wooden plank under the city, banded in the kingdom's colour, with
+    the kingdom's crest at its left end ([`15-social.md`](15-social.md)
+    §2.2). A rival's city carries its name the same way, once it is out of
+    the fog.
+- The name is asked for the moment the world map opens, after its splash
+  and its scene, or on the first tap of the world button if dismissed.
 - The server then seats them:
   - **in a rival's city on the newest board that still has a rival.** The
     rival leaves with its armies, offers and claims under way; its districts

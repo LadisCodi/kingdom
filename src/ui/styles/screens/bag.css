@@ -9,6 +9,11 @@
   padding-top: calc(var(--px) * 8);
   margin-bottom: calc(var(--px) * 10);
 }
+/* The tabs keep their height; the pane under them takes the rest of the
+ * screen and is the only thing that scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bag-tabs { flex: none; }
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bag-pane { flex: 1 1 0; }
+.bag-pane { min-height: 0; overflow-y: auto; overflow-x: clip; }
 /* A tab with nothing in it is still there, greyed — the wood gone dull. */
 .bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
 /* Something new in it: a small red wax dot at the plate's corner. */
@@ -72,7 +77,13 @@
 .bag-tile.is-tier-4 { --tier: #b38ae6; }
 .bag-tile.is-tier-5 { --tier: #f4c24a; }
 .bag-tile:active { translate: 0 calc(var(--px) * 2); box-shadow: inset 0 calc(var(--px) * 3) calc(var(--px) * 4) rgba(40, 22, 10, 0.45); }
-.bag-tile > .icon { --icon-size: 58%; }
+/* A length, never a %: the atlas sprite multiplies --icon-size into its
+ * background-size and -position, where a percentage means something else. */
+.bag-tile > .icon { --icon-size: calc(var(--px) * 46); }
+/* An item drawn for itself carries its size on its ribbon: no label above,
+ * so the picture takes the tile. */
+.bag-tile:not(:has(> .bag-tile-size)) > .icon { --icon-size: calc(var(--px) * 64); }
+.spd-tile:not(:has(> .bag-tile-size)) > .icon { --icon-size: calc(var(--px) * 50); }
 .bag-tile-size,
 .bag-tile-count {
   position: absolute;
@@ -317,16 +328,17 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 16);
-  height: calc(var(--px) * 16);
+  --slot: calc(var(--px) * 16);
+  width: var(--slot);
+  height: var(--slot);
   border-radius: calc(var(--px) * 4);
   border: calc(var(--px) * 1.5) dashed rgba(92, 58, 30, 0.45);
 }
 .rl-slot.is-held { border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.6); background: rgba(255, 255, 255, 0.35); }
-.rl-slot.is-keystone { width: calc(var(--px) * 20); height: calc(var(--px) * 20); border-color: var(--gold-dark); }
-.rl-slot .icon { --icon-size: 90%; }
-.rl-slots.is-big .rl-slot { width: calc(var(--px) * 40); height: calc(var(--px) * 40); border-radius: calc(var(--px) * 8); }
-.rl-slots.is-big .rl-slot.is-keystone { width: calc(var(--px) * 50); height: calc(var(--px) * 50); }
+.rl-slot.is-keystone { --slot: calc(var(--px) * 20); border-color: var(--gold-dark); }
+.rl-slot .icon { --icon-size: calc(var(--slot) * 0.9); }
+.rl-slots.is-big .rl-slot { --slot: calc(var(--px) * 40); border-radius: calc(var(--px) * 8); }
+.rl-slots.is-big .rl-slot.is-keystone { --slot: calc(var(--px) * 50); }
 .rl-slot > b {
   position: absolute;
   right: calc(var(--px) * 2);

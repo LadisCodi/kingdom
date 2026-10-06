@@ -81,7 +81,7 @@ export function houseGoldPerMinute(state: GameState, district: District): number
   const own = ownGoldPerMinute(state, district);
   const residents = residentsOf(state, district);
   if (residents === 0) return own;
-  // A Gilded Ledger's aura reaches the house as a whole (sim/hosts.ts).
+  // A Tribute Crown's aura reaches the house as a whole (sim/hosts.ts).
   const aura = relicAuraOver(state, 'taxRate', district);
   return own + Math.max(0, residents * (effectiveTaxRate(state, district.definitionId) + aura.add) * aura.mul
     * (1 + houseTaxBonus(district))

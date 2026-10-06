@@ -164,8 +164,7 @@
   `Borough` and `SecondLair` — 150 + 250 + 200 + 150 = 750.
 - With the 500 grant: **1,250 by the chain**. The second builder (2,500)
   and later rungs ([`14-monetization.md`](14-monetization.md) §2.2) come from
-  the season pass's free column ([`20-season-pass.md`](20-season-pass.md) §2)
-  or a wallet.
+  the Survey or a wallet.
 - **Stardust is paid only past the first summon** — `FirstSummon`,
   `Fellowship`, `SecondLair`, `TheBarrowsPrize`, `TheWatchtower`, `DeeperStill` — where the
   hero ladder it buys is open.
@@ -184,20 +183,10 @@
 ## 5. Deliberately not in this design
 
 - **A login ladder.** Coming back tomorrow is the stores and the Mana well
-  filled overnight; the ladders pay for playing and for exploring
-  ([`20-season-pass.md`](20-season-pass.md),
-  [`25-the-survey.md`](25-the-survey.md)).
+  filled overnight; the one ladder pays for exploring
+  ([`25-the-survey.md`](25-the-survey.md)).
 - A second quest chain. Branching quests.
-- **Generated orders ON THIS BOARD.** A recurring generated ask exists — it is
-  the season pass's mission board ([`20-season-pass.md`](20-season-pass.md)
-  §3) — and it deliberately is not a *fetch-quest*: it never asks the player
-  to hand resources over, because the open-ended Gold sink is
-  [`16-wonders.md`](16-wonders.md) §1 and a sink never pays back what it
-  asked for ([`16-wonders.md`](16-wonders.md) §3.1). It asks the player to
-  PLAY, and it pays.
-- **An order reroll**, as an ad placement or as a pass reward. The pass's
-  board is capped rather than timed, so the thing a wallet is offered is
-  finishing work already started, never a fresh hand of work
-  ([`14-monetization.md`](14-monetization.md) §1).
+- **Generated orders**, daily or weekly missions, or any recurring generated
+  ask.
 
-**Open questions:** OQ-16, OQ-17, OQ-47, OQ-53.
+**Open questions:** OQ-47, OQ-53.

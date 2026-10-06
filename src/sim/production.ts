@@ -1,6 +1,6 @@
 // What the city makes of each coin a second, RIGHT NOW — the number every
 // reward priced in production reads (`tap.workSeconds`'s rule, applied to a
-// city instead of a cell): a treasure, a mission, a scout's pay, a chest.
+// city instead of a cell): a treasure, a scout's pay, a chest.
 //
 // It reads the city's NOMINAL throughput (`cityGatherPerSecond`, travel and
 // all), so a shed nobody works pays nothing and a maxed Sawmill pays a

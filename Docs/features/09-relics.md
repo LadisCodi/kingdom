@@ -57,26 +57,26 @@ never a discount, because a discount dies at 100%.
 
 | Relic | Effect | Moves |
 |---|---|---|
-| **Dowsing Rod** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
-| **Verdant Seal** | a node **holds +X more** and a swing **takes +X more** | `harvestStock` and `harvestUnitsPerStrike` |
-| **Foreman's Sigil** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
-| **Gilded Ledger** | tax rate **+X%** | `taxRate` |
-| **Wanderer's Compass** | Stardust from rooms **+X%** | `stardustYield` |
-| **The Delver's Lantern** | a room's **Gold and Stone +X%** | `roomHaul` |
-| **The Muster Horn** | the army the halls field **+X%** | `armyCap` |
-| **The Bailiff's Tally** | every world-map improvement's hourly grant **+X%** | `worldImprovementYield` — **not read yet** |
+| **Staff of Renewal** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
+| **Sickle of Plenty** | a node **holds +X more** and a swing **takes +X more** | `harvestStock` and `harvestUnitsPerStrike` |
+| **The Winged Hammer** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
+| **The Tribute Crown** | tax rate **+X%** | `taxRate` |
+| **The Stargazer's Orb** | Stardust from rooms **+X%** | `stardustYield` |
+| **The Wisp Lantern** | a room's **Gold and Stone +X%** | `roomHaul` |
+| **Warhorn of the Host** | the army the halls field **+X%** | `armyCap` |
+| **The Steward's Signet** | every world-map improvement's hourly grant **+X%** | `worldImprovementYield` — **not read yet** |
 
 - **Five are the city's and three are the pillars outside it** — the dungeon,
   the war and the world map.
-- **Three move nothing today** (**OQ-113**): the Compass's passive and the
+- **Three move nothing today** (**OQ-113**): the Orb's passive and the
   Lantern's passive and Lamplight act on rooms that no longer read them.
 - **The Lantern takes a room's MATERIAL half only.** Its Stardust is the
-  Compass's and its Hero XP is a legendary's boon; three permanent layers on
+  Orb's and its Hero XP is a legendary's boon; three permanent layers on
   one number would be unreadable.
 - **A relic whose system does not exist yet says so on its card**, in muted
   ink with the reason, and its level accrues normally against the day it lands.
-- **A relic may move more than one number with one value.** The Seal's two and
-  the Sigil's two are one idea each: half of either saturates or reads as
+- **A relic may move more than one number with one value.** The Sickle's two and
+  the Hammer's two are one idea each: half of either saturates or reads as
   nothing — a bigger swing empties a node it cannot exceed, and a crew that
   swung faster and walked at the old pace would be half a relic.
 
@@ -96,20 +96,20 @@ The eight, and which one axis each grows:
 
 | Relic | Its ability | Cast on | Grows |
 |---|---|---|---|
-| **Dowsing Rod** | **Divining** — wakes every tired node in the zone at once, then keeps them coming back faster | a centre | **duration** |
-| **Verdant Seal** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
-| **Foreman's Sigil** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
-| **Gilded Ledger** | **Tithe** — pulls rent forward from every house in the zone, over and over, straight into the wallet, free | a centre | **taps per Mana** |
-| **Wanderer's Compass** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
-| **The Delver's Lantern** | **Lamplight** — the next rooms you clear pay double | nothing; it is lit and carried | **rooms** |
-| **The Muster Horn** | — *waits on the world map* | a fortification | — |
-| **The Bailiff's Tally** | — *waits on the world map* | a tile you hold | — |
+| **Staff of Renewal** | **Divining** — wakes every tired node in the zone at once, then keeps them coming back faster | a centre | **duration** |
+| **Sickle of Plenty** | **Reap** — harvests every node in the zone, over and over, free | a centre | **taps per Mana** |
+| **The Winged Hammer** | **Haste** — the crews of every building in the zone work much faster | a centre | **power** |
+| **The Tribute Crown** | **Tithe** — pulls rent forward from every house in the zone, over and over, straight into the wallet, free | a centre | **taps per Mana** |
+| **The Stargazer's Orb** | **Survey** — clears the fog around a cell you hold, free of Gold | a cell you hold | **radius** |
+| **The Wisp Lantern** | **Lamplight** — the next rooms you clear pay double | nothing; it is lit and carried | **rooms** |
+| **Warhorn of the Host** | — *waits on the world map* | a fortification | — |
+| **The Steward's Signet** | — *waits on the world map* | a tile you hold | — |
 
 - **A relic is one idea at two speeds, and two of the five had to change
-  subject to obey it.** The Rod's ability paid a cell's reveal cost while its
-  passive was about ground coming back; the Compass called a resource back
-  while its passive was about Stardust. The fog is the Compass's — what a
-  compass is FOR is ground you have not seen — and recovery is the Rod's.
+  subject to obey it.** The Staff's ability paid a cell's reveal cost while its
+  passive was about ground coming back; the Orb called a resource back
+  while its passive was about Stardust. The fog is the Orb's — what a
+  seeing orb is FOR is ground you have not seen — and recovery is the Staff's.
 - **A zone's growing axis is a WINDOW when its effect is a rate** (how much
   recovers inside it is time) **and POWER when its effect is a multiplier**
   (a crew either works faster or it does not, and a longer window is just a
@@ -167,7 +167,7 @@ The eight, and which one axis each grows:
   not a relic that covers the map.
 - **Three of the eight are cast on their own pillar** rather than on the city
   grid: the Lantern on a ruin before a delve, the Horn on a world-map
-  fortification, the Tally on a tile the player holds.
+  fortification, the Signet on a tile the player holds.
 - The relic's card shows which of the three states it is in, and the countdown
   derives from a timestamp rather than a decremented integer, so a throttled
   tab comes back correct.
@@ -183,8 +183,8 @@ The eight, and which one axis each grows:
 - `X = passiveBase + passivePerLevel × (level − 1)`, both authored per relic in
   `artifacts`. A level is **a season's worth of growth**, so `passivePerLevel`
   is sized to be **felt on a headline number** — of the order of +10% a level
-  on the Ledger — not to be safe.
-- The Rod and the Seal split the two harvest clocks between them: what grows
+  on the Crown — not to be safe.
+- The Staff and the Sickle split the two harvest clocks between them: what grows
   back in place and what reappears elsewhere are different numbers, and one
   relic moves each.
 - The effect is a **modifier at the base stage**, resolved where the number is
@@ -714,8 +714,8 @@ Every number below is a **proposal until it is authored**; the ones marked
 | A relic's `passiveBase` and `passivePerLevel` | per relic | `artifacts` |
 | What an ability costs, lasts and reaches | per relic | `artifacts`, `activeManaCost` · `activeDurationSeconds` · `activeRadius` |
 | Taps a Mana buys, and its per-level step | **2.00, +0.25** on both auto-tap abilities | `artifacts`, `activeTapsPerMana` · `…PerLevel` |
-| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Sigil; **×5.00 flat** on the Rod | `artifacts`, `activePower` · `activePowerPerLevel` |
-| Seconds a level adds to a window | **+60** on the Rod, from a five-minute base | `artifacts`, `activeDurationPerLevel` |
+| How hard a zone hits, and its per-level step | **×2.00, +0.25** on the Hammer; **×5.00 flat** on the Staff | `artifacts`, `activePower` · `activePowerPerLevel` |
+| Seconds a level adds to a window | **+60** on the Staff, from a five-minute base | `artifacts`, `activeDurationPerLevel` |
 | Uses an event-counted ability buys | **3 rooms, +1 a level** on the Lantern | `artifacts`, `activeCharges` · `activeChargesPerLevel` |
 | How fast an auto-tap run is watched | **4 taps a second** | `artifactAutoTapPerSecond` |
 | An ability's cooldown | **5 min, flat, for all eight and at every level**, counted from the window's close | `artifactCooldownSeconds` |

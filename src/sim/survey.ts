@@ -8,9 +8,9 @@
 // whatever level its map already earns. What the save keeps is what has been
 // taken, and whether the paid column is bought.
 //
-// EVERY CELL IS ITS OWN CLAIM, the season pass's rule: out of order, at the
-// player's pace, and buying the paid column opens every level already
-// reached — a column of cells to tap, not a payout.
+// EVERY CELL IS ITS OWN CLAIM: out of order, at the player's pace, and
+// buying the paid column opens every level already reached — a column of
+// cells to tap, not a payout.
 
 import { roundPrice } from './roundPrice';
 import { track as trackEvent } from './analytics';
@@ -40,7 +40,7 @@ export const nextLevelCells = (state: GameState): number | null =>
 
 export const surveyOwned = (state: GameState): boolean => state.kingdom.survey.owned;
 
-/** What one cell of one column holds — a wallet and a pack, as the pass's. */
+/** What one cell of one column holds — a wallet, items and fragments. */
 export interface SurveyCell extends Grant {
   level: number;
 }

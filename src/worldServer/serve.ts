@@ -44,6 +44,7 @@ export type Served =
 const KINDS: ReadonlySet<WorldCommandKind> = new Set<WorldCommandKind>([
   'join', 'snapshot', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect', 'reportSeen', 'postOffer',
   'takeOffer', 'withdrawOffer', 'sendArmy', 'recall', 'delveRoom', 'descendPortal', 'setBoost',
+  'setCrest',
 ]);
 
 /** How many times a request starts again on a board written under it. */
@@ -59,6 +60,7 @@ export function badBody(body: unknown): string | null {
   const cmd = b.cmd as Record<string, unknown> | null;
   if (cmd === null || typeof cmd !== 'object' || !KINDS.has(cmd.kind as WorldCommandKind)) return 'cmd';
   if (cmd.kind === 'join' && typeof cmd.nickname !== 'string') return 'nickname';
+  if (cmd.kind === 'setCrest' && cmd.crest !== null && (typeof cmd.crest !== 'string' || cmd.crest.length > 32)) return 'crest';
   return null;
 }
 
@@ -116,7 +118,7 @@ async function seatNewPlayer(store: BoardStore, req: WorldRequest, nickname: str
 }
 
 function refusal(kind: WorldCommandKind, why: 'NotARival' | 'NoBoard'): unknown {
-  return kind === 'snapshot' || kind === 'setBoost' ? null : { ok: false, why };
+  return kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest' ? null : { ok: false, why };
 }
 
 /** Boards in memory, for the tests — and the shape the tables keep. */

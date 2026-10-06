@@ -32,9 +32,8 @@ export const activeQuest = (state: GameState): QuestDef | null =>
  * relative goal). Cheap enough to call from every tap and deposit.
  *
  * IT TAKES THE WHOLE `SimEvent` UNION, not a chain-shaped subset, and the
- * switch below ends in a `default` — so the kinds the season pass's missions
- * added (a level, a trainee, a cleared room) cost this nothing and can never
- * move `state.quests.progress`. Call sites go through
+ * switch below ends in a `default` — so a kind no quest goal reads (a level, a
+ * trainee) costs this nothing and can never move `state.quests.progress`. Call sites go through
  * `recordEvent` (sim/events.ts), which calls this first and then the
  * odometer; nothing outside that file calls this directly.
  */

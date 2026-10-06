@@ -96,6 +96,10 @@ export class RemoteWorldServer implements WorldServerApi {
     await this.send({ kind: 'setBoost', boost });
   }
 
+  async setCrest(crest: string | null): Promise<void> {
+    await this.send({ kind: 'setCrest', crest });
+  }
+
   acknowledge(seq: number): void {
     this.ack = Math.max(this.ack, seq);
   }

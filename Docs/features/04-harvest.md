@@ -52,7 +52,7 @@ Every resource cell carries:
 - Recovery is timestamp-based: it works offline and costs exactly one boundary.
 - **The wait is priced once, at the moment the cell runs dry.** The tech tree
   can shorten it — `harvestRecovery`, aimed at a source, so "trees grow back
-  20% faster" leaves the crops alone — and so does the **Dowsing Rod** relic,
+  20% faster" leaves the crops alone — and so does the **Staff of Renewal** relic,
   on every in-place clock at once ([`09-relics.md`](09-relics.md) §2).
   Neither wakes a cell already sleeping: the stamp is a fact about the cell,
   not a live query, and a bonus that repriced a stretch already elapsed would
@@ -64,7 +64,7 @@ Every resource cell carries:
   Crops. A berry bush, a herd and a shoal are consumed
   and reappear on another tile instead (`respawnSeconds`, §3), which is a
   different number the tree cannot move — so aiming a recovery bonus at one
-  is refused rather than sold. The **Verdant Seal** relic is what moves it
+  is refused rather than sold. The **Sickle of Plenty** relic is what moves it
   ([`09-relics.md`](09-relics.md) §2).
 - The chunk and the rhythm are per cell: iron is a heavy swing, crops a light
   tick, and two cells can pay the same per minute and feel different.
@@ -264,8 +264,8 @@ Quests:
 - A **nominal** city-wide rate with a travel term that takes the influence
   radius as the distance, and with each building's own level in its haul and
   its cadence.
-- The tap does not read it. Treasures, raids, the mission board and the card
-  collection read it as the city's rate of a coin.
+- The tap does not read it. Treasures and raids read it as the city's rate of
+  a coin.
 
 ## 5. Areas of influence, claims and migration
 

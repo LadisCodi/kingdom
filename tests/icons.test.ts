@@ -10,7 +10,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
-import { CURRENCIES, DISTRICTS } from '../src/sim/data/definitions';
+import { CURRENCIES, DISTRICTS, ITEMS } from '../src/sim/data/definitions';
 
 
 const cells = new Set(Object.keys(ICON_INDEX));
@@ -44,7 +44,8 @@ describe('the icon atlas', () => {
   it('ships no cell the kit cannot name', () => {
     // Catches a typo in the manifest, which would otherwise pack a cell that
     // no call site can ever reach.
-    const known = new Set(Object.keys(ICON_EMOJI));
+    // An item's own picture is named by its id (`itemArt.ts` asks for it).
+    const known = new Set([...Object.keys(ICON_EMOJI), ...Object.keys(ITEMS)]);
     const orphans = [...cells]
       .map((c) => c.replace(/-(sm|locked)$/, '').replace(/-sm$/, ''))
       .filter((base) => !known.has(base));

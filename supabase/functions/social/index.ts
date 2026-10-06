@@ -20,16 +20,34 @@ const CORS = {
 const json = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-const PROFILE = 'user_id, nickname, code, townhall, cells, seen_at';
+const PROFILE = 'user_id, nickname, code, townhall, cells, crest, seen_at';
 
-interface Row { user_id: string; nickname: string; code: string | null; townhall: number; cells: number; seen_at: string | null }
+interface Row {
+  user_id: string; nickname: string; code: string | null; townhall: number; cells: number; crest: string | null; seen_at: string | null;
+}
 
 const profileOf = (r: Row) => ({
-  userId: r.user_id, nickname: r.nickname, code: r.code, townhall: r.townhall, cells: r.cells,
+  userId: r.user_id, nickname: r.nickname, code: r.code, townhall: r.townhall, cells: r.cells, crest: r.crest,
   seenAt: r.seen_at === null ? null : Date.parse(r.seen_at),
 });
 
 const iso = (ms: number) => new Date(ms).toISOString();
+
+const MESSAGE = 'user_id, id, kind, from_id, created_at, read_at, state';
+
+interface MessageRow {
+  user_id: string; id: string; kind: string; from_id: string; created_at: string; read_at: string | null; state: string | null;
+}
+
+/** A message as `serveSocial` reads it (src/socialServer/serve.ts MessageRow). */
+interface Message {
+  userId: string; id: string; kind: string; fromId: string; at: number; readAt: number | null; state: string | null;
+}
+
+const messageOf = (r: MessageRow): Message => ({
+  userId: r.user_id, id: r.id, kind: r.kind, fromId: r.from_id, at: Date.parse(r.created_at),
+  readAt: r.read_at === null ? null : Date.parse(r.read_at), state: r.state,
+});
 
 function rows<T>({ data, error }: { data: T[] | null; error: unknown }): T[] {
   if (error) throw error;
@@ -51,10 +69,11 @@ const store = {
     if (error) throw error;
     return data === null ? null : profileOf(data as Row);
   },
-  async byNicknamePrefix(prefix: string, limit: number) {
-    const pattern = `${prefix.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-    return rows<Row>(await admin.from('profiles').select(PROFILE).ilike('nickname', pattern).order('nickname').limit(limit))
-      .map(profileOf);
+  async byNickname(nickname: string) {
+    const exact = nickname.replace(/[\\%_]/g, (c) => `\\${c}`);
+    const { data, error } = await admin.from('profiles').select(PROFILE).ilike('nickname', exact).maybeSingle();
+    if (error) throw error;
+    return data === null ? null : profileOf(data as Row);
   },
   async claimNickname(userId: string, nickname: string) {
     const { data, error } = await admin.rpc('claim_nickname', { p_user: userId, p_nickname: nickname });
@@ -67,9 +86,12 @@ const store = {
     if (error) throw error;
     return true;
   },
-  async touch(userId: string, progress: { townhall: number; cells: number }, now: number) {
+  async touch(userId: string, progress: { townhall: number; cells: number; crest?: string | null }, now: number) {
     const { error } = await admin.from('profiles')
-      .update({ townhall: progress.townhall, cells: progress.cells, seen_at: iso(now) }).eq('user_id', userId);
+      .update({
+        townhall: progress.townhall, cells: progress.cells, seen_at: iso(now),
+        ...(progress.crest === undefined ? {} : { crest: progress.crest }),
+      }).eq('user_id', userId);
     if (error) throw error;
   },
   async links(userId: string) {
@@ -114,6 +136,28 @@ const store = {
     if (data === null) return [];
     return rows<{ user_id: string }>(await admin.from('seats').select('user_id').eq('board_id', data.board_id))
       .map((r) => r.user_id).filter((id) => id !== userId);
+  },
+  async messagesOf(userId: string) {
+    return rows<MessageRow>(await admin.from('messages').select(MESSAGE).eq('user_id', userId)).map(messageOf);
+  },
+  async putMessage(m: Message) {
+    const { error } = await admin.from('messages').upsert({
+      user_id: m.userId, id: m.id, kind: m.kind, from_id: m.fromId, created_at: iso(m.at),
+      read_at: m.readAt === null ? null : iso(m.readAt), state: m.state,
+    }, { onConflict: 'user_id,id' });
+    if (error) throw error;
+  },
+  async patchMessage(userId: string, id: string, patch: { readAt?: number; state?: string }) {
+    const { error } = await admin.from('messages').update({
+      ...(patch.readAt === undefined ? {} : { read_at: iso(patch.readAt) }),
+      ...(patch.state === undefined ? {} : { state: patch.state }),
+    }).eq('user_id', userId).eq('id', id);
+    if (error) throw error;
+  },
+  async dropMessages(userId: string, ids: string[]) {
+    if (ids.length === 0) return;
+    const { error } = await admin.from('messages').delete().eq('user_id', userId).in('id', ids);
+    if (error) throw error;
   },
 };
 

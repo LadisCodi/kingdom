@@ -148,7 +148,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - harvest → the building's store → a collect → materials → buildings
   - Mana → magic
   - time, lumps, Gold, Gems → Knowledge → research
-  - quests, the Survey, the pass, the Portal and the store → card packs →
+  - quests, the Survey, the Portal and the store → card packs →
     albums → relic levels
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
@@ -203,7 +203,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   calendar, **eight albums of nine cards**. The first season a
   relic's album is completed hands it over; every season after adds a level,
   so a relic rises at most once a season.
-- Cards come in **packs** — from quests, the Survey, the pass, the Portal and
+- Cards come in **packs** — from quests, the Survey, the Portal and
   the store — and an album pays a level, a chest of production hours, keys and
   Gems. Completing all eight pays the season hero and a pile of Gems.
 - At the close the cards are wiped and the levels stay. A duplicate is free to

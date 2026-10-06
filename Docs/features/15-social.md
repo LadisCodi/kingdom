@@ -6,7 +6,7 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity and the friends list built (§2, §2.1); the rest
+> **Status: identity, the friends list, the crest and the Inbox built (§2–§2.3); the rest
 > designed, not built.** Prototype population is five to ten named
 > playtesters.
 
@@ -18,7 +18,6 @@
 | The world board — claims, armies, dungeons ([`19-world-map.md`](19-world-map.md)) | **server** |
 | Save | per-player |
 | Friends, neighbours, guilds, help, collective bars | **server** |
-| The friends' reward path — what was taken | client (save) |
 | Purchase-intent log, telemetry | **server** |
 
 - Shared tables are readable but never directly writable.
@@ -64,9 +63,9 @@
   *just play* path survives.
 - A **friend code**: eight letters in two fours (`K7QD-M2XA`), handed out by
   the server the first time anyone needs it; no 0/O or 1/I.
-- A **crest**: one of eight painted shields, picked from the friend code, so
-  a kingdom wears the same one everywhere.
-- Not in scope: chosen avatars, chat, moderation.
+- A **crest**, chosen by the player (§2.2); until then the one its nickname
+  picks, the same everywhere.
+- Not in scope: avatars, chat, moderation.
 
 ### 2.1 The friends list
 
@@ -74,30 +73,51 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 [`../art/ui/mockups/m73-friends.png`](../art/ui/mockups/m73-friends.png).
 
 - **The door:** a knob hanging under the header, left of Settings. It opens
-  with Townhall 2 (the `friends` door). A red orb counts requests to answer
-  plus rewards to take.
+  once the world map is open and the kingdom has a nickname (the `friends`
+  door). A red orb counts requests to answer plus unread Inbox messages.
 - **The cap:** 10 friends, held on both sides. At most 10 requests waiting
   for an answer at once.
-- **The name first:** without a nickname the screen asks for one, then the
-  rest of it comes in. It is the world board's nickname: one name, unique,
-  never changed. A kingdom that went out onto the board first already has it.
-- **The screen, top to bottom:**
-  - **Requests**, three tabs: *Received* (accept / decline), *Sent*
-    (cancel), *Suggested* (add). A red seal counts the received and the sent.
-  - **Search** by friend code or by the start of a nickname; up to five found.
-  - **Invite:** the player's code on a brass plate (a tap copies it) and
-    *Invite*, which shares a message with the code and a link
-    (`?friend=<code>`) through the phone's share sheet, else the clipboard.
-    Opening the link searches the code the first time the list can.
-  - **Friends n/10**, the player included, ranked by Townhall level, then by
-    cells revealed. The first three wear a gold, silver or bronze ribbon with
-    their place; the rest a plain one. Each row: crest, name, Townhall tag,
-    last seen.
-  - **Friend rewards** at the foot (§2.2).
+- **Requests expire** after 48 hours unanswered, on both sides.
+- **The name first:** the name is asked for the moment the world map opens,
+  after its splash and its scene ([`19-world-map.md`](19-world-map.md)
+  §1.3); taking it seats the kingdom on a board. One name, unique, never
+  changed, the save keeps it. The friends list never asks.
+- **Two tabs:** *List* and *Inbox* (§2.3); a red seal on the Inbox counts
+  its unread messages.
+- **The List, top to bottom:**
+  - **The player's own card**, pinned: their place among their friends
+    (ribbon), crest, name, Townhall tag, friend code (a tap copies it), and a
+    pencil that opens the crest editor (§2.2). It stays put; everything
+    under it scrolls.
+  - **Friend requests**, one list:
+    - received: *Sent you a friend request*, the time left, ✕ and ✓;
+    - sent: *Awaiting response…*, a turning ring; no cancel;
+    - suggested: *Suggested friend*, a + that sends a request.
+    - Suggestions only fill the list to 3 rows, and never past the room
+      left for friends. Empty: *No pending requests*.
+  - **Share** and **Search** under it.
+    - *Share* sends a message with the player's code and a link
+      (`?friend=<code>`) through the phone's share sheet, else the
+      clipboard. Opening the link opens the search popup with the code in.
+    - *Search* opens the search popup.
+  - **Friends n/10**, ranked with the player by Townhall level, then by cells
+    revealed; the player's own place is on their card, not in the list. The
+    first three wear a gold, silver or bronze ribbon with their place; the
+    rest a plain one. Each row: crest, name, Townhall tag, last seen.
+- **The screen** takes the whole height between the header and the nav.
 - **The Townhall tag:** the Townhall icon and level on a pill coloured by
   band of two levels — 1-2 green, 3-4 teal, 5-6 blue, 7-8 purple, 9-10 orange.
 - **Last seen**, roughly: *Online now* (under five minutes), *Today*,
   *Yesterday*, *This week*, *n weeks ago*, *n months ago*.
+- **The search popup:** one field for a kingdom's whole nickname (any case)
+  or its friend code.
+  - A cross in the field until what is typed has a nickname's or a code's
+    shape, a tick once it has; *Add* is off until then.
+  - *Add* sends the request: *Sending request…*, then *Friend request sent*
+    and *Awaiting response from X*.
+  - Refused: the reason under the field (*There is no kingdom with that name
+    or code*, *Your friends list is full*…), the field crossed and *Add*
+    off until the text changes.
 - **Asking someone who already asked you** is a yes.
 - **A profile** opens on a tap of a friend's row: crest, name and code,
   Townhall, land revealed, last seen, place among friends; a section of
@@ -111,22 +131,48 @@ Modelled on Theme Park's friends list (ITP-009/26). Mockup:
 - **Reads:** a hello every 10 s while the screen is open, every 60 s
   elsewhere once the door is open.
 
-### 2.2 The friends' reward path
+### 2.2 The crest
 
-- A reward at 1, 3, 5 and 10 friends who **count**: those whose Townhall has
-  reached level 2.
-- Each pays Gems and one Bag item; the last is the biggest. A reached reward
-  glows until tapped; any other shows what it holds on a tap.
-- Taken once each, kept in the save. A friend removed and added again pays
-  nothing twice. The path is put away once every reward is taken.
-- The count is the server's last word; the claim is the client's (§1.1).
+- A blank shield in one of **8 tinctures** with one of **12 charges** on it:
+  - tinctures: red, blue, green, purple, black, orange, teal, wine;
+  - charges: lion, lily, oak, crown, tower, star, eagle, key, swords,
+    dragon, stag, ship.
+- **Every combination is free.**
+- **The editor:** the crest large, the 8 fields (each with the current
+  charge), the 12 charges (each on the current field), *Save*. A tap changes
+  the preview; the close X leaves the crest as it was.
+- **Where it shows:** the player's card, every row of the friends screens,
+  a friend's profile, and the plank under each city on the world map
+  ([`19-world-map.md`](19-world-map.md) §1.3).
+- **Where it lives:** the save is the player's own; the social server's
+  profile gets it with every hello, the world board's seat with a
+  `setCrest` command until the board agrees.
+
+### 2.3 The Inbox
+
+Modelled on Theme Park's Inbox (ITP-009/26, the send and receive pages).
+
+- **Two sections:** *New messages* and *Old messages*, newest first. Each
+  row: the sender's crest and name, what it says, how long ago.
+- **What arrives:**
+  - a friend request: *Sent you a friend request*, the time left, ✕ and ✓.
+    Answered here or on the list, it says so (*You accepted…* / *You
+    declined…*, a tick or a cross); unanswered, it expires;
+  - the answer to a request the player sent: *Accepted your friend
+    request* or *Declined your friend request*.
+  - Sending a request writes nothing to the sender's Inbox. A cancelled
+    request leaves the other's.
+- **Read:** opening the tab reads what is new; it moves under *Old* on the
+  next visit, stamped with when it was read. A request waiting for an answer
+  stays new until it is answered.
+- **Kept 30 days**, then gone. *Delete read* clears every old message.
+- Other systems add their own kinds (a friend's trade offer).
 
 | Dial, in the order to reach for them | Where |
 |---|---|
-| Milestones, their Gems and items | `?dev=data` › Friends (`friends.milestones`, `gems`, `items`) |
-| The Townhall a friend must reach to count | `friends.countsFromTownhall` |
-| The cap on friends, on requests waiting | `friends.max`, `friends.maxSent` |
-| How many suggestions | `friends.suggestions` |
+| The cap on friends, on requests waiting | `?dev=data` › Friends (`friends.max`, `friends.maxSent`) |
+| How long a request waits, a message is kept | `friends.requestHours`, `friends.messageDays` |
+| Rows the requests list fills with suggestions | `friends.requestRows` |
 
 ## 3. Neighbours and daily help
 
@@ -248,7 +294,7 @@ Submitted as they happen:
 ## 9. Deliberately not in this design
 
 - Chat
-- Chosen avatars; a crest is derived, not picked
+- Avatars and frames; crests locked behind progress or sold
 - A leaderboard at prototype population
 - Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §5)
 - Writing into another player's save

@@ -59,6 +59,8 @@ export interface WorldServerApi {
   recall(armyId: string, asSeat?: number): Promise<CommandResult>;
   /** What this kingdom's research does to its districts' output and stores. */
   setBoost(boost: SeatBoost): Promise<void>;
+  /** The crest the player chose, or null for their nickname's. */
+  setCrest(crest: string | null): Promise<void>;
   delveRoom(armyId: string): Promise<DelveResult>;
   descendPortal(armyId: string): Promise<DelveResult>;
   /** The last effect the client has applied AND saved: the next request
@@ -230,6 +232,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async setBoost(boost: SeatBoost): Promise<void> {
     this.ask({ kind: 'setBoost', boost });
+  }
+
+  async setCrest(crest: string | null): Promise<void> {
+    this.ask({ kind: 'setCrest', crest });
   }
 
   async recall(armyId: string, asSeat?: number): Promise<CommandResult> {

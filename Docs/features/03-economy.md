@@ -25,10 +25,10 @@
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons · hero calls | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · lairs · the Survey's paid column | hero levels, on any hero | kingdom | no — reads on the roster |
-| **Cards** | packs — every room, every boss, the event, the pass, the Survey, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
-| **Gems** | quests, first clears, the season pass and the Survey (both columns), the simulated store | power, comfort and breadth | player | yes |
+| **Cards** | packs — every room, every boss, the event, the Survey, offers | the collection's five albums, one per relic, which level them; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
+| **Gems** | quests, first clears, the Survey (both columns), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
-| **Gold key** | 1,500 Gems, a free call's ad, the season pass or the Survey | one call on the golden banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, a free call's ad or the Survey | one call on the golden banner | player | no — a price on a button |
 
 - Eleven wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a
@@ -83,7 +83,7 @@
 - Residents are auto-assigned: houses fill in build order as population grows.
   The only effect is which house their rent is stored in.
 - Roofless villagers pay nothing; empty minutes are never banked.
-- **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
+- **TradeRoutes** raises the rate +10%/level. The **Tribute Crown** relic adds
   +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel`, 2 at level 1 and
   2 more a level, to 20 at level 10 (OQ-46).
@@ -194,7 +194,7 @@ running. Research already worked this way.
 - The card has no Collect: its **Storage** tile reads what the store holds
   against its capacity (*120/8.6k*), in clay when full.
 - Holding the pointer on a ready building collects once.
-- Collecting is where a `collect` event (quests, missions) and a first
+- Collecting is where a `collect` event (quests) and a first
   discovery of a currency are recorded — never when rent accrues or a haul
   lands.
 - A collect pops `+N` per currency at the building and flies the haul to the

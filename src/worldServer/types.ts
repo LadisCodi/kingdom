@@ -124,6 +124,9 @@ export interface PortalState {
 export interface ServerSeat {
   playerId: string;
   name: string;
+  /** The crest its kingdom chose (`<tincture>.<charge>`, sim/crest.ts);
+   *  absent while it wears its nickname's (`setCrest`). */
+  crest?: string;
   /** A stand-in rival the server plays (local only). */
   bot: boolean;
   /** When a bot makes its next move. */
@@ -277,7 +280,14 @@ export interface ArmyView {
   fallen?: Array<{ unitId: UnitId; count: number }>;
 }
 
-export interface SeatView { seat: number; name: string; you: boolean; bot: boolean }
+export interface SeatView {
+  seat: number;
+  name: string;
+  you: boolean;
+  bot: boolean;
+  /** The crest its kingdom chose; null while it wears its nickname's. */
+  crest?: string | null;
+}
 
 export interface PortalView {
   open: boolean;

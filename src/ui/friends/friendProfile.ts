@@ -21,9 +21,9 @@ export function renderFriendProfile(game: Game): HTMLElement {
   if (f.confirmingRemove) {
     return sheet({ title: 'Remove friend', onClose: () => { f.confirmingRemove = false; game.notify(); }, centred: true },
       el('div', { class: 'fr-confirm' },
-        crestEl(k.nickname, k.code, 'lg'),
+        crestEl(k.nickname, k.crest, 'lg'),
         el('p', {}, 'Remove ', el('b', {}, k.nickname), ' from your friends?'),
-        el('p', { class: 'fr-confirm-fine' }, 'They will have to be asked again to come back. Rewards already taken are kept.'),
+        el('p', { class: 'fr-confirm-fine' }, 'They will have to be asked again to come back.'),
         el('div', { class: 'fr-confirm-buttons' },
           btn({ label: 'Keep', onClick: () => { f.confirmingRemove = false; game.notify(); } }),
           btn({
@@ -36,7 +36,7 @@ export function renderFriendProfile(game: Game): HTMLElement {
   return sheet({ title: 'Profile', onClose: () => f.closeProfile(), centred: true },
     el('div', { class: 'fr-profile' },
       el('div', { class: 'fr-profile-head' },
-        crestEl(k.nickname, k.code, 'lg'),
+        crestEl(k.nickname, k.crest, 'lg'),
         el('div', { class: 'fr-who' },
           el('div', { class: 'fr-name' }, k.nickname),
           el('div', { class: 'fr-profile-code' }, k.code))),

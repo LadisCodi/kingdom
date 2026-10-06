@@ -92,7 +92,7 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec, at:
   // flat and rides on top. One number reaches the thumb (`tapDraw`) and the
   // crew (`effectiveWorkerStrike`) from this one place — a fraction, which
   // both of them carry.
-  // AT THE CELL when there is one: a Verdant Seal's aura is a place
+  // AT THE CELL when there is one: a Sickle of Plenty's aura is a place
   // (sim/hosts.ts).
   const base = spec.unitsPerStrike * techMultiplier(state, 'harvestYield', { harvest: spec.id });
   return Math.max(0, at === null
@@ -219,7 +219,7 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
  *  one-call replay and stepped ticking on the same StateUntil.
  *
  *  `home` is the walker's BUILDING, for the same reason `workerStrikeMs`
- *  reads one: a crew in a Foreman's Sigil zone walks faster for the whole leg,
+ *  reads one: a crew in a Winged Hammer zone walks faster for the whole leg,
  *  including the half of it outside the zone. Omitted, this is the kingdom's
  *  walking speed with no zone in it — which is what the UI and a worker with
  *  no building want. */

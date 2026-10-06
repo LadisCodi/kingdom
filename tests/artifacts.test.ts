@@ -85,7 +85,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
 
   // OQ-97, and the rule the whole shape exists for. Every passive is a SPEED,
   // a yield or a capacity — the call site divides by a speed — so no level can
-  // walk one to zero and stop paying. Before this, the Rod and the Seal were
+  // walk one to zero and stop paying. Before this, the Staff and the Sickle were
   // time multipliers falling 0.05 a level and both read 0.00 at level 18.
   it('never reaches a level where the next one is worth nothing', () => {
     for (const id of ARTIFACT_ORDER) {
@@ -109,7 +109,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
     }
   });
 
-  // The Rod's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
+  // The Staff's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
   // approaches an instant recovery without ever arriving at one.
   it('shortens a wait without ever reaching zero', () => {
     let last = effectiveRecoveryMs(state, HARVEST.Forest, AT);
@@ -124,9 +124,9 @@ describe('a relic is a permanent passive with no ceiling', () => {
     }
   });
 
-  // ONE NUMBER, TWO CALL SITES. The Seal's `+1` has to reach the thumb and the
+  // ONE NUMBER, TWO CALL SITES. The Sickle's `+1` has to reach the thumb and the
   // crew, or half the relic is a sentence on a card.
-  it('the Seal pays the thumb and the crew from one number', () => {
+  it('the Sickle pays the thumb and the crew from one number', () => {
     const shed = { location: FOREST, definitionId: 'Sawmill', level: 1 } as District;
     const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, FOREST);
     const crew = effectiveWorkerStrike(state, HARVEST.Forest, shed);
@@ -138,8 +138,8 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(effectiveStock(state, map, FOREST, HARVEST.Forest)).toBe(held + 1);
   });
 
-  // And the Sigil's one number has to reach both halves of a round trip.
-  it('the Sigil hurries a crew\u2019s swing and its walk together', () => {
+  // And the Hammer's one number has to reach both halves of a round trip.
+  it('the Hammer hurries a crew\u2019s swing and its walk together', () => {
     const shed = { location: AT, definitionId: 'Sawmill', level: 1 } as District;
     const swing = workerStrikeMs(state, HARVEST.Forest, shed);
     const walk = effectiveWorkerSpeed(state, AT);
@@ -207,7 +207,7 @@ describe('the three relics outside the city', () => {
 
   // THE ONE THAT IS NOT COLLECTED YET, named rather than forgotten. Delete
   // this when the world map's improvements exist.
-  it('the Tally waits on the world map, and its card says so', () => {
+  it('the Signet waits on the world map, and its card says so', () => {
     expect(ARTIFACTS.BailiffsTally.passive.stats[0]!.stat).toBe('worldImprovementYield');
     const pending = ARTIFACT_ORDER.filter((id) => ARTIFACTS[id].pending !== null);
     expect(pending).toEqual(['BailiffsTally']);

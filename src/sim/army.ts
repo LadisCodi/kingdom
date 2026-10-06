@@ -524,9 +524,9 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
 function deliver(state: GameState, trainee: TrainableId, at: number, count = 1): void {
   if (trainee === 'Villager') {
     // THE ONE RUNTIME WRITER OF `city.population`, which is what makes the
-    // `villagers` odometer honest: a mission asking the player to grow the
-    // city counts arrivals here and nowhere else. A second writer would have
-    // to announce the same event, or the mission would quietly under-count.
+    // `villagers` odometer honest: arrivals are counted here and nowhere
+    // else. A second writer would have to announce the same event, or the
+    // count would quietly fall short.
     repriceTaxAnchorAround(state, at, () => { state.city.population += count; });
     for (let i = 0; i < count; i++) recordEvent(state, { kind: 'villager' });
     return;

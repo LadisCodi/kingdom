@@ -29,11 +29,6 @@
     "gems": 50000,
     "items": {}
   },
-  "SeasonPass": {
-    "priceUsd": 4.99,
-    "gems": 0,
-    "items": {}
-  },
   "Survey": {
     "priceUsd": 9.99,
     "gems": 0,
