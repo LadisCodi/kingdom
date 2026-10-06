@@ -1471,7 +1471,7 @@
     "providesHarvestSource": null,
     "trains": [],
     "crew": [],
-    "size": { "x": 2, "y": 2 },
+    "size": { "x": 1, "y": 1 },
     "maxLevel": 5,
     "populationCapacityPerLevel": [],
     "taxBonusPerLevel": [],

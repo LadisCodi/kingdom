@@ -33,7 +33,7 @@
 | **Orchard** | 2×1 | 12 | 24,000 Gold · 1,300 Food · 2 Planks | TH6, up to 1 → 5 | Gardening |
 | **Statue** | 1×1 | 10 | 160,000 Gold · 2 Cut Stone | TH7, up to 1 → 4 | Sculpture |
 | **Plaza** | 2×2 | 30 | 36,000 Gold · 2,000 Stone · 4 Planks · 4 Cut Stone | TH8, up to 1 → 3 | Paving |
-| **Shrine** | 2×2 | 40 | 600,000 Gold · 2 Runestone | TH9, up to 1 → 2 | Sacred Grounds |
+| **Shrine** | 1×1 | 40 | 600,000 Gold · 2 Runestone | TH9, up to 1 → 2 | Sacred Grounds |
 
 - A decoration has **one level, no crew, no tap and no fog ring**. It is
   movable like anything else, and a piece under construction supplies nothing.

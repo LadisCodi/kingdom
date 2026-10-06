@@ -289,7 +289,10 @@ describe('an active walks ACTIVE → COOLDOWN → READY', () => {
   // lay a second one on top of the first.
   it('carries both instants through a save', () => {
     const state = armed();
-    castOn(state, 'ForemansSigil', CENTRE, T0);
+    // Clear of the Townhall's 2×2 at the origin: a Shrine standing on it would
+    // be moved off on load (`settleFootprints`), and a move ends its spell.
+    reveal(state, [{ x: 2, y: 2 }]);
+    castOn(state, 'ForemansSigil', { x: 1, y: 1 }, T0);
     const back = deserialize(serialize(state, T0), map, T0)!;
     expect(back.artifacts.casts.ForemansSigil)
       .toEqual(state.artifacts.casts.ForemansSigil);
