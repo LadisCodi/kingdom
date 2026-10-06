@@ -10,6 +10,7 @@ import type { WorldDistrict, WorldUpgrade } from './world/types';
 import techTree from './data/tech-tree.json';
 import buildings from './data/game/buildings.json';
 import items from './data/game/items.json';
+import store from './data/game/store.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 
@@ -89,14 +90,33 @@ export type HeroId =
  *  `sim/research.ts#TOME_OPENS`. */
 export type TomeId = 'Kingdom' | 'Sagas' | 'Atlas';
 
-/** A real-money SKU of the simulated store (definitions.ts `STORE`). */
-export type StoreSkuId =
-  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
-  /** The Survey's paid column, once for the whole province: it grants nothing
-   *  on purchase and opens the levels already reached (sim/survey.ts). */
-  | 'Survey'
-  /** The Bag's bundles: items for money (Docs/proposals/inventory.md §5). */
-  | 'SpeedupSatchel' | 'SpeedupCrate' | 'SpeedupChest' | 'ResourceSack' | 'ResourceCart' | 'BuildersCrate';
+/** A real-money SKU of the simulated store: `data/game/store.json`'s keys,
+ *  like `DistrictId` — a product made in `?dev=data` is a type the moment it
+ *  is saved. */
+export type StoreSkuId = keyof typeof store;
+
+/** An offer's window (sim/offers.ts): when it opened, when it closes (null:
+ *  never — it stays until bought out) and how many it has sold. */
+export interface OfferWindow {
+  opened: number;
+  closes: number | null;
+  bought: number;
+}
+
+/** What a product bought hands over the next day, waiting to be claimed
+ *  (sim/offers.ts `claimNextDay`). */
+export interface NextDayDelivery {
+  sku: StoreSkuId;
+  /** The start of the day after the purchase, UTC. */
+  claimableAt: number;
+}
+
+export interface OffersState {
+  windows: Partial<Record<StoreSkuId, OfferWindow>>;
+  townhall: number;
+  /** The next-day deliveries not claimed yet. */
+  nextDay: NextDayDelivery[];
+}
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */
@@ -408,6 +428,9 @@ export interface WorldState {
    *  stored; a march under way is derived, not stored. */
   revealed: number[];
   explorers: ExplorerTrip[];
+  /** Explorers bought — with Gems or in a pack — on top of what Cartography
+   *  and the Atlas open (sim/world/explorers.ts). */
+  explorersBought: number;
   /** Builders out on the world board: what each is raising and when it is
    *  done. The server holds the hex; this is the builder's half, so a
    *  province build and a world build share the one crew. */
@@ -489,6 +512,9 @@ export interface GameState {
     /** The simulated payer, or null until the player has picked a profile —
      *  which the UI forces before anything else (14-monetization.md §3). */
     payer: PayerState | null;
+    /** The store's offers: each one's window, and the Townhall level the
+     *  townhall trigger last saw (sim/offers.ts). */
+    offers: OffersState;
   };
   fog: {
     revealed: Record<string, true>; // coordKey → revealed

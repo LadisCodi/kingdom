@@ -1,0 +1,9 @@
+hero_paladin
+hero_wizard
+hero_witch
+hero_druid
+hero_ice_lancer
+hero_holy_warrior
+hero_savage_warrior
+hero_spymaster
+hero_electric_archer

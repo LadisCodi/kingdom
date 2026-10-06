@@ -16,6 +16,7 @@ import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
+import type { DoorId } from '../doors';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrade } from '../world/types';
 import type {
@@ -2010,6 +2011,10 @@ export interface WorldDef {
   explorerRevealRadius: number;
   revealRadiusMax: number;
   cartographyExplorers: number;
+  /** Explorers a kingdom may buy — with Gems or in a pack — and their price. */
+  explorersForSale: number;
+  explorerGemCostBase: number;
+  explorerGemCostGrowth: number;
   /** Armies out at once before the War Camp adds any. */
   armySlots: number;
   /** Who holds the five other cities until the board comes from the server. */
@@ -2194,67 +2199,77 @@ export const AD = balance.ads;
 
 // ------------------------------------------------------------------ the store
 
+/** Where a SKU is sold (Docs/features/14-monetization.md §2). */
+export type StoreShelf = 'gems' | 'bag' | 'offer' | 'daily' | 'survey';
+/** What opens an offer's window (sim/offers.ts). */
+export type OfferTrigger = 'always' | 'door' | 'after' | 'townhall' | 'manaLow' | 'buildersBusy';
+
 /** A real-money SKU of the SIMULATED store (Docs/features/14-monetization.md
- *  §2). Nothing here ever charges: the price is deducted from the player's
-  *  monthly budget (`PAYER`), which is the whole instrument. */
+ *  §2), whole in `data/game/store.json`. Nothing here ever charges: the price
+ *  is deducted from the player's monthly budget (`PAYER`), which is the whole
+ *  instrument. */
 export interface StoreSkuDef {
   id: StoreSkuId;
   name: string;
+  /** An offer's name on its tab ('' → `name`). */
+  short: string;
   description: string;
-  /** Dollars, as displayed and as deducted from the monthly budget. */
-  priceUsd: number;
-  gems: number;
-  /** An item bundle: what it puts in the Bag. Empty for anything else. */
-  items: Partial<Record<ItemId, number>>;
+  /** An offer card's illustration, `render/assets/<art>.png` ('' → none). */
+  art: string;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;
+  shelf: StoreShelf;
+  /** Dollars, as displayed and as deducted from the monthly budget. */
+  priceUsd: number;
+  gems: number;
+  /** What it puts in the Bag. */
+  items: Partial<Record<ItemId, number>>;
+  hero: HeroId | null;
+  /** Permanent slots it opens. */
+  builders: number;
+  explorers: number;
+  heroSlots: number;
+  /** What it hands over the day after it is bought, claimed by the player
+   *  (sim/offers.ts `claimNextDay`): Gems, Hero XP, fragments of `hero`,
+   *  items. */
+  nextDayGems: number;
+  nextDayHeroXp: number;
+  nextDayFragments: number;
+  nextDayItems: Partial<Record<ItemId, number>>;
+  opensOn: OfferTrigger;
+  door: DoorId | null;
+  after: StoreSkuId | null;
+  townhall: number;
+  hours: number;
+  limit: number;
+  cooldownHours: number;
+  /** Shown full screen at the start of every session while on sale. */
+  splash: boolean;
+  /** Shown as a floating icon on the map while on sale (ui/offerWidget.ts). */
+  widget: boolean;
 }
 
-const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
-  GemsPouch: { name: 'Pouch of Gems', description: "A handful \u2014 a builder, or a pull.", sprite: 'gems_pouch' },
-  GemsPurse: { name: 'Purse of Gems', description: "A few calls, or a couple of hires.", sprite: 'gems_purse' },
-  GemsChest: { name: 'Chest of Gems', description: "A crew's worth, with change.", sprite: 'gems_chest' },
-  GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
-  GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
-  GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
-  Survey: { name: 'The Royal Survey', description: 'The Survey\u2019s second column, for the whole province.', sprite: 'season_pass' },
-  // The Bag's bundles (Docs/proposals/inventory.md §5): speed-ups in a
-  // satchel, a crate, a chest; choice chests in a sack and a cart; and the
-  // builder's crate.
-  SpeedupSatchel: { name: 'A satchel of speed-ups', description: 'A few hours off whatever you are waiting for.', sprite: 'bundle_speed_s' },
-  SpeedupCrate: { name: 'A crate of speed-ups', description: 'Most of a day off your timers.', sprite: 'bundle_speed_m' },
-  SpeedupChest: { name: 'A chest of speed-ups', description: 'A long build, done tonight.', sprite: 'bundle_speed_l' },
-  ResourceSack: { name: 'A sack of chests', description: 'Eight hours of the coin you pick.', sprite: 'bundle_res_s' },
-  ResourceCart: { name: 'A cart of chests', description: 'A day of the coins you pick.', sprite: 'bundle_res_m' },
-  BuildersCrate: { name: "The builder's crate", description: 'Construction speed-ups and a chest for the materials.', sprite: 'bundle_builder' },
-};
-
-/** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
- *  on purchase is sold where it is UNDERSTOOD, not on the pack shelf
- *  (Docs/features/12-quests.md §3.3). */
-export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
-  .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
-
-interface StoreRow {
-  priceUsd: number; gems: number;
-  items?: Partial<Record<ItemId, number>>;
-}
-
-export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
-  (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
-    const b = (balance.store as Record<string, StoreRow>)[id];
-    if (!b) throw new Error(`data/game/store.json is missing the store SKU "${id}"`);
-    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems, items: { ...(b.items ?? {}) } }];
-  }),
+export const STORE = Object.fromEntries(
+  (Object.entries(balance.store) as Array<[StoreSkuId, Omit<StoreSkuDef, 'id'>]>)
+    .map(([id, row]) => [id, { id, ...row, items: { ...row.items }, nextDayItems: { ...row.nextDayItems } }]),
 ) as Record<StoreSkuId, StoreSkuDef>;
 
-/** The Bag's bundles, in row order — the store's item shelf. */
-export const ITEM_BUNDLE_ORDER = (Object.keys(balance.store) as StoreSkuId[])
-  .filter((id) => Object.values(STORE[id]?.items ?? {}).some((n) => (n ?? 0) > 0));
-
-/** Workbook row order — the order the store shows them in. */
+/** Workbook row order — the order every shelf shows its products in. */
 export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
+const onShelf = (shelf: StoreShelf): StoreSkuId[] => STORE_ORDER.filter((id) => STORE[id].shelf === shelf);
+
+/** The Gem packs, for the store's 3×2 grid. */
+export const GEM_PACK_ORDER = onShelf('gems');
+/** The Bag's bundles, in row order — the store's item shelf. */
+export const ITEM_BUNDLE_ORDER = onShelf('bag');
+/** The offers: packs with a window of their own (sim/offers.ts). */
+export const OFFER_ORDER = onShelf('offer');
+/** The pool the day's offers are drawn from. */
+export const DAILY_POOL = onShelf('daily');
+
+/** How many daily offers a day shows. */
+export const OFFERS = balance.offers as { dailyCount: number };
 
 /** Monthly simulated budgets by payer profile, in dollars
  *  (Docs/features/14-monetization.md §3). */
@@ -2424,4 +2439,6 @@ export const GAME_VERSION: string = pkg.version;
 // v99: trading with friends (`Trade` on the kingdom), additive.
 // v100: no change of shape — the PROTOTYPE fresh start (`PROTOTYPE_FRESH_START`,
 // save.ts): every save written before it is discarded on boot.
-export const SAVE_VERSION = 100;
+// v101: the store's offers (`player.offers`) and the explorers bought
+// (`ExplorersBought` on the world), additive.
+export const SAVE_VERSION = 101;

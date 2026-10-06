@@ -20,6 +20,16 @@
         "whaleMonthlyUsd": { "type": "int" },
         "superWhaleMonthlyUsd": { "type": "int" }
       }
+    },
+    "offers": {
+      "type": "object",
+      "fields": {
+        "dailyCount": {
+          "type": "int",
+          "min": 0,
+          "doc": "How many daily offers the store shows each day, drawn from the shelf-daily products."
+        }
+      }
     }
   }
 }

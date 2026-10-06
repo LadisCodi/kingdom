@@ -468,3 +468,40 @@
   color: var(--ink-muted);
   font-weight: var(--weight-title);
 }
+
+/* ---- offers (sim/offers.ts): a bundle row with a wax seal for its value,
+ * and a countdown and what is left above its price. A stand-in until the
+ * store's redesign gives each offer its own tab. */
+.store-offer { position: relative; }
+.store-offer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 4);
+  color: var(--ink-muted);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+}
+.store-offer-timer { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
+/* A red wax seal pressed into the card's corner, the figure stamped in it. */
+.store-value {
+  position: absolute;
+  top: calc(var(--px) * -6);
+  right: calc(var(--px) * -4);
+  display: grid;
+  place-items: center;
+  min-width: calc(var(--px) * 46);
+  height: calc(var(--px) * 46);
+  padding: 0 calc(var(--px) * 4);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c9473b, #8e2219 70%);
+  box-shadow: inset 0 calc(var(--px) * -3) 0 rgba(60, 10, 6, 0.35), 0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.3);
+  color: #fbe6c8;
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 12);
+  font-weight: var(--weight-strong);
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.store-offer.is-splash { cursor: pointer; }

@@ -1,27 +1,18 @@
-// The store (Docs/features/14-monetization.md §2, §3): three surfaces, and
-// nothing on any of them that a real store would not show.
+// The store (Docs/features/14-monetization.md §2, §3), top to bottom:
 //
-//   * Heroes — the banner itself, first. A call for aid is a purchase, so the
-//     gacha is pulled from HERE; the Reliquary's heroes tab keeps the roster
-//     and points this way.
-//   * Builders — priced in Gems, the same purchase the refused-build offer
-//     raises (builderSheet.ts). Here it is the surface the player is SENT to
-//     rather than the one they stumble into, and the two answer different
-//     questions, which is why both exist.
-//   * Cards — an AIMED wildcard offer for each album the player has nearly
-//     finished, then the collection's two paid tiers, Gem-priced, WITH THEIR
-//     ODDS
-//     PRINTED ON THE SHELF. §6 of the relics design says "at published odds",
-//     and a store is the one place that promise has to be kept where the
-//     money is. Bronze and Silver are not here: selling what a lair already
-//     drips would undercut the only free source the collection has, and the
-//     fine print under the shelf says so in the player's words. Under it,
-//     the three CARD BUNDLES — star packs and wildcards for dollars rather
-//     than for Gems, withdrawn in the last hours of a season because the
-//     close wipes both (09-relics.md §6.1).
-//   * Gems — the real-money SKUs, last: six packs on a 3×2 grid of upright
-//     cards (count, art, price). A tap opens the confirmation sheet, which is
-//     where the price meets the monthly budget; nothing is granted from here.
+//   * Offers — the packs with a window (sim/offers.ts): each with its value,
+//     its countdown and what is left of it. Then today's daily offers.
+//   * Heroes — the banner itself. A call for aid is a purchase, so the
+//     gacha is pulled from HERE.
+//   * For the Bag — the item bundles, always on sale.
+//   * Relics, Keys — Gem-priced, the shapes the store shows without owning.
+//   * Crew — the slots for good, in Gems: a builder (the purchase the
+//     refused-build offer raises), an explorer, a hero slot.
+//   * Gems — the real-money packs, last: a 3×2 grid of upright cards.
+//
+// Every price in dollars opens the confirmation sheet; nothing is granted
+// from here. A layout stand-in: the store's redesign (Kingshot's one tab an
+// offer) comes once every offer kind is in.
 //
 // THE STORE DOES NOT KNOW IT IS SIMULATED. No budget line, no SIMULADO mark,
 // no price greyed out because the allowance is short: a playtester browsing
@@ -30,13 +21,60 @@
 // signal honest — the store measures desire, the confirmation measures it
 // against a wallet.
 
-import type { Game } from '../game';
+import type { Game, OfferCard } from '../game';
 import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
 import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
-import { el, formatExact, formatUsd } from './format';
+import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { btn, card, currencyIcon, iconEl, sheet } from './kit';
+
+/** One offer: its art, what it holds line by line, its value, how long it
+ *  lasts and how many are left, and its price. */
+function offerRow(game: Game, offer: OfferCard): HTMLElement {
+  const url = spriteUrl(offer.sprite);
+  const art = url
+    ? spriteImgAt(url, 'store-pack-row-art')
+    : el('span', { class: 'store-pack-row-art is-fallback' }, iconEl('chest', { size: 'lg' }));
+  const now = game.now();
+  const meta = [
+    ...(offer.closesAt === null ? [] : [el('span', { class: 'store-offer-timer' }, iconEl('hourglass', { size: 'sm' }),
+      formatCountdown(Math.max(0, Math.ceil((offer.closesAt - now) / 1000))))]),
+    ...(offer.left === null ? [] : [el('span', { class: 'store-offer-left' }, `Left: ${formatExact(offer.left)}`)]),
+  ];
+  const row = el('div', { class: `store-offer${STORE[offer.id].splash ? ' is-splash' : ''}` },
+    card({ art, name: offer.name, desc: offer.description },
+      el('div', { class: 'store-bundle-lines' },
+        ...(offer.gems > 0 ? [el('div', { class: 'store-bundle-line' },
+          currencyIcon('Gems', { size: 'sm' }), el('span', {}, `${formatExact(offer.gems)} Gems`))] : []),
+        ...offer.lines.map((line) => el('div', { class: 'store-bundle-line' },
+          iconEl('tick', { size: 'sm' }), el('span', {}, line)))),
+      el('div', { class: 'store-price-col' },
+        ...(meta.length === 0 ? [] : [el('div', { class: 'store-offer-meta' }, ...meta)]),
+        btn({
+          label: offer.left === 0 ? 'Sold out' : formatUsd(offer.priceCents),
+          kind: 'primary',
+          finish: 'gem',
+          onClick: () => game.openIap(offer.id),
+          disabledReason: offer.left === 0 ? 'Back tomorrow' : undefined,
+        }))),
+    // The value is a wax seal pressed on the card's corner.
+    offer.valuePercent > 100
+      ? el('span', { class: 'store-value', 'aria-label': `${formatExact(offer.valuePercent)}% value` },
+        `${formatExact(offer.valuePercent)}%`)
+      : '');
+  // An offer opens its own screen from its row — its splash, or its tab in
+  // the Offers screen; the price still buys.
+  if (STORE[offer.id].shelf === 'offer') {
+    row.classList.add('is-splash');
+    row.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      if (STORE[offer.id].splash) game.openOfferSplash(offer.id);
+      else game.openOffers(offer.id);
+    });
+  }
+  return row;
+}
 
 export function renderStoreSheet(game: Game): HTMLElement {
   const close = () => game.dismiss();
@@ -149,7 +187,47 @@ export function renderStoreSheet(game: Game): HTMLElement {
     return pack;
   });
 
+  // ---- offers, and today's
+  const offers = game.offerCards().map((o) => offerRow(game, o));
+  const daily = game.dailyCards();
+  const dailyRows = daily.cards.map((o) => offerRow(game, o));
+
+  // ---- the crew's other slots, for Gems
+  const explorer = game.explorerOffer();
+  const explorerCard = explorer.slots === 0 ? null : card({
+    art: iconEl('compass', { size: 'lg' }),
+    name: 'Another explorer',
+    desc: explorer.bought >= explorer.forSale
+      ? 'Every explorer for sale is yours.'
+      : `Explore with one more at once. ${formatExact(explorer.slots)} out at once now.`,
+  }, explorer.bought >= explorer.forSale
+    ? el('span', { class: 'store-owned' }, iconEl('tick', { size: 'sm' }), 'All hired')
+    : btn({
+        label: 'Hire', kind: 'gem', onClick: () => game.doBuyExplorer(),
+        cost: { Gems: explorer.cost }, have: (c) => game.walletValue(c),
+      }));
+  const slot = game.heroSlotOffer();
+  const heroSlotCard = !game.doorOpen('heroes') ? null : card({
+    art: iconEl('helmet', { size: 'lg', label: 'hero slot' }),
+    name: 'Another hero slot',
+    desc: slot.slots >= slot.ceiling
+      ? `${formatExact(slot.ceiling)} heroes is the whole board.`
+      : `One more hero in every party. ${formatExact(slot.slots)} of ${formatExact(slot.ceiling)} open.`,
+  }, slot.slots >= slot.ceiling
+    ? el('span', { class: 'store-owned' }, iconEl('tick', { size: 'sm' }), 'All open')
+    : btn({
+        label: 'Open', kind: 'gem', onClick: () => game.doBuyHeroSlot(),
+        cost: { Gems: slot.cost }, have: (c) => game.walletValue(c),
+      }));
+
   const body = el('div', { class: 'store' },
+    ...(offers.length === 0 ? [] : [el('div', { class: 'store-section' }, el('span', {}, 'Offers')), ...offers]),
+    ...(dailyRows.length === 0 ? [] : [
+      el('div', { class: 'store-section' }, el('span', {}, 'Today'),
+        el('span', { class: 'store-balance' }, iconEl('hourglass', { size: 'sm' }),
+          formatCountdown(Math.max(0, Math.ceil((daily.resetsAt - game.now()) / 1000))))),
+      ...dailyRows,
+    ]),
     el('div', { class: 'store-section' }, el('span', {}, 'Heroes')),
     // The banner hangs in the Tavern; until one stands, its place in the
     // store is padlocked (Docs/features/22-progression.md §3).
@@ -174,10 +252,12 @@ export function renderStoreSheet(game: Game): HTMLElement {
         formatExact(game.walletValue('Gems')))),
     ...keys,
     el('div', { class: 'store-section' },
-      el('span', {}, 'Builders'),
+      el('span', {}, 'Crew'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
         formatExact(game.walletValue('Gems')))),
     builders,
+    ...(explorerCard === null ? [] : [explorerCard]),
+    ...(heroSlotCard === null ? [] : [heroSlotCard]),
     el('div', { class: 'store-section' }, el('span', {}, 'Gems')),
     el('div', { class: 'store-packs' }, ...packs),
   );

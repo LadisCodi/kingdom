@@ -13,12 +13,13 @@
 
 import type { BagScreen, Game } from '../game';
 import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
-import { ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
+import { ITEMS } from '../sim/data/definitions';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, iconEl, knob, sheet } from './kit';
 import { relicTab } from './relicSheet';
 import { BOOST_ICON, tileArt } from './itemArt';
+import { BOOST_WHAT, chestCoin, itemLine, itemName, sizeLabel } from './itemText';
 
 const COLUMNS = 4;
 
@@ -29,53 +30,6 @@ const EMPTY_LINE: Record<BagTab, string> = {
   Boosts: 'Boosts turn up in quests, lairs and the Survey',
   Relics: 'Relic fragments turn up in lairs and in the fog',
   Other: 'Keys and flasks turn up as rewards',
-};
-
-/** The size printed at the top of a tile: "10m", "1h", "8h" — or, for what
- *  has no duration, its value: "25%", "5"; a key, nothing. */
-const sizeLabel = (def: ItemDef): string =>
-  def.kind === 'flask' ? `${formatExact(def.value)}%`
-    : def.kind === 'tome' ? formatExact(def.value)
-      : def.kind === 'key' ? ''
-        : formatDuration(def.seconds);
-
-/** The one coin a chest pays, and how much of it. */
-const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
-  const entry = (Object.entries(worth) as Array<[CurrencyId, number]>)[0];
-  return entry ?? null;
-};
-
-/** What a boost's popover says it raises. */
-const BOOST_WHAT: Record<BoostKind, string> = { Rent: 'Houses pay', Harvest: 'A tap takes', Mana: 'Mana fills' };
-
-/** What a speed-up's popover says it shortens. */
-const SPEEDS_WHAT: Record<NonNullable<ItemDef['speeds']>, string> = {
-  General: 'any build, training or workshop',
-  Construction: 'a build or an upgrade',
-  Training: 'a training line',
-  Workshop: 'the item a workshop is making',
-};
-
-/** What the Bag calls an item in its popover: "1h Wood chest". */
-const itemName = (def: ItemDef): string => `${sizeLabel(def)} ${def.name}`.trim();
-
-/** The popover's one line: what one is worth now. */
-const itemLine = (def: ItemDef, worth: Wallet): string => {
-  const coin = chestCoin(worth);
-  if (def.kind === 'chest' && coin !== null) {
-    return `${formatDuration(def.seconds)} of ${coin[0]} — ${formatExact(coin[1])} now`;
-  }
-  if (def.kind === 'speedup' && def.speeds !== null) {
-    return `Takes ${formatDuration(def.seconds)} off ${SPEEDS_WHAT[def.speeds]}`;
-  }
-  if (def.kind === 'choice') return `${formatDuration(def.seconds)} of the coin you pick`;
-  if (def.kind === 'boost' && def.boost !== null) {
-    return `${BOOST_WHAT[def.boost]} +${formatExact(def.value)}% for ${formatDuration(def.seconds)}`;
-  }
-  if (def.kind === 'flask') return `Fills ${formatExact(def.value)}% of the Mana pool`;
-  if (def.kind === 'tome') return `${formatExact(def.value)} Knowledge, past the bar's cap`;
-  if (def.kind === 'key') return 'One call on its banner, in the store';
-  return '';
 };
 
 function tabRow(game: Game, view: BagScreen): HTMLElement {

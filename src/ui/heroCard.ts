@@ -20,6 +20,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId } from '../sim/state';
 import type { Game, HeroPickSort } from '../game';
 import { el, formatExact } from './format';
+import { heroFragmentIcon } from './heroFragment';
 import { ctaBadge, hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
 
 export interface HeroCardOpts {
@@ -81,7 +82,7 @@ function missingCard(game: Game, heroId: HeroId, opts: HeroCardOpts): HTMLElemen
     iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
   el('span', { class: 'hc-foot' },
     el('span', { class: `hc-level hc-frag${have >= need ? ' is-ready' : ''}` },
-      iconEl('fragment', { size: 'sm' }), `${formatExact(have)} / ${formatExact(need)}`)),
+      heroFragmentIcon(heroId, { size: 'sm' }), `${formatExact(have)} / ${formatExact(need)}`)),
   ...(opts.cta ? [ctaBadge(1, `hero:${heroId}`)] : []));
   if (opts.onClick) card.addEventListener('click', opts.onClick);
   return card;

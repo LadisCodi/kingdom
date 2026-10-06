@@ -81,11 +81,14 @@ import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
+import { mountNextDayPill, mountOfferSplash } from './ui/offerSplash';
+import { mountOfferWidgets } from './ui/offerWidget';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
+import { renderOffersSheet } from './ui/offersSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { ToastShelf } from './ui/toasts';
@@ -265,6 +268,8 @@ async function boot(): Promise<void> {
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountNextDayPill(game, document.getElementById('nextday')!);
+  mountOfferWidgets(game, document.getElementById('offerwidgets')!);
   mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
@@ -272,6 +277,7 @@ async function boot(): Promise<void> {
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
+  mountOfferSplash(game, document.getElementById('offersplash')!);
   mountUnlockSplash(game, document.getElementById('unlock')!);
   // What is mounted, as classes on #ui, for the CSS that steps aside.
   mirrorMountFlags(document.getElementById('ui')!);
@@ -326,6 +332,7 @@ async function boot(): Promise<void> {
     survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
+    offers: renderOffersSheet,
     payerProfile: renderPayerSheet,
     nickname: renderNicknameSheet,
     friends: renderFriendsSheet,
@@ -451,7 +458,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'relic', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch', 'wishNeed', 'wishGive', 'wishFilled',
+        'mana', 'knowledge', 'builder', 'store', 'offers', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch', 'wishNeed', 'wishGive', 'wishFilled',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
@@ -526,8 +533,10 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', () => startMusic());
 
   // Interacting with the hinted element retires its arrow (capture phase, so
-  // it works no matter what the element's own handler does).
-  document.addEventListener('pointerdown', (e) => {
+  // it works no matter what the element's own handler does). On the click,
+  // not the press: retiring it re-renders the menu, and a button replaced
+  // between press and release never receives its click.
+  document.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest?.('.hinted')) game.clearHint();
   }, true);
 

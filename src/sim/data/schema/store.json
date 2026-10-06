@@ -1,13 +1,113 @@
 {
   "type": "object",
   "fields": {
-    "priceUsd": { "type": "float", "min": 0 },
-    "gems": { "type": "int" },
-    "items": {
+    "name": { "type": "text", "doc": "What the store and the confirmation call it." },
+    "short": {
+      "type": "text",
+      "emptyOk": true,
+      "maxLength": 12,
+      "doc": "An offer: its name on its tab in the Offers screen. Empty: its name."
+    },
+    "description": { "type": "text", "doc": "One line under the name: what it is for." },
+    "sprite": {
+      "type": "text",
+      "doc": "Its art: render/assets/<sprite>.png. The Gems or Bag icon stands in until the file lands."
+    },
+    "art": {
+      "type": "text",
+      "emptyOk": true,
+      "doc": "An offer: its card's illustration in the Offers screen, render/assets/<art>.png. Empty: the card shows no picture."
+    },
+    "shelf": {
+      "type": "text",
+      "options": ["gems", "bag", "offer", "daily", "survey"],
+      "doc": "Where it is sold (Docs/features/14-monetization.md §2). gems: the Gem pack grid, Gems and nothing else. bag: the Bag's bundles, always on sale. offer: a pack that opens on `opensOn`, with its own window and limit. daily: the pool the day's offers are drawn from. survey: the Survey's paid column, sold on the Survey."
+    },
+    "priceUsd": { "type": "float", "min": 0, "doc": "Dollars, as displayed and as deducted from the monthly budget." },
+    "gems": { "type": "int", "min": 0, "doc": "Gems into the wallet." },
+    "items": { "type": "map", "of": { "type": "int", "min": 1 }, "keysRef": "item", "doc": "What it puts in the Bag." },
+    "hero": {
+      "type": "text",
+      "nullable": true,
+      "ref": "hero",
+      "doc": "A hero it hands over. One already held pays the golden banner's duplicate fragments instead."
+    },
+    "builders": {
+      "type": "int",
+      "min": 0,
+      "doc": "Builders it hires for good. Held back from sale while the crew is at its ceiling."
+    },
+    "explorers": {
+      "type": "int",
+      "min": 0,
+      "doc": "Explorers it adds on the world map for good. Held back from sale at the ceiling."
+    },
+    "heroSlots": {
+      "type": "int",
+      "min": 0,
+      "doc": "Hero slots it opens in every party for good. Held back from sale at the ceiling."
+    },
+    "nextDayGems": {
+      "type": "int",
+      "min": 0,
+      "doc": "Gems it hands over the day after it is bought, claimed by the player."
+    },
+    "nextDayHeroXp": { "type": "int", "min": 0, "doc": "Hero XP it hands over the day after." },
+    "nextDayFragments": { "type": "int", "min": 0, "doc": "Fragments of its `hero` it hands over the day after." },
+    "nextDayItems": {
       "type": "map",
       "of": { "type": "int", "min": 1 },
       "keysRef": "item",
-      "doc": "An item bundle: what it puts in the Bag. A product is one thing: items, or Gems."
+      "doc": "Items it hands over the day after."
+    },
+    "opensOn": {
+      "type": "text",
+      "options": ["always", "door", "after", "townhall", "manaLow", "buildersBusy"],
+      "doc": "An offer: what opens its window. always: from the start. door: when `door` opens. after: when `after` is bought. townhall: every Townhall level from `townhall` on. manaLow: the pool below the ad threshold. buildersBusy: a build refused for want of a builder. The last three open again once the window has closed and `cooldownHours` have passed."
+    },
+    "door": {
+      "type": "text",
+      "nullable": true,
+      "options": [
+        "research",
+        "build",
+        "heroes",
+        "relics",
+        "store",
+        "world",
+        "knowledge",
+        "banner",
+        "survey",
+        "bag",
+        "friends"
+      ],
+      "doc": "opensOn door: the door that opens it (sim/doors.ts)."
+    },
+    "after": {
+      "type": "text",
+      "nullable": true,
+      "ref": "store",
+      "doc": "opensOn after: the offer whose purchase opens this one — the next step of a chain."
+    },
+    "townhall": {
+      "type": "int",
+      "min": 0,
+      "doc": "The Townhall level it waits for. opensOn townhall: the first level that opens it. daily: the level it joins the pool at."
+    },
+    "hours": { "type": "int", "min": 0, "doc": "How long its window stays open. 0: until it is bought out." },
+    "limit": { "type": "int", "min": 0, "doc": "How many a window sells (a daily: a day). 0: no limit." },
+    "cooldownHours": {
+      "type": "int",
+      "min": 0,
+      "doc": "manaLow, buildersBusy, townhall: hours after a window closes before the trigger can open it again."
+    },
+    "splash": {
+      "type": "bool",
+      "doc": "An offer shown full screen at the start of every session while it is on sale, from the session after its window opened."
+    },
+    "widget": {
+      "type": "bool",
+      "doc": "An offer shown as a floating icon on the map, under the Survey, while it is on sale or its next-day part waits; a tap opens its splash. Its icon is `sprite`."
     }
   }
 }

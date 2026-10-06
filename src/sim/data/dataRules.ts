@@ -91,7 +91,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   // The Bag (Docs/plans/relics-and-bag.md): what the player holds and uses.
   { id: 'items', label: 'Items', domain: 'Progression', view: 'table', noun: 'item', source: 'items' },
   { id: 'banners', label: 'Banners', domain: 'Store', view: 'table', noun: 'banner', source: 'banners' },
-  { id: 'monetization', label: 'Ads & payers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer'] },
+  { id: 'monetization', label: 'Ads, payers & offers', domain: 'Store', view: 'form', noun: 'setting', groups: ['ads', 'payer', 'offers'] },
 ];
 
 export const collectionById = (id: string): CollectionDef | undefined =>
@@ -682,11 +682,32 @@ export const RULES: Readonly<Record<string, Rule>> = {
     }
   },
   store: (doc, push) => {
-    for (const [id, s] of records(doc.store)) {
+    const all = records(doc.store);
+    const shelfOf = new Map(all.map(([id, s]) => [id, s.shelf]));
+    for (const [id, s] of all) {
       if (!(num(s.priceUsd) > 0)) push(id, ['priceUsd'], 'a product needs a positive price');
       const items = Object.values((s.items ?? {}) as Record<string, unknown>).some((n) => num(n) > 0);
-      if (items && num(s.gems) > 0) push(id, ['items'], 'grants items and Gems — a product is one thing');
+      const slots = num(s.builders) + num(s.explorers) + num(s.heroSlots) > 0;
+      const grants = items || slots || s.hero !== null || num(s.gems) > 0;
+      if (num(s.nextDayFragments) > 0 && s.hero === null) push(id, ['nextDayFragments'], 'fragments of which hero? It hands over none');
+      if (s.splash === true && s.shelf !== 'offer') push(id, ['splash'], 'only an offer is shown full screen');
+      if (s.widget === true && s.shelf !== 'offer') push(id, ['widget'], 'only an offer has a widget on the map');
+      if (s.shelf === 'gems' && (items || slots || s.hero !== null)) push(id, ['shelf'], 'a Gem pack grants Gems and nothing else');
+      if (s.shelf === 'gems' && !(num(s.gems) > 0)) push(id, ['gems'], 'a Gem pack with no Gems');
+      if (s.shelf === 'survey' && id !== 'Survey') push(id, ['shelf'], 'only the Survey is sold on the Survey');
+      if (s.shelf !== 'survey' && !grants) push(id, ['items'], 'grants nothing');
+      if (s.shelf === 'bag' && !items) push(id, ['items'], 'a Bag bundle puts nothing in the Bag');
+      if (s.shelf !== 'offer') continue;
+      if ((s.opensOn === 'door') !== (s.door !== null)) push(id, ['door'], 'a door goes with opensOn door, and only with it');
+      if ((s.opensOn === 'after') !== (s.after !== null)) push(id, ['after'], 'an offer it follows goes with opensOn after, and only with it');
+      if (s.after === id) push(id, ['after'], 'cannot follow itself');
+      else if (s.after !== null && shelfOf.get(s.after as string) !== 'offer') push(id, ['after'], 'follows something that is not an offer');
+      if (s.opensOn === 'townhall' && !(num(s.townhall) > 0)) push(id, ['townhall'], 'opens on a Townhall level — which one?');
+      const repeats = s.opensOn === 'townhall' || s.opensOn === 'manaLow' || s.opensOn === 'buildersBusy';
+      if (repeats && !(num(s.hours) > 0)) push(id, ['hours'], 'a trigger that comes back needs a window that closes');
+      if (!repeats && num(s.cooldownHours) > 0) push(id, ['cooldownHours'], 'only manaLow, buildersBusy and townhall come back');
     }
+    if (shelfOf.get('Survey') !== 'survey') push('Survey', ['shelf'], 'the Survey must exist, sold on the Survey');
   },
   banners: (doc, push) => {
     for (const [id, b] of records(doc.banners)) {

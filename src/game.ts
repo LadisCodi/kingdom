@@ -19,7 +19,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, ARTIFACT_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
@@ -110,10 +110,14 @@ import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buyItemBundle, buySku, isItemBundle, canAffordSku, choosePayerProfile,
+  PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { addHeroXp, boonText, pullPrice } from './sim/heroes';
+import {
+  boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
+  offerWindow, offersOn, refreshOffers, skuValuePercent,
+} from './sim/offers';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
@@ -132,11 +136,11 @@ import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, type QuestDef } from './sim/data/definitions';
+import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
-  arrivesAt, cutExplorer, dispatchExplorer, explorerRushCost, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
+  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
   worldFogAt, type ExplorerHome,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
@@ -195,6 +199,8 @@ export type OverlayName =
   // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
   | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
+  // The Offers screen: one tab an offer on sale (Docs/features/14-monetization.md §2.4).
+  | 'offers'
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
@@ -538,7 +544,16 @@ export class Game {
    *  a different building by the time it reopens. */
   upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
-  pendingSkuFrom: OverlayName = 'store';
+  pendingSkuFrom: OverlayName | null = 'store';
+  /** The Offers screen's open tab; null → the first on sale. */
+  offersTab: StoreSkuId | null = null;
+  /** When this session began: an offer splash shows from the session after
+   *  its window opened (`offerSplash`). */
+  sessionStartedAt = 0;
+  /** The offer splashes this session has closed, as `buy:<sku>` / `claim:<sku>`. */
+  private splashesClosed = new Set<string>();
+  /** A splash opened on purpose — from the store or the pill. */
+  private offerSplashForced: { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null = null;
   /** What was asked for while the payer-profile sheet had the screen. The
    *  profile sheet is modal in the strong sense (14-monetization.md §3), so
    *  whatever wanted to open — the welcome report, chiefly — waits here and
@@ -621,6 +636,7 @@ export class Game {
     public readonly camera: Camera,
   ) {
     this.registerTapHandlers();
+    this.sessionStartedAt = this.now();
   }
 
   /** The game's clock is the world server's: the device's time moved by
@@ -658,6 +674,9 @@ export class Game {
     // lagging it by up to a second. `tick()` calls notify() too, so the
     // "after advance()" ordering the architecture needs still holds.
     refreshAdOffer(this.state, this.now());
+    // The store's offers, on the same latch and for the same reason: a
+    // trigger met by a tap opens its window on that tap (sim/offers.ts).
+    refreshOffers(this.state, this.now());
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render. A RESOURCE is
     // never announced: its coin lands on the plank under the player's own
@@ -751,6 +770,8 @@ export class Game {
     // Advanced FIRST, so a raid due before the move lands where it was due.
     const result = advance(this.state, this.map, this.now());
     setUtcOffset(this.state, -new Date(this.now()).getTimezoneOffset(), this.now());
+    // Before the drain, so a window the tick opens is reported on this tick.
+    refreshOffers(this.state, this.now());
     this.drainAnalytics();
     // The Mana offer's tab, the moment it appears (14 §6).
     const offered = this.adOffer() !== null;
@@ -1946,14 +1967,226 @@ export class Game {
     });
   }
 
-  /** What a bundle hands over, one line a thing — the shelf's body and the
-   *  confirmation's grant. */
+  /** What a product hands over besides its Gems, one line a thing — the
+   *  shelf's body and the confirmation's grant. The things for good first. */
   bundleLines(id: StoreSkuId): string[] {
-    if (isItemBundle(id)) {
-      return (Object.entries(STORE[id].items) as Array<[ItemId, number]>)
-        .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`);
+    const s = STORE[id];
+    const forGood = (n: number, one: string, many: string): string[] =>
+      n <= 0 ? [] : [`${n === 1 ? `A ${one}` : `${formatExact(n)} ${many}`}, for good`];
+    return [
+      ...(s.hero === null ? [] : [`${HEROES[s.hero].name}, ${HEROES[s.hero].rarity.toLowerCase()} hero`]),
+      ...forGood(s.builders, 'builder', 'builders'),
+      ...forGood(s.explorers, 'second explorer', 'explorers'),
+      ...forGood(s.heroSlots, 'hero slot', 'hero slots'),
+      ...(Object.entries(s.items) as Array<[ItemId, number]>)
+        .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`),
+    ];
+  }
+
+  /** One offer as a card draws it: what it holds, what it is worth, how long
+   *  it lasts and how many are left. */
+  private offerCard(id: StoreSkuId, closesAt: number | null, left: number | null): OfferCard {
+    const s = STORE[id];
+    return {
+      id, name: s.name, description: s.description, sprite: s.sprite, priceCents: priceCents(id),
+      gems: s.gems, lines: this.bundleLines(id), valuePercent: skuValuePercent(this.state, id), closesAt, left,
+    };
+  }
+
+  /** The offers on sale now, in shelf order (sim/offers.ts). */
+  offerCards(): OfferCard[] {
+    const now = this.now();
+    return offersOn(this.state, now).map((id) => {
+      const w = offerWindow(this.state, id)!;
+      const { limit } = STORE[id];
+      return this.offerCard(id, w.closes, limit > 0 ? limit - w.bought : null);
+    });
+  }
+
+  /** Today's daily offers, each with what is left of it today; the draw
+   *  changes at `resetsAt`. */
+  dailyCards(): { cards: OfferCard[]; resetsAt: number } {
+    const now = this.now();
+    const resetsAt = dailyResetsAt(now);
+    return {
+      resetsAt,
+      cards: dailyOffers(this.state, now).map((id) => {
+        const { limit } = STORE[id];
+        return this.offerCard(id, resetsAt, limit > 0 ? Math.max(0, limit - boughtToday(this.state, id, now)) : null);
+      }),
+    };
+  }
+
+  /** A product's tiles, as the offer splash draws them: what lands now
+   *  and what lands the next day. */
+  offerTiles(id: StoreSkuId): { now: OfferTile[]; nextDay: OfferTile[] } {
+    const s = STORE[id];
+    const items = (m: Partial<Record<ItemId, number>>): OfferTile[] =>
+      (Object.entries(m) as Array<[ItemId, number]>).map(([item, n]) => ({
+        kind: 'item', id: item, count: n, worth: chestValue(this.state, item),
+      }));
+    return {
+      now: [
+        ...(s.hero === null ? [] : [{ kind: 'hero' as const, id: s.hero, count: 1 }]),
+        ...items(s.items),
+        ...(s.gems > 0 ? [{ kind: 'coin' as const, id: 'Gems', count: s.gems }] : []),
+      ],
+      nextDay: [
+        ...(s.hero !== null && s.nextDayFragments > 0 ? [{ kind: 'fragments' as const, id: s.hero, count: s.nextDayFragments }] : []),
+        ...(s.nextDayGems > 0 ? [{ kind: 'coin' as const, id: 'Gems', count: s.nextDayGems }] : []),
+        ...(s.nextDayHeroXp > 0 ? [{ kind: 'coin' as const, id: 'HeroXp', count: s.nextDayHeroXp }] : []),
+        ...items(s.nextDayItems),
+      ],
+    };
+  }
+
+  /**
+   * The offer splash on screen (Docs/features/14-monetization.md §2.6):
+   * a next-day part ready to claim first; otherwise a `splash` offer on sale
+   * whose window opened BEFORE this session began — it is the next session
+   * that shows it — and that this session has not closed yet. It waits for
+   * the map to be free: no sheet, no fight, no reveal, no video, no unlock.
+   */
+  offerSplash(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+    if (this.payerDue() || this.openOverlay !== null) return null;
+    if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
+    if (this.unlockOnScreen() !== null) return null;
+    const now = this.now();
+    const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
+    if (ready !== undefined) return { sku: ready, mode: 'claim' };
+    const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
+      && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
+    return sku === undefined ? null : { sku, mode: 'buy' };
+  }
+
+  /** The offer splash again, from the store or the pill: the same screen,
+   *  whatever the session has closed. */
+  openOfferSplash(sku: StoreSkuId): void {
+    const ready = nextDayReady(this.state, this.now()).includes(sku);
+    this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
+    this.offerSplashForced = { sku, mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy' };
+    this.setOverlay(null);
+  }
+
+  /** What the splash mount draws: the one forced open, else the session's. */
+  offerSplashOnScreen(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+    if (this.offerSplashForced !== null) return this.offerSplashForced;
+    return this.offerSplash();
+  }
+
+  closeOfferSplash(): void {
+    const on = this.offerSplashOnScreen();
+    if (on !== null) this.splashesClosed.add(`${on.mode === 'claim' ? 'claim' : 'buy'}:${on.sku}`);
+    this.offerSplashForced = null;
+    this.notify();
+  }
+
+  /** The splash's price: straight to the confirmation, which returns to the
+   *  map. */
+  buyFromSplash(sku: StoreSkuId): void {
+    this.splashesClosed.add(`buy:${sku}`);
+    this.offerSplashForced = null;
+    this.openIap(sku, null);
+  }
+
+  doClaimNextDay(sku: StoreSkuId): void {
+    const s = STORE[sku];
+    if (claimNextDay(this.state, sku, this.now()) !== 'Claimed') return;
+    playSfx('questComplete');
+    this.reward({ ...(s.nextDayGems > 0 ? { Gems: s.nextDayGems } : {}), ...(s.nextDayHeroXp > 0 ? { HeroXp: s.nextDayHeroXp } : {}) });
+    if (s.hero !== null && s.nextDayFragments > 0) {
+      this.toast(`${formatExact(s.nextDayFragments)} fragments of ${HEROES[s.hero].name}`);
     }
-    return [];
+    this.offerSplashForced = null;
+    this.notify();
+  }
+
+  /** The Offers screen on an offer — or on the first on sale. */
+  openOffers(sku?: StoreSkuId): void {
+    this.offersTab = sku ?? null;
+    this.setOverlay('offers');
+  }
+
+  /** Change the Offers screen's tab. */
+  showOfferTab(sku: StoreSkuId): void {
+    this.offersTab = sku;
+    this.notify();
+  }
+
+  /** What the Offers screen draws: a tab an offer on sale, and the open one's
+   *  card — its value, window, chain step and what it opens for good. */
+  offersScreen(): OffersScreen {
+    const cards = this.offerCards().filter((c) => !STORE[c.id].splash);
+    const open = cards.find((c) => c.id === this.offersTab) ?? cards[0] ?? null;
+    if (open === null) return { tabs: [], card: null };
+    const s = STORE[open.id];
+    // The chain it belongs to: back along `after` to its first step, then
+    // forward to its last.
+    let first: StoreSkuId = open.id;
+    while (STORE[first].after !== null) first = STORE[first].after!;
+    const chain: StoreSkuId[] = [first];
+    for (let next = OFFER_ORDER.find((id) => STORE[id].after === first); next !== undefined;
+      next = OFFER_ORDER.find((id) => STORE[id].after === chain[chain.length - 1])) chain.push(next);
+    const gifts = [
+      ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder — for good.' : `${formatExact(s.builders)} builders — for good.`, text: 'Build two things at once.' }] : []),
+      ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer — for good.', text: 'Explore the world with one more at once.' }] : []),
+      ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot — for good.', text: 'One more hero in every party.' }] : []),
+    ];
+    return {
+      tabs: cards.map((c) => ({ id: c.id, label: STORE[c.id].short || c.name, sprite: c.sprite, open: c.id === open.id })),
+      card: {
+        ...open,
+        art: s.art,
+        tiles: this.offerTiles(open.id).now.filter((t) => !(t.kind === 'coin' && t.id === 'Gems')),
+        chain: chain.length > 1 ? { at: chain.indexOf(open.id) + 1, of: chain.length } : null,
+        gifts,
+      },
+    };
+  }
+
+  /** The pill for a bought product's next-day part: ready, or when. A
+   *  product with a widget on the map says it there instead. */
+  nextDayPill(): { sku: StoreSkuId; ready: boolean; at: number } | null {
+    const now = this.now();
+    const ready = nextDayReady(this.state, now).find((sku) => !STORE[sku].widget);
+    if (ready !== undefined) return { sku: ready, ready: true, at: now };
+    const waiting = nextDayWaiting(this.state, now).find((d) => !STORE[d.sku].widget);
+    return waiting === undefined ? null : { sku: waiting.sku, ready: false, at: waiting.claimableAt };
+  }
+
+  /** The offers floating on the map under the Survey (ui/offerWidget.ts):
+   *  each `widget` offer on sale, or bought with its next-day part still to
+   *  claim — counting down to it, or ready. */
+  offerWidgets(): OfferWidget[] {
+    const now = this.now();
+    return OFFER_ORDER.filter((id) => STORE[id].widget).flatMap((sku): OfferWidget[] => {
+      const s = STORE[sku];
+      const base = { sku, name: s.name, sprite: s.sprite, hero: s.hero };
+      if (nextDayReady(this.state, now).includes(sku)) return [{ ...base, state: 'ready' as const, at: now }];
+      const waiting = nextDayWaiting(this.state, now).find((d) => d.sku === sku);
+      if (waiting !== undefined) return [{ ...base, state: 'waiting' as const, at: waiting.claimableAt }];
+      const w = offerWindow(this.state, sku);
+      return offerOn(this.state, sku, now) ? [{ ...base, state: 'sale' as const, at: w?.closes ?? 0 }] : [];
+    });
+  }
+
+  /** The explorer the store sells for Gems: its price, how many are out at
+   *  once and how many more can be bought. */
+  explorerOffer(): { cost: number; slots: number; bought: number; forSale: number } {
+    return {
+      cost: explorerGemCost(this.state),
+      slots: explorerSlots(this.state),
+      bought: this.state.world.explorersBought,
+      forSale: WORLD.explorersForSale,
+    };
+  }
+
+  doBuyExplorer(): void {
+    const result = buyExplorer(this.state);
+    if (result === 'Bought') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else this.toast('Every explorer for sale is yours');
+    this.notify();
   }
 
   /** Buy a whole pool at today's rung. The Mana sheet's other button. */
@@ -2757,6 +2990,7 @@ export class Game {
    */
   offerBuilder(): void {
     playSfx('error');
+    offerTrigger(this.state, 'buildersBusy', this.now());
     this.setOverlay('builder');
   }
 
@@ -2941,7 +3175,7 @@ export class Game {
    *  for a Gem pack, the Survey for its paid column. A confirmation that always
    *  returned to the store would take a player who tapped a price on the Survey
    *  somewhere they never asked to go. */
-  openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
+  openIap(id: StoreSkuId, from: OverlayName | null = 'store'): void {
     this.pendingSku = id;
     this.pendingSkuFrom = from;
     this.setOverlay('iapConfirm');
@@ -2949,7 +3183,7 @@ export class Game {
   }
 
   /** Where the confirmation came from, and where it returns. */
-  iapReturn(): OverlayName {
+  iapReturn(): OverlayName | null {
     return this.pendingSkuFrom;
   }
 
@@ -2959,12 +3193,19 @@ export class Game {
     // The SKUs that grant no Gems do not go through `buySku` directly. Each
     // still spends the budget through it, inside its own command: the Survey
     // is an unlock plus a back-pay, a bundle is items.
+    const heldBefore = new Set(this.state.heroes.owned);
+    const fragmentsBefore = { ...this.state.heroes.fragments };
     const result = id === 'Survey'
       ? buySurvey(this.state, this.now())
-      : isItemBundle(id)
-        ? buyItemBundle(this.state, id, this.now())
-        : buySku(this.state, id, this.now());
+      : buyStoreSku(this.state, id, this.now());
     if (result === 'Purchased') this.track('purchased', this.skuProps(id));
+    if (result === 'NotOnSale') {
+      // The window closed under the confirmation: nothing was charged.
+      this.toast('That offer has ended');
+      this.pendingSku = null;
+      this.setOverlay('store');
+      return;
+    }
     if (result === 'NoBudget') this.track('refused_no_credit', this.skuProps(id));
     if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
@@ -2972,10 +3213,21 @@ export class Game {
       this.pendingSku = null;
       // Only what the player cannot see from where they land is said.
       if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
+      // An offer bought out, or a Gem pack, goes back to the store; anything
+      // bought from a sheet that is not the store goes back there.
       this.setOverlay(back);
       if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
-      if (result === 'Purchased' && id !== 'Survey' && !isItemBundle(id)) {
-        this.reward({ Gems: STORE[id].gems });
+      if (result === 'Purchased' && STORE[id].gems > 0) this.reward({ Gems: STORE[id].gems });
+      if (result === 'Purchased') {
+        // A hero bought — in the pack, or as the first purchase's reward —
+        // arrives on the reveal, the way a call delivers one.
+        const heroes = [STORE[id].hero].filter((h): h is HeroId => h !== null);
+        const pulls: PullResult[] = heroes.map((h) => ({
+          result: 'Pulled', heroId: h, rarity: HEROES[h].rarity, duplicate: heldBefore.has(h),
+          fragments: (this.state.heroes.fragments[h] ?? 0) - (fragmentsBefore[h] ?? 0), fragmentsOf: h,
+          stardust: 0, guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
+        }));
+        if (pulls.length > 0) this.openReveal('advanced', pulls);
       }
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
@@ -5655,6 +5907,15 @@ export class Game {
     return id === null ? null : districtById(this.state, id)?.location ?? null;
   }
 
+  /** Is `cell` the plot the tutorial's hand, or a quest hint, points at? */
+  private isPointedAt(cell: Coord): boolean {
+    const f = this.tutorialFocus;
+    if (f !== null && cell.x >= f.cell.x && cell.x < f.cell.x + f.span.x
+      && cell.y >= f.cell.y && cell.y < f.cell.y + f.span.y) return true;
+    const h = this.hintCell();
+    return h !== null && h.x === cell.x && h.y === cell.y;
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
@@ -5663,7 +5924,11 @@ export class Game {
     // order they are drawn — the lair's bubble, the collect bubble, then the
     // lair's picture above its own ground — its pixels, not its box, so the
     // cells round its edges still answer as themselves.
-    const normal = this.mode.kind === 'normal';
+    // A tap on the plot the tutorial or a hint points at is a tap on that
+    // plot, whatever bubble floats over it: following the hand must do what
+    // the hand says.
+    const ground = this.camera.screenToCell(sx, sy);
+    const normal = this.mode.kind === 'normal' && !this.isPointedAt(ground);
     // A sleeping Shrine's Mana bubble floats over other cells too: a tap on
     // it is a tap on its Shrine, which opens the Shrine's card. A tap on a
     // building never costs Mana — the price is paid by Activate, in the card.
@@ -5673,7 +5938,7 @@ export class Game {
     const storeCell = normal && shrineCell === null && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
     const lair = lairBubble ?? (normal && shrineCell === null && storeCell === null ? lairArtAt(sx, sy) : null);
     const cell = shrineCell ?? (lair !== null ? LAIRS[lair].location
-      : storeCell ?? this.camera.screenToCell(sx, sy));
+      : storeCell ?? ground);
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
@@ -6111,3 +6376,55 @@ function describeWait(ms: number): string {
  *  noun decides the verb. */
 const holdsThisGround = (creature: string): string =>
   `${creature} ${creature.startsWith('A ') ? 'holds' : 'hold'} this ground`;
+
+/** An offer as the store draws it (`Game.offerCards`, `Game.dailyCards`). */
+export interface OfferCard {
+  id: StoreSkuId;
+  name: string;
+  description: string;
+  sprite: string;
+  priceCents: number;
+  gems: number;
+  lines: string[];
+  /** What it holds over what its price buys as Gems, in percent. */
+  valuePercent: number;
+  /** When its window closes, or null if it waits until bought out. */
+  closesAt: number | null;
+  /** How many this window still sells, or null for no limit. */
+  left: number | null;
+}
+
+/** One tile of an offer splash: a hero, its fragments, an item or a coin. */
+export interface OfferTile {
+  kind: 'hero' | 'fragments' | 'item' | 'coin';
+  id: string;
+  count: number;
+  /** An item: what one is worth now (a chest's coin), for its tooltip. */
+  worth?: Wallet;
+}
+
+/** An offer floating on the map (`Game.offerWidgets`). */
+export interface OfferWidget {
+  sku: StoreSkuId;
+  name: string;
+  sprite: string;
+  hero: HeroId | null;
+  /** On sale; bought and counting down to its next-day part; or that part ready. */
+  state: 'sale' | 'waiting' | 'ready';
+  /** When the window closes (0: never) or the next-day part is due. */
+  at: number;
+}
+
+/** The Offers screen (`Game.offersScreen`). */
+export interface OffersScreen {
+  tabs: Array<{ id: StoreSkuId; label: string; sprite: string; open: boolean }>;
+  card: (OfferCard & {
+    art: string;
+    /** What lands, as tiles — the Gems are drawn on their own row. */
+    tiles: OfferTile[];
+    /** Its step in a chain of offers, "I / III". */
+    chain: { at: number; of: number } | null;
+    /** The slots it opens for good, the card's GIFT strip. */
+    gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
+  }) | null;
+}

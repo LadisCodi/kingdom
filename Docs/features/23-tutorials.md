@@ -116,6 +116,8 @@ nervous, a bookworm who got the job because nobody else stayed:
 - **A scene resumes where the kingdom is**: after a reload it picks up after
   the last line whose PROGRESS condition already holds (a quest, a research,
   a building) — never on a moment like a sheet being shut.
+- **A tap on the plot the hand points at is a tap on that plot**, even where
+  a store's bubble or a lair's picture floats over it.
 - **A lock releases itself** if its target is missing for five seconds; the
   beat then shows as a hint. Nothing can strand the player.
 - The camera glides (0.2 s) to a map target before the beat's line appears, again

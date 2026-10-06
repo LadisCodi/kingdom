@@ -50,6 +50,14 @@
   font-style: normal;
   font-display: swap;
 }
+/* The ornate face: a splash's painted titles only (m86b), never a sheet. */
+@font-face {
+  font-family: 'Alegreya';
+  src: url('../fonts/alegreya-900-latin.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* ---- the reference pixel ----
@@ -174,10 +182,14 @@
   --weight-strong: 700;
   --weight-body: 600;
   --weight-small: 400;
+  /* The ornate face's one weight (--font-ornate): a splash's painted titles. */
+  --weight-ornate: 900;
 
   --font-display: 'Nunito', system-ui, -apple-system, sans-serif;
   --font-display-weight: var(--weight-title);
   --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
+  /* A splash's painted titles — an offer's ribbon, its hero's name. */
+  --font-ornate: 'Alegreya', Georgia, serif;
 
   /* Sized for the phone the game is played on — 402x874 CSS px — and for
    * nothing else: 16px body is the iOS reading size, 13px is the smallest

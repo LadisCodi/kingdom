@@ -150,6 +150,10 @@
   works there, and marches home. There is no button that buys fog.
 - **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
   first; a rank ladder in the Atlas gives more. No training.
+- **Up to `explorersForSale` (2) more are bought**, for Gems
+  (`explorerGemCostBase` 2,500, ×`explorerGemCostGrowth` 2 each) or in the
+  Explorer pack ([`14-monetization.md`](14-monetization.md) §2.4). A bought
+  explorer waits for *Cartography* like the first.
 - **Sending one costs Gold**, paid when it leaves:
   `exploreGoldBase` (2,500) × `exploreGoldGrowth` (×1.5) for every hex past
   the first from the city — 2,500 next door, about 19,000 at 6 hexes, 96,000

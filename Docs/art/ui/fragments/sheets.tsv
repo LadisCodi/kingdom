@@ -1,0 +1,32 @@
+L1	0	hero_scout	Legendary	The Scout
+L1	1	hero_golden_dragon	Legendary	The Golden Dragon
+L1	2	hero_vampire_lord	Legendary	The Vampire Lord
+L1	3	hero_necromancer	Legendary	The Necromancer
+L1	4	hero_pharao	Legendary	The Pharaoh
+L1	5	hero_elven_princess	Legendary	The Elven Princess
+R1	0	hero_scholar	Rare	The Scholar
+R1	1	hero_relic_hunter	Rare	The Relic-hunter
+R1	2	hero_dark_knight	Rare	The Dark Knight
+R1	3	hero_paladin	Rare	The Paladin
+R1	4	hero_wizard	Rare	The Wizard
+R1	5	hero_witch	Rare	The Witch
+R2	0	hero_druid	Rare	The Druid
+R2	1	hero_ice_lancer	Rare	The Ice Lancer
+R2	2	hero_holy_warrior	Rare	The Holy Warrior
+R2	3	hero_savage_warrior	Rare	The Savage
+R2	4	hero_spymaster	Rare	The Spymaster
+R2	5	hero_electric_archer	Rare	The Storm Archer
+C1	0	hero_warden	Common	The Warden
+C1	1	hero_quartermaster	Common	The Quartermaster
+C1	2	hero_adventurer	Common	The Adventurer
+C1	3	hero_bard	Common	The Bard
+C1	4	hero_beastkin_hunter	Common	The Beastkin Hunter
+C1	5	hero_cleric	Common	The Cleric
+C2	0	hero_cook	Common	The Cook
+C2	1	hero_gardener	Common	The Gardener
+C2	2	hero_joker	Common	The Joker
+C2	3	hero_merchant	Common	The Merchant
+C2	4	hero_priest	Common	The Priest
+C2	5	hero_rogue	Common	The Rogue
+C3	0	hero_three_mouses	Common	Three Mice in a Coat
+C3	1	hero_warrior	Common	The Sellsword

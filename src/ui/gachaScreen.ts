@@ -26,6 +26,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
 import type { HeroId } from '../sim/state';
 import { el, formatExact } from './format';
+import { heroFragmentIcon } from './heroFragment';
 import { iconEl } from './kit';
 
 /** How long between tiles. Long enough to read one, short enough that ten do
@@ -69,7 +70,7 @@ function prizeTile(prize: GachaPrize): HTMLElement {
   }
   return el('div', { class: `gr-tile is-fragment ${RARITY_CLASS[def.rarity]}` },
     portrait(prize.heroId, 'gr-art'),
-    el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
+    el('span', { class: 'gr-mark' }, heroFragmentIcon(prize.heroId, { size: 'sm' })),
     el('span', { class: 'gr-count' }, formatExact(prize.amount)));
 }
 

@@ -1,0 +1,9 @@
+hero_elven_princess
+hero_scout
+hero_golden_dragon
+hero_vampire_lord
+hero_necromancer
+hero_pharao
+hero_scholar
+hero_relic_hunter
+hero_dark_knight

@@ -5,7 +5,7 @@
 // a day's allowance twice or lose one — and the sim is not allowed to read
 // anything that is not passed in.
 
-const DAY_MS = 86_400_000;
+export const DAY_MS = 86_400_000;
 
 /**
  * Which day an instant falls in.
