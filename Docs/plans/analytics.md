@@ -87,7 +87,8 @@ Every event is one row:
 | `survey_opened` · `survey_claimed` | `level`, `paid` on a claim |
 | `friends_named` · `friends_invited` | — |
 | `crest_changed` | `tincture`, `charge` |
-| `friend_request` · `friend_accept` · `friend_decline` · `friend_cancel` · `friend_remove` | — (only those that took) |
+| `friend_request` · `friend_accept` · `friend_decline` · `friend_remove` | — (only those that took); `from: 'search'` on a request from the search popup |
+| `inbox_cleared` | — |
 
 ### 3.4 The store
 

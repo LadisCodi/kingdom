@@ -1,5 +1,5 @@
-// Pieces every friends screen draws a kingdom with: its crest, and the tag
-// that says how far it has come.
+// Pieces every friends screen draws a kingdom with: its crest, the tag that
+// says how far it has come, and the round buttons of a request.
 
 import { crestOf, type Crest } from '../../sim/crest';
 import { chargeUrl, fieldUrl } from '../crestArt';
@@ -32,3 +32,6 @@ export function townhallTag(level: number): HTMLElement {
     iconEl('Townhall', { size: 'sm' }),
     `Townhall ${formatExact(level)}`);
 }
+
+/** Accept, decline and add: the kit's painted knob, drawn a size up. */
+export const roundKnob = (b: HTMLButtonElement): HTMLButtonElement => { b.classList.add('fr-round'); return b; };

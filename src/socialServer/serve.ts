@@ -5,7 +5,7 @@
 // (local.ts) answers through the same function, so the two cannot drift.
 //
 // The rules hold here, not in the client: the cap on friends and on requests
-// waiting, who may be asked, what a search may find. Every command is
+// waiting, who may be asked, by what name. Every command is
 // idempotent by what it says — asking twice is one request, accepting twice
 // is one friendship — so a retry needs no command id.
 
@@ -14,7 +14,7 @@ import { parseCrest } from '../sim/crest';
 import { randInt } from '../sim/rng';
 import { nicknameProblem, normalNickname } from '../worldServer/nickname';
 import type {
-  KingdomView, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
+  KingdomView, MessageKind, RequestState, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
   SocialSnapshot,
 } from './types';
 
@@ -33,14 +33,27 @@ export interface ProfileRow {
 /** A request between two players, by user id. */
 export interface RequestRow { id: string; at: number }
 
+/** A message in one player's Inbox. Its id is unique in that Inbox and says
+ *  what it is about, so the same request is the same message: `req:<from>`
+ *  for a request, `acc:`/`dec:<from>:<at>` for an answer. */
+export interface MessageRow {
+  userId: string;
+  id: string;
+  kind: MessageKind;
+  fromId: string;
+  at: number;
+  readAt: number | null;
+  state: RequestState | null;
+}
+
 /** Where profiles and links live: tables on the server, maps in the tests
  *  and in the stand-in. */
 export interface SocialStore {
   profile(userId: string): Promise<ProfileRow | null>;
   profilesOf(userIds: readonly string[]): Promise<ProfileRow[]>;
   byCode(code: string): Promise<ProfileRow | null>;
-  /** Players whose nickname starts with `prefix`, whatever its case. */
-  byNicknamePrefix(prefix: string, limit: number): Promise<ProfileRow[]>;
+  /** The player with exactly this nickname, whatever its case. */
+  byNickname(nickname: string): Promise<ProfileRow | null>;
   /** Reserve a nickname: the one the player already has if any, else this
    *  one; null if another player has it, whatever its case. The world
    *  server's `claimNickname` — one name for both. */
@@ -61,6 +74,13 @@ export interface SocialStore {
   recentlySeen(since: number, limit: number): Promise<ProfileRow[]>;
   /** The other players seated on the player's world board. */
   boardmates(userId: string): Promise<string[]>;
+  /** A player's Inbox, in no order. */
+  messagesOf(userId: string): Promise<MessageRow[]>;
+  /** Write a message, replacing one with its id in that Inbox. */
+  putMessage(row: MessageRow): Promise<void>;
+  /** Change a message, if it is there. */
+  patchMessage(userId: string, id: string, patch: { readAt?: number; state?: RequestState }): Promise<void>;
+  dropMessages(userId: string, ids: readonly string[]): Promise<void>;
 }
 
 export type SocialServed =
@@ -68,13 +88,14 @@ export type SocialServed =
   | { status: 400; error: string };
 
 const KINDS: ReadonlySet<SocialCommandKind> = new Set<SocialCommandKind>([
-  'hello', 'name', 'search', 'request', 'accept', 'decline', 'cancel', 'remove',
+  'hello', 'name', 'request', 'accept', 'decline', 'cancel', 'remove', 'read', 'deleteRead',
 ]);
 
+const HOUR = 3600_000;
+const DAY = 24 * HOUR;
+
 /** How far back a player counts as lately in the game, for suggestions. */
-const RECENT_MS = 14 * 24 * 3600_000;
-/** How many a search finds at most. */
-const FOUND = 5;
+const RECENT_MS = 14 * DAY;
 
 // ------------------------------------------------------------ friend codes
 
@@ -119,7 +140,10 @@ export function badSocialBody(body: unknown): string | null {
       return null;
     }
     case 'name': return short(cmd.nickname, 64) ? null : 'nickname';
-    case 'search': return short(cmd.query, 64) ? null : 'query';
+    case 'request': return short(cmd.target, 64) ? null : 'target';
+    case 'read':
+      return Array.isArray(cmd.ids) && cmd.ids.length <= 100 && cmd.ids.every((id) => short(id, 128)) ? null : 'ids';
+    case 'deleteRead': return null;
     default: return short(cmd.code, 32) ? null : 'code';
   }
 }
@@ -144,55 +168,118 @@ async function answer(store: SocialStore, userId: string, cmd: SocialCommand, no
   if (me === null) {
     // No nickname yet: nobody can find the player, and they can do nothing
     // but take one (§2.1, the first visit).
-    const empty: SocialSnapshot = { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [] };
+    const empty: SocialSnapshot = { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [] };
     return cmd.kind === 'hello' ? { ok: true, snapshot: empty } : refused('NoName', empty);
   }
+  await expire(store, userId, now);
   if (cmd.kind === 'hello') {
     await store.touch(userId, cmd.progress, now);
     return { ok: true, snapshot: await snapshotFor(store, userId, now) };
   }
-  if (cmd.kind === 'search') {
-    const found = await search(store, userId, cmd.query);
-    return { ok: true, snapshot: await snapshotFor(store, userId, now), found };
+  if (cmd.kind === 'read') {
+    const mine = new Map((await store.messagesOf(userId)).map((m) => [m.id, m]));
+    for (const id of cmd.ids) {
+      const m = mine.get(id);
+      // A request waiting for an answer stays new until it is answered.
+      if (m !== undefined && m.readAt === null && m.state !== 'pending') await store.patchMessage(userId, id, { readAt: now });
+    }
+    return { ok: true, snapshot: await snapshotFor(store, userId, now) };
   }
-  const code = normalCode(cmd.code);
-  const them = code === null ? null : await store.byCode(code);
+  if (cmd.kind === 'deleteRead') {
+    const read = (await store.messagesOf(userId)).filter((m) => m.readAt !== null && m.state !== 'pending');
+    await store.dropMessages(userId, read.map((m) => m.id));
+    return { ok: true, snapshot: await snapshotFor(store, userId, now) };
+  }
+  let them: ProfileRow | null;
+  if (cmd.kind === 'request') {
+    // A friend code, else a nickname as typed — whole, whatever its case.
+    const code = normalCode(cmd.target);
+    them = code === null ? null : await store.byCode(code);
+    if (them === null && nicknameProblem(cmd.target) === null) them = await store.byNickname(normalNickname(cmd.target));
+  } else {
+    const code = normalCode(cmd.code);
+    them = code === null ? null : await store.byCode(code);
+  }
   const done = async (why: SocialRefusal | null): Promise<SocialReply> => {
     const snapshot = await snapshotFor(store, userId, now);
-    return why === null ? { ok: true, snapshot } : refused(why, snapshot);
+    if (why !== null) return refused(why, snapshot);
+    return cmd.kind === 'request' && them !== null ? { ok: true, snapshot, to: await viewOf(store, them) } : { ok: true, snapshot };
   };
   if (them === null) return done('NotFound');
-  if (them.userId === userId) return done('Self');
+  const other = them.userId;
+  if (other === userId) return done('Self');
   const mine = await store.links(userId);
-  const isFriend = mine.friends.includes(them.userId);
-  const asked = mine.incoming.some((r) => r.id === them.userId);
-  const asking = mine.outgoing.some((r) => r.id === them.userId);
+  const isFriend = mine.friends.includes(other);
+  const asked = mine.incoming.some((r) => r.id === other);
+  const asking = mine.outgoing.some((r) => r.id === other);
+  /** The player says yes to their request: friends, the request message
+   *  answered, and the asker told. */
+  const accept = async (): Promise<SocialReply> => {
+    const r = befriended(await store.befriend(userId, other, FRIENDS.max, now));
+    if (r === null) await answered(store, userId, other, 'accepted', now);
+    return done(r);
+  };
   switch (cmd.kind) {
     case 'request': {
       if (isFriend) return done('AlreadyFriends');
       // They asked first: asking back is saying yes.
-      if (asked) return done(befriended(await store.befriend(userId, them.userId, FRIENDS.max, now)));
+      if (asked) return accept();
       if (asking) return done(null);
       if (mine.friends.length >= FRIENDS.max) return done('Full');
       if (mine.outgoing.length >= FRIENDS.maxSent) return done('TooManySent');
-      if ((await store.links(them.userId)).friends.length >= FRIENDS.max) return done('TheirFull');
-      await store.addRequest(userId, them.userId, now);
+      if ((await store.links(other)).friends.length >= FRIENDS.max) return done('TheirFull');
+      await store.addRequest(userId, other, now);
+      // It lands in their Inbox too; sending one writes nothing to the
+      // sender's (§2.3).
+      await store.putMessage({ userId: other, id: `req:${userId}`, kind: 'request', fromId: userId, at: now, readAt: null, state: 'pending' });
       return done(null);
     }
     case 'accept':
       if (isFriend) return done(null);
       if (!asked) return done('NotFound');
-      return done(befriended(await store.befriend(userId, them.userId, FRIENDS.max, now)));
+      return accept();
     case 'decline':
-      await store.dropRequest(them.userId, userId);
+      if (!asked) return done(null);
+      await store.dropRequest(other, userId);
+      await answered(store, userId, other, 'declined', now);
       return done(null);
     case 'cancel':
-      await store.dropRequest(userId, them.userId);
+      if (!asking) return done(null);
+      await store.dropRequest(userId, other);
+      await store.dropMessages(other, [`req:${userId}`]);
       return done(null);
     case 'remove':
-      await store.unfriend(userId, them.userId);
+      await store.unfriend(userId, other);
       return done(null);
   }
+}
+
+/** A request answered: the player's message says how, and is read; the
+ *  asker gets a message of their own. */
+async function answered(store: SocialStore, userId: string, asker: string, how: 'accepted' | 'declined', now: number): Promise<void> {
+  await store.patchMessage(userId, `req:${asker}`, { state: how, readAt: now });
+  await store.putMessage({
+    userId: asker, id: `${how === 'accepted' ? 'acc' : 'dec'}:${userId}:${now}`, kind: how, fromId: userId,
+    at: now, readAt: null, state: null,
+  });
+}
+
+/** Requests past their hours go, both ways, and the request message says
+ *  it expired; messages past their days go. Run on every call, for the
+ *  player's own: the other side tidies its own on its own calls. */
+async function expire(store: SocialStore, userId: string, now: number): Promise<void> {
+  const due = (at: number) => at + FRIENDS.requestHours * HOUR <= now;
+  const links = await store.links(userId);
+  for (const r of links.incoming.filter((x) => due(x.at))) {
+    await store.dropRequest(r.id, userId);
+    await store.patchMessage(userId, `req:${r.id}`, { state: 'expired' });
+  }
+  for (const r of links.outgoing.filter((x) => due(x.at))) {
+    await store.dropRequest(userId, r.id);
+    await store.patchMessage(r.id, `req:${userId}`, { state: 'expired' });
+  }
+  const old = (await store.messagesOf(userId)).filter((m) => m.at + FRIENDS.messageDays * DAY <= now);
+  if (old.length > 0) await store.dropMessages(userId, old.map((m) => m.id));
 }
 
 const befriended = (r: 'ok' | 'full' | 'theirFull'): SocialRefusal | null =>
@@ -200,32 +287,14 @@ const befriended = (r: 'ok' | 'full' | 'theirFull'): SocialRefusal | null =>
 
 const refused = (why: SocialRefusal, snapshot: SocialSnapshot | null): SocialReply => ({ ok: false, why, snapshot });
 
-/** A code finds its kingdom; anything else, the nicknames that start with it. */
-async function search(store: SocialStore, userId: string, query: string): Promise<KingdomView[]> {
-  const q = query.trim();
-  if (q.length === 0) return [];
-  const code = normalCode(q);
-  const rows: ProfileRow[] = [];
-  if (code !== null) {
-    const hit = await store.byCode(code);
-    if (hit !== null) rows.push(hit);
-  }
-  if (q.length >= 2) {
-    for (const r of await store.byNicknamePrefix(normalNickname(q), FOUND + 1)) {
-      if (!rows.some((x) => x.userId === r.userId)) rows.push(r);
-    }
-  }
-  const others = rows.filter((r) => r.userId !== userId).slice(0, FOUND);
-  return Promise.all(others.map((r) => viewOf(store, r)));
-}
-
 /** Everything the friends screen shows, as it stands. */
 async function snapshotFor(store: SocialStore, userId: string, now: number): Promise<SocialSnapshot> {
   const me = await store.profile(userId);
-  if (me === null) return { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [] };
+  if (me === null) return { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [] };
   const links = await store.links(userId);
+  const messages = await store.messagesOf(userId);
   const taken = new Set([userId, ...links.friends, ...links.incoming.map((r) => r.id), ...links.outgoing.map((r) => r.id)]);
-  const ids = [...taken].filter((id) => id !== userId);
+  const ids = [...new Set([...taken, ...messages.map((m) => m.fromId)])].filter((id) => id !== userId);
   const rows = new Map((await store.profilesOf(ids)).map((r) => [r.userId, r]));
 
   const view = (id: string) => rows.get(id);
@@ -238,20 +307,36 @@ async function snapshotFor(store: SocialStore, userId: string, now: number): Pro
 
   const friends = await Promise.all(links.friends.map((id) => view(id)).filter((r): r is ProfileRow => r !== undefined)
     .map((r) => viewOf(store, r)));
+  const incoming = present(await Promise.all(newestFirst(links.incoming).map(asRequest)));
+  const outgoing = present(await Promise.all(newestFirst(links.outgoing).map(asRequest)));
+  // Suggestions only fill the requests list up to its rows, and never past
+  // the room left for friends (§2.1).
+  const room = Math.min(
+    FRIENDS.requestRows - incoming.length - outgoing.length,
+    FRIENDS.max - friends.length - outgoing.length,
+  );
+  const inbox = present(await Promise.all([...messages].sort((a, b) => b.at - a.at || a.id.localeCompare(b.id)).map(async (m) => {
+    const row = view(m.fromId);
+    if (row === undefined) return null;
+    const expiresAt = m.state === 'pending' ? m.at + FRIENDS.requestHours * HOUR : m.at + FRIENDS.messageDays * DAY;
+    return { id: m.id, kind: m.kind, from: await viewOf(store, row), at: m.at, readAt: m.readAt, state: m.state, expiresAt };
+  })));
   return {
     at: now,
     me: await viewOf(store, me),
     friends,
-    incoming: present(await Promise.all(newestFirst(links.incoming).map(asRequest))),
-    outgoing: present(await Promise.all(newestFirst(links.outgoing).map(asRequest))),
-    suggestions: await suggest(store, me, taken, now),
+    incoming,
+    outgoing,
+    suggestions: room > 0 ? await suggest(store, me, taken, now, room) : [],
+    inbox,
   };
 }
 
 /** Kingdoms the player might ask: their world board's other players first,
  *  then whoever was lately in the game nearest their own Townhall. */
-async function suggest(store: SocialStore, me: ProfileRow, taken: ReadonlySet<string>, now: number): Promise<KingdomView[]> {
-  if (FRIENDS.suggestions <= 0) return [];
+async function suggest(
+  store: SocialStore, me: ProfileRow, taken: ReadonlySet<string>, now: number, count: number,
+): Promise<KingdomView[]> {
   const mates = new Set(await store.boardmates(me.userId));
   const recent = await store.recentlySeen(now - RECENT_MS, 40);
   const rows = new Map<string, ProfileRow>();
@@ -264,7 +349,7 @@ async function suggest(store: SocialStore, me: ProfileRow, taken: ReadonlySet<st
       || Math.abs(a.townhall - me.townhall) - Math.abs(b.townhall - me.townhall)
       || (b.seenAt ?? 0) - (a.seenAt ?? 0)
       || a.userId.localeCompare(b.userId))
-    .slice(0, FRIENDS.suggestions);
+    .slice(0, count);
   return Promise.all(picked.map((r) => viewOf(store, r)));
 }
 
@@ -294,9 +379,11 @@ export interface SocialTables {
   friendships: Record<string, number>;
   /** A player's world board, for suggestions. */
   boards: Record<string, string>;
+  /** Each player's Inbox, by message id. */
+  messages: Record<string, Record<string, MessageRow>>;
 }
 
-export const emptyTables = (): SocialTables => ({ profiles: {}, requests: {}, friendships: {}, boards: {} });
+export const emptyTables = (): SocialTables => ({ profiles: {}, requests: {}, friendships: {}, boards: {}, messages: {} });
 
 /** A store over tables in memory. */
 export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { tables: SocialTables } {
@@ -309,10 +396,9 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
     async profile(id) { return copy(t.profiles[id]); },
     async profilesOf(ids) { return ids.map((id) => copy(t.profiles[id])).filter((r): r is ProfileRow => r !== null); },
     async byCode(code) { return copy(Object.values(t.profiles).find((r) => r.code === code)); },
-    async byNicknamePrefix(prefix, limit) {
-      const p = prefix.toLowerCase();
-      return Object.values(t.profiles).filter((r) => r.nickname.toLowerCase().startsWith(p))
-        .sort((a, b) => a.nickname.localeCompare(b.nickname)).slice(0, limit).map((r) => ({ ...r }));
+    async byNickname(nickname) {
+      const lower = nickname.toLowerCase();
+      return copy(Object.values(t.profiles).find((r) => r.nickname.toLowerCase() === lower));
     },
     async claimNickname(id, nickname) {
       const mine = t.profiles[id];
@@ -367,6 +453,16 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
     async boardmates(id) {
       const board = t.boards[id];
       return board === undefined ? [] : Object.keys(t.boards).filter((u) => u !== id && t.boards[u] === board);
+    },
+    async messagesOf(id) { return Object.values((t.messages ??= {})[id] ?? {}).map((m) => ({ ...m })); },
+    async putMessage(row) { ((t.messages ??= {})[row.userId] ??= {})[row.id] = { ...row }; },
+    async patchMessage(id, msg, patch) {
+      const m = (t.messages ??= {})[id]?.[msg];
+      if (m !== undefined) Object.assign(m, patch);
+    },
+    async dropMessages(id, ids) {
+      const box = (t.messages ??= {})[id];
+      if (box !== undefined) for (const m of ids) delete box[m];
     },
   };
 }

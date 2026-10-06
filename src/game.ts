@@ -220,7 +220,9 @@ export type OverlayName =
   // (Docs/features/15-social.md §2.1).
   | 'friends' | 'friendProfile'
   // The shield editor, from the pencil on the player's own card (§2.2).
-  | 'crestEditor';
+  | 'crestEditor'
+  // Asking a kingdom by its name or code, from the requests list (§2.1).
+  | 'friendSearch';
 
 /** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -314,7 +316,7 @@ export interface SpeedupScreen {
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
-  friends: 'friends', friendProfile: 'friends', crestEditor: 'friends',
+  friends: 'friends', friendProfile: 'friends', crestEditor: 'friends', friendSearch: 'friends',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -2908,10 +2910,13 @@ export class Game {
         const f = this.friends;
         const { at: _at, ...snap } = f.snap ?? { at: 0 };
         return JSON.stringify([
-          snap, f.found, f.tab, f.openCode, f.confirmingRemove, [...f.busy], f.searching, f.naming,
+          snap, f.tab, f.openCode, f.confirmingRemove, [...f.busy], f.naming,
           f.nicknameRefused, this.state.kingdom.profile.crest, Math.floor(this.now() / 60_000),
         ]);
       }
+      // The search popup: never with what is typed — the field marks itself
+      // as the player types (ui/friends/friendSearch.ts).
+      case 'friendSearch': return JSON.stringify([this.friends.searchStage, this.friends.searchRefused, this.friends.sentTo]);
       case 'crestEditor': return JSON.stringify([this.friends.crestDraft, this.state.kingdom.profile]);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);

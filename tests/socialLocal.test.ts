@@ -25,20 +25,20 @@ describe('the social stand-in', () => {
     expect(after.ok && after.snapshot.suggestions.length).toBeGreaterThan(0);
   });
 
-  it('answers a request within a minute — except Greywater, who never does', async () => {
+  it('answers a request within a minute — Dunmere with a no, and Greywater never', async () => {
     const { server, at } = stand();
     const named = await server.send({ kind: 'name', nickname: 'Oakvale' });
-    const find = async (name: string) => {
-      const r = await server.send({ kind: 'search', query: name });
-      return r.ok ? r.found![0].code : '';
-    };
-    await server.send({ kind: 'request', code: await find('Aldermoor') });
-    await server.send({ kind: 'request', code: await find('Greywater') });
+    await server.send({ kind: 'request', target: 'Aldermoor' });
+    await server.send({ kind: 'request', target: 'greywater' });
+    await server.send({ kind: 'request', target: 'Dunmere' });
     expect(named.ok).toBe(true);
     at(61_000);
     const later = await server.send({ kind: 'hello', progress: { townhall: 2, cells: 10 } });
     expect(later.ok && later.snapshot.friends.map((k) => k.nickname)).toEqual(['Aldermoor']);
     expect(later.ok && later.snapshot.outgoing.map((k) => k.nickname)).toEqual(['Greywater']);
+    // Both answers are in the Inbox, new.
+    expect(later.ok && later.snapshot.inbox.filter((m) => m.readAt === null && m.kind !== 'request')
+      .map((m) => `${m.kind}:${m.from.nickname}`).sort()).toEqual(['accepted:Aldermoor', 'declined:Dunmere']);
   });
 
   it('can be asked by one more kingdom from the dev bar', async () => {

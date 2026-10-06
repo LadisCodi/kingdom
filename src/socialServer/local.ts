@@ -5,9 +5,10 @@
 // over tables kept under their own key. With no other players in a browser,
 // it peoples them: a dozen made-up kingdoms that are found, suggested, ask
 // the player to be friends and answer the player's requests a little later
-// — all but one, who never does, so a request left waiting can be seen.
+// — one says no, so a declined request can be seen, and one never answers,
+// so a request left waiting can be. They act through `serveSocial` like any
+// player, so what they do lands in the player's Inbox as it would.
 
-import { FRIENDS } from '../sim/data/definitions';
 import { randInt } from '../sim/rng';
 import { emptyTables, friendCodeFor, memorySocial, serveSocial, type SocialTables } from './serve';
 import type { SocialCommand, SocialReply } from './types';
@@ -59,8 +60,9 @@ const PEOPLE: ReadonlyArray<{ name: string; townhall: number; cells: number; awa
   { name: 'Larkspur', townhall: 4, cells: 350, awayMin: 60 * 24 * 6 },
 ];
 
-/** The one who never answers a request. */
+/** The one who never answers a request, and the one who says no. */
 const SHY = 'Greywater';
+const GRUMPY = 'Dunmere';
 /** The two who ask the player first, the moment the player has a name. */
 const EAGER = ['Foxhollow', 'Elderglen'];
 
@@ -94,7 +96,8 @@ export class LocalSocialServer implements SocialServerApi {
     const linked = (id: string) => t.friendships[`${id}>${me}`] !== undefined
       || t.requests[`${id}>${me}`] !== undefined || t.requests[`${me}>${id}`] !== undefined;
     const next = PEOPLE.map((p) => botId(p.name)).find((id) => !linked(id));
-    if (next !== undefined && t.profiles[me] !== undefined) t.requests[`${next}>${me}`] = now;
+    const code = t.profiles[me]?.code;
+    if (next !== undefined && code) await serveSocial(memorySocial(t), next, { cmd: { kind: 'request', target: code } }, now);
     this.store.save(t);
   }
 
@@ -118,21 +121,22 @@ export class LocalSocialServer implements SocialServerApi {
    *  and each answers a request after its own short while. */
   private async play(t: LocalTables, now: number): Promise<void> {
     const me = this.playerId();
-    if (t.profiles[me] === undefined) return;
+    const code = t.profiles[me]?.code;
+    if (!code) return;
     const store = memorySocial(t);
+    const as = (bot: string, cmd: SocialCommand) => serveSocial(store, bot, { cmd }, now);
     if (!(t.askedFirst ?? []).includes(me)) {
       t.askedFirst = [...(t.askedFirst ?? []), me]; // they ask once
-      for (const name of EAGER) {
-        const id = botId(name);
-        if (t.friendships[`${id}>${me}`] === undefined) await store.addRequest(id, me, now);
-      }
+      for (const name of EAGER) await as(botId(name), { kind: 'request', target: code });
     }
     for (const { id, at } of (await store.links(me)).outgoing) {
       if (!id.startsWith('bot:') || id === botId(SHY)) continue;
       if (now < at + 15_000 + randInt(0x50c1a1, 45_000, 'answer', id)) continue;
       // The same cap as anyone's: a yes that would overfill either list is
-      // a request dropped.
-      if (await store.befriend(id, me, FRIENDS.max, now) !== 'ok') await store.dropRequest(me, id);
+      // refused, and the request then declined.
+      const yes = id !== botId(GRUMPY) && (await as(id, { kind: 'accept', code })).status === 200
+        && !(await store.links(me)).outgoing.some((r) => r.id === id);
+      if (!yes) await as(id, { kind: 'decline', code });
     }
   }
 }

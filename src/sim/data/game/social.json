@@ -2,6 +2,8 @@
   "friends": {
     "max": 10,
     "maxSent": 10,
-    "suggestions": 5
+    "requestRows": 3,
+    "requestHours": 48,
+    "messageDays": 30
   }
 }
