@@ -150,6 +150,17 @@ export function levelUpRelic(state: GameState, id: ArtifactId): LevelUpResult {
   return 'Levelled';
 }
 
+/**
+ * A RELIC HANDED OVER WHOLE — a tutorial line's gift (`SceneLine.restores`):
+ * restored at level 1, no fragments needed. Nothing when it already is.
+ */
+export function giveRelic(state: GameState, id: ArtifactId): boolean {
+  if (isRestored(state, id)) return false;
+  grantArtifactLevel(state, id);
+  track(state, 'relic_gifted', { relic: id });
+  return true;
+}
+
 // ----------------------------------------------------------------- the drops
 
 /** Which relics a drop of this kind may roll: the met ones, in order. */

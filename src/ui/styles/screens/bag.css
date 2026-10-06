@@ -483,7 +483,32 @@
 .dc-chapel-relic-art { width: 100%; height: 100%; object-fit: contain; }
 .dc-chapel.is-asleep .dc-chapel-relic-art { filter: saturate(0.45) brightness(0.85); }
 .dc-chapel.is-awake .dc-chapel-relic-art { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 230, 150, 0.95)); }
-.dc-chapel > .k-cta { top: calc(var(--px) * 6); right: calc(var(--px) * 6); }
+/* WAITING, IT CALLS: a gold ring breathing round the cradle (its + is in the
+ * painting), so the picture reads as a press; the CTA rides the ring. */
+.dc-chapel-call {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  width: 17%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  /* Light on gold reads only with an edge: a cream ring, a dark rim either
+     side of it, and the glow. */
+  border: calc(var(--px) * 4) solid #fff4cc;
+  box-shadow:
+    0 0 0 calc(var(--px) * 2) rgba(70, 36, 10, 0.7),
+    inset 0 0 0 calc(var(--px) * 2) rgba(70, 36, 10, 0.55),
+    0 0 calc(var(--px) * 16) calc(var(--px) * 2) rgba(255, 220, 120, 0.95);
+  animation: dc-chapel-call 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.dc-chapel-call > .k-cta { top: -12%; right: -12%; }
+@keyframes dc-chapel-call {
+  0%, 100% { scale: 1; opacity: 0.7; }
+  50% { scale: 1.22; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .dc-chapel-call { animation: none; opacity: 0.9; } }
 .dc-shrine > .dc-shrine-says { align-items: center; text-align: center; }
 
 /* AN EMPTY RELIC SLOT: the hero slot's dashed gold well (heroPicker.css

@@ -109,8 +109,8 @@ never a discount, because a discount dies at 100%.
     relic and wakes it.
   - The Shrine's card holds **one slot, drawn as a painting of the chapel
     inside** (the lair cards' 16:9 format): its altar's golden cradle
-    carved with a **+** while it waits (with the CTA when a relic in the Bag
-    could go there), the relic set in it once placed. A tap opens the relic
+    carved with a **+** while it waits, a cream ring breathing round it (and
+    the CTA on the ring when a relic in the Bag could go there), the relic set in it once placed. A tap opens the relic
     picker — the hero picker's flow: the restored city relics as cards, each
     with **what it does** (`+20% tax`) and the **Shrine mark** when it is
     already in one, the Shrine's slot under them, and **Select**. Selecting a

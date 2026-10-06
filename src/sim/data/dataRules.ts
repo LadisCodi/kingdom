@@ -501,6 +501,9 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
+  // '' is any relic: chosen in the picker, or standing in a Shrine.
+  relicPicked: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
+  relicHosted: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {

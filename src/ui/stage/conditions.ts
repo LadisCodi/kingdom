@@ -161,6 +161,14 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
       return open !== null && open.x === a.location.x && open.y === a.location.y;
     }
     case 'repairing': return state.abandoned.repaired[c.target] === true;
+    // The relic picker's slot holds it (or any relic, when '').
+    case 'relicPicked': {
+      const slot = game.relicPick?.slot ?? null;
+      return slot !== null && (c.target === '' || slot === c.target);
+    }
+    // A Shrine holds it (or any relic, when '').
+    case 'relicHosted':
+      return state.city.districts.some((d) => d.hosts !== undefined && (c.target === '' || d.hosts === c.target));
     default: return false;
   }
 }
