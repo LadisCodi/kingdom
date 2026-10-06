@@ -368,26 +368,38 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   /** The box has been placed in this scene, so a new place is a move. */
   let boxShown = false;
 
-  /** Where the box's top edge falls when it sits at the bottom. */
-  /** Would the box at the BOTTOM — or anyone standing on it — cover `r`?
+  /** The box at `where`, as the layout would have it: does it — or anyone
+   *  standing on it — cover `r`, and does the cast fit under the header?
    *  Read off the layout (offsets, not rects), so a box mid-move or a
    *  figure mid-entrance is judged where it will settle. */
-  const bottomCovers = (r: Rect): boolean => {
+  const judge = (where: string, r: Rect | null): { covers: boolean; castFits: boolean } => {
     const was = box.dataset.place;
-    box.dataset.place = 'bottom';
+    box.dataset.place = where;
     const f = frame.getBoundingClientRect();
     const l = layer.getBoundingClientRect();
     const b: Rect = {
       x: l.left - f.left + box.offsetLeft, y: l.top - f.top + box.offsetTop,
       w: box.offsetWidth, h: box.offsetHeight,
     };
-    const parts: Rect[] = [b, ...[left, right].filter((a) => a.childElementCount > 0).map((a) => ({
+    const actors = [left, right].filter((a) => a.childElementCount > 0);
+    const parts: Rect[] = [b, ...actors.map((a) => ({
       x: b.x + a.offsetLeft, y: b.y + a.offsetTop, w: a.offsetWidth, h: a.offsetHeight,
     }))];
     box.dataset.place = was ?? '';
+    const header = document.getElementById('header');
+    const limit = (header?.getBoundingClientRect().bottom ?? f.top) - f.top;
+    const castTop = Math.min(b.y, ...parts.slice(1).map((p) => p.y));
     // Touching is not covering: the box sits just above the quest scroll.
-    return parts.some((p) => r.x < p.x + p.w && p.x < r.x + r.w && r.y < p.y + p.h && p.y < r.y + r.h);
+    const covers = r !== null
+      && parts.some((p) => r.x < p.x + p.w && p.x < r.x + r.w && r.y < p.y + p.h && p.y < r.y + r.h);
+    return { covers, castFits: castTop >= limit };
   };
+
+  /** Where an `auto` box may sit, in the order it is tried: a little below
+   *  the middle of the screen first, then lower, then higher with the cast
+   *  still under the header — and only then the very top, with no room for
+   *  the cast (24-dialogue.md §2). */
+  const PLACES = ['low', 'bottom', 'high', 'top'] as const;
 
   /** The cast stands on the box; where that would put a figure above the
    *  header — off the screen — it is not shown. Read while the box is still,
@@ -406,25 +418,46 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  the box never flaps between the edges. */
   let boxMovedForHand = false;
 
-  /** Where the box sits: its own place, or away from the target. */
+  /** Where the box sits: its own place, or the first of `PLACES` where the
+   *  speaker and what the line is about are both in sight. */
   const place = (l: SceneLine): void => {
-    let where = l.box;
+    settleUntil = performance.now() + PLACE_SETTLE_MS;
+    setPlace(bestPlace(l));
+    boxMovedForHand = false;
+  };
+
+  /** A target can still be arriving when its line starts — a sheet
+   *  unrolling, a card sliding in — so the place is judged again until the
+   *  target has settled; after that, only to stop covering the target or to
+   *  make room for the cast again. */
+  const PLACE_SETTLE_MS = 700;
+  let settleUntil = 0;
+  const replace = (l: SceneLine): void => {
+    if (l.box !== 'auto' || box.getAnimations().length > 0) return;
+    const now = box.dataset.place ?? '';
+    const best = bestPlace(l);
+    if (best === now) return;
+    if (performance.now() < settleUntil) { setPlace(best); return; }
+    // Settled: move only to stop covering the target, or to bring back a
+    // cast that the current place has no room for.
+    const r = playing?.target ? targetRect(game, playing.target, frame) : null;
+    const here = judge(now, r);
+    if (here.covers || (!here.castFits && judge(best, r).castFits)) setPlace(best);
+  };
+
+  const bestPlace = (l: SceneLine): string => {
+    let where: string = l.box;
     if (where === 'auto') {
-      // BOTTOM, where the cast stands on it — unless the box, or someone
-      // standing on it, would cover the very thing the line points at. Only
-      // then the top, where there is no room for the cast. A line that asks
-      // for an action steps aside before the target is touched, so it stays
-      // at the bottom with its speaker.
-      let r = playing?.target && l.until === 'tap' ? targetRect(game, playing.target, frame) : null;
+      let r = playing?.target ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
       if (r !== null && playing?.target?.kind === 'cell') {
         r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
       }
-      where = r !== null && bottomCovers(r) ? 'top' : 'bottom';
+      const judged = PLACES.map((p) => ({ p, ...judge(p, r) }));
+      where = (judged.find((j) => !j.covers && j.castFits) ?? judged.find((j) => !j.covers) ?? judged[0]).p;
     }
-    boxMovedForHand = false;
-    setPlace(where);
+    return where;
   };
 
   /** The box goes to `where`. */
@@ -794,6 +827,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           // menu — is brought into view, or the lock holds the player in
           // front of something they cannot reach.
           if (playing.target?.kind === 'ui') bringIntoView(game, playing.target.key);
+          if (!playing.acting) replace(l);
           fitCast();
           if (lineHolds(l)) { graced(); next(); }
         }
