@@ -6,7 +6,7 @@
 > what they need and what they give for it, and any friend who has it fills
 > it in one tap. Modelled on Clash Royale's requests and Township's help,
 > with the rules of Idle Town Master's *Comercio*. Mockups: M75 (the first
-> pass, beside the two directions not taken, M74 and M76), M77 (this
+> pass, beside the two directions not taken, M74 and M76), M77, M78 (this
 > design). It is a **proposal**: nothing here is built.
 
 ## 1. What trades
@@ -49,16 +49,24 @@ A third tab on the Friends menu: **List · Trade · Inbox**.
 
 ## 3. Making a wish
 
-A window over the tab, two steps:
+Two windows, one after the other, from *+ Make a wish*:
 
-1. **I need** — a fragment the player is missing, picked from each met
-   relic's six slots (an empty slot is a missing fragment; the keystone is
-   the sixth); or one of the three materials ×5.
-2. **I give** — what the rules of §1 allow for that need, from the player's
-   spares and materials; what does not pair is greyed.
+1. **What do you need?** (step 1 of 2)
+   - **One relic a row**, every relic met: its picture and name, then its
+     six slots across the row — held ones faded, missing ones as dashed
+     outlines; the keystone is the sixth, a size up, gold-rimmed.
+   - A missing slot is picked; nothing else in a row is.
+   - Under the relics, the three materials ×5.
+   - A pick goes straight to step 2.
+2. **What will you give?** (step 2 of 2)
+   - The need on top, small, with a way back to step 1.
+   - **Only what pairs with it** (§1), from the player's goods: duplicated
+     fragments (×2 or more) and materials ×5.
+   - A fragment held once is greyed, *Only 1*; a keystone for anything but
+     a keystone is greyed, *Keystone only*.
+   - *Held until a friend fills it, or for 48 hours.* **Pin wish**: the
+     stake leaves the player's goods.
 
-- *Held until a friend fills it, or for 48 hours.* **Pin wish**: the stake
-  leaves the player's goods.
 - Up to **3** wishes at once. A wish never asks for what the player already
   wishes for.
 
