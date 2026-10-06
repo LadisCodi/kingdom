@@ -333,8 +333,7 @@ describe('save versions', () => {
 // one of them would be read against a table that no longer has the row.
 // v63: the depths behind the gate are retired (Docs/proposals/lairs.md §7).
 // A lair is one fight, so what a save knew about rooms and depths has nothing
-// left to mean — and a live mission watching a room odometer could never
-// finish.
+// left to mean. v97: the season pass goes, and its board of missions with it.
 describe('the depths retired (v63)', () => {
   const v62 = () => {
     const state = freshGame();
@@ -345,24 +344,29 @@ describe('the depths retired (v63)', () => {
       Cleared: ['HollowBarrow'],
       DeepestDepth: 2,
     };
-    modules['kingdom.kingdoms'].Pass.Live = [
+    modules['kingdom.kingdoms'].Pass = { Season: 3, Xp: 250, Live: [
       { UniqueID: 'm1', Kind: 'ClearRooms', Meter: 'rooms', Base: 0, Target: 3, Subject: null, Window: 0, Slot: 0 },
       { UniqueID: 'm2', Kind: 'OpenPacks', Meter: 'packs', Base: 0, Target: 2, Subject: null, Window: 0, Slot: 1 },
       { UniqueID: 'm3', Kind: 'CompleteDepths', Meter: 'depths', Base: 0, Target: 1, Subject: null, Window: 0, Slot: 2 },
-    ];
+    ] };
     save.SaveVersion = 62;
     return save;
   };
 
-  it('drops the ruins module and the missions of the retired kinds', () => {
+  it('drops the ruins module, and the season pass with its missions', () => {
     const save = v62();
     expect(migrate(save)).toBe(true);
     const modules = save.Modules as any;
     expect(modules['kingdom.ruins']).toBeUndefined();
-    expect(modules['kingdom.kingdoms'].Pass.Live.map((m: any) => m.Kind)).toEqual(['UseItems']);
+    expect(modules['kingdom.kingdoms'].Pass).toBeUndefined();
     const back = deserialize(v62(), map, T0)!;
     expect('ruins' in back).toBe(false);
-    expect(back.kingdom.pass.live.map((m) => m.kind)).toEqual(['UseItems']);
+    expect('pass' in back.kingdom).toBe(false);
+  });
+
+  it('writes no season pass any more', () => {
+    const save = serialize(freshGame(), T0);
+    expect((save.Modules as any)['kingdom.kingdoms'].Pass).toBeUndefined();
   });
 
   it('writes no ruins module any more', () => {

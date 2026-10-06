@@ -105,9 +105,9 @@ export function renderStoreSheet(game: Game): HTMLElement {
   });
 
   // ---- gem packs: upright cards, count over art over price
-  // GEM_PACK_ORDER, not every SKU: the season pass is a Store row because the
-  // budget has to see it, but it is sold on the pass where the ladder beside
-  // it explains the price (Docs/features/20-season-pass.md §6).
+  // GEM_PACK_ORDER, not every SKU: the Survey is a Store row because the
+  // budget has to see it, but it is sold on the Survey where the ladder beside
+  // it explains the price (Docs/features/25-the-survey.md §6).
   const packs = GEM_PACK_ORDER.map((id) => {
     const sku = STORE[id];
     // Each pack has its own art, dropped into render/assets as

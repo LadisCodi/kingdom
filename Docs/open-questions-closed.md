@@ -11,6 +11,10 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| Do generated missions expire? (**OQ-16**) | 2026-10-06 | **Moot: there are no missions.** The season pass and its mission board are gone; the Survey is the one reward ladder ([`features/25-the-survey.md`](features/25-the-survey.md)). |
+| Does a generated mission ever ask for Mana? (**OQ-17**) | 2026-10-06 | **Moot with the missions.** The rule it set still holds: nothing but a tap draws on Mana ([`features/08-magic.md`](features/08-magic.md)). |
+| How many albums does a free player complete in a season? (**OQ-88**) | 2026-10-06 | **Moot: there are no albums.** Cards and packs became relic fragments. |
+| The free pack faucet is 200 a season and mostly unbuilt (**OQ-102**) | 2026-10-06 | **Moot: there are no packs**, and the season pass that paid them is gone. |
 | Is a monster camp beaten by each player, or once for everyone? (**OQ-128**) | 2026-10-05 | **Each player, for themselves** ([`proposals/world-dynamics.md`](proposals/world-dynamics.md) §1.1), as dungeon progress already is: nobody's kill is stolen and every player meets the same board. |
 | Do the stand-in rivals fight camps? (**OQ-129**) | 2026-10-05 | **A rival treats a camp as beaten after a delay by its power**, so it keeps pace without a fight being simulated (§5). |
 | Can a camp be paid off instead of fought? (**OQ-130**) | 2026-10-05 | **Yes, always dearer than the fight**: its tribute is ×1.5 the training cost of the troops a winning army would lose to it, and it pays no loot (§1.4). |

@@ -114,23 +114,15 @@ import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
-  type FeatureId, type TrainableId, type Mission, type MissionKind,
+  type FeatureId, type TrainableId,
   type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
   type QueueItem, type Wallet,
 } from './sim/state';
-import {
-  anyCellPending, boardIsFull, boardMissions, buyPass, claimCell, claimMission,
-  freeCell, levelProgress, ladderLength as passLadderLength,
-  paidCell, passEndsAt, passLevel, passOwned, passXp, rollMissionsIfDue,
-} from './sim/pass';
 import {
   anySurveyPending, buySurvey, claimSurveyCell, freeSurveyCell, nextLevelCells, paidSurveyCell,
   surveyLength, surveyLevel, surveyOwned,
 } from './sim/survey';
 import { pickUpTreasure, treasureAt } from './sim/treasures';
-import {
-  isHardKind, missionComplete, missionProgress, nextWindowAt,
-} from './sim/missions';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
@@ -199,9 +191,6 @@ export type OverlayName =
   // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
   | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
-  // The season pass, reached from the Sowing Season pill on the map
-  // (Docs/features/20-season-pass.md §6).
-  | 'pass'
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
@@ -621,11 +610,6 @@ export class Game {
     // lagging it by up to a second. `tick()` calls notify() too, so the
     // "after advance()" ordering the architecture needs still holds.
     refreshAdOffer(this.state, this.now());
-    // The eight-hour window, for `adOffers.ts`'s reason verbatim: the board is
-    // an opportunity offered to a player, not economy, so it is filled from
-    // the LIVE tick and `advance()` never proposes a boundary for it. A stamp
-    // rather than a cursor, so a long absence issues one window's worth.
-    rollMissionsIfDue(this.state, this.now());
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render. A RESOURCE is
     // never announced: its coin lands on the plank under the player's own
@@ -1549,7 +1533,7 @@ export class Game {
       levelCost: levelCost(level), canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
-      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the pass' : 'the world: dungeons, the Portal, scouting',
+      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the Survey' : 'the world: dungeons, the Portal, scouting',
       pending: def.pending,
       cast: this.castPhase(id),
       forge,
@@ -1910,147 +1894,11 @@ export class Game {
     this.floaters.add(townhall(this.state).location, amount > 0 ? `+${formatExact(amount)}` : formatExact(amount), 'Knowledge');
   }
 
-  // ------------------------------------------------------------- ad offers
-
-  /** The standing offer, or null. Drives the widget and the popup. */
-  // ------------------------------------------------------- the season pass
-
-  /**
-   * THE WHOLE PASS SCREEN, flattened — the plank, the XP bar, the board and
-   * the two-column ladder (Docs/features/20-season-pass.md §6).
-   *
-   * Every cell carries its OWN `claimable` and `claimed`, because every cell
-   * is its own button and nothing else on the sheet decides what can be
-   * taken.
-   */
-  passScreen(): {
-    level: number;
-    length: number;
-    xpInto: number;
-    xpNeed: number;
-    owned: boolean;
-    priceUsd: number;
-    endsIn: string;
-    nextTasksIn: string;
-    boardFull: boolean;
-    missions: Array<{
-      id: string; kind: MissionKind; icon: IconName; goal: string;
-      done: number; target: number; complete: boolean;
-      /** What finishing it pays, resolved to what the player would receive
-       *  RIGHT NOW — Mana is a fraction of the pool, so the number moves with
-       *  the Sanctum and cannot be stored. */
-      reward: { currency: CurrencyId; amount: number } | { fragments: number };
-      hard: boolean;
-    }>;
-    ladder: Array<{
-      level: number;
-      reached: boolean;
-      free: { reward: Wallet; items: ItemStock; fragments: number; claimed: boolean; claimable: boolean };
-      paid: {
-        reward: Wallet; items: ItemStock; fragments: number;
-        claimed: boolean; claimable: boolean; locked: boolean;
-      };
-    }>;
-  } {
-    const now = this.now();
-    const level = passLevel(this.state, now);
-    const owned = passOwned(this.state, now);
-    const { into, need } = levelProgress(passXp(this.state, now));
-    const length = passLadderLength();
-    const claimedFree = this.state.kingdom.pass.claimedFree;
-    const claimedPaid = this.state.kingdom.pass.claimedPaid;
-    return {
-      level,
-      length,
-      xpInto: into,
-      xpNeed: need,
-      owned,
-      priceUsd: STORE.SeasonPass.priceUsd,
-      endsIn: formatDuration((passEndsAt(now) - now) / 1000),
-      nextTasksIn: formatDuration((nextWindowAt(now) - now) / 1000),
-      boardFull: boardIsFull(this.state, now),
-      missions: boardMissions(this.state, now).map((m) => ({
-        id: m.uniqueId,
-        kind: m.kind,
-        icon: MISSION_ICON[m.kind],
-        goal: missionGoal(m),
-        done: missionProgress(this.state, m),
-        target: m.target,
-        complete: missionComplete(this.state, m),
-        reward: m.reward.kind === 'Fragments'
-          ? { fragments: m.reward.n }
-          : m.reward.kind === 'Gems'
-            ? { currency: 'Gems' as CurrencyId, amount: m.reward.amount }
-            : {
-              currency: 'Mana' as CurrencyId,
-              amount: Math.round(manaCap(this.state) * m.reward.fraction),
-            },
-        hard: isHardKind(m.kind),
-      })),
-      ladder: Array.from({ length }, (_, i) => {
-        const n = i + 1;
-        const free = freeCell(n);
-        const paid = paidCell(n);
-        return {
-          level: n,
-          reached: n <= level,
-          free: {
-            reward: free.wallet,
-            items: free.items,
-            fragments: free.fragments,
-            claimed: claimedFree.includes(n),
-            claimable: n <= level && !claimedFree.includes(n),
-          },
-          paid: {
-            reward: paid.wallet,
-            items: paid.items,
-            fragments: paid.fragments,
-            claimed: owned && claimedPaid.includes(n),
-            claimable: owned && n <= level && !claimedPaid.includes(n),
-            locked: !owned,
-          },
-        };
-      }),
-    };
-  }
-
-  /** The pass is worth opening: a cell waiting, or the pass still on the
-   *  table. The pill decides the glow from this, never the sheet. */
-  passPending(): boolean {
-    return anyCellPending(this.state, this.now());
-  }
-
-  /** The pass's pill on the map (Docs/features/20-season-pass.md §6): its
-   *  level on the ladder and the time the season has left. It shows once the
-   *  store is open — the pass is sold there — and hides behind any sheet. */
-  passPillState(): { showing: boolean; glowing: boolean; level: number; length: number; leftMs: number } | null {
-    if (!this.doorOpen('store')) return null;
-    const now = this.now();
-    return {
-      showing: !this.hasOpenSheet(),
-      glowing: this.passPending(),
-      level: passLevel(this.state, now),
-      length: passLadderLength(),
-      leftMs: Math.max(0, passEndsAt(now) - now),
-    };
-  }
-
-  doClaimPassCell(level: number, track: 'free' | 'paid'): void {
-    const result = claimCell(this.state, level, track, this.now());
-    if (result !== 'Claimed') return;
-    playSfx('questComplete');
-    this.notify();
-  }
-
-  doBuyPass(): void {
-    this.openIap('SeasonPass', 'pass');
-  }
-
   // ---------------------------------------------------------------- the Survey
 
   /** THE SURVEY'S SHEET, flattened (Docs/features/25-the-survey.md §6): the
    *  province's count, the next level's, and the two-column ladder. Every
-   *  cell carries its own `claimable` and `claimed`, the pass's rule. */
+   *  cell carries its own `claimable` and `claimed`. */
   surveyScreen(): {
     level: number;
     length: number;
@@ -2127,12 +1975,9 @@ export class Game {
     this.openIap('Survey', 'survey');
   }
 
-  doClaimMission(id: string): void {
-    if (claimMission(this.state, id, this.now()) !== 'Claimed') return;
-    playSfx('questComplete');
-    this.notify();
-  }
+  // ------------------------------------------------------------- ad offers
 
+  /** The standing offer, or null. Drives the widget and the popup. */
   adOffer(): { reward: number } | null {
     return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
   }
@@ -2889,8 +2734,8 @@ export class Game {
    *  the budget. Nothing is granted from the store card itself.
    *
    *  `from` is where "Not now" and a completed purchase go back to — the store
-   *  for a Gem pack, the pass for its paid column. A confirmation that always
-   *  returned to the store would take a player who tapped a price on the pass
+   *  for a Gem pack, the Survey for its paid column. A confirmation that always
+   *  returned to the store would take a player who tapped a price on the Survey
    *  somewhere they never asked to go. */
   openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
     this.pendingSku = id;
@@ -2908,12 +2753,10 @@ export class Game {
     const id = this.pendingSku;
     if (id === null) return;
     // The SKUs that grant no Gems do not go through `buySku` directly. Each
-    // still spends the budget through it, inside its own command: the pass
-    // and the Survey are an unlock plus a back-pay, a bundle is items.
-    const result = id === 'SeasonPass'
-      ? buyPass(this.state, this.now())
-      : id === 'Survey'
-        ? buySurvey(this.state, this.now())
+    // still spends the budget through it, inside its own command: the Survey
+    // is an unlock plus a back-pay, a bundle is items.
+    const result = id === 'Survey'
+      ? buySurvey(this.state, this.now())
       : isItemBundle(id)
         ? buyItemBundle(this.state, id, this.now())
         : buySku(this.state, id, this.now());
@@ -2924,11 +2767,10 @@ export class Game {
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
       // Only what the player cannot see from where they land is said.
-      if (id === 'SeasonPass') this.toast('The season pass is yours — every level you have reached is open');
-      else if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
+      if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
       this.setOverlay(back);
       if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
-      if (result === 'Purchased' && id !== 'SeasonPass' && id !== 'Survey' && !isItemBundle(id)) {
+      if (result === 'Purchased' && id !== 'Survey' && !isItemBundle(id)) {
         this.reward({ Gems: STORE[id].gems });
       }
     } else {
@@ -5901,47 +5743,6 @@ function trainerName(unitId: UnitId): string {
 }
 
 
-/**
- * THE ICON A MISSION KIND WEARS.
- *
- * Every one of them is already in the UI atlas — `tests/icons.test.ts` refuses
- * an emoji fallback, so a kind with no honest cell would fail the build rather
- * than quietly draw a glyph.
- */
-const MISSION_ICON: Record<MissionKind, IconName> = {
-  Population: 'population',
-  UpgradeDistricts: 'arrowUp',
-  RaiseTownhall: 'Townhall',
-  CollectResource: 'workers',
-  DiscoverCells: 'compass',
-  BuildDistricts: 'build',
-  TrainTroops: 'army',
-  LevelHeroes: 'star',
-  UseItems: 'bag',
-};
-
-/**
- * WHAT A MISSION SAYS IT WANTS, in one line.
- *
- * Generated from the mission rather than authored per roll, so a target that
- * scaled with the city cannot disagree with the sentence that names it.
- */
-function missionGoal(m: Mission): string {
-  const n = formatCount(m.target);
-  switch (m.kind) {
-    case 'Population': return `Grow the town by ${n}`;
-    case 'UpgradeDistricts': return `Upgrade buildings ${n} times`;
-    case 'RaiseTownhall': return 'Raise the Townhall a level';
-    case 'CollectResource': return `Collect ${n} ${(m.subject ?? 'Gold').toLowerCase()}`;
-    case 'DiscoverCells': return `Discover ${n} cells`;
-    case 'BuildDistricts': return `Build ${n} buildings`;
-    case 'TrainTroops': return `Train ${n} soldiers`;
-    case 'LevelHeroes': return `Level heroes ${n} times`;
-    default: return `Open ${n} card packs`;
-  }
-}
-
-/**
 /**
  * One relic's effect, said in the player's words at a given value.
  *

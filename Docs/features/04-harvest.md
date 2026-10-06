@@ -264,8 +264,8 @@ Quests:
 - A **nominal** city-wide rate with a travel term that takes the influence
   radius as the distance, and with each building's own level in its haul and
   its cadence.
-- The tap does not read it. Treasures, raids, the mission board and the card
-  collection read it as the city's rate of a coin.
+- The tap does not read it. Treasures and raids read it as the city's rate of
+  a coin.
 
 ## 5. Areas of influence, claims and migration
 

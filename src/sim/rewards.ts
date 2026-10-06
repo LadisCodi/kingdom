@@ -1,7 +1,7 @@
 // ONE WAY IN FOR A REWARD (Docs/plans/relics-and-bag.md, step 4).
 //
 // A reward is coins, items and relic fragments. Every source that pays one —
-// the pass, the Survey, a quest, a treasure, a lair, the store — describes it
+// the Survey, a quest, a treasure, a lair, the store — describes it
 // as a `Grant` and pays it here, so a coin lands in the purse its scope names
 // (the player's Gems, the kingdom's Knowledge and Stardust, the city's
 // goods), an item lands in the Bag and fragments are rolled on the event

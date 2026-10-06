@@ -2,10 +2,9 @@
 // city's own production at the moment of use.
 
 import { describe, expect, it } from 'vitest';
-import { BAG, ITEMS, ITEM_ORDER, PASS, QUESTS, SURVEY, TREASURE } from '../src/sim/data/definitions';
+import { BAG, ITEMS, ITEM_ORDER, QUESTS, SURVEY, TREASURE } from '../src/sim/data/definitions';
 import { claimQuest } from '../src/sim/quests';
 import { treasureItem } from '../src/sim/treasures';
-import { paidCell } from '../src/sim/pass';
 import { freeSurveyCell } from '../src/sim/survey';
 import {
   chestValue, grantItem, heldItems, itemCount, markBagOpened, markItemSeen, useItem,
@@ -170,9 +169,7 @@ describe('items as rewards', () => {
     expect(treasureItem(state, TREASURE.itemEvery)).toBe(item);
   });
 
-  it('the pass and the Survey carry their item columns into their cells', () => {
-    const level = PASS.paidItems.findIndex((id) => id !== '') + 1;
-    expect(paidCell(level).items).toEqual({ [PASS.paidItems[level - 1]]: 1 });
+  it('the Survey carries its item column into its cells', () => {
     const sLevel = SURVEY.freeItems.findIndex((id) => id !== '') + 1;
     expect(freeSurveyCell(freshGame(), sLevel).items[SURVEY.freeItems[sLevel - 1] as never]).toBe(1);
   });

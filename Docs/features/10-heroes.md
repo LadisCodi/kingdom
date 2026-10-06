@@ -250,7 +250,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|
 | **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor |
 | **Fragments** | a duplicate or a miss on a call · boss chests, from a per-boss pool (not built, OQ-80) |
-| **Stardust** | every dungeon room and Portal floor · **every call, hero or not** · the quest chain, the season pass and the survey |
+| **Stardust** | every dungeon room and Portal floor · **every call, hero or not** · the quest chain and the Survey |
 
 - The chain is **army → hero → lairs and dungeon rooms → XP and Stardust →
   levels.** A player who never fights makes no progress on the
