@@ -205,6 +205,31 @@ export function activation(game: Game, id: ArtifactId): HTMLElement | null {
     ]));
 }
 
+/**
+ * THE ACTIVATION OVER THE SHRINE'S PAINTING (its card): only what can be
+ * pressed or read at a glance, on the painting's calm bottom band — asleep,
+ * Activate with its Mana (and, short of it, the smallest flask); awake, the
+ * window running down. The sheet's longer form is `activation`.
+ */
+export function activationOverlay(game: Game, id: ArtifactId): HTMLElement | null {
+  const a = game.relicActivation(id);
+  if (a === null || !a.hosted) return null;
+  if (a.awake) {
+    const bar = progress('blue');
+    bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${formatCountdown(Math.ceil(a.leftMs / 1000))} left`);
+    return el('div', { class: 'dc-chapel-foot is-awake' }, iconEl('hourglass'), bar.root);
+  }
+  return el('div', { class: 'dc-chapel-foot' },
+    activateButton(game, id),
+    ...(a.affordable || a.flask === null ? [] : [btn({
+      label: 'Use',
+      kind: 'blue',
+      icon: 'manaFlask',
+      note: `Flask ×${formatExact(a.flask.count)}`,
+      onClick: () => game.doUseFlaskFor(id),
+    })]));
+}
+
 /** A world relic's spell, once restored: cast it, or how long until it can
  *  be. A city relic has none — it is activated (`activation`). */
 export function spellSection(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {

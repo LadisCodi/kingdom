@@ -32,7 +32,7 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
-import { activation, relicArt } from './relicSheet';
+import { activationOverlay, relicArt } from './relicSheet';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -219,26 +219,33 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         const view = game.shrineView(district);
         const held = view.holds === null ? null : game.relicCard(view.holds);
         const placeable = held === null && game.relicPickList().some((r) => r.status === 'bag');
-        const altar = el('button', {
-          class: `dc-chapel k-section${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
+        // THE PAINTING IS THE PRESS: a tap anywhere on it opens the picker.
+        // What sits over it — the relic's name, Activate, the timer — are
+        // its own presses, so they are siblings, not children, of it.
+        const painting = el('button', {
+          class: 'dc-chapel-press', type: 'button',
           'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
           'data-coach': 'shrine-slot',
-        },
-          // WAITING, IT CALLS: a gold ring breathing round the cradle's +,
-          // so the painting reads as a thing to press — with the CTA on it
-          // when a relic in the Bag could go there.
+        });
+        painting.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
+        return el('div', { class: `dc-chapel k-section${held === null ? '' : ` is-held is-${held.status}`}` },
+          painting,
+          // WAITING, IT CALLS: the unlock splash's sunburst turning out of
+          // the cradle's + — with the CTA on it when a relic in the Bag
+          // could go there.
           ...(held === null ? [el('span', { class: 'dc-chapel-call', 'aria-hidden': 'true' },
+            el('span', { class: 'unl-glow' }),
+            el('span', { class: 'unl-rays is-long' }),
+            el('span', { class: 'unl-rays is-short' }),
             ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []))] : []),
-          ...(held === null ? [] : [el('span', { class: 'dc-chapel-relic' },
-            relicArt(held, 'dc-chapel-relic-art'), ...(held.status === 'asleep' ? [restMarks()] : []))]),
-        );
-        altar.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
-        return el('div', { class: 'dc-shrine rl-page' },
-          altar,
-          ...(held === null ? [] : [el('div', { class: 'dc-shrine-says' },
-            el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
-            el('span', {}, held.now))]),
-          ...(held === null ? [] : [activation(game, held.id)].filter((x): x is HTMLElement => x !== null)),
+          ...(held === null ? [] : [
+            el('span', { class: 'dc-chapel-relic', 'aria-hidden': 'true' },
+              relicArt(held, 'dc-chapel-relic-art'), ...(held.status === 'asleep' ? [restMarks()] : [])),
+            el('div', { class: 'dc-chapel-head', 'aria-hidden': 'true' },
+              el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
+              el('span', {}, held.now)),
+            ...[activationOverlay(game, held.id)].filter((x): x is HTMLElement => x !== null),
+          ]),
         );
       };
       body.append(sectionHead('Relic'), part(() => {
