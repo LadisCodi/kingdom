@@ -9,10 +9,9 @@
 
 import type { Game } from '../game';
 import { ARTIFACTS } from '../sim/data/definitions';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatExact } from './format';
-import { btn } from './kit';
 import { setHidden, setText } from './domWrite';
+import { activateButton, relicArt } from './relicSheet';
 
 export function mountRelicAsleepPill(game: Game, root: HTMLElement): void {
   const art = el('span', { class: 'rs-tab-art' });
@@ -39,15 +38,9 @@ export function mountRelicAsleepPill(game: Game, root: HTMLElement): void {
     if (key !== drawn) {
       drawn = key;
       const def = ARTIFACTS[n!.relic];
-      const url = spriteUrl(def.sprite);
-      art.replaceChildren(url ? spriteImgAt(url, 'rs-tab-img') : el('span', {}, def.glyph));
+      art.replaceChildren(relicArt(def, 'rs-tab-img'));
       setText(words, n!.count === 1 ? `${def.name} is asleep` : `${formatExact(n!.count)} relics are asleep`);
-      chip.replaceChildren(btn({
-        label: 'Activate',
-        kind: 'primary',
-        costExtra: [{ icon: 'Mana', amount: formatExact(n!.cost), short: !n!.affordable }],
-        onClick: () => game.doActivateRelic(n!.relic),
-      }));
+      chip.replaceChildren(activateButton(game, n!.relic));
     }
     if (!wasShowing) {
       // Restart the slide only when it genuinely arrives.

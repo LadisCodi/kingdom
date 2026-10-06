@@ -385,3 +385,41 @@ export function drawManaBubble(
 
 /** The price's ink on parchment: the rim's brown, darkened to read. */
 const RIM_INK = '#4a2e14';
+
+/**
+ * WHAT AN AWAKE AURA PAYS a building (M84): a small tag in the bubbles'
+ * parchment and rim, the Gold coin and `+30%`, centred on (cx, bottom).
+ */
+export function drawAuraBadge(
+  ctx: CanvasRenderingContext2D, text: string, font: string, cx: number, bottom: number, fontPx: number,
+): void {
+  ctx.save();
+  ctx.font = `bold ${fontPx}px ${font}`;
+  const icon = Math.round(fontPx * 1.3);
+  const textW = ctx.measureText(text).width;
+  const padX = fontPx * 0.45;
+  const w = padX + icon + fontPx * 0.25 + textW + padX;
+  const h = Math.max(icon, fontPx) + fontPx * 0.35;
+  const x = cx - w / 2;
+  const y = bottom - h;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, h / 2);
+  const fill = ctx.createLinearGradient(0, y, 0, y + h);
+  fill.addColorStop(0, PARCHMENT_LIGHT);
+  fill.addColorStop(1, PARCHMENT);
+  ctx.shadowColor = 'rgba(40, 22, 10, 0.35)';
+  ctx.shadowBlur = h * 0.25;
+  ctx.shadowOffsetY = h * 0.08;
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = Math.max(1.5, fontPx * 0.12);
+  ctx.strokeStyle = RIM;
+  ctx.stroke();
+  drawIcon(ctx, 'Gold', x + padX, y + (h - icon) / 2, icon);
+  ctx.fillStyle = RIM_INK;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + padX + icon + fontPx * 0.25, y + h / 2 + fontPx * 0.05);
+  ctx.restore();
+}

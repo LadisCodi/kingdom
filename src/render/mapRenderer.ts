@@ -31,7 +31,7 @@ import {
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawClaimBubble, drawCollectBubble, drawLairBubble, drawManaBubble } from './collectBubbleArt';
+import { drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble, drawManaBubble } from './collectBubbleArt';
 import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
@@ -1660,35 +1660,14 @@ export function drawMap(
     }
   }
 
-  // Pass 3d: WHAT AN AWAKE AURA PAYS, a coin badge over each roof it reaches
-  // (M84): `+30%`, on the gold of the coin it is about.
+  // Pass 3d: WHAT AN AWAKE AURA PAYS, a small parchment tag over each roof
+  // it reaches (M84) — `+30%` beside the coin it is about.
   for (const badge of markers.auraBadges) {
     const art = artOf.get(badge.districtId);
     if (!art) continue;
     const plot = camera.plotBox(badge.location, badge.size);
-    const fontPx = wholePx(Math.max(11, plot.w * 0.13), 11);
-    ctx.save();
-    ctx.font = labelFont(fontPx, 11, true);
-    const icon = Math.round(fontPx * 1.3);
-    const textW = ctx.measureText(badge.text).width;
-    const padX = fontPx * 0.45;
-    const bw = padX + icon + fontPx * 0.25 + textW + padX;
-    const bh = Math.max(icon, fontPx) + fontPx * 0.35;
-    const bx = art.x + art.w / 2 - bw / 2;
-    const by = art.y + art.h * 0.18 - bh;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, bh / 2);
-    ctx.fillStyle = 'rgba(46, 28, 12, 0.82)';
-    ctx.fill();
-    ctx.lineWidth = Math.max(1.5, fontPx * 0.12);
-    ctx.strokeStyle = 'rgba(244, 196, 84, 0.95)';
-    ctx.stroke();
-    drawIcon(ctx, 'Gold', bx + padX, by + (bh - icon) / 2, icon);
-    ctx.fillStyle = '#ffe7a3';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(badge.text, bx + padX + icon + fontPx * 0.25, by + bh / 2 + fontPx * 0.05);
-    ctx.restore();
+    drawAuraBadge(ctx, badge.text, labelFace(), art.x + art.w / 2, art.y + art.h * 0.18,
+      wholePx(Math.max(11, plot.w * 0.13), 11));
   }
 
   // Pass 4: COLLECT BUBBLES — over the whole world, under the UI. One per
