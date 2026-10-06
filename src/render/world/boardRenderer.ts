@@ -248,7 +248,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
 
   // Burnt districts: fire at their foot and smoke rising in columns (19 §5.5).
   // A raid to come is an arc from the camp to each district of the player's
-  // it will raid, a pulse running along it, and the time left on the camp:
+  // it will raid, its dashes running towards it, and the time left on the camp:
   // "this camp raids this district in this time".
   const raids: Array<{ camp: number; target: number }> = [];
   const raidAt = new Map<number, number>();
@@ -1080,13 +1080,10 @@ function drawFire(ctx: CanvasRenderingContext2D, camera: HexCamera, c: { x: numb
   ctx.restore();
 }
 
-/** How long a raid's pulse takes to run from the camp to its target. */
-const RAID_PULSE_MS = 1600;
-
 /**
  * A raid to come: a dashed red arc from the camp to the district, high in
- * the middle like a thrown spear, an arrowhead where it lands, and a glowing
- * pulse running along it from the camp to the district, over and over.
+ * the middle like a thrown spear, its dashes running towards the arrowhead
+ * where it lands.
  */
 function drawRaidArc(
   ctx: CanvasRenderingContext2D, camera: HexCamera, from: { x: number; y: number }, to: { x: number; y: number }, clock: number,
@@ -1142,22 +1139,6 @@ function drawRaidArc(
   ctx.lineWidth = 1.5;
   ctx.fill();
   ctx.stroke();
-  ctx.restore();
-  // The pulse: from the camp to the district, swelling as it travels and
-  // fading as it lands.
-  const t = ((clock % RAID_PULSE_MS) + RAID_PULSE_MS) % RAID_PULSE_MS / RAID_PULSE_MS;
-  const p = at(t * end);
-  const rad = width * (1.6 + t * 1.4);
-  ctx.save();
-  ctx.globalAlpha = t < 0.85 ? 1 : (1 - t) / 0.15;
-  const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 2.4);
-  glow.addColorStop(0, 'rgba(255, 236, 170, 1)');
-  glow.addColorStop(0.35, 'rgba(255, 120, 60, 0.9)');
-  glow.addColorStop(1, 'rgba(210, 58, 42, 0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, rad * 2.4, 0, Math.PI * 2);
-  ctx.fill();
   ctx.restore();
 }
 
