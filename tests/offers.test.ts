@@ -287,3 +287,22 @@ describe('the offer widget', () => {
     }
   });
 });
+
+describe('the Offers screen', () => {
+  it('has a tab an offer on sale, the splash ones apart, and draws the open one\'s chain and gift', async () => {
+    const { freshPresenter } = await import('./helpers');
+    const state = shop();
+    state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+    const game = freshPresenter(state);
+    refreshOffers(state, game.now());
+    game.openOffers('NovicePack1' as StoreSkuId);
+    const view = game.offersScreen();
+    expect(view.tabs.map((t) => t.id)).not.toContain('FirstPurchase');
+    expect(view.tabs.find((t) => t.open)?.id).toBe('NovicePack1');
+    expect(view.card?.chain).toEqual({ at: 1, of: 3 });
+    expect(view.card?.gifts.map((g) => g.icon)).toEqual(['builder']);
+    // The Gems have their own row, not a tile.
+    expect(view.card?.tiles.some((t) => t.kind === 'coin' && t.id === 'Gems')).toBe(false);
+    expect(view.card?.valuePercent).toBeGreaterThan(100);
+  });
+});

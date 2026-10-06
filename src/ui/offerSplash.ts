@@ -61,7 +61,9 @@ function tileTip(t: OfferTile): { title: string; text: string } {
   return { title: itemName(def), text: itemLine(def, t.worth ?? {}) };
 }
 
-function tile(t: OfferTile): HTMLElement {
+/** One reward as a tile, with the tooltip saying what it is — the splash's
+ *  panels and the Offers screen's card both draw these. */
+export function offerTile(t: OfferTile): HTMLElement {
   const art = t.kind === 'hero' ? heroArt(t.id as HeroId, 'ofs-tile-hero')
     : t.kind === 'fragments' ? heroFragmentIcon(t.id as HeroId, { size: 'lg' })
     : t.kind === 'coin' ? currencyIcon(t.id as CurrencyId, { size: 'lg' })
@@ -136,7 +138,7 @@ function ribbonTitle(text: string): SVGSVGElement {
 function panel(title: string, tiles: OfferTile[], badge: HTMLElement | null, locked: boolean): HTMLElement {
   return el('section', { class: `ofs-panel${locked ? ' is-locked' : ''}` },
     el('div', { class: 'ofs-panel-head' }, ...(badge === null ? [] : [badge]), el('span', {}, title)),
-    el('div', { class: 'ofs-tiles' }, ...tiles.map(tile)));
+    el('div', { class: 'ofs-tiles' }, ...tiles.map(offerTile)));
 }
 
 export function mountOfferSplash(game: Game, root: HTMLElement): void {
