@@ -472,7 +472,6 @@
 /* ---- offers (sim/offers.ts): a bundle row with a wax seal for its value,
  * and a countdown and what is left above its price. A stand-in until the
  * store's redesign gives each offer its own tab. */
-.store-art.is-hero-slot { background-image: url('../../assets/icon_hero_fragment.png'); }
 .store-offer { position: relative; }
 .store-offer-meta {
   display: flex;

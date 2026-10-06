@@ -1,0 +1,5 @@
+hero_merchant
+hero_priest
+hero_rogue
+hero_three_mouses
+hero_warrior

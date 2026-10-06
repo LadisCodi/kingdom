@@ -16,6 +16,14 @@ The OFL permits bundling, embedding and redistribution with the software —
 that the font itself not be sold on its own and that the licence travel with
 it, which `OFL.txt` does. No credit to players is required.
 
+## Alegreya — SIL Open Font License 1.1
+
+- Designer: **Juan Pablo del Peral**, Huerta Tipográfica — Copyright 2011 The
+  Alegreya Project Authors — <https://github.com/huertatipografica/Alegreya>.
+- Licence: **OFL 1.1**, the same text as [`OFL.txt`](OFL.txt).
+- File: `alegreya-900-latin.woff2` — Google Fonts' latin subset of Alegreya
+  Black, unmodified.
+
 ## Gone from the build
 
 - **PT Sans** (ParaType, OFL 1.1) and **Germania One** (John Vargas Beltrán,

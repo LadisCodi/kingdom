@@ -149,12 +149,16 @@ describe('the font files', () => {
   // ONE family, FOUR weights — and the four are the four roles of §2 (board,
   // 2026-09-11): 800 a heading, 700 a button or an amount or a name, 600
   // ordinary prose, 400 the small description under it. A fifth face on this
-  // list is a weight nothing names and a download nobody asked for.
-  it('ships Nunito at 400, 600, 700 and 800, and nothing else', () => {
+  // list is a weight nothing names and a download nobody asked for. The one
+  // other face is the ORNATE one (2026-10-06): Alegreya Black, for a
+  // splash's painted titles (m86b), behind `--font-ornate` and its own role.
+  it('ships Nunito at 400, 600, 700 and 800, the ornate Alegreya 900, and nothing else', () => {
     const faces = [...tokens.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
     const declared = faces.map((f) =>
       `${/font-family:\s*'([^']+)'/.exec(f)?.[1]} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`).sort();
-    expect(declared).toEqual(['Nunito 400', 'Nunito 600', 'Nunito 700', 'Nunito 800']);
+    expect(declared).toEqual(['Alegreya 900', 'Nunito 400', 'Nunito 600', 'Nunito 700', 'Nunito 800']);
+    expect(tokens).toMatch(/--font-ornate:\s*'Alegreya'/);
+    expect(tokens).toMatch(/--weight-ornate:\s*900;/);
     // Both type tokens name the same family: the split is the weight now.
     expect(tokens).toMatch(/--font-display:\s*'Nunito'/);
     expect(tokens).toMatch(/--font-body:\s*'Nunito'/);
@@ -164,7 +168,7 @@ describe('the font files', () => {
   // synthesises it — a smeared fake bold that looks almost right on the
   // desktop and wrong on the phone.
   it('names a role for every weight, and a shipped face for every role', () => {
-    const roles = ['title', 'strong', 'body', 'small'] as const;
+    const roles = ['title', 'strong', 'body', 'small', 'ornate'] as const;
     const shipped = new Set([...tokens.matchAll(/@font-face\s*\{[^}]*font-weight:\s*(\d+)/g)]
       .map((m) => Number(m[1])));
     for (const role of roles) {

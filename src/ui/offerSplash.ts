@@ -14,7 +14,8 @@
 // WHEN (`Game.offerSplashOnScreen`): at the start of a session, once the map
 // is free.
 
-import { HEROES, STORE } from '../sim/data/definitions';
+import { BANNERS, BANNER_ORDER, HEROES, ITEMS, STORE } from '../sim/data/definitions';
+import { boonText } from '../sim/heroes';
 import type { CurrencyId, HeroId, ItemId, StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { playSfx } from '../audio/sfx';
@@ -22,7 +23,8 @@ import type { Game, OfferTile } from '../game';
 import { itemIcon } from './itemArt';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
-import { btn, closeKnob, currencyIcon, iconEl } from './kit';
+import { btn, closeKnob, currencyIcon, iconEl, withTooltip } from './kit';
+import { itemLine, itemName } from './itemText';
 
 /** A hero's round-cornered portrait, or its glyph while the art is missing. */
 function heroArt(id: HeroId, cls: string): HTMLElement {
@@ -31,13 +33,59 @@ function heroArt(id: HeroId, cls: string): HTMLElement {
   return url ? spriteImgAt(url, cls) : el('span', { class: cls }, def.glyph);
 }
 
+/** What a reward IS, for the tooltip a tap on its tile opens. */
+function tileTip(t: OfferTile): { title: string; text: string } {
+  if (t.kind === 'hero' || t.kind === 'fragments') {
+    const def = HEROES[t.id as HeroId];
+    const name = def.name.replace(/^The /, '');
+    if (t.kind === 'fragments') {
+      return {
+        title: `${formatExact(t.count)} fragments of ${name}`,
+        text: `With Stardust, they raise ${name} a tier, and the level cap with it`,
+      };
+    }
+    const boon = def.boon === null ? null : boonText(def.boon);
+    return {
+      title: def.name,
+      text: `A ${def.rarity.toLowerCase()} hero, yours for good${boon === null ? '' : `. Held, for the whole kingdom: ${boon}`}`,
+    };
+  }
+  if (t.kind === 'coin') {
+    return t.id === 'HeroXp'
+      ? { title: `${formatExact(t.count)} Hero XP`, text: 'Levels up any hero, up to their tier\'s cap' }
+      : { title: `${formatExact(t.count)} Gems`, text: 'Keys, builders, time and more, in the store' };
+  }
+  const def = ITEMS[t.id as ItemId];
+  const banner = def.kind === 'key' ? BANNER_ORDER.find((b) => BANNERS[b].key === t.id) : undefined;
+  if (banner !== undefined) return { title: def.name, text: `One ${BANNERS[banner].name.replace(/^The /, '').toLowerCase()} for aid, in the store` };
+  return { title: itemName(def), text: itemLine(def, t.worth ?? {}) };
+}
+
 function tile(t: OfferTile): HTMLElement {
   const art = t.kind === 'hero' ? heroArt(t.id as HeroId, 'ofs-tile-hero')
     : t.kind === 'fragments' ? heroFragmentIcon(t.id as HeroId, { size: 'lg' })
     : t.kind === 'coin' ? currencyIcon(t.id as CurrencyId, { size: 'lg' })
     : iconEl(itemIcon(t.id as ItemId), { size: 'lg' });
-  return el('div', { class: `ofs-tile${t.kind === 'hero' ? ' is-hero' : ''}` },
-    art, el('b', { class: 'ofs-tile-count' }, `×${formatExact(t.count)}`));
+  const tip = tileTip(t);
+  return withTooltip(el('button', {
+    class: `ofs-tile${t.kind === 'hero' ? ' is-hero' : ''}`, type: 'button', 'aria-label': tip.title,
+  }, art, el('b', { class: 'ofs-tile-count' }, `×${formatExact(t.count)}`)), tip.text, tip.title);
+}
+
+/** Where the sparkles sit over the hero, in % of the hero's box, how big
+ *  (× the base size) and when each first lights. Fixed rather than random:
+ *  the same splash twinkles the same way every time it is opened. */
+const SPARKLES: ReadonlyArray<[number, number, number, number]> = [
+  [14, 22, 1, 0], [78, 14, 1.3, 700], [88, 46, 0.8, 1500], [8, 58, 1.1, 2200],
+  [62, 6, 0.7, 400], [30, 8, 0.9, 1900], [92, 74, 1, 1100], [20, 84, 0.8, 2600],
+  [70, 62, 0.6, 3100], [46, 30, 0.6, 2900],
+];
+
+/** A painted title: the ornate face, cream to gold, in a dark outline. The
+ *  outline is a second copy of the words behind the first, because a
+ *  gradient fill and a stroke cannot share one layer of text. */
+function ornate(text: string, cls: string): HTMLElement {
+  return el('span', { class: `ofs-ornate ${cls}`, 'data-text': text }, text);
 }
 
 function panel(title: string, tiles: OfferTile[], badge: HTMLElement | null, locked: boolean): HTMLElement {
@@ -72,23 +120,31 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
       action = el('div', { class: 'ofs-wait' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, 'Tomorrow in '), timer);
     }
 
+    // The magic in the light: sparkles that come and go, each on its own
+    // beat, so the burst never pulses as one.
+    const sparkles = SPARKLES.map(([x, y, size, delay]) => el('span', {
+      class: 'ofs-sparkle', 'aria-hidden': 'true',
+      style: `left:${x}%;top:${y}%;--s:${size};animation-delay:${delay}ms`,
+    }));
+    const art = s.hero === null ? null : spriteUrl(HEROES[s.hero].sprite);
     const screen = el('div', { class: 'ofs-screen', role: 'dialog', 'aria-modal': 'true', 'aria-label': s.name },
       close,
-      el('div', { class: 'ofs-ribbon' }, el('span', {}, s.name)),
-      el('div', { class: 'ofs-hero' },
-        el('div', { class: 'ofs-burst', 'aria-hidden': 'true' }),
-        ...(s.hero === null ? [] : [(() => {
-          const url = spriteUrl(HEROES[s.hero].sprite);
-          return url ? spriteImgAt(url, 'ofs-hero-art') : el('span', {});
-        })()]),
+      el('div', { class: 'ofs-column' },
+        el('div', { class: 'ofs-hero', 'aria-hidden': 'true' },
+          el('div', { class: 'ofs-burst' }),
+          ...(art === null ? [] : [spriteImgAt(art, 'ofs-hero-art')]),
+          ...sparkles),
+        el('div', { class: 'ofs-ribbon' }, ornate(s.name, 'ofs-ribbon-text')),
         ...(hero === null ? [] : [el('div', { class: 'ofs-hero-name' },
-          el('b', {}, hero.name), el('span', { class: 'ofs-rarity' }, hero.rarity))])),
-      panel(mode === 'buy' ? 'Yours now' : 'Yours', tiles.now, null, false),
-      ...(tiles.nextDay.length === 0 ? [] : [panel('Tomorrow', tiles.nextDay,
-        mode === 'claim' ? null : el('span', { class: 'ofs-lock' }, iconEl('padlock', { size: 'sm' }), iconEl('hourglass', { size: 'sm' })),
-        mode !== 'claim')]),
-      el('div', { class: 'ofs-actions' }, action,
-        ...(mode === 'buy' && s.limit === 1 ? [el('span', { class: 'ofs-note' }, 'Once per kingdom.')] : [])));
+          ornate(hero.name.replace(/^The /, ''), 'ofs-name-text'),
+          el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, hero.rarity))]),
+        el('div', { class: 'ofs-panels' },
+          panel(mode === 'buy' ? 'Yours now' : 'Yours', tiles.now, null, false),
+          ...(tiles.nextDay.length === 0 ? [] : [panel('Tomorrow', tiles.nextDay,
+            mode === 'claim' ? null : el('span', { class: 'ofs-lock' }, iconEl('padlock', { size: 'lg' }), iconEl('hourglass', { size: 'lg' })),
+            mode !== 'claim')]),
+          el('div', { class: 'ofs-actions' }, action,
+            ...(mode === 'buy' && s.limit === 1 ? [el('span', { class: 'ofs-note' }, 'Once per kingdom.')] : [])))));
     root.replaceChildren(screen);
     if (mode !== 'waiting') playSfx('unlock');
   };

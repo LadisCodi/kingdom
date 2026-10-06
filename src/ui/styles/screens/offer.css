@@ -1,186 +1,287 @@
 /* THE OFFER SPLASH (ui/offerSplash.ts, Docs/features/14-monetization.md §2.6),
  * after Docs/art/ui/mockups/m86b-offer-first-purchase.png: no window, the
- * game dimmed behind; a red cloth ribbon with the offer's name, the hero on a
- * golden burst, two parchment panels in nailed wood frames, and the price on
- * a gold button. */
+ * game dimmed behind; a red cloth ribbon with the offer's name, the hero
+ * large on a golden burst with sparkles coming and going, the lower part of
+ * the hero behind two parchment panels in nailed wood frames, reward tiles,
+ * and the price on a gold button.
+ *
+ * The column is the iPhone X's width at most (402 reference px) and never
+ * grows: a wider screen shows more air at the sides, not wider panels. */
 
 .ofs-screen {
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 44) calc(var(--px) * 12) calc(var(--px) * 18);
+  justify-content: center;
   background: rgba(16, 10, 5, 0.86);
-  overflow-y: auto;
+  overflow: hidden;
   animation: ofs-veil 250ms ease-out both;
 }
 @keyframes ofs-veil { from { opacity: 0; } }
 #ui:has(> #offersplash:not(:empty)) > #stage { visibility: hidden; }
 
-.ofs-screen > .ofs-close { position: absolute; top: calc(var(--px) * 10); right: calc(var(--px) * 10); left: auto; z-index: 2; }
+.ofs-screen > .ofs-close {
+  position: absolute;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 8);
+  right: calc(var(--px) * 10);
+  left: auto;
+  z-index: 3;
+}
 
-/* A red cloth ribbon, its tails folded back behind it. */
+.ofs-column {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--px) * 402);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding:
+    calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 30)
+    calc(var(--px) * 12)
+    calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--px) * 10);
+}
+
+/* ------------------------------------------------------------- the ribbon */
+
 .ofs-ribbon {
   position: relative;
+  z-index: 2;
   align-self: center;
-  z-index: 1;
-  padding: calc(var(--px) * 8) calc(var(--px) * 26);
-  background: linear-gradient(#c43a2c, #8e2219);
-  border-top: calc(var(--px) * 2) solid #e7b347;
-  border-bottom: calc(var(--px) * 2) solid #e7b347;
-  box-shadow: 0 calc(var(--px) * 3) 0 rgba(40, 10, 5, 0.45);
-  color: #fbe6c8;
-  font-family: var(--font-display, var(--font-body));
-  font-size: calc(var(--px) * 24);
-  font-weight: var(--weight-strong);
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.6);
-  white-space: nowrap;
-}
-.ofs-ribbon::before,
-.ofs-ribbon::after {
-  content: '';
-  position: absolute;
-  top: calc(var(--px) * 8);
-  width: calc(var(--px) * 22);
-  height: 100%;
-  background: #7a1c14;
-  z-index: -1;
-}
-.ofs-ribbon::before { left: calc(var(--px) * -16); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 35% 50%); }
-.ofs-ribbon::after { right: calc(var(--px) * -16); clip-path: polygon(0 0, 100% 0, 65% 50%, 100% 100%, 0 100%); }
-
-/* The hero, on light. */
-.ofs-hero {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: calc(var(--px) * 220);
+  width: calc(var(--px) * 360);
+  aspect-ratio: 4 / 1;
   display: grid;
-  place-items: end center;
-  margin-top: calc(var(--px) * -14);
+  place-items: center;
+  padding-bottom: calc(var(--px) * 12);
+  background: url('../../assets/offer-ribbon.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(30, 10, 4, 0.45));
+}
+
+/* A painted title: the ornate face, cream to pale gold, a dark brown outline
+ * and a soft drop. The outline is the ::before copy behind the fill. */
+.ofs-ornate {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  line-height: 1;
+  white-space: nowrap;
+  color: transparent;
+  background: linear-gradient(#fffaf0 30%, #f8dc93 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.ofs-ornate::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: #3b1d0c;
+  -webkit-text-stroke: calc(var(--px) * 5) #3b1d0c;
+  text-shadow: 0 calc(var(--px) * 3) 0 rgba(30, 10, 4, 0.55);
+}
+.ofs-ribbon-text { font-size: calc(var(--px) * 26); }
+
+/* --------------------------------------------------------------- the hero */
+
+/* The hero's box runs from under the ribbon to the middle of the first
+ * panel, so her lower half stands behind the rewards. */
+.ofs-hero {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 40);
+  height: 68%;
+  pointer-events: none;
 }
 .ofs-burst {
   position: absolute;
-  inset: 4% 8% 0;
+  inset: 4% -10% 8% -10%;
   border-radius: 50%;
   background:
-    radial-gradient(closest-side, rgba(255, 214, 110, 0.75), rgba(242, 178, 51, 0.25) 60%, transparent),
-    repeating-conic-gradient(from 0deg, rgba(255, 220, 130, 0.22) 0deg 6deg, transparent 6deg 18deg);
-  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
-  mask-image: radial-gradient(closest-side, #000 55%, transparent);
-  animation: ofs-spin 60s linear infinite;
+    radial-gradient(closest-side, rgba(255, 226, 130, 0.95), rgba(255, 196, 70, 0.55) 45%, rgba(242, 178, 51, 0.12) 75%, transparent),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 224, 140, 0.35) 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 50%, transparent);
+  mask-image: radial-gradient(closest-side, #000 50%, transparent);
+  animation: ofs-spin 80s linear infinite;
 }
 @keyframes ofs-spin { to { transform: rotate(360deg); } }
 .ofs-hero-art {
-  position: relative;
-  height: 100%;
-  max-height: calc(var(--px) * 360);
-  max-width: 70%;
-  object-fit: contain;
-  justify-self: start;
-  margin-left: 4%;
-}
-.ofs-hero-name {
   position: absolute;
-  right: calc(var(--px) * 4);
-  top: 30%;
+  left: -14%;
+  bottom: 0;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 220, 140, 0.45));
+}
+
+/* A sparkle: lights, swells and goes, then waits — each on its own delay. */
+.ofs-sparkle {
+  position: absolute;
+  width: calc(var(--px) * 30 * var(--s, 1));
+  aspect-ratio: 1;
+  margin: calc(var(--px) * -15 * var(--s, 1));
+  background: url('../../assets/sparkle.png') center / contain no-repeat;
+  opacity: 0;
+  transform: scale(0.2) rotate(0deg);
+  animation: ofs-twinkle 3.4s ease-in-out infinite;
+}
+@keyframes ofs-twinkle {
+  0%, 55%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  70% { opacity: 1; transform: scale(1) rotate(25deg); }
+  85% { opacity: 0.7; transform: scale(0.75) rotate(45deg); }
+}
+
+/* The hero's name, painted on the light at the right, the rarity's cloth
+ * ribbon under it. */
+.ofs-hero-name {
+  position: relative;
+  z-index: 1;
+  align-self: flex-end;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--px) * 4);
-  color: #fff7e6;
-  font-family: var(--font-display, var(--font-body));
-  font-size: calc(var(--px) * 26);
-  line-height: 1;
+  gap: calc(var(--px) * 6);
+  margin-top: calc(var(--px) * 64);
+  margin-right: calc(var(--px) * 2);
+  max-width: 46%;
   text-align: center;
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 20, 6, 0.8);
-  max-width: 40%;
 }
+.ofs-name-text { font-size: calc(var(--px) * 38); white-space: normal; line-height: 0.95; }
 .ofs-rarity {
-  padding: calc(var(--px) * 3) calc(var(--px) * 12);
-  background: linear-gradient(#f4cf63, #d79e2c);
-  border: calc(var(--px) * 2) solid #8a5a1c;
-  border-radius: calc(var(--px) * 3);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 168);
+  aspect-ratio: 3.4 / 1;
+  padding-left: calc(var(--px) * 10);
+  padding-bottom: calc(var(--px) * 4);
+  background: var(--ribbon) center / contain no-repeat;
   color: #5a3510;
-  font-family: var(--font-body);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-strong);
-  letter-spacing: 0.08em;
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  font-size: calc(var(--px) * 14);
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  text-shadow: none;
+}
+.ofs-rarity.is-common { --ribbon: url('../../assets/hero-rarity-common.png'); color: #fff6e0; }
+.ofs-rarity.is-rare { --ribbon: url('../../assets/hero-rarity-rare.png'); color: #fff6e0; }
+.ofs-rarity.is-legendary { --ribbon: url('../../assets/hero-rarity-legendary.png'); }
+
+/* ------------------------------------------------------------- the panels */
+
+.ofs-panels {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 22);
 }
 
-/* A parchment panel in a nailed wood frame, a wooden plaque for its title. */
+/* A parchment panel in a nailed wood frame (9-slice), a wooden plaque on
+ * its top edge for its title. */
 .ofs-panel {
   position: relative;
-  padding: calc(var(--px) * 20) calc(var(--px) * 10) calc(var(--px) * 10);
-  margin-top: calc(var(--px) * 10);
-  background: var(--parchment);
-  border: calc(var(--px) * 5) solid var(--wood);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 calc(var(--px) * 3) 0 rgba(30, 16, 6, 0.4);
+  padding: calc(var(--px) * 26) calc(var(--px) * 4) calc(var(--px) * 12);
+  border-style: solid;
+  border-width: calc(var(--px) * 26);
+  /* offer-frame.png: 512², the wood and the nails inside an 80 px inset. */
+  border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 26) / 0 stretch;
+  margin: 0;
 }
 .ofs-panel-head {
   position: absolute;
-  top: calc(var(--px) * -16);
+  top: calc(var(--px) * -40);
   left: 50%;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
-  gap: calc(var(--px) * 6);
-  padding: calc(var(--px) * 4) calc(var(--px) * 22);
-  background: linear-gradient(#a2683a, #7b4a24);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 4);
+  gap: calc(var(--px) * 4);
+  height: calc(var(--px) * 40);
+  padding: 0 calc(var(--px) * 34);
+  border-style: solid;
+  border-width: 0 calc(var(--px) * 27);
+  /* offer-plaque.png: 512×90, the nailed end caps 60 px wide. */
+  border-image: url('../../assets/offer-plaque.png') 0 60 fill / 0 calc(var(--px) * 27) / 0 stretch;
   color: #fbe6c8;
-  font-family: var(--font-body);
-  font-size: calc(var(--px) * 16);
-  font-weight: var(--weight-strong);
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  font-size: calc(var(--px) * 21);
+  text-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 16, 4, 0.8);
   white-space: nowrap;
 }
-.ofs-lock { display: inline-flex; gap: calc(var(--px) * 1); }
+.ofs-lock {
+  display: inline-flex;
+  margin-left: calc(var(--px) * -34);
+  margin-top: calc(var(--px) * -10);
+  filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(30, 16, 6, 0.5));
+}
 .ofs-tiles { display: flex; justify-content: center; gap: calc(var(--px) * 6); }
+
+/* A reward: a parchment card with brass rivets; a legendary hero's is gold. */
 .ofs-tile {
   position: relative;
-  flex: 0 1 calc(var(--px) * 74);
+  flex: 0 1 calc(var(--px) * 80);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  background: var(--parchment-shade);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 4);
-  overflow: hidden;
+  background: url('../../assets/offer-tile.png') center / 100% 100% no-repeat;
 }
-.ofs-tile.is-hero {
-  border-color: #c9962b;
-  background: radial-gradient(circle, #ffe7a0, #e9b94c);
-  box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 205, 96, 0.8);
+.ofs-tile.is-hero { background-image: url('../../assets/offer-tile-gold.png'); }
+button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: pointer; }
+.ofs-tile:active { transform: translateY(calc(var(--px) * 1)); }
+/* Its tooltip (kit withTooltip), centred under the tile and over the panel
+ * below; the tip's own pop stays on `transform`, so the centring is a
+ * `translate`. */
+.ofs-tile > .k-tip { left: 50%; translate: -50% 0; z-index: 4; text-align: left; }
+.ofs-tile > .k-tip::after { left: calc(50% - var(--px) * 7); }
+.ofs-tile.has-tip-open { z-index: 4; }
+/* In reference px: a % --icon-size breaks the atlas sprite. */
+.ofs-tile > .icon { --icon-size: calc(var(--px) * 54); }
+.ofs-tile > .hero-frag { --icon-size: calc(var(--px) * 64); }
+.ofs-tile-hero {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  border-radius: calc(var(--px) * 3);
 }
-/* No avatar is drawn for every hero: the full figure, cropped to the face. */
-.ofs-tile-hero { width: 88%; height: auto; aspect-ratio: 1; transform: scale(1.9); transform-origin: 52% 30%; object-fit: cover; object-position: 50% 0%; border-radius: calc(var(--px) * 3); }
 .ofs-tile-count {
   position: absolute;
+  right: calc(var(--px) * 8);
+  bottom: calc(var(--px) * 5);
   z-index: 1;
-  right: calc(var(--px) * 4);
-  bottom: calc(var(--px) * 2);
   color: var(--ink);
-  font-size: calc(var(--px) * 14);
-  font-weight: var(--weight-strong);
-  text-shadow: 0 0 calc(var(--px) * 3) var(--parchment);
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 16);
+  font-weight: var(--weight-title);
+  text-shadow: 0 0 calc(var(--px) * 3) var(--parchment), 0 0 calc(var(--px) * 3) var(--parchment);
 }
-.ofs-tile > .hero-frag { --icon-size: 82%; width: 82%; height: 82%; }
-/* Tomorrow's panel waits, a little dimmed, until its day. */
-.ofs-panel.is-locked .ofs-tiles { opacity: 0.82; }
+
+/* ------------------------------------------------------------ the price */
 
 .ofs-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: calc(var(--px) * 6);
-  margin-top: calc(var(--px) * 8);
+  margin-top: calc(var(--px) * -8);
 }
-.ofs-actions > .k-btn { min-width: 60%; font-size: calc(var(--px) * 22); }
+/* The kit's slab is 46 tall and at most 144 wide (material.css); the
+ * splash's one button is the mockup's big gold bar. */
+.ofs-actions > .k-btn.k-btn:not(.k-knob):not(.has-cost) {
+  height: calc(var(--px) * 64);
+  min-height: calc(var(--px) * 64);
+  max-height: calc(var(--px) * 64);
+  min-width: calc(var(--px) * 270);
+  max-width: none;
+}
+.ofs-actions > .k-btn .k-btn-label {
+  font-family: var(--font-body);
+  font-size: calc(var(--px) * 30);
+  font-weight: var(--weight-title);
+}
 .ofs-note { color: #e9dcc4; font-size: var(--text-helper); }
 .ofs-wait {
   display: inline-flex;

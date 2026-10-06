@@ -2018,7 +2018,9 @@ export class Game {
   offerTiles(id: StoreSkuId): { now: OfferTile[]; nextDay: OfferTile[] } {
     const s = STORE[id];
     const items = (m: Partial<Record<ItemId, number>>): OfferTile[] =>
-      (Object.entries(m) as Array<[ItemId, number]>).map(([item, n]) => ({ kind: 'item', id: item, count: n }));
+      (Object.entries(m) as Array<[ItemId, number]>).map(([item, n]) => ({
+        kind: 'item', id: item, count: n, worth: chestValue(this.state, item),
+      }));
     return {
       now: [
         ...(s.hero === null ? [] : [{ kind: 'hero' as const, id: s.hero, count: 1 }]),
@@ -6320,4 +6322,6 @@ export interface OfferTile {
   kind: 'hero' | 'fragments' | 'item' | 'coin';
   id: string;
   count: number;
+  /** An item: what one is worth now (a chest's coin), for its tooltip. */
+  worth?: Wallet;
 }
