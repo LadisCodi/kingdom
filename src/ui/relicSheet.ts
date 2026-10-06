@@ -53,7 +53,7 @@ function cardStatus(game: Game, view: RelicView): HTMLElement[] {
             `${formatExact(view.slots.filter((n) => n > 0).length)} / ${formatExact(view.slots.length)}`)];
     case 'awake': {
       const a = game.relicActivation(view.id);
-      const left = formatCountdown(Math.ceil((a?.leftMs ?? 0) / 1000));
+      const left = formatDuration(Math.ceil((a?.leftMs ?? 0) / 1000));
       return [el('span', { class: 'rl-awake-plate' }, iconEl('hourglass', { size: 'sm' }), `Awake · ${left}`)];
     }
     case 'asleep': {
@@ -178,7 +178,8 @@ export function activation(game: Game, id: ArtifactId): HTMLElement | null {
   if (a.awake) {
     // A TIMER is the blue bar (kit/stats.ts `ProgressTone`).
     const bar = progress('blue');
-    const left = formatCountdown(Math.ceil(a.leftMs / 1000));
+    // To the second while it runs down: the window is the thing being read.
+    const left = formatDuration(Math.ceil(a.leftMs / 1000));
     bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${left} left`);
     return el('div', { class: 'rl-block rl-activation is-awake' },
       el('div', { class: 'rl-awake-row' }, iconEl('hourglass'), bar.root),
@@ -216,7 +217,7 @@ export function activationOverlay(game: Game, id: ArtifactId): HTMLElement | nul
   if (a === null || !a.hosted) return null;
   if (a.awake) {
     const bar = progress('blue');
-    bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${formatCountdown(Math.ceil(a.leftMs / 1000))} left`);
+    bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${formatDuration(Math.ceil(a.leftMs / 1000))} left`);
     return el('div', { class: 'dc-chapel-foot is-awake' }, iconEl('hourglass'), bar.root);
   }
   return el('div', { class: 'dc-chapel-foot' },
