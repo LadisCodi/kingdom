@@ -77,6 +77,18 @@ const isKnown = (game: Game, id: DistrictId): boolean => {
   return def.requiredTech === null || isTechComplete(game.state, def.requiredTech);
 };
 
+// A quest hint on a card opens the menu on that card's tab — once, when the
+// hint appears, so the player can still switch tabs while it lasts.
+let followedHint: string | null = null;
+function followHint(game: Game): void {
+  const hint = game.uiHint();
+  if (hint !== followedHint && hint?.startsWith('build:')) {
+    const id = hint.slice('build:'.length) as DistrictId;
+    if (DISTRICTS[id]) openTab = DISTRICTS[id].buildTab;
+  }
+  followedHint = hint;
+}
+
 const inTab = (tab: BuildTab): DistrictId[] =>
   CITY_DEF.buildMenuOrder.filter((id) => DISTRICTS[id].buildTab === tab);
 
@@ -243,6 +255,7 @@ export function buildMenuSignature(game: Game): string {
 }
 
 export function renderBuildMenu(game: Game): HTMLElement {
+  followHint(game);
   const seenIds = loadSeen(game);
   const known = inTab(openTab).filter((id) => isKnown(game, id));
 

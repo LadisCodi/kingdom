@@ -5843,6 +5843,15 @@ export class Game {
     return id === null ? null : districtById(this.state, id)?.location ?? null;
   }
 
+  /** Is `cell` the plot the tutorial's hand, or a quest hint, points at? */
+  private isPointedAt(cell: Coord): boolean {
+    const f = this.tutorialFocus;
+    if (f !== null && cell.x >= f.cell.x && cell.x < f.cell.x + f.span.x
+      && cell.y >= f.cell.y && cell.y < f.cell.y + f.span.y) return true;
+    const h = this.hintCell();
+    return h !== null && h.x === cell.x && h.y === cell.y;
+  }
+
   handleTap(sx: number, sy: number): void {
     // A lair's warning bubble floats over other cells: a tap on it is a tap
     // on the lair (Docs/proposals/lairs.md §6).
@@ -5851,7 +5860,11 @@ export class Game {
     // order they are drawn — the lair's bubble, the collect bubble, then the
     // lair's picture above its own ground — its pixels, not its box, so the
     // cells round its edges still answer as themselves.
-    const normal = this.mode.kind === 'normal';
+    // A tap on the plot the tutorial or a hint points at is a tap on that
+    // plot, whatever bubble floats over it: following the hand must do what
+    // the hand says.
+    const ground = this.camera.screenToCell(sx, sy);
+    const normal = this.mode.kind === 'normal' && !this.isPointedAt(ground);
     // A sleeping Shrine's Mana bubble floats over other cells too: a tap on
     // it is a tap on its Shrine, which opens the Shrine's card. A tap on a
     // building never costs Mana — the price is paid by Activate, in the card.
@@ -5861,7 +5874,7 @@ export class Game {
     const storeCell = normal && shrineCell === null && lairBubble === null ? this.collectBubbleCell(sx, sy) : null;
     const lair = lairBubble ?? (normal && shrineCell === null && storeCell === null ? lairArtAt(sx, sy) : null);
     const cell = shrineCell ?? (lair !== null ? LAIRS[lair].location
-      : storeCell ?? this.camera.screenToCell(sx, sy));
+      : storeCell ?? ground);
     const hinted = this.hintCell();
     if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
