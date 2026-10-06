@@ -93,7 +93,7 @@ function hostLines(game: Game, view: RelicView): HTMLElement[] {
     el('div', { class: `rl-line${host.at === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
       el('span', {}, host.at !== null ? `Hosted in ${host.at}`
         : world ? 'Not hosted — it acts only from a Chapel on the world map'
-          : 'Not hosted — it acts only inside a Shrine\u2019s aura')),
+          : 'Not hosted — host it in a Shrine, then activate it')),
     host.shrines.length === 0 && host.at === null
       ? el('div', { class: 'rl-line is-muted' }, el('span', {}, world
         ? 'Build a Chapel into a district you hold to host it'
@@ -107,9 +107,36 @@ function hostLines(game: Game, view: RelicView): HTMLElement[] {
         ...(host.at === null ? [] : [btn({ label: 'Remove', onClick: () => game.doUnhostRelic(view.id) })])))];
 }
 
-/** The spell, once restored: cast it, or how long until it can be. A city
- *  relic's is cast over its Shrine's aura, so it waits for one. */
+/**
+ * A CITY RELIC'S ACTIVATION, once it is hosted (sim/hosts.ts): asleep with
+ * the button to wake it, or awake with what is left of its window. The
+ * relic's level sets the power and reach; its Shrine's level, the window.
+ */
+export function activation(game: Game, id: ArtifactId): HTMLElement | null {
+  const a = game.relicActivation(id);
+  if (a === null || !a.hosted) return null;
+  const window = formatDuration(Math.ceil(a.windowMs / 1000));
+  return el('div', { class: 'rl-spell' },
+    el('div', { class: 'rl-line' }, iconEl('compass', { size: 'sm' }),
+      el('span', {}, `Aura: ${formatExact(a.radius)} cells round its Shrine`)),
+    a.awake
+      ? el('div', { class: 'rl-line' }, iconEl('hourglass', { size: 'sm' }),
+        el('span', {}, `Awake — ${formatDuration(Math.ceil(a.leftMs / 1000))} left`))
+      : el('div', { class: 'rl-line is-muted' }, iconEl('hourglass', { size: 'sm' }),
+        el('span', {}, `Asleep — activate it to wake its effect for ${window}`)),
+    ...(a.awake ? [] : [btn({
+      label: 'Activate',
+      kind: 'primary',
+      finish: 'gem',
+      costExtra: [{ icon: 'Mana', amount: formatExact(a.cost), short: !a.affordable }],
+      onClick: () => game.doActivateRelic(id),
+    })]));
+}
+
+/** A world relic's spell, once restored: cast it, or how long until it can
+ *  be. A city relic has none — it is activated (`activation`). */
 export function spell(game: Game, id: ArtifactId, view: RelicView): HTMLElement | null {
+  if (view.kind === 'city') return activation(game, id);
   const active = ARTIFACTS[id].active;
   if (active === null || !view.restored) return null;
   if (view.host !== null && view.host.at === null) return null;

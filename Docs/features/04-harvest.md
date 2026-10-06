@@ -19,8 +19,6 @@
 - A tap is priced against the ground and the thumb, never against the payroll.
 - A tap on a building is not a harvest: it collects the building's store, free
   ([`03-economy.md`](03-economy.md) §3.2).
-- The one exception to the first rule is the Tithe relic ability, which pulls
-  rent forward and mints Gold ([`09-relics.md`](09-relics.md) §2.1).
 
 ### 1.1 The thumb's worth
 

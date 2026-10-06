@@ -207,8 +207,9 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       }
     }
 
-    // A SHRINE holds one city relic, whose passive and spell reach its aura
-    // (sim/hosts.ts): what it holds, its spell, and what it could hold.
+    // A SHRINE holds one city relic, whose effect reaches its aura while it
+    // is activated (sim/hosts.ts): what it holds, its activation, and what it
+    // could hold.
     if (def.hostsRelic) {
       const shrine = () => {
         const view = game.shrineView(district);
@@ -216,10 +217,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         return el('div', { class: 'dc-shrine rl-page' },
           el('div', { class: `rl-line${held === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
             el('span', {}, held === null
-              ? 'Empty — host a city relic and it acts over this Shrine\u2019s aura'
+              ? 'Empty — host a city relic, then activate it to wake its effect here'
               : `${held.name}, level ${formatExact(held.level)}: ${held.now}`)),
-          el('div', { class: 'rl-line is-muted' }, iconEl('compass', { size: 'sm' }),
-            el('span', {}, `The aura reaches ${formatExact(view.radius)} cells round the Shrine`)),
+          el('div', { class: 'rl-line is-muted' }, iconEl('hourglass', { size: 'sm' }),
+            el('span', {}, `An activation here lasts ${formatDuration(Math.ceil(view.windowMs / 1000))}`)),
           ...(held === null ? [] : [spell(game, held.id, held)].filter((x): x is HTMLElement => x !== null)),
           ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
             el('div', { class: 'rl-forge' },

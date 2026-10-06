@@ -74,6 +74,7 @@ Every event is one row:
 | `relic_forged` · `relic_chest` | `relic`, `slot` and `gems` on a forge |
 | `premium_shrine` | `n` (which), `gems` |
 | `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
+| `relic_activated` | `relic`, `level`, `shrine_level`, `mana` — a city relic woken in its Shrine |
 | `item_used` | `item`, `count` — one Use, ×N counted once; `job` (`queue`, `training`, `workshop`, `explorer`, `hex`) for a speed-up, `coin` for a choice chest |
 
 ### 3.3 The playtest signals

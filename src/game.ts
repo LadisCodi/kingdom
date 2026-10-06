@@ -38,7 +38,10 @@ import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
 import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
-import { auraOf, castHosted, hostOf, hostRelic, shrines, unhostRelic } from './sim/hosts';
+import {
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, hostOf, hostRelic, isAwake,
+  shrines, unhostRelic, windowMsOf,
+} from './sim/hosts';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
@@ -53,9 +56,8 @@ import {
   dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
 } from './sim/relics';
 import {
-  activeRadius, buildingsIn, cast, castBlock, castState, chargesLeft,
-  divinationSaving, reapCells, surveyCells, tapBudget, tapRunSeconds,
-  validCastCells, type CastPhase,
+  activeRadius, cast, castBlock, castState, chargesLeft,
+  divinationSaving, surveyCells, validCastCells, type CastPhase,
 } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -275,11 +277,29 @@ export interface ShrineOption {
   holds: string | null;
 }
 
+/** A city relic's activation in its Shrine (sim/hosts.ts). */
+export interface RelicActivationView {
+  hosted: boolean;
+  /** Its window is open: its effect reaches the aura. */
+  awake: boolean;
+  /** What is left of the open window, derived from its end every frame. */
+  leftMs: number;
+  /** How long an activation in its Shrine lasts — the Shrine's level. */
+  windowMs: number;
+  cost: number;
+  affordable: boolean;
+  /** How far the aura reaches round the Shrine — the relic's level. */
+  radius: number;
+  block: string | null;
+}
+
 /** A Shrine's card section: what it holds and what it could. */
 export interface ShrineView {
   holds: ArtifactId | null;
-  /** How far round its footprint the aura reaches. */
+  /** How far round its footprint the aura reaches — its relic's level. */
   radius: number;
+  /** How long one activation lasts here — this Shrine's level. */
+  windowMs: number;
   /** Every restored city relic it could host instead, and where each is now. */
   candidates: Array<{ id: ArtifactId; name: string; at: string | null }>;
 }
@@ -1340,17 +1360,6 @@ export class Game {
       this.notify();
       return;
     }
-    // A CITY RELIC IS CAST WHERE IT IS HOSTED: its Shrine's aura is the
-    // target, so there is no cell to pick (sim/hosts.ts).
-    if (relicKind(artifactId) === 'city') {
-      if (hostOf(this.state, artifactId) === null) {
-        this.toast('Host it in a Shrine first');
-        this.notify();
-        return;
-      }
-      this.doCast(artifactId, null);
-      return;
-    }
     if (!active.targeted) {
       this.doCast(artifactId, null);
       return;
@@ -1389,15 +1398,11 @@ export class Game {
   }
 
   private doCast(artifactId: ArtifactId, picked: Coord | null): void {
-    const host = hostOf(this.state, artifactId);
-    const report = relicKind(artifactId) === 'city'
-      ? castHosted(this.state, this.map, artifactId, this.now())
-      : cast(this.state, this.map, artifactId, picked, this.now());
-    // Where the floaters rise: the cell picked, or the Shrine cast from.
-    const target = picked ?? host?.location ?? null;
+    const report = cast(this.state, this.map, artifactId, picked, this.now());
+    const target = picked;
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
-      else if (report.result === 'NotHosted') this.toast('Host it in a Shrine first');
+      else if (report.result === 'NotHosted') this.toast('Hold it in a Chapel first');
       else this.toast('That cannot be cast there');
       this.notify();
       return;
@@ -1408,17 +1413,53 @@ export class Game {
     if (report.goldSaved > 0 && target) {
       this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
     }
-    if (report.activeId === 'Reap' && target) {
-      this.floaters.add(target, `${report.taps} taps, free`);
-    }
-    if (report.activeId === 'Haste' && target) {
-      this.floaters.add(target, `${report.affected.length} crews hurried`);
-    }
-    if (report.activeId === 'Tithe' && target) {
-      this.floaters.add(target, `+${formatExact(Math.round(report.goldSaved))}`, 'Gold');
-    }
-    if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
     this.notify();
+  }
+
+  /**
+   * ACTIVATE A CITY RELIC in its Shrine (sim/hosts.ts): Mana paid, and its
+   * effect reaches the aura for the Shrine's window.
+   */
+  doActivateRelic(id: ArtifactId): void {
+    const result = activateRelic(this.state, id, this.now());
+    if (result !== 'Activated') {
+      if (result === 'NotEnoughMana') this.shake(['Mana']);
+      else if (result === 'NotHosted') this.toast('Host it in a Shrine first');
+      else if (result === 'Active') this.toast(`${ARTIFACTS[id].name} is already awake`);
+      this.notify();
+      return;
+    }
+    playSfx('research');
+    const host = hostOf(this.state, id);
+    if (host !== null) {
+      for (const c of this.map.cells.filter((c) => areaCovers(auraOf(this.state, host, id), c))) {
+        this.tapFx.add(coordKey(c));
+      }
+    }
+    // A faster crew starts its next leg faster: wake the idle ones now.
+    wakeIdleWorkersAt(this.state, this.now());
+    this.notify();
+  }
+
+  /** A city relic's activation as its card and its Shrine's card read it. */
+  relicActivation(id: ArtifactId): RelicActivationView | null {
+    const def = ARTIFACTS[id];
+    if (def.activation === null) return null;
+    const host = hostOf(this.state, id);
+    const now = this.now();
+    const awake = isAwake(this.state, id);
+    const endsAt = this.state.artifacts.casts[id]?.endsAt ?? now;
+    const cost = activationCost(this.state, id);
+    return {
+      hosted: host !== null,
+      awake,
+      leftMs: awake ? Math.max(0, endsAt - now) : 0,
+      windowMs: host === null ? 0 : windowMsOf(host),
+      cost,
+      affordable: mana(this.state) >= cost,
+      radius: auraRadiusAt(id, artifactLevel(this.state, id)),
+      block: activateBlock(this.state, id),
+    };
   }
 
   /**
@@ -1440,7 +1481,23 @@ export class Game {
     for (const m of activeZones(this.state)) {
       byCast.set(`${m.area!.relic}:${m.area!.since}`, m);
     }
-    return [...byCast.values()].map((m) => {
+    // An awake city relic's aura, its wheel counting the Shrine's window down.
+    const awake = shrines(this.state).flatMap((host) => {
+      const relic = host.hosts;
+      if (relic === undefined || !isAwake(this.state, relic)) return [];
+      const c = this.state.artifacts.casts[relic]!;
+      const span = Math.max(1, windowMsOf(host));
+      const area = auraOf(this.state, host, relic);
+      return [{
+        relic,
+        glyph: ARTIFACTS[relic].glyph,
+        centre: host.location,
+        cells: this.map.cells.filter((cell) => areaCovers(area, cell)),
+        left: Math.max(0, Math.min(1, (c.endsAt - now) / span)),
+        leftMs: Math.max(0, c.endsAt - now),
+      }];
+    });
+    return [...awake, ...[...byCast.values()].map((m) => {
       const { centre, radius, relic, since } = m.area!;
       const area = m.area!;
       const ends = m.expiresAt ?? now;
@@ -1456,30 +1513,13 @@ export class Game {
         left: Math.max(0, Math.min(1, (ends - now) / span)),
         leftMs: Math.max(0, ends - now),
       };
-    });
-  }
-
-  /** The buildings a zone would cover — every one for Haste, the inhabited
-   *  houses for Tithe, which is what each actually reaches. */
-  private zoneTargets(id: ArtifactId, active: 'Haste' | 'Tithe', centre: Coord): Coord[] {
-    // A PREVIEW is not a cast, so the relic and the instant are only there to
-    // satisfy the shape: nothing reads them off an area that never lands.
-    const area = { centre, radius: activeRadius(this.state, id), relic: id, since: 0 };
-    return buildingsIn(this.state, area)
-      .filter((d) => d.state === 'Built'
-        && (active === 'Haste' || residentsOf(this.state, d) > 0))
-      .map((d) => d.location);
+    })];
   }
 
   /** The cast preview the panel and the renderer both read. */
   castInfo(): {
     artifactId: ArtifactId; cell: Coord | null; manaCost: number; affordable: boolean;
     saving: number;
-    /** An auto-tap ability's preview: how many nodes the zone covers, how many
-     *  taps the cast buys and how long the run takes to watch. */
-    reap: { nodes: number; taps: number; seconds: number } | null;
-    /** Buildings a non-tapping zone would cover. */
-    zone: number | null;
   } | null {
     if (this.mode.kind !== 'casting') return null;
     const { artifactId, selected } = this.mode;
@@ -1494,21 +1534,6 @@ export class Game {
         ? surveyCells(this.state, this.map, selected, activeRadius(this.state, artifactId))
           .reduce((n, c) => n + divinationSaving(this.state, this.map, c), 0)
         : 0,
-      reap: (active.id === 'Reap' || active.id === 'Tithe') && selected
-        ? {
-          nodes: active.id === 'Reap'
-            ? reapCells(this.state, this.map, selected,
-              activeRadius(this.state, artifactId)).length
-            : this.zoneTargets(artifactId, 'Tithe', selected).length,
-          taps: tapBudget(this.state, artifactId),
-          seconds: tapRunSeconds(this.state, artifactId),
-        }
-        : null,
-      // A zone that is not an auto-tap still owes the same answer: how much of
-      // the kingdom the cast would actually touch.
-      zone: active.id === 'Haste' && selected
-        ? this.zoneTargets(artifactId, 'Haste', selected).length
-        : null,
     };
   }
 
@@ -1575,7 +1600,8 @@ export class Game {
   shrineView(district: District): ShrineView {
     return {
       holds: district.hosts ?? null,
-      radius: levelIndexed(DISTRICTS[district.definitionId].auraRadiusPerLevel, district.level),
+      radius: auraRadiusAt(district.hosts ?? 'GildedLedger', district.hosts === undefined ? 1 : artifactLevel(this.state, district.hosts)),
+      windowMs: windowMsOf(district),
       candidates: ARTIFACT_ORDER
         .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1 && id !== district.hosts)
         .map((id) => ({ id, name: ARTIFACTS[id].name, at: this.hostLabel(id) })),
@@ -4369,18 +4395,6 @@ export class Game {
       layer.selected = this.mode.selected;
       layer.selectedSize = { x: 1, y: 1 };
       if (this.mode.selected) {
-        if (active.id === 'Reap') {
-          layer.influenceCells = reapCells(
-            this.state, this.map, this.mode.selected,
-            activeRadius(this.state, this.mode.artifactId));
-        }
-        // A ZONE ON BUILDINGS lights the BUILDINGS, not the ground: what the
-        // cast will touch is the answer the preview owes, and a lit square of
-        // empty grass would promise something it cannot pay.
-        if (active.id === 'Haste' || active.id === 'Tithe') {
-          layer.influenceCells = this.zoneTargets(
-            this.mode.artifactId, active.id, this.mode.selected);
-        }
         // A SURVEY LIGHTS THE FOG IT WOULD LIFT, each cell labelled with what
         // it would have cost — the decision is Gold against Mana, and the
         // grid is where that question gets answered.
@@ -4395,12 +4409,6 @@ export class Game {
             tone: 'good' as const,
           }));
         }
-        // The nodes a Divining would wake, which is what it is FOR.
-        if (active.id === 'Divining') {
-          layer.influenceCells = reapCells(
-            this.state, this.map, this.mode.selected,
-            activeRadius(this.state, this.mode.artifactId));
-        }
       }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
@@ -4409,7 +4417,7 @@ export class Game {
       if (district) {
         if (district.state === 'Built' && DISTRICTS[district.definitionId].hostsRelic) {
           // A Shrine's area is its aura, in gold (sim/hosts.ts).
-          const aura = auraOf(district, district.hosts ?? 'GildedLedger');
+          const aura = auraOf(this.state, district, district.hosts ?? 'GildedLedger');
           layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura, c));
           layer.influenceIsAura = true;
         } else if (district.state === 'Built') {

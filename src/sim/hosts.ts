@@ -1,30 +1,37 @@
-// A RELIC'S HOST (Docs/proposals/relic-restoration.md §5.1, §5.4;
-// Docs/plans/relics-and-bag.md step 6).
+// A RELIC'S HOST (Docs/features/09-relics.md §2).
 //
-// A restored city relic does nothing until a Shrine holds it. Hosted, its
-// passive reaches every cell of the Shrine's aura — the Shrine's footprint
-// and `auraRadiusPerLevel` cells round it, Chebyshev — and its spell is cast
-// there. Rules this file keeps:
+// A restored city relic does nothing until a Shrine holds it AND the player
+// activates it: Mana paid, a window opens, and for the window its effect
+// reaches every cell of the Shrine's aura — the Shrine's footprint and the
+// relic's radius round it, Chebyshev. The relic's level is the POWER (its
+// number and its reach); the Shrine's level is the DURATION. Rules this file
+// keeps:
 //
 //  1. AN AURA IS A STAGE OF ITS OWN, not a modifier: a hosted relic is a fact
 //     about the kingdom, so it resolves base → technologies → relic auras →
 //     modifiers. `relicAura` is that stage; `resolveAt` folds it in.
 //  2. WHERE A RELIC'S AURAS OVERLAP, THE STRONGER COUNTS. They never add.
 //  3. ONE RELIC, ONE HOST. Hosting a relic takes it from where it was, and a
-//     Shrine that held another hands that one back to the Bag.
+//     Shrine that held another hands that one back to the Bag. A relic that
+//     leaves its Shrine loses the window it had running.
 //  4. EVERY CHANGE TO AN AURA IS REPRICED: rent is priced house by house, so
-//     hosting, unhosting and moving run inside `repriceTaxAnchorAround`.
-//  5. A WORLD RELIC IS NOT A SHRINE'S: until its Chapel exists (step 7) its
-//     passive stays kingdom-wide (`syncArtifactModifiers`).
+//     hosting, unhosting, moving, activating and a window CLOSING all run
+//     inside `repriceTaxAnchorAround` — the close at its own boundary in
+//     `advance` (`nextRelicWindowEnd` / `closeRelicWindows`).
+//  5. THE WINDOW IS STATE, NOT A CLOCK READ. It is the relic's entry in
+//     `state.artifacts.casts`, priced by the Shrine's level when it opens and
+//     deleted at the boundary where it ends, so the aura stage asks only
+//     whether the entry is there — `advance` has no `now` to give it.
+//  6. A WORLD RELIC IS NOT A SHRINE'S: it acts while a Chapel holds it
+//     (`syncArtifactModifiers`).
 
 import { track } from './analytics';
-import { artifactLevel, passiveValue, syncArtifactModifiers } from './artifacts';
-import { ARTIFACTS, DISTRICTS, levelIndexed, relicKind } from './data/definitions';
-import { removeModifiersWhere, type ModifierArea, type ModifierStat, areaCovers } from './modifiers';
+import { artifactLevel, ownsArtifact, passiveValue, syncArtifactModifiers } from './artifacts';
+import { ARTIFACTS, ARTIFACT_RADIUS_STEPS, DISTRICTS, levelIndexed, relicKind } from './data/definitions';
+import { mana, payMana } from './mana';
+import { resolve, type ModifierArea, type ModifierStat, areaCovers } from './modifiers';
 import { repriceTaxAnchorAround } from './population';
 import type { ArtifactId, Coord, District, GameState } from './state';
-import { cast, type CastReport } from './casting';
-import type { MapData } from './grid';
 
 /** Every Shrine standing — built, not under construction. */
 export const shrines = (state: GameState): District[] =>
@@ -34,14 +41,29 @@ export const shrines = (state: GameState): District[] =>
 export const hostOf = (state: GameState, relic: ArtifactId): District | null =>
   state.city.districts.find((d) => d.hosts === relic) ?? null;
 
-/** A host's aura: its footprint and the ring its level reaches. */
-export const auraOf = (host: District, relic: ArtifactId, since = 0): ModifierArea => ({
+/** How far a city relic's aura reaches round its Shrine at `level`: its
+ *  authored radius, one ring more at each of `ARTIFACT_RADIUS_STEPS`. */
+export function auraRadiusAt(relic: ArtifactId, level: number): number {
+  const base = ARTIFACTS[relic].activation?.radius ?? 0;
+  return base + ARTIFACT_RADIUS_STEPS.filter((at) => level >= at).length;
+}
+
+/** A host's aura: its footprint and the ring its relic's level reaches. */
+export const auraOf = (state: GameState, host: District, relic: ArtifactId, since = 0): ModifierArea => ({
   centre: host.location,
   size: DISTRICTS[host.definitionId].size,
-  radius: levelIndexed(DISTRICTS[host.definitionId].auraRadiusPerLevel, host.level),
+  radius: auraRadiusAt(relic, artifactLevel(state, relic)),
   relic,
   since,
 });
+
+/** How long an activation in this Shrine lasts, in ms — its level's window. */
+export const windowMsOf = (host: District): number =>
+  levelIndexed(DISTRICTS[host.definitionId].relicWindowMinutesPerLevel, host.level) * 60_000;
+
+/** Is this relic's window open? See rule 5: the entry IS the window. */
+export const isAwake = (state: GameState, relic: ArtifactId): boolean =>
+  relicKind(relic) === 'city' && state.artifacts.casts[relic] !== undefined;
 
 /** Does any part of this building stand inside the aura? A building is in
  *  as a whole when one of its cells is. */
@@ -56,7 +78,7 @@ export const buildingInAura = (area: ModifierArea, d: District): boolean => {
 };
 
 /**
- * THE AURA STAGE: what the hosted city relics do to `stat` at `cell`, as an
+ * THE AURA STAGE: what the awake city relics do to `stat` at `cell`, as an
  * add and a multiplier to fold before the modifiers. Each relic counts once —
  * the strongest of its auras that covers the cell.
  */
@@ -69,9 +91,9 @@ export function relicAura(state: GameState, stat: ModifierStat, cell: Coord): { 
   const counted = new Set<ArtifactId>();
   for (const host of shrines(state)) {
     const relic = host.hosts;
-    if (relic === undefined || counted.has(relic) || relicKind(relic) !== 'city' || artifactLevel(state, relic) < 1) continue;
+    if (relic === undefined || counted.has(relic) || !isAwake(state, relic) || artifactLevel(state, relic) < 1) continue;
     const entries = ARTIFACTS[relic].passive.stats.filter((s) => s.stat === stat);
-    if (entries.length === 0 || !areaCovers(auraOf(host, relic), cell)) continue;
+    if (entries.length === 0 || !areaCovers(auraOf(state, host, relic), cell)) continue;
     counted.add(relic);
     const value = passiveValue(state, relic);
     for (const e of entries) {
@@ -96,13 +118,10 @@ export function relicAuraOver(state: GameState, stat: ModifierStat, d: District)
   return best;
 }
 
-/** End the spell a relic has running in its aura — the zone goes, the
- *  cooldown keeps counting (§6: moving a Shrine ends its active). */
-export function endHostedSpell(state: GameState, relic: ArtifactId, now: number): boolean {
-  const cast = state.artifacts.casts[relic];
-  const removed = removeModifiersWhere(state, (m) => m.area?.relic === relic);
-  if (cast !== undefined && cast.endsAt > now) cast.endsAt = now;
-  return removed > 0;
+/** Close a relic's window now — it left its Shrine (rule 3). The caller
+ *  brackets it in `repriceTaxAnchorAround`. */
+function closeWindow(state: GameState, relic: ArtifactId): void {
+  if (relicKind(relic) === 'city') delete state.artifacts.casts[relic];
 }
 
 export type HostResult = 'Hosted' | 'NotRestored' | 'NotACityRelic' | 'NotAShrine';
@@ -119,11 +138,11 @@ export function hostRelic(state: GameState, relic: ArtifactId, shrineId: string,
   repriceTaxAnchorAround(state, now, () => {
     const was = hostOf(state, relic);
     if (was !== null && was !== shrine) {
-      endHostedSpell(state, relic, now);
+      closeWindow(state, relic);
       delete was.hosts;
     }
     if (shrine.hosts !== undefined && shrine.hosts !== relic) {
-      endHostedSpell(state, shrine.hosts, now);
+      closeWindow(state, shrine.hosts);
     }
     shrine.hosts = relic;
     syncArtifactModifiers(state);
@@ -137,15 +156,75 @@ export function unhostRelic(state: GameState, relic: ArtifactId, now: number): b
   const host = hostOf(state, relic);
   if (host === null) return false;
   repriceTaxAnchorAround(state, now, () => {
-    endHostedSpell(state, relic, now);
+    closeWindow(state, relic);
     delete host.hosts;
   });
   return true;
 }
 
-/** Cast a hosted city relic's spell over its Shrine's aura, at `now`. */
-export function castHosted(state: GameState, map: MapData, relic: ArtifactId, now: number): CastReport {
+export type ActivateBlock =
+  | 'NotRestored' | 'NotACityRelic' | 'NotHosted' | 'Active' | 'NotEnoughMana';
+
+/** What activating this relic costs right now — `activeCost` (Resonance)
+ *  buys it down, as it did a cast. */
+export function activationCost(state: GameState, relic: ArtifactId): number {
+  const base = ARTIFACTS[relic].activation?.manaCost ?? 0;
+  return Math.max(0, Math.round(resolve(state, 'activeCost', base)));
+}
+
+/** Why this relic cannot be activated right now, or null when it can. The
+ *  window before the purse: a relic already running says so. */
+export function activateBlock(state: GameState, relic: ArtifactId): ActivateBlock | null {
+  if (!ownsArtifact(state, relic)) return 'NotRestored';
+  if (ARTIFACTS[relic].activation === null) return 'NotACityRelic';
   const host = hostOf(state, relic);
-  if (host === null || host.state !== 'Built') return cast(state, map, relic, null, now);
-  return cast(state, map, relic, null, now, auraOf(host, relic, now));
+  if (host === null || host.state !== 'Built') return 'NotHosted';
+  if (isAwake(state, relic)) return 'Active';
+  if (mana(state) < activationCost(state, relic)) return 'NotEnoughMana';
+  return null;
+}
+
+/**
+ * ACTIVATE A HOSTED CITY RELIC at `now`: pay its Mana, and its effect reaches
+ * the Shrine's aura for the Shrine's window. The window is priced by the
+ * Shrine's level NOW and stored, so upgrading the Shrine mid-window does not
+ * stretch it. No cooldown: it can be activated again the moment it closes.
+ */
+export function activateRelic(state: GameState, relic: ArtifactId, now: number): ActivateBlock | 'Activated' {
+  const block = activateBlock(state, relic);
+  if (block !== null) return block;
+  const host = hostOf(state, relic)!;
+  const cost = activationCost(state, relic);
+  const endsAt = now + windowMsOf(host);
+  repriceTaxAnchorAround(state, now, () => {
+    payMana(state, cost);
+    state.artifacts.casts[relic] = { endsAt, readyAt: endsAt };
+  });
+  track(state, 'relic_activated', {
+    relic, level: artifactLevel(state, relic), shrine_level: host.level, mana: cost,
+  });
+  return 'Activated';
+}
+
+/** The earliest window to close strictly after `after` — a boundary. */
+export function nextRelicWindowEnd(state: GameState, after: number): number | null {
+  let best: number | null = null;
+  for (const [relic, c] of Object.entries(state.artifacts.casts)) {
+    if (c === undefined || relicKind(relic as ArtifactId) !== 'city' || c.endsAt <= after) continue;
+    if (best === null || c.endsAt < best) best = c.endsAt;
+  }
+  return best;
+}
+
+/** Close every window due at `t`. Called inside `applyDueAt`'s reprice
+ *  bracket, so the rent before `t` is priced with the aura and after without.
+ *  Returns the relics whose window closed, for the offline report. */
+export function closeRelicWindows(state: GameState, t: number): ArtifactId[] {
+  const closed: ArtifactId[] = [];
+  for (const [relic, c] of Object.entries(state.artifacts.casts)) {
+    if (c === undefined || relicKind(relic as ArtifactId) !== 'city' || c.endsAt > t) continue;
+    delete state.artifacts.casts[relic as ArtifactId];
+    closed.push(relic as ArtifactId);
+  }
+  return closed;
 }
