@@ -8,22 +8,22 @@
 >
 > **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
 > card and the reveal screen (§8); the stat block and the type passive on the
-> board (§2.3, §2.4), the traits (§2.5) and the boons (§2.6); the whole ladder
+> board (§2.3, §2.4), the skills (§2.5) and the boons (§2.6); the whole ladder
 > (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
-> (§2.1) and `passivePerTier` (§2.4) — every hero's numbers are authored whole
-> in `heroes`, and the passive does not step with ascension — and the banner
+> (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
 > moving into the Tavern (§8.3).
 
 ## 1. The collection substrate
 
 - Heroes and relics are the game's two collections, and **they are built to
   feel different** ([`09-relics.md`](09-relics.md) §1). A hero is a **ladder**:
-  collect → a tier caps the level → a currency buys levels inside the cap →
+  collect → the ascension caps the level → a currency buys levels inside the cap →
   equip into limited slots. A relic is an **album**: its own nine cards a
   season, completed once, and a permanent level with no cap and no slot.
-- A hero's ascension is worth **ten levels** and its ladder ends at tier 5 /
-  **level 50**. A relic's ladder never ends.
+- A hero's ascension is **five stars of six points** — thirty ascensions —
+  and each **full star** is worth **eight levels**, up to **level 50**. A
+  relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
   **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
   so the toll is Stardust's only sink (**OQ-78**). **OQ-6.**
@@ -34,7 +34,7 @@
 ## 2. The hero
 
 Each hero carries a **rarity**, a **unit type**, a **stat block**, one
-**passive**, a **level** and an **ascension tier**.
+**passive**, a **level** and an **ascension**.
 
 ### 2.1 Rarity
 
@@ -90,28 +90,63 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   what tells two heroes of one type apart.
 - Several heroes of one type add on the excess: `1 + Σ(mult − 1)`.
 - Computed at battle start; it **stands if the hero dies**.
-- **The passive grows with ascension, not level**: `passivePerTier` steps
-  each of the three numbers at every tier. Level moves the body, ascension
-  moves the buff, so both ladders are felt.
+- **The passive does not grow.** Level and ascension both move the body
+  (§4.2).
 - A hero on a board with no troops of its type fights and buffs nobody.
 
-### 2.5 The trait
+### 2.5 The skill
 
-- **A hero also carries one TRAIT, and a trait acts off the board.** The stat
-  block and the passive win the fight; the trait changes what the trip costs
-  or what comes home from it. One per hero, authored in `heroes` as
-  a name and a value, and printed on the card as a sentence.
-- The three the game reads:
+- **Every hero has one SKILL, and it acts only in the fights the hero is
+  in.** Owning a hero gives nothing; sending it does. A villain carries one
+  too, by the same rules ([`combat.md`](combat.md) §9.3).
+- **No skill twice within a rarity.** A skill may appear in several rarities,
+  stronger in the higher one (a data rule).
+- **Six kinds**: Strike, Heal, Shield, Daze fire on their own clock; a Rally
+  holds for the whole fight; Spoils pay when the fight is won. Their
+  variants and how each fires are [`combat.md`](combat.md) §9.3.
+- **Spoils**, when the fight is won, whether the hero survived it or not:
+  - **Plunder**: +X% of a lair's hoard (when it falls) and of a world fight's
+    Gold.
+  - **Lore**: +X% Knowledge — a lair's first-clear lump, a world room's.
+  - **Seasoned**: +X% Hero XP.
+  - **Field medic**: +X points of the fallen carried home wounded, capped as
+    the wounded share is ([`combat.md`](combat.md) §4).
+  - Two heroes' spoils add up.
 
-  | Trait | What it moves |
-  |---|---|
-  | `SupplyDiscount` | a slice off a room's supplies ([`11-expeditions.md`](11-expeditions.md) §5) |
-  | `PartyDefence` | the party's DEF in the power estimate ([`combat.md`](combat.md) §12) |
-  | `WoundedRecovery` | adds to the share of the fallen that reaches a bed instead of dying ([`combat.md`](combat.md) §4) |
+| Rarity | Hero · skill (rank 1) |
+|---|---|
+| **Common** | Warden **Shield** 15% every 1.8 s · Sellsword **Cleave** 60% every 1.4 s · Quartermaster **Bulwark** +2 DEF · Cook **Vigour** +5% HP · Bard **War cry** +5% damage · Cleric **Mend** 10% every 1.4 s · Gardener **Wave** 3% every 2.1 s · Joker **Daze** 1 s every 1.8 s · Rogue **Sharpshot** 80% every 1.4 s · Beastkin Hunter **Ambush** 100% every 1.4 s · Three Mice **Volley** 25% every 1.8 s · Merchant **Plunder** +15% · Adventurer **Seasoned** +20% · Priest **Field medic** +10 |
+| **Rare** | Dark Knight **Crush** 120% every 1.4 s · Paladin **Shield** 25% every 1.8 s · Holy Warrior **War cry** +8% · Ice Lancer **Daze** 2 s every 1.4 s · Druid **Wave** 5% every 1.8 s · Witch **Mend** 15% every 1.4 s · Wizard **Volley** 40% every 1.8 s · Electric Archer **Sharpshot** 100% every 1 s · Spymaster **Ambush** 120% every 1 s · Savage Warrior **Cleave** 80% every 1 s · Relic-hunter **Plunder** +30% · Scholar **Lore** +25% |
+| **Legendary** | Pharaoh **War cry** +15% · Elven Princess **Wave** 6% every 1.8 s · Necromancer **Volley** 60% every 1.8 s · Golden Dragon **Cleave** 120% every 1.8 s · Vampire Lord **Crush** 180% every 1 s · Ranger **Sharpshot** 150% every 1 s |
 
-- **A party trait is the best in the party, never the sum**: two
-  quartermasters do not buy a free trip, and two medics do not buy a fight
-  nobody dies in.
+- A fight lasts a few seconds (1.5–7.5 s on the lairs and the dungeons), so
+  a timed skill fires every 1–2 s.
+
+#### 2.5.1 Ranks
+
+- **Five ranks.** Rank 1 comes with the hero.
+- **A rank UNLOCKS at a level and is then BOUGHT** with Stardust and the
+  skill family's precious material. It is never raised on its own.
+- The unlock levels are the first past a star's level cap, so each rank asks
+  for an ascension too:
+
+  | Rank | Unlocks at level | Stars | Stardust | Material |
+  |---|---|---|---|---|
+  | 2 | 11 | 1 | 100 | 2 |
+  | 3 | 19 | 2 | 200 | 4 |
+  | 4 | 27 | 3 | 400 | 8 |
+  | 5 | 35 | 4 | 800 | 12 |
+
+- **Each rank adds 25% of the rank-1 value**: rank 5 is twice rank 1. What
+  grows is the X; never how often it fires.
+- **The material is the family's**: Strike → Starmetal; Heal, Shield →
+  Moonglass; Rally, Daze, Spoils → Heartwood. **While the world is shut** a
+  rank asks for Stardust alone ([`19-world-map.md`](19-world-map.md) §7.6).
+- Each axis has its own key: a level is Hero XP, an ascension Fragments and
+  Stardust, a rank Stardust and material.
+- **Hero XP comes from the world**: a lair pays its tier once; a dungeon
+  room, a camp and a Portal floor pay it for good
+  ([`19-world-map.md`](19-world-map.md) §8.1).
 
 ### 2.6 The boon
 
@@ -128,8 +163,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   kingdom grows, and a falling number has a floor, which is a ceiling on a
   passive that never ends. Where the game owns a TIME, the boon owns the SPEED
   and the call site divides by it.
-- **A boon never scales.** Level moves the body, ascension moves the type
-  passive, the boon is what arrives with the hero. Three ladders, three jobs.
+- **A boon never scales.** Level and ascension move the body; the boon is
+  what arrives with the hero.
 - **Boons stack; a duplicate adds nothing.** Two Legendaries are two heroes —
   unlike a party trait, which is best-of.
 - The six:
@@ -202,9 +237,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | | Raise | Cost |
 |---|---|---|
-| **Recruit** | not owned → owned, at tier 1 level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the tier cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
-| **Ascension** | +1 tier, **cap +10 levels** | that hero's Fragments **and** a Stardust toll |
+| **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
+| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
+| **Ascension** | +1 point of the current star: **every stat +2%**; a **full star** also lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -215,18 +250,29 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
 - **Recruiting is not an ascension.** A hero recruited with fragments starts
-  at tier 1 with the whole ladder below still ahead of them, exactly as a
-  pulled one does.
-- The price is the ladder's own base rung, so **the recruit and the first
-  ascension ask for the same ten** and the player learns one number. Change on
-  a bigger pile carries over.
+  with every star empty, exactly as a pulled one does. Change on a bigger pile
+  carries over.
 
-| Ascension | Fragments | Cumulative | Stardust toll | New level cap |
-|---|---|---|---|---|
-| tier 1 → 2 | 10 | 10 | 50 | 20 |
-| tier 2 → 3 | 20 | 30 | 100 | 30 |
-| tier 3 → 4 | 40 | 70 | 200 | 40 |
-| tier 4 → 5 | 80 | **150** | 400 | **50** (max) |
+### 4.2 The stars
+
+- **Five stars, six points each.** One ascension fills one point; points fill
+  clockwise from the top, and a star is finished before the next one starts.
+- **Every point lifts Attack, Defense and HP by 2%** of what the level gives —
+  +60% with every star full. The card, the board, the power estimate and the
+  HP bar all read the one formula.
+- **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
+  five.
+- **Every point of a star costs the same**, and each star costs twice the one
+  before.
+
+| Star | Fragments a point | Stardust a point | Cap once full |
+|---|---|---|---|
+| 1 | 1 | 4 | 18 |
+| 2 | 2 | 8 | 26 |
+| 3 | 4 | 16 | 34 |
+| 4 | 8 | 32 | 42 |
+| 5 | 16 | 64 | **50** (max) |
+| **All 30** | **186** | **744** | |
 
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
@@ -235,7 +281,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   the length and the TOTAL is what is held steady. Whether that survives a
   playtest is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
-- The Stardust toll totals **750** to max one hero. The toll is **Stardust's
+- The Stardust toll totals **744** to max one hero. The toll is **Stardust's
   only sink**; whether the trickle is oversized is **OQ-78**.
 - **Every gacha drop has a play-based route.** Fragments fall from boss chests
   (not built, **OQ-80**) as well as from calls; the wallet buys the same hero
@@ -382,10 +428,20 @@ Each of these is data, not code:
   top-left, the **unit type** on its banner top-right, and an **arrow each
   side** that steps to the previous or next hero.
 - Then one section each, under a section head:
-  - **Ascension** — the five stars, and **Ascend** with its Stardust toll
-    and fragment count over it. At the top tier, *Fully ascended*.
+  - **Ascension** — the five stars, under them what the next point does
+    (*Next: stats +2%*, plus *· level cap n* on the point that finishes a
+    star), and **Ascend** with
+    its Stardust toll and fragment count over it. Every star full: *Fully
+    ascended*.
+- **The card fits the screen.** The stage gives up height to the sections,
+  down to a floor; only a screen too short for that scrolls.
   - **Stats** — Attack, Defense and HP, a tile each.
-  - **Passive** — the trait, and the boon under it on the six that have one.
+  - **Skill** — its name, its rank pips and what it does at its rank; under
+    it the next rank, with its price and **Upgrade**, or a padlock saying what
+    is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
+    that can be bought now lights the card's orb.
+  - **Kingdom boon** — on the six that have one.
+  - On the roster, a skill past rank 1 shows as a brass numeral on the card.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
     Hero XP price over it. At the ascension's ceiling the button is gone and
     the tray says *Ascend them to go further*; at the last level, *At the
@@ -476,12 +532,14 @@ how many slots it wants (1…n) and what to do with the answer.
 | Dial | Value | Key |
 |---|---|---|
 | A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
-| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`; `passivePerTier` *(not built)* |
+| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
-| How long a hero's ladder is | 10 a tier, 50 in all | `heroLadder.heroLevelsPerTier`, `heroLadder.heroMaxLevel` |
-| What a recruit costs | 10 Fragments — the ladder's base rung | `heroLadder.fragmentsPerTierBase` |
-| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `heroLadder.fragmentsPerTier*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
+| How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
+| What a point does to the stats | +2% Attack, Defense and HP | `heroLadder.statsPerAscension` |
+| How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
+| What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
+| What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
@@ -493,14 +551,15 @@ how many slots it wants (1…n) and what to do with the answer.
 
 ## 10. Deliberately not in this design
 
-- **An ultimate, energy, or any hero ability beyond the type passive.** The
-  hero is a body and a buff.
+- **An ultimate, energy, or a skill the player triggers.** A skill fires on
+  its own; there is no input during a fight.
+- **A random skill** — a chance to crit, dodge or proc.
+- **A kingdom passive below Legendary.**
+- **A skill rank that fires more often.**
 - **A hero-only battle mode.** Every fight fields troops and heroes. A hero
   arena is a possible future, not this version.
-- **A trait that reads the room before it is entered.** The threat preview is
-  a Guild perk, not a hero's; a hero's trait moves a cost or a casualty
-  (§2.5), never what the player is told.
-- **A party-wide stat.** A hero buffs its own type or nothing.
+- **A party-wide stat beyond a Rally.** The type passive buffs its own type;
+  only a Rally skill reaches every type.
 - **Per-hero XP.** One kingdom counter, or the gacha hands out heroes the
   player cannot use.
 - **Guild-gated hero slots**, or a free second slot.
@@ -524,10 +583,6 @@ how many slots it wants (1…n) and what to do with the answer.
 
 ## 11. Known holes
 
-- **Two of the five traits are never read.** `KnowledgeBonus` and
-  `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
-  call site consults either, so those heroes have no off-board effect at all.
-  **OQ-95.**
 - **What a boon is worth is unproven.** The Scout's `worldRevealSpeed`
   divides an explorer's march time ([`19-world-map.md`](19-world-map.md)
   §3.1); whether ×1.25 is worth a Legendary is **OQ-96**.
@@ -536,4 +591,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-95, OQ-96.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96.

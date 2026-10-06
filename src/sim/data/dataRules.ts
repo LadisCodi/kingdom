@@ -481,6 +481,10 @@ export const ADJACENCY_CLAMP = 0.25;
 const ABANDONED_IDS: readonly string[] = ((regionMap as { abandoned?: Array<{ id: string }> }).abandoned ?? [])
   .map((a) => a.id);
 
+/** A skill that fires on its own clock rather than at the start or the end. */
+const timedSkill = (skill: unknown): boolean =>
+  ['Sharpshot', 'Crush', 'Cleave', 'Ambush', 'Volley', 'Mend', 'Wave', 'Shield', 'Daze'].includes(String(skill));
+
 /** The items authored, and their kinds: what a Bag condition may name. */
 const bagTargets = (doc: DataDoc): readonly string[] => {
   const items = (doc.items ?? {}) as Record<string, { kind?: unknown }>;
@@ -639,6 +643,16 @@ export const RULES: Readonly<Record<string, Rule>> = {
     }
   },
   heroes: (doc, push) => {
+    // Variety (10-heroes.md §2.5): no skill twice within a rarity.
+    const byRarity = new Map<string, Map<string, string>>();
+    for (const [id, h] of records(doc.heroes)) {
+      const seen = byRarity.get(String(h.rarity)) ?? new Map<string, string>();
+      byRarity.set(String(h.rarity), seen);
+      const other = seen.get(String(h.skill));
+      if (other !== undefined) push(id, ['skill'], `${h.skill} is ${other}'s already — no skill twice within a rarity`);
+      else seen.set(String(h.skill), id);
+      if (timedSkill(h.skill) && !(num(h.skillEvery) > 0)) push(id, ['skillEvery'], `${h.skill} fires on a clock: it needs seconds`);
+    }
     for (const [id, h] of records(doc.heroes)) {
       const boon = h.boon as Record<string, unknown> | undefined;
       if (boon === undefined) continue;
@@ -850,6 +864,24 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (num(t.bonus) === 0) push(null, ['harmony', 'surplusTiers', i, 'bonus'], 'a tier needs a bonus');
       if (i > 0 && num(t.at) <= num(tiers[i - 1].at)) push(null, ['harmony', 'surplusTiers', i, 'at'], 'tiers must be ascending');
     });
+  },
+  villains: (doc, push) => {
+    for (const [id, v] of records(doc.villains)) {
+      if (['Plunder', 'Lore', 'Seasoned', 'FieldMedic'].includes(String(v.skill))) {
+        push(id, ['skill'], 'a villain wins nothing: no spoils skill');
+      }
+      if (timedSkill(v.skill) && !(num(v.skillEvery) > 0)) push(id, ['skillEvery'], `${v.skill} fires on a clock: it needs seconds`);
+    }
+  },
+  heroLadder: (doc, push) => {
+    const l = (doc.heroLadder ?? {}) as Record<string, unknown>;
+    const ranks = [l.skillRankLevels, l.skillRankStardust, l.skillRankMaterial].map((x) => (Array.isArray(x) ? x.length : -1));
+    if (new Set(ranks).size !== 1) push(null, ['heroLadder', 'skillRankLevels'], 'a skill rank has a level, a Stardust price and a material price: the three lists are one length');
+    // The cap with no star is what is left once every star has added its
+    // levels, and a hero must start able to reach at least level 1.
+    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars) < 1) {
+      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars add more levels than heroMaxLevel holds');
+    }
   },
 };
 

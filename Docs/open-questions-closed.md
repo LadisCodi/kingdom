@@ -11,6 +11,7 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| Fourteen heroes carry a trait the game never reads (**OQ-95**) | 2026-10-07 | **The traits are gone.** Every hero has a skill that acts in its fights, no skill twice within a rarity; `KnowledgeBonus` and `FragmentBonus` became the **Lore** and **Plunder** spoils ([`features/10-heroes.md`](features/10-heroes.md) §2.5). |
 | Does helping touch the other player's state, or only your own? (**OQ-34**) | 2026-10-06 | **Only your own, plus a gift they claim**: a help pays the helper Mana and leaves a speed-up in the friend's Bag as a delivery ([`features/15-social.md`](features/15-social.md) §3). |
 | Do generated missions expire? (**OQ-16**) | 2026-10-06 | **Moot: there are no missions.** The season pass and its mission board are gone; the Survey is the one reward ladder ([`features/25-the-survey.md`](features/25-the-survey.md)). |
 | Does a generated mission ever ask for Mana? (**OQ-17**) | 2026-10-06 | **Moot with the missions.** The rule it set still holds: nothing but a tap draws on Mana ([`features/08-magic.md`](features/08-magic.md)). |

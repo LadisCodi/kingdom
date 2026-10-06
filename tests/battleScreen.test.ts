@@ -140,7 +140,7 @@ describe('the hero slots', () => {
     const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
-    game.state.heroes.tiers.Adventurer = 1;
+    game.state.heroes.ascension.Adventurer = 0;
     game.partyHeroes = [];
     game.assignHero('Warden');
     game.assignHero('Warden');
@@ -177,7 +177,7 @@ describe('what the screen adds up to', () => {
     const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
-    game.state.heroes.tiers.Adventurer = 1;
+    game.state.heroes.ascension.Adventurer = 0;
     game.partyHeroes = ['Warden'];
     game.expeditionParty = [];
     const alone = game.lairPreview()!;
@@ -198,7 +198,7 @@ describe('what the screen adds up to', () => {
     const game = atTheLair();
     game.state.heroes.owned.push('Adventurer');
     game.state.heroes.levels.Adventurer = 1;
-    game.state.heroes.tiers.Adventurer = 1;
+    game.state.heroes.ascension.Adventurer = 0;
     game.doBuyHeroSlot();
     game.partyHeroes = ['Warden', 'Adventurer'];
     // Twenty orcs hold the orc lair, so the heroes bring the company with them.

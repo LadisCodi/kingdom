@@ -833,8 +833,8 @@ describe('the heroes screen signature', () => {
     expect(game.state.heroes.levels.Bard).toBe(2); // it really happened
     seen.add(game.heroesSignature());
 
-    game.doRaiseHeroTier('Bard');
-    expect(game.state.heroes.tiers.Bard).toBe(2);
+    game.doAscendHero('Bard');
+    expect(game.state.heroes.ascension.Bard).toBe(1);
     seen.add(game.heroesSignature());
 
     // Five moves, five distinct readings: none of them collide.

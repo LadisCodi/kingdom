@@ -14,12 +14,13 @@
 // silhouette, and the fragments it has against the ten that recruit it in
 // place of the level — a signpost, not a locked box.
 
-import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
-import { heroUnlockCost } from '../sim/heroes';
+import { HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { heroUnlockCost, skillRank } from '../sim/heroes';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId } from '../sim/state';
 import type { Game, HeroPickSort } from '../game';
 import { el, formatExact } from './format';
+import { ascensionStars } from './ascensionStars';
 import { heroFragmentIcon } from './heroFragment';
 import { ctaBadge, hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
 
@@ -38,12 +39,9 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
   if (!game.state.heroes.owned.includes(heroId)) return missingCard(game, heroId, opts);
   const def = HEROES[heroId];
   const health = game.heroHealthOf(heroId);
-  const tier = game.state.heroes.tiers[heroId] ?? 1;
   const url = spriteUrl(def.sprite);
-  const stars = el('span', { class: 'hc-stars' });
-  for (let i = 0; i < HERO_LADDER.maxTier; i++) {
-    stars.append(iconEl('ascension', { size: 'sm', locked: i >= tier, label: 'ascension' }));
-  }
+  const stars = ascensionStars(game.state.heroes.ascension[heroId] ?? 0, 'hc-stars');
+  const rank = skillRank(game.state, heroId);
   const card = el(opts.onClick ? 'button' : 'span', {
     class: `hc is-${def.rarity.toLowerCase()}${opts.small ? ' is-small' : ''}`
       + `${opts.picked ? ' is-picked' : ''}${health.exhausted ? ' is-resting' : ''}`,
@@ -59,11 +57,15 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
     : [el('span', { class: 'hc-foot' },
       stars, el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`))]),
   hpOf(health.hp, health.max, opts.small === true),
+  // The skill's rank, once it has one past the first (10-heroes.md §2.5).
+  ...(rank > 1 ? [el('span', { class: 'hc-rank', 'aria-label': `Skill rank ${rank}` }, ROMAN[rank] ?? String(rank))] : []),
   ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []),
   ...(opts.cta ? [ctaBadge(1, `hero:${heroId}`)] : []));
   if (opts.onClick) card.addEventListener('click', opts.onClick);
   return card;
 }
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 
 /** A hero not found yet: stone, a silhouette, its fragments. */
 function missingCard(game: Game, heroId: HeroId, opts: HeroCardOpts): HTMLElement {

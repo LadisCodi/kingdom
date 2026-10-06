@@ -22,7 +22,12 @@
 /* -------------------------------------------------------------- the card -- */
 
 .k-sheet.is-centred:has(.hd) { max-width: calc(var(--px) * 380); max-height: 94%; }
-.hd { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+/* THE CARD FITS THE SCREEN. The stage is the give: it takes the height the
+   sections leave, down to a floor, so the body scrolls only on a screen too
+   short for even that. */
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-sheet-body { display: flex; flex-direction: column; }
+.hd { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.hd > :not(.hd-stage) { flex: none; }
 .hd > .k-section-head { margin: calc(var(--px) * 6) 0 0; }
 .hd-subtitle {
   color: var(--ink-muted);
@@ -37,9 +42,11 @@
 .hd-stage {
   --stage-w: calc(var(--px) * 336);
   position: relative;
+  flex: 0 1 auto;
   align-self: center;
   width: var(--stage-w);
-  aspect-ratio: 4 / 3;
+  height: calc(var(--stage-w) * 0.75);
+  min-height: calc(var(--px) * 150);
   margin-inline: calc(var(--px) * 14);
 }
 .hd-stage::before {
@@ -136,17 +143,15 @@
   filter: brightness(0) invert(1) drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.55));
 }
 
-/* The arrows: the game's round wood knob, half over the frame's edge. */
-.hd-stage > .k-knob {
+/* The arrows: the game's round wood knob, half over the frame's edge.
+   `.k-btn.k-knob` to outrank material.css's knob, which would draw it at its
+   default size — a pebble on the frame. */
+.hd-stage > .k-btn.k-knob {
+  --knob-size: calc(var(--px) * 40);
   position: absolute;
   top: 50%;
   z-index: 1;
   translate: 0 -50%;
-  width: calc(var(--px) * 44);
-  height: calc(var(--px) * 44);
-  min-height: calc(var(--px) * 44);
-  font-size: calc(var(--px) * 26);
-  font-weight: var(--weight-title);
 }
 .hd-stage > .hd-prev { left: calc(var(--px) * -18); }
 .hd-stage > .hd-next { right: calc(var(--px) * -18); }
@@ -181,21 +186,22 @@
   font-weight: var(--weight-strong);
 }
 
-/* The ascension: the five stars, big — the ladder the player is chasing. */
-.hd-stars { display: flex; justify-content: center; gap: calc(var(--px) * 2); }
-.hd-stars .icon { --icon-size: calc(var(--px) * 32); }
-.hd-stars .icon.is-locked { opacity: 0.6; }
-.hd-ascend.is-max .hd-stars .icon { --icon-size: calc(var(--px) * 36); }
+/* The ascension: the five stars, big — the ladder the player is chasing —
+   and what the next point does under them. */
+.hd-asc { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
+.hd-stars { --asc-size: calc(var(--px) * 34); }
+.hd-ascend.is-max .hd-stars { --asc-size: calc(var(--px) * 44); }
+.hd-asc-line { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; }
 
 /* The stats: three parchment tiles, icon then label over value. */
-.hd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--px) * 6); }
+.hd-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--px) * 6); }
 .hd-stat.k-section {
   display: flex;
   align-items: center;
-  gap: calc(var(--px) * 6);
-  padding: calc(var(--px) * 6) calc(var(--px) * 8);
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 6);
 }
-.hd-stat > .icon { --icon-size: calc(var(--px) * 32); flex: none; }
+.hd-stat > .icon { --icon-size: calc(var(--px) * 28); flex: none; }
 .hd-stat-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
 .hd-stat-label { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
 .hd-stat-value { font-size: var(--text-title); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
@@ -212,6 +218,21 @@
 }
 .hd-passive > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
 .hd-passive.is-boon { border-color: var(--gold-dark); }
+
+/* The skill: its name and rank pips over what it does, and the next rank
+   in a tray under it. */
+.hd-skill-wrap { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.hd-skill.k-section {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
+}
+.hd-skill > .icon { --icon-size: calc(var(--px) * 32); flex: none; }
+.hd-skill-text { display: flex; flex-direction: column; gap: calc(var(--px) * 3); min-width: 0; }
+.hd-skill-name { display: flex; align-items: center; gap: calc(var(--px) * 8); font-size: var(--text-title); }
+.hd-skill-says { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--ink); }
+.hd-rank .hd-read-line > b { font-size: var(--text-body); }
 
 /* The level (or the fragments), as words over the game's green bar. */
 .hd-read { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }

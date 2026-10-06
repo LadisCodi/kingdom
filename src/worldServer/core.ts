@@ -14,14 +14,15 @@
 
 import { roundPrice } from '../sim/roundPrice';
 import {
-  boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
+  boardPower, buildBoard, generateEnemy, poolsAfter, resolveBattle, survivorsOf,
   type BattleLog, type Board as FightBoard, type Side,
 } from '../sim/battle';
 import {
-  ARTIFACTS, LAIRS, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL, WORLD_PRECIOUS,
+  ARTIFACTS, LAIRS, VILLAIN_ORDER, WORLD, WORLD_BOTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_PORTAL, WORLD_PRECIOUS,
   relicKind,
 } from '../sim/data/definitions';
 import { parseCrest } from '../sim/crest';
+import { spoilsOf, type Spoils } from '../sim/skills';
 import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEATS_PER_BOARD, SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
@@ -703,11 +704,10 @@ function sendHome(b: ServerBoard, a: ServerArmy, t: number): void {
  *  not hit for. A slot with nothing left leaves the board. */
 function boardAfter(log: BattleLog, board: FightBoard, side: Side): { board: FightBoard; fallen: Array<{ unitId: UnitId; count: number }> } {
   const alive = survivorsOf(log, side);
-  const taken = new Map<number, number>();
-  for (const e of log.events) if (e.kind === 'attack' && e.to.side === side) taken.set(e.to.id, (taken.get(e.to.id) ?? 0) + e.dealt);
+  const pools = poolsAfter(log, side);
   const fallen: Array<{ unitId: UnitId; count: number }> = [];
   const slots = board.slots.map((s) => {
-    if (s.kind === 'hero') return { ...s, hpPool: Math.max(0, s.hpPool - (taken.get(s.id) ?? 0)) };
+    if (s.kind === 'hero') return { ...s, hpPool: pools.get(s.id) ?? s.hpPool };
     const left = alive.get(s.id) ?? s.count;
     if (s.unitId !== null && left < s.count) fallen.push({ unitId: s.unitId, count: s.count - left });
     return { ...s, count: left, hpPool: left * s.hpUnit };
@@ -758,6 +758,7 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     // this seat and pays its loot (19 §5.4).
     const camp = campAt(b, a.target);
     if (camp !== null && guarded(b, a.owner, a.target)) {
+      const fighters = a.board.slots;
       const log = resolveBattle(a.board, campBoard(b, a.target));
       const after = boardAfter(log, a.board, 'ours');
       a.board = after.board;
@@ -765,10 +766,11 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
       const name = CAMP_CREATURE[camp.creature];
       if (log.winner === 'ours') {
         beat(b, a.owner, a.target);
+        const sp = spoilsOf(fighters);
         owe(b, a.owner, {
           kind: 'loot', at: t, knowledge: 0, stardust: 0,
-          gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower),
-          heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower),
+          gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
+          heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
           precious: {
             id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
             amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
@@ -999,6 +1001,17 @@ export function roomPower(depth: number, room: number): number {
   return Math.round(room === WORLD_DUNGEON.roomsPerDepth ? base * WORLD_DUNGEON.bossMultiplier : base);
 }
 
+/** A won fight's pay with the party's spoils skills on it (sim/skills.ts):
+ *  Plunder on the Gold, Lore on the Knowledge, Seasoned on the Hero XP. */
+function withSpoils<P extends { gold: number; knowledge: number; heroXp: number }>(pay: P, sp: Spoils): P {
+  return {
+    ...pay,
+    gold: roundPrice(pay.gold * (1 + sp.plunder)),
+    knowledge: roundPrice(pay.knowledge * (1 + sp.lore)),
+    heroXp: roundPrice(pay.heroXp * (1 + sp.seasoned)),
+  };
+}
+
 /** What a room pays (11-expeditions.md §7.1); a boss, a multiple of it. */
 export function roomReward(
   depth: number, room: number,
@@ -1057,7 +1070,11 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   const plan = generateEnemy({
     seed: b.seed, parts: ['dungeon', dungeonKey(b, a.target), next.depth, next.room],
     budget: roomPower(next.depth, next.room), affinity: dungeonAffinity(b, a.target),
+    // A depth's boss room is held by villains — the heroes' counterpoint
+    // (combat.md §9.3).
+    ...(next.boss ? { villainPool: VILLAIN_ORDER } : {}),
   });
+  const sp = spoilsOf(a.board.slots);
   const log = resolveBattle(a.board, buildBoard(plan.squads, plan.fighters));
   const after = boardAfter(log, a.board, 'ours');
   a.board = after.board;
@@ -1066,7 +1083,7 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   const won = log.winner === 'ours';
   if (won) {
     progress[a.target] = cleared + 1;
-    const { precious, ...pay } = roomReward(next.depth, next.room);
+    const { precious, ...pay } = withSpoils(roomReward(next.depth, next.room), sp);
     owe(b, seat, {
       kind: 'loot', at: t, ...pay, from: next.room === WORLD_DUNGEON.roomsPerDepth ? 'boss' : 'room',
       precious: { id: lumpMaterial(boardData(b), seat, 'room', dungeonKey(b, a.target), next.depth, next.room), amount: precious },
@@ -1165,6 +1182,7 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
   const floor = (p.floors[seat]?.floor ?? 0) + 1;
   if (floor > WORLD_PORTAL.floors) return { ok: false, why: 'NothingThere' };
   const plan = generateEnemy({ seed: b.seed, parts: ['portal', p.event, floor], budget: floorPower(floor), affinity: 'Any' });
+  const sp = spoilsOf(a.board.slots);
   const log = resolveBattle(a.board, buildBoard(plan.squads, plan.fighters));
   const after = boardAfter(log, a.board, 'ours');
   a.board = after.board;
@@ -1179,7 +1197,7 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
       gems = WORLD_PORTAL.milestoneGems;
       report(b, seat, t, `First to floor ${floor} of the Portal`, true);
     }
-    const { precious, ...pay } = floorReward(floor);
+    const { precious, ...pay } = withSpoils(floorReward(floor), sp);
     owe(b, seat, {
       kind: 'loot', at: t, ...pay, from: 'portal', ...(gems > 0 ? { gems } : {}),
       ...(precious > 0 ? { precious: { id: lumpMaterial(boardData(b), seat, 'portal', p.event, floor), amount: precious } } : {}),

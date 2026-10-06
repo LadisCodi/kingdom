@@ -61,9 +61,10 @@ export function newGame(map: MapData, now: number): GameState {
     // once a Tavern stands (Docs/features/10-heroes.md §6.2); until then the
     // lairs are fought by soldiers alone.
     heroes: {
-      owned: [], levels: {}, tiers: {},
+      owned: [], levels: {}, ascension: {},
       // One hero slot is free; the second and third are Gems, always
       // (Docs/features/10-heroes.md §3).
+      skillRanks: {},
       heroSlotsPurchased: 0,
       hurt: {},
       fragments: {},

@@ -10,13 +10,15 @@ import { roundPrice } from './roundPrice';
 import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
 import { COMBAT, HEROES, PARTY, LAIRS, RELIC_RULES, UNITS, garrisonForTier } from './data/definitions';
 import { dropFragments, openRelicDoor, type FragmentDrop } from './relics';
-import { addHeroXp, heroSlots } from './heroes';
+import { addHeroXp, heroSlots, skillRank } from './heroes';
+import { slotSkill, spoilsOf } from './skills';
+import { heroBody } from './heroLadder';
 import {
   NO_DRILL, partyPower, partyStats,
   type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import {
-  boardPower, buildBoard, resolveBattle, survivorsOf,
+  boardPower, buildBoard, poolsAfter, resolveBattle, survivorsOf,
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
@@ -51,16 +53,10 @@ export const troopSlots = (): number => PARTY.troopSlots;
  * is about troops. The Quartermaster and the Rations line discount it.
  */
 export function lairSupplyCost(
-  state: GameState, lairId: LairId, heroIds: readonly HeroId[],
+  state: GameState, lairId: LairId, _heroIds: readonly HeroId[],
 ): Wallet {
   const base = lairSupplies(lairId);
-  // The best quartermaster in the party, not the sum of them: two of them
-  // would otherwise stack to a free trip.
-  const discount = heroIds.reduce((best, id) => (HEROES[id].trait === 'SupplyDiscount'
-    ? Math.max(best, HEROES[id].traitValue) : best), 0);
-  // The trait is a discount and the modifier stack rides on it. The tree
-  // never discounts.
-  const mult = Math.max(0, resolve(state, 'supplyCost', 1 - discount));
+  const mult = Math.max(0, resolve(state, 'supplyCost', 1));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
     out[c as keyof Wallet] = Math.max(1, roundPrice(n * mult));
@@ -126,7 +122,10 @@ export const partyOf = (
   t: number = state.lastAdvance,
 ): Party => ({
   // Each hero walks in with what the last fight left it (sim/heroHealth.ts).
-  heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id), hp: heroHp(state, id, t) })),
+  heroes: heroIds.map((id) => ({
+    id, level: heroLevel(state, id), ascension: state.heroes.ascension[id] ?? 0, hp: heroHp(state, id, t),
+    skillRank: skillRank(state, id),
+  })),
   slots,
   drill: drillOf(state),
 });
@@ -140,20 +139,21 @@ export function partyBoard(party: Party): Board {
   const drill = party.drill ?? NO_DRILL;
   const fighters: FighterSpec[] = party.heroes.map((h) => {
     const def = HEROES[h.id];
-    const step = h.level - 1;
+    const body = heroBody(def, h.level, h.ascension);
     return {
       id: h.id,
       name: def.name,
       type: def.unitType,
-      dmg: def.dmg + def.dmgPerLevel * step,
-      def: def.def + def.defPerLevel * step,
-      hp: def.hp + def.hpPerLevel * step,
+      dmg: body.dmg,
+      def: body.def,
+      hp: body.hp,
       hpNow: h.hp,
       cooldown: def.cooldown,
-      power: Math.round((def.dmg + def.dmgPerLevel * step) * COMBAT.heroPowerPerDmg),
+      power: Math.round(body.dmg * COMBAT.heroPowerPerDmg),
       troopDmgMult: def.troopDmgMult,
       troopHpMult: def.troopHpMult,
       troopDefBonus: def.troopDefBonus,
+      skill: slotSkill(def.skill, h.skillRank ?? 1),
     };
   });
   const bonus = {
@@ -330,24 +330,31 @@ export function attackLair(
     };
   }
   markLairDefeated(state, lairId);
+  // THE SPOILS (sim/skills.ts): Plunder swells the hoard now, Lore and
+  // Seasoned ride on the claim.
+  const spoils = spoilsOf(ours.slots);
+  const lair = state.lairs[lairId]!;
+  if (spoils.plunder > 0) {
+    for (const [c, n] of Object.entries(lair.hoard) as Array<[keyof Wallet, number]>) {
+      lair.hoard[c] = Math.round(n * (1 + spoils.plunder));
+    }
+  }
+  if (spoils.lore > 0 || spoils.seasoned > 0) lair.spoils = { lore: spoils.lore, seasoned: spoils.seasoned };
   // What the claim will pay, for the report — nothing has moved yet.
-  const hoard: Wallet = { ...state.lairs[lairId]!.hoard };
+  const hoard: Wallet = { ...lair.hoard };
   const { knowledge } = lairClearReward(state, lairId);
   return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded, heroes };
 }
 
 /** What each hero on our board has left when the fight ends: what it walked
- *  in with, less every blow that landed on it. */
+ *  in with, less every blow that landed on it, back up with every heal. */
 function heroesAfter(log: BattleLog, board: Board): Array<{ id: HeroId; hp: number; max: number }> {
-  const taken = new Map<number, number>();
-  for (const e of log.events) {
-    if (e.kind === 'attack' && e.to.side === 'ours') taken.set(e.to.id, (taken.get(e.to.id) ?? 0) + e.dealt);
-  }
+  const pools = poolsAfter(log, 'ours');
   return board.slots
     .filter((s) => s.kind === 'hero' && s.fighterId !== null)
     .map((s) => ({
       id: s.fighterId as HeroId,
-      hp: Math.max(0, s.hpPool - (taken.get(s.id) ?? 0)),
+      hp: pools.get(s.id) ?? s.hpPool,
       max: s.hpUnit,
     }));
 }
@@ -404,10 +411,13 @@ export function claimLair(state: GameState, lairId: LairId): ClaimReport {
  */
 export const lairClearReward = (
   state: GameState, lairId: LairId,
-): { heroXp: number; knowledge: number } => ({
-  heroXp: LAIRS[lairId].tier,
-  knowledge: firstClearLump(state),
-});
+): { heroXp: number; knowledge: number } => {
+  const spoils = state.lairs[lairId]?.spoils;
+  return {
+    heroXp: Math.round(LAIRS[lairId].tier * (1 + (spoils?.seasoned ?? 0))),
+    knowledge: Math.round(firstClearLump(state) * (1 + (spoils?.lore ?? 0))),
+  };
+};
 
 /** What the lair sheet shows before the player commits: the threat is always
  *  visible on a lair, so this hides nothing. */
