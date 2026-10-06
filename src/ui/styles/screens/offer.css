@@ -171,12 +171,12 @@
 .ofs-rarity {
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 168);
+  width: calc(var(--px) * 176);
   aspect-ratio: 3.4 / 1;
   /* The flat of the cloth: clear of the curl on the left and the forked
    * tail on the right. */
-  padding-left: calc(var(--px) * 24);
-  padding-right: calc(var(--px) * 34);
+  padding-left: calc(var(--px) * 36);
+  padding-right: calc(var(--px) * 30);
   padding-bottom: calc(var(--px) * 4);
   background: var(--ribbon) center / contain no-repeat;
   color: #5a3510;
