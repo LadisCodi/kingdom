@@ -182,3 +182,48 @@ Attach `ref-isolde.png` (at rest, and surprised — a mood with its own pose).
 **P6 result.** `../../../originals/hero-sheets/isolde-idea.png` (1024×1536,
 true alpha) → `src/render/assets/portrait_advisor_idea.png`, cut the same way
 as P5.
+
+## P7 — Old Hob, at rest
+
+Attach `ref-heroes.png` and a montage of the shipped cast (Isolde, Tom,
+Grukk, the Warden).
+
+> CREATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references. The first is hero art already shipped in this game; the second is the tutorial cast already shipped (Isolde the advisor, a young villager, Grukk the orc, the Warden). Match that style exactly: it is LOCKED; do not drift. Your character will stand in the same dialogue box next to them.
+>
+> === STYLE === *(as P1)*
+>
+> === COMPOSITION ===
+> One portrait image, 2:3, ONE character alone, full body, standing, facing the viewer with a touch of 3/4, about 88% of the canvas height, feet at the bottom. Both hands and both feet visible; every prop entirely inside the canvas with a 40 px empty margin.
+>
+> === THE CHARACTER ===
+> OLD HOB, the village woodcutter — the only one who never fled the fog. A stocky old man in his late sixties, a little stooped but strong, broad shoulders and big weathered hands. A bushy WHITE beard and big white eyebrows, a bald crown with a white fringe, a red bulbous nose, ruddy cheeks. A moss-green wool tunic with rolled sleeves, a PATCHED brown leather apron with a hatchet loop, a rope belt, sturdy worn boots. A big FELLING AXE resting on one shoulder, a short clay PIPE in the corner of his mouth with a small wisp of smoke. A gruff, sceptical look: one bushy eyebrow raised, mouth set in a grumpy line under the beard — but a soft, kind twinkle in his eyes. He must read at a glance as grumpy-but-lovable, and clearly different from the young villager and the orc.
+>
+> *(the true-alpha closing of P1)*
+
+**P7 result.** `../../../originals/hero-sheets/hob-rest.png` (1024×1536, true
+alpha) → `src/render/assets/portrait_hob.png`.
+
+## P8 — Old Hob's moods
+
+Attach `hob-rest.png`. The P5 prompt, with Hob's three moods: **happy** — a
+hearty laugh, eyes shut, pipe in hand, the axe planted head-down; **worried**
+— a grumpy scowl, arms crossed, the axe against his shoulder, a puff of
+smoke (*someone has just stolen his woodpile*); **surprised** — eyebrows up,
+the pipe falling from his open mouth, one hand raised.
+
+**P8 result.** `../../../originals/hero-sheets/hob-moods.png` (1536×1024, true
+alpha) → `src/render/assets/portrait_hob_{happy,worried,surprised}.png`.
+
+## P9 — Tom's moods
+
+Attach `src/render/assets/portrait_villager.png`. The P5 prompt, with Tom's
+three moods: **happy** — a huge grin, eyes shut, both fists up in a cheer;
+**worried** — a nervous smile, a hand scratching the back of his neck;
+**surprised** — a round "oh!", pushing his hat up off his forehead.
+
+**P9 result.** `../../../originals/hero-sheets/tom-moods.png` (1536×1024, true
+alpha) → `src/render/assets/portrait_villager_{happy,worried,surprised}.png`.
+
+P8 and P9 are cut with `../../../portraits/cut_moods.py`, which keeps one
+scale for a whole sheet (matched to the rest pose: Hob 0.840, Tom 0.821) and
+stands each figure on its feet, so a change of face never changes the size.

@@ -18,7 +18,7 @@ import {
   DISTRICTS, HELP, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
-import { playSfx } from '../../audio/sfx';
+import { playSfx, playVoice } from '../../audio/sfx';
 import { spriteUrl } from '../../render/sprites';
 import { CAMERA_GLIDE_MS } from '../../render/camera';
 import type { Coord } from '../../sim/state';
@@ -263,6 +263,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (playing.target?.kind === 'cell') {
       game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
     }
+    // A speaker taking their turn says so — a little vocal emote in the
+    // line's mood — once, not on every line they speak in a row.
+    if (l.speaker !== voiced) playVoice(l.speaker, l.expression);
+    voiced = l.speaker;
     cast(l.side, l.speaker, l.expression);
     const other = l.side === 'left' ? 'right' : 'left';
     left.classList.toggle('is-lit', l.side === 'left');
@@ -319,6 +323,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   const start = (scene: SceneDef): void => {
+    voiced = null;
     playing = {
       scene, index: 0, tapsAtStart: 0, typed: 0, target: null, missingSince: null, lockReleased: false,
     };
@@ -339,6 +344,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     graced();
     begin(resumeAt);
   };
+
+  /** Who spoke the line before, so a run of lines voices only its first. */
+  let voiced: string | null = null;
 
   /** The box has been placed in this scene, so a new place is a move. */
   let boxShown = false;

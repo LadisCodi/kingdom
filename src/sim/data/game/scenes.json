@@ -23,7 +23,20 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "I’m Isolde. I kept the royal library — but everyone else fled the fog, so… I’m your Royal Advisor now. I’ll do my very best!",
+        "text": "I’m Isolde. I kept the royal library — but most of the court fled the fog, so… I’m your Royal Advisor now!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Advisor. Ha! Last time she advised anyone, it was the old king. To read more.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -36,7 +49,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The fog swallowed everything past the Townhall — our forests, our fields, our people’s work. The books say it can be pushed back. I hope.",
+        "text": "This is Hob, our woodcutter. He’s the only one who never left. He says the fog doesn’t scare him.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -47,9 +60,22 @@
         "expression": "worried"
       },
       {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Scare me? It’s greedy, that’s all. Loves a shine. Toss it a coin and it gives a bit of ground back.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
         "speaker": "advisor",
         "side": "left",
-        "text": "Those trees in the fog are ours! A few coins and a little patience clear a patch — tap it, Your Majesty. Five times, I’ve read.",
+        "text": "Then let’s feed it! Those trees in the fog are ours — tap it, Your Majesty. Five coins, Hob says.",
         "box": "auto",
         "point": "feature:TreesFog",
         "lock": "target",
@@ -62,7 +88,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Timber! Oh, it worked! And — look, right beside it! Something in the fog. Clear that one too!",
+        "text": "Timber! It worked! And look — right beside it. Something glinting in the fog. Clear that one too!",
         "box": "auto",
         "point": "treasure",
         "lock": "target",
@@ -73,9 +99,9 @@
         "expression": "surprised"
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "A purse someone dropped when they fled! Tap it — it’s ours now.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "That’s Widow Pell’s purse. Dropped it running, she did. Well — the fog owes us. Tap it.",
         "box": "auto",
         "point": "treasure",
         "lock": "target",
@@ -83,12 +109,12 @@
         "untilTarget": "",
         "untilAmount": 1,
         "exit": false,
-        "expression": "happy"
+        "expression": ""
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The fog keeps more of what they left, I’m sure of it. Three more stands, and our axes will have work again.",
+        "text": "The fog kept more of what they left, I’m sure of it. Three more stands, and the axes will have work again.",
         "box": "auto",
         "point": "feature:TreesFog",
         "lock": "map",
@@ -101,7 +127,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The townsfolk saw you win the woods back — they’ve gathered a gift! Go on, accept it. They’d be ever so pleased.",
+        "text": "The folk sheltering in the Townhall saw it all — they’ve gathered you a gift! Go on, accept it.",
         "box": "auto",
         "point": "quest",
         "lock": "target",
@@ -122,6 +148,19 @@
     "skippable": false,
     "lines": [
       {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Trees aplenty, and nobody left who knows how to drop one safe. My hands shake too much now.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
         "speaker": "advisor",
         "side": "left",
         "text": "Oh — let’s set this aside first, and step back out to the kingdom.",
@@ -137,7 +176,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Trees at last — and, um, nobody left who remembers how to fell them. But I have a book for that! I have a book for most things.",
+        "text": "Then a book will teach them! I have a book for that. I have a book for most things.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "target",
@@ -145,12 +184,12 @@
         "untilTarget": "research",
         "untilAmount": 0,
         "exit": false,
-        "expression": "worried"
+        "expression": "idea"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Each page is a craft our people can learn. This one’s Forestry — chapter one. My favourite!",
+        "text": "Each page is a craft Oakville forgot. This one’s Forestry — chapter one. My favourite!",
         "box": "auto",
         "point": "ui:tech:Forestry",
         "lock": "target",
@@ -163,7 +202,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Learning takes Knowledge, and ours is right here. Pour it in…",
+        "text": "Learning takes Knowledge — that’s my studying, bottled up. Pour it in…",
         "box": "top",
         "point": "ui:tech-pour",
         "lock": "target",
@@ -176,7 +215,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "…then a little Gold for the tools, and the craft is ours. Just like that!",
+        "text": "…then a little Gold for proper axes, and the craft is ours again. Just like that!",
         "box": "auto",
         "point": "ui:tech-research",
         "lock": "target",
@@ -184,12 +223,12 @@
         "untilTarget": "Forestry",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Listen — axes in the woods already! And I keep studying: a point of Knowledge an hour, up to ten. Best spend it before then.",
+        "text": "Hear that? Axes in the woods! I study a point of Knowledge an hour, up to ten. Best spend it before then.",
         "box": "auto",
         "point": "ui:knowledge",
         "lock": "all",
@@ -223,9 +262,9 @@
     "skippable": false,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Shall we show them how it’s done? Tap a tree. Each swing draws a drop of Mana — the kingdom’s magic, in that blue well up there.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Show ’em how it’s done, Majesty. Tap a tree. Every swing asks the land’s leave — a drop from that blue well.",
         "box": "auto",
         "point": "feature:TreesRevealed",
         "lock": "map",
@@ -236,9 +275,9 @@
         "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Hold your finger down and the axe keeps swinging! When a stand is bare, move on — it grows back. Trees are patient like that.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Hold it down and the axe keeps going. When a stand’s bare, move on — it grows back. Trees don’t sulk.",
         "box": "auto",
         "point": "feature:TreesRevealed",
         "lock": "none",
@@ -246,12 +285,12 @@
         "untilTarget": "Timber",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": ""
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Oh — the well is lower. Every swing drew a drop. Don’t fret! It fills itself again, slowly, hour by hour. I checked twice.",
+        "text": "Oh — the well is lower! Every swing drew a drop. Don’t fret: it fills again by itself. I checked twice.",
         "box": "auto",
         "point": "ui:mana",
         "lock": "all",
@@ -262,9 +301,22 @@
         "expression": "worried"
       },
       {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Three times. I counted.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
         "speaker": "advisor",
         "side": "left",
-        "text": "Wood for the kingdom! The woodfolk have sent their thanks — accept it, and the well gets a little of its magic back.",
+        "text": "Wood for Oakville! The Townhall folk sent their thanks — accept it, and the well gets a little magic back.",
         "box": "auto",
         "point": "quest",
         "lock": "target",
@@ -287,7 +339,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Wood at last — and not one roof to sleep under. But that shape past the trees… the Millers’ house! The fog has it. Clear it, Your Majesty!",
+        "text": "Wood at last — and nowhere to sleep. But that shape past the trees… the Millers’ house! Clear the fog, Your Majesty!",
         "box": "auto",
         "point": "abandoned:OldHouse",
         "lock": "target",
@@ -335,6 +387,19 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "happy"
+      },
+      {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Young Tom Miller’s camped on the south road. Been waiting a year for a roof to come home to.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -349,7 +414,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A roof is a start — but people eat, and our pantry is… a shelf. Berry bushes would do. Clear the fog off one, then pick it.",
+        "text": "A roof won’t feed Tom, and our pantry is… a shelf. Berry bushes would do. Clear the fog off one, then pick it.",
         "box": "auto",
         "point": "feature:BerryBush",
         "lock": "none",
@@ -372,7 +437,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "The House is still going up. No family moves in under scaffolding — I asked.",
+        "text": "The House is still going up. Nobody moves in under scaffolding — I asked.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "none",
@@ -385,7 +450,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A roof, a pantry… now we need people! The Townhall calls settlers in from the roads. Open it, Your Majesty.",
+        "text": "A roof, a pantry… now Tom! The Townhall bell carries to the roads. Open it, Your Majesty.",
         "box": "auto",
         "point": "district:Townhall",
         "lock": "target",
@@ -398,7 +463,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Call one! They’ll need that roof — and a little Food for the road.",
+        "text": "Ring for him! He’ll need that roof — and a little Food for the walk home.",
         "box": "auto",
         "point": "ui:card:train",
         "lock": "none",
@@ -411,7 +476,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "They’re on their way! We can wait for them to arrive — or a few Gems would hurry them along. Whichever you think best!",
+        "text": "He’s coming! We can wait for him — or a few Gems would hurry him along. Whichever you think best!",
         "box": "auto",
         "point": "",
         "lock": "none",
@@ -424,7 +489,7 @@
       {
         "speaker": "villager",
         "side": "right",
-        "text": "A roof, a hearth and a monarch! I’ll pay my rent on time, Your Majesty.",
+        "text": "Is that… our roof? Your Majesty! Tom Miller, home at last. I’ll pay my rent on time, I swear it.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -432,12 +497,25 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": ""
+        "expression": "happy"
       },
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Let’s close the Townhall — our villager is settling in.",
+        "text": "Welcome home, Tom! You see, Your Majesty? Mend what the fog broke, and the people come back.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Let’s close the Townhall — Tom’s settling in.",
         "box": "auto",
         "point": "ui:card:close",
         "lock": "target",
@@ -460,7 +538,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Our villager pays rent into the House. When the purse shows, gather it — it’s theirs to give, and it costs you nothing.",
+        "text": "Tom pays his rent into the House. When the purse shows, gather it — it’s his to give, and it costs you nothing.",
         "box": "auto",
         "point": "district:Housing",
         "lock": "none",
@@ -473,7 +551,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "That’s how a kingdom is kept, I think: clear the fog, gather, build, grow. The townsfolk will always have their next request.",
+        "text": "That’s how a kingdom is kept, I think: clear the fog, gather, build — and they come home, one by one.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -520,9 +598,9 @@
         "expression": "worried"
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "And there was one! The old farm, right beside the fields. Clear its fog and open it, Your Majesty.",
+        "speaker": "villager",
+        "side": "right",
+        "text": "Dad ran the old farm, right by the fields. Clear its fog and open it, Your Majesty — I’ll show you.",
         "box": "auto",
         "point": "abandoned:OldFarm",
         "lock": "none",
@@ -530,7 +608,7 @@
         "untilTarget": "OldFarm",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": ""
       },
       {
         "speaker": "advisor",
@@ -569,9 +647,9 @@
         "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "The Farm stands — and nobody works it. Oh dear. Open it, Your Majesty.",
+        "speaker": "villager",
+        "side": "right",
+        "text": "The Farm stands — and nobody’s working it. Open it, Your Majesty!",
         "box": "auto",
         "point": "district:Farm",
         "lock": "target",
@@ -582,9 +660,9 @@
         "expression": "worried"
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Send a villager! They’ll walk to a plot in reach, reap it and carry the crop home. More hands, more trips.",
+        "speaker": "villager",
+        "side": "right",
+        "text": "Send me! I know every furrow. Each pair of hands walks to a plot, reaps it and carries the crop home.",
         "box": "auto",
         "point": "ui:card:workers",
         "lock": "none",
@@ -592,7 +670,7 @@
         "untilTarget": "ToWork",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": "happy"
       },
       {
         "speaker": "advisor",
@@ -633,7 +711,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "That House is full — two to a roof. And the fog kept no other… so we’ll raise one of our own!",
+        "text": "Word’s spreading on the roads, and Tom’s house is full. The fog kept no other… so we’ll raise one of our own!",
         "box": "auto",
         "point": "ui:nav:build",
         "lock": "target",
@@ -644,9 +722,9 @@
         "expression": "idea"
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Oh — a new House wants more Wood than we hold. Here, I put some by for just this!",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "New house wants more wood than you’ve got. Here — been stacking it all winter. Don’t make a fuss.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -654,7 +732,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "happy",
+        "expression": "",
         "stocks": "Housing"
       },
       {
@@ -694,9 +772,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "The Farm reaps by itself… so why not the forest? There was a Sawmill among the trees — the old one. Find it, Your Majesty, and open it.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Farm reaps by itself, and an old man’s still swinging an axe? There was a sawmill in the trees. Find it. Open it.",
         "box": "auto",
         "point": "abandoned:OldSawmill",
         "lock": "none",
@@ -704,12 +782,12 @@
         "untilTarget": "OldSawmill",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Oh — mending it wants more Wood than we hold. Here, I put some by for just this!",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Mending it wants more wood than you’ve got. That’s the last of my pile, mind.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -717,7 +795,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "happy",
+        "expression": "worried",
         "stocks": "Sawmill"
       },
       {
@@ -757,9 +835,9 @@
         "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "The Sawmill stands idle — saws, and nobody to swing them. Open it.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Sawmill’s up and nobody on the saws. Open it.",
         "box": "auto",
         "point": "district:Sawmill",
         "lock": "target",
@@ -767,12 +845,12 @@
         "untilTarget": "card:workers",
         "untilAmount": 0,
         "exit": false,
-        "expression": "worried"
+        "expression": ""
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Send it woodcutters. The townsfolk hope to see three villagers at work — the Farm’s count too.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Send it woodcutters. Young ones. The townsfolk want three at work — the Farm’s count too.",
         "box": "auto",
         "point": "ui:card:workers",
         "lock": "none",
@@ -788,6 +866,19 @@
         "text": "Food and Wood come in by themselves now, even while you’re away. A real town, Your Majesty! I— I’m a little proud.",
         "box": "auto",
         "point": "district:Sawmill",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Hmph. …Me too.",
+        "box": "auto",
+        "point": "",
         "lock": "all",
         "until": "tap",
         "untilTarget": "",
@@ -821,7 +912,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A second story wants stone, and nobody here knows how to cut it. But I’m sure I know a chapter that can teach them!",
+        "text": "Tom wants a second floor, and that wants stone. Nobody here can cut it — but I know a chapter that can!",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "target",
@@ -894,9 +985,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Tap a mountain — clear its fog first, if need be. Every swing brings home Stone, and draws a drop from the well, like the axe.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Tap a mountain — clear its fog first, if need be. Every swing brings home Stone. My back’s writing to complain.",
         "box": "auto",
         "point": "feature:Mountain",
         "lock": "none",
@@ -904,7 +995,7 @@
         "untilTarget": "Rubble",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": ""
       }
     ]
   },
@@ -919,7 +1010,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "A grander Townhall! Its watch reaches further now — the dotted line marks how far we can push the fog — and more can live here.",
+        "text": "A grander Townhall! Its bell carries further now — the dotted line marks how far we can push the fog.",
         "box": "auto",
         "point": "district:Townhall",
         "lock": "none",
@@ -942,7 +1033,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "And look — the Royal Survey! Every patch we win back from the fog is written in it, and the crown pays for every page.",
+        "text": "And the Royal Survey! The crown pays for every page we win back. Well — you’re the crown. But it’s tradition!",
         "box": "auto",
         "point": "ui:survey",
         "lock": "none",
@@ -1047,7 +1138,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Your Majesty — a camp, out past the fog! Whoever they are, they’ve seen our smoke too. Tap it… carefully.",
+        "text": "Your Majesty — a camp, past the fog! They’ve smelled our smoke. A town coming back to life draws company. Tap it… carefully.",
         "box": "auto",
         "point": "lair:",
         "lock": "target",
@@ -1071,9 +1162,9 @@
         "expression": "worried"
       },
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Axes won’t do. We need soldiers — and the research tree knows how to raise them. Look for the Warrior.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Axes won’t do, not against that lot. You want soldiers — and the book knows how. Look for the Warrior.",
         "box": "auto",
         "point": "",
         "lock": "all",
@@ -1081,7 +1172,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "idea"
+        "expression": "worried"
       }
     ]
   },
@@ -1109,7 +1200,33 @@
       {
         "speaker": "warden",
         "side": "right",
-        "text": "Warden of the Guard, Your Majesty. Give me soldiers and I’ll drive them out.",
+        "text": "Warden of the Guard, Your Majesty — what’s left of it. We followed your smoke home. Give me soldiers.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Soldiers… there’s a chapter on Barracks, I’m sure of it. Let me read up on it first—",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
+        "speaker": "warden",
+        "side": "right",
+        "text": "Read. With respect, Your Majesty — orcs don’t wait for chapter two.",
         "box": "auto",
         "point": "",
         "lock": "none",
@@ -1135,7 +1252,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Soldiers it is! The research tree knows how to raise a Barracks — let’s read it together.",
+        "text": "Then I’ll read very quickly! The Barracks is in the research tree — let’s open it together.",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "none",
@@ -1156,9 +1273,22 @@
     "skippable": true,
     "lines": [
       {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "They’ve had my woodpile. MY woodpile.",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "worried"
+      },
+      {
         "speaker": "advisor",
         "side": "left",
-        "text": "They’ve robbed our stores! Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.",
+        "text": "Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.",
         "box": "auto",
         "point": "lair:Orcs",
         "lock": "none",
@@ -1220,6 +1350,19 @@
         "text": "Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.",
         "box": "auto",
         "point": "lair:Orcs",
+        "lock": "none",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Woodpile included.",
+        "box": "auto",
+        "point": "",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
@@ -1527,9 +1670,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Game in the woods! A tap brings home three times what a bush does — once Hunting teaches us how.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Boar! Not had boar since the fog came. Mind — they bite back. Learn Hunting first.",
         "box": "auto",
         "point": "feature:WildAnimals",
         "lock": "none",
@@ -1573,9 +1716,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Gold in the mountain! Once we learn Mining, every swing of a pick there brings up coin.",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Gold in the rock. That’s what the fog likes best — mind it doesn’t get ideas. Mining’ll get it out.",
         "box": "auto",
         "point": "feature:MountainGold",
         "lock": "none",
@@ -1583,7 +1726,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "surprised"
+        "expression": "worried"
       }
     ]
   },
@@ -1619,9 +1762,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Harpies, roosting over our mountains! While they stand, not one stone up there is ours. Archers on the wing — riders, I think?",
+        "speaker": "woodcutter",
+        "side": "right",
+        "text": "Harpies. Every shiny thing in the valley, gone by morning — the fog with feathers. And our stone with them.",
         "box": "auto",
         "point": "lair:Harpies",
         "lock": "none",
@@ -1642,9 +1785,9 @@
     "skippable": true,
     "lines": [
       {
-        "speaker": "advisor",
-        "side": "left",
-        "text": "Our soldiers came home wounded — but not lost, thank goodness. The Infirmary patches them up for less than a new recruit.",
+        "speaker": "warden",
+        "side": "right",
+        "text": "They came home hurt, not lost. The Infirmary patches them up for less than a new recruit.",
         "box": "auto",
         "point": "",
         "lock": "none",
@@ -1652,7 +1795,7 @@
         "untilTarget": "",
         "untilAmount": 0,
         "exit": false,
-        "expression": "worried"
+        "expression": ""
       }
     ]
   },
