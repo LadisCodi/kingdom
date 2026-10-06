@@ -4,7 +4,9 @@
 // pays, and the tab that asks for a relic to be woken again.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DISTRICTS } from '../src/sim/data/definitions';
+import { DISTRICTS, SCENES } from '../src/sim/data/definitions';
+import { giveRelic } from '../src/sim/relics';
+import { conditionHolds } from '../src/ui/stage/conditions';
 import { hostRelic } from '../src/sim/hosts';
 import { mana } from '../src/sim/mana';
 import { clearShrineBubbles, markShrineBubble } from '../src/render/shrineBubbles';
@@ -170,5 +172,46 @@ describe('choosing a Shrine\'s relic', () => {
     game.openRelicPicker('shrine_a');
     game.relicPickConfirm();
     expect(game.openOverlay).toBeNull();
+  });
+});
+
+// THE FIRST SHRINE'S LESSON (Docs/features/23-tutorials.md §4.4): the scene
+// hands over a relic whole and walks the slot, the picker and Select.
+describe('the first Shrine teaches placing a relic', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('hands the relic over whole, once', () => {
+    const state = freshGame();
+    expect(giveRelic(state, 'DowsingRod')).toBe(true);
+    expect(state.artifacts.levels.DowsingRod).toBe(1);
+    expect(giveRelic(state, 'DowsingRod')).toBe(false);
+    expect(state.artifacts.levels.DowsingRod).toBe(1);
+  });
+
+  it('plays on the first Shrine standing, gives the Staff and waits on each step', () => {
+    const scene = SCENES.find((s) => s.id === 'shrineRelic')!;
+    expect(scene).toBeDefined();
+    expect(scene.trigger).toBe('built');
+    expect(scene.triggerTarget).toBe('Shrine');
+    expect(scene.lines[0]!.restores).toBe('DowsingRod');
+    expect(scene.lines.map((l) => l.until)).toEqual(['ui', 'overlay', 'relicPicked', 'relicHosted', 'tap']);
+  });
+
+  it('knows when the relic is chosen and when it stands in a Shrine', () => {
+    const { game } = crowned();
+    const holds = (kind: 'relicPicked' | 'relicHosted', target: string) =>
+      conditionHolds(game, { kind, target, amount: 0, tapsAtStart: 0 });
+    expect(holds('relicHosted', 'GildedLedger')).toBe(true);
+    expect(holds('relicHosted', 'DowsingRod')).toBe(false);
+    game.state.artifacts.levels.DowsingRod = 1;
+    expect(holds('relicPicked', 'DowsingRod')).toBe(false);
+    game.openRelicPicker('shrine_a');
+    game.relicPickToggle('DowsingRod');
+    expect(holds('relicPicked', 'DowsingRod')).toBe(true);
+    expect(holds('relicPicked', '')).toBe(true);
   });
 });

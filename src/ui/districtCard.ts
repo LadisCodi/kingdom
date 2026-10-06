@@ -222,10 +222,16 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         const altar = el('button', {
           class: `dc-chapel k-section${held === null ? '' : ` is-held is-${held.status}`}`, type: 'button',
           'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
+          'data-coach': 'shrine-slot',
         },
+          // WAITING, IT CALLS: a gold ring breathing round the cradle's +,
+          // so the painting reads as a thing to press — with the CTA on it
+          // when a relic in the Bag could go there.
+          ...(held === null ? [el('span', { class: 'dc-chapel-call', 'aria-hidden': 'true' },
+            ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []))] : []),
           ...(held === null ? [] : [el('span', { class: 'dc-chapel-relic' },
             relicArt(held, 'dc-chapel-relic-art'), ...(held.status === 'asleep' ? [restMarks()] : []))]),
-          ...(placeable ? [ctaBadge(1, `shrine-slot:${district.uniqueId}`)] : []));
+        );
         altar.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
         return el('div', { class: 'dc-shrine rl-page' },
           altar,

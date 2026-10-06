@@ -560,7 +560,8 @@ export type SceneCondition =
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
-  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing';
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing'
+  | 'relicPicked' | 'relicHosted';
 
 export interface SceneLine {
   speaker: string;
@@ -584,6 +585,9 @@ export interface SceneLine {
    *  the wallet cannot pay for one more of it, and as it is read hands over
    *  what is missing. Absent or null: an ordinary line. */
   stocks?: DistrictId | null;
+  /** A city relic the speaker hands over, restored at level 1, as the line
+   *  is read; nothing when it is already restored. Absent or null: none. */
+  restores?: ArtifactId | null;
 }
 
 export interface SceneDef {

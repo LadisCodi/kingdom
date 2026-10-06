@@ -16,7 +16,7 @@ import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
-import { dropFragments, openRelicDoor } from './sim/relics';
+import { dropFragments, giveRelic, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
 import { LAIR_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
@@ -881,6 +881,7 @@ async function boot(): Promise<void> {
           for (const l of s.lines) {
             if (l.gives) giveBook(game.state, l.gives);
             if (l.stocks) stockBuild(game.state, l.stocks);
+            if (l.restores) giveRelic(game.state, l.restores);
           }
           game.state.tutorial.seen[key] = true;
         }

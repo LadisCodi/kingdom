@@ -74,13 +74,15 @@ function cardStatus(game: Game, view: RelicView): HTMLElement[] {
  *  it is the emerald stone (§3.3), with its Mana inside it (§6.4). */
 export function activateButton(game: Game, id: ArtifactId): HTMLButtonElement {
   const a = game.relicActivation(id);
-  return btn({
+  const button = btn({
     label: 'Activate',
     kind: 'primary',
     finish: 'gem',
     costExtra: [{ icon: 'Mana', amount: formatExact(a?.cost ?? 0), short: !(a?.affordable ?? false) }],
     onClick: () => game.doActivateRelic(id),
   });
+  button.dataset.coach = 'relic-activate';
+  return button;
 }
 
 /** One relic's card in the Bag: two a row (M72, M80). */

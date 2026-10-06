@@ -25,6 +25,7 @@ import type { Coord } from '../../sim/state';
 import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
+import { giveRelic } from '../../sim/relics';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
 import { firstMorningOn } from '../../sim/doors';
@@ -229,6 +230,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const hand = (l: SceneLine): void => {
     if (l.gives) giveBook(game.state, l.gives);
     if (l.stocks) { stockBuild(game.state, l.stocks); game.notify(); }
+    if (l.restores && giveRelic(game.state, l.restores)) game.notify();
   };
 
   /** A line that `stocks` a building has nothing to say while the wallet can
