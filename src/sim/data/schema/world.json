@@ -714,28 +714,6 @@
           "doc": "Precious material a beaten camp pays, per point of its power."
         }
       }
-    },
-    "worldExchange": {
-      "type": "object",
-      "doc": "The Exchange: offers of one precious material for another between the players of a board (Docs/features/19-world-map.md §7.5).",
-      "fields": {
-        "offerHours": {
-          "type": "float",
-          "min": 0,
-          "doc": "How long an offer stands before it comes back to whoever made it."
-        },
-        "maxOffers": { "type": "int", "min": 1, "doc": "How many offers a player may have standing at once." },
-        "botTakeHours": {
-          "type": "float",
-          "min": 0,
-          "doc": "How long a stand-in rival takes to take a fair offer of the material it yields."
-        },
-        "botOfferAmount": {
-          "type": "int",
-          "min": 1,
-          "doc": "How much of its own material a stand-in rival offers, one for one."
-        }
-      }
     }
   }
 }

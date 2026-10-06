@@ -19,6 +19,7 @@ import type { KingdomView } from '../../socialServer/types';
 import { el, formatExact } from '../format';
 import { btn, knob, sectionHead, sheet } from '../kit';
 import { expiresWords, inboxPane } from './inboxPane';
+import { tradePane } from './tradePane';
 import { crestEl, roundKnob, townhallTag } from './kingdomBits';
 
 export function renderFriendsSheet(game: Game): HTMLElement {
@@ -28,6 +29,7 @@ export function renderFriendsSheet(game: Game): HTMLElement {
     if (f.server === null) return [el('p', { class: 'fr-empty' }, 'Friends need the messengers, and none can be reached.')];
     if (!ready) return [el('p', { class: 'fr-empty' }, 'Sending for news of your friends…')];
     if (f.tab === 'inbox') return inboxPane(game);
+    if (f.tab === 'trade') return tradePane(game);
     return [requestsPanel(game), friendsPanel(game)];
   };
   // The sections come in one after another the first time they are drawn
@@ -46,8 +48,9 @@ export function renderFriendsSheet(game: Game): HTMLElement {
   return surface;
 }
 
-/** List and Inbox: the Build menu's wooden plates, the Inbox wearing a red
- *  wax seal of what is unread. */
+/** List, Trade and Inbox: the Build menu's wooden plates; a red wax seal on
+ *  Trade while a friend's wish can be filled, and on the Inbox for what is
+ *  unread. */
 function tabRow(game: Game): HTMLElement {
   const f = game.friends;
   const tab = (id: FriendsTab, label: string, count: number): HTMLElement => {
@@ -62,6 +65,7 @@ function tabRow(game: Game): HTMLElement {
   };
   return el('div', { class: 'bld-tabs fr-tabs', role: 'tablist' },
     tab('list', 'List', 0),
+    tab('trade', 'Trade', f.fillable().length),
     tab('inbox', 'Inbox', f.unread()));
 }
 

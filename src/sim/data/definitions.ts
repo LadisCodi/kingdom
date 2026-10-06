@@ -2172,10 +2172,7 @@ export interface WorldPreciousDef {
 
 export const WORLD_PRECIOUS = balance.worldPrecious as unknown as WorldPreciousDef;
 
-/** The Exchange (19 §7.5). */
-export interface WorldExchangeDef { offerHours: number; maxOffers: number; botTakeHours: number; botOfferAmount: number }
 
-export const WORLD_EXCHANGE = balance.worldExchange as unknown as WorldExchangeDef;
 
 /** The local world server's stand-in rivals. */
 export const WORLD_BOTS: {
@@ -2285,6 +2282,14 @@ export const FRIENDS = balance.friends as {
   requestRows: number;
   requestHours: number;
   messageDays: number;
+};
+
+/** Trading with friends — Docs/features/15-social.md §2.4: the wish board. */
+export const TRADE = balance.trade as {
+  materialLot: number;
+  wishes: number;
+  wishHours: number;
+  fillsPerDay: number;
 };
 
 // ------------------------------------------------------------ the timeline
@@ -2400,4 +2405,5 @@ export const GAME_VERSION: string = pkg.version;
 // v96: the friends' reward path (`Friends` on the kingdom), additive.
 // v97: the season pass goes — `Pass` leaves the kingdom (a migrator).
 // v98: the kingdom's nickname and crest (`Profile` on the kingdom), additive.
-export const SAVE_VERSION = 98;
+// v99: trading with friends (`Trade` on the kingdom), additive.
+export const SAVE_VERSION = 99;

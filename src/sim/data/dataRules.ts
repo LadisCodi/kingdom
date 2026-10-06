@@ -52,7 +52,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
-  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious', 'worldExchange'] },
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
@@ -75,8 +75,8 @@ export const COLLECTIONS: readonly CollectionDef[] = [
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
-  // The friends list (Docs/features/15-social.md §2.1).
-  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends'] },
+  // The friends list and trading with friends (Docs/features/15-social.md §2).
+  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends', 'trade'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },

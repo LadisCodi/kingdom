@@ -6,7 +6,7 @@ import type { WorldServerApi } from '../worldServer/local';
 
 /** The commands worth an event: the player's actions, not the reads. */
 const COMMANDS: ReadonlySet<string> = new Set([
-  'join', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect', 'postOffer', 'takeOffer', 'withdrawOffer',
+  'join', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect',
   'sendArmy', 'recall', 'delveRoom', 'descendPortal',
 ]);
 

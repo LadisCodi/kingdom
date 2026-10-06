@@ -9,12 +9,13 @@
 // idempotent by what it says — asking twice is one request, accepting twice
 // is one friendship — so a retry needs no command id.
 
-import { FRIENDS } from '../sim/data/definitions';
+import { FRIENDS, TRADE } from '../sim/data/definitions';
 import { parseCrest } from '../sim/crest';
 import { randInt } from '../sim/rng';
 import { nicknameProblem, normalNickname } from '../worldServer/nickname';
+import { lotKey, pairs, validLot, type TradeLot } from '../sim/trade';
 import type {
-  KingdomView, MessageKind, RequestState, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
+  DeliveryView, KingdomView, MessageKind, RequestState, RequestView, SocialCommand, SocialCommandKind, SocialProgress, SocialRefusal, SocialReply,
   SocialSnapshot,
 } from './types';
 
@@ -44,7 +45,25 @@ export interface MessageRow {
   at: number;
   readAt: number | null;
   state: RequestState | null;
+  /** A trade's: what this player got and gave. */
+  lots?: { got: TradeLot; gave: TradeLot | null } | null;
 }
+
+/** A wish on the board (§2.4). `give` is held by the server while it is
+ *  open; it ends filled, withdrawn or expired. */
+export interface WishRow {
+  id: string;
+  userId: string;
+  need: TradeLot;
+  give: TradeLot;
+  at: number;
+  state: 'open' | 'filled' | 'withdrawn' | 'expired';
+  filledBy: string | null;
+  filledAt: number | null;
+}
+
+/** Goods owed to one player, numbered in the order they were owed. */
+export interface DeliveryRow { userId: string; seq: number; lot: TradeLot; why: DeliveryView['why'] }
 
 /** Where profiles and links live: tables on the server, maps in the tests
  *  and in the stand-in. */
@@ -81,6 +100,19 @@ export interface SocialStore {
   /** Change a message, if it is there. */
   patchMessage(userId: string, id: string, patch: { readAt?: number; state?: RequestState }): Promise<void>;
   dropMessages(userId: string, ids: readonly string[]): Promise<void>;
+  /** Open wishes of these players. */
+  openWishes(userIds: readonly string[]): Promise<WishRow[]>;
+  addWish(row: WishRow): Promise<void>;
+  /** End an open wish, as one: false if it is no longer open — someone
+   *  else ended it first. */
+  closeWish(id: string, end: Pick<WishRow, 'state' | 'filledBy' | 'filledAt'>): Promise<WishRow | null>;
+  /** How many wishes this player has filled since `since`. */
+  fillsSince(userId: string, since: number): Promise<number>;
+  /** Owe a player a lot; the next number in their queue. */
+  deliver(userId: string, lot: TradeLot, why: DeliveryRow['why']): Promise<void>;
+  deliveriesOf(userId: string): Promise<DeliveryRow[]>;
+  /** Forget what the player has applied: every delivery up to `seq`. */
+  dropDeliveries(userId: string, upTo: number): Promise<void>;
 }
 
 export type SocialServed =
@@ -89,6 +121,7 @@ export type SocialServed =
 
 const KINDS: ReadonlySet<SocialCommandKind> = new Set<SocialCommandKind>([
   'hello', 'name', 'request', 'accept', 'decline', 'cancel', 'remove', 'read', 'deleteRead',
+  'pinWish', 'withdrawWish', 'fillWish',
 ]);
 
 const HOUR = 3600_000;
@@ -137,6 +170,7 @@ export function badSocialBody(body: unknown): string | null {
       const count = (v: unknown, max: number) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max;
       if (!count(p.townhall, 100) || !count(p.cells, 1_000_000)) return 'progress';
       if (p.crest !== undefined && p.crest !== null && parseCrest(p.crest) === null) return 'crest';
+      if (p.ack !== undefined && !Number.isInteger(p.ack)) return 'ack';
       return null;
     }
     case 'name': return short(cmd.nickname, 64) ? null : 'nickname';
@@ -144,6 +178,8 @@ export function badSocialBody(body: unknown): string | null {
     case 'read':
       return Array.isArray(cmd.ids) && cmd.ids.length <= 100 && cmd.ids.every((id) => short(id, 128)) ? null : 'ids';
     case 'deleteRead': return null;
+    case 'pinWish': return validLot(cmd.need) && validLot(cmd.give) ? null : 'lot';
+    case 'withdrawWish': case 'fillWish': return short(cmd.id, 128) ? null : 'id';
     default: return short(cmd.code, 32) ? null : 'code';
   }
 }
@@ -168,13 +204,19 @@ async function answer(store: SocialStore, userId: string, cmd: SocialCommand, no
   if (me === null) {
     // No nickname yet: nobody can find the player, and they can do nothing
     // but take one (§2.1, the first visit).
-    const empty: SocialSnapshot = { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [] };
+    const empty = emptySnapshot(now);
     return cmd.kind === 'hello' ? { ok: true, snapshot: empty } : refused('NoName', empty);
   }
   await expire(store, userId, now);
   if (cmd.kind === 'hello') {
     await store.touch(userId, cmd.progress, now);
+    if (cmd.progress.ack !== undefined) await store.dropDeliveries(userId, cmd.progress.ack);
     return { ok: true, snapshot: await snapshotFor(store, userId, now) };
+  }
+  if (cmd.kind === 'pinWish' || cmd.kind === 'withdrawWish' || cmd.kind === 'fillWish') {
+    const why = await trade(store, userId, cmd, now);
+    const snapshot = await snapshotFor(store, userId, now);
+    return why === null ? { ok: true, snapshot } : refused(why, snapshot);
   }
   if (cmd.kind === 'read') {
     const mine = new Map((await store.messagesOf(userId)).map((m) => [m.id, m]));
@@ -280,6 +322,70 @@ async function expire(store: SocialStore, userId: string, now: number): Promise<
   }
   const old = (await store.messagesOf(userId)).filter((m) => m.at + FRIENDS.messageDays * DAY <= now);
   if (old.length > 0) await store.dropMessages(userId, old.map((m) => m.id));
+  await expireWishes(store, userId, now);
+}
+
+// ------------------------------------------------------------ the wish board
+
+/** A wish's end, as messages and deliveries. Every lot that lands on a
+ *  player goes through `deliver`, so the client applies each exactly once. */
+async function trade(
+  store: SocialStore, userId: string,
+  cmd: Extract<SocialCommand, { kind: 'pinWish' | 'withdrawWish' | 'fillWish' }>, now: number,
+): Promise<SocialRefusal | null> {
+  if (cmd.kind === 'pinWish') {
+    if (!pairs(cmd.need, cmd.give)) return 'BadWish';
+    const mine = await store.openWishes([userId]);
+    if (mine.length >= TRADE.wishes) return 'TooManyWishes';
+    if (mine.some((w) => lotKey(w.need) === lotKey(cmd.need))) return 'SameWish';
+    await store.addWish({
+      id: `w:${userId}:${now}:${mine.length}`, userId, need: cmd.need, give: cmd.give, at: now,
+      state: 'open', filledBy: null, filledAt: null,
+    });
+    return null;
+  }
+  if (cmd.kind === 'withdrawWish') {
+    const w = (await store.openWishes([userId])).find((x) => x.id === cmd.id);
+    if (w === undefined) return 'WishGone';
+    const ended = await store.closeWish(w.id, { state: 'withdrawn', filledBy: null, filledAt: null });
+    if (ended !== null) await store.deliver(userId, ended.give, 'withdrawn');
+    return null;
+  }
+  // Fill: a friend's open wish, within its hours, and the fills left.
+  const links = await store.links(userId);
+  const w = (await store.openWishes(links.friends)).find((x) => x.id === cmd.id)
+    ?? (await store.openWishes([userId])).find((x) => x.id === cmd.id);
+  if (w === undefined || w.at + TRADE.wishHours * HOUR <= now) return 'WishGone';
+  if (w.userId === userId) return 'OwnWish';
+  if (!links.friends.includes(w.userId)) return 'NotFriends';
+  if (await store.fillsSince(userId, now - DAY) >= TRADE.fillsPerDay) return 'NoFillsLeft';
+  const filled = await store.closeWish(w.id, { state: 'filled', filledBy: userId, filledAt: now });
+  if (filled === null) return 'WishGone';
+  await store.deliver(w.userId, w.need, 'filled');
+  await store.deliver(userId, w.give, 'youFilled');
+  await store.putMessage({
+    userId: w.userId, id: `fill:${w.id}`, kind: 'wishFilled', fromId: userId, at: now, readAt: null, state: null,
+    lots: { got: w.need, gave: w.give },
+  });
+  await store.putMessage({
+    userId, id: `filled:${w.id}`, kind: 'filledWish', fromId: w.userId, at: now, readAt: now, state: null,
+    lots: { got: w.give, gave: w.need },
+  });
+  return null;
+}
+
+/** The player's wishes past their hours: their stakes come back. */
+async function expireWishes(store: SocialStore, userId: string, now: number): Promise<void> {
+  for (const w of await store.openWishes([userId])) {
+    if (w.at + TRADE.wishHours * HOUR > now) continue;
+    const ended = await store.closeWish(w.id, { state: 'expired', filledBy: null, filledAt: null });
+    if (ended === null) continue;
+    await store.deliver(userId, ended.give, 'expired');
+    await store.putMessage({
+      userId, id: `exp:${w.id}`, kind: 'wishExpired', fromId: userId, at: now, readAt: null, state: null,
+      lots: { got: ended.give, gave: null },
+    });
+  }
 }
 
 const befriended = (r: 'ok' | 'full' | 'theirFull'): SocialRefusal | null =>
@@ -287,12 +393,20 @@ const befriended = (r: 'ok' | 'full' | 'theirFull'): SocialRefusal | null =>
 
 const refused = (why: SocialRefusal, snapshot: SocialSnapshot | null): SocialReply => ({ ok: false, why, snapshot });
 
+const emptySnapshot = (now: number): SocialSnapshot => ({
+  at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [],
+  wishes: [], friendWishes: [], fillsLeft: 0, deliveries: [],
+});
+
 /** Everything the friends screen shows, as it stands. */
 async function snapshotFor(store: SocialStore, userId: string, now: number): Promise<SocialSnapshot> {
   const me = await store.profile(userId);
-  if (me === null) return { at: now, me: null, friends: [], incoming: [], outgoing: [], suggestions: [], inbox: [] };
+  if (me === null) return emptySnapshot(now);
   const links = await store.links(userId);
   const messages = await store.messagesOf(userId);
+  const standing = (w: WishRow) => w.at + TRADE.wishHours * HOUR > now;
+  const myWishes = (await store.openWishes([userId])).sort((a, b) => a.at - b.at);
+  const theirWishes = (await store.openWishes(links.friends)).filter(standing).sort((a, b) => b.at - a.at);
   const taken = new Set([userId, ...links.friends, ...links.incoming.map((r) => r.id), ...links.outgoing.map((r) => r.id)]);
   const ids = [...new Set([...taken, ...messages.map((m) => m.fromId)])].filter((id) => id !== userId);
   const rows = new Map((await store.profilesOf(ids)).map((r) => [r.userId, r]));
@@ -316,19 +430,35 @@ async function snapshotFor(store: SocialStore, userId: string, now: number): Pro
     FRIENDS.max - friends.length - outgoing.length,
   );
   const inbox = present(await Promise.all([...messages].sort((a, b) => b.at - a.at || a.id.localeCompare(b.id)).map(async (m) => {
-    const row = view(m.fromId);
+    // A wish that expired is the player's own news: it comes from them.
+    const row = m.fromId === userId ? me : view(m.fromId);
     if (row === undefined) return null;
     const expiresAt = m.state === 'pending' ? m.at + FRIENDS.requestHours * HOUR : m.at + FRIENDS.messageDays * DAY;
-    return { id: m.id, kind: m.kind, from: await viewOf(store, row), at: m.at, readAt: m.readAt, state: m.state, expiresAt };
+    return {
+      id: m.id, kind: m.kind, from: await viewOf(store, row), at: m.at, readAt: m.readAt, state: m.state, expiresAt,
+      ...(m.lots ? { lots: m.lots } : {}),
+    };
   })));
+  const mine = await viewOf(store, me);
+  const wishView = async (w: WishRow) => {
+    const row = w.userId === userId ? me : view(w.userId);
+    return row === undefined ? null : {
+      id: w.id, owner: w.userId === userId ? mine : await viewOf(store, row), need: w.need, give: w.give,
+      at: w.at, expiresAt: w.at + TRADE.wishHours * HOUR,
+    };
+  };
   return {
     at: now,
-    me: await viewOf(store, me),
+    me: mine,
     friends,
     incoming,
     outgoing,
     suggestions: room > 0 ? await suggest(store, me, taken, now, room) : [],
     inbox,
+    wishes: present(await Promise.all(myWishes.map(wishView))),
+    friendWishes: present(await Promise.all(theirWishes.map(wishView))),
+    fillsLeft: Math.max(0, TRADE.fillsPerDay - await store.fillsSince(userId, now - DAY)),
+    deliveries: (await store.deliveriesOf(userId)).sort((a, b) => a.seq - b.seq).map((d) => ({ seq: d.seq, lot: d.lot, why: d.why })),
   };
 }
 
@@ -381,9 +511,16 @@ export interface SocialTables {
   boards: Record<string, string>;
   /** Each player's Inbox, by message id. */
   messages: Record<string, Record<string, MessageRow>>;
+  /** Every wish, by id. */
+  wishes?: Record<string, WishRow>;
+  /** Goods owed, by player; `seq` counts across all of them. */
+  deliveries?: Record<string, DeliveryRow[]>;
+  seq?: number;
 }
 
-export const emptyTables = (): SocialTables => ({ profiles: {}, requests: {}, friendships: {}, boards: {}, messages: {} });
+export const emptyTables = (): SocialTables => ({
+  profiles: {}, requests: {}, friendships: {}, boards: {}, messages: {}, wishes: {}, deliveries: {}, seq: 0,
+});
 
 /** A store over tables in memory. */
 export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { tables: SocialTables } {
@@ -463,6 +600,28 @@ export function memorySocial(t: SocialTables = emptyTables()): SocialStore & { t
     async dropMessages(id, ids) {
       const box = (t.messages ??= {})[id];
       if (box !== undefined) for (const m of ids) delete box[m];
+    },
+    async openWishes(ids) {
+      return Object.values(t.wishes ??= {}).filter((w) => w.state === 'open' && ids.includes(w.userId)).map((w) => ({ ...w }));
+    },
+    async addWish(row) { (t.wishes ??= {})[row.id] = { ...row }; },
+    async closeWish(id, end) {
+      const w = (t.wishes ??= {})[id];
+      if (w === undefined || w.state !== 'open') return null;
+      Object.assign(w, end);
+      return { ...w };
+    },
+    async fillsSince(id, since) {
+      return Object.values(t.wishes ??= {}).filter((w) => w.filledBy === id && (w.filledAt ?? 0) > since).length;
+    },
+    async deliver(id, lot, why) {
+      t.seq = (t.seq ?? 0) + 1;
+      ((t.deliveries ??= {})[id] ??= []).push({ userId: id, seq: t.seq, lot, why });
+    },
+    async deliveriesOf(id) { return ((t.deliveries ??= {})[id] ?? []).map((d) => ({ ...d })); },
+    async dropDeliveries(id, upTo) {
+      const box = (t.deliveries ??= {})[id];
+      if (box !== undefined) t.deliveries[id] = box.filter((d) => d.seq > upTo);
     },
   };
 }

@@ -55,10 +55,8 @@ import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { renderArmySheet } from './ui/world/armySheet';
-import { renderExchangeSheet } from './ui/world/exchangeSheet';
 import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
-import { mountExchangeChip } from './ui/world/exchangeChip';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
@@ -66,6 +64,7 @@ import { RemoteWorldServer } from './worldServer/remote';
 import { renderNicknameSheet } from './ui/world/nicknameSheet';
 import { renderCrestEditor } from './ui/friends/crestEditor';
 import { renderFriendSearch } from './ui/friends/friendSearch';
+import { renderWishFilled, renderWishGive, renderWishNeed } from './ui/friends/wishSheets';
 import { renderFriendProfile, renderFriendsSheet } from './ui/friends/friendsSheet';
 import { LocalSocialServer, LOCAL_SOCIAL_KEY, browserSocialStore } from './socialServer/local';
 import { RemoteSocialServer } from './socialServer/remote';
@@ -261,7 +260,6 @@ async function boot(): Promise<void> {
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
-  mountExchangeChip(game, document.getElementById('worldtrade')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -312,7 +310,6 @@ async function boot(): Promise<void> {
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
     army: renderArmySheet,
-    exchange: renderExchangeSheet,
     delve: renderDelveScreen,
     builder: renderBuilderSheet,
     survey: renderSurveySheet,
@@ -324,6 +321,9 @@ async function boot(): Promise<void> {
     friendProfile: renderFriendProfile,
     crestEditor: renderCrestEditor,
     friendSearch: renderFriendSearch,
+    wishNeed: renderWishNeed,
+    wishGive: renderWishGive,
+    wishFilled: renderWishFilled,
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
@@ -440,7 +440,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'relic', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch',
+        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch', 'wishNeed', 'wishGive', 'wishFilled',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {

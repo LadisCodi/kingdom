@@ -90,6 +90,8 @@ Every event is one row:
 | `crest_changed` | `tincture`, `charge` |
 | `friend_request` · `friend_accept` · `friend_decline` · `friend_remove` | — (only those that took); `from: 'search'` on a request from the search popup |
 | `inbox_cleared` | — |
+| `wish_pinned` · `wish_filled` | `need`, `give` (lot keys: `m:Starmetal`, `f:<relic>:<slot>`) |
+| `friend_withdrawWish` | — |
 
 ### 3.4 The store
 

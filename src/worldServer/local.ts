@@ -17,7 +17,7 @@ import {
 } from './handle';
 import { normalNickname } from './nickname';
 import type {
-  CollectResult, CommandResult, DelveResult, Lot, SeatBoost, SendResult, ServerWorld, TradeResult,
+  CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerWorld,
   WorldSnapshot,
 } from './types';
 
@@ -36,15 +36,10 @@ export interface WorldServerApi {
   upgrade(index: number, what: WorldUpgrade, asSeat?: number): Promise<CommandResult>;
   /** Pay a camp off — the tribute paid by the client (19 §5.4). */
   tribute(index: number, asSeat?: number): Promise<CommandResult>;
-  /** The Exchange (19 §7.5): the client pays what it gives, and is handed
-   *  what it receives. */
-  postOffer(give: Lot, want: Lot, asSeat?: number): Promise<TradeResult>;
   /** Repair a district a camp burnt (19 §5.5); the client pays. */
   repair(index: number, asSeat?: number): Promise<CommandResult>;
   /** Tell the server which lurking camps the player has now seen. */
   reportSeen(indices: number[]): Promise<CommandResult>;
-  takeOffer(offerId: string, asSeat?: number): Promise<TradeResult>;
-  withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult>;
   /** Finish a builder's work on a hex now — paid for by the client. */
   finish(index: number, asSeat?: number): Promise<CommandResult>;
   /** Take `seconds` off a builder's work on a hex — a speed-up, paid for by
@@ -192,18 +187,6 @@ export class LocalWorldServer implements WorldServerApi {
 
   async reportSeen(indices: number[]): Promise<CommandResult> {
     return this.ask({ kind: 'reportSeen', indices });
-  }
-
-  async postOffer(give: Lot, want: Lot, asSeat?: number): Promise<TradeResult> {
-    return this.ask({ kind: 'postOffer', give, want }, asSeat);
-  }
-
-  async takeOffer(offerId: string, asSeat?: number): Promise<TradeResult> {
-    return this.ask({ kind: 'takeOffer', offerId }, asSeat);
-  }
-
-  async withdrawOffer(offerId: string, asSeat?: number): Promise<TradeResult> {
-    return this.ask({ kind: 'withdrawOffer', offerId }, asSeat);
   }
 
   async finish(index: number, asSeat?: number): Promise<CommandResult> {
