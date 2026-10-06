@@ -8,7 +8,7 @@ import { gemsToFinish } from '../src/sim/rush';
 import { ascensionStardustCost } from '../src/sim/heroes';
 import { claimGold, floorReward, roomReward } from '../src/worldServer/core';
 import type { DistrictId } from '../src/sim/state';
-import { tierCost, xpLevelCost } from '../src/sim/heroLadder';
+import { ascensionFragmentCost, maxAscension, xpLevelCost } from '../src/sim/heroLadder';
 
 describe('a calculated number is rounded to what a player can read back', () => {
   it('keeps three significant figures, and a whole number below 1,000', () => {
@@ -42,9 +42,9 @@ describe('the curves pay and charge round numbers', () => {
     for (let p = 0; p < 300; p++) expect(isRound(populationCost(p)), `population ${p}`).toBe(true);
     for (let h = 0; h < 40; h++) expect(isRound(claimGold(h)), `claim ${h}`).toBe(true);
     for (let s = 0; s < 400_000; s += 997) expect(isRound(gemsToFinish(s)), `rush ${s}`).toBe(true);
-    for (let t = 1; t <= HERO_LADDER.maxTier; t++) {
-      expect(isRound(ascensionStardustCost(t)), `ascension ${t}`).toBe(true);
-      expect(isRound(tierCost(t)), `tier ${t}`).toBe(true);
+    for (let a = 0; a < maxAscension(); a++) {
+      expect(isRound(ascensionStardustCost(a)), `ascension ${a}`).toBe(true);
+      expect(isRound(ascensionFragmentCost(a)), `fragments ${a}`).toBe(true);
     }
     for (let l = 1; l <= HERO_LADDER.heroMaxLevel; l++) expect(isRound(xpLevelCost(l)), `xp ${l}`).toBe(true);
   });

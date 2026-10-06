@@ -9,9 +9,11 @@ import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
   ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, levelUpHero,
-  ownsHeroId, pull, raiseHeroTier, unlockHero,
+  ascendHero, ownsHeroId, pull, unlockHero,
 } from '../src/sim/heroes';
-import { heroLevelCapForTier, xpLevelCost } from '../src/sim/heroLadder';
+import {
+  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
+} from '../src/sim/heroLadder';
 import type { PullResult } from '../src/sim/heroes';
 import { HERO_LADDER } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
@@ -44,8 +46,8 @@ describe('fragments are the second door to a hero', () => {
     // The overflow survives, so a player sitting on twelve starts two along
     // the ascension ladder rather than back at zero.
     expect(state.heroes.fragments.Bard).toBe(2);
-    // Unlocking is NOT an ascension: the whole tier ladder is still ahead.
-    expect(state.heroes.tiers.Bard).toBe(1);
+    // Unlocking is NOT an ascension: every star is still empty.
+    expect(state.heroes.ascension.Bard).toBe(0);
     expect(state.heroes.levels.Bard).toBe(1);
   });
 
@@ -64,10 +66,8 @@ describe('fragments are the second door to a hero', () => {
     expect(state.heroes.fragments.Bard).toBe(99);
   });
 
-  it('prices the unlock at the ladder\'s own base rung', () => {
-    // The number the card shows and the number the first ascension asks for
-    // are deliberately the same one, so the player learns it once.
-    expect(heroUnlockCost()).toBe(HERO_LADDER.fragmentsPerTierBase);
+  it('prices the unlock at its own authored number', () => {
+    expect(heroUnlockCost()).toBe(HERO_LADDER.recruitFragments);
   });
 
   // The property the whole design turns on: a hero the banner never offers is
@@ -185,27 +185,48 @@ describe('an ascension asks two prices', () => {
     const state = armed();
     addToWallet(state.kingdom.wallet, 'Stardust', 1000);
 
-    expect(raiseHeroTier(state, 'Bard')).toBe('Raised');
+    expect(ascendHero(state, 'Bard')).toBe('Ascended');
 
-    expect(state.heroes.tiers.Bard).toBe(2);
-    expect(state.heroes.fragments.Bard).toBe(999 - 10);
-    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - ascensionStardustCost(1));
+    expect(state.heroes.ascension.Bard).toBe(1);
+    expect(state.heroes.fragments.Bard).toBe(999 - ascensionFragmentCost(0));
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - ascensionStardustCost(0));
   });
 
   it('refuses without the Stardust, and takes nothing when it refuses', () => {
     const state = armed();
-    addToWallet(state.kingdom.wallet, 'Stardust', ascensionStardustCost(1) - 1);
+    addToWallet(state.kingdom.wallet, 'Stardust', ascensionStardustCost(0) - 1);
 
-    expect(raiseHeroTier(state, 'Bard')).toBe('NotEnoughStardust');
+    expect(ascendHero(state, 'Bard')).toBe('NotEnoughStardust');
 
     // The fragments are still there: a half-paid ascension would eat them.
     expect(state.heroes.fragments.Bard).toBe(999);
-    expect(state.heroes.tiers.Bard).toBe(1);
+    expect(state.heroes.ascension.Bard).toBe(0);
   });
 
-  it('costs 750 Stardust to carry one hero to the top', () => {
-    const total = [1, 2, 3, 4].reduce((n, tier) => n + ascensionStardustCost(tier), 0);
-    expect(total).toBe(750);
+  it('prices every point of a star alike, and each star twice the last', () => {
+    const per = HERO_LADDER.ascensionStepsPerStar;
+    for (let a = 0; a < per; a++) expect(ascensionStardustCost(a)).toBe(ascensionStardustCost(0));
+    expect(ascensionStardustCost(per)).toBe(ascensionStardustCost(0) * 2);
+    expect(ascensionFragmentCost(per)).toBe(ascensionFragmentCost(0) * 2);
+  });
+
+  it('carries one hero to the top for 744 Stardust and 186 fragments', () => {
+    let dust = 0;
+    let frags = 0;
+    for (let a = 0; a < maxAscension(); a++) {
+      dust += ascensionStardustCost(a);
+      frags += ascensionFragmentCost(a);
+    }
+    expect(maxAscension()).toBe(30);
+    expect(dust).toBe(744);
+    expect(frags).toBe(186);
+  });
+
+  it('stops at the last point of the last star', () => {
+    const state = armed();
+    addToWallet(state.kingdom.wallet, 'Stardust', 10_000);
+    state.heroes.ascension.Bard = maxAscension();
+    expect(ascendHero(state, 'Bard')).toBe('AtMaxAscension');
   });
 });
 
@@ -235,27 +256,39 @@ describe('a level costs Hero XP', () => {
     expect(state.heroes.levels.Bard).toBe(1);
   });
 
-  it('still refuses at the tier cap, before it looks at the purse', () => {
+  it('still refuses at the ascension cap, before it looks at the purse', () => {
     const state = freshGame();
     grantHero(state, 'Bard');
-    // Derived, not typed in: a hero's ascension is worth ten levels and the
-    // number has already moved once.
-    state.heroes.levels.Bard = heroLevelCapForTier(1);
+    // Derived, not typed in: the cap is data and has already moved twice.
+    state.heroes.levels.Bard = heroLevelCap(0);
     addToWallet(state.kingdom.wallet, 'HeroXp', 999_999);
 
-    expect(levelUpHero(state, 'Bard')).toBe('TierCapped');
+    expect(levelUpHero(state, 'Bard')).toBe('AscensionCapped');
     expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(999_999);
   });
 });
 
-// Ten levels an ascension, fifty in all — a hero's ladder is five times a
-// relic's, because the collection arc is spent on the roster and an ascension
-// worth two levels is not worth chasing (Docs/features/10-heroes.md §4).
-describe('a hero ascension is worth ten levels', () => {
-  it('caps each tier ten levels above the last, and fifty at the top', () => {
-    expect(heroLevelCapForTier(1)).toBe(10);
-    expect(heroLevelCapForTier(2)).toBe(20);
-    expect(heroLevelCapForTier(HERO_LADDER.maxTier)).toBe(50);
+// A full star is worth eight levels and a point of one is worth none: the
+// cap climbs 10, 18, 26, 34, 42, 50 (Docs/features/10-heroes.md §4).
+describe('a full star raises the level cap', () => {
+  it('caps at ten with no star, eight more a star, and fifty at the top', () => {
+    const per = HERO_LADDER.ascensionStepsPerStar;
+    expect(heroLevelCap(0)).toBe(10);
+    expect(heroLevelCap(per - 1)).toBe(10);
+    expect(heroLevelCap(per)).toBe(18);
+    expect(fullStars(per * 2 + 3)).toBe(2);
+    expect(heroLevelCap(maxAscension())).toBe(50);
+  });
+
+  it('holds the level at the cap until the star is finished', () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    addToWallet(state.kingdom.wallet, 'HeroXp', 1_000_000);
+    state.heroes.levels.Bard = 10;
+    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar - 1;
+    expect(levelUpHero(state, 'Bard')).toBe('AscensionCapped');
+    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar;
+    expect(levelUpHero(state, 'Bard')).toBe('Levelled');
   });
 
   it('keeps the XP curve payable over fifty levels', () => {

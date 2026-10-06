@@ -1,0 +1,28 @@
+/* A hero's ascension stars (ui/ascensionStars.ts): the empty wooden socket,
+   and the gold star over it uncovered one petal a point, clockwise from the
+   top. The size is the parent's: set --asc-size. */
+.asc-stars {
+  --asc-size: calc(var(--px) * 24);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--asc-size) * 0.04);
+}
+.asc-star {
+  position: relative;
+  flex: none;
+  width: var(--asc-size);
+  height: var(--asc-size);
+  background: url('../../assets/ascension-star-empty.png') center / contain no-repeat;
+}
+.asc-star::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/ascension-star-lit.png') center / contain no-repeat;
+  --asc-wedge: calc(360deg / var(--asc-steps));
+  --asc-mask: conic-gradient(from calc(var(--asc-wedge) / -2),
+    #000 calc(var(--asc-points) * var(--asc-wedge)), transparent 0);
+  -webkit-mask: var(--asc-mask);
+  mask: var(--asc-mask);
+}
+.asc-star.is-full::after { -webkit-mask: none; mask: none; }

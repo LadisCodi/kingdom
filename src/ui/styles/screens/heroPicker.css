@@ -99,9 +99,7 @@ button.hc { cursor: pointer; }
   color: var(--ink-inverse);
   font-weight: var(--weight-title);
 }
-.hc-stars { display: inline-flex; gap: 0; filter: drop-shadow(0 calc(var(--hc-w) * 0.006) calc(var(--hc-w) * 0.008) rgba(20, 10, 4, 0.8)); }
-.hc-stars .icon { --icon-size: calc(var(--hc-w) * 0.11); }
-.hc-stars .icon.is-locked { opacity: 0.55; }
+.hc-stars { --asc-size: calc(var(--hc-w) * 0.13); gap: 0; filter: drop-shadow(0 calc(var(--hc-w) * 0.006) calc(var(--hc-w) * 0.008) rgba(20, 10, 4, 0.8)); }
 /* The level, in the dark glass pill (hero-level-pill.png, three-sliced). */
 .hc-level,
 .hc-foot > .k-rest-left {
