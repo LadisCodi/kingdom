@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "fields": {
+    "friends": {
+      "type": "object",
+      "doc": "The friends list (Docs/features/15-social.md §2.1). The milestone lists are parallel: one entry a milestone; their length IS the reward path.",
+      "fields": {
+        "max": { "type": "int", "min": 1, "doc": "How many friends a player may have." },
+        "maxSent": {
+          "type": "int",
+          "min": 1,
+          "doc": "How many friend requests a player may have waiting for an answer at once."
+        },
+        "countsFromTownhall": {
+          "type": "int",
+          "min": 1,
+          "doc": "The Townhall level a friend must have reached to count toward the rewards."
+        },
+        "suggestions": { "type": "int", "min": 0, "doc": "How many suggested kingdoms the requests panel offers." },
+        "milestones": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "doc": "Friends who count, for each reward on the path, rising."
+        },
+        "gems": { "type": "list", "of": { "type": "int", "min": 0 }, "doc": "Gems each milestone pays." },
+        "items": {
+          "type": "list",
+          "of": { "type": "text", "ref": "item", "emptyOk": true },
+          "doc": "An item each milestone puts in the Bag, or empty for none."
+        }
+      }
+    }
+  }
+}
