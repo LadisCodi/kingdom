@@ -204,6 +204,8 @@ export type OverlayName =
   | 'knowledge'
   // Choosing heroes for n slots, from whatever asked (`openHeroPicker`).
   | 'heroPicker'
+  // Choosing the city relic a Shrine holds (`openRelicPicker`), over its card.
+  | 'relicPicker'
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
   | 'world'
@@ -522,6 +524,9 @@ export class Game {
   partyHeroes: HeroId[] = [];
   /** The hero picker, while it is open (`openHeroPicker`). */
   heroPick: HeroPick | null = null;
+  /** The relic picker, while it is open (`openRelicPicker`): the Shrine it
+   *  chooses for, and the one slot as it stands — null is empty. */
+  relicPick: { shrineId: string; slot: ArtifactId | null } | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -3855,6 +3860,77 @@ export class Game {
     this.notify();
   }
 
+  // ----------------------------------------------------------- relic picker
+
+  /**
+   * OPEN THE RELIC PICKER for a Shrine, over its card — the hero picker's
+   * flow (`openHeroPicker`): the restored city relics as cards, the Shrine's
+   * one slot fixed under them, and Select. A tap on a relic seats it, a tap
+   * on the filled slot empties it, and closing without Select changes
+   * nothing.
+   */
+  openRelicPicker(shrineId: string): void {
+    const shrine = shrines(this.state).find((d) => d.uniqueId === shrineId);
+    if (shrine === undefined) return;
+    this.relicPick = { shrineId, slot: shrine.hosts ?? null };
+    playSfx('click');
+    this.setOverlay('relicPicker');
+  }
+
+  /** The relics the picker offers: every restored city relic, in order. */
+  relicPickList(): RelicView[] {
+    return ARTIFACT_ORDER
+      .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1)
+      .map((id) => this.relicCard(id));
+  }
+
+  /** Where a relic is now, for its card in the picker: its Shrine's name,
+   *  or null in the Bag. */
+  relicPickWhere(id: ArtifactId): string | null {
+    return this.hostLabel(id);
+  }
+
+  /** A TAP ON A RELIC: into the slot, or out of it if it is the one there. */
+  relicPickToggle(id: ArtifactId): void {
+    if (this.relicPick === null) return;
+    this.relicPick.slot = this.relicPick.slot === id ? null : id;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** A tap on the filled slot empties it. */
+  relicPickClear(): void {
+    if (this.relicPick === null || this.relicPick.slot === null) return;
+    this.relicPick.slot = null;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** SELECT: the Shrine holds what the slot holds — hosted, swapped or taken
+   *  out — and its card comes back. */
+  relicPickConfirm(): void {
+    const pick = this.relicPick;
+    if (pick === null) return;
+    this.relicPick = null;
+    this.setOverlay(null);
+    const shrine = shrines(this.state).find((d) => d.uniqueId === pick.shrineId);
+    this.inspectedDistrictId = pick.shrineId;
+    if (shrine !== undefined && shrine.hosts !== (pick.slot ?? undefined)) {
+      if (pick.slot !== null) this.doHostRelic(pick.slot, pick.shrineId);
+      else if (shrine.hosts !== undefined) this.doUnhostRelic(shrine.hosts);
+    }
+    this.notify();
+  }
+
+  /** The window's close: nothing changes, and the Shrine's card comes back. */
+  relicPickCancel(): void {
+    const pick = this.relicPick;
+    this.relicPick = null;
+    this.setOverlay(null);
+    if (pick !== null) this.inspectedDistrictId = pick.shrineId;
+    this.notify();
+  }
+
   // ------------------------------------------------------------ hero picker
 
   /**
@@ -4280,7 +4356,7 @@ export class Game {
     this.openOverlay = name;
     // The picker and the shortfall are sheets over the card they were opened
     // from: the card stays.
-    if (name !== null && name !== 'speedup' && name !== 'shortfall') {
+    if (name !== null && name !== 'speedup' && name !== 'shortfall' && name !== 'relicPicker') {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }

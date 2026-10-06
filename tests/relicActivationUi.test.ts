@@ -100,3 +100,41 @@ describe('the relic activation on screen', () => {
     expect(a.readyInMs).toBe(Math.ceil((15 / a.regenPerHour) * 3_600_000));
   });
 });
+
+// THE RELIC PICKER: the hero picker's flow, one slot, over the Shrine's card.
+describe('choosing a Shrine\'s relic', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('seats a relic, swaps it, and leaves the card open under it', () => {
+    const { state, game } = crowned();
+    state.artifacts.levels.ForemansSigil = 1;
+    game.inspectedDistrictId = 'shrine_a';
+    game.openRelicPicker('shrine_a');
+    expect(game.openOverlay).toBe('relicPicker');
+    expect(game.inspectedDistrictId).toBe('shrine_a');
+    expect(game.relicPick?.slot).toBe('GildedLedger');
+    expect(game.relicPickList().map((v) => v.id)).toEqual(['ForemansSigil', 'GildedLedger']);
+    game.relicPickToggle('ForemansSigil');
+    game.relicPickConfirm();
+    expect(game.openOverlay).toBeNull();
+    expect(game.inspectedDistrictId).toBe('shrine_a');
+    expect(state.city.districts.find((d) => d.uniqueId === 'shrine_a')!.hosts).toBe('ForemansSigil');
+  });
+
+  it('takes the relic out when the slot is emptied, and changes nothing on close', () => {
+    const { state, game } = crowned();
+    const shrine = () => state.city.districts.find((d) => d.uniqueId === 'shrine_a')!;
+    game.openRelicPicker('shrine_a');
+    game.relicPickClear();
+    game.relicPickCancel();
+    expect(shrine().hosts).toBe('GildedLedger');
+    game.openRelicPicker('shrine_a');
+    game.relicPickClear();
+    game.relicPickConfirm();
+    expect(shrine().hosts).toBeUndefined();
+  });
+});
