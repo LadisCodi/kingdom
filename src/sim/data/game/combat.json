@@ -9,7 +9,7 @@
   },
   "combat": {
     "tickMs": 100,
-    "timeoutTicks": 600,
+    "timeoutTicks": 1800,
     "typeAdvantageNum": 3,
     "typeAdvantageDen": 2,
     "typeDisadvantageNum": 3,
@@ -19,7 +19,7 @@
     "genVillainThreshold": 400,
     "genVillainShare": 0.3,
     "genVillainSlots": 3,
-    "heroPowerPerDmg": 0.5
+    "heroPowerPerDmg": 1.67
   },
   "party": {
     "troopSlots": 6,

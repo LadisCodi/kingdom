@@ -4,9 +4,9 @@
     "glyph": "💀",
     "sprite": "villain_barrow_thane",
     "unitType": "Warrior",
-    "dmg": 120,
+    "dmg": 36,
     "def": 3,
-    "hp": 520,
+    "hp": 1560,
     "cooldown": 12,
     "troopDmgMult": 1.1,
     "troopHpMult": 1.05,
@@ -14,16 +14,16 @@
     "power": 60,
     "skill": "Mend",
     "skillValue": 12,
-    "skillEvery": 1.8
+    "skillEvery": 4.5
   },
   "DrownedChoir": {
     "name": "Drowned Choir",
     "glyph": "🎶",
     "sprite": "villain_drowned_choir",
     "unitType": "Archer",
-    "dmg": 150,
+    "dmg": 45,
     "def": 1,
-    "hp": 320,
+    "hp": 960,
     "cooldown": 12,
     "troopDmgMult": 1.15,
     "troopHpMult": 1,
@@ -31,16 +31,16 @@
     "power": 75,
     "skill": "Volley",
     "skillValue": 30,
-    "skillEvery": 1.8
+    "skillEvery": 4.5
   },
   "SlagWarden": {
     "name": "Slag Warden",
     "glyph": "🔥",
     "sprite": "villain_slag_warden",
     "unitType": "Lancer",
-    "dmg": 180,
+    "dmg": 54,
     "def": 2,
-    "hp": 600,
+    "hp": 1800,
     "cooldown": 13,
     "troopDmgMult": 1.1,
     "troopHpMult": 1.1,
@@ -55,9 +55,9 @@
     "glyph": "📕",
     "sprite": "villain_ledger_keeper",
     "unitType": "Cavalry",
-    "dmg": 260,
+    "dmg": 78,
     "def": 2,
-    "hp": 700,
+    "hp": 2100,
     "cooldown": 14,
     "troopDmgMult": 1.2,
     "troopHpMult": 1.05,
@@ -65,16 +65,16 @@
     "power": 130,
     "skill": "Daze",
     "skillValue": 1.5,
-    "skillEvery": 1.4
+    "skillEvery": 3.5
   },
   "StarSeer": {
     "name": "The Star Seer",
     "glyph": "🌠",
     "sprite": "villain_star_seer",
     "unitType": "Archer",
-    "dmg": 320,
+    "dmg": 96,
     "def": 2,
-    "hp": 820,
+    "hp": 2460,
     "cooldown": 12,
     "troopDmgMult": 1.25,
     "troopHpMult": 1.15,
@@ -82,6 +82,6 @@
     "power": 160,
     "skill": "Crush",
     "skillValue": 140,
-    "skillEvery": 1.4
+    "skillEvery": 3.5
   }
 }

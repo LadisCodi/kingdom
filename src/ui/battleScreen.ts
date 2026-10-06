@@ -142,6 +142,23 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     };
     paintBar();
 
+    // THE CLOCK'S TWO KNOBS: twice the speed (kept for the next fight), and
+    // straight to the end. A fight lasts tens of seconds, a dungeon has many.
+    const speed = el('button', { class: 'bs-knob', type: 'button', 'aria-label': 'Play faster' });
+    const paintSpeed = (): void => {
+      const fast = (game.battle?.speed ?? 1) > 1;
+      speed.textContent = fast ? '×1' : '×2';
+      speed.setAttribute('aria-pressed', fast ? 'true' : 'false');
+    };
+    speed.addEventListener('click', () => {
+      game.setBattleSpeed((game.battle?.speed ?? 1) > 1 ? 1 : 2);
+      paintSpeed();
+    });
+    paintSpeed();
+    const skip = el('button', { class: 'bs-knob', type: 'button' }, 'Skip');
+    skip.addEventListener('click', () => game.skipBattle());
+    const knobs = el('div', { class: 'bs-knobs' }, speed, skip);
+
     const plaque = el('div', { class: 'bs-plaque is-hidden' });
     const exit = el('div', { class: 'bs-exit is-hidden' },
       btn({ label: 'Leave the field', kind: 'primary', onClick: () => game.dismissBattle() }));
@@ -150,6 +167,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       el('div', { class: 'bs-where' },
         el('b', {}, playback.title),
         el('span', {}, playback.subtitle)),
+      knobs,
       el('div', { class: 'bs-board' }, ...theirs.rows, el('div', { class: 'bs-gap' }), ...ours.rows),
       plaque,
       exit,
@@ -238,6 +256,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       game.advanceBattle(game.now());
       const phase = game.battle?.phase;
       if (phase === undefined) return;
+      if (phase !== 'playing') knobs.classList.add('is-hidden');
       if (phase !== 'playing' && plaque.classList.contains('is-hidden')) {
         plaque.classList.remove('is-hidden');
         plaque.classList.add(log.winner === 'ours' ? 'is-won' : 'is-lost');

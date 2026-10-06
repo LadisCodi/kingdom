@@ -49,8 +49,10 @@ describe('the damage formula', () => {
     const log = resolveBattle(ours, theirs);
     const first = attacks(log.events)[0]!;
     expect(first.from).toEqual({ side: 'ours', id: 0 });
-    expect(first.hits).toBe(50); // frontage, not the hundred standing there
-    expect(first.dealt).toBe(Math.floor((50 * (8 - 1) * 3) / 4)); // 262
+    const front = UNITS.Warrior.frontage;
+    expect(front).toBeLessThan(100);
+    expect(first.hits).toBe(front); // frontage, not the hundred standing there
+    expect(first.dealt).toBe(Math.floor((front * (UNITS.Warrior.dmg - UNITS.Archer.def) * 3) / 4));
   });
 
   it('never lets defence take a swing below one a troop', () => {
@@ -70,10 +72,12 @@ describe('the damage formula', () => {
     const lost = log.events.find((e) => e.kind === 'troops_lost');
     expect(lost?.kind).toBe('troops_lost');
     if (lost?.kind !== 'troops_lost') return;
-    // 50 hits × (8 − 3) = 250 off a 2,000-point pool: 1,750 left, and
-    // `ceil(1750 / 20)` = 88 still standing.
-    expect(lost.hpPool).toBe(1750);
-    expect(lost.alive).toBe(88);
+    // frontage hits × (dmg − def) off a pool of a hundred troops; the troops
+    // that are left are what the pool covers, rounded up.
+    const w = UNITS.Warrior;
+    const pool = 100 * w.hp - w.frontage * (w.dmg - w.def);
+    expect(lost.hpPool).toBe(pool);
+    expect(lost.alive).toBe(Math.ceil(pool / w.hp));
   });
 });
 

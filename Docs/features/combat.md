@@ -98,13 +98,23 @@ and the army cap; hero slots one free, the rest Gems
 
 | Unit | `squadSize` | `frontage` | `dmg` | `hp` | `def` | `cooldown` | `power` | Targeting |
 |---|---|---|---|---|---|---|---|---|
-| **Warrior** | 100 | 50 | 8 | 20 | 3 | 10 | 3 | Melee |
-| **Lancer** | 100 | 60 | 10 | 16 | 2 | 10 | 4 | Melee |
-| **Archer** | 80 | 80 | 7 | 10 | 1 | 12 | 4 | Ranged |
-| **Cavalry** | 60 | 30 | 22 | 24 | 2 | 15 | 7 | Flanker |
+| **Warrior** | 100 | 15 | 8 | 60 | 3 | 10 | 3 | Melee |
+| **Lancer** | 100 | 15 | 10 | 48 | 2 | 10 | 4 | Melee |
+| **Archer** | 80 | 20 | 7 | 30 | 1 | 12 | 4 | Ranged |
+| **Cavalry** | 60 | 8 | 22 | 72 | 2 | 15 | 7 | Flanker |
 
 `cooldown` is in ticks. `squadSize` and `frontage` are fixed constants at every
 tier.
+
+- **A fight lasts at least ten seconds**, a fair one fifteen to thirty, a
+  dungeon's boss room up to a minute and a half. Two dials hold it there:
+  - `hp` sets how many blows a soldier takes — the floor of a small fight;
+  - `frontage` is **small and fixed**, so a big squad strikes no harder than
+    a middling one: its extra troops are reserve that buys time.
+- Heroes and villains are scaled with them (10-heroes.md §2.3): health ×3,
+  damage ×0.3, so a hero stays a body worth a share of a squad.
+- The first lair, the Orcs, is the exception: ten orcs against the chain's
+  twenty-four Warriors last six to nine seconds.
 
 What one soldier costs to recruit (`units.recruitCost`), Gold first because
 Gold is what an army is mostly paid in:
@@ -248,7 +258,7 @@ as ticks.
 - Per tick, in ascending slot order — attacker side first, then defender:
   decrement countdowns; every slot reaching 0 attacks and resets.
 - **Victory:** all enemy slots at 0 → that side wins.
-- **Timeout: 600 ticks.** The **defender** wins. In PvE the player is always the
+- **Timeout: 1,800 ticks** (three minutes). The **defender** wins. In PvE the player is always the
   attacker. There are no draws.
 
 ## 11. Enemy generation

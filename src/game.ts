@@ -500,10 +500,18 @@ export interface BattlePlayback {
   /** What the ENEMY's troops look like, by type: a lair fields creatures,
    *  not the player's own soldiers. Absent, both sides wear the unit busts. */
   enemyFaces?: Partial<Record<UnitId, string>>;
-  /** Wall clock at the first tick — everything else is derived from it. */
+  /** Wall clock at the first tick. */
   startedAt: number;
+  /** THE PLAYBACK'S CLOCK, which a speed change rebases: the fight's own
+   *  milliseconds at `clockAt`, running `speed` times as fast after it. */
+  clockAt: number;
+  clockMs: number;
+  speed: number;
   phase: 'playing' | 'result' | 'rewards' | 'done';
 }
+
+/** The fight's own milliseconds a playback has reached at `now`. */
+const playbackMs = (b: BattlePlayback, now: number): number => b.clockMs + (now - b.clockAt) * b.speed;
 
 /** How long the plaque waits after the last blow. */
 export const BATTLE_RESULT_DELAY_MS = 2000;
@@ -4497,8 +4505,36 @@ export class Game {
       prizes: about.prizes,
       enemyFaces: about.enemyFaces,
       startedAt: this.now(),
+      clockAt: this.now(),
+      clockMs: 0,
+      speed: this.battleSpeed,
       phase: 'playing',
     };
+  }
+
+  /** How fast the playback runs, kept for the next fight: a player who
+   *  watches at ×2 wants the next at ×2 too. A screen preference, not state. */
+  battleSpeed = 1;
+
+  /** Play the fight at `speed` from here, or jump to its end. */
+  setBattleSpeed(speed: number): void {
+    const b = this.battle;
+    this.battleSpeed = speed;
+    if (b === null) return;
+    const now = this.now();
+    b.clockMs = playbackMs(b, now);
+    b.clockAt = now;
+    b.speed = speed;
+    this.notify();
+  }
+
+  skipBattle(): void {
+    const b = this.battle;
+    if (b === null || b.phase !== 'playing') return;
+    const now = this.now();
+    b.clockMs = b.log.ticks * COMBAT.tickMs;
+    b.clockAt = now;
+    this.advanceBattle(now);
   }
 
   /** Which tick of the fight the screen should be drawing at `now`. Past the
@@ -4506,7 +4542,7 @@ export class Game {
   battleTick(now: number): number {
     const b = this.battle;
     if (b === null) return 0;
-    return Math.min(b.log.ticks, Math.floor((now - b.startedAt) / COMBAT.tickMs));
+    return Math.min(b.log.ticks, Math.floor(playbackMs(b, now) / COMBAT.tickMs));
   }
 
   /**
@@ -4517,7 +4553,7 @@ export class Game {
   advanceBattle(now: number): void {
     const b = this.battle;
     if (b === null) return;
-    const elapsed = now - b.startedAt;
+    const elapsed = playbackMs(b, now);
     const fight = b.log.ticks * COMBAT.tickMs;
     let moved = false;
     // A LOOP, not a step: a frame the browser skipped, or a test that jumps

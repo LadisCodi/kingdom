@@ -1667,7 +1667,7 @@
       "tier": 2,
       "radius": 2,
       "sight": 3,
-      "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90 },
+      "guard": { "threat": "Archer", "power": 240, "warningMinutes": 90 },
       "flavour": "Anything that shines is theirs by morning. The market has learned to trade in the dark."
     },
     "Goblins": {
