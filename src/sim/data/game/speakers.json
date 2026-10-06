@@ -18,8 +18,8 @@
     "frame": "figure"
   },
   "villager": {
-    "name": "A villager",
-    "title": "Your first settler",
+    "name": "Tom Miller",
+    "title": "The Millers’ son, home from the road",
     "portrait": "portrait_villager",
     "frame": "figure"
   },
@@ -27,6 +27,12 @@
     "name": "Grukk",
     "title": "Orc warchief",
     "portrait": "portrait_grukk",
+    "frame": "figure"
+  },
+  "woodcutter": {
+    "name": "Old Hob",
+    "title": "The woodcutter who never left",
+    "portrait": "portrait_hob",
     "frame": "figure"
   }
 }

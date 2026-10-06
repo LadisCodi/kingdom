@@ -185,6 +185,7 @@
 .stg-name[data-speaker='cook'] { --ribbon: url('../../assets/ribbon-red.png'); }
 .stg-name[data-speaker='villager'] { --ribbon: url('../../assets/ribbon-brown.png'); }
 .stg-name[data-speaker='orcChief'] { --ribbon: url('../../assets/ribbon-crimson.png'); }
+.stg-name[data-speaker='woodcutter'] { --ribbon: url('../../assets/ribbon-brown.png'); }
 .stg-name.is-right { left: auto; right: calc(var(--px) * 22); }
 .stg-text {
   flex: 1;
