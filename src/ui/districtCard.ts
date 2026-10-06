@@ -32,7 +32,7 @@ import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
 import { statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
-import { spell } from './relicSheet';
+import { activation, relicArt } from './relicSheet';
 import { unitPortrait } from './unitArt';
 import type { IconName } from './kit/icon';
 import { LiveParts, type Screen } from './kit';
@@ -45,7 +45,7 @@ import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
 import { coach, el, formatDuration, formatExact, formatShort } from './format';
-import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, sectionHead, windowHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, restMarks, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -217,19 +217,17 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         // The relic on its plinth, dim while it sleeps and lit while it is
         // awake, beside its name and what it does (M82). How long a window
         // lasts here is the card's own "Relic awake for" tile.
-        const url = held === null ? null : spriteUrl(held.sprite);
         return el('div', { class: 'dc-shrine rl-page' },
           held === null
             ? el('div', { class: 'rl-line is-muted' }, iconEl('Shrine', { size: 'sm' }),
               el('span', {}, 'Empty — host a city relic, then activate it'))
             : el('div', { class: `dc-shrine-held is-${held.status}` },
-              el('span', { class: 'dc-shrine-plinth' }, url
-                ? spriteImgAt(url, 'dc-shrine-art')
-                : el('span', { class: 'dc-shrine-art is-glyph' }, held.glyph)),
+              el('span', { class: 'dc-shrine-plinth k-section' }, relicArt(held, 'dc-shrine-art'),
+                ...(held.status === 'asleep' ? [restMarks()] : [])),
               el('div', { class: 'dc-shrine-says' },
                 el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
                 el('span', {}, held.now))),
-          ...(held === null ? [] : [spell(game, held.id, held)].filter((x): x is HTMLElement => x !== null)),
+          ...(held === null ? [] : [activation(game, held.id)].filter((x): x is HTMLElement => x !== null)),
           ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
             el('div', { class: 'rl-forge' },
               ...view.candidates.map((c) => btn({

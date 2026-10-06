@@ -102,7 +102,7 @@ export function relicStatsAt(id: ArtifactId, level: number): RelicStat[] {
   // aura round its Shrine widens a ring at each step (sim/hosts.ts).
   if (ARTIFACTS[id].activation !== null) {
     const radius = auraRadiusAt(id, level);
-    out.push({ key: 'aura', icon: 'compass', label: 'Aura', value: `${radius} \u00b7 ${(2 * radius + 1) ** 2} cells` });
+    out.push({ key: 'aura', icon: 'compass', label: 'Aura', value: `${formatExact((2 * radius + 1) ** 2)} cells` });
   }
   return out;
 }
