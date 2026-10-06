@@ -198,6 +198,8 @@ function campBoard(b: ServerBoard, index: number): FightBoard {
   const camp = campAt(b, index)!;
   const plan = generateEnemy({
     seed: b.seed, parts: ['camp', index], budget: camp.power, affinity: LAIRS[camp.creature].guard.threat,
+    // A camp of a creature fields what its lair does.
+    ...(LAIRS[camp.creature].guard.mix ? { mix: LAIRS[camp.creature].guard.mix } : {}),
   });
   return buildBoard(plan.squads, plan.fighters);
 }

@@ -62,6 +62,10 @@ guard { threat, power, warningMinutes }
   time.
 - **The gate's `threat` is the ruin's affinity**, so the first fight teaches
   the matchup the whole ruin is built on.
+- **A `mix` makes an army of its own**: weights by unit type, the generator
+  spending the budget on those types alone, the heaviest first. Without one,
+  the threat takes the lion's share and the rest is split evenly. A world
+  camp of the same creature fields the same mix.
 - **Recommended `power`: below the ruin's `powerStart` at Depth 1.** The gate is
   easier than the first room, because it is the room the player is pushed
   into on a clock.
@@ -70,13 +74,13 @@ guard { threat, power, warningMinutes }
 - A ruin's **tier** keys the `garrisons` entries that are not per site: take seconds
   and gate supplies (§8).
 
-| Lair | Tier | `threat` | `power` | Warning |
-|---|---|---|---|---|
-| Orcs | 1 | Warrior | **45** | **30 min** |
-| Harpies | 2 | Archer | 180 | 90 min |
-| Goblins | 3 | Lancer | 440 | 120 min |
-| Wolf riders | 4 | Cavalry | 700 | 180 min |
-| Drake | 5 | Any | 1,000 | 240 min |
+| Lair | Tier | `threat` | `mix` | `power` | Warning |
+|---|---|---|---|---|---|
+| Orcs | 1 | Warrior | Warriors 4 · Lancers 1 | **60** | **30 min** |
+| Harpies | 2 | Archer | Archers 7 · Cavalry 3 | 300 | 90 min |
+| Goblins | 3 | Lancer | — | 440 | 120 min |
+| Wolf riders | 4 | Cavalry | — | 700 | 180 min |
+| Drake | 5 | Any | — | 1,000 | 240 min |
 
 - **`power` is a budget in troops' worth, and the count is what the player
   sees**: the generator spends it on each unit's `power`, so fifteen orcs is
@@ -135,9 +139,10 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - **What the player sees is what they fight.** The squads are derived from
   `guard` (§2) and their sum is the number the attempt is scored against, so
   the authored budget never appears on screen and never has to be trusted.
-- **Soldiers alone and a hero alone are both legal boards**; nobody at all
-  is refused. The first fight in the game is soldiers alone: it comes before
-  the Tavern, and the kingdom owns no hero until then.
+- **A lair wants soldiers**: soldiers alone, or soldiers with heroes. A hero
+  alone is refused (*A lair wants soldiers*), and so is nobody at all. The
+  first fight in the game is soldiers alone: it comes before the Tavern, and
+  the kingdom owns no hero until then.
 - **No hero is ever busy.** Every fight in the game resolves the instant it is
   entered, so a hero is never away and never unavailable
   ([`10-heroes.md`](10-heroes.md) §2.7).
@@ -166,15 +171,15 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - The first fight is **the Orcs: on the surface, the enemy in
   view, the outcome guaranteed by authoring.** It teaches the room sheet, the
   type chart and the board before Depth 1 adds the power ladder.
-- **Fifteen orcs is a company's job, not a hero's.** The chain musters
-  twenty-four soldiers one beat before it
+- **Twenty orcs is a company's job, not a hero's.** The chain musters
+  thirty soldiers one beat before it
   ([`12-quests.md`](12-quests.md) §2), so the fight is won by the army the
   onboarding just built and the hero that leads it — which is what makes the
   military block mean something.
 - Discovering the Orcs starts their thirty minutes, so the military block sits
   right after the reveal that finds it in the onboarding
   ([`12-quests.md`](12-quests.md) §2): Warrior → Barracks → first soldier →
-  **a company of twenty-four** → **`DriveThemOut`**.
+  **a company of thirty** → **`DriveThemOut`**.
 - Every later gate is the argument for the next hall, the next squad, the next
   tier.
 

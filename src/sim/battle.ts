@@ -56,6 +56,8 @@ export interface BoardSlot {
   /** Troops in the squad; 1 for a hero. */
   count: number;
   frontage: number;
+  /** Attack and Defence are ratings; `dmg` is what lands at an even pair (§7). */
+  atk: number;
   dmg: number;
   def: number;
   hpUnit: number;
@@ -119,6 +121,7 @@ export interface FighterSpec {
   id: string;
   name: string;
   type: UnitId;
+  atk: number;
   dmg: number;
   def: number;
   hp: number;
@@ -203,6 +206,7 @@ export function buildBoard(
       name: u.name,
       count: squad.count,
       frontage: u.frontage,
+      atk: u.atk,
       dmg: Math.max(1, Math.round(
         (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(squad.unitId) ?? 1) + rallyDmg))),
       def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0) + rallyDef,
@@ -227,6 +231,7 @@ export function buildBoard(
       name: f.name,
       count: 1,
       frontage: 1,
+      atk: Math.round(f.atk),
       dmg: f.dmg,
       def: f.def,
       hpUnit: f.hp,
@@ -244,6 +249,20 @@ export function buildBoard(
 const alive = (s: BoardSlot): number => Math.ceil(s.hpPool / s.hpUnit);
 
 const living = (board: Board): BoardSlot[] => board.slots.filter((s) => s.hpPool > 0);
+
+/**
+ * THE ATTACK AND DEFENCE RULE (§7), Heroes III's: the damage a blow carries
+ * is moved by how far the attacker's Attack stands from the target's
+ * Defence. Each point of Attack over adds `attackStepPerMille`, up to
+ * `attackCapPerMille`; each point of Defence over takes `defenceStepPerMille`
+ * off, down to `defenceCapPerMille`. Per mille, so the fight stays integer.
+ */
+export function attackMultiplier(atk: number, def: number): number {
+  const lead = Math.round(atk) - Math.round(def);
+  return lead >= 0
+    ? 1000 + Math.min(COMBAT.attackCapPerMille, COMBAT.attackStepPerMille * lead)
+    : 1000 - Math.min(COMBAT.defenceCapPerMille, COMBAT.defenceStepPerMille * -lead);
+}
 
 /**
  * The type fraction, as the integer pair it is authored as (§7).
@@ -356,7 +375,7 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     tick: number, side: Side, from: BoardSlot, target: BoardSlot, hits: number, base: number, skill?: SkillId,
   ): boolean => {
     const foe: Side = side === 'ours' ? 'theirs' : 'ours';
-    const raw = hits * Math.max(1, base - target.def);
+    const raw = Math.max(1, Math.floor((hits * base * attackMultiplier(from.atk, target.def)) / 1000));
     const { num, den } = fraction(from.type, target.type);
     let dealt = Math.floor((raw * num) / den);
     const absorbed = Math.min(shield[foe][target.id]!, dealt);
@@ -530,6 +549,7 @@ export const villainFighter = (id: VillainId): FighterSpec => {
     id,
     name: v.name,
     type: v.unitType,
+    atk: v.atk,
     dmg: v.dmg,
     def: v.def,
     hp: v.hp,
@@ -559,6 +579,8 @@ export function generateEnemy(opts: {
   parts: readonly RngPart[];
   budget: number;
   affinity: UnitId | 'Any';
+  /** What it fields, by weight — overrides the affinity's shares. */
+  mix?: Partial<Record<UnitId, number>>;
   villainPool?: readonly VillainId[];
   /** A boss's villain is authored and always present — never rolled. */
   boss?: VillainId | null;
@@ -609,9 +631,17 @@ export function generateEnemy(opts: {
   // rest is split evenly: a party that hard-counters the affinity should
   // still meet something awkward.
   const types = Object.keys(BEATS) as UnitId[];
-  const order = affinity === 'Any' ? types : [affinity, ...types.filter((t) => t !== affinity)];
+  const mixed = opts.mix === undefined ? [] : types
+    .filter((t) => (opts.mix![t] ?? 0) > 0)
+    .sort((a, b) => (opts.mix![b] ?? 0) - (opts.mix![a] ?? 0) || types.indexOf(a) - types.indexOf(b));
+  const order = mixed.length > 0 ? mixed
+    : affinity === 'Any' ? types : [affinity, ...types.filter((t) => t !== affinity)];
   const share = new Map<UnitId, number>();
-  if (affinity === 'Any') {
+  if (mixed.length > 0) {
+    // AN AUTHORED MIX: its types alone, by weight, the heaviest first.
+    const total = mixed.reduce((sum, t) => sum + (opts.mix![t] ?? 0), 0);
+    for (const t of mixed) share.set(t, (budget * (opts.mix![t] ?? 0)) / total);
+  } else if (affinity === 'Any') {
     for (const t of types) share.set(t, budget / types.length);
   } else {
     const lion = Math.round(budget * 0.6);
@@ -636,7 +666,7 @@ export function generateEnemy(opts: {
   // Whatever the shares left on the table goes to the affinity, while there
   // is a slot to put it in. Budget a board cannot hold is budget a room
   // cannot field — which is the ceiling the authored ladder lives under.
-  const filler = affinity === 'Any' ? order[0]! : affinity;
+  const filler = mixed.length > 0 ? mixed[0]! : affinity === 'Any' ? order[0]! : affinity;
   while (squads.length < wanted && left >= UNITS[filler].power) {
     add(filler, Math.floor(left / UNITS[filler].power));
   }

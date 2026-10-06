@@ -295,10 +295,12 @@ export function buySkillRank(state: GameState, id: HeroId): SkillRankResult {
 }
 
 /** A hero's stat line at their current level, for the roster and the party. */
-export function heroStats(state: GameState, id: HeroId): { atk: number; def: number; hp: number } {
+export function heroStats(state: GameState, id: HeroId): { atk: number; dmg: number; def: number; hp: number } {
   const entry = heroEntry(state, id);
   const body = heroBody(HEROES[id], entry.level, entry.ascension);
-  return { atk: Math.round(body.dmg), def: Math.round(body.def), hp: Math.round(body.hp) };
+  return {
+    atk: Math.round(body.atk), dmg: Math.round(body.dmg), def: Math.round(body.def), hp: Math.round(body.hp),
+  };
 }
 
 // ---------------------------------------------------------- the hero slots

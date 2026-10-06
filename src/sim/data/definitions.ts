@@ -1071,8 +1071,13 @@ export interface UnitDef {
    * something else entirely if it followed the damage table.
    */
   power: number;
-  /** What one troop of this type takes off a target it hits (§7). */
+  /** Attack (§7): each point over the target's Defence adds a step to the
+   *  damage, up to a cap — the Heroes III rule. A rating, not a damage. */
+  atk: number;
+  /** Damage (§7): what one troop takes off a target at an even Attack and
+   *  Defence, before the type chart. */
   dmg: number;
+  /** Defence (§7): each point over the attacker's Attack takes a step off. */
   def: number;
   hp: number;
   /**
@@ -1548,6 +1553,10 @@ export interface GuardDef {
   /** Minutes from DISCOVERY to the first raid. Every raid after it follows
    *  the daily schedule (`RAID`, Docs/proposals/lairs.md §4.1). */
   warningMinutes: number;
+  /** WHAT IT FIELDS, as weights by unit type: the Orcs are warriors with a
+   *  few spears, the Harpies archers with a few riders. Absent = the threat
+   *  takes the lion's share and the rest is split evenly (combat.md §11). */
+  mix?: Partial<Record<UnitId, number>>;
 }
 
 const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1575,7 +1584,7 @@ const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph'
 
 const lairBalance = regionMap.lairs as Record<LairId, {
   x: number; y: number; size?: number; tier: number; radius: number; sight: number; flavour: string;
-  guard: { threat: string; power: number; warningMinutes: number };
+  guard: { threat: string; power: number; warningMinutes: number; mix?: Record<string, number> };
 }>;
 
 /** Every lair the code knows about. LairId is a union, so the roster is fixed
@@ -1597,7 +1606,11 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
       radius: b.radius,
       sight: b.sight,
       flavour: b.flavour,
-      guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
+      guard: {
+        ...b.guard,
+        threat: b.guard.threat as GuardDef['threat'],
+        ...(b.guard.mix ? { mix: b.guard.mix as GuardDef['mix'] } : {}),
+      },
     }];
   }),
 ) as Record<LairId, LairDef>;
@@ -1662,11 +1675,14 @@ export interface HeroDef {
   skill: SkillDef;
   /** The body it brings to the board: it hits for `dmg` every `cooldown`
    *  ticks with a frontage of one, and dies when its `hp` runs out — which
-   *  stops it attacking and nothing else (Docs/features/combat.md §9.1). */
+   *  stops it attacking and nothing else (Docs/features/combat.md §9.1).
+   *  `atk` and `def` are ratings, as a troop's are (§7). */
+  atk: number;
   dmg: number;
   def: number;
   hp: number;
   cooldown: number;
+  atkPerLevel: number;
   dmgPerLevel: number;
   defPerLevel: number;
   hpPerLevel: number;
@@ -1705,6 +1721,7 @@ export interface VillainDef {
   glyph: string;
   sprite: string;
   unitType: UnitId;
+  atk: number;
   dmg: number;
   def: number;
   hp: number;
@@ -1860,8 +1877,8 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
 
 const heroBalance = balance.heroes as Record<HeroId, {
   rarity: string; unitType: string; skill: string; skillValue: number; skillEvery: number;
-  dmg: number; def: number; hp: number; cooldown: number;
-  dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
+  atk: number; dmg: number; def: number; hp: number; cooldown: number;
+  atkPerLevel: number; dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
   troopDmgMult: number; troopHpMult: number; troopDefBonus: number;
 }>;
 
@@ -1874,8 +1891,8 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       rarity: b.rarity as HeroRarity,
       unitType: b.unitType as UnitId,
       skill: { id: b.skill as SkillId, value: b.skillValue, every: b.skillEvery },
-      dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
-      dmgPerLevel: b.dmgPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
+      atk: b.atk, dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
+      atkPerLevel: b.atkPerLevel, dmgPerLevel: b.dmgPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
       troopDmgMult: b.troopDmgMult,
       troopHpMult: b.troopHpMult,
       troopDefBonus: b.troopDefBonus,

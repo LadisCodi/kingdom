@@ -323,7 +323,7 @@ describe('an ascension point lifts every stat', () => {
     const before = { stats: heroStats(state, 'Bard'), hp: heroMaxHp(state, 'Bard') };
     const power = (a: number) => partyPower({ heroes: [{ id: 'Bard', level: 1, ascension: a }], slots: [] });
     state.heroes.ascension.Bard = maxAscension();
-    expect(heroStats(state, 'Bard').atk).toBeGreaterThan(before.stats.atk);
+    expect(heroStats(state, 'Bard').dmg).toBeGreaterThan(before.stats.dmg);
     expect(heroMaxHp(state, 'Bard')).toBeGreaterThan(before.hp);
     expect(power(maxAscension())).toBeGreaterThan(power(0));
   });

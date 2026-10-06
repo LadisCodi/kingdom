@@ -25,8 +25,8 @@
 
 - Every fight fields **troop slots and hero slots**: lairs, dungeon rooms,
   bosses, armies on the world board. There is no hero-only mode.
-- **A lair needs someone on the player's side** — soldiers, a hero, or
-  both; an army on the world map needs a hero
+- **A lair needs soldiers** — alone or with heroes, never a hero alone;
+  an army on the world map needs a hero
   ([`10-heroes.md`](10-heroes.md) §2.7).
 
 ## 3. Board
@@ -96,15 +96,29 @@ and the army cap; hero slots one free, the rest Gems
 
 ## 5. Unit stats — Tier 1
 
-| Unit | `squadSize` | `frontage` | `dmg` | `hp` | `def` | `cooldown` | `power` | Targeting |
-|---|---|---|---|---|---|---|---|---|
-| **Warrior** | 100 | 50 | 8 | 20 | 3 | 10 | 3 | Melee |
-| **Lancer** | 100 | 60 | 10 | 16 | 2 | 10 | 4 | Melee |
-| **Archer** | 80 | 80 | 7 | 10 | 1 | 12 | 4 | Ranged |
-| **Cavalry** | 60 | 30 | 22 | 24 | 2 | 15 | 7 | Flanker |
+| Unit | `squadSize` | `frontage` | `atk` | `dmg` | `def` | `hp` | `cooldown` | `power` | Targeting |
+|---|---|---|---|---|---|---|---|---|---|
+| **Warrior** | 100 | 15 | 4 | 5 | 6 | 60 | 10 | 3 | Melee |
+| **Lancer** | 100 | 15 | 6 | 8 | 4 | 48 | 10 | 4 | Melee |
+| **Archer** | 80 | 20 | 6 | 6 | 2 | 30 | 12 | 4 | Ranged |
+| **Cavalry** | 60 | 8 | 8 | 20 | 3 | 72 | 15 | 7 | Flanker |
+
+- **Attack** (`atk`) and **Defence** (`def`) are ratings; **Damage** (`dmg`)
+  is what one troop takes off at an even pair (§7).
+- The four are what a unit's and a hero's card shows, in that order.
 
 `cooldown` is in ticks. `squadSize` and `frontage` are fixed constants at every
 tier.
+
+- **A fight lasts at least ten seconds**, a fair one fifteen to thirty, a
+  dungeon's boss room up to a minute and a half. Two dials hold it there:
+  - `hp` sets how many blows a soldier takes — the floor of a small fight;
+  - `frontage` is **small and fixed**, so a big squad strikes no harder than
+    a middling one: its extra troops are reserve that buys time.
+- Heroes and villains are scaled with them (10-heroes.md §2.3): health ×3,
+  damage ×0.3, so a hero stays a body worth a share of a squad.
+- The first lair, the Orcs — twenty orcs against the chain's thirty
+  Warriors — lasts about fifteen seconds.
 
 What one soldier costs to recruit (`units.recruitCost`), Gold first because
 Gold is what an army is mostly paid in:
@@ -127,7 +141,7 @@ Gold is what an army is mostly paid in:
 | T5 | ×6.8 | Research |
 
 - The multiplier applies to `dmg`, `hp` and `power`. `squadSize`,
-  `frontage`, `def` and `cooldown` are unaffected.
+  `frontage`, `atk`, `def` and `cooldown` are unaffected.
 - **Each unit type tiers independently.**
 - Unlocking a tier switches training output to it and **converts existing troops
   of that type**. Only one tier of a type exists at a time.
@@ -138,9 +152,18 @@ Per attack, from slot `A` onto slot `B`:
 
 ```
 hits  = min(alive(A), frontage(A))
-raw   = hits × max(1, dmg(A) − def(B))
+lead  = atk(A) − def(B)
+step  = 1000 + min(1500, 50 × lead)        if lead ≥ 0   (per mille)
+        1000 − min(750, 25 × −lead)        if lead < 0
+raw   = max(1, hits × dmg(A) × step / 1000)            (floor)
 dealt = raw × type_num / type_den          (integer division, floor)
 ```
+
+- **The Heroes III rule**: each point of Attack over the target's Defence
+  adds 5% to the damage, up to **+150%**; each point of Defence over the
+  attacker's Attack takes 2.5% off, down to **−75%**. Both caps are reached
+  at a lead of 30.
+- Damage is never random.
 
 `hp_pool(B) −= dealt`, then `alive(B)` recomputes. Troops are removed whole; the
 remainder stays in the pool.
@@ -229,8 +252,8 @@ as ticks.
   | **Shield** | a shield of X‰ of its own `hp`, soaking blows first; a new one replaces a smaller | the front-row ally with least `hp_pool` |
   | **Daze** | its next attack comes X ticks later | the enemy with the highest `dmg × hits` |
 
-  - A skill's hit is one hit of `max(1, base − def(B))`, through the type
-    fraction (§7). Ties break by lowest slot id.
+  - A skill's hit is one hit of `base`, through the Attack/Defence step and
+    the type fraction (§7). Ties break by lowest slot id.
   - A heal never lifts a wiped slot, and brings troops back as the pool
     climbs.
 - **Rally** — at battle start, to **every** squad on its side, on the
@@ -248,7 +271,7 @@ as ticks.
 - Per tick, in ascending slot order — attacker side first, then defender:
   decrement countdowns; every slot reaching 0 attacks and resets.
 - **Victory:** all enemy slots at 0 → that side wins.
-- **Timeout: 600 ticks.** The **defender** wins. In PvE the player is always the
+- **Timeout: 1,800 ticks** (three minutes). The **defender** wins. In PvE the player is always the
   attacker. There are no draws.
 
 ## 11. Enemy generation
@@ -382,6 +405,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Unit stats, `frontage`, `squadSize`, `power` | `units` |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
 | Tier multipliers | `units` |
+| Attack/Defence step and caps, per mille | `combat.attackStepPerMille`, `attackCapPerMille`, `defenceStepPerMille`, `defenceCapPerMille` |
 | Type fractions, as integer pairs | `combat.typeAdvantageNum/Den`, `combat.typeDisadvantageNum/Den` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `heroes`, `heroes.rarity*` ([`10-heroes.md`](10-heroes.md) §9) |
 | Villain stat blocks, per room | `villains` |

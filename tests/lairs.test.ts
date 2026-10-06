@@ -364,7 +364,7 @@ describe('clearing the lair', () => {
   /** A kingdom that can put a party on the orc lair's doorstep — the company
    *  the chain musters before `DriveThemOut` (12-quests.md §2). */
   // The Warden, as a hero the banner brought: the kingdom starts with none.
-  function readyToFight(units = 24): GameState {
+  function readyToFight(units = 30): GameState {
     const state = watched();
     grantHero(state, 'Warden');
     addAllTrainers(state);
@@ -374,7 +374,7 @@ describe('clearing the lair', () => {
     return state;
   }
 
-  const company = [{ unitId: 'Warrior' as const, count: 24 }];
+  const company = [{ unitId: 'Warrior' as const, count: 30 }];
 
   // The chain sends the player at the Orcs long before the Tavern, so the
   // first fight is the company alone.
@@ -399,16 +399,18 @@ describe('clearing the lair', () => {
     expect(lairBlock(state, map, ORCS, ['Scout'], company)).toBe('NoHero');
   });
 
-  it('IS beatable by a hero alone', () => {
+  // A lair wants soldiers (18-garrisons-and-raids.md): a hero alone is
+  // refused, so no hero ever wins one by itself.
+  it('refuses a hero alone', () => {
     const state = readyToFight();
-    expect(attackLair(state, map, ORCS, ['Warden'], []).result).toBe('Cleared');
+    expect(attackLair(state, map, ORCS, ['Warden'], []).result).toBe('NoSoldiers');
   });
 
-  it('is not beatable alone one lair deeper — that one wants the company', () => {
+  it('is not beatable by the first company one lair deeper', () => {
     const state = readyToFight();
     reveal(state, [LAIRS.Harpies.location]);
     advance(state, map, T0);
-    expect(attackLair(state, map, 'Harpies', ['Warden'], []).result).toBe('Repelled');
+    expect(attackLair(state, map, 'Harpies', [], company).result).toBe('Repelled');
   });
 
   it('stops the clock for good when beaten, and holds its ground until the claim', () => {
@@ -466,7 +468,8 @@ describe('clearing the lair', () => {
 
   it('leaves its heroes hurt, and the wound mends on its own', () => {
     const state = readyToFight();
-    const report = attackLair(state, map, ORCS, ['Warden'], company, T0);
+    // With one soldier, so the blows soon land on the hero.
+    const report = attackLair(state, map, ORCS, ['Warden'], [{ unitId: 'Warrior', count: 1 }], T0);
     const [warden] = report.heroes;
     expect(warden!.hp).toBeLessThan(warden!.max);
     expect(heroHp(state, 'Warden', T0)).toBe(warden!.hp);
@@ -493,13 +496,14 @@ describe('clearing the lair', () => {
   });
 
   it('costs the supplies and the fallen when it fails, and nothing else', () => {
-    const state = readyToFight();
+    const state = readyToFight(31);
     reveal(state, [LAIRS.Drake.location]);
     advance(state, map, T0);
     const supplies = lairSupplies('Drake');
     fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
     const gold = getWallet(state.city.wallet, 'Gold');
-    const report = attackLair(state, map, 'Drake', ['Warden'], []);
+    // A token soldier, so the hero takes the blows once it falls.
+    const report = attackLair(state, map, 'Drake', ['Warden'], [{ unitId: 'Warrior', count: 1 }]);
     expect(report.result).toBe('Repelled');
     expect(report.attack).toBeLessThan(report.power);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
@@ -534,10 +538,10 @@ describe('a save', () => {
   it('carries a cleared lair, so nothing re-infests it', () => {
     const state = watched();
     addAllTrainers(state);
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 30; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
-    attackLair(state, map, ORCS, [], [{ unitId: 'Warrior', count: 24 }]);
+    attackLair(state, map, ORCS, [], [{ unitId: 'Warrior', count: 30 }]);
     // A beaten lair keeps its unclaimed reward across a save…
     const beaten = deserialize(serialize(state, T0), map, T0 + DAY)!;
     expect(lairAwaitsClaim(beaten, ORCS)).toBe(true);
@@ -556,7 +560,7 @@ describe('the route to a lair', () => {
     const state = watched();
     state.heroes.owned = [];
     addAllTrainers(state);
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 30; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
     const game = freshPresenter(state);
@@ -571,7 +575,7 @@ describe('the route to a lair', () => {
     expect(game.openOverlay).toBe('lair');
     // No hero yet — the first fight is the company alone.
     expect(game.partyHeroes).toEqual([]);
-    expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 24 }]);
+    expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 30 }]);
     expect(game.lairBlockText()).toBeNull();
     expect(game.lairPreview()!.enough).toBe(true);
   });
@@ -620,10 +624,10 @@ describe('the formation in the doorway', () => {
   it('is exactly what the attempt is scored against', () => {
     const state = watched();
     addAllTrainers(state);
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 30; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
-    const company = [{ unitId: 'Warrior' as const, count: 24 }];
+    const company = [{ unitId: 'Warrior' as const, count: 30 }];
     const preview = previewLair(state, ORCS, ['Warden'], company);
     expect(preview.enemy).toEqual(lairFormation(state, ORCS));
     expect(preview.power).toBe(formationPower(preview.enemy));

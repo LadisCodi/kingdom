@@ -16,6 +16,23 @@
       "type": "object",
       "fields": {
         "tickMs": { "type": "int" },
+        "attackStepPerMille": {
+          "type": "int",
+          "min": 0,
+          "doc": "Per mille of damage each point of Attack over the target's Defence adds (Heroes III: 50)."
+        },
+        "attackCapPerMille": { "type": "int", "min": 0, "doc": "The most an Attack lead can add, per mille (1500 = +150%)." },
+        "defenceStepPerMille": {
+          "type": "int",
+          "min": 0,
+          "doc": "Per mille of damage each point of Defence over the attacker's Attack takes off (Heroes III: 25)."
+        },
+        "defenceCapPerMille": {
+          "type": "int",
+          "min": 0,
+          "max": 1000,
+          "doc": "The most a Defence lead can take off, per mille (750 = −75%)."
+        },
         "timeoutTicks": { "type": "int" },
         "typeAdvantageNum": { "type": "int" },
         "typeAdvantageDen": { "type": "int" },

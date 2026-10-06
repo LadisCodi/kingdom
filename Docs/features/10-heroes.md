@@ -47,9 +47,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Rarity | Count | Stat multiplier | Passive multiplier |
 |---|---|---|---|
-| **Common** | 14 | ×1.0 | ×1.0 |
-| **Rare** | 12 | ×1.2 | ×1.25 |
-| **Legendary** | 6 | ×1.5 | ×1.75 |
+| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
+| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
+| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
 
 - Below Legendary, a Rare is a Common with bigger numbers, so a duplicate role
   is a real choice about stats rather than a second vocabulary.
@@ -70,13 +70,15 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 ### 2.3 It fights
 
 - A hero occupies a **hero slot** on the board and attacks like a squad of one:
-  `dmg`, `hp`, `def`, `cooldown`, `frontage = 1`, `alive = 1`
+  `atk`, `dmg`, `def`, `hp`, `cooldown`, `frontage = 1`, `alive = 1`
   ([`combat.md`](combat.md) §9.1).
 - Its type sits in the matchup chart on both sides, as attacker and as target.
 - **Balanced to ~70% of a full squad's output at equivalent investment.** The
   hero is a second body and a buff, not the army.
-- `dmg`, `def` and `hp` grow per level (`dmgPerLevel`, `defPerLevel`,
-  `hpPerLevel`); `cooldown` does not move.
+- Attack and Defence are ratings, read against the other side's by the
+  Heroes III rule ([`combat.md`](combat.md) §7); Damage is what its blow takes off.
+- `atk`, `dmg`, `def` and `hp` grow per level (`atkPerLevel`, `dmgPerLevel`,
+  `defPerLevel`, `hpPerLevel`); `cooldown` does not move.
 - It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
   again when the fight ends.
 
@@ -85,7 +87,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **A hero buffs the troops of its own type**, every squad of that type on its
   side of the board, regardless of slot or row. Nothing else.
 - Three numbers, authored per hero: `troopDmgMult`, `troopHpMult`,
-  `troopDefBonus` (flat, because `def` is a flat subtraction). A hero leans
+  `troopDefBonus` (flat, because `def` is a rating). A hero leans
   one way — a Warden's Warriors hold, a Sellsword's Warriors hit — which is
   what tells two heroes of one type apart.
 - Several heroes of one type add on the excess: `1 + Σ(mult − 1)`.
@@ -115,12 +117,12 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Rarity | Hero · skill (rank 1) |
 |---|---|
-| **Common** | Warden **Shield** 15% every 1.8 s · Sellsword **Cleave** 60% every 1.4 s · Quartermaster **Bulwark** +2 DEF · Cook **Vigour** +5% HP · Bard **War cry** +5% damage · Cleric **Mend** 10% every 1.4 s · Gardener **Wave** 3% every 2.1 s · Joker **Daze** 1 s every 1.8 s · Rogue **Sharpshot** 80% every 1.4 s · Beastkin Hunter **Ambush** 100% every 1.4 s · Three Mice **Volley** 25% every 1.8 s · Merchant **Plunder** +15% · Adventurer **Seasoned** +20% · Priest **Field medic** +10 |
-| **Rare** | Dark Knight **Crush** 120% every 1.4 s · Paladin **Shield** 25% every 1.8 s · Holy Warrior **War cry** +8% · Ice Lancer **Daze** 2 s every 1.4 s · Druid **Wave** 5% every 1.8 s · Witch **Mend** 15% every 1.4 s · Wizard **Volley** 40% every 1.8 s · Electric Archer **Sharpshot** 100% every 1 s · Spymaster **Ambush** 120% every 1 s · Savage Warrior **Cleave** 80% every 1 s · Relic-hunter **Plunder** +30% · Scholar **Lore** +25% |
-| **Legendary** | Pharaoh **War cry** +15% · Elven Princess **Wave** 6% every 1.8 s · Necromancer **Volley** 60% every 1.8 s · Golden Dragon **Cleave** 120% every 1.8 s · Vampire Lord **Crush** 180% every 1 s · Ranger **Sharpshot** 150% every 1 s |
+| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
+| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
+| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
 
-- A fight lasts a few seconds (1.5–7.5 s on the lairs and the dungeons), so
-  a timed skill fires every 1–2 s.
+- A fight lasts ten seconds or more ([`combat.md`](combat.md) §5), so a
+  timed skill fires every 2.5–5 s.
 
 #### 2.5.1 Ranks
 
@@ -187,8 +189,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ### 2.7 The party rule
 
-- **A lair takes soldiers alone, a hero alone, or both.** A party with
-  nobody in it is refused. The kingdom owns no hero until the Tavern's first
+- **A lair takes soldiers alone, or soldiers with heroes — never a hero
+  alone** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A
+  party with nobody in it is refused. The kingdom owns no hero until the Tavern's first
   call, so the first fights are soldiers alone.
 - **An army on the world map needs a hero** to lead it.
 - In the province a hero is never *busy*. Fights resolve on entry; what
@@ -257,7 +260,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **Five stars, six points each.** One ascension fills one point; points fill
   clockwise from the top, and a star is finished before the next one starts.
-- **Every point lifts Attack, Defense and HP by 2%** of what the level gives —
+- **Every point lifts Attack, Damage, Defence and HP by 2%** of what the level gives —
   +60% with every star full. The card, the board, the power estimate and the
   HP bar all read the one formula.
 - **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
@@ -435,7 +438,7 @@ Each of these is data, not code:
     ascended*.
 - **The card fits the screen.** The stage gives up height to the sections,
   down to a floor; only a screen too short for that scrolls.
-  - **Stats** — Attack, Defense and HP, a tile each.
+  - **Stats** — Attack, Damage, Defence and Health, a tile each, in one row.
   - **Skill** — its name, its rank pips and what it does at its rank; under
     it the next rank, with its price and **Upgrade**, or a padlock saying what
     is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
@@ -531,12 +534,12 @@ how many slots it wants (1…n) and what to do with the answer.
 
 | Dial | Value | Key |
 |---|---|---|
-| A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
+| A hero's stat block and growth | §2.3 | `heroes.atk`, `dmg`, `def`, `hp`, `cooldown`, `atkPerLevel`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
 | A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
-| What a point does to the stats | +2% Attack, Defense and HP | `heroLadder.statsPerAscension` |
+| What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
 | How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
 | What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |

@@ -690,6 +690,16 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       (v) => patch({ guard: { ...r.guard, power: v } }))));
     card.append(field('warning min', numberInput(r.guard.warningMinutes,
       (v) => patch({ guard: { ...r.guard, warningMinutes: v } }))));
+    // What it fields, by weight (0 = none); all at 0, the threat's shares.
+    card.append(el('div', { class: 'ed-label' }, 'Mix (weights)'));
+    for (const u of UNIT_ORDER) {
+      card.append(field(u, numberInput(r.guard.mix?.[u] ?? 0, (v) => {
+        const mix = { ...(r.guard.mix ?? {}), [u]: v };
+        for (const k of Object.keys(mix)) if (!(mix[k]! > 0)) delete mix[k];
+        const { mix: _old, ...rest } = r.guard;
+        patch({ guard: Object.keys(mix).length > 0 ? { ...rest, mix } : rest });
+      })));
+    }
     return card;
   }
 

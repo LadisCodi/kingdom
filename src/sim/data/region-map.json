@@ -1659,7 +1659,7 @@
       "tier": 1,
       "radius": 2,
       "sight": 3,
-      "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30 },
+      "guard": { "threat": "Warrior", "power": 60, "warningMinutes": 30, "mix": { "Warrior": 4, "Lancer": 1 } },
       "flavour": "They burn what they cannot carry. Every night the war drums draw closer to the town."
     },
     "Harpies": {
@@ -1667,7 +1667,7 @@
       "tier": 2,
       "radius": 2,
       "sight": 3,
-      "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90 },
+      "guard": { "threat": "Archer", "power": 300, "warningMinutes": 90, "mix": { "Archer": 7, "Cavalry": 3 } },
       "flavour": "Anything that shines is theirs by morning. The market has learned to trade in the dark."
     },
     "Goblins": {

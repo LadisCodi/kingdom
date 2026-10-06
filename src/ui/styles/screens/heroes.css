@@ -193,16 +193,18 @@
 .hd-ascend.is-max .hd-stars { --asc-size: calc(var(--px) * 44); }
 .hd-asc-line { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; }
 
-/* The stats: three parchment tiles, icon then label over value. */
-.hd-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--px) * 6); }
+/* The stats: four parchment tiles in one row — Attack, Damage, Defence,
+   Health — the icon over the label and the value. */
+.hd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--px) * 4); }
 .hd-stat.k-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: calc(var(--px) * 4);
-  padding: calc(var(--px) * 6);
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 4) calc(var(--px) * 2);
 }
-.hd-stat > .icon { --icon-size: calc(var(--px) * 28); flex: none; }
-.hd-stat-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+.hd-stat > .icon { --icon-size: calc(var(--px) * 24); flex: none; }
+.hd-stat-text { display: flex; flex-direction: column; align-items: center; min-width: 0; line-height: 1.1; }
 .hd-stat-label { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
 .hd-stat-value { font-size: var(--text-title); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
 

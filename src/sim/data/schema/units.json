@@ -2,8 +2,21 @@
   "type": "object",
   "fields": {
     "power": { "type": "int" },
-    "dmg": { "type": "int" },
-    "def": { "type": "int" },
+    "atk": {
+      "type": "int",
+      "min": 0,
+      "doc": "Attack: each point over the target's Defence adds 5% to its damage, up to +150%."
+    },
+    "dmg": {
+      "type": "int",
+      "min": 1,
+      "doc": "Damage: what one troop takes off a target at an even Attack and Defence (combat.md §7)."
+    },
+    "def": {
+      "type": "int",
+      "min": 0,
+      "doc": "Defence: each point over the attacker's Attack takes 2.5% off the damage, down to −75%."
+    },
     "hp": { "type": "int", "min": 1 },
     "squadSize": { "type": "int", "min": 1 },
     "frontage": { "type": "int" },

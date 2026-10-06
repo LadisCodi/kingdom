@@ -2,7 +2,7 @@
  "cell": 64,
  "atlasCols": 16,
  "smooth": true,
- "note": "Smooth chrome (2026-09-10, Docs/art/ui-menus-redesign.md \u00a77.17-7.18): five 4x4 sheets drawn to be scaled, sliced Lanczos into 64px cells with the alpha left soft. Names must match IconName in src/ui/kit/icon.ts \u2014 tests/icons.test.ts holds us to it. A null entry skips that grid cell. The pixel-era sheets (ui-a..h, currencies-16, the hand-drawn 16px keys) are kept in sheets/ as provenance and are no longer sliced.",
+ "note": "Smooth chrome (2026-09-10, Docs/art/ui-menus-redesign.md §7.17-7.18): five 4x4 sheets drawn to be scaled, sliced Lanczos into 64px cells with the alpha left soft. Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. The pixel-era sheets (ui-a..h, currencies-16, the hand-drawn 16px keys) are kept in sheets/ as provenance and are no longer sliced.",
  "sheets": [
   {
    "file": "sheets/ui-a2-currencies.png",
@@ -153,7 +153,7 @@
     "vault",
     "crest"
    ],
-   "note": "The card collection's four marks (Docs/art/ui-menus-redesign.md \u00a77.26, C2). A 2x2 of its own rather than ui-e2's empty fourth row: regenerating that sheet would redraw the twelve marks already on it.",
+   "note": "The card collection's four marks (Docs/art/ui-menus-redesign.md §7.26, C2). A 2x2 of its own rather than ui-e2's empty fourth row: regenerating that sheet would redraw the twelve marks already on it.",
    "evenGrid": true,
    "solid": true
   },
@@ -233,6 +233,18 @@
    "fill": 0.86,
    "names": [
     "power"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-n3-damage.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "dmg"
    ],
    "evenGrid": true
   },
@@ -465,6 +477,7 @@
    "close",
    "daily",
    "def",
+   "dmg",
    "dungeon",
    "fragment",
    "hp",
@@ -500,6 +513,7 @@
    "atk",
    "builders",
    "def",
+   "dmg",
    "fragment",
    "hp",
    "padlock",

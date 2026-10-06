@@ -312,6 +312,7 @@ export function lairBoard(state: GameState, lairId: LairId): Board {
     parts: [ROLL_KEY[lairId], 'gate'],
     budget: guard.power,
     affinity: guard.threat,
+    ...(guard.mix ? { mix: guard.mix } : {}),
   });
   return buildBoard(plan.squads, plan.fighters);
 }

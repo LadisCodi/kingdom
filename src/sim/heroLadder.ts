@@ -56,10 +56,11 @@ export const heroLevelCap = (ascension: number): number =>
  * by `statsPerAscension` more. The one formula: the card, the board, the
  * estimate and the HP bar all read it.
  */
-export function heroBody(def: HeroDef, level: number, ascension = 0): { dmg: number; def: number; hp: number } {
+export function heroBody(def: HeroDef, level: number, ascension = 0): { atk: number; dmg: number; def: number; hp: number } {
   const step = level - 1;
   const mult = 1 + HERO_LADDER.statsPerAscension * Math.min(ascension, maxAscension());
   return {
+    atk: (def.atk + def.atkPerLevel * step) * mult,
     dmg: (def.dmg + def.dmgPerLevel * step) * mult,
     def: (def.def + def.defPerLevel * step) * mult,
     hp: (def.hp + def.hpPerLevel * step) * mult,
