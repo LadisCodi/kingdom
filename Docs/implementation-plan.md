@@ -155,8 +155,8 @@ remaining SKUs, and the telemetry that makes a retention read-out possible.
 Ordered so each step is playable before the next exists. Step 5.1 is worth
 shipping on its own: **the save stops evaporating.**
 
-1. Profiles and a display name, with optional account linking. **Built**
-   (15 §2, §2.1).
+1. Profiles and a display name. **Built** (15 §2, §2.1); account linking
+   is not in the prototype.
 2. Daily help with a cap, gifts drained at load. **Built**, between
    friends (15 §3).
 3. Guilds and membership.

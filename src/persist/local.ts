@@ -47,15 +47,6 @@ export function markReset(at: number): void {
 }
 
 /** When this device last reset, or 0. */
-/** Forget the reset stamp: it was about another account's save. */
-export function clearResetMark(): void {
-  try {
-    localStorage.removeItem(RESET_KEY);
-  } catch {
-    // Blocked storage: there is no stamp to forget.
-  }
-}
-
 export function lastResetAt(): number {
   try {
     const raw = localStorage.getItem(RESET_KEY);

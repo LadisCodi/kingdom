@@ -23,7 +23,6 @@ export async function cloudInit(): Promise<boolean> {
     const { data } = await client.auth.getSession();
     if (data.session) {
       userId = data.session.user.id;
-      email = data.session.user.email || null;
       return true;
     }
     const { data: anon, error } = await client.auth.signInAnonymously();
@@ -37,57 +36,6 @@ export async function cloudInit(): Promise<boolean> {
 
 /** The signed-in user's id, once `cloudInit` has a session. */
 export const cloudUserId = (): string | null => userId;
-
-// THE ACCOUNT (Docs/features/15-social.md §2): a kingdom starts on an
-// anonymous user; linking an email to it lets the same kingdom be played
-// on another device, by a six-digit code sent to that email.
-
-/** Why an email step was refused, in the player's words. */
-export type AccountProblem = 'taken' | 'unknown' | 'badCode' | 'tooMany' | 'offline';
-
-let email: string | null = null;
-
-/** The email this kingdom is linked to; null while it is anonymous. */
-export const cloudEmail = (): string | null => email;
-
-function problemOf(error: { code?: string; message?: string; status?: number } | null): AccountProblem | null {
-  if (error === null) return null;
-  const code = error.code ?? '';
-  if (code === 'email_exists' || code === 'user_already_exists' || /already been registered/i.test(error.message ?? '')) return 'taken';
-  if (code === 'otp_expired' || code === 'invalid_otp' || /token has expired or is invalid/i.test(error.message ?? '')) return 'badCode';
-  if (code === 'otp_disabled' || code === 'signup_disabled' || code === 'user_not_found' || /signups not allowed/i.test(error.message ?? '')) return 'unknown';
-  if (code.startsWith('over_') || error.status === 429) return 'tooMany';
-  return 'offline';
-}
-
-async function call(f: () => Promise<{ error: { code?: string; message?: string; status?: number } | null }>): Promise<AccountProblem | null> {
-  if (!client) return 'offline';
-  try {
-    return problemOf((await f()).error);
-  } catch {
-    return 'offline';
-  }
-}
-
-/** Link an email to this kingdom: a code goes to it. */
-export const linkEmailStart = (to: string): Promise<AccountProblem | null> =>
-  call(() => client!.auth.updateUser({ email: to }));
-
-/** The code that came: the email is this kingdom's now. */
-export async function linkEmailVerify(to: string, code: string): Promise<AccountProblem | null> {
-  const problem = await call(() => client!.auth.verifyOtp({ email: to, token: code, type: 'email_change' }));
-  if (problem === null) email = to;
-  return problem;
-}
-
-/** Play the kingdom an email keeps, on this device: a code goes to it. */
-export const signInStart = (to: string): Promise<AccountProblem | null> =>
-  call(() => client!.auth.signInWithOtp({ email: to, options: { shouldCreateUser: false } }));
-
-/** The code that came: this device is that kingdom's now. The caller drops
- *  this device's save and reloads, so the cloud's is the one that loads. */
-export const signInVerify = (to: string, code: string): Promise<AccountProblem | null> =>
-  call(() => client!.auth.verifyOtp({ email: to, token: code, type: 'email' }));
 
 export async function cloudLoad(): Promise<SaveFile | null> {
   if (!client || !userId) return null;

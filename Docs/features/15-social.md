@@ -6,7 +6,7 @@
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity, email linking, the friends list, the crest, the
+> **Status: identity, the friends list, the crest, the
 > Inbox, the wish board and daily help built (§2–§3); the rest
 > designed, not built.** Prototype population is five to ten named
 > playtesters.
@@ -60,19 +60,12 @@
   the world server (built).
 - A **nickname**, chosen the first time out onto the world map, unique and
   never changed ([`19-world-map.md`](19-world-map.md) §1.3) (built).
-- **Optional email linking**, in Settings › Your kingdom. The *just play*
-  path survives.
-  - **Link:** an email, then the six-digit code sent to it, typed in the
-    game. The email is the kingdom's from then on.
-  - **Sign in**, on another device: the email, then its code. That device
-    plays the linked kingdom; the one it had is dropped, and said so before
-    the code is asked for when it was not linked.
-  - An email already linked to a kingdom cannot link another.
 - A **friend code**: eight letters in two fours (`K7QD-M2XA`), handed out by
   the server the first time anyone needs it; no 0/O or 1/I.
 - A **crest**, chosen by the player (§2.2); until then the one its nickname
   picks, the same everywhere.
-- Not in scope: avatars, chat, moderation.
+- Not in scope: email linking (a kingdom lives in one browser), avatars,
+  chat, moderation.
 
 ### 2.1 The friends list
 
