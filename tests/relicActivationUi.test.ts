@@ -215,3 +215,21 @@ describe('the first Shrine teaches placing a relic', () => {
     expect(holds('relicPicked', '')).toBe(true);
   });
 });
+
+// THE RELIC IS DRAWN ONCE: an awake Shrine's aura has no wheel of its own —
+// the floating relic wears the countdown.
+describe('an awake Shrine on the map', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('draws its relic once, and counts its window on it', () => {
+    const { game } = crowned();
+    game.doActivateRelic('GildedLedger');
+    const layer = game.markers();
+    expect(layer.spellZones.filter((z) => z.wheel !== false)).toEqual([]);
+    expect(layer.shrineRelics[0]).toEqual(expect.objectContaining({ awake: true, left: 1 }));
+  });
+});
