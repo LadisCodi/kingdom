@@ -82,7 +82,7 @@ import {
 import {
   buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
   heroSlotGemCost, heroSlots, levelUpHero,
-  ascendHero, pull, pullMany, STANDARD_BANNER, unlockHero, type PullResult,
+  ascendHero, buySkillRank, pull, pullMany, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
   mana, manaCap, manaNetRegen, manaProduction, msToNextMana,
@@ -4583,6 +4583,15 @@ export class Game {
     if (result === 'Levelled') playSfx('upgradeBought');
     else if (result === 'NotEnoughXp') this.shake(['HeroXp']);
     else if (result === 'AscensionCapped') this.toast('Their ascension holds them back');
+    this.notify();
+  }
+
+  doBuySkillRank(id: HeroId): void {
+    const result = buySkillRank(this.state, id);
+    if (result === 'Ranked') playSfx('upgradeBought');
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
+    else if (result === 'NotEnoughMaterial') this.toast('Not enough precious material yet');
+    else if (result === 'LevelTooLow') this.toast('Reach the level first');
     this.notify();
   }
 

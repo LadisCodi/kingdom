@@ -17,7 +17,8 @@
 // event would restart every animation on the board and re-decode every
 // portrait (the fault `battlePicker.ts` documents).
 
-import { HEROES, UNITS, VILLAINS } from '../sim/data/definitions';
+import { COMBAT, HEROES, UNITS, VILLAINS } from '../sim/data/definitions';
+import { SKILLS } from '../sim/skills';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { BattleEvent, BattleLog, BoardSlot, Side } from '../sim/battle';
@@ -156,7 +157,46 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
 
     /** Apply one event to the board. The screen never works anything out —
      *  every number it paints came off the log (§13). */
+    /** A word rising off a slot: a skill's name, a heal's number. */
+    const pop = (view: SlotView, text: string, cls = ''): void => {
+      const p = el('span', { class: `bs-pop${cls ? ` ${cls}` : ''}` }, text);
+      view.root.append(p);
+      window.setTimeout(() => p.remove(), 950);
+    };
+    /** A mark held on a slot for a while — a shield, a daze. */
+    const mark = (view: SlotView, cls: string, ms: number): void => {
+      view.root.classList.add(cls);
+      window.setTimeout(() => view.root.classList.remove(cls), ms);
+    };
+
     const apply = (event: BattleEvent): void => {
+      if (event.kind === 'skill') {
+        const view = views[event.from.side].get(event.from.id);
+        if (view !== undefined) pop(view, SKILLS[event.skill].name);
+        return;
+      }
+      if (event.kind === 'healed') {
+        const view = views[event.at.side].get(event.at.id);
+        if (view === undefined) return;
+        pop(view, `+${formatExact(event.amount)}`, 'is-heal');
+        if (event.alive !== view.troops && view.count.textContent !== '') {
+          power[event.at.side] += (event.alive - view.troops) * view.power;
+          view.troops = event.alive;
+          view.count.textContent = `x${formatExact(event.alive)}`;
+          paintBar();
+        }
+        return;
+      }
+      if (event.kind === 'shielded') {
+        const view = views[event.at.side].get(event.at.id);
+        if (view !== undefined) mark(view, 'is-shielded', 1500);
+        return;
+      }
+      if (event.kind === 'dazed') {
+        const view = views[event.at.side].get(event.at.id);
+        if (view !== undefined) mark(view, 'is-dazed', event.ticks * COMBAT.tickMs);
+        return;
+      }
       if (event.kind === 'attack') {
         const view = views[event.to.side].get(event.to.id);
         if (view === undefined) return;

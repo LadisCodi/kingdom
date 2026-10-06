@@ -40,7 +40,10 @@ import {
 } from './heroLadder';
 import { dayIndex } from './day';
 import { rand } from './rng';
-import { addToWallet, getWallet, type ItemId, type GameState, type HeroId } from './state';
+import { addToWallet, getWallet, type GoodsStock, type ItemId, type GameState, type HeroId } from './state';
+import { SKILLS, maxSkillRank } from './skills';
+import { resolvePrice } from './precious';
+import { canAffordGoods, payGoods } from './goods';
 import { recordEvent } from './events';
 import { itemCount, takeItem } from './bag';
 
@@ -235,6 +238,60 @@ export function ascendHero(state: GameState, id: HeroId): HeroAscendResult {
   state.heroes.fragments[id] = entry.fragments - ascensionFragmentCost(entry.ascension);
   state.heroes.ascension[id] = entry.ascension + 1;
   return 'Ascended';
+}
+
+// -------------------------------------------------------------- skill ranks
+
+/** A hero's skill rank: 1 until a rank is bought (10-heroes.md §2.5). */
+export const skillRank = (state: GameState, id: HeroId): number =>
+  Math.min(maxSkillRank(), state.heroes.skillRanks[id] ?? 1);
+
+/** The level the NEXT rank unlocks at, or null at the top. */
+export function nextSkillRankLevel(rank: number): number | null {
+  return HERO_LADDER.skillRankLevels[rank - 1] ?? null;
+}
+
+/**
+ * What the NEXT rank costs: Stardust, and the skill family's precious
+ * material — asked only once the world is open (19-world-map.md §7.6), so
+ * before the Watchtower a rank is Stardust alone.
+ */
+export function skillRankPrice(state: GameState, id: HeroId): { stardust: number; goods: GoodsStock } | null {
+  const rank = skillRank(state, id);
+  if (rank >= maxSkillRank()) return null;
+  const material = SKILLS[HEROES[id].skill.id].material;
+  return {
+    stardust: HERO_LADDER.skillRankStardust[rank - 1] ?? 0,
+    goods: resolvePrice(state, { [material]: HERO_LADDER.skillRankMaterial[rank - 1] ?? 0 }),
+  };
+}
+
+export type SkillRankBlock = 'NotOwned' | 'AtMaxRank' | 'LevelTooLow' | 'NotEnoughStardust' | 'NotEnoughMaterial';
+
+/** Why the next rank cannot be bought now, or null when it can. */
+export function skillRankBlock(state: GameState, id: HeroId): SkillRankBlock | null {
+  if (!ownsHeroId(state, id)) return 'NotOwned';
+  const price = skillRankPrice(state, id);
+  if (price === null) return 'AtMaxRank';
+  const unlock = nextSkillRankLevel(skillRank(state, id))!;
+  if (heroEntry(state, id).level < unlock) return 'LevelTooLow';
+  if (getWallet(state.kingdom.wallet, 'Stardust') < price.stardust) return 'NotEnoughStardust';
+  if (!canAffordGoods(state.city.goods, price.goods)) return 'NotEnoughMaterial';
+  return null;
+}
+
+export type SkillRankResult = 'Ranked' | SkillRankBlock;
+
+/** Buy the next skill rank. Never raised on its own: a level only unlocks
+ *  the purchase (10-heroes.md §2.5). */
+export function buySkillRank(state: GameState, id: HeroId): SkillRankResult {
+  const block = skillRankBlock(state, id);
+  if (block !== null) return block;
+  const price = skillRankPrice(state, id)!;
+  addToWallet(state.kingdom.wallet, 'Stardust', -price.stardust);
+  payGoods(state.city.goods, price.goods);
+  state.heroes.skillRanks[id] = skillRank(state, id) + 1;
+  return 'Ranked';
 }
 
 /** A hero's stat line at their current level, for the roster and the party. */

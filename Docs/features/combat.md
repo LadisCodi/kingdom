@@ -74,8 +74,8 @@ and the army cap; hero slots one free, the rest Gems
     upward.** A battlefield keeps most of what it takes; bringing more of it
     home is something the player builds towards rather than a rate they are
     given.
-    - **A hero with the `WoundedRecovery` trait**, +15 to +40 points, the best
-      in the party and never the sum ([`10-heroes.md`](10-heroes.md) §2.5).
+    - **A hero with the Field medic skill**, +10 points at rank 1, more at
+      each rank ([`10-heroes.md`](10-heroes.md) §2.5).
     - Capped at **90%**: someone always stays out there.
   - **The ward is a building, not a rule.** With no Infirmary built there are
     no beds, so every casualty is a death. It is opened by the `Infirmary`
@@ -208,8 +208,38 @@ A hero or villain occupies a hero slot and does two things.
 - Multipliers from several heroes of the same type are additive on the excess:
   `1 + Σ(mult − 1)`; flat bonuses sum.
 - **Bonuses are computed at battle start and persist if the hero dies.**
-- This is the hero's only ability. No ultimate, no energy, no abilities on
-  unit types.
+
+### 9.3 It has one skill
+
+A hero or a villain carries one skill ([`10-heroes.md`](10-heroes.md) §2.5),
+resolved to its rank when the board is built: a share as per-mille, a time
+as ticks.
+
+- **Timed** — its own countdown, beside the attack's, from the start of the
+  fight, while the fighter lives; within a tick, after the fighter's own
+  swing:
+
+  | Skill | What it does | Target |
+  |---|---|---|
+  | **Sharpshot** · **Crush** | a hit at X‰ of its `dmg` | the enemy with least · most `hp_pool` |
+  | **Cleave** | that hit | every enemy front-row slot (else every enemy) |
+  | **Ambush** | that hit | the back-row enemy with least `hp_pool` (else any) |
+  | **Volley** | that hit | every enemy slot |
+  | **Mend** · **Wave** | heals X‰ of what the slot walked in with | the most wounded ally (least share, integer cross-multiplied) · every wounded ally |
+  | **Shield** | a shield of X‰ of its own `hp`, soaking blows first; a new one replaces a smaller | the front-row ally with least `hp_pool` |
+  | **Daze** | its next attack comes X ticks later | the enemy with the highest `dmg × hits` |
+
+  - A skill's hit is one hit of `max(1, base − def(B))`, through the type
+    fraction (§7). Ties break by lowest slot id.
+  - A heal never lifts a wiped slot, and brings troops back as the pool
+    climbs.
+- **Rally** — at battle start, to **every** squad on its side, on the
+  passive's rules (added on the excess, standing if it falls): **War cry**
+  +X% `dmg`, **Bulwark** +X `def`, **Vigour** +X% HP.
+- **Spoils** are not the resolver's: the caller reads them off the board
+  when it pays a won fight.
+- **Villains** hold the world dungeons' boss rooms: a boss room's enemy is
+  generated with every villain in its pool (§11).
 
 ## 10. Ticks and victory
 
@@ -281,8 +311,12 @@ fast-forward or restart.
 | Event | Payload |
 |---|---|
 | `start` | Both boards, slot types, tiers, rows, applied bonuses, seed |
-| `attack` | tick, source slot, target slot, `hits`, `dealt`, type fraction |
+| `attack` | tick, source slot, target slot, `hits`, `dealt` (after a shield), and `skill` and `absorbed` when a skill struck or a shield soaked |
 | `troops_lost` | tick, slot, new `alive`, new `hp_pool` |
+| `skill` | tick (0 for a Rally), the fighter, the skill — the screen shows its name |
+| `healed` | tick, slot, amount, new `alive`, new `hp_pool` |
+| `shielded` | tick, slot, the shield now |
+| `dazed` | tick, slot, the delay in ticks |
 | `slot_wiped` | tick, slot |
 | `end` | tick, winner, reason (`wiped` \| `timeout`) |
 
@@ -351,20 +385,22 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Type fractions, as integer pairs | `combat.typeAdvantageNum/Den`, `combat.typeDisadvantageNum/Den` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `heroes`, `heroes.rarity*` ([`10-heroes.md`](10-heroes.md) §9) |
 | Villain stat blocks, per room | `villains` |
-| Villain pool per depth | — (no key yet: no caller passes one) |
+| Villain pool | every villain, on a world dungeon's boss rooms (§9.3); no key |
 | Tick length, timeout | `combat.tickMs`, `combat.timeoutTicks` |
 | Enemy slot band, villain threshold, share and slots | `combat.genSlotsMin/Max`, `combat.genVillainThreshold`, `genVillainShare`, `genVillainSlots` |
 | What a hero is worth in the ESTIMATE | `combat.heroPowerPerDmg` |
 | Army cap per building level | `buildings.armyCapPerLevel` |
-| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), `heroes.traitValue`, `buildings.bedsPerLevel` |
+| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), the Field medic's `heroes.skillValue`, `buildings.bedsPerLevel` |
+| A skill: which, its X, how often | `heroes.skill`, `skillValue`, `skillEvery` (and `villains.*`) |
+| Skill ranks | `heroLadder.skillRankLevels`, `skillRankStardust`, `skillRankMaterial`, `skillRankStep` |
 | What mending costs against recruiting | `army.healCostShare`, `army.healTimeShare` |
 
 ## 18. Not in this version
 
 - Any input during the fight
 - Movement, pathfinding or facing
-- Abilities on unit types; ultimates, energy or any hero ability beyond the
-  type passive
+- Abilities on unit types; ultimates, energy, a skill the player triggers,
+  or a skill that rolls
 - A hero-only battle mode — a hero arena is a possible future
 - Upgradeable `frontage` or `squadSize`
 - Mixed tiers of one type in a squad

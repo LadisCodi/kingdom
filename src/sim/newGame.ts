@@ -64,6 +64,7 @@ export function newGame(map: MapData, now: number): GameState {
       owned: [], levels: {}, ascension: {},
       // One hero slot is free; the second and third are Gems, always
       // (Docs/features/10-heroes.md §3).
+      skillRanks: {},
       heroSlotsPurchased: 0,
       hurt: {},
       fragments: {},

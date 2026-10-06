@@ -39,6 +39,8 @@ import {
 import { canAfford, pay } from './wallet';
 import { recordEvent } from './events';
 import { gemsToFinish } from './rush';
+import { skillRank } from './heroes';
+import { rankValue } from './skills';
 
 /**
  * THE ARMY CAP IS A HEADCOUNT (Docs/features/combat.md §14).
@@ -124,12 +126,12 @@ export interface Casualties {
  */
 export const WOUNDED_SHARE_CAP = 0.9;
 
-export function woundedShareFor(_state: GameState, heroIds: readonly HeroId[] = []): number {
-  // The best medic in the party, not the sum of them, the way the
-  // quartermaster's discount works (Docs/features/10-heroes.md §2.5): two
-  // healers must not add up to a fight nobody dies in.
-  const fromHeroes = heroIds.reduce((best, id) => (HEROES[id].trait === 'WoundedRecovery'
-    ? Math.max(best, HEROES[id].traitValue) : best), 0);
+export function woundedShareFor(state: GameState, heroIds: readonly HeroId[] = []): number {
+  // A Field medic in the party carries its points home with it
+  // (Docs/features/10-heroes.md §2.5), at its rank; the cap below keeps two
+  // from adding up to a fight nobody dies in.
+  const fromHeroes = heroIds.reduce((sum, id) => (HEROES[id].skill.id === 'FieldMedic'
+    ? sum + rankValue(HEROES[id].skill, skillRank(state, id)) / 100 : sum), 0);
   const share = ARMY.woundedShare + fromHeroes;
   return Math.min(WOUNDED_SHARE_CAP, Math.max(0, share));
 }

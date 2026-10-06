@@ -222,23 +222,14 @@ describe('training takes time now', () => {
 describe('the supplies a lair asks for', () => {
   const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 
-  it('are the tier\'s supplies for a party with no quartermaster', () => {
+  // No hero discounts a trip: the bonus rule (every bonus climbs) took the
+  // Quartermaster's discount with the traits (10-heroes.md §2.5).
+  it('are the tier\'s supplies, whoever leads', () => {
     const state = readyToDelve();
     for (const id of LAIR_ORDER) {
       expect(lairSupplyCost(state, id, ['Warden'])).toEqual(lairSupplies(id));
+      expect(lairSupplyCost(state, id, ['Quartermaster', 'Scout'])).toEqual(lairSupplies(id));
     }
-  });
-
-  it('take the BEST quartermaster in the party, not the sum of them', () => {
-    const state = readyToDelve();
-    const id = 'Drake';
-    const base = lairSupplies(id);
-    const one = lairSupplyCost(state, id, ['Quartermaster']);
-    expect(one.Gold).toBe(Math.round(base.Gold! * 0.75));
-    // Scout (0.4) beats Quartermaster (0.25); together they are the Scout.
-    const both = lairSupplyCost(state, id, ['Quartermaster', 'Scout']);
-    expect(both).toEqual(lairSupplyCost(state, id, ['Scout']));
-    expect(both.Gold).toBe(Math.round(base.Gold! * 0.6));
   });
 
   it('is what the attempt charges, and what the preview shows', () => {
@@ -246,7 +237,6 @@ describe('the supplies a lair asks for', () => {
     state.heroes.owned.push('Quartermaster');
     const heroes = ['Quartermaster'] as const;
     const cost = lairSupplyCost(state, ORCS, [...heroes]);
-    expect(cost).not.toEqual(lairSupplies(ORCS));
     expect(previewLair(state, ORCS, [...heroes], company).supplies).toEqual(cost);
     const gold = getWallet(state.city.wallet, 'Gold');
     const report = attackLair(state, map, ORCS, [...heroes], company);

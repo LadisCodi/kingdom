@@ -11,7 +11,10 @@
     "troopDmgMult": 1.1,
     "troopHpMult": 1.05,
     "troopDefBonus": 1,
-    "power": 60
+    "power": 60,
+    "skill": "Mend",
+    "skillValue": 12,
+    "skillEvery": 1.8
   },
   "DrownedChoir": {
     "name": "Drowned Choir",
@@ -25,7 +28,10 @@
     "troopDmgMult": 1.15,
     "troopHpMult": 1,
     "troopDefBonus": 0,
-    "power": 75
+    "power": 75,
+    "skill": "Volley",
+    "skillValue": 30,
+    "skillEvery": 1.8
   },
   "SlagWarden": {
     "name": "Slag Warden",
@@ -39,7 +45,10 @@
     "troopDmgMult": 1.1,
     "troopHpMult": 1.1,
     "troopDefBonus": 1,
-    "power": 90
+    "power": 90,
+    "skill": "Bulwark",
+    "skillValue": 3,
+    "skillEvery": 0
   },
   "LedgerKeeper": {
     "name": "The Ledger Keeper",
@@ -53,7 +62,10 @@
     "troopDmgMult": 1.2,
     "troopHpMult": 1.05,
     "troopDefBonus": 1,
-    "power": 130
+    "power": 130,
+    "skill": "Daze",
+    "skillValue": 1.5,
+    "skillEvery": 1.4
   },
   "StarSeer": {
     "name": "The Star Seer",
@@ -67,6 +79,9 @@
     "troopDmgMult": 1.25,
     "troopHpMult": 1.15,
     "troopDefBonus": 2,
-    "power": 160
+    "power": 160,
+    "skill": "Crush",
+    "skillValue": 140,
+    "skillEvery": 1.4
   }
 }

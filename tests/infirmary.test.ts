@@ -249,8 +249,8 @@ describe('the ward is a building, not a rule', () => {
 // the BEDS instead (`Beds`, tests/upgrades.test.ts): a share is bounded, and a
 // bonus has to be able to climb for ever.
 describe('how much of the fallen is carried home', () => {
-  /** The medics, and the best one of them. */
-  const MEDIC: HeroId = 'Pharao';   // the biggest WoundedRecovery in the book
+  /** The Field medic, and a hero without the skill. */
+  const MEDIC: HeroId = 'Priest';
   const LESSER: HeroId = 'Cleric';
 
   it('starts at a tenth, with nothing researched and nobody leading', () => {
@@ -258,16 +258,19 @@ describe('how much of the fallen is carried home', () => {
     expect(ARMY.woundedShare).toBe(0.1);
   });
 
-  // The party-trait rule (Docs/features/10-heroes.md §2.5): the best medic in
-  // the party, never the sum of them, or two of them buy a fight nobody dies in.
-  it('takes the best medic in the party and never the sum', () => {
+  // A Field medic carries its points home at its rank (10-heroes.md §2.5);
+  // a hero with another skill adds nothing.
+  it('takes a Field medic in the party, at its rank', () => {
     const state = freshGame();
     const base = woundedShareFor(state);
     const alone = woundedShareFor(state, [MEDIC]);
-    expect(alone).toBeGreaterThan(base);
-    expect(woundedShareFor(state, [LESSER])).toBeLessThan(alone);
+    expect(HEROES[MEDIC].skill.id).toBe('FieldMedic');
+    expect(alone).toBeCloseTo(base + HEROES[MEDIC].skill.value / 100);
+    expect(woundedShareFor(state, [LESSER])).toBe(base);
     expect(woundedShareFor(state, [MEDIC, LESSER])).toBe(alone);
-    expect(HEROES[MEDIC].trait).toBe('WoundedRecovery');
+    state.heroes.owned.push(MEDIC);
+    state.heroes.skillRanks[MEDIC] = 5;
+    expect(woundedShareFor(state, [MEDIC])).toBeCloseTo(base + 2 * HEROES[MEDIC].skill.value / 100);
   });
 
   it('a hero adds to it, and the whole thing is capped short of one', () => {

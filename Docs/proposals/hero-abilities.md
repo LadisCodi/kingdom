@@ -6,7 +6,12 @@
 > ([`../features/10-heroes.md`](../features/10-heroes.md) §2.5). The body and
 > the type passive are unchanged.
 >
-> **Status: proposal — decisions taken (2026-10-06)**, ready to build.
+> **Status: built (2026-10-07).** The live design is
+> [`../features/10-heroes.md`](../features/10-heroes.md) §2.5 and
+> [`../features/combat.md`](../features/combat.md) §9.3; this file keeps the
+> reasoning. Built differently from below: timed skills fire every 1–2 s
+> (a fight lasts a few seconds), and ranks unlock at levels 11/19/27/35, the
+> first past each star's cap.
 
 ## 1. The rule
 

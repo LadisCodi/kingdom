@@ -8,7 +8,7 @@
 >
 > **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
 > card and the reveal screen (§8); the stat block and the type passive on the
-> board (§2.3, §2.4), the traits (§2.5) and the boons (§2.6); the whole ladder
+> board (§2.3, §2.4), the skills (§2.5) and the boons (§2.6); the whole ladder
 > (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
 > (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
@@ -94,23 +94,59 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   (§4.2).
 - A hero on a board with no troops of its type fights and buffs nobody.
 
-### 2.5 The trait
+### 2.5 The skill
 
-- **A hero also carries one TRAIT, and a trait acts off the board.** The stat
-  block and the passive win the fight; the trait changes what the trip costs
-  or what comes home from it. One per hero, authored in `heroes` as
-  a name and a value, and printed on the card as a sentence.
-- The three the game reads:
+- **Every hero has one SKILL, and it acts only in the fights the hero is
+  in.** Owning a hero gives nothing; sending it does. A villain carries one
+  too, by the same rules ([`combat.md`](combat.md) §9.3).
+- **No skill twice within a rarity.** A skill may appear in several rarities,
+  stronger in the higher one (a data rule).
+- **Six kinds**: Strike, Heal, Shield, Daze fire on their own clock; a Rally
+  holds for the whole fight; Spoils pay when the fight is won. Their
+  variants and how each fires are [`combat.md`](combat.md) §9.3.
+- **Spoils**, when the fight is won, whether the hero survived it or not:
+  - **Plunder**: +X% of a lair's hoard (when it falls) and of a world fight's
+    Gold.
+  - **Lore**: +X% Knowledge — a lair's first-clear lump, a world room's.
+  - **Seasoned**: +X% Hero XP.
+  - **Field medic**: +X points of the fallen carried home wounded, capped as
+    the wounded share is ([`combat.md`](combat.md) §4).
+  - Two heroes' spoils add up.
 
-  | Trait | What it moves |
-  |---|---|
-  | `SupplyDiscount` | a slice off a room's supplies ([`11-expeditions.md`](11-expeditions.md) §5) |
-  | `PartyDefence` | the party's DEF in the power estimate ([`combat.md`](combat.md) §12) |
-  | `WoundedRecovery` | adds to the share of the fallen that reaches a bed instead of dying ([`combat.md`](combat.md) §4) |
+| Rarity | Hero · skill (rank 1) |
+|---|---|
+| **Common** | Warden **Shield** 15% every 1.8 s · Sellsword **Cleave** 60% every 1.4 s · Quartermaster **Bulwark** +2 DEF · Cook **Vigour** +5% HP · Bard **War cry** +5% damage · Cleric **Mend** 10% every 1.4 s · Gardener **Wave** 3% every 2.1 s · Joker **Daze** 1 s every 1.8 s · Rogue **Sharpshot** 80% every 1.4 s · Beastkin Hunter **Ambush** 100% every 1.4 s · Three Mice **Volley** 25% every 1.8 s · Merchant **Plunder** +15% · Adventurer **Seasoned** +20% · Priest **Field medic** +10 |
+| **Rare** | Dark Knight **Crush** 120% every 1.4 s · Paladin **Shield** 25% every 1.8 s · Holy Warrior **War cry** +8% · Ice Lancer **Daze** 2 s every 1.4 s · Druid **Wave** 5% every 1.8 s · Witch **Mend** 15% every 1.4 s · Wizard **Volley** 40% every 1.8 s · Electric Archer **Sharpshot** 100% every 1 s · Spymaster **Ambush** 120% every 1 s · Savage Warrior **Cleave** 80% every 1 s · Relic-hunter **Plunder** +30% · Scholar **Lore** +25% |
+| **Legendary** | Pharaoh **War cry** +15% · Elven Princess **Wave** 6% every 1.8 s · Necromancer **Volley** 60% every 1.8 s · Golden Dragon **Cleave** 120% every 1.8 s · Vampire Lord **Crush** 180% every 1 s · Ranger **Sharpshot** 150% every 1 s |
 
-- **A party trait is the best in the party, never the sum**: two
-  quartermasters do not buy a free trip, and two medics do not buy a fight
-  nobody dies in.
+- A fight lasts a few seconds (1.5–7.5 s on the lairs and the dungeons), so
+  a timed skill fires every 1–2 s.
+
+#### 2.5.1 Ranks
+
+- **Five ranks.** Rank 1 comes with the hero.
+- **A rank UNLOCKS at a level and is then BOUGHT** with Stardust and the
+  skill family's precious material. It is never raised on its own.
+- The unlock levels are the first past a star's level cap, so each rank asks
+  for an ascension too:
+
+  | Rank | Unlocks at level | Stars | Stardust | Material |
+  |---|---|---|---|---|
+  | 2 | 11 | 1 | 100 | 2 |
+  | 3 | 19 | 2 | 200 | 4 |
+  | 4 | 27 | 3 | 400 | 8 |
+  | 5 | 35 | 4 | 800 | 12 |
+
+- **Each rank adds 25% of the rank-1 value**: rank 5 is twice rank 1. What
+  grows is the X; never how often it fires.
+- **The material is the family's**: Strike → Starmetal; Heal, Shield →
+  Moonglass; Rally, Daze, Spoils → Heartwood. **While the world is shut** a
+  rank asks for Stardust alone ([`19-world-map.md`](19-world-map.md) §7.6).
+- Each axis has its own key: a level is Hero XP, an ascension Fragments and
+  Stardust, a rank Stardust and material.
+- **Hero XP comes from the world**: a lair pays its tier once; a dungeon
+  room, a camp and a Portal floor pay it for good
+  ([`19-world-map.md`](19-world-map.md) §8.1).
 
 ### 2.6 The boon
 
@@ -400,7 +436,12 @@ Each of these is data, not code:
 - **The card fits the screen.** The stage gives up height to the sections,
   down to a floor; only a screen too short for that scrolls.
   - **Stats** — Attack, Defense and HP, a tile each.
-  - **Passive** — the trait, and the boon under it on the six that have one.
+  - **Skill** — its name, its rank pips and what it does at its rank; under
+    it the next rank, with its price and **Upgrade**, or a padlock saying what
+    is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
+    that can be bought now lights the card's orb.
+  - **Kingdom boon** — on the six that have one.
+  - On the roster, a skill past rank 1 shows as a brass numeral on the card.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
     Hero XP price over it. At the ascension's ceiling the button is gone and
     the tray says *Ascend them to go further*; at the last level, *At the
@@ -510,14 +551,15 @@ how many slots it wants (1…n) and what to do with the answer.
 
 ## 10. Deliberately not in this design
 
-- **An ultimate, energy, or any hero ability beyond the type passive.** The
-  hero is a body and a buff.
+- **An ultimate, energy, or a skill the player triggers.** A skill fires on
+  its own; there is no input during a fight.
+- **A random skill** — a chance to crit, dodge or proc.
+- **A kingdom passive below Legendary.**
+- **A skill rank that fires more often.**
 - **A hero-only battle mode.** Every fight fields troops and heroes. A hero
   arena is a possible future, not this version.
-- **A trait that reads the room before it is entered.** The threat preview is
-  a Guild perk, not a hero's; a hero's trait moves a cost or a casualty
-  (§2.5), never what the player is told.
-- **A party-wide stat.** A hero buffs its own type or nothing.
+- **A party-wide stat beyond a Rally.** The type passive buffs its own type;
+  only a Rally skill reaches every type.
 - **Per-hero XP.** One kingdom counter, or the gacha hands out heroes the
   player cannot use.
 - **Guild-gated hero slots**, or a free second slot.
@@ -541,10 +583,6 @@ how many slots it wants (1…n) and what to do with the answer.
 
 ## 11. Known holes
 
-- **Two of the five traits are never read.** `KnowledgeBonus` and
-  `FragmentBonus` are authored on 14 heroes — two of them Legendary — and no
-  call site consults either, so those heroes have no off-board effect at all.
-  **OQ-95.**
 - **What a boon is worth is unproven.** The Scout's `worldRevealSpeed`
   divides an explorer's march time ([`19-world-map.md`](19-world-map.md)
   §3.1); whether ×1.25 is worth a Legendary is **OQ-96**.
@@ -553,4 +591,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-95, OQ-96.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96.

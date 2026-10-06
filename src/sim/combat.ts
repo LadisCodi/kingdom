@@ -96,6 +96,8 @@ export interface PartyHero {
   /** The HP it walks in with, when a past fight left it short. Absent =
    *  full (sim/heroHealth.ts). */
   hp?: number;
+  /** Its skill's rank (sim/heroes.ts). Absent = rank 1. */
+  skillRank?: number;
 }
 
 export interface Party {
@@ -140,11 +142,6 @@ export function partyStats(party: Party): PartyStats {
     atk += body.dmg;
     def += body.def;
     hp += body.hp;
-    // The Warden's trait is party-wide DEF, which reads to the player as "we
-    // all stay standing longer" — so it multiplies the assembled party rather
-    // than the hero's own line. Two Wardens multiply twice, the way two
-    // heroes of one type stack everywhere else.
-    if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }

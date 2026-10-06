@@ -28,8 +28,10 @@
 import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
-  ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
+  ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, nextSkillRankLevel, rosterView,
+  skillRank, skillRankBlock, skillRankPrice,
 } from '../sim/heroes';
+import { SKILLS, maxSkillRank, skillSentence } from '../sim/skills';
 import {
   ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
 } from '../sim/heroLadder';
@@ -39,8 +41,9 @@ import type { Game } from '../game';
 import { el, formatExact, formatNumber } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
-  btn, iconEl, knob, priceLine, progress, sectionHead, sheet, unitTypeIcon,
+  btn, iconEl, knob, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
 } from './kit';
+import type { IconName } from './kit';
 import { ascensionStars } from './ascensionStars';
 import { heroCard, heroFilterBar } from './heroCard';
 
@@ -60,7 +63,8 @@ function ready(game: Game, view: RosterEntry): boolean {
     && game.walletValue('HeroXp') >= xpLevelCost(view.entry.level);
   const canAscend = view.entry.ascension < maxAscension()
     && view.entry.fragments >= ascensionFragmentCost(view.entry.ascension);
-  return canLevel || canAscend;
+  const canRank = skillRankBlock(game.state, view.id) === null;
+  return canLevel || canAscend || canRank;
 }
 
 // ------------------------------------------------------------------ the grid
@@ -235,6 +239,55 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   ));
 }
 
+/** The skill's mark, by what it does. */
+const SKILL_ICON: Record<string, IconName> = {
+  strike: 'atk', heal: 'hp', shield: 'def', daze: 'sparkle', rally: 'crest', spoils: 'sparkle',
+};
+
+/**
+ * THE SKILL (Docs/features/10-heroes.md §2.5): what it does at its rank, and
+ * under it the next rank — its price and Upgrade, or what is missing. A level
+ * only UNLOCKS a rank; the rank is bought.
+ */
+function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
+  const def = HEROES[id];
+  const info = SKILLS[def.skill.id];
+  const rank = owned ? skillRank(game.state, id) : 1;
+  const top = maxSkillRank();
+  const head = el('div', { class: 'hd-skill k-section' },
+    iconEl(SKILL_ICON[info.kind] ?? 'sparkle'),
+    el('div', { class: 'hd-skill-text' },
+      el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), pips(rank, top)),
+      el('div', { class: 'hd-skill-says' }, skillSentence(def.skill, rank))));
+  if (!owned || rank >= top) return head;
+  const unlock = nextSkillRankLevel(rank)!;
+  const next = el('div', { class: 'hd-read' },
+    el('div', { class: 'hd-read-line' }, el('b', {}, `Rank ${formatExact(rank + 1)}: `), skillSentence(def.skill, rank + 1)));
+  const level = game.heroLevelOf(id);
+  if (level < unlock) {
+    const cap = heroLevelCap(game.state.heroes.ascension[id] ?? 0);
+    return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next,
+      el('div', { class: 'hd-note' }, iconEl('padlock', { size: 'sm' }),
+        cap < unlock ? `Ascend, then reach level ${formatExact(unlock)}` : `Reach level ${formatExact(unlock)}`)));
+  }
+  const price = skillRankPrice(game.state, id)!;
+  const block = skillRankBlock(game.state, id);
+  const terms = [{ icon: 'Stardust' as IconName, amount: formatExact(price.stardust), short: game.walletValue('Stardust') < price.stardust }];
+  for (const [good, n] of Object.entries(price.goods)) {
+    terms.push({ icon: good as IconName, amount: formatExact(n ?? 0), short: block === 'NotEnoughMaterial' });
+  }
+  return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next, buy(
+    priceLine(terms),
+    btn({
+      label: 'Upgrade',
+      kind: 'primary',
+      onClick: () => game.doBuySkillRank(id),
+      disabledReason: block === 'NotEnoughStardust' ? 'Not enough Stardust'
+        : block === 'NotEnoughMaterial' ? `Not enough ${info.material}` : undefined,
+    }),
+  )));
+}
+
 function detail(game: Game, id: HeroId): HTMLElement {
   const def = HEROES[id];
   const view = rosterView(game.state).find((h) => h.id === id)!;
@@ -248,12 +301,9 @@ function detail(game: Game, id: HeroId): HTMLElement {
         el('span', { class: 'hd-stat-label' }, label),
         el('b', { class: 'hd-stat-value' }, formatExact(value))));
 
-  const passive = [el('div', { class: 'hd-passive k-section' }, iconEl('sparkle'), def.traitText)];
   // THE BOON, on the six that have one (Docs/proposals/legendary-boons.md):
-  // one more row of what this hero does, marked as the thing no Common or
-  // Rare has.
+  // the thing no Common or Rare has, on while the hero is owned.
   const boon = game.heroBoonText(id);
-  if (boon !== null) passive.push(el('div', { class: 'hd-passive k-section is-boon' }, iconEl('crest'), boon));
 
   return el('div', { class: 'hd' },
     el('div', { class: 'hd-subtitle' }, def.title),
@@ -267,8 +317,10 @@ function detail(game: Game, id: HeroId): HTMLElement {
       statTile('atk', 'Attack', s.atk),
       statTile('def', 'Defense', s.def),
       statTile('hp', 'HP', s.hp)),
-    sectionHead('Passive'),
-    ...passive,
+    sectionHead('Skill'),
+    skill(game, id, owned),
+    ...(boon !== null ? [sectionHead('Kingdom boon'),
+      el('div', { class: 'hd-passive k-section is-boon' }, iconEl('crest'), boon)] : []),
     sectionHead(owned ? 'Level' : 'Fragments'),
     owned ? level(game, id, view) : fragments(game, id, view),
   );

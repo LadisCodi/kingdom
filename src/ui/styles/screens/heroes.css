@@ -219,6 +219,21 @@
 .hd-passive > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
 .hd-passive.is-boon { border-color: var(--gold-dark); }
 
+/* The skill: its name and rank pips over what it does, and the next rank
+   in a tray under it. */
+.hd-skill-wrap { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.hd-skill.k-section {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 10);
+  padding: calc(var(--px) * 8) calc(var(--px) * 12);
+}
+.hd-skill > .icon { --icon-size: calc(var(--px) * 32); flex: none; }
+.hd-skill-text { display: flex; flex-direction: column; gap: calc(var(--px) * 3); min-width: 0; }
+.hd-skill-name { display: flex; align-items: center; gap: calc(var(--px) * 8); font-size: var(--text-title); }
+.hd-skill-says { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--ink); }
+.hd-rank .hd-read-line > b { font-size: var(--text-body); }
+
 /* The level (or the fragments), as words over the game's green bar. */
 .hd-read { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
 .hd-read-line { color: var(--ink-muted); font-size: var(--text-body); font-weight: var(--weight-strong); }

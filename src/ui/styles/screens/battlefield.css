@@ -195,6 +195,37 @@
 .bs-slot.is-dead .bs-skull .icon { transform: scale(0.7); filter: brightness(1.8); }
 .bs-slot.is-dead .bs-portrait { opacity: 0.55; }
 
+/* A SKILL FIRING: its name rises off the fighter, a heal's number off its
+   target, and fades. */
+.bs-pop {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * -6);
+  translate: -50% 0;
+  z-index: 2;
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 6);
+  background: var(--parchment);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 11);
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bs-pop 900ms ease-out forwards;
+}
+.bs-pop.is-heal { background: none; border: none; color: #3fae4b; font-size: calc(var(--px) * 15);
+  text-shadow: 0 calc(var(--px) * 1) 0 var(--wood-dark); }
+@keyframes bs-pop {
+  from { opacity: 0; transform: translateY(calc(var(--px) * 6)); }
+  15% { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(calc(var(--px) * -14)); }
+}
+/* A shield soaking for it: a ring of steady blue. A daze: the slot dims. */
+.bs-slot.is-shielded { box-shadow: 0 0 0 calc(var(--px) * 3) #6fb6ff, 0 0 calc(var(--px) * 10) #6fb6ff; }
+.bs-slot.is-dazed .bs-portrait { filter: saturate(0.4) brightness(0.8); }
+
 /* ------------------------------------------------------- how it turned out */
 
 /* The verdict lands OVER the board, in the middle of it — a sign at the
