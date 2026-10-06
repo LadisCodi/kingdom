@@ -103,6 +103,9 @@ never a discount, because a discount dies at 100%.
 - **The close is a boundary**: offline replay ends it at the same instant as
   live ticking, and rent inside the aura is repriced there.
 - **On screen** (mockups M80–M85):
+  - **Every fragment has its own art**: a broken piece of that relic, the
+    keystone its heart in a gold rim (`<sprite>_frag<slot>`). A held slot
+    shows its piece; a missing one, the piece's silhouette in chalk.
   - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
   - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a

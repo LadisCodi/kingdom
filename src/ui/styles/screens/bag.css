@@ -337,6 +337,10 @@
 .rl-slot.is-held { border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.6); background: rgba(255, 255, 255, 0.35); }
 .rl-slot.is-keystone { --slot: calc(var(--px) * 20); border-color: var(--gold-dark); }
 .rl-slot .icon { --icon-size: calc(var(--slot) * 0.9); }
+/* A fragment's own piece fills its slot; a missing one is its silhouette in
+ * chalk, so the gap says WHICH piece it is. */
+.rl-frag { width: 92%; height: 92%; object-fit: contain; }
+.rl-slot.is-missing .rl-frag { filter: brightness(0) invert(0.35); opacity: 0.28; }
 .rl-slots.is-big .rl-slot { --slot: calc(var(--px) * 40); border-radius: calc(var(--px) * 8); }
 .rl-slots.is-big .rl-slot.is-keystone { --slot: calc(var(--px) * 50); }
 .rl-slot > b {
