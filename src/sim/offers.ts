@@ -266,7 +266,7 @@ export function skuGemWorth(state: GameState, sku: StoreSkuId): number {
   const s = STORE[sku];
   const worth = (items: Partial<Record<ItemId, number>>): number =>
     (Object.entries(items) as Array<[ItemId, number]>).reduce((sum, [id, n]) => sum + itemGemWorth(id) * n, 0);
-  const fragment = s.hero === null ? 0 : heroGemWorth(s.hero) / HERO_LADDER.fragmentsPerTierBase;
+  const fragment = s.hero === null ? 0 : heroGemWorth(s.hero) / HERO_LADDER.recruitFragments;
   return s.gems + worth(s.items) + s.nextDayGems + worth(s.nextDayItems)
     + Math.round(fragment * s.nextDayFragments)
     + (s.hero === null ? 0 : heroGemWorth(s.hero))

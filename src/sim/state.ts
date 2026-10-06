@@ -564,7 +564,9 @@ export interface GameState {
   heroes: {
     owned: HeroId[];
     levels: Partial<Record<HeroId, number>>;
-    tiers: Partial<Record<HeroId, number>>;
+    /** Ascension points filled, 0 to every point of every star
+     *  (sim/heroLadder.ts). */
+    ascension: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
     /** Extra HERO slots bought with Gems: one is free and every further one
      *  is Gems, always, up to the board's three

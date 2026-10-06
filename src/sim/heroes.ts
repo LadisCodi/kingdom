@@ -1,9 +1,8 @@
 // Heroes and the gacha (Docs/features/10-heroes.md).
 //
-// Heroes reuse the collection substrate verbatim: Fragments raise a tier cap,
-// Stardust buys levels within it. That is the whole point of building the
-// substrate first — a hero and a relic are two KINDS OF THING, not two systems
-// with two vocabularies, and the player learns the rules once.
+// Fragments and a Stardust toll fill a hero's ascension stars one point at a
+// time, and each full star raises the level cap Hero XP climbs inside
+// (sim/heroLadder.ts).
 //
 // THE LINE THAT KEEPS MONETIZATION HONEST:
 //
@@ -36,7 +35,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
-  emptyEntry, heroLevelCapForTier, isHeroMaxLevel, tierBlock, tierCost,
+  ascensionBlock, ascensionFragmentCost, emptyEntry, fullStars, heroLevelCap, isHeroMaxLevel,
   xpLevelCost, type CollectionEntry,
 } from './heroLadder';
 import { dayIndex } from './day';
@@ -53,7 +52,7 @@ export const ownsHeroId = (state: GameState, id: HeroId): boolean =>
 export function heroEntry(state: GameState, id: HeroId): CollectionEntry {
   return {
     level: state.heroes.levels[id] ?? 1,
-    tier: state.heroes.tiers[id] ?? 1,
+    ascension: state.heroes.ascension[id] ?? 0,
     fragments: state.heroes.fragments[id] ?? 0,
   };
 }
@@ -68,7 +67,7 @@ export function grantHero(
   state.heroes.owned.push(id);
   const fresh = emptyEntry();
   state.heroes.levels[id] = fresh.level;
-  state.heroes.tiers[id] = fresh.tier;
+  state.heroes.ascension[id] = fresh.ascension;
   state.heroes.fragments[id] = state.heroes.fragments[id] ?? 0;
   syncHeroBoons(state);
   return 'Granted';
@@ -151,7 +150,7 @@ export const activeBoons = (state: GameState): Array<{ id: HeroId; boon: HeroBoo
     .filter((row): row is { id: HeroId; boon: HeroBoon } => row.boon !== null);
 
 export type HeroLevelResult =
-  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughXp';
+  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'AscensionCapped' | 'NotEnoughXp';
 
 /**
  * A level costs HERO XP, not Stardust.
@@ -166,7 +165,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
   if (isHeroMaxLevel(entry)) return 'AtMaxLevel';
-  if (entry.level >= heroLevelCapForTier(entry.tier)) return 'TierCapped';
+  if (entry.level >= heroLevelCap(entry.ascension)) return 'AscensionCapped';
   const cost = xpLevelCost(entry.level);
   if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
   addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
@@ -184,12 +183,10 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
  * handle, which is the one thing "every gacha drop has a play-based route"
  * (Docs/features/10-heroes.md §4) cannot survive.
  *
- * Priced at the ladder's own base rung, so the entry price and the first
- * ascension are the same ten and the player learns one number rather than
- * two. It is deliberately NOT a tier raise: an unlocked hero still starts at
- * tier 1 with the whole ascension ladder ahead of them.
+ * It is deliberately NOT an ascension: an unlocked hero still starts with
+ * every star empty and the whole ascension ladder ahead of them.
  */
-export const heroUnlockCost = (): number => HERO_LADDER.fragmentsPerTierBase;
+export const heroUnlockCost = (): number => HERO_LADDER.recruitFragments;
 
 export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
 
@@ -198,7 +195,7 @@ export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
   const held = state.heroes.fragments[id] ?? 0;
   if (held < heroUnlockCost()) return 'NotEnoughFragments';
   // Spend, then grant — `grantHero` preserves whatever is left over, so a
-  // player sitting on twelve keeps two toward the first ascension.
+  // player sitting on twelve keeps two toward the first ascensions.
   state.heroes.fragments[id] = held - heroUnlockCost();
   grantHero(state, id);
   return 'Unlocked';
@@ -209,33 +206,35 @@ export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
   !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost();
 
 /**
- * The Stardust an ascension asks for on top of the fragments.
+ * The Stardust the NEXT ascension asks for on top of the fragments — the
+ * same for every point of a star, `growth` times dearer each star.
  *
  * A hero pays TWO prices to ascend and a relic pays one: the fragments are
  * the chase, the Stardust is the toll (Docs/features/10-heroes.md §4). It is
  * what keeps Stardust the relics' currency with a hero tax on it rather than
- * a second hero currency — 750 to max one hero against ~3,612 for a relic.
+ * a second hero currency.
  */
-export const ascensionStardustCost = (tier: number): number => roundPrice(
-  HERO_LADDER.ascensionStardustBase * HERO_LADDER.ascensionStardustGrowth ** (tier - 1),
+export const ascensionStardustCost = (ascension: number): number => roundPrice(
+  HERO_LADDER.ascensionStardustBase * HERO_LADDER.ascensionStardustGrowth ** fullStars(ascension),
 );
 
-export type HeroTierResult =
-  | 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments' | 'NotEnoughStardust';
+export type HeroAscendResult =
+  | 'Ascended' | 'NotOwned' | 'AtMaxAscension' | 'NotEnoughFragments' | 'NotEnoughStardust';
 
-export function raiseHeroTier(state: GameState, id: HeroId): HeroTierResult {
+/** Fill the next point of the hero's current star. */
+export function ascendHero(state: GameState, id: HeroId): HeroAscendResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
-  const block = tierBlock(entry);
+  const block = ascensionBlock(entry);
   if (block !== null) return block;
-  const toll = ascensionStardustCost(entry.tier);
+  const toll = ascensionStardustCost(entry.ascension);
   if (getWallet(state.kingdom.wallet, 'Stardust') < toll) return 'NotEnoughStardust';
   // Both prices, or neither: a half-paid ascension would eat the fragments
-  // and leave the tier where it was.
+  // and leave the star where it was.
   addToWallet(state.kingdom.wallet, 'Stardust', -toll);
-  state.heroes.fragments[id] = entry.fragments - tierCost(entry.tier);
-  state.heroes.tiers[id] = entry.tier + 1;
-  return 'Raised';
+  state.heroes.fragments[id] = entry.fragments - ascensionFragmentCost(entry.ascension);
+  state.heroes.ascension[id] = entry.ascension + 1;
+  return 'Ascended';
 }
 
 /** A hero's stat line at their current level, for the roster and the party. */
@@ -690,7 +689,7 @@ export function rosterView(state: GameState): Array<{
       id,
       owned: ownsHeroId(state, id),
       entry,
-      levelCap: heroLevelCapForTier(entry.tier),
+      levelCap: heroLevelCap(entry.ascension),
     };
   });
 }

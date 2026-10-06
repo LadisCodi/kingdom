@@ -1,49 +1,63 @@
 // The hero ladder (Docs/features/10-heroes.md §1, §4).
 //
-// Collect → a tier caps the level → Hero XP buys levels inside the cap →
-// Fragments plus a Stardust toll raise the cap. One shape, two numbers: the
-// tier is the ceiling and the XP is the climb.
+// Collect → the ascension caps the level → Hero XP buys levels inside the cap
+// → Fragments plus a Stardust toll raise the ascension. One shape, two
+// numbers: the ascension is the ceiling and the XP is the climb.
+//
+// AN ASCENSION IS ONE POINT OF A STAR. A hero has `ascensionStars` stars of
+// `ascensionStepsPerStar` points each, filled one point at a time; a FULL
+// star is what raises the level cap. Every point of a star costs the same,
+// and each star costs `growth` times the one before.
 //
 // IT USED TO BE SHARED WITH THE RELICS and is not any more. A relic is
-// levelled by finishing its album and by nothing else — no tier, no
-// Fragments, no cap, no Stardust (Docs/features/09-relics.md §13) — so the
-// half of this file that priced a relic's levels went with it, and what is
-// left is a hero's ladder under a name that says so.
+// levelled by finishing its album and by nothing else — no ascension, no
+// Fragments, no cap, no Stardust (Docs/features/09-relics.md §13).
 
 import { roundPrice } from './roundPrice';
 import { HERO_LADDER } from './data/definitions';
 
-/** What one collectible looks like, whatever KIND of thing it is. */
+/** What one hero looks like in the collection. `ascension` counts points
+ *  filled, 0 to `maxAscension()`. */
 export interface CollectionEntry {
   level: number;
-  tier: number;
+  ascension: number;
   fragments: number;
 }
 
-export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments: 0 });
+export const emptyEntry = (): CollectionEntry => ({ level: 1, ascension: 0, fragments: 0 });
+
+/** Every point of every star: the last ascension. */
+export const maxAscension = (): number =>
+  HERO_LADDER.ascensionStars * HERO_LADDER.ascensionStepsPerStar;
+
+/** Stars completed at this ascension. */
+export const fullStars = (ascension: number): number =>
+  Math.floor(Math.min(ascension, maxAscension()) / HERO_LADDER.ascensionStepsPerStar);
 
 /** Hero XP for a HERO's next level — `base × growth^level`, rounded to three
  *  figures like every calculated price (sim/roundPrice.ts). */
 export const xpLevelCost = (level: number): number =>
   roundPrice(HERO_LADDER.xpLevelCostBase * HERO_LADDER.xpLevelCostGrowth ** level);
 
-/** Fragments to raise the tier cap from `tier` to `tier + 1`. */
-export const tierCost = (tier: number): number =>
-  roundPrice(HERO_LADDER.fragmentsPerTierBase * HERO_LADDER.fragmentsPerTierGrowth ** (tier - 1));
+/** Fragments for the ascension that fills the point after `ascension`: the
+ *  same for every point of a star, `growth` times dearer each star. */
+export const ascensionFragmentCost = (ascension: number): number =>
+  roundPrice(HERO_LADDER.fragmentsPerStepBase * HERO_LADDER.fragmentsPerStepGrowth ** fullStars(ascension));
 
-/** The highest level a hero's ascension allows. An ascension is worth TEN
- *  levels, which is what makes it the thing the collection arc is spent on. */
-export const heroLevelCapForTier = (tier: number): number =>
-  Math.min(HERO_LADDER.heroMaxLevel, tier * HERO_LADDER.heroLevelsPerTier);
+/** The highest level an ascension allows: each FULL star adds
+ *  `heroLevelsPerStar`, and every star full is `heroMaxLevel`. */
+export const heroLevelCap = (ascension: number): number =>
+  HERO_LADDER.heroMaxLevel
+  - (HERO_LADDER.ascensionStars - fullStars(ascension)) * HERO_LADDER.heroLevelsPerStar;
 
 export const isHeroMaxLevel = (e: CollectionEntry): boolean =>
   e.level >= HERO_LADDER.heroMaxLevel;
-export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= HERO_LADDER.maxTier;
+export const isMaxAscension = (e: CollectionEntry): boolean => e.ascension >= maxAscension();
 
-export type TierBlock = 'AtMaxTier' | 'NotEnoughFragments';
+export type AscensionBlock = 'AtMaxAscension' | 'NotEnoughFragments';
 
-export function tierBlock(e: CollectionEntry): TierBlock | null {
-  if (isMaxTier(e)) return 'AtMaxTier';
-  if (e.fragments < tierCost(e.tier)) return 'NotEnoughFragments';
+export function ascensionBlock(e: CollectionEntry): AscensionBlock | null {
+  if (isMaxAscension(e)) return 'AtMaxAscension';
+  if (e.fragments < ascensionFragmentCost(e.ascension)) return 'NotEnoughFragments';
   return null;
 }

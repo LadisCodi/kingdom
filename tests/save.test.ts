@@ -680,3 +680,21 @@ describe('the tree in five books (v69)', () => {
     expect(back.research.poured).toEqual({ ReforestingI: 1 });
   });
 });
+
+// v102: an ascension is a point of a star, not a tier. Tier t was t − 1
+// ascensions, so it becomes t − 1 full stars of six points.
+describe('v102 turns a hero\'s tier into stars', () => {
+  it('maps tier t to t − 1 full stars, and keeps the level', () => {
+    const state = freshGame();
+    state.heroes.owned.push('Bard', 'Warden');
+    state.heroes.levels.Bard = 23;
+    const save = serialize(state, T0);
+    const heroes = (save.Modules as any)['kingdom.heroes'];
+    delete heroes.Ascension;
+    heroes.Tiers = { Bard: 3, Warden: 1 };
+    save.SaveVersion = 101;
+    const back = deserialize(save, map, T0)!;
+    expect(back.heroes.ascension).toEqual({ Bard: 12, Warden: 0 });
+    expect(back.heroes.levels.Bard).toBe(23);
+  });
+});

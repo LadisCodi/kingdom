@@ -1160,8 +1160,9 @@ export const MANA = balance.mana;
  */
 export type PackTier = 'Green' | 'Yellow' | 'Rose' | 'Blue' | 'Purple' | 'Golden';
 
-/** The hero ladder: Fragments raise a tier cap and Hero XP buys levels within
- *  it. A relic has no tier, no Fragments and no level cap. */
+/** The hero ladder: Fragments and Stardust fill the ascension stars, a full
+ *  star raises the level cap, and Hero XP buys levels within it. A relic has
+ *  no ascension, no Fragments and no level cap. */
 export const HERO_LADDER = balance.heroLadder;
 
 /**
@@ -2442,4 +2443,6 @@ export const GAME_VERSION: string = pkg.version;
 // save.ts): every save written before it is discarded on boot.
 // v101: the store's offers (`player.offers`) and the explorers bought
 // (`ExplorersBought` on the world), additive.
-export const SAVE_VERSION = 101;
+// v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
+// on `kingdom.heroes` (a migrator).
+export const SAVE_VERSION = 102;

@@ -851,6 +851,14 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (i > 0 && num(t.at) <= num(tiers[i - 1].at)) push(null, ['harmony', 'surplusTiers', i, 'at'], 'tiers must be ascending');
     });
   },
+  heroLadder: (doc, push) => {
+    const l = (doc.heroLadder ?? {}) as Record<string, unknown>;
+    // The cap with no star is what is left once every star has added its
+    // levels, and a hero must start able to reach at least level 1.
+    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars) < 1) {
+      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars add more levels than heroMaxLevel holds');
+    }
+  },
 };
 
 // ------------------------------------------------------------------- helpers

@@ -30,7 +30,9 @@ import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
 } from '../sim/heroes';
-import { tierCost, xpLevelCost } from '../sim/heroLadder';
+import {
+  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
+} from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
@@ -39,6 +41,7 @@ import { heroFragmentIcon } from './heroFragment';
 import {
   btn, iconEl, knob, priceLine, progress, sectionHead, sheet, unitTypeIcon,
 } from './kit';
+import { ascensionStars } from './ascensionStars';
 import { heroCard, heroFilterBar } from './heroCard';
 
 const RARITY_CLASS: Record<HeroRarity, string> = {
@@ -55,8 +58,8 @@ function ready(game: Game, view: RosterEntry): boolean {
   if (!view.owned) return canUnlockHero(game.state, view.id);
   const canLevel = view.entry.level < view.levelCap
     && game.walletValue('HeroXp') >= xpLevelCost(view.entry.level);
-  const canAscend = view.entry.tier < HERO_LADDER.maxTier
-    && view.entry.fragments >= tierCost(view.entry.tier);
+  const canAscend = view.entry.ascension < maxAscension()
+    && view.entry.fragments >= ascensionFragmentCost(view.entry.ascension);
   return canLevel || canAscend;
 }
 
@@ -112,15 +115,6 @@ function heroArt(def: HeroDef): HTMLElement {
   return url ? spriteImgAt(url, 'hd-art') : el('div', { class: 'hd-art is-glyph' }, def.glyph);
 }
 
-/** Ascension, as the stars the player counts rather than a number they read. */
-function stars(tier: number): HTMLElement {
-  const row = el('span', { class: 'hd-stars' });
-  for (let i = 0; i < HERO_LADDER.maxTier; i++) {
-    row.append(iconEl('ascension', { locked: i >= tier, label: 'ascension' }));
-  }
-  return row;
-}
-
 /** The hero on its rarity's stage: the rarity's ribbon top-left, the type's
  *  banner top-right, an arrow each side to step the roster. */
 function stage(game: Game, def: HeroDef, id: HeroId, owned: boolean): HTMLElement {
@@ -161,16 +155,29 @@ function reading(label: string, have: number, of: number): HTMLElement {
     bar.root);
 }
 
+/** The stars, and under them what the next point does: fill a petal, or
+ *  finish a star and lift the level cap. */
+function ascensionRead(ascension: number): HTMLElement {
+  const per = HERO_LADDER.ascensionStepsPerStar;
+  const points = ascension - fullStars(ascension) * per;
+  const line = ascension >= maxAscension()
+    ? 'Fully ascended'
+    : points === per - 1
+      ? `Next: level cap ${formatExact(heroLevelCap(ascension + 1))}`
+      : `${formatExact(points)} of ${formatExact(per)} to the next star`;
+  return el('div', { class: 'hd-asc' },
+    ascensionStars(ascension, 'hd-stars'),
+    el('div', { class: 'hd-asc-line' }, line));
+}
+
 function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
-  if (view.entry.tier >= HERO_LADDER.maxTier) {
-    return tray('hd-ascend is-max', stars(view.entry.tier),
-      el('div', { class: 'hd-note' }, iconEl('ascension', { size: 'sm' }), 'Fully ascended'));
-  }
-  const toll = ascensionStardustCost(view.entry.tier);
-  const need = tierCost(view.entry.tier);
+  const a = view.entry.ascension;
+  if (a >= maxAscension()) return tray('hd-ascend is-max', ascensionRead(a), null);
+  const toll = ascensionStardustCost(a);
+  const need = ascensionFragmentCost(a);
   const shortDust = game.walletValue('Stardust') < toll;
   const shortFrags = view.entry.fragments < need;
-  return tray('hd-ascend', stars(view.entry.tier), buy(
+  return tray('hd-ascend', ascensionRead(a), buy(
     // Both prices over the button that spends them: the Stardust toll is a
     // wallet row, the fragments are a counter beside the hero, and one shown
     // without the other is a button whose refusal has no reason.
@@ -181,7 +188,7 @@ function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
     btn({
       label: 'Ascend',
       kind: 'primary',
-      onClick: () => game.doRaiseHeroTier(id),
+      onClick: () => game.doAscendHero(id),
       disabledReason: shortFrags ? 'Not enough fragments' : shortDust ? 'Not enough Stardust' : undefined,
     }),
   ));

@@ -19,11 +19,12 @@
 
 - Heroes and relics are the game's two collections, and **they are built to
   feel different** ([`09-relics.md`](09-relics.md) §1). A hero is a **ladder**:
-  collect → a tier caps the level → a currency buys levels inside the cap →
+  collect → the ascension caps the level → a currency buys levels inside the cap →
   equip into limited slots. A relic is an **album**: its own nine cards a
   season, completed once, and a permanent level with no cap and no slot.
-- A hero's ascension is worth **ten levels** and its ladder ends at tier 5 /
-  **level 50**. A relic's ladder never ends.
+- A hero's ascension is **five stars of six points** — thirty ascensions —
+  and each **full star** is worth **eight levels**, up to **level 50**. A
+  relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
   **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
   so the toll is Stardust's only sink (**OQ-78**). **OQ-6.**
@@ -34,7 +35,7 @@
 ## 2. The hero
 
 Each hero carries a **rarity**, a **unit type**, a **stat block**, one
-**passive**, a **level** and an **ascension tier**.
+**passive**, a **level** and an **ascension**.
 
 ### 2.1 Rarity
 
@@ -90,9 +91,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   what tells two heroes of one type apart.
 - Several heroes of one type add on the excess: `1 + Σ(mult − 1)`.
 - Computed at battle start; it **stands if the hero dies**.
-- **The passive grows with ascension, not level**: `passivePerTier` steps
-  each of the three numbers at every tier. Level moves the body, ascension
-  moves the buff, so both ladders are felt.
+- **The passive grows with ascension, not level** *(not built)*:
+  `passivePerTier` would step each of the three numbers at every star. Level
+  moves the body, ascension moves the buff, so both ladders are felt.
 - A hero on a board with no troops of its type fights and buffs nobody.
 
 ### 2.5 The trait
@@ -202,9 +203,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | | Raise | Cost |
 |---|---|---|
-| **Recruit** | not owned → owned, at tier 1 level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the tier cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
-| **Ascension** | +1 tier, **cap +10 levels** | that hero's Fragments **and** a Stardust toll |
+| **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
+| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
+| **Ascension** | +1 point of the current star; a **full star** lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -215,18 +216,26 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
 - **Recruiting is not an ascension.** A hero recruited with fragments starts
-  at tier 1 with the whole ladder below still ahead of them, exactly as a
-  pulled one does.
-- The price is the ladder's own base rung, so **the recruit and the first
-  ascension ask for the same ten** and the player learns one number. Change on
-  a bigger pile carries over.
+  with every star empty, exactly as a pulled one does. Change on a bigger pile
+  carries over.
 
-| Ascension | Fragments | Cumulative | Stardust toll | New level cap |
-|---|---|---|---|---|
-| tier 1 → 2 | 10 | 10 | 50 | 20 |
-| tier 2 → 3 | 20 | 30 | 100 | 30 |
-| tier 3 → 4 | 40 | 70 | 200 | 40 |
-| tier 4 → 5 | 80 | **150** | 400 | **50** (max) |
+### 4.2 The stars
+
+- **Five stars, six points each.** One ascension fills one point; points fill
+  clockwise from the top, and a star is finished before the next one starts.
+- **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
+  five.
+- **Every point of a star costs the same**, and each star costs twice the one
+  before.
+
+| Star | Fragments a point | Stardust a point | Cap once full |
+|---|---|---|---|
+| 1 | 1 | 4 | 18 |
+| 2 | 2 | 8 | 26 |
+| 3 | 4 | 16 | 34 |
+| 4 | 8 | 32 | 42 |
+| 5 | 16 | 64 | **50** (max) |
+| **All 30** | **186** | **744** | |
 
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
@@ -235,7 +244,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   the length and the TOTAL is what is held steady. Whether that survives a
   playtest is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
-- The Stardust toll totals **750** to max one hero. The toll is **Stardust's
+- The Stardust toll totals **744** to max one hero. The toll is **Stardust's
   only sink**; whether the trickle is oversized is **OQ-78**.
 - **Every gacha drop has a play-based route.** Fragments fall from boss chests
   (not built, **OQ-80**) as well as from calls; the wallet buys the same hero
@@ -382,8 +391,12 @@ Each of these is data, not code:
   top-left, the **unit type** on its banner top-right, and an **arrow each
   side** that steps to the previous or next hero.
 - Then one section each, under a section head:
-  - **Ascension** — the five stars, and **Ascend** with its Stardust toll
-    and fragment count over it. At the top tier, *Fully ascended*.
+  - **Ascension** — the five stars, under them what the next point does
+    (*n of 6 to the next star*, or *Next: level cap n*), and **Ascend** with
+    its Stardust toll and fragment count over it. Every star full: *Fully
+    ascended*.
+- **The card fits the screen.** The stage gives up height to the sections,
+  down to a floor; only a screen too short for that scrolls.
   - **Stats** — Attack, Defense and HP, a tile each.
   - **Passive** — the trait, and the boon under it on the six that have one.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
@@ -479,9 +492,10 @@ how many slots it wants (1…n) and what to do with the answer.
 | A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`; `passivePerTier` *(not built)* |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
-| How long a hero's ladder is | 10 a tier, 50 in all | `heroLadder.heroLevelsPerTier`, `heroLadder.heroMaxLevel` |
-| What a recruit costs | 10 Fragments — the ladder's base rung | `heroLadder.fragmentsPerTierBase` |
-| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `heroLadder.fragmentsPerTier*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
+| How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
+| How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
+| What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
+| What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |

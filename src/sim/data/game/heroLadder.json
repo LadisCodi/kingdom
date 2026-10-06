@@ -1,13 +1,15 @@
 {
   "heroLadder": {
-    "maxTier": 5,
-    "fragmentsPerTierBase": 10,
-    "fragmentsPerTierGrowth": 2,
-    "ascensionStardustBase": 50,
+    "ascensionStars": 5,
+    "ascensionStepsPerStar": 6,
+    "recruitFragments": 10,
+    "fragmentsPerStepBase": 1,
+    "fragmentsPerStepGrowth": 2,
+    "ascensionStardustBase": 4,
     "ascensionStardustGrowth": 2,
     "xpLevelCostBase": 100,
     "xpLevelCostGrowth": 1.09,
-    "heroLevelsPerTier": 10,
+    "heroLevelsPerStar": 8,
     "heroMaxLevel": 50
   }
 }
