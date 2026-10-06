@@ -505,7 +505,4 @@
   transform: rotate(-12deg);
   pointer-events: none;
 }
-.store-first .k-card {
-  border-color: var(--gold, #c9962b);
-  background: var(--parchment);
-}
+.store-offer.is-splash { cursor: pointer; }

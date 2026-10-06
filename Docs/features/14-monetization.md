@@ -8,7 +8,7 @@
 >
 > **Status: built** — the payer profile and its monthly budget (§3); the
 > Gem packs, the item bundles (§2.3), the **offers** and the **daily offers**
-> (§2.4, §2.5), the **first-purchase reward** (§2.6) and the Survey's paid
+> (§2.4, §2.5), the **first-purchase pack** and its splash (§2.6) and the Survey's paid
 > column for simulated dollars; builders, explorers, hero slots, keys and the
 > rest of §1.1 for Gems; three ad placements and the builder offer. The
 > store's layout is a stand-in until its redesign. The shop refresh, the town
@@ -97,8 +97,7 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **First purchase** | what the first purchase adds (§2.6), until something is bought | — |
-| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands | the monthly budget |
+| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands; one with a splash opens it from its row | the monthly budget |
 | **Today** | the day's offers (§2.5), with the time to the next draw | the monthly budget |
 | **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
 | **For the Bag** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
@@ -165,6 +164,7 @@
 
 | Offer | Price | Opens | Holds |
 |---|---|---|---|
+| **First Purchase Reward** | $4.99 | the heroes' door; full screen (§2.6) | **the Elven Princess**, keys, Gems; tomorrow her fragments, Gems, Hero XP |
 | **The novice's pack** | $3.49 | the store's door | **a builder for good**, Gems, construction speed-ups, chests, keys |
 | The squire's pack · the knight's pack | $9.99 · $19.99 | each after the one before | Gems, gold keys, speed-ups, chests, tomes |
 | **A second explorer** | $4.99 | the world's door | **an explorer for good**, Gems, speed-ups, chests, flasks, keys |
@@ -183,14 +183,26 @@
 - The draw changes at midnight UTC and is the same however often it is asked.
 - Each sells `limit` a day.
 
-### 2.6 The first purchase
+### 2.6 The first-purchase pack and the splash
 
-- **The first purchase of anything** — a Gem pack, an offer, the Survey —
-  also hands over `firstPurchase`: **a fixed Legendary hero** (the Elven
-  Princess) and keys, **all at once**.
-- Once per kingdom. A hero already held pays its duplicate fragments.
-- The store shows it at the top until something is bought; the hero arrives
-  on the call's reveal.
+- **First Purchase Reward**, an offer: **$4.99**, once per kingdom, opened by
+  the heroes' door (a Tavern standing).
+- Now: **the Elven Princess** (Legendary), 10 gold keys, 10 silver keys,
+  300 Gems. A hero already held pays her duplicate fragments.
+- **The next day** (from the next midnight UTC), **claimed by the player**:
+  10 of her fragments — her first ascension — 200 Gems, 1,500 Hero XP.
+- An offer with `splash` is shown **full screen at the start of every
+  session** while it is on sale, from the session after its window opened,
+  once the map is free (no sheet, fight, reveal, video or unlock splash). It
+  sits over everything, the header too; its close knob closes it for the
+  session.
+- The splash's button is the **price**: it goes straight to the confirmation
+  (§3.2), which returns to the map.
+- Bought, the splash shows tomorrow's part **locked**; a **pill** on the
+  right edge counts down to it, then glows **Claim**. At the start of a
+  session with a part ready, the splash opens on it, and its button claims.
+- Any product may carry a next-day part (`nextDay*`); a hero's fragments
+  need the product's `hero`.
 
 ## 3. The simulated budget
 
@@ -368,7 +380,7 @@ One page, refreshed weekly:
 | Item bundles | **$1.99 / $4.99 / $9.99**, what each holds | `store` · `items` |
 | Offers | price, contents, trigger, window, limit, cooldown | `store` (shelf `offer`) |
 | Daily offers | **3 a day** from the `daily` shelf | `offers.dailyCount` · `store` (shelf `daily`) |
-| First purchase | the Elven Princess, 5 gold keys, 10 silver keys | `firstPurchase` |
+| First-purchase pack | $4.99 · the Elven Princess, 10 + 10 keys, 300 Gems · tomorrow 10 fragments, 200 Gems, 1,500 Hero XP | `store.FirstPurchase` |
 | Explorer | **2,500**, `×2`, **2** for sale | `world.explorerGemCost*`, `world.explorersForSale` |
 | Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
 | Ad eligibility | below half a pool | `ads.eligibleBelowFraction` |
@@ -386,8 +398,8 @@ One page, refreshed weekly:
   ([`25-the-survey.md`](25-the-survey.md)).
 - **A season pass.** A seasonal reward ladder, its missions and its paid
   column.
-- **A login ladder** — nor a second delivery of the first purchase the next
-  day.
+- **A login ladder.** A product's next-day part is one delivery, not a
+  ladder.
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.

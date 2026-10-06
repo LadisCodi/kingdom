@@ -41,6 +41,7 @@
 @import './screens/world.css';
 @import './screens/stage.css';
 @import './screens/unlock.css';
+@import './screens/offer.css';
 /* Last, and deliberately: it overrides the portrait rules of every screen
    above for the heroes whose art has been repainted. */
 @import './screens/portraits.css';

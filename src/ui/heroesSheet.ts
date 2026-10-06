@@ -35,6 +35,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
+import { heroFragmentIcon } from './heroFragment';
 import {
   btn, iconEl, knob, priceLine, progress, sectionHead, sheet, unitTypeIcon,
 } from './kit';
@@ -175,7 +176,7 @@ function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
     // without the other is a button whose refusal has no reason.
     priceLine([
       { icon: 'Stardust', amount: formatExact(toll), short: shortDust },
-      { icon: 'fragment', amount: `${formatExact(view.entry.fragments)} / ${formatExact(need)}`, short: shortFrags },
+      { icon: 'fragment', art: heroFragmentIcon(id), amount: `${formatExact(view.entry.fragments)} / ${formatExact(need)}`, short: shortFrags },
     ]),
     btn({
       label: 'Ascend',
@@ -219,7 +220,7 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   const need = heroUnlockCost();
   const enough = view.entry.fragments >= need;
   return tray('hd-level', reading('Fragments', view.entry.fragments, need), buy(
-    enough ? priceLine([{ icon: 'fragment', amount: formatExact(need) }]) : null,
+    enough ? priceLine([{ icon: 'fragment', art: heroFragmentIcon(id), amount: formatExact(need) }]) : null,
     enough
       ? btn({ label: 'Recruit', kind: 'primary', onClick: () => game.doUnlockHero(id) })
       : btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.setOverlay('store') }),

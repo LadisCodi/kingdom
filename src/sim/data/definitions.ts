@@ -2226,6 +2226,13 @@ export interface StoreSkuDef {
   builders: number;
   explorers: number;
   heroSlots: number;
+  /** What it hands over the day after it is bought, claimed by the player
+   *  (sim/offers.ts `claimNextDay`): Gems, Hero XP, fragments of `hero`,
+   *  items. */
+  nextDayGems: number;
+  nextDayHeroXp: number;
+  nextDayFragments: number;
+  nextDayItems: Partial<Record<ItemId, number>>;
   opensOn: OfferTrigger;
   door: DoorId | null;
   after: StoreSkuId | null;
@@ -2233,11 +2240,13 @@ export interface StoreSkuDef {
   hours: number;
   limit: number;
   cooldownHours: number;
+  /** Shown full screen at the start of every session while on sale. */
+  splash: boolean;
 }
 
 export const STORE = Object.fromEntries(
   (Object.entries(balance.store) as Array<[StoreSkuId, Omit<StoreSkuDef, 'id'>]>)
-    .map(([id, row]) => [id, { id, ...row, items: { ...row.items } }]),
+    .map(([id, row]) => [id, { id, ...row, items: { ...row.items }, nextDayItems: { ...row.nextDayItems } }]),
 ) as Record<StoreSkuId, StoreSkuDef>;
 
 /** Workbook row order — the order every shelf shows its products in. */
@@ -2255,10 +2264,6 @@ export const DAILY_POOL = onShelf('daily');
 
 /** How many daily offers a day shows. */
 export const OFFERS = balance.offers as { dailyCount: number };
-/** What the first purchase of anything adds, once per kingdom. */
-export const FIRST_PURCHASE = balance.firstPurchase as {
-  hero: HeroId | null; gems: number; items: Partial<Record<ItemId, number>>;
-};
 
 /** Monthly simulated budgets by payer profile, in dollars
  *  (Docs/features/14-monetization.md §3). */

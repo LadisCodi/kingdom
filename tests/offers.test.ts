@@ -4,16 +4,16 @@
 // and the first-purchase reward.
 import { describe, expect, it } from 'vitest';
 import {
-  DAILY_POOL, FIRST_PURCHASE, KINGDOM_DEF, LANDMARKS, OFFERS, OFFER_ORDER, STORE, WORLD,
+  DAILY_POOL, KINGDOM_DEF, LANDMARKS, OFFERS, OFFER_ORDER, STORE, WORLD,
 } from '../src/sim/data/definitions';
 import { newGame } from '../src/sim/newGame';
 import {
-  dailyOffers, dailyOn, dailyResetsAt, gemsPerDollar, offerOn, offerTrigger, refreshOffers, skuGemWorth,
+  claimNextDay, dailyOffers, dailyOn, dailyResetsAt, gemsPerDollar, nextDayReady, offerOn, offerTrigger, refreshOffers, skuGemWorth,
   skuValuePercent,
 } from '../src/sim/offers';
 import { deserialize, serialize } from '../src/sim/save';
 import { addToWallet, getWallet, townhall, type GameState, type StoreSkuId } from '../src/sim/state';
-import { buySku, buyStoreSku, choosePayerProfile, firstPurchaseDone } from '../src/sim/store';
+import { buyStoreSku, choosePayerProfile } from '../src/sim/store';
 import { buyExplorer, explorerGemCost, explorerSlots } from '../src/sim/world/explorers';
 import { map, T0 } from './helpers';
 
@@ -120,7 +120,7 @@ describe('a purchase', () => {
     const gems = getWallet(state.player.wallet, 'Gems');
     expect(buyStoreSku(state, sku, T0)).toBe('Purchased');
     expect(state.kingdom.builders).toBe(builders + STORE[sku].builders);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + STORE[sku].gems + FIRST_PURCHASE.gems);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + STORE[sku].gems);
     for (const [item, n] of Object.entries(STORE[sku].items)) {
       expect(state.bag.held[item as keyof typeof state.bag.held] ?? 0).toBeGreaterThanOrEqual(n!);
     }
@@ -134,18 +134,39 @@ describe('a purchase', () => {
     const sku = OFFER_ORDER.find((id) => offerOn(state, id, T0))!;
     expect(buyStoreSku(state, sku, T0)).toBe('NoBudget');
     expect(state.player.offers.windows[sku]!.bought).toBe(0);
-    expect(firstPurchaseDone(state)).toBe(false);
+    expect(state.player.offers.nextDay).toEqual([]);
   });
 
-  it('pays the first-purchase reward once, on the first purchase of anything', () => {
+  it('sells the first-purchase pack once the heroes are open: its hero now, the rest the next day, claimed', () => {
     const state = shop();
-    expect(firstPurchaseDone(state)).toBe(false);
-    expect(buySku(state, 'GemsPouch', T0)).toBe('Purchased');
-    expect(firstPurchaseDone(state)).toBe(true);
-    if (FIRST_PURCHASE.hero !== null) expect(state.heroes.owned).toContain(FIRST_PURCHASE.hero);
-    const keys = { ...state.bag.held };
-    buySku(state, 'GemsPouch', T0);
-    expect(state.bag.held).toEqual(keys);
+    const sku = 'FirstPurchase' as StoreSkuId;
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(false);
+    state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(true);
+    const at = T0 + 3 * HOUR;
+    expect(buyStoreSku(state, sku, at)).toBe('Purchased');
+    const hero = STORE[sku].hero!;
+    expect(state.heroes.owned).toContain(hero);
+    // Tomorrow's part waits for the next UTC day, then for the claim.
+    const tomorrow = (Math.floor(at / DAY) + 1) * DAY;
+    expect(claimNextDay(state, sku, tomorrow - 1)).toBe('NotYet');
+    expect(nextDayReady(state, tomorrow)).toEqual([sku]);
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const fragments = state.heroes.fragments[hero] ?? 0;
+    expect(claimNextDay(state, sku, tomorrow)).toBe('Claimed');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + STORE[sku].nextDayGems);
+    expect(state.heroes.fragments[hero]).toBe(fragments + STORE[sku].nextDayFragments);
+    expect(claimNextDay(state, sku, tomorrow)).toBe('Nothing');
+    expect(buyStoreSku(state, sku, tomorrow)).toBe('NotOnSale');
+  });
+
+  it('keeps a next-day part across a save', () => {
+    const state = shop();
+    state.player.offers.nextDay.push({ sku: 'FirstPurchase' as StoreSkuId, claimableAt: T0 + DAY });
+    const back = deserialize(serialize(state, T0), map, T0);
+    expect(back?.player.offers.nextDay).toEqual(state.player.offers.nextDay);
   });
 });
 
@@ -202,5 +223,40 @@ describe('an explorer bought', () => {
     while (buyExplorer(state) === 'Bought');
     expect(state.world.explorersBought).toBe(WORLD.explorersForSale);
     expect(buyExplorer(state)).toBe('AtMax');
+  });
+});
+
+describe('the offer splash', () => {
+  it('shows from the session after its window opened, closes for the session, and leads to the claim', async () => {
+    const { vi } = await import('vitest');
+    const { freshPresenter } = await import('./helpers');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(T0);
+      const state = shop();
+      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      const first = freshPresenter(state);
+      refreshOffers(state, first.now());
+      // Opened in this session: it waits for the next one.
+      expect(first.offerSplashOnScreen()).toBeNull();
+
+      vi.setSystemTime(T0 + HOUR);
+      const next = freshPresenter(state);
+      expect(next.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'buy' });
+      next.closeOfferSplash();
+      expect(next.offerSplashOnScreen()).toBeNull();
+
+      // Bought: tomorrow's part shows on the pill, then claims from the splash.
+      expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, next.now())).toBe('Purchased');
+      expect(next.nextDayPill()?.ready).toBe(false);
+      vi.setSystemTime(dailyResetsAt(T0 + HOUR));
+      const later = freshPresenter(state);
+      expect(later.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'claim' });
+      later.doClaimNextDay('FirstPurchase' as StoreSkuId);
+      expect(later.offerSplashOnScreen()).toBeNull();
+      expect(later.nextDayPill()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

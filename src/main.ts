@@ -81,6 +81,7 @@ import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
+import { mountNextDayPill, mountOfferSplash } from './ui/offerSplash';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
@@ -265,6 +266,7 @@ async function boot(): Promise<void> {
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountNextDayPill(game, document.getElementById('nextday')!);
   mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
@@ -272,6 +274,7 @@ async function boot(): Promise<void> {
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
+  mountOfferSplash(game, document.getElementById('offersplash')!);
   mountUnlockSplash(game, document.getElementById('unlock')!);
   // What is mounted, as classes on #ui, for the CSS that steps aside.
   mirrorMountFlags(document.getElementById('ui')!);

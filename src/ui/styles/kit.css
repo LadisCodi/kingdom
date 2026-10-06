@@ -1128,3 +1128,6 @@
 /* Held by a mouse (kit/scroll.ts `dragToScroll`): any scroller, mid-drag.
    The hand leads; a snap waits for the release. */
 .is-dragging { cursor: grabbing; scroll-snap-type: none; }
+
+/* A hero's fragment (ui/heroFragment.ts): its own picture, at an icon's size. */
+.icon.hero-frag { object-fit: contain; background: none; }

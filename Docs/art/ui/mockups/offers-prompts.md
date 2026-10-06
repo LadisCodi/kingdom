@@ -85,3 +85,20 @@ Under them a small muted line "Both cover the 1,000 Gems you need."
 - M89's hero XP tile prints the asset label "HeroXp", and its hero-fragment tile is the blue relic shard, not a hero puzzle piece.
 - M91's 5m speed-up ribbon is garbled ("50").
 - M92 added the "Townhall" tab at the end of the strip; M94 invented Store tabs (Cards, Resources, Heroes, Relics, Daily) behind the popup.
+
+## M86b — First purchase reward, second pass (`m86b-offer-first-purchase.png`)
+
+Attached: `m86-offer-first-purchase.png` (layout base), `m87-offer-novice-chain.png` (style lock), `ref-ui-kit.png`, `ref-offer-icons.png`, `ref-heroes.png` (no game screens, to stay under the 10 MB upload).
+
+GENERATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY style and layout references.
+
+STYLE LOCKED: m87-offer-novice-chain.png is the approved style of this game's offers (wood, yellowed parchment, brass, red wax, purple Gems, the heroes' flat cartoon style with a bold dark-brown outline). Use m86-offer-first-purchase.png as the layout base and change only what is listed here. One portrait phone screen at 390×844 proportions, no device bezel, no captions outside the screen. All text in English, spelled exactly as written here.
+
+1. It is a FULL-SCREEN SPLASH over the dimmed game map, above everything: NO coin plank or resource header at the top, NO "Offers" title bar, NO tab strip. Only the splash itself, over the darkened isometric city map, with a round close X carved into red wood in the top-right corner.
+2. Keep from m86: the red ribbon banner "First Purchase Reward", the Elven Princess art large on a golden burst of light and sparkles, her name "Elven Princess" and the gold "LEGENDARY" ribbon.
+3. Two reward rows, stacked, each a parchment panel in a carved wooden frame with a wooden header plank:
+   - "Yours now": four tiles — the Elven Princess portrait tile with a glowing gold frame "×1", gold key "×10", silver key "×10", Gems "×300".
+   - "Tomorrow", a second panel just below, with a small brass padlock-and-hourglass badge on its header plank (it unlocks the day after buying): three tiles — Elven Princess fragments "×10" (her portrait on a jigsaw puzzle piece, the same style as the "×15" hero-fragment tile in m87, NOT a blue shard), Gems "×200", Hero XP "×1,500" (the gold double-chevron Hero XP icon from ref-offer-icons; never write the word "HeroXp" or any asset name as text).
+4. Under the panels a big gold painted button showing the price "$4.99" (no other words on it), and under the button a small line "Once per kingdom."
+
+Raw image only — do not resize, verify or save a corrected file.

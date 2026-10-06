@@ -19,7 +19,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, ARTIFACT_ORDER, FIRST_PURCHASE, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
@@ -110,12 +110,13 @@ import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buyStoreSku, firstPurchaseDone, isItemBundle, canAffordSku, choosePayerProfile,
+  PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { addHeroXp, boonText, pullPrice } from './sim/heroes';
 import {
-  boughtToday, dailyOffers, dailyResetsAt, offerTrigger, offerWindow, offersOn, refreshOffers, skuValuePercent,
+  boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
+  offerWindow, offersOn, refreshOffers, skuValuePercent,
 } from './sim/offers';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
@@ -541,7 +542,14 @@ export class Game {
    *  a different building by the time it reopens. */
   upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
-  pendingSkuFrom: OverlayName = 'store';
+  pendingSkuFrom: OverlayName | null = 'store';
+  /** When this session began: an offer splash shows from the session after
+   *  its window opened (`offerSplash`). */
+  sessionStartedAt = 0;
+  /** The offer splashes this session has closed, as `buy:<sku>` / `claim:<sku>`. */
+  private splashesClosed = new Set<string>();
+  /** A splash opened on purpose — from the store or the pill. */
+  private offerSplashForced: { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null = null;
   /** What was asked for while the payer-profile sheet had the screen. The
    *  profile sheet is modal in the strong sense (14-monetization.md §3), so
    *  whatever wanted to open — the welcome report, chiefly — waits here and
@@ -624,6 +632,7 @@ export class Game {
     public readonly camera: Camera,
   ) {
     this.registerTapHandlers();
+    this.sessionStartedAt = this.now();
   }
 
   /** The game's clock is the world server's: the device's time moved by
@@ -2004,19 +2013,95 @@ export class Game {
     };
   }
 
-  /** The first-purchase reward while it is still to come: what any first
-   *  purchase adds. Null once something has been bought. */
-  firstPurchaseOffer(): { hero: HeroId | null; lines: string[] } | null {
-    if (firstPurchaseDone(this.state)) return null;
-    const { hero, gems, items } = FIRST_PURCHASE;
+  /** A product's tiles, as the offer splash draws them: what lands now
+   *  and what lands the next day. */
+  offerTiles(id: StoreSkuId): { now: OfferTile[]; nextDay: OfferTile[] } {
+    const s = STORE[id];
+    const items = (m: Partial<Record<ItemId, number>>): OfferTile[] =>
+      (Object.entries(m) as Array<[ItemId, number]>).map(([item, n]) => ({ kind: 'item', id: item, count: n }));
     return {
-      hero,
-      lines: [
-        ...(hero === null ? [] : [`${HEROES[hero].name}, ${HEROES[hero].rarity.toLowerCase()} hero`]),
-        ...(gems > 0 ? [`${formatExact(gems)} Gems`] : []),
-        ...(Object.entries(items) as Array<[ItemId, number]>).map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`),
+      now: [
+        ...(s.hero === null ? [] : [{ kind: 'hero' as const, id: s.hero, count: 1 }]),
+        ...items(s.items),
+        ...(s.gems > 0 ? [{ kind: 'coin' as const, id: 'Gems', count: s.gems }] : []),
+      ],
+      nextDay: [
+        ...(s.hero !== null && s.nextDayFragments > 0 ? [{ kind: 'fragments' as const, id: s.hero, count: s.nextDayFragments }] : []),
+        ...(s.nextDayGems > 0 ? [{ kind: 'coin' as const, id: 'Gems', count: s.nextDayGems }] : []),
+        ...(s.nextDayHeroXp > 0 ? [{ kind: 'coin' as const, id: 'HeroXp', count: s.nextDayHeroXp }] : []),
+        ...items(s.nextDayItems),
       ],
     };
+  }
+
+  /**
+   * The offer splash on screen (Docs/features/14-monetization.md §2.6):
+   * a next-day part ready to claim first; otherwise a `splash` offer on sale
+   * whose window opened BEFORE this session began — it is the next session
+   * that shows it — and that this session has not closed yet. It waits for
+   * the map to be free: no sheet, no fight, no reveal, no video, no unlock.
+   */
+  offerSplash(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+    if (this.payerDue() || this.openOverlay !== null) return null;
+    if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
+    if (this.unlockOnScreen() !== null) return null;
+    const now = this.now();
+    const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
+    if (ready !== undefined) return { sku: ready, mode: 'claim' };
+    const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
+      && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
+    return sku === undefined ? null : { sku, mode: 'buy' };
+  }
+
+  /** The offer splash again, from the store or the pill: the same screen,
+   *  whatever the session has closed. */
+  openOfferSplash(sku: StoreSkuId): void {
+    const ready = nextDayReady(this.state, this.now()).includes(sku);
+    this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
+    this.offerSplashForced = { sku, mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy' };
+    this.setOverlay(null);
+  }
+
+  /** What the splash mount draws: the one forced open, else the session's. */
+  offerSplashOnScreen(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+    if (this.offerSplashForced !== null) return this.offerSplashForced;
+    return this.offerSplash();
+  }
+
+  closeOfferSplash(): void {
+    const on = this.offerSplashOnScreen();
+    if (on !== null) this.splashesClosed.add(`${on.mode === 'claim' ? 'claim' : 'buy'}:${on.sku}`);
+    this.offerSplashForced = null;
+    this.notify();
+  }
+
+  /** The splash's price: straight to the confirmation, which returns to the
+   *  map. */
+  buyFromSplash(sku: StoreSkuId): void {
+    this.splashesClosed.add(`buy:${sku}`);
+    this.offerSplashForced = null;
+    this.openIap(sku, null);
+  }
+
+  doClaimNextDay(sku: StoreSkuId): void {
+    const s = STORE[sku];
+    if (claimNextDay(this.state, sku, this.now()) !== 'Claimed') return;
+    playSfx('questComplete');
+    this.reward({ ...(s.nextDayGems > 0 ? { Gems: s.nextDayGems } : {}), ...(s.nextDayHeroXp > 0 ? { HeroXp: s.nextDayHeroXp } : {}) });
+    if (s.hero !== null && s.nextDayFragments > 0) {
+      this.toast(`${formatExact(s.nextDayFragments)} fragments of ${HEROES[s.hero].name}`);
+    }
+    this.offerSplashForced = null;
+    this.notify();
+  }
+
+  /** The pill for a bought product's next-day part: ready, or when. */
+  nextDayPill(): { sku: StoreSkuId; ready: boolean; at: number } | null {
+    const now = this.now();
+    const ready = nextDayReady(this.state, now)[0];
+    if (ready !== undefined) return { sku: ready, ready: true, at: now };
+    const waiting = nextDayWaiting(this.state, now)[0];
+    return waiting === undefined ? null : { sku: waiting.sku, ready: false, at: waiting.claimableAt };
   }
 
   /** The explorer the store sells for Gems: its price, how many are out at
@@ -3024,7 +3109,7 @@ export class Game {
    *  for a Gem pack, the Survey for its paid column. A confirmation that always
    *  returned to the store would take a player who tapped a price on the Survey
    *  somewhere they never asked to go. */
-  openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
+  openIap(id: StoreSkuId, from: OverlayName | null = 'store'): void {
     this.pendingSku = id;
     this.pendingSkuFrom = from;
     this.setOverlay('iapConfirm');
@@ -3032,7 +3117,7 @@ export class Game {
   }
 
   /** Where the confirmation came from, and where it returns. */
-  iapReturn(): OverlayName {
+  iapReturn(): OverlayName | null {
     return this.pendingSkuFrom;
   }
 
@@ -3042,7 +3127,6 @@ export class Game {
     // The SKUs that grant no Gems do not go through `buySku` directly. Each
     // still spends the budget through it, inside its own command: the Survey
     // is an unlock plus a back-pay, a bundle is items.
-    const first = !firstPurchaseDone(this.state);
     const heldBefore = new Set(this.state.heroes.owned);
     const fragmentsBefore = { ...this.state.heroes.fragments };
     const result = id === 'Survey'
@@ -3071,16 +3155,13 @@ export class Game {
       if (result === 'Purchased') {
         // A hero bought — in the pack, or as the first purchase's reward —
         // arrives on the reveal, the way a call delivers one.
-        const firstNow = first && firstPurchaseDone(this.state);
-        const heroes = [STORE[id].hero, firstNow ? FIRST_PURCHASE.hero : null]
-          .filter((h): h is HeroId => h !== null);
+        const heroes = [STORE[id].hero].filter((h): h is HeroId => h !== null);
         const pulls: PullResult[] = heroes.map((h) => ({
           result: 'Pulled', heroId: h, rarity: HEROES[h].rarity, duplicate: heldBefore.has(h),
           fragments: (this.state.heroes.fragments[h] ?? 0) - (fragmentsBefore[h] ?? 0), fragmentsOf: h,
           stardust: 0, guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
         }));
         if (pulls.length > 0) this.openReveal('advanced', pulls);
-        if (firstNow) this.toast('Your first purchase — the reward is yours');
       }
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
@@ -6232,4 +6313,11 @@ export interface OfferCard {
   closesAt: number | null;
   /** How many this window still sells, or null for no limit. */
   left: number | null;
+}
+
+/** One tile of an offer splash: a hero, its fragments, an item or a coin. */
+export interface OfferTile {
+  kind: 'hero' | 'fragments' | 'item' | 'coin';
+  id: string;
+  count: number;
 }

@@ -113,7 +113,13 @@ export function stat(icon: IconName, value: string, unit?: string): HTMLElement 
 }
 
 /** One term of a PRICE LINE: what it costs in one thing, red when short. */
-export interface PriceTerm { icon: IconName; amount: string; short?: boolean }
+export interface PriceTerm {
+  icon: IconName;
+  amount: string;
+  short?: boolean;
+  /** A picture of its own in place of the atlas icon — a hero's fragment. */
+  art?: HTMLElement;
+}
 
 /**
  * THE PRICE LINE over a window's button (mockup M35): each term as a large
@@ -124,7 +130,7 @@ export interface PriceTerm { icon: IconName; amount: string; short?: boolean }
 export function priceLine(terms: readonly PriceTerm[], ...trailing: Node[]): HTMLElement {
   return el('div', { class: 'k-price' },
     ...terms.map((t) => el('span', { class: `k-price-term${t.short ? ' is-short' : ''}` },
-      iconEl(t.icon), el('b', {}, t.amount))),
+      t.art ?? iconEl(t.icon), el('b', {}, t.amount))),
     ...trailing);
 }
 
