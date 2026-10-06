@@ -47,9 +47,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Rarity | Count | Stat multiplier | Passive multiplier |
 |---|---|---|---|
-| **Common** | 14 | ×1.0 | ×1.0 |
-| **Rare** | 12 | ×1.2 | ×1.25 |
-| **Legendary** | 6 | ×1.5 | ×1.75 |
+| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
+| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
+| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
 
 - Below Legendary, a Rare is a Common with bigger numbers, so a duplicate role
   is a real choice about stats rather than a second vocabulary.
@@ -115,12 +115,12 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Rarity | Hero · skill (rank 1) |
 |---|---|
-| **Common** | Warden **Shield** 15% every 1.8 s · Sellsword **Cleave** 60% every 1.4 s · Quartermaster **Bulwark** +2 DEF · Cook **Vigour** +5% HP · Bard **War cry** +5% damage · Cleric **Mend** 10% every 1.4 s · Gardener **Wave** 3% every 2.1 s · Joker **Daze** 1 s every 1.8 s · Rogue **Sharpshot** 80% every 1.4 s · Beastkin Hunter **Ambush** 100% every 1.4 s · Three Mice **Volley** 25% every 1.8 s · Merchant **Plunder** +15% · Adventurer **Seasoned** +20% · Priest **Field medic** +10 |
-| **Rare** | Dark Knight **Crush** 120% every 1.4 s · Paladin **Shield** 25% every 1.8 s · Holy Warrior **War cry** +8% · Ice Lancer **Daze** 2 s every 1.4 s · Druid **Wave** 5% every 1.8 s · Witch **Mend** 15% every 1.4 s · Wizard **Volley** 40% every 1.8 s · Electric Archer **Sharpshot** 100% every 1 s · Spymaster **Ambush** 120% every 1 s · Savage Warrior **Cleave** 80% every 1 s · Relic-hunter **Plunder** +30% · Scholar **Lore** +25% |
-| **Legendary** | Pharaoh **War cry** +15% · Elven Princess **Wave** 6% every 1.8 s · Necromancer **Volley** 60% every 1.8 s · Golden Dragon **Cleave** 120% every 1.8 s · Vampire Lord **Crush** 180% every 1 s · Ranger **Sharpshot** 150% every 1 s |
+| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
+| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
+| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
 
-- A fight lasts a few seconds (1.5–7.5 s on the lairs and the dungeons), so
-  a timed skill fires every 1–2 s.
+- A fight lasts ten seconds or more ([`combat.md`](combat.md) §5), so a
+  timed skill fires every 2.5–5 s.
 
 #### 2.5.1 Ranks
 

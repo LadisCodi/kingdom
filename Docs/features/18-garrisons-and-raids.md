@@ -73,7 +73,7 @@ guard { threat, power, warningMinutes }
 | Lair | Tier | `threat` | `power` | Warning |
 |---|---|---|---|---|
 | Orcs | 1 | Warrior | **45** | **30 min** |
-| Harpies | 2 | Archer | 180 | 90 min |
+| Harpies | 2 | Archer | 240 | 90 min |
 | Goblins | 3 | Lancer | 440 | 120 min |
 | Wolf riders | 4 | Cavalry | 700 | 180 min |
 | Drake | 5 | Any | 1,000 | 240 min |

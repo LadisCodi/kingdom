@@ -138,7 +138,7 @@ an interrupted replay costs nothing.
 | Ending | **Two seconds** after the last blow, a Victory or Defeat plaque over the middle of the board |
 | Rewards | On a victory with spoils, the **gacha reveal** deals them over the board — the one screen that already knows how to hand things over one at a time (§8.3 of [`10-heroes.md`](10-heroes.md)) |
 | Leaving | Then, and only then, a button at the bottom. It returns to the room sheet, which is already showing the NEXT room |
-| Rules | No controls: no speed, no skip. One tick is 100 ms, so the replay is exactly as long as the fight was |
+| Rules | Two controls under the bar: **×2** (kept for the next fight) and **Skip** (straight to the result). At ×1 one tick is 100 ms, so the replay is as long as the fight was |
 
 ### 2.8 Result — the sheet behind it
 
