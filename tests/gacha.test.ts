@@ -8,14 +8,16 @@ import { grantItem } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
-  ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, levelUpHero,
+  ascensionStardustCost, canUnlockHero, grantHero, heroStats, heroUnlockCost, levelUpHero,
   ascendHero, ownsHeroId, pull, unlockHero,
 } from '../src/sim/heroes';
 import {
-  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
+  ascensionFragmentCost, fullStars, heroBody, heroLevelCap, maxAscension, xpLevelCost,
 } from '../src/sim/heroLadder';
+import { heroMaxHp } from '../src/sim/heroHealth';
+import { partyPower } from '../src/sim/combat';
 import type { PullResult } from '../src/sim/heroes';
-import { HERO_LADDER } from '../src/sim/data/definitions';
+import { HERO_LADDER, HEROES } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
 import { freshGame, freshPresenter } from './helpers';
 
@@ -299,5 +301,30 @@ describe('a full star raises the level cap', () => {
     expect(xpLevelCost(1)).toBeLessThan(200);
     expect(xpLevelCost(49)).toBeLessThan(10_000);
     expect(total).toBeLessThan(200_000);
+  });
+});
+
+// Every point lifts every stat, as in Kingshot: the body the card prints, the
+// one the board fights with and the HP bar all read the same formula.
+describe('an ascension point lifts every stat', () => {
+  it('multiplies Attack, Defense and HP by the same share a point', () => {
+    const d = HEROES.Bard;
+    const base = heroBody(d, 12, 0);
+    const up = heroBody(d, 12, 5);
+    const mult = 1 + HERO_LADDER.statsPerAscension * 5;
+    expect(up.dmg).toBeCloseTo(base.dmg * mult);
+    expect(up.def).toBeCloseTo(base.def * mult);
+    expect(up.hp).toBeCloseTo(base.hp * mult);
+  });
+
+  it('shows on the card, the HP bar and the party\'s power', () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    const before = { stats: heroStats(state, 'Bard'), hp: heroMaxHp(state, 'Bard') };
+    const power = (a: number) => partyPower({ heroes: [{ id: 'Bard', level: 1, ascension: a }], slots: [] });
+    state.heroes.ascension.Bard = maxAscension();
+    expect(heroStats(state, 'Bard').atk).toBeGreaterThan(before.stats.atk);
+    expect(heroMaxHp(state, 'Bard')).toBeGreaterThan(before.hp);
+    expect(power(maxAscension())).toBeGreaterThan(power(0));
   });
 });

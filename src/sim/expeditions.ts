@@ -11,6 +11,7 @@ import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
 import { COMBAT, HEROES, PARTY, LAIRS, RELIC_RULES, UNITS, garrisonForTier } from './data/definitions';
 import { dropFragments, openRelicDoor, type FragmentDrop } from './relics';
 import { addHeroXp, heroSlots } from './heroes';
+import { heroBody } from './heroLadder';
 import {
   NO_DRILL, partyPower, partyStats,
   type EnemySquad, type Party, type PartySlot, type Drill,
@@ -126,7 +127,9 @@ export const partyOf = (
   t: number = state.lastAdvance,
 ): Party => ({
   // Each hero walks in with what the last fight left it (sim/heroHealth.ts).
-  heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id), hp: heroHp(state, id, t) })),
+  heroes: heroIds.map((id) => ({
+    id, level: heroLevel(state, id), ascension: state.heroes.ascension[id] ?? 0, hp: heroHp(state, id, t),
+  })),
   slots,
   drill: drillOf(state),
 });
@@ -140,17 +143,17 @@ export function partyBoard(party: Party): Board {
   const drill = party.drill ?? NO_DRILL;
   const fighters: FighterSpec[] = party.heroes.map((h) => {
     const def = HEROES[h.id];
-    const step = h.level - 1;
+    const body = heroBody(def, h.level, h.ascension);
     return {
       id: h.id,
       name: def.name,
       type: def.unitType,
-      dmg: def.dmg + def.dmgPerLevel * step,
-      def: def.def + def.defPerLevel * step,
-      hp: def.hp + def.hpPerLevel * step,
+      dmg: body.dmg,
+      def: body.def,
+      hp: body.hp,
       hpNow: h.hp,
       cooldown: def.cooldown,
-      power: Math.round((def.dmg + def.dmgPerLevel * step) * COMBAT.heroPowerPerDmg),
+      power: Math.round(body.dmg * COMBAT.heroPowerPerDmg),
       troopDmgMult: def.troopDmgMult,
       troopHpMult: def.troopHpMult,
       troopDefBonus: def.troopDefBonus,

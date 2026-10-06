@@ -36,7 +36,7 @@ import {
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatExact } from './format';
+import { el, formatExact, formatNumber } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
   btn, iconEl, knob, priceLine, progress, sectionHead, sheet, unitTypeIcon,
@@ -155,16 +155,17 @@ function reading(label: string, have: number, of: number): HTMLElement {
     bar.root);
 }
 
-/** The stars, and under them what the next point does: fill a petal, or
- *  finish a star and lift the level cap. */
+/** The stars, and under them what the next point does: every point lifts
+ *  every stat, and the one that finishes a star lifts the level cap too. */
 function ascensionRead(ascension: number): HTMLElement {
   const per = HERO_LADDER.ascensionStepsPerStar;
   const points = ascension - fullStars(ascension) * per;
+  const stats = `Next: stats +${formatNumber(HERO_LADDER.statsPerAscension * 100, 1)}%`;
   const line = ascension >= maxAscension()
     ? 'Fully ascended'
     : points === per - 1
-      ? `Next: level cap ${formatExact(heroLevelCap(ascension + 1))}`
-      : `${formatExact(points)} of ${formatExact(per)} to the next star`;
+      ? `${stats} · level cap ${formatExact(heroLevelCap(ascension + 1))}`
+      : stats;
   return el('div', { class: 'hd-asc' },
     ascensionStars(ascension, 'hd-stars'),
     el('div', { class: 'hd-asc-line' }, line));

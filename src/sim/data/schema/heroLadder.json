@@ -30,7 +30,12 @@
           "min": 1,
           "doc": "Levels each full star adds to the level cap. With no star the cap is heroMaxLevel minus this times ascensionStars."
         },
-        "heroMaxLevel": { "type": "int" }
+        "heroMaxLevel": { "type": "int" },
+        "statsPerAscension": {
+          "type": "float",
+          "min": 0,
+          "doc": "How much every ascension point adds to a hero's Attack, Defense and HP, as a share of what its level gives: 0.02 is +2% a point."
+        }
       }
     }
   }

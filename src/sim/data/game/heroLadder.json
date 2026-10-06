@@ -10,6 +10,7 @@
     "xpLevelCostBase": 100,
     "xpLevelCostGrowth": 1.09,
     "heroLevelsPerStar": 8,
+    "statsPerAscension": 0.02,
     "heroMaxLevel": 50
   }
 }

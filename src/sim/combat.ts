@@ -18,6 +18,7 @@
 
 import type { UnitTag } from './data/definitions';
 import { ARMY, COMBAT, HEROES, UNITS } from './data/definitions';
+import { heroBody } from './heroLadder';
 import type { HeroId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
@@ -90,6 +91,8 @@ const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
 export interface PartyHero {
   id: HeroId;
   level: number;
+  /** Ascension points filled (sim/heroLadder.ts). Absent = none. */
+  ascension?: number;
   /** The HP it walks in with, when a past fight left it short. Absent =
    *  full (sim/heroHealth.ts). */
   hp?: number;
@@ -133,9 +136,10 @@ export function partyStats(party: Party): PartyStats {
   }
   for (const hero of party.heroes) {
     const h = HEROES[hero.id];
-    atk += h.dmg + h.dmgPerLevel * (hero.level - 1);
-    def += h.def + h.defPerLevel * (hero.level - 1);
-    hp += h.hp + h.hpPerLevel * (hero.level - 1);
+    const body = heroBody(h, hero.level, hero.ascension);
+    atk += body.dmg;
+    def += body.def;
+    hp += body.hp;
     // The Warden's trait is party-wide DEF, which reads to the player as "we
     // all stay standing longer" — so it multiplies the assembled party rather
     // than the hero's own line. Two Wardens multiply twice, the way two
@@ -160,8 +164,7 @@ export function partyPower(party: Party): number {
   let power = 0;
   for (const slot of party.slots) power += UNITS[slot.unitId].power * slot.count;
   for (const hero of party.heroes) {
-    const h = HEROES[hero.id];
-    power += (h.dmg + h.dmgPerLevel * (hero.level - 1)) * COMBAT.heroPowerPerDmg;
+    power += heroBody(HEROES[hero.id], hero.level, hero.ascension).dmg * COMBAT.heroPowerPerDmg;
   }
   return Math.round(power);
 }

@@ -5,6 +5,7 @@
 import { roundPrice } from '../roundPrice';
 import { COMBAT, HEROES, UNITS, WORLD_CAMPS } from '../data/definitions';
 import { heroSlots } from '../heroes';
+import { heroBody } from '../heroLadder';
 import type { GameState, LairId, Wallet } from '../state';
 import type { BoardHex } from './board';
 import type { FogState } from './explorers';
@@ -40,10 +41,8 @@ export function strongestParty(state: GameState): number {
   let power = 0;
   for (const u of state.army) power += UNITS[u.definitionId].power;
   const heroes = state.heroes.owned
-    .map((id) => {
-      const h = HEROES[id];
-      return (h.dmg + h.dmgPerLevel * ((state.heroes.levels[id] ?? 1) - 1)) * COMBAT.heroPowerPerDmg;
-    })
+    .map((id) => heroBody(HEROES[id], state.heroes.levels[id] ?? 1, state.heroes.ascension[id] ?? 0).dmg
+      * COMBAT.heroPowerPerDmg)
     .sort((a, b) => b - a)
     .slice(0, heroSlots(state));
   for (const p of heroes) power += p;
