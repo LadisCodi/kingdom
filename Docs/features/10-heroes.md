@@ -187,8 +187,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ### 2.7 The party rule
 
-- **A lair takes soldiers alone, a hero alone, or both.** A party with
-  nobody in it is refused. The kingdom owns no hero until the Tavern's first
+- **A lair takes soldiers alone, or soldiers with heroes — never a hero
+  alone** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A
+  party with nobody in it is refused. The kingdom owns no hero until the Tavern's first
   call, so the first fights are soldiers alone.
 - **An army on the world map needs a hero** to lead it.
 - In the province a hero is never *busy*. Fights resolve on entry; what

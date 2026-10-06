@@ -216,7 +216,7 @@ export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned
  * a retry is identical to a first attempt: nothing is lost but the supplies.
  */
 export type LairBlock =
-  | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'EmptyParty' | 'NoHero' | 'TooManyHeroes'
+  | 'LairNotFound' | 'AlreadyCleared' | 'AlreadyDefeated' | 'EmptyParty' | 'NoSoldiers' | 'NoHero' | 'TooManyHeroes'
   | 'TooManySlots'
   | 'NotEnoughUnits' | 'NotEnoughSupplies' | 'HeroDown';
 
@@ -243,10 +243,12 @@ export function lairBlock(
   if (heroIds.some((id) => !heroCanFight(state, id, t))) return 'HeroDown';
   // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
   // (Docs/features/10-heroes.md §2.6).
-  // A hero alone is a legal board, and so are soldiers alone; nobody at all
-  // is not.
+  // A LAIR WANTS SOLDIERS (18-garrisons-and-raids.md): soldiers alone, or
+  // soldiers with heroes — never a hero alone, who would hold a garrison off
+  // on its defence and win the slow way.
   const committed = slots.filter((s) => s.count > 0);
   if (heroIds.length === 0 && committed.length === 0) return 'EmptyParty';
+  if (committed.length === 0) return 'NoSoldiers';
   if (committed.length > troopSlots()) return 'TooManySlots';
   const available = availableRoster(state);
   for (const s of committed) {
