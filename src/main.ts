@@ -297,6 +297,14 @@ async function boot(): Promise<void> {
     location.reload();
   });
 
+  // Signed in to another kingdom: this device's save goes, the cloud's loads.
+  const switchAccount = (): void => {
+    saveManager.dropForAccount();
+    try { localStorage.removeItem('kingdom.worldServer'); } catch { /* private window */ }
+    try { localStorage.removeItem(LOCAL_SOCIAL_KEY); } catch { /* private window */ }
+    location.reload();
+  };
+
   const panelRoot = document.getElementById('panel')!;
   const overlayRoot = document.getElementById('overlay')!;
   const toastRoot = document.getElementById('toast')!;
@@ -304,7 +312,7 @@ async function boot(): Promise<void> {
   const OVERLAYS: Record<OverlayName, (g: Game) => HTMLElement> = {
     build: renderBuildMenu,
     research: renderResearchMenu,
-    settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
+    settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave, onSignedIn: switchAccount }),
     purse: renderPurseSheet,
     relic: renderRelicSheet,
     bag: renderBagSheet,

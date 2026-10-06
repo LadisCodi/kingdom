@@ -11,6 +11,7 @@ import { musicMuted, setMusicMuted } from '../audio/music';
 import { setSfxMuted, sfxMuted } from '../audio/sfx';
 import type { Game } from '../game';
 import { GAME_VERSION, SAVE_VERSION } from '../sim/data/definitions';
+import { accountRows, accountSignature } from './accountRow';
 import { el } from './format';
 import { action, sectionHead, sheet, switchCtl } from './kit';
 
@@ -27,11 +28,12 @@ export const settingsSignature = (game: Game): string => [
   musicMuted(), sfxMuted(), ambienceMuted(),
   Date.now() < armedUntil,
   game.payerInfo()?.label ?? '-',
+  accountSignature(),
 ].join('|');
 
 export function renderSettingsMenu(
   game: Game,
-  opts: { saveModeLabel: string; onReset: () => void },
+  opts: { saveModeLabel: string; onReset: () => void; onSignedIn: () => void },
 ): HTMLElement {
   // Every row leads with a painted mark in a parchment vignette (M9); the
   // marks are sheets/ui-i1-settings.png, drawn as CSS backgrounds.
@@ -81,6 +83,7 @@ export function renderSettingsMenu(
       mark('save'),
       words(opts.saveModeLabel.includes('cloud') ? 'Saved to the cloud' : 'Saved to this device',
         'Your kingdom keeps working while you are away, until its stores are full.')),
+    ...(opts.saveModeLabel.includes('cloud') ? accountRows(game, { onSignedIn: opts.onSignedIn }) : []),
 
     sectionHead('Playing as'),
     el('div', { class: 'set-row' },

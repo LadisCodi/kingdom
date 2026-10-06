@@ -4,7 +4,7 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: steps 3 and 5 built.** The game uses the real server
+> **Status: steps 3, 4 and 5 built.** The game uses the real server
 > when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
@@ -112,6 +112,10 @@ npx supabase functions deploy social
 ```
 
 - Anonymous sign-ins on (Authentication → Sign In / Up).
+- Email linking (15 §2) sends a code, not a link: the **Magic Link** and
+  **Change Email Address** templates (Authentication → Emails) carry
+  `{{ .Token }}`, and a custom SMTP sender is set — the built-in one only
+  mails the project's own team.
 - `.env.local` with the project URL and anon key turns the game onto it.
 
 ## 6. What the client still decides
