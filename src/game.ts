@@ -549,7 +549,7 @@ export class Game {
   /** The offer splashes this session has closed, as `buy:<sku>` / `claim:<sku>`. */
   private splashesClosed = new Set<string>();
   /** A splash opened on purpose — from the store or the pill. */
-  private offerSplashForced: { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null = null;
+  private offerSplashForced: OfferSplashView | null = null;
   /** What was asked for while the payer-profile sheet had the screen. The
    *  profile sheet is modal in the strong sense (14-monetization.md §3), so
    *  whatever wanted to open — the welcome report, chiefly — waits here and
@@ -2043,29 +2043,34 @@ export class Game {
    * that shows it — and that this session has not closed yet. It waits for
    * the map to be free: no sheet, no fight, no reveal, no video, no unlock.
    */
-  offerSplash(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+  offerSplash(): OfferSplashView | null {
     if (this.payerDue() || this.openOverlay !== null) return null;
     if (this.battle !== null || this.gachaReveal !== null || this.adWatch() !== null) return null;
     if (this.unlockOnScreen() !== null) return null;
     const now = this.now();
     const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
-    if (ready !== undefined) return { sku: ready, mode: 'claim' };
+    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false };
     const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
       && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
-    return sku === undefined ? null : { sku, mode: 'buy' };
+    return sku === undefined ? null : { sku, mode: 'buy', browse: false };
   }
 
-  /** The offer splash again, from the store or the pill: the same screen,
-   *  whatever the session has closed. */
-  openOfferSplash(sku: StoreSkuId): void {
+  /** The offer splash again, from the store or the offers widget: the same
+   *  screen, whatever the session has closed. `browse` — opened from the
+   *  widget — adds the row of every offer on the map along its top, to step
+   *  from one to the next. */
+  openOfferSplash(sku: StoreSkuId, browse = false): void {
     const ready = nextDayReady(this.state, this.now()).includes(sku);
     this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
-    this.offerSplashForced = { sku, mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy' };
+    this.offerSplashForced = {
+      sku, browse,
+      mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy',
+    };
     this.setOverlay(null);
   }
 
   /** What the splash mount draws: the one forced open, else the session's. */
-  offerSplashOnScreen(): { sku: StoreSkuId; mode: 'buy' | 'claim' | 'waiting' } | null {
+  offerSplashOnScreen(): OfferSplashView | null {
     if (this.offerSplashForced !== null) return this.offerSplashForced;
     return this.offerSplash();
   }
@@ -2140,6 +2145,7 @@ export class Game {
    *  claim — counting down to it, or ready. */
   offerWidgets(): OfferWidget[] {
     const now = this.now();
+    const rank = { ready: 0, sale: 1, waiting: 2 } as const;
     return OFFER_ORDER.filter((id) => STORE[id].widget).flatMap((sku): OfferWidget[] => {
       const s = STORE[sku];
       const base = { sku, name: s.name, sprite: s.sprite, hero: s.hero };
@@ -2148,7 +2154,7 @@ export class Game {
       if (waiting !== undefined) return [{ ...base, state: 'waiting' as const, at: waiting.claimableAt }];
       const w = offerWindow(this.state, sku);
       return offerOn(this.state, sku, now) ? [{ ...base, state: 'sale' as const, at: w?.closes ?? 0 }] : [];
-    });
+    }).sort((a, b) => rank[a.state] - rank[b.state]);
   }
 
   /** The explorer the store sells for Gems: its price, how many are out at
@@ -6411,4 +6417,12 @@ export interface OfferSale {
   gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
   /** Bought, and its next-day part not due yet: when it is. */
   nextDayAt: number | null;
+}
+
+/** The offer splash on screen: which offer, in which mood, and whether it
+ *  was opened from the offers widget (the row of offers along its top). */
+export interface OfferSplashView {
+  sku: StoreSkuId;
+  mode: 'buy' | 'claim' | 'waiting';
+  browse: boolean;
 }

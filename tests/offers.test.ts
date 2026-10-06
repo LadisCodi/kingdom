@@ -242,7 +242,7 @@ describe('the offer splash', () => {
 
       vi.setSystemTime(T0 + HOUR);
       const next = freshPresenter(state);
-      expect(next.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'buy' });
+      expect(next.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'buy', browse: false });
       next.closeOfferSplash();
       expect(next.offerSplashOnScreen()).toBeNull();
 
@@ -251,7 +251,7 @@ describe('the offer splash', () => {
       expect(next.offerWidgets().filter((w) => w.sku === 'FirstPurchase').map((w) => w.state)).toEqual(['waiting']);
       vi.setSystemTime(dailyResetsAt(T0 + HOUR));
       const later = freshPresenter(state);
-      expect(later.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'claim' });
+      expect(later.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'claim' });
       later.doClaimNextDay('FirstPurchase' as StoreSkuId);
       expect(later.offerSplashOnScreen()).toBeNull();
       expect(later.offerWidgets().filter((w) => w.sku === 'FirstPurchase')).toEqual([]);
@@ -305,5 +305,33 @@ describe('an offer\'s sale', () => {
     const build = game.offerSale(OFFER_ORDER.find((id) => STORE[id].opensOn === 'buildersBusy')!);
     expect(build.once).toBe(false);
     expect(build.closesAt).not.toBeNull();
+  });
+});
+
+describe('the grouped offers widget', () => {
+  it('leads with an offer to claim, and opens its splash with the row of offers', async () => {
+    const { vi } = await import('vitest');
+    const { freshPresenter } = await import('./helpers');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(T0);
+      const state = shop();
+      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      const game = freshPresenter(state);
+      refreshOffers(state, game.now());
+      expect(game.offerWidgets().length).toBeGreaterThan(1);
+      expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, game.now())).toBe('Purchased');
+      vi.setSystemTime(dailyResetsAt(T0));
+      expect(game.offerWidgets()[0]).toMatchObject({ sku: 'FirstPurchase', state: 'ready' });
+      game.openOfferSplash(game.offerWidgets()[1]!.sku, true);
+      expect(game.offerSplashOnScreen()?.browse).toBe(true);
+      game.closeOfferSplash();
+      // The unlock splash the Tavern raised goes first.
+      while (game.unlockOnScreen() !== null) game.dismissUnlock();
+      // The session's own splash (the claim) carries no row.
+      expect(game.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'claim', browse: false });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

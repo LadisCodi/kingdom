@@ -464,7 +464,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (elNode === null) return false;
     // A reveal or a splash that lands mid-line takes its own taps: it sits
     // above the stage, so a lock that refused them could never be lifted.
-    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar, #unlock, #gacha') !== null) return true;
+    if (box.contains(elNode) || elNode.closest('.dev-bar, #dev, .devbar, #unlock, #gacha, #offersplash') !== null) return true;
     if (elNode.tagName === 'CANVAS') return true;
     const t = playing!.target;
     if (lock !== 'all' && t?.kind === 'ui') {
@@ -481,8 +481,9 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   frame.addEventListener('click', (e) => {
     if (!waitsForTap()) return;
     const node = e.target instanceof HTMLElement ? e.target : (e.target as Node | null)?.parentElement ?? null;
-    // An unlock splash or a pack reveal over a line takes its own tap.
-    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar, #unlock, #gacha') !== null) return;
+    // An unlock splash, an offer splash or a pack reveal over a line takes
+    // its own tap.
+    if (node === null || box.contains(node) || node.closest('.dev-bar, #dev, .devbar, #unlock, #gacha, #offersplash') !== null) return;
     const moved = downAt === null ? 0 : Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
     if (moved < TAP_SLOP_PX) tapLine();
     e.preventDefault();
