@@ -5,6 +5,7 @@
 // CSS side effects does not belong in a 40-line string formatter.
 
 export * from './controls';
+export * from './holdRepeat';
 export * from './cta';
 export * from './host';
 export * from './icon';

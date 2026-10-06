@@ -447,15 +447,19 @@ wood of its sides touches the screen's edges.
     one line of flavour, and the priced
     Train button — its costs above it. The training time is the building's
     own stat tile (*Training*), one trainee per building.
-    A soldier adds its three numbers — Attack, Defence, Health — as small
-    tiles (the mark and the number, the name under them) under the portrait
-    and the flavour, beside the Train button, which runs down past them; the
-    bust rises out of the panel through its top edge, so the tiles' feet
-    line up with Train's whenever the flavour is no taller than the bust. Any
-    further stat takes a row of its own under both, the same tiles, four to
-    the row. A gate keeps the button, disabled, and puts a padlock and a
+    A soldier adds its four numbers — Attack, Damage, Defence, Health — as
+    small tiles (the mark and the number, the name under them) in one row
+    under the portrait and the flavour, beside the Train button, which runs
+    down past them; the bust rises out of the panel through its top edge, so
+    the tiles' feet line up with Train's whenever the flavour is no taller
+    than the bust. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
     reached*, *Needs Archery*.
+  - **Hold to train.** A tap on Train is one press. Held, it presses itself:
+    after 0.35 s at 3 a second, climbing to 15 a second over 2.5 s. It stops
+    on release, when the finger moves (a scroll), or where a tap would find
+    the button dead — a gate, or the purse short — without opening the
+    shortfall sheet. While it repeats it stays pushed in.
   - **Tags:** a chip for the unit's type (blue: Melee, Ranged, Mounted;
     Worker for a villager). Tapping it opens the kit's tooltip with the type
     chart's word on it: *Strong vs Lancers, weak vs Archers*. One

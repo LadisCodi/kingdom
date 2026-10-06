@@ -276,6 +276,10 @@
 }
 .k-btn:hover { filter: brightness(1.07); }
 .k-btn:active { transform: translateY(var(--lip)); box-shadow: 0 0 0 0 var(--slab-lip); }
+/* A held button (kit/holdRepeat.ts) stays pushed in while it repeats — even
+   one rebuilt under the finger, which never saw the press. */
+.k-btn.is-held { transform: translateY(var(--lip)); box-shadow: 0 0 0 0 var(--slab-lip); }
+.k-btn.is-holdable { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 
 .k-btn--primary { --slab: var(--leaf); --slab-lip: var(--leaf-dark); }
 .k-btn--secondary { --slab: var(--wood); --slab-lip: var(--wood-dark); }
