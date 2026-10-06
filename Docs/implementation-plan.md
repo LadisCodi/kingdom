@@ -157,8 +157,8 @@ Ordered so each step is playable before the next exists. Step 5.1 is worth
 shipping on its own: **the save stops evaporating.**
 
 1. Profiles and a display name, with optional account linking. **Built**:
-   the nickname, the friend code and the friends list with its reward path
-   (15 §2, §2.1, §2.2); account linking is not.
+   the nickname, the friend code and the friends list
+   (15 §2, §2.1); account linking is not.
 2. Neighbours, daily help with a cap, gifts drained at load.
 3. Guilds and membership.
 4. The guild week: the bar, contributions, threshold chests.

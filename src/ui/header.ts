@@ -104,8 +104,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   });
 
   // THE FRIENDS KNOB (Docs/features/15-social.md §2.1) hangs beside it on a
-  // rope of its own, and wears the red orb while someone asks to be friends
-  // or a reward on the friends' path waits.
+  // rope of its own, and wears the red orb while someone asks to be friends.
   const friendsKnob = el('button', {
     class: 'hud-knob is-friends', type: 'button', 'aria-label': 'Friends', 'data-coach': 'friends',
   }, iconEl('friends', { size: 'md' }));

@@ -1,7 +1,11 @@
 /* The friends list (Docs/features/15-social.md §2.1, mockup M73): requests
  * under three wooden tabs, a search, the player's code on a brass plate, the
- * ranked list, and the reward path at the foot — all on the window's
+ * ranked list — all on the window's
  * parchment, each kingdom a parchment card in a thin wood border. */
+
+/* The whole screen (`is-panes`): the list fills what the title leaves and
+   is the only thing that scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .fr { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: clip; }
 
 /* The name step: the words wrap beside the crest. */
 .fr-name .nick-lede > div { flex: 1; min-width: 0; }
@@ -12,7 +16,6 @@
 .fr.is-named > :nth-child(2) { animation-delay: 60ms; }
 .fr.is-named > :nth-child(3) { animation-delay: 120ms; }
 .fr.is-named > :nth-child(4) { animation-delay: 180ms; }
-.fr.is-named > :nth-child(5) { animation-delay: 240ms; }
 @keyframes fr-in {
   from { opacity: 0; transform: translateY(calc(var(--px) * 10)); }
   to { opacity: 1; transform: none; }
@@ -248,120 +251,6 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 }
 .fr-invite > .k-btn .k-btn-label { display: inline-flex; align-items: center; }
 
-/* THE REWARD PATH: a track filling green with the friends who count, its
-   rewards standing on their rings — taken ones ticked, a reached one glowing
-   until it is tapped. */
-.fr-path {
-  padding: calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 6);
-  border-radius: var(--radius);
-  border: calc(var(--px) * 2) solid rgba(92, 58, 30, 0.35);
-  background: rgba(226, 204, 160, 0.55);
-}
-.fr-path-head { display: flex; justify-content: space-between; align-items: baseline; font-size: calc(var(--px) * 15); }
-.fr-path-head b { font-weight: var(--weight-title); color: var(--wood-dark); }
-.fr-path-head span { font-weight: var(--weight-strong); color: var(--ink-muted); }
-.fr-track {
-  position: relative;
-  height: calc(var(--px) * 96);
-  margin: 0 calc(var(--px) * 14) 0 calc(var(--px) * 6);
-}
-.fr-track-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--px) * 26);
-  height: calc(var(--px) * 12);
-  border-radius: calc(var(--px) * 6);
-  background: linear-gradient(#7a5532, #5c3a1e);
-  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(20, 10, 4, 0.45), 0 calc(var(--px) * 1) 0 rgba(255, 255, 255, 0.4);
-  overflow: hidden;
-}
-.fr-track-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(#a6e36e, var(--leaf) 45%, var(--leaf-dark));
-  transition: width 400ms var(--ease-out, ease-out);
-}
-.fr-node {
-  position: absolute;
-  left: calc(var(--at) * 100%);
-  bottom: 0;
-  translate: -50% 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 2);
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--ink);
-  cursor: pointer;
-}
-.fr-node::before {
-  /* The ring on the track the reward stands on. */
-  content: '';
-  order: 2;
-  width: calc(var(--px) * 22);
-  height: calc(var(--px) * 22);
-  margin-top: calc(var(--px) * -2);
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff3d0 0 32%, #c98a16 34% 56%, #7a4d0e 58%);
-  box-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.4);
-}
-.fr-node-count { order: 3; font-size: calc(var(--px) * 14); font-weight: var(--weight-title); line-height: 1.1; }
-.fr-node-art { order: 1; position: relative; display: grid; place-items: center; height: calc(var(--px) * 46); }
-.fr-node-art .icon { --icon-size: calc(var(--px) * 40); }
-.fr-node.is-last .fr-node-art .icon { --icon-size: calc(var(--px) * 52); }
-.fr-node:not(.is-ready):not(.is-claimed) .fr-node-art { filter: saturate(0.75); }
-.fr-node.is-claimed .fr-node-art .icon:first-child { filter: saturate(0.5) brightness(0.92); }
-.fr-node-tick {
-  position: absolute;
-  right: calc(var(--px) * -6);
-  bottom: 0;
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #a6e36e, var(--leaf-dark));
-  box-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 20, 10, 0.45);
-}
-.fr-node-tick .icon { --icon-size: calc(var(--px) * 14); filter: brightness(0) invert(1); }
-.fr-node.is-ready .fr-node-art { animation: fr-ready 1.4s ease-in-out infinite; }
-.fr-node.is-ready .fr-node-art::before {
-  content: '';
-  position: absolute;
-  inset: calc(var(--px) * -10);
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 220, 110, 0.95), rgba(255, 190, 60, 0.45) 45%, rgba(255, 190, 60, 0) 70%);
-  animation: fr-glow 1.4s ease-in-out infinite;
-}
-.fr-node.is-ready::before { background: radial-gradient(circle, #fff7d8 0 32%, #f2b233 34% 56%, #a9700f 58%); box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 200, 80, 0.9); }
-@keyframes fr-ready {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(calc(var(--px) * -3)) scale(1.06); }
-}
-@keyframes fr-glow {
-  0%, 100% { opacity: 0.55; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
-.fr-node.is-popping .fr-node-art { animation: fr-pop 420ms var(--ease-out, ease-out); }
-@keyframes fr-pop {
-  0% { transform: scale(1.35); }
-  100% { transform: scale(1); }
-}
-/* A reward's tooltip opens ABOVE it — the path is the foot of the screen —
-   and the last one's is anchored to its right, off the window's edge. */
-.fr-node .k-tip { top: auto; bottom: calc(100% + var(--px) * 6); left: 50%; translate: -50% 0; text-align: left; }
-.fr-node .k-tip::after { top: 100%; bottom: auto; left: 50%; translate: -50% 0; border-bottom-color: transparent; border-top-color: var(--section-line); }
-.fr-node.is-last .k-tip { left: auto; right: calc(var(--px) * -4); translate: none; }
-.fr-node.is-last .k-tip::after { left: auto; right: calc(var(--px) * 22); translate: none; }
-.fr-node:first-of-type .k-tip { left: calc(var(--px) * -10); translate: none; }
-.fr-node:first-of-type .k-tip::after { left: calc(var(--px) * 22); translate: none; }
-.fr-path-note { margin: calc(var(--px) * 2) 0 0; text-align: center; font-size: var(--text-helper); font-weight: var(--weight-small); color: var(--ink-muted); }
-
 /* A FRIEND'S PROFILE: the crest large beside the name and code, the facts
    as a ledger, room for what friends do together, and Remove in the corner. */
 .fr-profile-head { display: flex; align-items: center; gap: calc(var(--px) * 12); margin-bottom: calc(var(--px) * 10); }
@@ -392,7 +281,7 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 .fr-confirm-buttons { display: flex; gap: calc(var(--px) * 10); margin-top: calc(var(--px) * 8); }
 
 /* THE KNOB under the header that opens it all, hanging on its own rope
-   left of Settings, with the red orb when someone asks or a reward waits. */
+   left of Settings, with the red orb when someone asks. */
 .hud-knob.is-friends { right: calc(var(--rpx) * 148); }
 .hud-knob.is-friends[hidden] { display: none; }
 .hud-knob.is-friends > .k-cta { top: calc(var(--rpx) * -6); right: calc(var(--rpx) * -6); }

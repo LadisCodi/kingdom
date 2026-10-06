@@ -3,20 +3,17 @@
 //
 // Top to bottom, as the player meets it: the requests (received, sent,
 // suggested), a search, the invitation with the player's own code, the list
-// of friends ranked by how far each has come, and the reward path at the
-// foot. The first visit without a name asks for one, and the rest arrives.
+// of friends ranked by how far each has come. The first visit without a name asks for one, and the rest arrives.
 //
 // Everything here reads `game.friends` (friendsClient.ts) and calls it.
 
-import { itemWords, type Game } from '../../game';
+import type { Game } from '../../game';
 import { lastSeenWords, type RankedKingdom, type RequestsTab } from '../../friendsClient';
 import { FRIENDS } from '../../sim/data/definitions';
-import type { ItemId } from '../../sim/state';
 import type { KingdomView } from '../../socialServer/types';
 import { NICKNAME_MAX, nicknameProblem } from '../../worldServer/nickname';
 import { el, formatExact } from '../format';
-import { itemIcon } from '../itemArt';
-import { btn, currencyIcon, iconEl, knob, sectionHead, sheet, withTooltip } from '../kit';
+import { btn, iconEl, knob, sectionHead, sheet } from '../kit';
 import { crestEl, townhallTag } from './kingdomBits';
 
 /** Accept and decline: the kit's painted knob, drawn a size up. */
@@ -33,15 +30,18 @@ export function renderFriendsSheet(game: Game): HTMLElement {
       searchPanel(game),
       invitePanel(game),
       friendsPanel(game),
-      ...(f.path() === null ? [] : [rewardPath(game)]),
     ];
   };
   // The sections come in one after another the first time they are drawn
   // after opening — and after a name is taken (§2.1) — never on a rebuild.
   const settled = f.settled;
   if (f.named()) f.settled = true;
-  return sheet({ title: 'Friends', onClose: () => game.dismiss(), tall: true },
-    el('div', { class: `fr${f.named() ? ' is-named' : ''}${settled ? ' is-settled' : ''}` }, ...body()));
+  // The whole screen however little it holds (`is-panes`, kit.css), the
+  // list under the title the one scroller.
+  const surface = sheet({ title: 'Friends', onClose: () => game.dismiss(), tall: true },
+    el('div', { class: `fr${f.named() ? ' is-named' : ''}${settled ? ' is-settled' : ''}`, 'data-keep-scroll': 'friends' }, ...body()));
+  surface.classList.add('is-panes');
+  return surface;
 }
 
 // ------------------------------------------------------------ the name
@@ -202,55 +202,6 @@ function friendsPanel(game: Game): HTMLElement {
     sectionHead(`Friends ${formatExact(friends)}/${formatExact(FRIENDS.max)}`),
     el('div', { class: 'fr-rows' }, ...rows),
     ...(friends === 0 ? [el('p', { class: 'fr-empty' }, 'Add a kingdom above, or invite a friend with your code.')] : []));
-}
-
-// ------------------------------------------------------------ rewards
-
-/** The reward path at the foot of the screen: a track of milestones, the
- *  ones reached glowing until they are taken, the rest telling what they
- *  hold on a tap. Put away once every reward is taken. */
-function rewardPath(game: Game): HTMLElement {
-  const f = game.friends;
-  const path = f.path()!;
-  const last = path.milestones[path.milestones.length - 1];
-  const top = last.friends;
-  const fill = Math.min(1, path.counting / top);
-  const nodes = path.milestones.map((m) => {
-    const claimed = path.claimed.includes(m.index);
-    const ready = !claimed && path.counting >= m.friends;
-    const isLast = m === last;
-    const gems = m.reward.wallet.Gems ?? 0;
-    const item = Object.keys(m.reward.items)[0] as ItemId | undefined;
-    const art = item !== undefined ? iconEl(itemIcon(item), { size: 'lg' }) : currencyIcon('Gems', { size: 'lg' });
-    const words = rewardWords(gems, item);
-    const node = el('button', {
-      class: `fr-node${claimed ? ' is-claimed' : ''}${ready ? ' is-ready' : ''}${isLast ? ' is-last' : ''}`
-        + `${f.justClaimed.has(m.index) ? ' is-popping' : ''}`,
-      type: 'button',
-      style: `--at: ${(m.friends / top).toFixed(4)}`,
-      'aria-label': `${formatExact(m.friends)} friends: ${words}${claimed ? ', taken' : ready ? ', ready to take' : ''}`,
-    },
-    el('span', { class: 'fr-node-art' }, art, ...(claimed ? [el('span', { class: 'fr-node-tick' }, iconEl('tick', { size: 'sm' }))] : [])),
-    el('span', { class: 'fr-node-count' }, formatExact(m.friends)));
-    // Ready: a tap takes it. Otherwise a tap says what it holds — the last
-    // one above all, which is the one worth reaching for.
-    if (ready) node.addEventListener('click', () => f.claim(m.index));
-    else withTooltip(node, words, claimed ? 'Taken' : `${formatExact(m.friends)} friends`);
-    return node;
-  });
-  f.justClaimed.clear();
-  return el('section', { class: 'fr-path' },
-    el('div', { class: 'fr-path-head' },
-      el('b', {}, 'Friend rewards'),
-      el('span', {}, `${formatExact(Math.min(path.counting, top))}/${formatExact(top)}`)),
-    el('div', { class: 'fr-track' },
-      el('div', { class: 'fr-track-bar' }, el('div', { class: 'fr-track-fill', style: `width: ${(fill * 100).toFixed(1)}%` })),
-      ...nodes),
-    el('p', { class: 'fr-path-note' }, `A friend counts once their Townhall reaches level ${formatExact(FRIENDS.countsFromTownhall)}.`));
-}
-
-function rewardWords(gems: number, item: ItemId | undefined): string {
-  return [...(gems > 0 ? [`${formatExact(gems)} Gems`] : []), ...(item !== undefined ? [itemWords(item)] : [])].join(' and ');
 }
 
 // ------------------------------------------------------------ a row

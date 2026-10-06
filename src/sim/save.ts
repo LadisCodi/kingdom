@@ -970,7 +970,6 @@ export function serialize(state: GameState, now: number): SaveFile {
           ClaimedPaid: state.kingdom.survey.claimedPaid,
           Owned: state.kingdom.survey.owned,
         },
-        Friends: { Claimed: state.kingdom.friends.claimed },
         Pass: {
           Season: state.kingdom.pass.season,
           Xp: state.kingdom.pass.xp,
@@ -1378,10 +1377,6 @@ export function deserialize(
       claimedPaid: [...(survey?.ClaimedPaid ?? [])],
       owned: survey?.Owned === true,
     };
-    // Additive (v96): a kingdom from before the friends list has taken none
-    // of its rewards.
-    const friends = kingdomDto.Friends as { Claimed?: number[] } | undefined;
-    state.kingdom.friends = { claimed: [...(friends?.Claimed ?? [])] };
     const pass = kingdomDto.Pass as {
       Season?: number; Xp?: number; ClaimedFree?: number[]; ClaimedPaid?: number[];
       PaidSeason?: number | null; LastWindow?: number; Week?: number;
