@@ -53,7 +53,7 @@ function cardStatus(game: Game, view: RelicView): HTMLElement[] {
             `${formatExact(view.slots.filter((n) => n > 0).length)} / ${formatExact(view.slots.length)}`)];
     case 'awake': {
       const a = game.relicActivation(view.id);
-      const left = formatCountdown(Math.ceil((a?.leftMs ?? 0) / 1000));
+      const left = formatDuration(Math.ceil((a?.leftMs ?? 0) / 1000));
       return [el('span', { class: 'rl-awake-plate' }, iconEl('hourglass', { size: 'sm' }), `Awake · ${left}`)];
     }
     case 'asleep': {
@@ -74,13 +74,15 @@ function cardStatus(game: Game, view: RelicView): HTMLElement[] {
  *  it is the emerald stone (§3.3), with its Mana inside it (§6.4). */
 export function activateButton(game: Game, id: ArtifactId): HTMLButtonElement {
   const a = game.relicActivation(id);
-  return btn({
+  const button = btn({
     label: 'Activate',
     kind: 'primary',
     finish: 'gem',
     costExtra: [{ icon: 'Mana', amount: formatExact(a?.cost ?? 0), short: !(a?.affordable ?? false) }],
     onClick: () => game.doActivateRelic(id),
   });
+  button.dataset.coach = 'relic-activate';
+  return button;
 }
 
 /** One relic's card in the Bag: two a row (M72, M80). */
@@ -176,7 +178,8 @@ export function activation(game: Game, id: ArtifactId): HTMLElement | null {
   if (a.awake) {
     // A TIMER is the blue bar (kit/stats.ts `ProgressTone`).
     const bar = progress('blue');
-    const left = formatCountdown(Math.ceil(a.leftMs / 1000));
+    // To the second while it runs down: the window is the thing being read.
+    const left = formatDuration(Math.ceil(a.leftMs / 1000));
     bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${left} left`);
     return el('div', { class: 'rl-block rl-activation is-awake' },
       el('div', { class: 'rl-awake-row' }, iconEl('hourglass'), bar.root),
@@ -201,6 +204,31 @@ export function activation(game: Game, id: ArtifactId): HTMLElement | null {
         onClick: () => game.doUseFlaskFor(id),
       })]),
     ]));
+}
+
+/**
+ * THE ACTIVATION OVER THE SHRINE'S PAINTING (its card): only what can be
+ * pressed or read at a glance, on the painting's calm bottom band — asleep,
+ * Activate with its Mana (and, short of it, the smallest flask); awake, the
+ * window running down. The sheet's longer form is `activation`.
+ */
+export function activationOverlay(game: Game, id: ArtifactId): HTMLElement | null {
+  const a = game.relicActivation(id);
+  if (a === null || !a.hosted) return null;
+  if (a.awake) {
+    const bar = progress('blue');
+    bar.set(a.windowMs > 0 ? a.leftMs / a.windowMs : 0, `${formatDuration(Math.ceil(a.leftMs / 1000))} left`);
+    return el('div', { class: 'dc-chapel-foot is-awake' }, iconEl('hourglass'), bar.root);
+  }
+  return el('div', { class: 'dc-chapel-foot' },
+    activateButton(game, id),
+    ...(a.affordable || a.flask === null ? [] : [btn({
+      label: 'Use',
+      kind: 'blue',
+      icon: 'manaFlask',
+      note: `Flask ×${formatExact(a.flask.count)}`,
+      onClick: () => game.doUseFlaskFor(id),
+    })]));
 }
 
 /** A world relic's spell, once restored: cast it, or how long until it can

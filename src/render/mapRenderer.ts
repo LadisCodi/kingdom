@@ -31,7 +31,7 @@ import {
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
-import { drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble, drawManaBubble } from './collectBubbleArt';
+import { drawAsleepBubble, drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
 import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
@@ -90,6 +90,9 @@ export interface MarkerLayer {
     glyph: string; centre: Coord; cells: Coord[]; left: number;
     /** The relic's own art for the wheel's face, when it has one. */
     sprite?: string;
+    /** False: no wheel — what it counts is drawn elsewhere (a Shrine's
+     *  relic counts its own window down over the Shrine). */
+    wheel?: boolean;
   }>;
   /** EVERY SHRINE HOLDING A RELIC (09-relics.md §11.6, M84): the relic's art
    *  floats over an awake one and rests on the altar of a sleeping one, which
@@ -97,6 +100,8 @@ export interface MarkerLayer {
   shrineRelics: Array<{
     relic: ArtifactId; districtId: string; location: Coord; size: { x: number; y: number }; sprite: string;
     awake: boolean; cost: number; affordable: boolean;
+    /** Of an awake one's window, what is left: 1 at the wake, 0 as it ends. */
+    left: number;
   }>;
   /** What an awake aura pays a building inside it, on a small coin badge
    *  over its roof: `+30%` (M84). */
@@ -1434,6 +1439,8 @@ export function drawMap(
     }
     ctx.restore();
 
+    if (zone.wheel === false) continue;
+
     // THE WHEEL, on the centre: a dark disc with the window sweeping off it
     // clockwise from twelve, and the relic's own glyph in the middle so two
     // zones standing at once are told apart by WHOSE they are.
@@ -1650,6 +1657,25 @@ export function drawMap(
       // The halo first, the art over it; without the halo it still floats.
       drawSpriteGlow(ctx, held.sprite, x, y, s, s, s * 0.12, PALETTE.spellGlow);
       drawSprite(ctx, held.sprite, x, y, s, s);
+      // ITS WINDOW, as a thin arc round it sweeping off from twelve — the
+      // zone's wheel, worn by the relic itself rather than drawn twice.
+      const cx = x + s / 2;
+      const cy = y + s / 2;
+      const r = s * 0.62;
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(3, s * 0.07);
+      ctx.strokeStyle = PALETTE.spellDial;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = PALETTE.spellGlow;
+      ctx.shadowColor = PALETTE.spellBorder;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * held.left);
+      ctx.stroke();
+      ctx.restore();
     } else {
       const s = plot.w * 0.3;
       ctx.save();
@@ -1704,16 +1730,16 @@ export function drawMap(
       Math.max(28, Math.min(64, size * 0.62)), clock));
   }
 
-  // Pass 4.6: A SLEEPING SHRINE'S MANA BUBBLE (M84) — the price of waking
-  // its relic, over its roof. A tap on it opens the Shrine's card, so its
+  // Pass 4.6: A SLEEPING SHRINE'S BUBBLE — its relic, drained and resting
+  // under Zs: there, and off. A tap on it opens the Shrine's card, so its
   // rect is kept (render/shrineBubbles.ts).
   clearShrineBubbles();
   for (const held of markers.shrineRelics) {
     if (held.awake) { bubbles.forget(`shrine:${held.districtId}`); continue; }
     const art = artOf.get(held.districtId);
     if (!art) continue;
-    markShrineBubble(held.relic, drawManaBubble(ctx, bubbles, `shrine:${held.districtId}`,
-      formatExact(held.cost), held.affordable, labelFace(),
+    markShrineBubble(held.relic, drawAsleepBubble(ctx, bubbles, `shrine:${held.districtId}`,
+      held.sprite, labelFace(),
       art.x + art.w / 2, art.y + art.h * 0.12, Math.max(26, Math.min(56, size * 0.5)), clock));
   }
 

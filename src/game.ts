@@ -1561,10 +1561,13 @@ export class Game {
       const relic = d.hosts;
       if (relic === undefined || artifactLevel(this.state, relic) < 1) return [];
       const cost = activationCost(this.state, relic);
+      const awake = isAwake(this.state, relic);
+      const endsAt = this.state.artifacts.casts[relic]?.endsAt ?? 0;
       return [{
         relic, districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size,
         sprite: ARTIFACTS[relic].sprite,
-        awake: isAwake(this.state, relic), cost, affordable: have >= cost,
+        awake, cost, affordable: have >= cost,
+        left: awake ? Math.max(0, Math.min(1, (endsAt - this.now()) / Math.max(1, windowMsOf(d)))) : 0,
       }];
     });
   }
@@ -1606,6 +1609,8 @@ export class Game {
    */
   spellZones(): Array<{
     relic: ArtifactId; glyph: string; centre: Coord; cells: Coord[];
+    /** The relic's art for the wheel's face; `wheel: false` draws none. */
+    sprite?: string; wheel?: boolean;
     /** 1 at the cast, 0 as it closes — the wheel's sweep. */
     left: number;
     leftMs: number;
@@ -1615,7 +1620,9 @@ export class Game {
     for (const m of activeZones(this.state)) {
       byCast.set(`${m.area!.relic}:${m.area!.since}`, m);
     }
-    // An awake city relic's aura, its wheel counting the Shrine's window down.
+    // An awake city relic's aura. NO WHEEL: the relic floats over its Shrine
+    // and counts its own window down (`shrineRelics`), so a wheel bearing
+    // the same art on the same spot would show it twice.
     const awake = shrines(this.state).flatMap((host) => {
       const relic = host.hosts;
       if (relic === undefined || !isAwake(this.state, relic)) return [];
@@ -1626,6 +1633,7 @@ export class Game {
         relic,
         glyph: ARTIFACTS[relic].glyph,
         sprite: ARTIFACTS[relic].sprite,
+        wheel: false,
         centre: host.location,
         cells: this.map.cells.filter((cell) => areaCovers(area, cell)),
         left: Math.max(0, Math.min(1, (c.endsAt - now) / span)),

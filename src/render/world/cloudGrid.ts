@@ -5,14 +5,14 @@
 // (plates and sides) and what stands on it (boardRenderer.ts), so the clouds
 // can lap over the near edge of a tile and nothing upright is hidden.
 
-import { BOARD_RADIUS, type Hex } from '../../sim/world/hex';
+import { WORLD_RADIUS, type Hex } from '../../sim/world/hex';
 import { CLOUD_PX, type BankGrid } from '../fog/fogLayer';
 import { HEX_R, HEX_W, TILT } from './hexLayout';
 
-/** The mask spans the board and a rim of one hex, which is always cloud:
+/** The mask spans the world and a rim of one hex, which is always cloud:
  *  past it the texture's edge repeats the rim. */
-export const MASK_SPAN = 2 * BOARD_RADIUS + 3;
-export const MASK_ORIGIN = -(BOARD_RADIUS + 1);
+export const MASK_SPAN = 2 * WORLD_RADIUS + 3;
+export const MASK_ORIGIN = -(WORLD_RADIUS + 1);
 
 /** The mask's byte for a hex. */
 export const maskIndex = (h: Hex): number => (h.r - MASK_ORIGIN) * MASK_SPAN + (h.q - MASK_ORIGIN);

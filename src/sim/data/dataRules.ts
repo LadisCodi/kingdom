@@ -16,6 +16,7 @@
 
 import techTree from './tech-tree.json';
 import regionMap from './region-map.json';
+import { BOARD_COUNT } from '../world/hex';
 import { DEPOSIT_OF, OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
@@ -501,6 +502,9 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
+  // '' is any relic: chosen in the picker, or standing in a Shrine.
+  relicPicked: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
+  relicHosted: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
 };
 
 export const RULES: Readonly<Record<string, Rule>> = {
@@ -772,6 +776,13 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {
         push(null, ['worldGen', 'terrainWeights', role], 'every weight is 0 — a hex here could roll no terrain');
       }
+    }
+    // Dungeon names: two of its own for every sixth of the world, so two
+    // standing at once never share one (worldServer/core.ts `dungeonInfo`).
+    const dungeon = (doc.worldDungeon ?? {}) as Record<string, unknown>;
+    const combos = list(dungeon.nameFirst).length * list(dungeon.nameSecond).length;
+    if (combos < 2 * BOARD_COUNT * 6) {
+      push(null, ['worldDungeon', 'nameFirst'], `${combos} names for ${BOARD_COUNT * 6} sixths — a world needs two a sixth (${2 * BOARD_COUNT * 6})`);
     }
     // Every district once, every feature a hex can be held on decided by
     // exactly one of them (19 §7).

@@ -216,7 +216,7 @@ plays this before the lair's own scene. Its lines are beats.
 
 | Scene | Trigger | Says (Isolde) |
 |---|---|---|
-| `shrineSeen` | the Thorned Shrine is out of the dark | *Old stones, still standing — a shrine! Claimed, it deepens our well for good. Though not while the Orcs squat beside it.* |
+| `shrineSeen` | the Thorned Shrine is out of the dark | *A shrine in ruins! Repaired, it can hold a relic and lend us its power. Though not while the Orcs squat beside it.* |
 | `huntSeen` | the first wild game | *Game in the woods! A tap brings home three times what a bush does — once Hunting teaches us how.* |
 | `ironSeen` | the first iron mountain | *Iron in that rock! The Quarry can't cut it until we learn Mining — and then it's worth five bare peaks.* |
 | `goldSeen` | the first gold mountain | *Gold in the mountain! Once we learn Mining, every swing of a pick there brings up coin.* |
@@ -224,6 +224,21 @@ plays this before the lair's own scene. Its lines are beats.
 | `harpies` | the Harpies are discovered | *Harpies, roosting over our mountains! While they stand, not one stone up there is ours. Archers on the wing — riders, I think?* |
 
 Each points at what it is about.
+
+**`shrineRelic` — the first Shrine.** The first Shrine standing plays this.
+Its first line **hands over the Staff of Renewal whole** (restored at level 1,
+nothing if it already is). Its lines are beats, like the first lair's.
+
+| Isolde says | Points at | Lock | Moves on |
+|---|---|---|---|
+| *The shrine stands again! And look what the Orcs left behind — the Staff of Renewal, whole. It wants an altar. Tap the shrine.* | the Shrine | the Shrine | its card is open |
+| *A relic set on this altar lends the kingdom its power. Tap the altar.* | the altar | the altar | the relic picker is open |
+| *There's the Staff. Its power makes the forests, crops and stone round the shrine grow back faster. Choose it.* | the Staff's card | the card | the Staff is in the slot |
+| *Now Select, and it takes its place.* | Select | Select | a Shrine holds the Staff |
+| *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine — a grander shrine keeps it awake longer.* | Activate | none | tap |
+
+- Activating is pointed at, not required: a player short of Mana is never
+  held on a line they cannot finish.
 
 ### 4.5 Later systems
 

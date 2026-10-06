@@ -453,38 +453,101 @@
 .rl-awake-row > .icon { flex: none; --icon-size: calc(var(--px) * 28); }
 .rl-awake-row > .k-trough { flex: 1 1 auto; }
 
-/* THE SHRINE'S SLOT IS ITS ALTAR (assets/shrine-altar-empty.png with the
- * carved +, shrine-altar.png once a relic stands in it; 400×469, one size so
- * the niche never moves). The relic is set in the niche — its foot on the
- * niche's floor, 43% down the art — dim asleep, lit awake. */
-.dc-altar {
+/* THE SHRINE'S SLOT IS ITS CHAPEL (assets/shrine-interior-empty.jpg with the
+ * cradle carved with a +, shrine-interior.jpg once a relic stands in it):
+ * the lair card's 16:9 painting on a kit section, the whole card's width,
+ * with everything about the relic laid over it — its name and effect on a
+ * dark band at the top, Activate or the timer on the calm floor at the
+ * bottom. The relic is set in the altar's golden cradle: centred, 36% down
+ * the painting — dim asleep, lit awake. */
+.dc-chapel.k-section {
   position: relative;
-  align-self: center;
-  width: calc(var(--px) * 180);
-  aspect-ratio: 400 / 469;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  overflow: hidden;
+  background: url('../../assets/shrine-interior-empty.jpg') center / cover no-repeat;
+}
+.dc-chapel.k-section.is-held { background-image: url('../../assets/shrine-interior.jpg'); }
+.dc-chapel.is-held { aspect-ratio: 4 / 3; }
+.dc-chapel-press {
+  position: absolute;
+  inset: 0;
   padding: 0;
   border: none;
-  background: url('../../assets/shrine-altar-empty.png') center / contain no-repeat;
+  background: none;
   cursor: pointer;
-  --zzz-size: calc(var(--px) * 16);
 }
-.dc-altar.is-held { background-image: url('../../assets/shrine-altar.png'); }
-.dc-altar:active { translate: 0 calc(var(--px) * 2); }
-.dc-altar:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * 4); border-radius: var(--radius); }
-.dc-altar-relic {
+.dc-chapel-press:active ~ .dc-chapel-relic { translate: -50% calc(-50% + var(--px) * 2); }
+.dc-chapel-press:focus-visible { outline: calc(var(--px) * 3) solid var(--gold); outline-offset: calc(var(--px) * -4); border-radius: var(--radius); }
+.dc-chapel-relic {
   position: absolute;
   left: 50%;
-  bottom: 57%;
-  width: 40%;
-  height: auto;
+  /* 4:3 crops the 16:9 painting's sides (cover keeps its height), so the
+     cradle is still 36% down and now a fifth of the width. */
+  top: 36%;
+  width: 20%;
   aspect-ratio: 1;
-  translate: -50% 0;
-  object-fit: contain;
+  translate: -50% -50%;
+  pointer-events: none;
+  --zzz-size: calc(var(--px) * 14);
 }
-.dc-altar.is-asleep .dc-altar-relic { filter: saturate(0.45) brightness(0.88); }
-.dc-altar.is-awake .dc-altar-relic { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 214, 110, 0.95)); }
-.dc-altar > .k-zzz { top: 8%; right: 22%; }
-.dc-altar > .k-cta { top: 6%; right: 6%; }
+.dc-chapel:not(.is-held) .dc-chapel-relic { top: 36%; width: 15%; }
+.dc-chapel-relic-art { width: 100%; height: 100%; object-fit: contain; }
+.dc-chapel.is-asleep .dc-chapel-relic-art { filter: saturate(0.45) brightness(0.85); }
+.dc-chapel.is-awake .dc-chapel-relic-art { filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 230, 150, 0.95)); }
+/* The relic's name and what it does, on a dark band across the top. */
+.dc-chapel-head {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--px) * 22);
+  background: linear-gradient(rgba(20, 12, 30, 0.82), rgba(20, 12, 30, 0.5) 60%, transparent);
+  color: var(--ink-inverse);
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(10, 6, 16, 0.9);
+  pointer-events: none;
+}
+.dc-chapel-head > b { font-size: var(--text-body); font-weight: var(--weight-title); }
+.dc-chapel-head > span { font-size: var(--text-desc); }
+/* Activate (or the window running down) on the calm floor at the bottom. */
+.dc-chapel-foot {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 24) calc(var(--px) * 10) calc(var(--px) * 8);
+  background: linear-gradient(transparent, rgba(20, 12, 30, 0.6));
+}
+.dc-chapel-foot > .k-btn { margin-inline: 0; }
+.dc-chapel-foot.is-awake { align-items: center; }
+.dc-chapel-foot.is-awake > .icon { flex: none; --icon-size: calc(var(--px) * 28); }
+.dc-chapel-foot.is-awake > .k-trough { flex: 1 1 auto; }
+/* WAITING, IT CALLS: the unlock splash's sunburst and bloom (unlock.css
+ * `.unl-rays`, `.unl-glow`), turning out of the cradle's +; the CTA rides it. */
+.dc-chapel-call {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  width: 26%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+/* The light comes OUT of the cradle and leaves its + in sight: a clear disc
+ * at the centre, the sunburst beyond it. */
+.dc-chapel-call > .unl-glow, .dc-chapel-call > .unl-rays {
+  mix-blend-mode: screen;
+  -webkit-mask: radial-gradient(closest-side, transparent 30%, #000 46%, #000 70%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 30%, #000 46%, #000 70%, transparent 100%);
+}
+.dc-chapel-call > .unl-glow { inset: -20%; opacity: 0.7; }
+.dc-chapel-call > .k-cta { top: 4%; right: 4%; }
 .dc-shrine > .dc-shrine-says { align-items: center; text-align: center; }
 
 /* AN EMPTY RELIC SLOT: the hero slot's dashed gold well (heroPicker.css

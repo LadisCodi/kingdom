@@ -32,7 +32,7 @@ describe('a first join', () => {
     expect(store.nicknames.get('u1')).toBe('Ada');
     const doc = (await store.load('b-u1'))!.doc;
     expect(doc.seats[board.seat]).toMatchObject({ name: 'Ada', bot: false });
-    expect(doc.seats.filter((s) => s?.bot)).toHaveLength(5);
+    expect(doc.seats.filter((s) => s?.bot)).toHaveLength(SEAT_INDICES.length - 1);
   });
 
   it('puts the next player in a rival\'s city on the newest board, and the rival leaves', async () => {
@@ -51,7 +51,7 @@ describe('a first join', () => {
     expect(second.seat).not.toBe(first.seat);
     const doc = (await store.load('b-u1'))!.doc;
     expect(doc.seats[rival]).toMatchObject({ playerId: 'u2', name: 'Brin', bot: false });
-    expect(doc.seats.filter((s) => s?.bot)).toHaveLength(4);
+    expect(doc.seats.filter((s) => s?.bot)).toHaveLength(SEAT_INDICES.length - 2);
     const left = doc.hexes[boardNeighbors(SEAT_INDICES[rival])[0]];
     expect(left).toMatchObject({ owner: null, stored: 0 });
   });
@@ -59,8 +59,9 @@ describe('a first join', () => {
   it('opens a new board once every rival on the old one is replaced', async () => {
     const store = memoryBoards();
     await joined(store, 'u0', 'Player 0');
-    for (let i = 1; i <= 5; i++) expect((await joined(store, `u${i}`, `Player ${i}`)).id).toBe('b-u0');
-    expect((await joined(store, 'u6', 'Player 6')).id).toBe('b-u6');
+    const last = SEAT_INDICES.length;
+    for (let i = 1; i < last; i++) expect((await joined(store, `u${i}`, `Player ${i}`)).id).toBe('b-u0');
+    expect((await joined(store, `u${last}`, `Player ${last}`)).id).toBe(`b-u${last}`);
   });
 
   it('refuses a nickname another player has, whatever its case, and one of the wrong shape', async () => {

@@ -303,20 +303,19 @@ export function drawClaimBubble(
   return { x: tipX - w / 2, y: ty - tail - h, w, h: h + tail };
 }
 
-// -------------------------------------------------------- the Mana bubble
+// ------------------------------------------------------- the asleep bubble
 
 /**
- * A SLEEPING SHRINE'S BUBBLE (Docs/features/09-relics.md §11.6, M84): the
- * collect bubble's parchment and rim, holding the Mana orb and what waking
- * its relic costs — the price inked red while the pool is short of it.
+ * A SLEEPING SHRINE'S BUBBLE (Docs/features/09-relics.md §11.6): the collect
+ * bubble's parchment and rim, holding its relic drained of colour and the
+ * resting Zs the UI marks a sleeper with — the relic is there, and off.
  * Returns its rect, so a tap on it opens the Shrine's card.
  */
-export function drawManaBubble(
+export function drawAsleepBubble(
   ctx: CanvasRenderingContext2D,
   bubbles: CollectBubbles,
   id: string,
-  cost: string,
-  affordable: boolean,
+  sprite: string,
   font: string,
   tipX: number,
   tipY: number,
@@ -329,16 +328,14 @@ export function drawManaBubble(
   const bob = still ? 0 : (Math.sin(clock / 260 + phaseOf(id)) * 0.5 + 0.5) * height * 0.14;
   const h = height;
   const tail = h * 0.22;
-  const pad = h * 0.18;
-  const orb = Math.round(h * 0.62);
-  const textPx = Math.max(11, Math.round(h * 0.42));
-  ctx.save();
-  ctx.font = `bold ${textPx}px ${font}`;
-  const textW = ctx.measureText(cost).width;
-  const w = pad + orb + h * 0.1 + textW + pad;
+  const pad = h * 0.14;
+  const art = Math.round(h * 0.8);
+  const zPx = Math.max(11, Math.round(h * 0.4));
+  const w = pad + art + h * 0.04 + zPx * 1.1 + pad;
   const r = h * 0.42;
   const line = Math.max(1.5, h * 0.055);
   const ty = tipY - bob;
+  ctx.save();
   ctx.translate(tipX, ty);
   ctx.scale(scale, scale);
   const x = -w / 2;
@@ -371,14 +368,27 @@ export function drawManaBubble(
   ctx.lineJoin = 'round';
   ctx.strokeStyle = RIM;
   ctx.stroke();
+  // The relic, drained: present, and off.
   const midY = y + h / 2;
-  let cursor = x + pad;
-  drawIcon(ctx, 'Mana', cursor, midY - orb / 2, orb);
-  cursor += orb + h * 0.1;
+  ctx.save();
+  ctx.globalAlpha = 0.8;
+  ctx.filter = 'grayscale(0.85) brightness(0.9)';
+  drawSprite(ctx, sprite, x + pad, midY - art / 2, art, art);
+  ctx.restore();
+  // The resting Zs, rising up and to the right like the UI's (kit `.k-zzz`).
+  ctx.font = `bold ${zPx}px ${font}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = affordable ? RIM_INK : RIM_FULL;
-  ctx.fillText(cost, cursor, midY + textPx * 0.05);
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, zPx * 0.2);
+  ctx.strokeStyle = RIM_INK;
+  ctx.fillStyle = '#ffffff';
+  const zx = x + pad + art + h * 0.02;
+  for (const [dx, dy, k] of [[0, 0.18, 0.7], [0.32, -0.12, 1]] as const) {
+    ctx.font = `bold ${Math.round(zPx * k)}px ${font}`;
+    ctx.strokeText('Z', zx + dx * zPx, midY + dy * h);
+    ctx.fillText('Z', zx + dx * zPx, midY + dy * h);
+  }
   ctx.restore();
   return { x: tipX - w / 2, y: ty - tail - h, w, h: h + tail };
 }

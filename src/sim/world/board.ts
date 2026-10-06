@@ -14,7 +14,8 @@ import {
 import { PRECIOUS, type LairId, type PreciousId } from '../state';
 import { rand } from '../rng';
 import {
-  BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexDistance, hexIndex, hexNeighbors, hexScale, ringOf, rotateBy,
+  BOARD_CENTRES, BOARD_HEXES, BOARD_RADIUS, HEX_DIRS, hexAdd, hexDistance, hexIndex, hexNeighbors, hexScale, localHex,
+  miniBoardOf, ringOf, rotateBy, worldHex,
   type Hex,
 } from './hex';
 import {
@@ -76,19 +77,28 @@ export function lumpMaterial(board: Board, ...parts: Array<string | number>): Pr
   return PRECIOUS[Math.min(PRECIOUS.length - 1, Math.floor(rand(board.seed, 'lump', ...parts) * PRECIOUS.length))];
 }
 
-/** The seat whose city is nearest a hex — a deposit's owner. */
-const nearestSeat = (h: Hex): number => {
-  let best = 0;
-  SEATS.forEach((s, i) => { if (hexDistance(h, s) < hexDistance(h, SEATS[best])) best = i; });
-  return best;
-};
-
 /** The ring the cities stand on: one inside the rim, five hexes apart. */
 export const HOME_RING = BOARD_RADIUS - 1;
 
-/** The six city hexes: the corners of the home ring, seat i in direction i. */
-export const SEATS: readonly Hex[] = HEX_DIRS.map((d) => hexScale(d, HOME_RING));
+/** A mini-board's six city hexes, from its centre: the corners of the home
+ *  ring, the city in direction d first. */
+const LOCAL_SEATS: readonly Hex[] = HEX_DIRS.map((d) => hexScale(d, HOME_RING));
+
+/** Every city hex in the world, six a mini-board: seat `6b + d` is board
+ *  b's city in direction d. */
+export const SEATS: readonly Hex[] = BOARD_CENTRES.flatMap((_, b) => LOCAL_SEATS.map((l) => worldHex(b, l)));
 export const SEAT_INDICES: readonly number[] = SEATS.map(hexIndex);
+export const SEATS_PER_BOARD = LOCAL_SEATS.length;
+
+/** The seat whose city is nearest a hex, on its own mini-board — a
+ *  deposit's owner. */
+const nearestSeat = (h: Hex): number => {
+  const b = miniBoardOf(h);
+  const l = localHex(h);
+  let best = 0;
+  LOCAL_SEATS.forEach((s, i) => { if (hexDistance(l, s) < hexDistance(l, LOCAL_SEATS[best])) best = i; });
+  return b * SEATS_PER_BOARD + best;
+};
 
 export function roleOf(h: Hex): HexRole {
   const k = ringOf(h);
@@ -112,8 +122,9 @@ interface WedgeAt { wedge: number; k: number; j: number }
 const wedgeHex = (k: number, j: number, wedge: number): Hex =>
   rotateBy(hexAdd(hexScale(HEX_DIRS[0], k), hexScale(HEX_DIRS[2], j)), wedge);
 
-/** Where a hex sits in the wedges: null for the Portal. */
-function wedgeOf(h: Hex): WedgeAt | null {
+/** Where a hex sits in its mini-board's wedges: null for a Portal. */
+function wedgeOf(world: Hex): WedgeAt | null {
+  const h = localHex(world);
   const k = ringOf(h);
   if (k === 0) return null;
   for (let wedge = 0; wedge < 6; wedge++) {
@@ -127,8 +138,12 @@ function wedgeOf(h: Hex): WedgeAt | null {
 
 const localKey = (k: number, j: number): string => `${k}:${j}`;
 
-/** Which sixth of the board a hex is in; null for the Portal. */
-export const wedgeIndexOf = (h: Hex): number | null => wedgeOf(h)?.wedge ?? null;
+/** Which sixth of the world a hex is in — `6b + w`, board b's wedge w, the
+ *  sixth seat `6b + w` stands at the head of; null for a Portal. */
+export const wedgeIndexOf = (h: Hex): number | null => {
+  const at = wedgeOf(h);
+  return at === null ? null : miniBoardOf(h) * SEATS_PER_BOARD + at.wedge;
+};
 
 /**
  * The board with its dungeons where the world server says they are now:
@@ -199,7 +214,7 @@ function rollFeatures(seed: number, k: number, j: number, role: RolledRole, terr
  *  wedge they map to. */
 function seatNeighbourPlaces(): string[] {
   const around: string[] = [];
-  for (const n of hexNeighbors(SEATS[0])) {
+  for (const n of hexNeighbors(LOCAL_SEATS[0])) {
     const at = wedgeOf(n);
     if (at === null) continue;
     const key = localKey(at.k, at.j);
@@ -330,14 +345,24 @@ function rollCamps(seed: number, local: Map<string, Contents>, camps: WorldCamps
   return out;
 }
 
-/** A board from its seed. Pure: the same seed and data give the same board. */
+/** A mini-board's own seed: the world's for the middle one, so a world of
+ *  one board is the board it always was. */
+const boardSeed = (seed: number, b: number): number =>
+  (b === 0 ? seed : Math.floor(rand(seed, 'miniBoard', b) * 0x1_0000_0000) >>> 0);
+
+/** A world from its seed: every mini-board rolled as one board on its own
+ *  seed and laid at its place (Docs/plans/precious-deposits.md §3). Pure:
+ *  the same seed and data give the same world. */
 export function generateBoard(
   id: string, seed: number, gen: WorldGenDef = WORLD_GEN, camps: WorldCampsDef = WORLD_CAMPS,
   scouting: WorldScoutingDef = WORLD_SCOUTING,
 ): Board {
-  const local = rollWedge(seed, gen);
-  const wedgeCamps = rollCamps(seed, local, camps);
-  const deal = dealDeposits(seed);
+  const rolled = BOARD_CENTRES.map((_, b) => {
+    const s = boardSeed(seed, b);
+    const local = rollWedge(s, gen);
+    return { seed: s, local, camps: rollCamps(s, local, camps), deal: dealDeposits(s) };
+  });
+  const deal = rolled.flatMap((r) => r.deal);
   const rank = new Map<string, keyof DepositDeal>();
   for (const r of ['strong', 'middle', 'weak'] as const) for (const key of gen.deposits[r]) rank.set(key, r);
   /** A deposit of this material on this ground: the ground gives way to a
@@ -352,17 +377,18 @@ export function generateBoard(
     const seat = SEAT_INDICES.indexOf(index);
     const base = { index, hex, role, seat: seat >= 0 ? seat : null };
     if (role === 'portal') return { ...base, terrain: null, features: [], camp: null, scout: null };
+    const { seed: s, local, camps: wedgeCamps } = rolled[miniBoardOf(hex)];
     const at = wedgeOf(hex)!;
     if (role === 'inner') {
       // Every inner hex is a deposit of the weak material of the seat it
       // faces, held by the strongest camp: its +200% is earned.
       const authored = deposit(deal[nearestSeat(hex)].weak, gen.innerRing[at.wedge].terrain);
       const camp: Camp = {
-        creature: pick(camps.creatures.inner, rand(seed, 'campCreature', 1, at.wedge)),
-        power: campPower(seed, 1, at.wedge, camps),
+        creature: pick(camps.creatures.inner, rand(s, 'campCreature', 1, at.wedge)),
+        power: campPower(s, 1, at.wedge, camps),
         lurking: false,
       };
-      const scout = rollScout(seed, 'inner', 1, at.wedge, scouting, authored.features);
+      const scout = rollScout(s, 'inner', 1, at.wedge, scouting, authored.features);
       return { ...base, terrain: authored.terrain, features: [...authored.features], camp, scout };
     }
     const key = localKey(at.k, at.j);
@@ -370,7 +396,7 @@ export function generateBoard(
     // A deposit's place: the material its owner's deal puts there.
     const c = r === undefined ? local.get(key)! : deposit(deal[nearestSeat(hex)][r], local.get(key)!.terrain);
     const camp = wedgeCamps.get(key);
-    const scout = seat >= 0 ? null : rollScout(seed, role as RolledRole, at.k, at.j, scouting, c.features);
+    const scout = seat >= 0 ? null : rollScout(s, role as RolledRole, at.k, at.j, scouting, c.features);
     return { ...base, terrain: c.terrain, features: [...c.features], camp: camp === undefined ? null : { ...camp }, scout };
   });
   return { id, seed, hexes, deposits: deal };

@@ -41,7 +41,9 @@
         "treasurePicked",
         "abandonedRevealed",
         "siteOpen",
-        "repairing"
+        "repairing",
+        "relicPicked",
+        "relicHosted"
       ],
       "doc": "What starts the scene, the first time it holds."
     },
@@ -118,7 +120,9 @@
               "treasurePicked",
               "abandonedRevealed",
               "siteOpen",
-              "repairing"
+              "repairing",
+              "relicPicked",
+              "relicHosted"
             ],
             "doc": "What moves the line on; tap is a tap on the box."
           },
@@ -140,6 +144,12 @@
             "type": "text",
             "nullable": true,
             "doc": "A building the speaker makes up the price of. The line plays only while the player cannot pay for one more of it, and as it is read hands over what is missing."
+          },
+          "restores": {
+            "type": "text",
+            "nullable": true,
+            "options": ["DowsingRod", "VerdantSeal", "ForemansSigil", "GildedLedger"],
+            "doc": "A city relic the speaker hands over, restored at level 1, as the line is read. Nothing when it is already restored."
           }
         }
       }

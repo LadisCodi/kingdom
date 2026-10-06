@@ -16,7 +16,7 @@ import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
-import { dropFragments, openRelicDoor } from './sim/relics';
+import { dropFragments, giveRelic, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
 import { LAIR_ORDER } from './sim/data/definitions';
 import { addMana, manaCap } from './sim/mana';
@@ -64,6 +64,9 @@ import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { RemoteWorldServer } from './worldServer/remote';
 import { renderNicknameSheet } from './ui/world/nicknameSheet';
+import { mountMinimap } from './ui/world/minimap';
+import { bitsFrom } from './sim/world/fogBits';
+import { BOARD_HEXES } from './sim/world/hex';
 import { renderCrestEditor } from './ui/friends/crestEditor';
 import { renderFriendSearch } from './ui/friends/friendSearch';
 import { renderWishFilled, renderWishGive, renderWishNeed } from './ui/friends/wishSheets';
@@ -263,6 +266,7 @@ async function boot(): Promise<void> {
   mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
+  mountMinimap(game, document.getElementById('worldmini')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
   mountStage(game, document.getElementById('stage')!, document.getElementById('app')!);
@@ -881,6 +885,7 @@ async function boot(): Promise<void> {
           for (const l of s.lines) {
             if (l.gives) giveBook(game.state, l.gives);
             if (l.stocks) stockBuild(game.state, l.stocks);
+            if (l.restores) giveRelic(game.state, l.restores);
           }
           game.state.tutorial.seen[key] = true;
         }
@@ -905,6 +910,11 @@ async function boot(): Promise<void> {
         game.state.landmarks.claimed[tower.id] = true;
         runTick();
         game.enterWorld();
+      }),
+      // The whole world in view, to look the board over without exploring it.
+      button('🗺 reveal', () => {
+        game.state.world.revealed = bitsFrom(BOARD_HEXES.map((_, i) => i));
+        runTick();
       }),
       // The friends list, opened whatever the Townhall, and one more of the
       // stand-in's kingdoms asking to be friends (socialServer/local.ts).

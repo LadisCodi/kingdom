@@ -107,23 +107,28 @@ never a discount, because a discount dies at 100%.
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
   - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a
     relic and wakes it.
-  - The Shrine's card holds **one slot, drawn as its altar**: the niche
-    carved with a **+** while it waits (with the CTA when a relic in the Bag
-    could go there), the relic set in it once placed. A tap opens the relic
+  - The Shrine's card holds **one slot, drawn as a painting of the chapel
+    inside** (the lair cards' 16:9 format): its altar's golden cradle
+    carved with a **+** while it waits, the unlock splash's sunburst turning
+    out of it (and the CTA on it when a relic in the Bag could go there), the relic set in it once placed. A tap opens the relic
     picker — the hero picker's flow: the restored city relics as cards, each
     with **what it does** (`+20% tax`) and the **Shrine mark** when it is
     already in one, the Shrine's slot under them, and **Select**. Selecting a
     relic that stands in another Shrine asks first — *Move it to this one?*
     Cancel / Move. Emptying the slot and selecting
     takes the relic out; closing changes nothing.
-  - The relic's sheet and its Shrine's card: a grey **Asleep** seal beside
+  - **On the Shrine's card everything sits on the painting**: the relic's name
+    and effect on a dark band at the top, Activate (and, short of Mana, a
+    flask) or the window's bar on the floor at the bottom.
+  - The relic's sheet: a grey **Asleep** seal beside
     Activate, or an **Awake** ribbon and a gold bar running down the window.
     Short of the price, how soon the pool holds it, and the smallest Mana
     flask in the Bag.
   - On the map, an awake relic floats over its Shrine and the aura wears the
     zone's tint and wheel; a sleeping one rests dim on the altar under a
-    **Mana bubble** with its price. A tap on the bubble, like a tap on the
-    Shrine, opens its card and costs nothing; Activate there pays the Mana.
+    bubble showing the relic **drained of colour, with resting Zs** — there,
+    and off. A tap on the bubble, like a tap on the Shrine, opens its card
+    and costs nothing; Activate there pays the Mana.
   - Houses an awake Crown pays, and buildings with crews an awake Hammer
     speeds, wear a **+X%** badge.
   - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
