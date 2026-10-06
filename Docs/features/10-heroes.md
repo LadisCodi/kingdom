@@ -11,8 +11,7 @@
 > board (§2.3, §2.4), the traits (§2.5) and the boons (§2.6); the whole ladder
 > (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
-> (§2.1) and `passivePerTier` (§2.4) — every hero's numbers are authored whole
-> in `heroes`, and the passive does not step with ascension — and the banner
+> (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
 > moving into the Tavern (§8.3).
 
 ## 1. The collection substrate
@@ -91,9 +90,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   what tells two heroes of one type apart.
 - Several heroes of one type add on the excess: `1 + Σ(mult − 1)`.
 - Computed at battle start; it **stands if the hero dies**.
-- **The passive grows with ascension, not level** *(not built)*:
-  `passivePerTier` would step each of the three numbers at every star. Level
-  moves the body, ascension moves the buff, so both ladders are felt.
+- **The passive does not grow.** Level and ascension both move the body
+  (§4.2).
 - A hero on a board with no troops of its type fights and buffs nobody.
 
 ### 2.5 The trait
@@ -129,8 +127,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   kingdom grows, and a falling number has a floor, which is a ceiling on a
   passive that never ends. Where the game owns a TIME, the boon owns the SPEED
   and the call site divides by it.
-- **A boon never scales.** Level moves the body, ascension moves the type
-  passive, the boon is what arrives with the hero. Three ladders, three jobs.
+- **A boon never scales.** Level and ascension move the body; the boon is
+  what arrives with the hero.
 - **Boons stack; a duplicate adds nothing.** Two Legendaries are two heroes —
   unlike a party trait, which is best-of.
 - The six:
@@ -205,7 +203,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 |---|---|---|
 | **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
 | **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
-| **Ascension** | +1 point of the current star; a **full star** lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
+| **Ascension** | +1 point of the current star: **every stat +2%**; a **full star** also lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -223,6 +221,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **Five stars, six points each.** One ascension fills one point; points fill
   clockwise from the top, and a star is finished before the next one starts.
+- **Every point lifts Attack, Defense and HP by 2%** of what the level gives —
+  +60% with every star full. The card, the board, the power estimate and the
+  HP bar all read the one formula.
 - **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
   five.
 - **Every point of a star costs the same**, and each star costs twice the one
@@ -392,7 +393,8 @@ Each of these is data, not code:
   side** that steps to the previous or next hero.
 - Then one section each, under a section head:
   - **Ascension** — the five stars, under them what the next point does
-    (*n of 6 to the next star*, or *Next: level cap n*), and **Ascend** with
+    (*Next: stats +2%*, plus *· level cap n* on the point that finishes a
+    star), and **Ascend** with
     its Stardust toll and fragment count over it. Every star full: *Fully
     ascended*.
 - **The card fits the screen.** The stage gives up height to the sections,
@@ -489,10 +491,11 @@ how many slots it wants (1…n) and what to do with the answer.
 | Dial | Value | Key |
 |---|---|---|
 | A hero's stat block and growth | §2.3 | `heroes.dmg`, `hp`, `def`, `cooldown`, `dmgPerLevel`, `defPerLevel`, `hpPerLevel` |
-| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus`; `passivePerTier` *(not built)* |
+| A hero's passive | §2.4 | `heroes.troopDmgMult`, `troopHpMult`, `troopDefBonus` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarityStatMult*`, `heroes.rarityPassiveMult*` *(not built)* |
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
+| What a point does to the stats | +2% Attack, Defense and HP | `heroLadder.statsPerAscension` |
 | How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
 | What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |

@@ -35,7 +35,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
-  ascensionBlock, ascensionFragmentCost, emptyEntry, fullStars, heroLevelCap, isHeroMaxLevel,
+  ascensionBlock, ascensionFragmentCost, emptyEntry, fullStars, heroBody, heroLevelCap, isHeroMaxLevel,
   xpLevelCost, type CollectionEntry,
 } from './heroLadder';
 import { dayIndex } from './day';
@@ -239,13 +239,9 @@ export function ascendHero(state: GameState, id: HeroId): HeroAscendResult {
 
 /** A hero's stat line at their current level, for the roster and the party. */
 export function heroStats(state: GameState, id: HeroId): { atk: number; def: number; hp: number } {
-  const def = HEROES[id];
-  const level = heroEntry(state, id).level;
-  return {
-    atk: Math.round(def.dmg + def.dmgPerLevel * (level - 1)),
-    def: Math.round(def.def + def.defPerLevel * (level - 1)),
-    hp: Math.round(def.hp + def.hpPerLevel * (level - 1)),
-  };
+  const entry = heroEntry(state, id);
+  const body = heroBody(HEROES[id], entry.level, entry.ascension);
+  return { atk: Math.round(body.dmg), def: Math.round(body.def), hp: Math.round(body.hp) };
 }
 
 // ---------------------------------------------------------- the hero slots

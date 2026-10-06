@@ -11,15 +11,14 @@
 // recovery).
 
 import { HEROES, PARTY } from './data/definitions';
+import { heroBody } from './heroLadder';
 import type { GameState, HeroId } from './state';
 
 const recoverMs = (): number => PARTY.heroRecoverHours * 3_600_000;
 
-/** A hero's full HP at its level. */
-export const heroMaxHp = (state: GameState, id: HeroId): number => {
-  const def = HEROES[id];
-  return def.hp + def.hpPerLevel * ((state.heroes.levels[id] ?? 1) - 1);
-};
+/** A hero's full HP at its level and ascension. */
+export const heroMaxHp = (state: GameState, id: HeroId): number =>
+  Math.round(heroBody(HEROES[id], state.heroes.levels[id] ?? 1, state.heroes.ascension[id] ?? 0).hp);
 
 /** The share of its HP a hero has at `t`, 0…1. */
 export function heroHpShare(state: GameState, id: HeroId, t: number): number {

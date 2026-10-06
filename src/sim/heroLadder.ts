@@ -14,7 +14,7 @@
 // Fragments, no cap, no Stardust (Docs/features/09-relics.md §13).
 
 import { roundPrice } from './roundPrice';
-import { HERO_LADDER } from './data/definitions';
+import { HERO_LADDER, type HeroDef } from './data/definitions';
 
 /** What one hero looks like in the collection. `ascension` counts points
  *  filled, 0 to `maxAscension()`. */
@@ -49,6 +49,22 @@ export const ascensionFragmentCost = (ascension: number): number =>
 export const heroLevelCap = (ascension: number): number =>
   HERO_LADDER.heroMaxLevel
   - (HERO_LADDER.ascensionStars - fullStars(ascension)) * HERO_LADDER.heroLevelsPerStar;
+
+/**
+ * A hero's body — Attack, Defense and HP — at a level and an ascension. The
+ * level adds its flat steps; EVERY ascension point then multiplies all three
+ * by `statsPerAscension` more. The one formula: the card, the board, the
+ * estimate and the HP bar all read it.
+ */
+export function heroBody(def: HeroDef, level: number, ascension = 0): { dmg: number; def: number; hp: number } {
+  const step = level - 1;
+  const mult = 1 + HERO_LADDER.statsPerAscension * Math.min(ascension, maxAscension());
+  return {
+    dmg: (def.dmg + def.dmgPerLevel * step) * mult,
+    def: (def.def + def.defPerLevel * step) * mult,
+    hp: (def.hp + def.hpPerLevel * step) * mult,
+  };
+}
 
 export const isHeroMaxLevel = (e: CollectionEntry): boolean =>
   e.level >= HERO_LADDER.heroMaxLevel;
