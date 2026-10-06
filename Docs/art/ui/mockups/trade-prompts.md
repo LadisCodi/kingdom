@@ -154,3 +154,50 @@ plus the two refs. The same three screens, with the rules settled
 > resize, verify or save a corrected file.
 
 Result: one fix in the same chat — the first pass added a stray empty "Keystone" row under the relic rows in screen 2; asked to remove it and move the materials up, everything else kept. Small remaining drift: Elderglen's Starmetal tile in screen 1 shows its ×5 twice (on the icon and under the name).
+
+## M78 — the wish made in two steps (`m78-wish-steps.png`)
+
+The user's notes on M77: what you need and what you give are two windows,
+not one; and one relic a row, not two columns. Attached: `m77-wish-board.png`
+(the pass to iterate), then the two refs.
+
+> GENERA UNA IMAGEN NUEVA. The first attachment is the previous version of
+> this mockup: keep its style, its pieces and the three-screen landscape
+> format (1536×1024, three screens numbered 1, 2, 3). The other two are the
+> same style references as before.
+>
+> Screen 1 — keep screen 1 of the previous version exactly ("Friends", tabs
+> List / Trade / Inbox, "YOUR WISHES 2/3", "+ Make a wish", "FRIENDS NEED"
+> with "Fills 3/5"), with one fix: on Elderglen's card the Starmetal tile
+> shows "×5" once only, under the word "Starmetal".
+>
+> Screen 2 — a window titled "What do you need?", under the title a small
+> "Step 1 of 2". A list of relics, ONE RELIC PER ROW, each row full width: a
+> parchment card with the relic's small picture at the left (Dowsing Rod,
+> Gilded Ledger, Foreman's Sigil, Verdant Seal, Bailiff's Tally — the
+> relics of the first attachment's Bag reference), its name above, and its
+> SIX fragment slots across the rest of the row, big and easy to tap: held
+> fragments drawn faded, missing ones as empty dashed outlines; the sixth
+> slot is the keystone, a little larger with a gold rim. On the Verdant Seal
+> row, one missing slot glows gold (picked). Under the relic rows, a section
+> "Materials" with three cards: Heartwood ×5, Moonglass ×5, Starmetal ×5.
+>
+> Screen 3 — a window titled "What will you give?", "Step 2 of 2". At the
+> top a small parchment strip "You need:" with the Verdant Seal piece and a
+> small wooden "Change" button. Under it a grid "Your duplicates":
+> Dowsing Rod piece ×3, Gilded Ledger piece ×2, Bailiff's Tally piece ×2,
+> Verdant Seal piece ×4 — selectable; Foreman's Sigil piece ×1 greyed with
+> the words "Only 1"; two keystones greyed with a small padlock and
+> "Keystone only". Then "Materials": Heartwood ×5, Moonglass ×5,
+> Starmetal ×5, Starmetal selected with a gold glow. At the bottom the note
+> "Held until a friend fills it, or for 48 hours" and a green "Pin wish"
+> button.
+>
+> All text in English, spelled exactly as given. Raw image only — do not
+> resize, verify or save a corrected file.
+
+Result: first try, no fix asked. One relic a row with six big slots, the
+two steps on screens 2 and 3, Foreman's Sigil ×1 greyed "Only 1", both
+keystones locked "Keystone only", Elderglen's "×5" shown once. Drift: every
+row's keystone slot is drawn filled (held), so no row shows a missing
+keystone; and two empty dashed cells pad the duplicates grid.
