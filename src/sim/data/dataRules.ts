@@ -16,7 +16,7 @@
 
 import techTree from './tech-tree.json';
 import regionMap from './region-map.json';
-import { OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
+import { DEPOSIT_OF, OUTER_SITE_ROOM, PLACED_SITES, WORLD_DISTRICTS, WORLD_FEATURES, WORLD_TERRAINS, WORLD_UPGRADES } from '../world/types';
 import { CHARACTERS } from '../../render/characters/atlas.generated';
 
 // ------------------------------------------------------------ the registry
@@ -745,18 +745,28 @@ export const RULES: Readonly<Record<string, Rule>> = {
     if (placedTotal > OUTER_SITE_ROOM) {
       push(null, ['worldGen', 'placedPerWedge'], `${placedTotal} sites, but a wedge's outer ring has room for ${OUTER_SITE_ROOM} away from the city`);
     }
-    list(gen.innerRing).forEach((h, i) => {
-      const hex = (h ?? {}) as Record<string, unknown>;
-      const held = list(hex.features) as string[];
-      held.forEach((f, n) => {
-        const rule = rules[f];
-        if (rule === undefined) return;
-        if (!list(rule.terrains).includes(hex.terrain)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never stands on ${String(hex.terrain)}`);
-        for (const other of held.slice(0, n)) {
-          if (excludes(f).includes(other)) push(null, ['worldGen', 'innerRing', i, 'features', n], `a ${f} never shares a hex with ${other}`);
-        }
+    // The deposits are dealt, never rolled: their places on the corridor,
+    // each once (Docs/plans/precious-deposits.md §1.2).
+    for (const f of Object.values(DEPOSIT_OF)) {
+      for (const [role, row] of Object.entries(chances)) {
+        if (num(row?.[f]) > 0) push(null, ['worldGen', 'featureChance', role, f], `a ${f} is dealt (worldGen.deposits), not rolled — its chance is 0`);
+      }
+      if (num(placed[f]) > 0) push(null, ['worldGen', 'placedPerWedge', f], `a ${f} is dealt (worldGen.deposits), not placed`);
+    }
+    const deposits = (gen.deposits ?? {}) as Record<string, unknown>;
+    const seen = new Set<string>();
+    for (const rank of ['strong', 'middle', 'weak']) {
+      const places = list(deposits[rank]) as unknown[];
+      if (places.length === 0) push(null, ['worldGen', 'deposits', rank], 'names no place — every seat has some of each');
+      places.forEach((p, i) => {
+        const m = /^(\d+):(\d+)$/.exec(String(p));
+        const k = m === null ? 0 : Number(m[1]);
+        const j = m === null ? 0 : Number(m[2]);
+        if (m === null || k < 2 || k > 4 || j >= k) push(null, ['worldGen', 'deposits', rank, i], 'is not a corridor place (ring:step, rings 2–4)');
+        else if (seen.has(String(p))) push(null, ['worldGen', 'deposits', rank, i], 'holds another deposit already');
+        seen.add(String(p));
       });
-    });
+    }
     const weights = (gen.terrainWeights ?? {}) as Record<string, Record<string, unknown> | undefined>;
     for (const [role, row] of Object.entries(weights)) {
       if (Object.values(row ?? {}).every((w) => num(w) <= 0)) {

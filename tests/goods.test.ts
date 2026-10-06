@@ -5,6 +5,7 @@
 // under test here is the plumbing that has to exist before they can: the
 // stockpile, the per-level price, and the two separate refusals an upgrade
 // now has.
+import { PRECIOUS } from '../src/sim/state';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DISTRICTS, GOODS, SAVE_VERSION, type DistrictDef } from '../src/sim/data/definitions';
 import { upgradeDistrict } from '../src/sim/commands';
@@ -110,6 +111,12 @@ describe('a building level priced in goods', () => {
     expect(goodsCostForLevel(def, 4)).toEqual({});
   });
 
+  /** The refined goods of a price: a precious material is the world's, not
+   *  a workshop's, and is asked for early and low
+   *  (Docs/plans/precious-deposits.md §1.3). */
+  const refinedOf = (goods: Record<string, number>) => Object.fromEntries(Object.entries(goods)
+    .filter(([g]) => !(PRECIOUS as readonly string[]).includes(g)));
+
   it('charges nothing below the late city, and something at every level of it', () => {
     for (const def of Object.values(DISTRICTS)) {
       if (def.maxLevel < LATE_FROM) {
@@ -117,7 +124,7 @@ describe('a building level priced in goods', () => {
         // decoration, whose whole point is the workshop queue.
         if (def.harmonySupply > 0) continue;
         for (let level = 1; level <= def.maxLevel; level++) {
-          expect(goodsCostForLevel(def, level), `${def.id} stops early, level ${level}`)
+          expect(refinedOf(goodsCostForLevel(def, level)), `${def.id} stops early, level ${level}`)
             .toEqual({});
         }
         continue;
@@ -128,7 +135,7 @@ describe('a building level priced in goods', () => {
         // ladder hangs from, and the workshops open at 4 so that a good exists
         // before the first level that asks for one.
         if (def.id === 'Townhall' && level === LATE_FROM - 1) continue;
-        expect(goodsCostForLevel(def, level), `${def.id} level ${level}`).toEqual({});
+        expect(refinedOf(goodsCostForLevel(def, level)), `${def.id} level ${level}`).toEqual({});
       }
       // Every late level asks for a good, so no building's ladder can be
       // climbed without a workshop (the whole point of §2).

@@ -403,6 +403,9 @@ gates them; *Cartography* opens the first explorer.
 | **Game** | **Hunting Grounds** | Food |
 | **Landmark** | **Observatory** | Knowledge |
 | **Sanctuary** | **Shrine** | raises max Mana while held and active — no store |
+| **Heartwood Grove** | **Grove Camp** | Heartwood (§7.4) |
+| **Starfall Crater** | **Starmetal Dig** | Starmetal (§7.4) |
+| **Moonglass Spires** | **Spire Quarry** | Moonglass (§7.4) |
 | **Dungeon** | — never held (§8.1) | |
 
 - **Rural districts are the board's houses**, and pay far less than the
@@ -449,22 +452,34 @@ gates them; *Cartography* opens the first explorer.
 - **Three materials only the world yields**: Starmetal, Heartwood and
   Moonglass. They are goods ([`17`](17-workshops-and-goods.md) §1), kept with
   the refined goods, never made.
-- **Each seat is dealt one**, two seats each, shuffled by the board's seed.
-- **A rich hex** is one Forest or Mountain hex in five (`richFeatureShare`)
-  and one bare Desert hex in four (`richDesertShare`) — counted per wedge,
-  at least one of each kind there is, so every wedge has the same rich
-  ground. An inner hex is rich by its own roll.
-  It yields **its wedge's seat's material** — whoever holds it. Explored, it
-  shows its material's icon and a sparkle; its sheet says *Rich in …*.
-- **A rich district fills a second store** with that material:
-  `perDay` a day (the inner ring multiplies it, as research does), holding
-  `storeDays` of it. One Collect empties both stores.
-- **Lumps** are mostly the player's own material (`ownShare`), otherwise one
-  of the other two:
+- **Each comes from a deposit of its own** — a feature, as a Forest is
+  (§8): a **Heartwood Grove**, a **Starfall Crater**, **Moonglass Spires**.
+  The district built on one yields only its material into a store:
+  `perDay` (2) a day, holding `storeDays` (1) of it; the inner ring and
+  research multiply it as they do any district. Explored, a deposit shows
+  its material's icon; its sheet says *Yields …*.
+- **Every seat is dealt 3/2/1**: three deposits of its **strong** material,
+  two of its **middle**, one of its **weak**, in its corridor two to three
+  hexes from its city (`worldGen.deposits`).
+  - The six places are the same in every wedge; the material on each is the
+    seat's deal.
+  - **The bag:** the six orders of the three materials, one per seat,
+    shuffled by the board's seed. Every material is strong for two seats,
+    middle for two, weak for two — twelve deposits of each on the corridors.
+  - **The inner ring** holds six more: the hex facing each seat is a deposit
+    of that seat's weak material — two of each — guarded by the strongest
+    camps (§5.4).
+  - Deposits are conquered and denied like any hex (§6).
+  - The player's own city sheet says their deal: *Your deposits: Starmetal
+    ×3 · Heartwood ×2 · Moonglass ×1*.
+- **Lumps** are any of the three alike:
   - a beaten camp pays `campPerPower` of its power (§5.4);
   - a scouting reward may be one (§3.2);
   - every dungeon room pays one (§8.1), and every fifth Portal floor
     (§10.4).
+- **Why 3/2/1:** the three are asked for alike (§7.6), so alone the weak one
+  sets the pace; trading one for one with friends (§7.5) evens them out and
+  doubles it. Trade speeds the late city up; it never walls it off.
 
 ### 7.5 Trading
 
@@ -475,13 +490,14 @@ gates them; *Cartography* opens the first explorer.
 
 - **Never while the world is shut.** Until the Watchtower is claimed, no
   price asks for precious material: its terms are left off.
-- **Early: a few of any.** A building's level 5 asks `anyPrecious` (5; the
-  Townhall 10) of any material, and Fortress level 2 asks 10. *Any* is paid
-  from what the player holds most of, after the named terms, and the price
-  shows the materials it will take.
+- **Early: a few, by name.** A building's level 4 asks 2 of one material
+  and its level 5 asks 3 of another (the Townhall 5), the three asked for
+  alike across the buildings; Farsight II, Scouts II and Pathfinding (the
+  Atlas) ask 2 of one each. Fortress level 2 asks 10 of *any* — paid from
+  what the player holds most of, after the named terms, the price showing
+  the materials it will take.
 - **Late: each of the three, named.** Levels 8–10 of every building but
-  Housing name all three materials, the two the player does not yield
-  included:
+  Housing name all three materials:
 
   | Buildings | Level 8 | Level 9 | Level 10 |
   |---|---|---|---|
@@ -521,6 +537,7 @@ A hex holds **none or one**. A feature decides the district built there
 | **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). Never held. **Outer ring only** |
 | **Sanctuary** | its district is the Shrine: max Mana while held and active. **Outer ring only** |
 | **Landmark** | its district is the Observatory, which fills a store of Knowledge. **Corridors only** (rings 2–4) |
+| **Heartwood Grove**, **Starfall Crater**, **Moonglass Spires** | the deposits: their districts yield a precious material (§7.4). **Dealt, never rolled**: six a seat on its corridor, and the inner ring |
 
 ### 8.1 Dungeons
 
@@ -599,9 +616,11 @@ Contents are rolled at board creation, under rules:
 - Every player has **at least one hex with no feature** adjacent to their
   city.
 - **No dungeon** is adjacent to a player's city.
-- **The inner ring is not rolled and not turned — it is authored by hand**, so
-  all six hexes are worth something and no two are alike: 2 Forest, 2
-  Mountain, 1 Fertile land, 1 empty (`worldGen.innerRing`).
+- **The deposits are dealt, not rolled** (§7.4): each seat's six on the
+  same places of its wedge, the material on each from the seat's deal.
+- **The inner ring is not rolled and not turned**: each of its hexes is a
+  deposit of the weak material of the seat it faces, on the terrain authored
+  for it (`worldGen.innerRing`) when the deposit stands on it.
 - **Every sixth of the board has exactly one Dungeon and one Sanctuary**, on
   its outer ring and never beside a city: six of each on every board, one for
   each seat at the same distance. They are placed, not rolled
@@ -620,6 +639,9 @@ Contents are rolled at board creation, under rules:
 | **Dungeon** | any terrain (its art carries its own rock) |
 | **Sanctuary** | Grassland, Plains |
 | **Landmark** | Grassland, Plains, Desert |
+| **Heartwood Grove** | Grassland, Plains (dealt) |
+| **Starfall Crater** | Desert (dealt) |
+| **Moonglass Spires** | Plains (dealt) |
 
 - Features roll in the table's order; **the first that rolls and fits the
   terrain is kept**. Dungeon and Sanctuary are placed instead (above).
@@ -702,8 +724,8 @@ The outer scope feeds the inner one.
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
-| **Precious prices** — level 5's *any*, levels 8–10 each (§7.6) | how much the late city needs the world and trade | the late city stalls, or ignores the world |
-| **Rich shares** and **precious yield** (4 a day) | how much of the world's materials the board makes | late prices go unpaid, or the materials pile up |
+| **Precious prices** — levels 4–5 by name, levels 8–10 each (§7.6) | how much the city needs the world and trade | the late city stalls, or ignores the world |
+| **Deposit yield** (2 a day) and **places** (`worldGen.deposits`, 3/2/1) | how much of the world's materials the board makes, and how lopsided each seat is | late prices go unpaid, or nobody needs to trade |
 | **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |

@@ -6,6 +6,12 @@
 > seat 3/2/1 from a bag. Phase 1 builds that on today's board of six, with
 > the generator ready for a world made of many boards. Phase 2, later, makes
 > that world. Decisions taken with the user on 2026-10-06.
+>
+> **Phase 1 built** (the live design is
+> [`../features/19-world-map.md`](../features/19-world-map.md) §7.4–§7.6,
+> §9). Step 1 (geometry for many boards) moved to the start of phase 2: the
+> six-seat assumptions are already single constants, and their per-board
+> shape is phase 2's to decide.
 
 ## 1. The design (phase 1)
 
@@ -14,8 +20,8 @@
 | Feature | On terrain | Its district | Yields |
 |---|---|---|---|
 | **Heartwood Grove** — an enchanted wood | Grassland, Plains | Grove Camp | Heartwood |
-| **Starfall Crater** — a fallen star | Desert, Plains | Starmetal Dig | Starmetal |
-| **Moonglass Spires** — crystal needles | Snow, Tundra | Spire Quarry | Moonglass |
+| **Starfall Crater** — a fallen star | Desert | Starmetal Dig | Starmetal |
+| **Moonglass Spires** — crystal needles | Plains | Spire Quarry | Moonglass |
 
 - A feature like Forest or Mountain: **it is the deposit**, not a state of
   another feature. Its district yields only its material.

@@ -1,5 +1,6 @@
 // The board and how it is rolled (Docs/features/19-world-map.md §1, §9).
 import { describe, expect, it } from 'vitest';
+import { depositMaterial } from '../src/sim/world/types';
 import { WORLD_GEN } from '../src/sim/data/definitions';
 import { validateData, type DataDoc } from '../src/sim/data/dataRules';
 import balance from '../src/sim/data/balance';
@@ -43,19 +44,27 @@ describe('the board', () => {
       for (const h of BOARD_HEXES) {
         if (h.q === 0 && h.r === 0) continue;
         const here = b.hexes[hexIndex(h)];
-        if (here.role === 'inner') continue; // authored, never turned
+        if (here.role === 'inner') continue; // dealt, never turned
         const turned = b.hexes[hexIndex(rotate60(h))];
+        // A deposit stands on the same place in every wedge; which material
+        // is the seat's deal.
+        if (depositMaterial(here.features) !== null) {
+          expect(depositMaterial(turned.features)).not.toBeNull();
+          continue;
+        }
         expect({ t: turned.terrain, f: turned.features }).toEqual({ t: here.terrain, f: here.features });
       }
     }
   });
 
-  it('lays the inner ring as authored, east first', () => {
+  it('lays the inner ring on its authored terrain, east first, a deposit on each', () => {
     HEX_DIRS.forEach((d, i) => {
       const hex = at(board, d.q, d.r);
-      expect({ terrain: hex.terrain, features: hex.features }).toEqual({
-        terrain: WORLD_GEN.innerRing[i].terrain, features: [...WORLD_GEN.innerRing[i].features],
-      });
+      expect(depositMaterial(hex.features)).not.toBeNull();
+      // The authored terrain, unless the deposit never stands on it.
+      const f = hex.features[0];
+      const authored = WORLD_GEN.innerRing[i].terrain;
+      expect(hex.terrain).toBe(WORLD_GEN.featureRules[f].terrains.includes(authored) ? authored : WORLD_GEN.featureRules[f].terrains[0]);
     });
   });
 
@@ -117,7 +126,7 @@ describe('the board', () => {
     // Beside a city the §9 fix-up has the last word.
     const nearCity = new Set(SEATS.flatMap((c) => hexNeighbors(c).map(hexIndex)));
     for (const h of generateBoard('t', 1, gen).hexes) {
-      if ((h.role !== 'corridor' && h.role !== 'outer') || nearCity.has(h.index)) continue;
+      if ((h.role !== 'corridor' && h.role !== 'outer') || nearCity.has(h.index) || depositMaterial(h.features) !== null) continue;
       if (h.terrain === 'Desert') expect(h.features).toEqual(['Game']);
       else expect(h.features).toEqual(['Forest']);
     }
@@ -176,13 +185,17 @@ describe('the world data', () => {
     b.worldGen.featureRules.FertileLand.excludes = b.worldGen.featureRules.FertileLand.excludes.filter((f: string) => f !== 'Game');
     b.worldGen.featureRules.Landmark.terrains = [];
     delete b.worldGen.featureRules.Sanctuary;
-    b.worldGen.innerRing[0] = { terrain: 'Desert', features: ['Forest'] };
+    b.worldGen.deposits.weak = ['5:0'];
+    b.worldGen.deposits.middle = [...b.worldGen.deposits.middle, b.worldGen.deposits.strong[0]];
+    b.worldGen.featureChance.corridor.HeartwoodGrove = 0.2;
     expect(errors(b)).toEqual(expect.arrayContaining([
       'worldGen.featureRules.Game.excludes: cannot exclude itself',
       'worldGen.featureRules.FertileLand.excludes: Game excludes FertileLand, so FertileLand must exclude Game',
       'worldGen.featureRules.Landmark.terrains: names no terrain — it could never roll',
       'worldGen.featureRules.Sanctuary: is missing — every feature says where it rolls',
-      'worldGen.innerRing.0.features.0: a Forest never stands on Desert',
+      'worldGen.deposits.weak.0: is not a corridor place (ring:step, rings 2–4)',
+      'worldGen.deposits.middle.2: holds another deposit already',
+      'worldGen.featureChance.corridor.HeartwoodGrove: a HeartwoodGrove is dealt (worldGen.deposits), not rolled — its chance is 0',
     ]));
   });
 });

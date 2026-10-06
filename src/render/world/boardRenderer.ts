@@ -19,7 +19,7 @@
 // edge of a tile, and nothing upright is hidden or under a rim.
 
 import type { GameState } from '../../sim/state';
-import { lumpMaterial, materialAt, type BoardHex } from '../../sim/world/board';
+import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
@@ -29,7 +29,7 @@ import { crestOf, type Crest } from '../../sim/crest';
 import { chargeUrl, fieldUrl } from '../../ui/crestArt';
 import type { WorldSource } from '../../sim/world/source';
 import type { ArmyView } from '../../worldServer/types';
-import type { WorldDistrict, WorldTerrain } from '../../sim/world/types';
+import { depositMaterial, type WorldDistrict, type WorldTerrain } from '../../sim/world/types';
 import { formatCount, formatCountdown } from '../../ui/format';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
@@ -64,6 +64,9 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
   ],
   Sanctuary: [{ sprite: 'landmark_leyspring', size: 0.5, dx: 0, dy: 0.3 }],
   Landmark: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
+  HeartwoodGrove: [{ sprite: 'forest_3', size: 0.8, dx: 0, dy: 0.3 }],
+  StarfallCrater: [{ sprite: 'mountain', size: 0.5, dx: 0, dy: 0.3 }],
+  MoonglassSpires: [{ sprite: 'landmark_stones', size: 0.56, dx: 0, dy: 0.3 }],
 };
 
 /** Until a district has its own art, a province building stands in for it,
@@ -71,6 +74,7 @@ const COMBO_STAND_IN: Record<HexCombo, Array<{ sprite: string; size: number; dx:
 const DISTRICT_STAND_IN: Record<WorldDistrict, string> = {
   Rural: 'housing_l1', LoggingCamp: 'sawmill_l1', Quarry: 'quarry_l1', FarmLands: 'farm_l1',
   HuntingGrounds: 'housing_l1', Observatory: 'housing_l1', Shrine: 'housing_l1',
+  GroveCamp: 'sawmill_l1', StarmetalDig: 'quarry_l1', SpireQuarry: 'quarry_l1',
 };
 
 /** Hex art's foot line: the bottom of its canvas, a little in front of the
@@ -277,11 +281,11 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     drawProgressRing(ctx, camera, c.x, c.y - r * 0.55, source.delved(bh.index), total, camped);
   }
 
-  // A rich hex: a sparkle and its material's icon at its right corner
-  // (19 §7.4), on ground the player has explored.
+  // A deposit: a sparkle and its material's icon at its right corner
+  // (Docs/plans/precious-deposits.md), on ground the player has explored.
   for (const bh of board.hexes) {
-    if (!bh.rich || states[bh.index] !== 'Revealed') continue;
-    const material = materialAt(board, bh.index);
+    if (states[bh.index] !== 'Revealed') continue;
+    const material = depositMaterial(bh.features);
     if (material === null) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;

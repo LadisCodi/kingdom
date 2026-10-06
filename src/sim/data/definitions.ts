@@ -2011,12 +2011,18 @@ export interface WorldDef {
   rivals: readonly string[];
 }
 
-export interface WorldHexDef { terrain: WorldTerrain; features: readonly WorldFeature[] }
+/** An inner-ring hex: its terrain. Its feature is the deposit dealt to it. */
+export interface WorldHexDef { terrain: WorldTerrain }
+
+/** Where a seat's deposits stand, as places of the wedge (`k:j`), by the
+ *  rank of the material on them (Docs/plans/precious-deposits.md §1.2). */
+export interface WorldDepositsDef { strong: readonly string[]; middle: readonly string[]; weak: readonly string[] }
 
 /** How a board is rolled (19 §9). */
 export interface WorldGenDef {
   /** East first, on round in HEX_DIRS order. */
   innerRing: readonly WorldHexDef[];
+  deposits: WorldDepositsDef;
   terrainWeights: Record<RolledRole, Partial<Record<WorldTerrain, number>>>;
   featureChance: Record<RolledRole, Partial<Record<WorldFeature, number>>>;
   /** Where each feature may roll, and what it never shares a hex with. */
@@ -2160,13 +2166,11 @@ export interface WorldScoutingDef {
 
 export const WORLD_SCOUTING = balance.worldScouting as unknown as WorldScoutingDef;
 
-/** Precious materials on the world board (19 §7.4). */
+/** Precious materials on the world board (Docs/plans/precious-deposits.md). */
 export interface WorldPreciousDef {
-  richFeatureShare: number;
-  richDesertShare: number;
+  /** What a deposit's district yields a day. */
   perDay: number;
   storeDays: number;
-  ownShare: number;
   campPerPower: number;
 }
 

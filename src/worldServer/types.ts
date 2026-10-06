@@ -215,7 +215,7 @@ export interface ServerDungeon {
 }
 
 export interface ServerWorld {
-  version: 3;
+  version: 4;
   boards: ServerBoard[];
   /** The stand-in's nicknames, by player. The real server keeps them in a
    *  table of their own: they are unique across every board. */
