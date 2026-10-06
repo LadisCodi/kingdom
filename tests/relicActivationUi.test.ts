@@ -233,3 +233,21 @@ describe('an awake Shrine on the map', () => {
     expect(layer.shrineRelics[0]).toEqual(expect.objectContaining({ awake: true, left: 1 }));
   });
 });
+
+// THE STORE'S FRAGMENT PACK IS DEALT ON THE REVEAL, like a call.
+describe('opening a fragment pack', () => {
+  it('deals its fragments on the reveal, keystones last', () => {
+    const state = freshGame();
+    state.relics.held.DowsingRod = { found: [1, 0, 0, 0, 0, 0], bound: [0, 0, 0, 0, 0, 0] };
+    state.player.wallet.Gems = 5000;
+    const game = freshPresenter(state);
+    game.doBuyFragmentPack();
+    const reveal = game.gachaReveal!;
+    expect(reveal.caption).toBe('Relic fragments');
+    const total = reveal.prizes.reduce((n, p) => n + (p.kind === 'relicFragment' ? p.amount : 0), 0);
+    expect(total).toBe(5);
+    const slots = reveal.prizes.map((p) => (p.kind === 'relicFragment' ? p.slot : -1));
+    const firstKey = slots.indexOf(5);
+    if (firstKey >= 0) expect(slots.slice(firstKey).every((s) => s === 5)).toBe(true);
+  });
+});
