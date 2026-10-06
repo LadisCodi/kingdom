@@ -2211,7 +2211,11 @@ export type OfferTrigger = 'always' | 'door' | 'after' | 'townhall' | 'manaLow' 
 export interface StoreSkuDef {
   id: StoreSkuId;
   name: string;
+  /** An offer's name on its tab ('' → `name`). */
+  short: string;
   description: string;
+  /** An offer card's illustration, `render/assets/<art>.png` ('' → none). */
+  art: string;
   /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
    *  icon until the file lands, like every other sprite. */
   sprite: string;

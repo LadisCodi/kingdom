@@ -175,6 +175,14 @@
 
 - Opening is decided by the live game, not by `advance()`: an offer produces
   nothing, and a trigger met only inside a replayed absence opens nothing.
+- **The Offers screen**: one tab an offer on sale (its icon `sprite` over its
+  `short` name), the open one's card under them — its name and pitch, its
+  step in a chain (*I / III*), its picture (`art`), its Gems beside a sack
+  with its value on a red wax seal, a tile for everything else (a tap says
+  what it is), a green **GIFT** strip for each slot it opens for good, its
+  countdown and purchase limit, and its price. An offer with a splash has no
+  tab: its splash is its screen. A tap on an offer's row in the store opens
+  its tab, or its splash.
 
 ### 2.5 Daily offers
 

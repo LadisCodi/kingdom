@@ -2,10 +2,21 @@
   "type": "object",
   "fields": {
     "name": { "type": "text", "doc": "What the store and the confirmation call it." },
+    "short": {
+      "type": "text",
+      "emptyOk": true,
+      "maxLength": 12,
+      "doc": "An offer: its name on its tab in the Offers screen. Empty: its name."
+    },
     "description": { "type": "text", "doc": "One line under the name: what it is for." },
     "sprite": {
       "type": "text",
       "doc": "Its art: render/assets/<sprite>.png. The Gems or Bag icon stands in until the file lands."
+    },
+    "art": {
+      "type": "text",
+      "emptyOk": true,
+      "doc": "An offer: its card's illustration in the Offers screen, render/assets/<art>.png. Empty: the card shows no picture."
     },
     "shelf": {
       "type": "text",

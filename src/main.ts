@@ -88,6 +88,7 @@ import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
+import { renderOffersSheet } from './ui/offersSheet';
 import { renderUpgradeSheet, upgradeSignature } from './ui/upgradeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { ToastShelf } from './ui/toasts';
@@ -331,6 +332,7 @@ async function boot(): Promise<void> {
     survey: renderSurveySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
     store: renderStoreSheet,
+    offers: renderOffersSheet,
     payerProfile: renderPayerSheet,
     nickname: renderNicknameSheet,
     friends: renderFriendsSheet,
@@ -456,7 +458,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'relic', 'bag', 'speedup', 'shortfall', 'heroes', 'lair', 'welcome', 'settings',
-        'mana', 'knowledge', 'builder', 'store', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch', 'wishNeed', 'wishGive', 'wishFilled',
+        'mana', 'knowledge', 'builder', 'store', 'offers', 'payerProfile', 'iapConfirm', 'world', 'army', 'nickname', 'crestEditor', 'friendSearch', 'wishNeed', 'wishGive', 'wishFilled',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => {
