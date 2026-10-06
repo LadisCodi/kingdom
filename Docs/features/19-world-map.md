@@ -72,6 +72,12 @@
   corner shows the whole world — mist, explored ground, every kingdom's
   ground in its colour, the cities, the Portals and the camera's frame — and
   a tap there moves the camera.
+- **Labels thin out as the camera goes out**, the least important first:
+  - always: your kingdom's name, the Portals' times, a raid on you (its arc,
+    its time and the camp's power), the armies;
+  - from a hex ~60 pt wide: every camp's power and the rivals' names;
+  - from ~80 pt: the dungeons' progress, the deposits' materials, what
+    exploring promises.
 - **Content icons are read, never tapped.** At ~130 pt an icon lands at 25–40 pt,
   under the 44 pt / 48 dp minimums. **The hexagon is the tap target; a dispatch
   sheet is where actions happen.**

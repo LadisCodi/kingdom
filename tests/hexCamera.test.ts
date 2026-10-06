@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { HexCamera } from '../src/render/world/hexCamera';
 import {
-  HEX_W, STRATEGIC_W, TILT, acrossEdge, edgeDir, hexCorners, hexToPlane, planeToHex, regionEdges,
+  HEX_W, LABEL_MIN_HEX_W, STRATEGIC_W, TILT, labelShown, type WorldLabel, acrossEdge, edgeDir, hexCorners, hexToPlane, planeToHex, regionEdges,
 } from '../src/render/world/hexLayout';
 import { BOARD_HEXES, HEX_DIRS, WORLD_RADIUS, hexNeighbors } from '../src/sim/world/hex';
 
@@ -101,5 +101,16 @@ describe('the world camera', () => {
     cam.panByScreen(1e6, -1e6);
     expect(Math.abs(cam.x)).toBeLessThan(HEX_W * (WORLD_RADIUS + 1));
     expect(Math.abs(cam.y)).toBeLessThan(HEX_W * (WORLD_RADIUS + 1));
+  });
+});
+
+describe('labels by importance (19 §1.2)', () => {
+  it('everything shows in the tactical register, the least important go first as the camera goes out', () => {
+    for (const label of Object.keys(LABEL_MIN_HEX_W) as WorldLabel[]) {
+      expect(labelShown(label, HEX_W)).toBe(true);
+      expect(labelShown(label, STRATEGIC_W)).toBe(false);
+    }
+    expect(LABEL_MIN_HEX_W.camp).toBeLessThan(LABEL_MIN_HEX_W.deposit);
+    expect(LABEL_MIN_HEX_W.rival).toBeLessThan(LABEL_MIN_HEX_W.promise);
   });
 });

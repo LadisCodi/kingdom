@@ -37,7 +37,7 @@ import { homeboundMs, legPosition } from '../../sim/world/travel';
 import {
   COMBO_SPRITE, PLATE_SPRITE, fortressSprite, hexArt, pickVariant, type HexCombo,
 } from './hexArt';
-import { TILT, hexCorners, regionEdges } from './hexLayout';
+import { TILT, hexCorners, labelShown, regionEdges, type WorldLabel } from './hexLayout';
 import { drawCloudBank } from '../fog/fogLayer';
 import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
 import type { HexCamera } from './hexCamera';
@@ -278,8 +278,10 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // strongest party they could send (19 §5.4) — on explored ground only,
   // since a camp in the mist is only a shape.
   const party = strongestParty(state);
+  const shows = (label: WorldLabel): boolean => labelShown(label, camera.hexWidth);
   for (const bh of board.hexes) {
     if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
+    if (!raidAt.has(bh.index) && !shows('camp')) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
     // Its power, in the units of the player's own army, coloured by how it
@@ -295,6 +297,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // and a badge when their army is camped there and can fight (19 §8.2).
   const total = WORLD_DUNGEON.depths * WORLD_DUNGEON.roomsPerDepth;
   for (const bh of board.hexes) {
+    if (!shows('dungeon')) break;
     if (!bh.features.includes('Dungeon') || states[bh.index] !== 'Revealed') continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
@@ -306,6 +309,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // A deposit: a sparkle and its material's icon at its right corner
   // (Docs/plans/precious-deposits.md), on ground the player has explored.
   for (const bh of board.hexes) {
+    if (!shows('deposit')) break;
     if (states[bh.index] !== 'Revealed') continue;
     const material = depositMaterial(bh.features);
     if (material === null) continue;
@@ -317,6 +321,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // Over every misty hex, what exploring it promises and the Gold it costs
   // (19 §3.2); once an explorer is on its way there, only the promise.
   for (const bh of board.hexes) {
+    if (!shows('promise')) break;
     if (states[bh.index] !== 'Sensed' || bh.scout === null) continue;
     const c = camera.hexToScreen(bh.hex);
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
@@ -346,7 +351,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // at the plank's left end (15 §2.2). The player's own is the save's, which
   // the board may not have heard yet.
   for (const seat of source.seats()) {
-    if (!seat.owner.you && states[seat.index] === 'Unknown') continue;
+    if (!seat.owner.you && (states[seat.index] === 'Unknown' || !shows('rival'))) continue;
     const c = camera.hexToScreen(hexAt(seat.index));
     if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 2 || c.y > h + r * 3) continue;
     const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];

@@ -83,3 +83,15 @@ export function regionEdges(region: readonly Hex[]): Array<{ hex: Hex; edge: num
 /** Half the world's extent on the plane, for clamping a pan. */
 export const BOARD_HALF_W = HEX_W * (WORLD_RADIUS + 0.5);
 export const BOARD_HALF_H = HEX_R * (1.5 * WORLD_RADIUS + 1) * TILT;
+
+/** The labels the board prints, by how far out each still shows (19 §1.2):
+ *  the narrower a hex on screen, the fewer, the least important going first.
+ *  The player's own name, the Portals, a raid on the player — its arc, its
+ *  time and the camp's power — and the armies always show. */
+export type WorldLabel = 'camp' | 'rival' | 'dungeon' | 'deposit' | 'promise';
+export const LABEL_MIN_HEX_W: Record<WorldLabel, number> = {
+  camp: 60, rival: 60, dungeon: 80, deposit: 80, promise: 80,
+};
+export function labelShown(label: WorldLabel, hexWidth: number): boolean {
+  return hexWidth >= LABEL_MIN_HEX_W[label];
+}
