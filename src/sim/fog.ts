@@ -88,7 +88,7 @@ export function countMultiplier(state: GameState): number {
   return growth ** Math.floor(revealedCellCount(state) / step);
 }
 
-/** The cost the PLAYER actually pays, after the Dowsing Rod and anything else
+/** The cost the PLAYER actually pays, after the Staff of Renewal and anything else
  *  that discounts the fog. Every consumer reads this rather than revealCost(),
  *  so a discount can never apply to the bar but not the charge. */
 export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>

@@ -241,7 +241,7 @@ export interface CellHarvestState {
    * (`effectiveRecoveryMs`), so the BAR that counts it down has to be told
    * what it is counting. Deriving the span from the authored
    * `recoverySeconds` instead made the bar start nearly full under anything
-   * that speeds recovery up — a Dowsing Rod at level 16 shortens a Forest's
+   * that speeds recovery up — a Staff of Renewal at level 16 shortens a Forest's
    * 90 seconds to 21, and a bar spanning 90 opens at 77%.
    */
   recoveryMs: number | null;
@@ -641,7 +641,7 @@ export interface GameState {
     casts: Partial<Record<ArtifactId, { endsAt: number; readyAt: number }>>;
     /**
      * USES LEFT on an ability whose window is counted in EVENTS rather than
-     * in seconds — the Delver's Lantern's rooms.
+     * in seconds — the Wisp Lantern's rooms.
      *
      * It has no clock at all, and deliberately: the only clock a delve has is
      * the player opening the next door, so a charge cannot expire while

@@ -121,7 +121,7 @@ const cellState = (
 };
 
 /**
- * How long a cell stays exhausted, after the tree, the Verdant Seal and
+ * How long a cell stays exhausted, after the tree, the Sickle of Plenty and
  * anything else that shortens it.
  *
  * **Stamped ONCE at the moment of exhaustion** — a relic attuned or a
@@ -141,7 +141,7 @@ export const effectiveRecoveryMs = (
   Math.max(1000, Math.round(
     resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)
     / Math.max(1, techMultiplier(state, 'regrowthSpeed', { harvest: spec.id }))
-    // AT THE CELL, because the Dowsing Rod's zone is a place. It is read once,
+    // AT THE CELL, because the Staff of Renewal's zone is a place. It is read once,
     // when the cell exhausts, so a zone only ever reaches the cells that empty
     // INSIDE it — which is exactly what the active's instant refill arranges,
     // by emptying the waiting list first (Docs/proposals/relic-effects.md §3.1).
@@ -149,7 +149,7 @@ export const effectiveRecoveryMs = (
 
 /**
  * How long a CONSUMED feature waits before it reappears somewhere else — the
- * other harvest clock, and the one the Verdant Seal moves
+ * other harvest clock, and the one the Sickle of Plenty moves
  * (Docs/features/09-relics.md §2).
  *
  * Priced when the wait STARTS and stored on the respawn entry, the same rule
@@ -230,7 +230,7 @@ export function recoversForSpec(
  * It spans the wait that was STAMPED, which is the only span that is true: a
  * wait is priced once, at exhaustion, so a bar measured against the authored
  * `recoverySeconds` opened nearly full under anything that speeds recovery up
- * — a Dowsing Rod at level 16 shortens a Forest's 90 seconds to 21, and a bar
+ * — a Staff of Renewal at level 16 shortens a Forest's 90 seconds to 21, and a bar
  * spanning 90 starts at 77%. It also has to span the stamped wait rather than
  * a live re-read, or a zone expiring mid-wait would make the bar jump
  * backwards.

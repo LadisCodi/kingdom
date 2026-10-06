@@ -95,7 +95,7 @@ describe('a zone is a modifier with a centre', () => {
 
   // THE ASYMMETRY IS THE SAFETY. Every number in the game that is not about a
   // place still calls `resolve()`, so a zone must be invisible there — or the
-  // Foreman's Sigil's 5×5 would speed up the whole kingdom's crews.
+  // Winged Hammer's 5×5 would speed up the whole kingdom's crews.
   it('is invisible to the cell-blind read and visible to the placed one', () => {
     const state = freshGame();
     zone(state, 'workerStrikeSpeed', 3);
@@ -142,7 +142,7 @@ describe('a zone is a modifier with a centre', () => {
 });
 
 describe('a zone reaches the numbers that belong to a place', () => {
-  // The Dowsing Rod: recovery runs faster inside the zone. The wait is stamped
+  // The Staff of Renewal: recovery runs faster inside the zone. The wait is stamped
   // ONCE, when the cell exhausts, so what the zone buys is the cells that
   // empty inside it — never a retroactive wake-up of a cell already waiting.
   it('shortens a recovery stamped inside it, and not one stamped outside', () => {
@@ -154,7 +154,7 @@ describe('a zone reaches the numbers that belong to a place', () => {
     expect(effectiveRecoveryMs(state, HARVEST.Forest, { x: 9, y: 9 })).toBe(plain);
   });
 
-  // The Foreman's Sigil: read at the BUILDING, never at the cell. A worker
+  // The Winged Hammer: read at the BUILDING, never at the cell. A worker
   // walks, so a zone asking where it was standing would flicker as it crossed
   // the edge — and travel is Euclidean while a zone is Chebyshev.
   it('speeds the crew of a building inside it, swing and walk alike', () => {
@@ -394,7 +394,7 @@ describe('an ability reaches further at three named levels', () => {
 describe('an auto-tap spell buys taps with the Mana of the cast', () => {
   const REAPER = 'VerdantSeal';
 
-  /** A kingdom that can harvest, holding the Seal at `level`. */
+  /** A kingdom that can harvest, holding the Sickle at `level`. */
   const reaper = (level: number): GameState => {
     const state = canGather(freshGame());
     // A zone needs GROUND to spend on: `canGather` clears three cells, and a
@@ -525,7 +525,7 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
     expect(effectiveWorkerSpeed(state, near.location)).toBeGreaterThan(walkBefore);
   });
 
-  // POWER is the Sigil's growing axis — a crew either works faster or it does
+  // POWER is the Hammer's growing axis — a crew either works faster or it does
   // not, and a longer window is just a longer wait.
   it('hits harder at every level, and for the same five minutes', () => {
     let last = 0;
@@ -542,7 +542,7 @@ describe('Haste is a zone on buildings, not an hour on the kingdom', () => {
   it('lets go when its window closes', () => {
     const { state, near } = sigil(1);
     const swing = () => workerStrikeMs(state, HARVEST.Forest, near);
-    // Hosted first: the Sigil's passive stays when its spell goes.
+    // Hosted first: the Hammer's passive stays when its spell goes.
     hostNear(state, 'ForemansSigil', CENTRE);
     const before = swing();
     castOn(state, 'ForemansSigil', CENTRE, T0);
@@ -577,7 +577,7 @@ describe('Tithe is the other exchange rate', () => {
   });
 
   // THE ASYMMETRY THE COOLDOWN EXISTS TO HOLD (OQ-99). A node empties and the
-  // Seal's run hits a wall; a house always has rent to pull forward, so this
+  // Sickle's run hits a wall; a house always has rent to pull forward, so this
   // one always spends the whole budget.
   it('always spends its whole budget, because a house never runs dry', () => {
     const state = ledger(3);
@@ -599,10 +599,10 @@ describe('Tithe is the other exchange rate', () => {
 
 /**
  * A RELIC IS ONE IDEA AT TWO SPEEDS. Both of these changed subject to obey it:
- * the Rod's ability used to pay a cell's reveal cost while its passive was
- * about ground coming back, and the Compass called a resource back while its
- * passive was about Stardust. The fog is the Compass's, and recovery is the
- * Rod's.
+ * the Staff's ability used to pay a cell's reveal cost while its passive was
+ * about ground coming back, and the Orb called a resource back while its
+ * passive was about Stardust. The fog is the Orb's, and recovery is the
+ * Staff's.
  */
 describe('Divining wakes the ground and keeps it coming back', () => {
   const rod = (level: number): GameState => {
@@ -705,11 +705,11 @@ describe('Survey buys the fog with Mana instead of Gold', () => {
  *
  * A wait is priced ONCE, at exhaustion, so a bar measured against the authored
  * `recoverySeconds` opens nearly full under anything that speeds recovery up —
- * which is every level of the Dowsing Rod, and then its zone on top. The bar
+ * which is every level of the Staff of Renewal, and then its zone on top. The bar
  * should fill FASTER, not start fuller.
  */
 describe('a faster recovery fills the bar faster, not fuller', () => {
-  /** A kingdom that can harvest, holding the Rod at `level` — passives and
+  /** A kingdom that can harvest, holding the Staff at `level` — passives and
    *  all, because a level set by hand moves no modifier. */
   const holder = (level: number): GameState => {
     const state = canGather(freshGame());

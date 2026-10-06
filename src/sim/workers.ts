@@ -172,7 +172,7 @@ function findClaimableCell(
  *  (Cartage). Fixed for the leg, like every other StateUntil, so replay and
  *  stepped ticking agree on when the worker arrives.
  *
- *  `home` is the crew's BUILDING, which is where a Foreman's Sigil zone is
+ *  `home` is the crew's BUILDING, which is where a Winged Hammer zone is
  *  read: one of `from` and `to` is always it, and asking the building rather
  *  than the moving end is what keeps a leg from repricing halfway across the
  *  zone's edge. */
