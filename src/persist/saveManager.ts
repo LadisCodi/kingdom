@@ -4,7 +4,7 @@
 import { serialize, type SaveFile } from '../sim/save';
 import type { GameState } from '../sim/state';
 import { cloudClear, cloudInit, cloudLoad, cloudSave, cloudUserId } from './cloud';
-import { clearLocal, lastResetAt, loadLocal, localPlayerId, markReset, saveLocal } from './local';
+import { clearLocal, clearResetMark, lastResetAt, loadLocal, localPlayerId, markReset, saveLocal } from './local';
 
 const CLOUD_DEBOUNCE_MS = 3000;
 
@@ -67,6 +67,20 @@ export class SaveManager {
     // refused by the loader.
     markReset(Date.now());
     if (this.cloudActive) await cloudClear();
+  }
+
+  /** This device now plays another account's kingdom: drop the local save
+   *  without stamping a reset — the cloud's save is the one to load — and
+   *  disarm saving until the caller reloads. */
+  dropForAccount(): void {
+    this.disabled = true;
+    if (this.cloudTimer !== null) clearTimeout(this.cloudTimer);
+    this.cloudTimer = null;
+    this.pendingCloud = null;
+    clearLocal();
+    // A reset done here was of this device's kingdom, never of the one
+    // signed in to: its cloud save must load whatever its age.
+    clearResetMark();
   }
 
   save(state: GameState, now: number, flush = false): void {
