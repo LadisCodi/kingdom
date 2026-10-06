@@ -53,7 +53,7 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  canRestore, forgeReplica, isMet, levelCost, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
+  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
   dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
 } from './sim/relics';
 import {
@@ -250,14 +250,14 @@ export interface RelicView {
   level: number; restored: boolean; met: boolean;
   /** Fragments held per slot: five pieces, then the keystone. */
   slots: number[];
-  /** What the spares are worth in levels. */
+  /** Copies past the first of each slot, worth what a replica asks. */
   spares: number;
-  /** Spares the next level asks. */
-  levelCost: number;
+  /** Stardust the next level asks; it also takes one fragment of each slot. */
+  levelStardust: number;
+  /** Every slot holds a fragment — the set a level takes. */
+  hasSet: boolean;
   canRestore: boolean;
   now: string; next: string;
-  /** Where its fragments drop. */
-  foundIn: string;
   pending: string | null;
   cast: { phase: CastPhase; leftMs: number; charges: number };
   /** The replica offer for its first missing fragment, or null. */
@@ -1687,10 +1687,10 @@ export class Game {
     return {
       id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
       level, restored, met: isMet(this.state, id), slots, spares,
-      levelCost: levelCost(level), canRestore: canRestore(this.state, id),
+      levelStardust: levelStardust(Math.max(1, level)), hasSet: slots.every((n) => n > 0),
+      canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
-      foundIn: relicKind(id) === 'city' ? 'lairs, fog treasures, quests and the Survey' : 'the world: dungeons, the Portal, scouting',
       pending: def.pending,
       cast: this.castPhase(id),
       forge,
@@ -1819,12 +1819,13 @@ export class Game {
   }
 
   doLevelRelic(id: ArtifactId): void {
-    if (levelUpRelic(this.state, id) === 'Levelled') {
+    const result = levelUpRelic(this.state, id);
+    if (result === 'Levelled') {
       playSfx('questComplete');
       // A world relic in a Chapel acts at the level the server holds: send it.
       const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
       if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
-    } else this.shake([]);
+    } else this.shake(result === 'NotEnoughStardust' ? ['Stardust'] : []);
     this.notify();
   }
 

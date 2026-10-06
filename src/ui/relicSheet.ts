@@ -228,39 +228,52 @@ export function spellSection(game: Game, id: ArtifactId, view: RelicView): HTMLE
 const sparesTerm = (have: number, need: number) =>
   ({ icon: 'shard' as const, amount: `${formatExact(have)} / ${formatExact(need)}`, short: have < need });
 
-/** The relic's progress action for its state, and the forge's two. ONE
- *  GREEN ACTION A SCREEN (§2.2): while an asleep relic's Activate is on the
- *  page, levelling it up steps down to wood. */
-function actions(game: Game, view: RelicView): HTMLElement[] {
+/**
+ * THE LEVEL SECTION (one `.k-section`): the relic's level, its six slots and
+ * the press that moves it — Restore while it is in fragments, then Level up,
+ * which takes one fragment of each slot and the level's Stardust, every
+ * level. A missing piece is forged here too. ONE GREEN ACTION A SCREEN
+ * (§2.2): while an asleep relic's Activate is on the page, Level up steps
+ * down to wood.
+ */
+function levelSection(game: Game, view: RelicView): HTMLElement {
+  const held = view.slots.filter((n) => n > 0).length;
+  const head = el('div', { class: 'rl-level-head' },
+    el('b', {}, view.restored ? `Level ${formatExact(view.level)}` : 'Not restored'),
+    ...(view.restored ? [] : [el('span', {}, `${formatExact(view.spares)} spares`)]));
+  const press: HTMLElement[] = [];
   if (view.restored) {
-    return [btn({
+    press.push(btn({
       label: 'Level up',
       kind: view.status === 'asleep' ? 'secondary' : 'primary',
-      costExtra: [sparesTerm(view.spares, view.levelCost)],
+      cost: { Stardust: view.levelStardust },
+      have: (c) => game.walletValue(c),
+      costExtra: [{ icon: 'shard', amount: `${formatExact(held)} / ${formatExact(view.slots.length)}`, short: !view.hasSet }],
       onClick: () => game.doLevelRelic(view.id),
-    })];
+    }));
+  } else if (view.canRestore) {
+    press.push(btn({ label: 'Restore', kind: 'primary', onClick: () => game.doRestoreRelic(view.id) }));
+  } else if (view.forge !== null) {
+    const f = view.forge;
+    const what = f.slot === 5 ? 'the keystone' : 'a missing piece';
+    press.push(
+      el('p', { class: 'rl-note' }, `Forge ${what} as a replica`),
+      el('div', { class: 'rl-forge' },
+        btn({
+          label: 'Forge',
+          costExtra: [sparesTerm(view.spares, f.freeSpares)],
+          onClick: () => game.doForgeReplica(view.id, false),
+        }),
+        btn({
+          label: 'Forge',
+          kind: 'gem',
+          cost: { Gems: f.gems },
+          have: (c) => game.walletValue(c),
+          costExtra: [sparesTerm(view.spares, f.spares)],
+          onClick: () => game.doForgeReplica(view.id, true),
+        })));
   }
-  if (view.canRestore) return [btn({ label: 'Restore', kind: 'primary', onClick: () => game.doRestoreRelic(view.id) })];
-  const f = view.forge;
-  if (f === null) return [];
-  const what = f.slot === 5 ? 'the keystone' : 'a missing piece';
-  return [
-    el('p', { class: 'rl-note' }, `Forge ${what} as a replica`),
-    el('div', { class: 'rl-forge' },
-      btn({
-        label: 'Forge',
-        costExtra: [sparesTerm(view.spares, f.freeSpares)],
-        onClick: () => game.doForgeReplica(view.id, false),
-      }),
-      btn({
-        label: 'Forge',
-        kind: 'gem',
-        cost: { Gems: f.gems },
-        have: (c) => game.walletValue(c),
-        costExtra: [sparesTerm(view.spares, f.spares)],
-        onClick: () => game.doForgeReplica(view.id, true),
-      })),
-  ];
+  return el('div', { class: 'rl-level k-section' }, head, slotRow(view, true), ...press);
 }
 
 /** What the relic is worth now and at the next level, as the building
@@ -284,17 +297,12 @@ export function renderRelicSheet(game: Game): HTMLElement {
   const spell = spellSection(game, id, view);
   const body = el('div', { class: 'rl-page' },
     el('div', { class: `rl-hero is-${view.status}` },
-      relicArt(view, 'rl-hero-art'), seal(view),
+      relicArt(view, 'rl-hero-art'),
       ...(view.status === 'awake' ? [el('span', { class: 'rl-awake-plate is-ribbon' }, 'Awake')] : []),
       ...(view.status === 'asleep' ? [restMarks()] : [])),
-    slotRow(view, true),
     statBand(view),
     ...(view.pending !== null ? [el('p', { class: 'rl-note' }, view.pending)] : []),
-    el('div', { class: 'rl-lines' },
-      el('div', { class: 'rl-line is-muted' }, iconEl('compass', { size: 'sm' }), el('span', {}, `Found in ${view.foundIn}`)),
-      ...(view.restored ? [] : [el('div', { class: 'rl-line is-muted' }, iconEl('shard', { size: 'sm' }),
-        el('span', {}, `${formatExact(view.spares)} spares — copies past the first`))])),
-    ...actions(game, view),
+    levelSection(game, view),
     ...(view.host === null ? [] : [sectionHead(view.kind === 'city' ? 'Shrine' : 'Chapel'), ...hostLines(game, view)]),
     ...(spell === null ? [] : [...(view.host === null ? [sectionHead('Spell')] : []), spell]),
     ...(view.chest === null ? [] : [sectionHead("Restorer's chest"), el('div', { class: 'rl-block rl-chest' },
@@ -308,5 +316,8 @@ export function renderRelicSheet(game: Game): HTMLElement {
         onClick: () => game.doRestorerChest(view.id),
       }))]),
   );
-  return sheet({ title: view.name, onClose: close, tall: true }, body);
+  // The whole height between the header and the nav, whatever it holds.
+  const surface = sheet({ title: view.name, onClose: close, tall: true }, body);
+  surface.classList.add('is-relic');
+  return surface;
 }
