@@ -45,6 +45,7 @@
  * above, the size printed at the top and the count at the bottom right in
  * cream with a dark outline. */
 .bag-tile {
+  container-type: inline-size;
   --tier: #e8d6ae;
   position: relative;
   aspect-ratio: 1;
@@ -72,7 +73,9 @@
 .bag-tile.is-tier-4 { --tier: #b38ae6; }
 .bag-tile.is-tier-5 { --tier: #f4c24a; }
 .bag-tile:active { translate: 0 calc(var(--px) * 2); box-shadow: inset 0 calc(var(--px) * 3) calc(var(--px) * 4) rgba(40, 22, 10, 0.45); }
-.bag-tile > .icon { --icon-size: 58%; }
+/* In cqi, not %: the atlas sprite multiplies --icon-size into its
+ * background-size and -position, where a percentage means something else. */
+.bag-tile > .icon { --icon-size: 58cqi; }
 .bag-tile-size,
 .bag-tile-count {
   position: absolute;
@@ -314,6 +317,7 @@
  * keystone last and larger, gold-rimmed. */
 .rl-slots { display: flex; align-items: center; justify-content: center; gap: calc(var(--px) * 4); }
 .rl-slot {
+  container-type: inline-size;
   position: relative;
   display: grid;
   place-items: center;
@@ -324,7 +328,7 @@
 }
 .rl-slot.is-held { border: calc(var(--px) * 1.5) solid rgba(92, 58, 30, 0.6); background: rgba(255, 255, 255, 0.35); }
 .rl-slot.is-keystone { width: calc(var(--px) * 20); height: calc(var(--px) * 20); border-color: var(--gold-dark); }
-.rl-slot .icon { --icon-size: 90%; }
+.rl-slot .icon { --icon-size: 90cqi; }
 .rl-slots.is-big .rl-slot { width: calc(var(--px) * 40); height: calc(var(--px) * 40); border-radius: calc(var(--px) * 8); }
 .rl-slots.is-big .rl-slot.is-keystone { width: calc(var(--px) * 50); height: calc(var(--px) * 50); }
 .rl-slot > b {
