@@ -7,7 +7,7 @@ import { ARTIFACT_ORDER, RELIC_RULES, relicDoor, relicKind } from '../src/sim/da
 import { claimLair } from '../src/sim/expeditions';
 import {
   canRestore, distinctHeld, dropFragments, forgeReplica, isMet, KEYSTONE, levelStardust, levelUpRelic,
-  openRelicDoor, openRestorerChest, replicaPrice, restoreRelic, slotCount, spareWorth,
+  openFragmentPack, openRelicDoor, replicaPrice, restoreRelic, slotCount, spareWorth,
 } from '../src/sim/relics';
 import { deserialize, serialize } from '../src/sim/save';
 import type { ArtifactId, GameState } from '../src/sim/state';
@@ -132,18 +132,22 @@ describe('the paid doors', () => {
     expect(canRestore(state, id)).toBe(true);
   });
 
-  it('the Restorer\'s chest pays bound fragments of a restored relic, for Gems', () => {
+  it('the store\'s fragment pack pays bound fragments of relics met, for Gems', () => {
     const state = freshGame();
+    state.player.wallet.Gems = RELIC_RULES.fragmentPackGems;
+    // Nothing found yet: the pack rolls nothing and charges nothing.
+    expect(openFragmentPack(state).kind).toBe('NothingMet');
+    expect(state.player.wallet.Gems).toBe(RELIC_RULES.fragmentPackGems);
     const id = ARTIFACT_ORDER[1];
-    expect(openRestorerChest(state, id).kind).toBe('NotRestored');
-    hold(state, id, [1, 1, 1, 1, 1, 1]);
-    restoreRelic(state, id);
-    state.player.wallet.Gems = RELIC_RULES.restorerChestGems;
-    const r = openRestorerChest(state, id);
+    hold(state, id, [1, 0, 0, 0, 0, 0]);
+    const r = openFragmentPack(state);
     expect(r.kind).toBe('Opened');
-    const f = state.relics.held[id]!;
-    expect(f.bound.reduce((a, b) => a + b, 0)).toBe(RELIC_RULES.restorerChestSize);
-    expect(f.found.reduce((a, b) => a + b, 0)).toBe(0);
+    expect(state.player.wallet.Gems).toBe(0);
+    if (r.kind !== 'Opened') return;
+    expect(r.drops).toHaveLength(RELIC_RULES.fragmentPackSize);
+    expect(r.drops.every((d) => d.relic === id)).toBe(true);
+    expect(state.relics.held[id]!.bound.reduce((a, b) => a + b, 0)).toBe(RELIC_RULES.fragmentPackSize);
+    expect(openFragmentPack(state).kind).toBe('NotEnoughGems');
   });
 });
 

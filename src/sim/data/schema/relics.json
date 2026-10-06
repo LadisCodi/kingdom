@@ -24,8 +24,12 @@
         "replicaSpares": { "type": "int", "min": 0, "doc": "Spares the Gem forge takes besides its Gems." },
         "replicaGemsPiece": { "type": "int", "min": 0, "doc": "Gems the forge asks for a piece." },
         "replicaGemsKeystone": { "type": "int", "min": 0, "doc": "Gems the forge asks for the keystone." },
-        "restorerChestGems": { "type": "int", "min": 0, "doc": "The Restorer's chest: its Gem price." },
-        "restorerChestSize": { "type": "int", "min": 1, "doc": "The Restorer's chest: fragments of the chosen restored relic." },
+        "fragmentPackGems": { "type": "int", "min": 0, "doc": "The store's fragment pack: its Gem price." },
+        "fragmentPackSize": {
+          "type": "int",
+          "min": 1,
+          "doc": "The store's fragment pack: bound fragments of relics already met, at random."
+        },
         "treasureEvery": {
           "type": "int",
           "min": 0,

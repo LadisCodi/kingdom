@@ -109,6 +109,7 @@
 .store-art.is-SilverKey { background-image: url('../../assets/art-key-silver.png'); }
 .store-art.is-GoldKey { background-image: url('../../assets/art-key-gold.png'); }
 .store-art.is-hammer { background-image: url('../../assets/art-hammer.png'); }
+.store-art.is-fragments { background-image: url('../../assets/art-fragments.png'); }
 .store-banner-head { grid-area: head; min-width: 0; }
 .store-banner-title { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 18); line-height: 1.15; }
 .store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-small); line-height: 1.3; }
