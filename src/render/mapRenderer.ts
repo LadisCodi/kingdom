@@ -129,6 +129,8 @@ const moveArrowBob = (): number => (reducedMotion?.matches
   : 0.5 - 0.5 * Math.cos((performance.now() % ARROW_CYCLE_MS) / ARROW_CYCLE_MS * Math.PI * 2));
 
 const SPELL_CYCLE_MS = 6000;
+/** One wave of an awake Shrine's aura, from the Shrine to its edge. */
+const AURA_PULSE_MS = 3200;
 const spellPhase = (): number => (performance.now() % SPELL_CYCLE_MS) / SPELL_CYCLE_MS;
 
 /** THE SELECTED BUILDING'S PULSE: 0 → 1 → 0 once every 1.4 s, on the same
@@ -1155,6 +1157,131 @@ export function drawMap(
     .filter(({ cell }) => fogState(state, map, cell) !== 'Undiscovered')
     .map(({ cell }) => cell), cellRect, size);
 
+  // Pass 1.1d: SPELLS STANDING ON THE GROUND — on the floor, under
+  // everything that stands on it: trees, buildings and features stand in
+  // front of the enchanted ground, as they do in front of a work area. A
+  // zone is a fact about the world rather than a preview of a decision, so a
+  // placement outline or a cast target sits ON TOP of it and still reads.
+  //
+  // THE TINT SAYS "THERE IS MAGIC HERE" AND THE WHEEL SAYS FOR HOW LONG, and
+  // they are drawn on different things on purpose: the tint on EVERY covered
+  // cell, because the question it answers is *which ground* — and the wheel on
+  // the CENTRE alone, because a countdown repeated across twenty-five cells is
+  // twenty-five things to read that all say the same number.
+  for (const zone of markers.spellZones) {
+    const inZone = new Set(zone.cells.map(coordKey));
+    // The pulse is the whole of the "living" read, and it is slow — a zone
+    // stands for minutes, so anything quick would be a distraction rather
+    // than a presence.
+    const pulse = 0.82 + 0.18 * Math.sin(spellPhase() * Math.PI * 2);
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    // THE GLOW IS THE GROUND. A drawn haze under every covered cell, larger
+    // than the cell so neighbours bleed into one another and a block of tiles
+    // reads as ONE enchanted area rather than as a chequerboard of lit
+    // squares. The flat fill stays underneath it as the floor of the effect,
+    // so the zone is still legible before the art loads.
+    ctx.fillStyle = PALETTE.spellFill;
+    ctx.beginPath();
+    for (const cell of zone.cells) diamondPath(ctx, cellRect(cell));
+    ctx.fill();
+    ctx.globalAlpha = pulse * 0.2;
+    for (const cell of zone.cells) {
+      const b = cellRect(cell);
+      drawSprite(ctx, 'spell_glow', b.x - b.w * 0.1, b.y - b.h * 0.6, b.w * 1.2, b.h * 2.2);
+    }
+    // A SIGIL ON A FEW CELLS, and FEW is the whole point. A zone is 81 cells
+    // at radius 4 and 121 at radius 5; a mark on each is a rash that buries
+    // the kingdom the player is trying to look at. These are TEXTURE — enough
+    // to say the ground is enchanted, never enough to count. One in seven, by
+    // a hash, so they hold still while the zone is redrawn.
+    ctx.globalAlpha = pulse * 0.4;
+    for (const cell of zone.cells) {
+      const seed = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
+      if (seed % 7 !== 0) continue;
+      const c = mid(cellRect(cell));
+      drawSprite(ctx, 'spell_sigil', c.x - size * 0.2, c.y - size * 0.2, size * 0.4, size * 0.4);
+    }
+    // The border traces the OUTSIDE of the whole zone, never the grid inside
+    // it: what is enchanted is an area, not a set of squares.
+    ctx.strokeStyle = PALETTE.spellBorder;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = PALETTE.spellGlow;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    for (const cell of zone.cells) outline(cellRect(cell), cell, inZone);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // MOTES: two per cell, drifting upward on a loop seeded by the cell, so a
+    // big zone shimmers without any two cells moving alike. They are the
+    // "living" half of the read — a flat tint alone says a rule applies here,
+    // where something MOVING says a spell is working.
+    // NO shadow on these. The border draws four segments and can afford a
+    // blur; the motes are two per cell and a radius-5 zone is 121 of them, so
+    // a blurred mote is 242 blurred circles a frame.
+    ctx.fillStyle = PALETTE.spellGlow;
+    const moteSize = Math.max(5, size * 0.2);
+    for (const cell of zone.cells) {
+      // One mote a cell, and only on the cells the sigils skipped: two rising
+      // sparkles on top of a mark is the same tile saying the same thing twice.
+      const pick = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
+      if (pick % 3 !== 1) continue;
+      const b = cellRect(cell);
+      const c = mid(b);
+      for (let i = 0; i < 1; i++) {
+        const seed = ((cell.x * 73856093) ^ (cell.y * 19349663) ^ (i * 83492791)) >>> 0;
+        const t = (spellPhase() + (seed % 1000) / 1000) % 1;
+        const mx = c.x + (((seed >>> 10) % 100) / 100 - 0.5) * b.w * 0.5;
+        const my = c.y + b.h * 0.3 - t * size;
+        ctx.globalAlpha = pulse * Math.sin(t * Math.PI) * 0.75;
+        // The drawn mote if the sheet has landed, a plain dot if it has not —
+        // the same fallback every sprite in the game has, so art lands one
+        // file at a time.
+        if (!drawSprite(ctx, 'spell_mote', mx - moteSize / 2, my - moteSize / 2, moteSize, moteSize)) {
+          ctx.beginPath();
+          ctx.arc(mx, my, Math.max(2, size * 0.07), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+    // A SHRINE'S AURA BREATHES OUT: a slow wave from the Shrine to the aura's
+    // edge, over and over, so an awake relic reads as awake at a glance. The
+    // ground is a diamond on screen, so is the wave; clipped to the aura.
+    if (zone.wheel === false && !reducedMotion?.matches) {
+      const t = (performance.now() % AURA_PULSE_MS) / AURA_PULSE_MS;
+      const c = mid(cellRect(zone.centre));
+      let reach = 0;
+      for (const cell of zone.cells) {
+        const b = cellRect(cell);
+        reach = Math.max(reach, Math.abs(mid(b).x - c.x) + b.w / 2, (Math.abs(mid(b).y - c.y) + b.h / 2) * 2);
+      }
+      const rx = reach * (0.08 + 0.92 * t);
+      const ry = rx / 2;
+      ctx.save();
+      ctx.beginPath();
+      for (const cell of zone.cells) diamondPath(ctx, cellRect(cell));
+      ctx.clip();
+      // Bright where it leaves the Shrine, fading as it reaches the edge —
+      // never so faint mid-way that the wave is lost on lit ground.
+      ctx.globalAlpha = 0.35 + 0.6 * (1 - t);
+      ctx.strokeStyle = PALETTE.spellGlow;
+      ctx.lineWidth = Math.max(3, size * 0.2 * (1 - t * 0.5));
+      ctx.shadowColor = PALETTE.spellBorder;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(c.x, c.y - ry);
+      ctx.lineTo(c.x + rx, c.y);
+      ctx.lineTo(c.x, c.y + ry);
+      ctx.lineTo(c.x - rx, c.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+
   // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A line of white
   // dots along the last ring the player may pay for, with a soft shadow on
   // the far side, drawn over the fog and across undiscovered ground too, so
@@ -1349,97 +1476,11 @@ export function drawMap(
       line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true));
   }
 
-  // Pass 3a: SPELLS STANDING ON THE GROUND.
-  //
-  // Drawn before every other marker, because a zone is a fact about the world
-  // rather than a preview of a decision: a placement outline or a cast target
-  // must be able to sit ON TOP of it and still be read.
-  //
-  // THE TINT SAYS "THERE IS MAGIC HERE" AND THE WHEEL SAYS FOR HOW LONG, and
-  // they are drawn on different things on purpose: the tint on EVERY covered
-  // cell, because the question it answers is *which ground* — and the wheel on
-  // the CENTRE alone, because a countdown repeated across twenty-five cells is
-  // twenty-five things to read that all say the same number.
+  // Pass 3a: THE WHEELS of the zones that carry one, over what stands —
+  // its countdown must read whatever is in front of the ground.
   for (const zone of markers.spellZones) {
-    const inZone = new Set(zone.cells.map(coordKey));
-    // The pulse is the whole of the "living" read, and it is slow — a zone
-    // stands for minutes, so anything quick would be a distraction rather
-    // than a presence.
-    const pulse = 0.82 + 0.18 * Math.sin(spellPhase() * Math.PI * 2);
-    ctx.save();
-    ctx.globalAlpha = pulse;
-    // THE GLOW IS THE GROUND. A drawn haze under every covered cell, larger
-    // than the cell so neighbours bleed into one another and a block of tiles
-    // reads as ONE enchanted area rather than as a chequerboard of lit
-    // squares. The flat fill stays underneath it as the floor of the effect,
-    // so the zone is still legible before the art loads.
-    ctx.fillStyle = PALETTE.spellFill;
-    ctx.beginPath();
-    for (const cell of zone.cells) diamondPath(ctx, cellRect(cell));
-    ctx.fill();
-    ctx.globalAlpha = pulse * 0.2;
-    for (const cell of zone.cells) {
-      const b = cellRect(cell);
-      drawSprite(ctx, 'spell_glow', b.x - b.w * 0.1, b.y - b.h * 0.6, b.w * 1.2, b.h * 2.2);
-    }
-    // A SIGIL ON A FEW CELLS, and FEW is the whole point. A zone is 81 cells
-    // at radius 4 and 121 at radius 5; a mark on each is a rash that buries
-    // the kingdom the player is trying to look at. These are TEXTURE — enough
-    // to say the ground is enchanted, never enough to count. One in seven, by
-    // a hash, so they hold still while the zone is redrawn.
-    ctx.globalAlpha = pulse * 0.4;
-    for (const cell of zone.cells) {
-      const seed = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
-      if (seed % 7 !== 0) continue;
-      const c = mid(cellRect(cell));
-      drawSprite(ctx, 'spell_sigil', c.x - size * 0.2, c.y - size * 0.2, size * 0.4, size * 0.4);
-    }
-    // The border traces the OUTSIDE of the whole zone, never the grid inside
-    // it: what is enchanted is an area, not a set of squares.
-    ctx.strokeStyle = PALETTE.spellBorder;
-    ctx.lineWidth = 3;
-    ctx.shadowColor = PALETTE.spellGlow;
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    for (const cell of zone.cells) outline(cellRect(cell), cell, inZone);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // MOTES: two per cell, drifting upward on a loop seeded by the cell, so a
-    // big zone shimmers without any two cells moving alike. They are the
-    // "living" half of the read — a flat tint alone says a rule applies here,
-    // where something MOVING says a spell is working.
-    // NO shadow on these. The border draws four segments and can afford a
-    // blur; the motes are two per cell and a radius-5 zone is 121 of them, so
-    // a blurred mote is 242 blurred circles a frame.
-    ctx.fillStyle = PALETTE.spellGlow;
-    const moteSize = Math.max(5, size * 0.2);
-    for (const cell of zone.cells) {
-      // One mote a cell, and only on the cells the sigils skipped: two rising
-      // sparkles on top of a mark is the same tile saying the same thing twice.
-      const pick = ((cell.x * 374761393) ^ (cell.y * 668265263)) >>> 0;
-      if (pick % 3 !== 1) continue;
-      const b = cellRect(cell);
-      const c = mid(b);
-      for (let i = 0; i < 1; i++) {
-        const seed = ((cell.x * 73856093) ^ (cell.y * 19349663) ^ (i * 83492791)) >>> 0;
-        const t = (spellPhase() + (seed % 1000) / 1000) % 1;
-        const mx = c.x + (((seed >>> 10) % 100) / 100 - 0.5) * b.w * 0.5;
-        const my = c.y + b.h * 0.3 - t * size;
-        ctx.globalAlpha = pulse * Math.sin(t * Math.PI) * 0.75;
-        // The drawn mote if the sheet has landed, a plain dot if it has not —
-        // the same fallback every sprite in the game has, so art lands one
-        // file at a time.
-        if (!drawSprite(ctx, 'spell_mote', mx - moteSize / 2, my - moteSize / 2, moteSize, moteSize)) {
-          ctx.beginPath();
-          ctx.arc(mx, my, Math.max(2, size * 0.07), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    ctx.restore();
-
     if (zone.wheel === false) continue;
+    const pulse = 0.82 + 0.18 * Math.sin(spellPhase() * Math.PI * 2);
 
     // THE WHEEL, on the centre: a dark disc with the window sweeping off it
     // clockwise from twelve, and the relic's own glyph in the middle so two

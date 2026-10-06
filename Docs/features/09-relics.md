@@ -678,6 +678,9 @@ its window down. The map has to say two different things about them.
   spell is working.
 - **The wheel carries the relic's own glyph**, so two zones standing at once
   are told apart by whose they are rather than by where they happen to be.
+- **The tint is on the floor, behind what stands**: trees, buildings and
+  features stand in front of the enchanted ground. An awake Shrine's aura also
+  **breathes out**: a slow wave from the Shrine to the aura's edge, every 3.2 s.
 - The whole thing is drawn **before every other marker**: a zone is a fact
   about the world, so a placement outline or a cast preview must be able to sit
   on top of it and still be read.
