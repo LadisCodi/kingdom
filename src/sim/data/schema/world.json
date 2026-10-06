@@ -48,6 +48,17 @@
           "min": 0,
           "doc": "Explorer slots Cartography opens. The Atlas ladder adds to it."
         },
+        "explorersForSale": {
+          "type": "int",
+          "min": 0,
+          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of what Cartography and the Atlas open."
+        },
+        "explorerGemCostBase": { "type": "int", "min": 0, "doc": "Gems for the first explorer bought." },
+        "explorerGemCostGrowth": {
+          "type": "float",
+          "min": 1,
+          "doc": "Each explorer bought multiplies the next one’s Gem price by this."
+        },
         "rivals": {
           "type": "list",
           "of": { "type": "text" },

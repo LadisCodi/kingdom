@@ -9,6 +9,9 @@
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
     "cartographyExplorers": 1,
+    "explorersForSale": 2,
+    "explorerGemCostBase": 2500,
+    "explorerGemCostGrowth": 2,
     "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"],
     "armySlots": 1
   },

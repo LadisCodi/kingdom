@@ -103,6 +103,8 @@ Every event is one row:
 | `confirm_opened` | `sku`, `price_cents`, `from` — a price tapped opens it |
 | `purchased` · `refused_no_credit` | `sku`, `price_cents`, `credit_cents` |
 | `dismissed` | `sku` |
+| `offer_opened` | `sku`, `trigger` — an offer's window opened (sim/offers.ts) |
+| `gems_spent` | `sink`, `gems` — Gems spent in the store outside a product (`explorer`) |
 | `ad_offer_shown` · `ad_watched` | `placement` |
 
 ### 3.5 The world and errors
