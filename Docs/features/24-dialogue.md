@@ -93,11 +93,19 @@
 | `quest` | the quest pill |
 | `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
+- **Read, then act.** A line that asks for an action plays in two turns:
+  - **Reading**: the box and the cast are on screen and the line types; no
+    hand. The target may glow, so the player sees what the line is about. A
+    tap anywhere finishes the line, then moves to acting; nothing behind the
+    box takes it.
+  - **Acting**: the box and the cast fade out, the hand comes, and only now
+    does the lock let the target take a tap. The next line brings the box
+    back, its speaker walking on again.
+- A line that waits for a tap is read only: it never shows the hand.
+- A line that asks for an action sits at the bottom, with its speaker,
+  whatever it points at.
 - **A gloved hand** (white glove, brass cuff) bobbing over the target,
   pointing down at it — or up from below, at the top of the screen.
-- **The hand never stands on the line box.** Where it would, it points
-  from the target's other side; where both sides meet the box, the box moves
-  to the other edge, once a line.
 - **A blue magic glow** marks it: a control's own silhouette lit blue
   (`--magic-glow-*`, the one cold light in a warm palette); a map plot as its
   own diamond in the same glow. Small motes of that light drift slowly off

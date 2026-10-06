@@ -48,6 +48,10 @@ interface Playing {
   missingSince: number | null;
   /** The failsafe fired: the lock has let go for the rest of this line. */
   lockReleased: boolean;
+  /** A line that asks for an action is read first, then acted on: the box
+   *  and the cast leave and the hand comes, and only then does the target
+   *  take a tap (24-dialogue.md §4). False while it is being read. */
+  acting: boolean;
 }
 
 const sceneKey = (id: string): string => `scene:${id}`;
@@ -264,6 +268,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     playing.typed = 0;
     playing.missingSince = null;
     playing.lockReleased = false;
+    // Back from acting: the box returns, and whoever speaks walks back on.
+    if (playing.acting || layer.classList.contains('is-acting')) {
+      layer.classList.remove('is-acting');
+      leave('left');
+      leave('right');
+    }
+    playing.acting = false;
     playing.target = resolveTarget(game, l.point, null);
     // The camera flies to a map target before the line appears.
     if (playing.target?.kind === 'cell') {
@@ -331,7 +342,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const start = (scene: SceneDef): void => {
     voiced = null;
     playing = {
-      scene, index: 0, tapsAtStart: 0, typed: 0, target: null, missingSince: null, lockReleased: false,
+      scene, index: 0, tapsAtStart: 0, typed: 0, target: null, missingSince: null, lockReleased: false, acting: false,
     };
     // A SCENE RESUMES WHERE THE GAME IS (23-tutorials.md §3): after a reload
     // the player may already have done what its later lines ask, so it picks
@@ -401,8 +412,10 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (where === 'auto') {
       // BOTTOM, where the cast stands on it — unless the box, or someone
       // standing on it, would cover the very thing the line points at. Only
-      // then the top, where there is no room for the cast.
-      let r = playing?.target ? targetRect(game, playing.target, frame) : null;
+      // then the top, where there is no room for the cast. A line that asks
+      // for an action steps aside before the target is touched, so it stays
+      // at the bottom with its speaker.
+      let r = playing?.target && l.until === 'tap' ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
       if (r !== null && playing?.target?.kind === 'cell') {
@@ -441,13 +454,24 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (l === null) return;
     if (playing.typed < l.text.length) { playing.typed = l.text.length; text.textContent = l.text; return; }
     if (l.until === 'tap') next();
+    else act();
+  };
+
+  /** The line has been read: the box and the cast step aside, the hand
+   *  comes, and the target is the player's to tap. */
+  const act = (): void => {
+    if (playing === null) return;
+    playing.acting = true;
+    playing.missingSince = null;
+    layer.classList.add('is-acting');
+    game.notify();
   };
   box.addEventListener('click', tapLine);
 
   /** A line that waits for a tap takes one ANYWHERE on the screen, as a
    *  visual novel does — and keeps it: the tap moves the dialogue on and
    *  reaches nothing behind it. Panning the map stays free. */
-  const waitsForTap = (): boolean => playing !== null && line()?.until === 'tap';
+  const waitsForTap = (): boolean => playing !== null && (line()?.until === 'tap' || !playing.acting);
 
   // ------------------------------------------------------------ the lock
   const lockNow = (): SceneLine['lock'] => {
@@ -615,15 +639,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // and the hand's size (a guess on the frame it first shows).
     const f = frame.getBoundingClientRect();
     const b = box.getBoundingClientRect();
-    const boxRect = b.width > 0 ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
+    // A box stepped aside for the player's turn is not in the hand's way.
+    const boxAside = playing === null || playing.acting;
+    const boxRect = b.width > 0 && !boxAside ? { x: b.left - f.left, y: b.top - f.top, w: b.width, h: b.height } : null;
     const hand = { w: arrow.offsetWidth || 48, h: arrow.offsetHeight || 56 };
     const isCell = pointed?.kind === 'cell';
     glow(show && !isCell && pointed?.kind === 'ui' ? uiNode(pointed.key) : null);
     game.tutorialFocus = show && pointed?.kind === 'cell'
       ? { cell: pointed.cell, span: pointed.span } : null;
     halo.hidden = glowing === null;
-    arrow.hidden = !show;
-    sparks.hidden = !show;
+    // The hand points only when it is the player's turn: never while a line
+    // is being read, so the eye is on the words or on the target, not both.
+    // The target's glow may light what the line talks about.
+    const pointing = show && (playing === null || playing.acting);
+    arrow.hidden = !pointing;
+    sparks.hidden = !pointing;
     if (!show) return;
     const pad = pointed?.kind === 'cell' ? 0 : 6;
     const padded = {
@@ -720,7 +750,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
             }
           }
         }
-        const moreHidden = !(l.until === 'tap' && playing.typed >= l.text.length);
+        const moreHidden = !(playing.typed >= l.text.length);
         // Keep the target found: a UI node is re-found each frame, a cell is
         // kept while it still fits.
         const was = playing.target;
@@ -749,7 +779,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         }
         // A LOCK NEVER STRANDS THE PLAYER: a target missing for a while lets
         // the lock go, and the line reads as a hint.
-        if ((l.lock === 'target' || l.lock === 'map') && r === null && l.point !== '') {
+        if (playing.acting && (l.lock === 'target' || l.lock === 'map') && r === null && l.point !== '') {
           playing.missingSince ??= now;
           if (now - playing.missingSince > HELP.lockFailsafeSeconds * 1000) playing.lockReleased = true;
         } else {
