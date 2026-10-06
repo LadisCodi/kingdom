@@ -246,15 +246,30 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // hex stands over it (19 §7.1).
   if (groundStale) drawRoads(ground, camera, frame, states);
 
-  // Burnt districts: fire at their foot and smoke rising in columns; and on
-  // the player's own districts a camp will raid, crossed swords (19 §5.5).
+  // Burnt districts: fire at their foot and smoke rising in columns (19 §5.5).
+  // A raid to come is an arc from the camp to each district of the player's
+  // it will raid, a pulse running along it, and the time left on the camp:
+  // "this camp raids this district in this time".
+  const raids: Array<{ camp: number; target: number }> = [];
+  const raidAt = new Map<number, number>();
   for (const bh of board.hexes) {
     const hc = source.hexOf(bh.index);
     if (hc === null || states[bh.index] !== 'Revealed') continue;
-    const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
-    if (hc.burnt) drawFire(ctx, camera, c, bh.index, clock);
-    else if (hc.threat != null) drawThreat(ctx, camera, c.x - camera.hexWidth * 0.28, c.y - r * 0.4);
+    if (hc.burnt) {
+      const c = camera.hexToScreen(bh.hex);
+      if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
+      drawFire(ctx, camera, c, bh.index, clock);
+    } else if (hc.threat != null) {
+      for (const camp of hc.threat.camps) {
+        raids.push({ camp, target: bh.index });
+        raidAt.set(camp, Math.min(raidAt.get(camp) ?? Infinity, hc.threat.nextRaidAt));
+      }
+    }
+  }
+  for (const { camp, target } of raids) {
+    const from = camera.hexToScreen(board.hexes[camp].hex);
+    const to = camera.hexToScreen(board.hexes[target].hex);
+    drawRaidArc(ctx, camera, from, to, clock + camp * 211 + target * 97);
   }
 
   // Over every camp the player can see, how hard it is against the
@@ -267,6 +282,9 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
     const difficulty = campDifficulty(bh.camp.power, party);
     drawPill(ctx, camera, c.x - camera.hexWidth * 0.14, c.y - r * 0.2, difficulty, DIFFICULTY_COLOR[difficulty]);
+    // A camp about to raid: the time left, under its difficulty.
+    const at = raidAt.get(bh.index);
+    if (at !== undefined) drawRaidTimer(ctx, camera, c.x - camera.hexWidth * 0.14, c.y + r * 0.22, formatCountdown(Math.max(0, (at - now) / 1000)));
   }
 
   // A dungeon: how far the player has gone in it, as a ring and "13/24",
@@ -1062,18 +1080,108 @@ function drawFire(ctx: CanvasRenderingContext2D, camera: HexCamera, c: { x: numb
   ctx.restore();
 }
 
-/** A district a camp will raid: a small red disc with crossed swords. */
-function drawThreat(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number): void {
-  const size = Math.max(14, camera.hexWidth * 0.14);
+/** How long a raid's pulse takes to run from the camp to its target. */
+const RAID_PULSE_MS = 1600;
+
+/**
+ * A raid to come: a dashed red arc from the camp to the district, high in
+ * the middle like a thrown spear, an arrowhead where it lands, and a glowing
+ * pulse running along it from the camp to the district, over and over.
+ */
+function drawRaidArc(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, from: { x: number; y: number }, to: { x: number; y: number }, clock: number,
+): void {
+  const lift = camera.hexRadius * 0.25;
+  const p0 = { x: from.x, y: from.y - lift };
+  const p2 = { x: to.x, y: to.y - lift };
+  const span = Math.hypot(p2.x - p0.x, p2.y - p0.y);
+  const ctl = { x: (p0.x + p2.x) / 2, y: (p0.y + p2.y) / 2 - span * 0.55 };
+  const at = (t: number) => ({
+    x: (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * ctl.x + t * t * p2.x,
+    y: (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * ctl.y + t * t * p2.y,
+  });
+  // The arc stops short of the district, so the arrowhead lands on it.
+  const head = Math.max(8, camera.hexWidth * 0.08);
+  const end = 1 - Math.min(0.2, head / Math.max(1, span * 1.2));
+  const tip = at(1);
+  const back = at(end);
+  const width = Math.max(2, camera.hexWidth * 0.022);
   ctx.save();
+  ctx.lineCap = 'round';
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    // The curve to `end`: the same parabola, its control point pulled in.
+    const c1 = { x: p0.x + (ctl.x - p0.x) * end, y: p0.y + (ctl.y - p0.y) * end };
+    ctx.quadraticCurveTo(c1.x, c1.y, back.x, back.y);
+  };
+  // A dark groove under the red, so it reads on grass, sand and snow.
+  path();
+  ctx.strokeStyle = 'rgba(40, 8, 4, 0.55)';
+  ctx.lineWidth = width + 3;
+  ctx.stroke();
+  path();
+  ctx.strokeStyle = '#d23a2a';
+  ctx.lineWidth = width;
+  ctx.setLineDash([width * 3, width * 2]);
+  ctx.lineDashOffset = -clock / 40;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // The arrowhead, along the curve's last direction.
+  const ang = Math.atan2(tip.y - back.y, tip.x - back.x);
+  ctx.translate(tip.x, tip.y);
+  ctx.rotate(ang);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-head, head * 0.55);
+  ctx.lineTo(-head * 0.7, 0);
+  ctx.lineTo(-head, -head * 0.55);
+  ctx.closePath();
+  ctx.fillStyle = '#d23a2a';
+  ctx.strokeStyle = 'rgba(40, 8, 4, 0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  // The pulse: from the camp to the district, swelling as it travels and
+  // fading as it lands.
+  const t = ((clock % RAID_PULSE_MS) + RAID_PULSE_MS) % RAID_PULSE_MS / RAID_PULSE_MS;
+  const p = at(t * end);
+  const rad = width * (1.6 + t * 1.4);
+  ctx.save();
+  ctx.globalAlpha = t < 0.85 ? 1 : (1 - t) / 0.15;
+  const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 2.4);
+  glow.addColorStop(0, 'rgba(255, 236, 170, 1)');
+  glow.addColorStop(0.35, 'rgba(255, 120, 60, 0.9)');
+  glow.addColorStop(1, 'rgba(210, 58, 42, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, rad * 2.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** The time left before a camp raids: a red pill with crossed swords, on
+ *  the camp. */
+function drawRaidTimer(ctx: CanvasRenderingContext2D, camera: HexCamera, x: number, y: number, text: string): void {
+  const fs = Math.max(10, Math.min(14, camera.hexWidth * 0.1));
+  const icon = fs * 1.3;
+  ctx.save();
+  ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+  const pw = ctx.measureText(text).width + fs * 1.4 + icon;
+  const ph = fs * 1.7;
   ctx.fillStyle = '#a8231d';
   ctx.strokeStyle = '#3d0c08';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(x, y, size * 0.62, 0, Math.PI * 2);
+  ctx.roundRect(x - pw / 2, y - ph / 2, pw, ph, ph / 2);
   ctx.fill();
   ctx.stroke();
-  drawIcon(ctx, 'atk', x - size / 2, y - size / 2, size);
+  drawIcon(ctx, 'atk', x - pw / 2 + fs * 0.45, y - icon / 2, icon);
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + icon / 2, y + 0.5);
   ctx.restore();
 }
 
