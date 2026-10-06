@@ -7,7 +7,7 @@ import { advance } from '../src/sim/commands';
 import { footprintAt, townhallDistance } from '../src/sim/grid';
 import { lairZoneCells, zoneLairsAt } from '../src/sim/lairZone';
 import { sightedAt, sightedThings } from '../src/sim/sight';
-import { coordKey, parseCoordKey, type Coord, type LairId } from '../src/sim/state';
+import { coordKey, parseCoordKey, type LairId } from '../src/sim/state';
 import { freshGame, map, reveal, T0 } from './helpers';
 
 const reachAt = (level: number): number => levelIndexed(FOG.reachPerTownhallLevel, level);
@@ -19,14 +19,6 @@ const revealedTo = (ring: number) => {
   advance(state, map, T0 + 1000);
   return state;
 };
-
-const footprint = (o: Coord, size: number): Coord[] => {
-  const out: Coord[] = [];
-  for (let y = o.y; y < o.y + size; y++) for (let x = o.x; x < o.x + size; x++) out.push({ x, y });
-  return out;
-};
-const lairDistance = (id: LairId): number =>
-  Math.min(...footprint(LAIRS[id].location, LAIRS[id].size).map((c) => townhallDistance(map, c)));
 
 const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
 
@@ -44,7 +36,7 @@ describe('the province opens to the south', () => {
     expect(sightedAt(freshGame(), map, shrine.location)?.id).toBe(shrine.id);
   });
 
-  it('shows the Shrine\'s ruin, south, and the Watchtower, north, while the Townhall is at level 1 — and the two camps', () => {
+  it('shows the Shrine\'s ruin, south, and the Watchtower, north, while the Townhall is at level 1 — and the Orcs\' camp', () => {
     const state = revealedTo(reachAt(1));
     const seen = sightedThings(state, map);
     expect(seen.filter((t) => t.kind === 'landmark').map((t) => t.id)).toEqual([tower.id]);
@@ -52,7 +44,7 @@ describe('the province opens to the south', () => {
     // South on screen is +x +y; north is −x −y.
     expect(shrine.location.x + shrine.location.y).toBeGreaterThan(0);
     expect(tower.location.x + tower.location.y).toBeLessThan(0);
-    expect(seen.filter((t) => t.kind === 'lair').map((t) => t.id).sort()).toEqual(['Harpies', 'Orcs']);
+    expect(seen.filter((t) => t.kind === 'lair').map((t) => t.id)).toEqual(['Orcs']);
   });
 
   it('shows the Orcs from the last ring the first Townhall reaches, not before', () => {
@@ -65,15 +57,35 @@ describe('the province opens to the south', () => {
   });
 });
 
-describe('the near mountains are the Harpies’', () => {
-  it('puts the Harpies past the second Townhall’s reach and inside the third’s', () => {
-    expect(lairDistance('Harpies')).toBeGreaterThan(reachAt(2));
-    expect(lairDistance('Harpies')).toBeLessThanOrEqual(reachAt(3));
+/** The nearest ring of a lair's ground on the map: where revealing a cell
+ *  finds it. */
+const groundDistance = (id: LairId): number =>
+  Math.min(...lairZoneCells(id).filter((c) => map.terrain.has(coordKey(c)))
+    .map((c) => townhallDistance(map, c)));
+
+// The Orcs come first: the second Townhall can find no other lair, so the
+// first fight, the Warden and the victory are theirs.
+describe('the Orcs are the second Townhall’s only lair', () => {
+  it('puts the Orcs’ ground inside the second Townhall’s reach', () => {
+    expect(groundDistance('Orcs')).toBeLessThanOrEqual(reachAt(2));
   });
 
-  it('shows the Harpies from the last ring the first Townhall reaches, not before', () => {
-    expect(sightedAt(revealedTo(reachAt(1) - 1), map, LAIRS.Harpies.location)).toBeUndefined();
-    expect(sightedAt(revealedTo(reachAt(1)), map, LAIRS.Harpies.location)?.id).toBe('Harpies');
+  it('puts every other lair’s ground past it', () => {
+    for (const id of Object.keys(LAIRS) as LairId[]) {
+      if (id !== 'Orcs') expect(groundDistance(id), id).toBeGreaterThan(reachAt(2));
+    }
+  });
+});
+
+describe('the near mountains are the Harpies’', () => {
+  it('puts the Harpies’ ground past the second Townhall’s reach and inside the third’s', () => {
+    expect(groundDistance('Harpies')).toBeGreaterThan(reachAt(2));
+    expect(groundDistance('Harpies')).toBeLessThanOrEqual(reachAt(3));
+  });
+
+  it('shows the Harpies from the last ring the second Townhall reaches, not before', () => {
+    expect(sightedAt(revealedTo(reachAt(2) - 1), map, LAIRS.Harpies.location)).toBeUndefined();
+    expect(sightedAt(revealedTo(reachAt(2)), map, LAIRS.Harpies.location)?.id).toBe('Harpies');
   });
 
   it('holds every big mountain the second Townhall reaches', () => {
@@ -81,14 +93,16 @@ describe('the near mountains are the Harpies’', () => {
     for (const m of big) expect(zoneLairsAt(m.cell), coordKey(m.cell)).toContain('Harpies');
   });
 
-  // Gold beyond the houses is a Mana sink worth fighting for: the one vein the
-  // second Townhall reaches is on the Harpies' ground.
-  it('guards the gold vein the second Townhall reaches', () => {
-    const gold = [...map.initialFeatures]
-      .filter(([key, id]) => id === 'MountainGold' && townhallDistance(map, parseCoordKey(key)) <= reachAt(2))
+  // Gold beyond the houses is a Mana sink worth fighting for: the second
+  // Townhall reaches none, and the one vein the third reaches is on the
+  // Harpies' ground.
+  it('guards the gold vein the third Townhall reaches', () => {
+    const goldTo = (ring: number) => [...map.initialFeatures]
+      .filter(([key, id]) => id === 'MountainGold' && townhallDistance(map, parseCoordKey(key)) <= ring)
       .map(([key]) => parseCoordKey(key));
-    expect(gold).toHaveLength(1);
-    expect(zoneLairsAt(gold[0])).toContain('Harpies');
+    expect(goldTo(reachAt(2))).toHaveLength(0);
+    expect(goldTo(reachAt(3))).toHaveLength(1);
+    expect(zoneLairsAt(goldTo(reachAt(3))[0])).toContain('Harpies');
   });
 });
 

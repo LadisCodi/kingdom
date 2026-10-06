@@ -347,15 +347,17 @@ The near map is laid out so the first Townhalls look one way at a time
   holds the shrine, so they are found at Townhall 2 and cleared before it is
   claimed. A lair is fought once found, so it is its ground, not its camp,
   that the chain needs in reach.
-- **The Harpies guard the gold.** The one gold vein in Townhall 2's reach,
-  4 rings to the north-east, lies on the Harpies' ground (radius 2), and no
-  big mountain stands on the east of the town. Their camp is 6 rings out:
-  past Townhall 2's reach, inside Townhall 3's. Revealing the vein finds them.
+- **The Orcs are the only lair Townhall 2 can find.** Every other lair's
+  ground lies past its reach, so the first fight is theirs.
+- **The Harpies guard the gold.** Their camp is 8 rings north-east; their
+  ground (radius 2) starts at ring 6: past Townhall 2's reach, inside
+  Townhall 3's. It holds the first gold vein (6 rings) and the stone
+  mountains to the north. Revealing the vein finds them.
 - **One loose stone node** stands 2 rings from the Townhall, to the north,
   on no lair's ground: the stone the opening has, and the reason to want
   more.
-- **The Harpies** show from ring 3 beyond their vein: the camp that holds
-  the gold is in sight before the player can reach it.
+- **The Harpies** show from Townhall 2's last ring: the camp that holds the
+  gold is in sight before the player can reach it.
 - **The Watchtower** (5 rings north) is sighted from Townhall 1's ground and
   reached at Townhall 2: the world map's door is in view from the start. The
   Fallen Stones (7 rings) are sighted from ring 4, at Townhall 2.
