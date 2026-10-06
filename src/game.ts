@@ -543,6 +543,10 @@ export class Game {
   upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
   pendingSkuFrom: OverlayName | null = 'store';
+  /** The store tab the player picked; null → the one it opens on. */
+  private storeTabPick: StoreTab | null = null;
+  /** Where a splash opened from a sheet goes back to when it is closed. */
+  private splashReturn: OverlayName | null = null;
   /** When this session began: an offer splash shows from the session after
    *  its window opened (`offerSplash`). */
   sessionStartedAt = 0;
@@ -1901,7 +1905,28 @@ export class Game {
 
   /** The relic sheet's way to more fragments: the store, at its pack. */
   openStoreForFragments(): void {
+    this.openStore('supplies');
+  }
+
+  /** The store, on a tab — or on the one it opens on: Offers when there are
+   *  any, else Heroes. */
+  openStore(tab?: StoreTab): void {
+    this.storeTabPick = tab ?? null;
     this.setOverlay('store');
+  }
+
+  setStoreTab(tab: StoreTab): void {
+    this.storeTabPick = tab;
+    this.notify();
+  }
+
+  /** The store's tabs, and the open one. Offers only while there is an offer
+   *  or a daily offer to show. */
+  storeTabs(): { tabs: StoreTab[]; open: StoreTab } {
+    const offers = this.offerCards().length > 0 || this.dailyCards().cards.length > 0;
+    const tabs: StoreTab[] = [...(offers ? ['offers' as const] : []), 'heroes', 'supplies', 'gems'];
+    const pick = this.storeTabPick;
+    return { tabs, open: pick !== null && tabs.includes(pick) ? pick : tabs[0] };
   }
 
   /** The three-state walk, as the card reads it. `leftMs` is derived from a
@@ -2060,6 +2085,8 @@ export class Game {
    *  widget — adds the row of every offer on the map along its top, to step
    *  from one to the next. */
   openOfferSplash(sku: StoreSkuId, browse = false): void {
+    // From a sheet (the store), the splash goes back to it when closed.
+    if (this.openOverlay !== null) this.splashReturn = this.openOverlay;
     const ready = nextDayReady(this.state, this.now()).includes(sku);
     this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
     this.offerSplashForced = {
@@ -2079,6 +2106,9 @@ export class Game {
     const on = this.offerSplashOnScreen();
     if (on !== null) this.splashesClosed.add(`${on.mode === 'claim' ? 'claim' : 'buy'}:${on.sku}`);
     this.offerSplashForced = null;
+    const back = this.splashReturn;
+    this.splashReturn = null;
+    if (back !== null) this.setOverlay(back);
     this.notify();
   }
 
@@ -2087,7 +2117,9 @@ export class Game {
   buyFromSplash(sku: StoreSkuId): void {
     this.splashesClosed.add(`buy:${sku}`);
     this.offerSplashForced = null;
-    this.openIap(sku, null);
+    const back = this.splashReturn;
+    this.splashReturn = null;
+    this.openIap(sku, back);
   }
 
   doClaimNextDay(sku: StoreSkuId): void {
@@ -3313,6 +3345,19 @@ export class Game {
    */
   overlaySignature(name: OverlayName): string | null {
     switch (name) {
+      // The store moves with its tab, what is on sale, the purses and the
+      // calls — never with its countdowns, which tick in place
+      // (ui/storeSheet.ts), so its pictures and the heroes' carousel stay.
+      case 'store': {
+        return JSON.stringify([
+          this.storeTabs(), this.offerCards().map((c) => [c.id, c.left]),
+          this.dailyCards().cards.map((c) => [c.id, c.left]),
+          this.state.player.wallet, this.state.bag.held, this.state.heroes,
+          this.state.kingdom.builders, this.state.world.explorersBought,
+          BANNER_ORDER.map((b) => [this.freePull(b).left, this.freePull(b).ready, this.pullPrice(b).amount]),
+          this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(),
+        ]);
+      }
       case 'heroes': return this.heroesSignature();
       // The picker moves with the choice and with a resting hero's minute.
       case 'heroPicker': return JSON.stringify([
@@ -6426,3 +6471,6 @@ export interface OfferSplashView {
   mode: 'buy' | 'claim' | 'waiting';
   browse: boolean;
 }
+
+/** The store's tabs (ui/storeSheet.ts). */
+export type StoreTab = 'offers' | 'heroes' | 'supplies' | 'gems';
