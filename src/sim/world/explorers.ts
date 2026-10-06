@@ -21,8 +21,9 @@ import { gemsToFinish } from '../rush';
 import { resolve } from '../modifiers';
 import { isTechComplete } from '../research';
 import { randInt } from '../rng';
+import { track } from '../analytics';
 import {
-  getWallet, newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState,
+  addToWallet, getWallet, newId, type ExplorerTrip, type GameState, type WorldBuild, type WorldState,
 } from '../state';
 import { techFlat, techMultiplier } from '../techEffects';
 import { SEAT_INDICES } from './board';
@@ -41,6 +42,7 @@ export function freshWorld(seed: number): WorldState {
     board: { id: `local-${boardSeed.toString(36)}`, seed: boardSeed, seat: randInt(seed, 6, 'world', 'seat') },
     revealed: emptyBits(),
     explorers: [],
+    explorersBought: 0,
     builds: [],
     sanctuaries: 0,
     chapels: [],
@@ -55,10 +57,31 @@ export const homeIndex = (state: GameState): number => SEAT_INDICES[state.world.
 // ----------------------------------------------------------- the numbers
 
 /** How many explorers can be out at once: Cartography's, plus the Atlas
- *  ladder's. Zero until Cartography is researched. */
+ *  ladder's, plus the ones bought. Zero until Cartography is researched —
+ *  a bought explorer waits for the map like the others. */
 export function explorerSlots(state: GameState): number {
-  const base = isTechComplete(state, 'Cartography') ? WORLD.cartographyExplorers : 0;
+  const mapped = isTechComplete(state, 'Cartography');
+  const base = mapped ? WORLD.cartographyExplorers + state.world.explorersBought : 0;
   return base + Math.max(0, Math.floor(techFlat(state, 'explorerSlots')));
+}
+
+/** Gems for the next explorer bought, on the builders' curve:
+ *  `round(base × growth^bought)`. */
+export const explorerGemCost = (state: GameState): number =>
+  roundPrice(WORLD.explorerGemCostBase * WORLD.explorerGemCostGrowth ** state.world.explorersBought);
+
+export type BuyExplorerResult = 'Bought' | 'AtMax' | 'NotEnoughGems';
+
+/** Buy one more explorer for good, with Gems — the purchase the Explorer
+ *  pack makes in money. */
+export function buyExplorer(state: GameState): BuyExplorerResult {
+  if (state.world.explorersBought >= WORLD.explorersForSale) return 'AtMax';
+  const cost = explorerGemCost(state);
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  state.world.explorersBought += 1;
+  track(state, 'gems_spent', { sink: 'explorer', gems: cost });
+  return 'Bought';
 }
 
 export const freeExplorers = (state: GameState): number =>

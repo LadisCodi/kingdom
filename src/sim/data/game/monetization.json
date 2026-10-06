@@ -12,5 +12,13 @@
     "dolphinMonthlyUsd": 50,
     "whaleMonthlyUsd": 250,
     "superWhaleMonthlyUsd": 2000
+  },
+  "offers": {
+    "dailyCount": 3
+  },
+  "firstPurchase": {
+    "hero": "ElvenPrincess",
+    "gems": 0,
+    "items": { "GoldKey": 5, "SilverKey": 10 }
   }
 }

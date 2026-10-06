@@ -20,9 +20,12 @@
 // F2P is a profile with a budget of zero rather than a "no store" flag: it
 // walks the same code, sees the same prices and is refused the same way.
 
-import { PAYER, STORE } from './data/definitions';
-import type { GameState, ItemId, PayerProfile, PayerState, StoreSkuId } from './state';
+import { BANNERS, BANNER_ORDER, FIRST_PURCHASE, HEROES, PAYER, STORE } from './data/definitions';
+import type { GameState, HeroId, ItemId, PayerProfile, PayerState, StoreSkuId } from './state';
 import { grantItem } from './bag';
+import { grantBuilder } from './commands';
+import { grantHero } from './heroes';
+import { dailyOn, offerOn, recordOfferPurchase } from './offers';
 import { addToWallet } from './state';
 
 export const PAYER_PROFILES: readonly PayerProfile[] = [
@@ -111,16 +114,54 @@ export type BuySkuResult = 'Purchased' | 'NoProfile' | 'NoBudget';
 export const isItemBundle = (sku: StoreSkuId): boolean =>
   Object.values(STORE[sku].items).some((n) => (n ?? 0) > 0);
 
+/** Has the kingdom bought anything yet — is the first-purchase reward still
+ *  to come? */
+export const firstPurchaseDone = (state: GameState): boolean =>
+  (state.player.payer?.purchases.length ?? 0) > 0;
+
+/** A hero handed over by a purchase. One already held pays the duplicate
+ *  fragments of the banner most generous with its rarity, as a call would. */
+function grantHeroBought(state: GameState, id: HeroId): void {
+  const rarity = HEROES[id].rarity;
+  const fragments = Math.max(0, ...BANNER_ORDER
+    .filter((b) => BANNERS[b].weights[rarity] > 0)
+    .map((b) => BANNERS[b].duplicateFragments));
+  grantHero(state, id, fragments);
+}
+
+/** Everything a product hands over besides its Gems. */
+function grantContents(state: GameState, c: { items: Partial<Record<ItemId, number>>; hero: HeroId | null }): void {
+  for (const [id, n] of Object.entries(c.items) as Array<[ItemId, number]>) grantItem(state, id, n);
+  if (c.hero !== null) grantHeroBought(state, c.hero);
+}
+
+/** Is this product on sale right now? The Gem packs and the Bag's bundles
+ *  always are; an offer while its window is open; a daily while it is in
+ *  today's draw. The Survey is sold by `buySurvey`, which knows its own. */
+export function skuOnSale(state: GameState, sku: StoreSkuId, now: number): boolean {
+  switch (STORE[sku].shelf) {
+    case 'offer': return offerOn(state, sku, now);
+    case 'daily': return dailyOn(state, sku, now);
+    case 'survey': return false;
+    default: return true;
+  }
+}
+
 /**
- * Buy one of the Bag's bundles: the budget first, through `buySku` (which
- * grants no Gems for it), then the items. A bundle hands over the things,
- * never the Gems that would buy them.
+ * Buy any product but the Survey: the budget through `buySku`, then
+ * everything it hands over — items, a hero, the slots it opens for good —
+ * and, for an offer, the window's count and the next step of its chain.
  */
-export function buyItemBundle(state: GameState, sku: StoreSkuId, now: number): BuySkuResult | 'NotABundle' {
-  if (!isItemBundle(sku)) return 'NotABundle';
+export function buyStoreSku(state: GameState, sku: StoreSkuId, now: number): BuySkuResult | 'NotOnSale' {
+  if (!skuOnSale(state, sku, now)) return 'NotOnSale';
   const paid = buySku(state, sku, now);
   if (paid !== 'Purchased') return paid;
-  for (const [id, n] of Object.entries(STORE[sku].items) as Array<[ItemId, number]>) grantItem(state, id, n);
+  const s = STORE[sku];
+  grantContents(state, s);
+  for (let i = 0; i < s.builders; i++) grantBuilder(state);
+  state.heroes.heroSlotsPurchased += s.heroSlots;
+  state.world.explorersBought += s.explorers;
+  if (s.shelf === 'offer') recordOfferPurchase(state, sku, now);
   return 'Purchased';
 }
 
@@ -129,6 +170,9 @@ export function buyItemBundle(state: GameState, sku: StoreSkuId, now: number): B
  * player's wallet — for real, so the economy stays coherent and the retention
  * data stays usable. A refusal is logged too, because a tap the budget could
  * not cover is exactly the data point the store exists to collect.
+ *
+ * The FIRST purchase of anything — the Survey too — also pays the
+ * first-purchase reward (`monetization.firstPurchase`), once per kingdom.
  */
 export function buySku(state: GameState, sku: StoreSkuId, now: number): BuySkuResult {
   const payer = state.player.payer;
@@ -139,9 +183,13 @@ export function buySku(state: GameState, sku: StoreSkuId, now: number): BuySkuRe
     payer.refusals += 1;
     return 'NoBudget';
   }
+  const first = payer.purchases.length === 0;
   payer.spentCentsThisMonth += cents;
   payer.purchases.push({ sku, priceCents: cents, at: now });
   addToWallet(state.player.wallet, 'Gems', STORE[sku].gems);
+  if (first) {
+    addToWallet(state.player.wallet, 'Gems', FIRST_PURCHASE.gems);
+    grantContents(state, FIRST_PURCHASE);
+  }
   return 'Purchased';
 }
-

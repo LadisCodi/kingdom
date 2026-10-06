@@ -6,13 +6,13 @@
 > [`08-magic.md`](08-magic.md) §6, the two call placements in
 > [`10-heroes.md`](10-heroes.md) §6.2.
 >
-> **Status: three ad placements, the builder offer and the
-> store are built** — the payer profile and its monthly budget (§3);
-> builders and keys for Gems; the **item bundles** (§2.3), the Gem packs and
-> the Survey's paid column for simulated dollars; and the two hero banners
-> (§2.1). The shop
-> refresh, the town banner set, the other three placements and the telemetry
-> pipeline (§4) are designed, not built.
+> **Status: built** — the payer profile and its monthly budget (§3); the
+> Gem packs, the item bundles (§2.3), the **offers** and the **daily offers**
+> (§2.4, §2.5), the **first-purchase reward** (§2.6) and the Survey's paid
+> column for simulated dollars; builders, explorers, hero slots, keys and the
+> rest of §1.1 for Gems; three ad placements and the builder offer. The
+> store's layout is a stand-in until its redesign. The shop refresh, the town
+> banner set and the other three placements are designed, not built.
 
 ## 0. Rules
 
@@ -44,63 +44,68 @@
 |---|---|---|
 | **Power** | silver and gold keys | stronger heroes, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, buy Knowledge, item bundles, refresh the shop | buys back the player's time |
-| **Breadth** | hero slots, builders | more things at once |
+| **Breadth** | builders, explorers, hero slots | more things at once |
 | **Exploration** | the Survey's paid column ([`25-the-survey.md`](25-the-survey.md)) | more of what exploring finds — never a reveal |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
 
 - The Gems plaque in the header opens the store (§2.1).
-- Gems buy **five** things: **keys**, hero slots, builders, Mana refills and
-  **Knowledge** at a fixed price a point
-  ([`07-research.md`](07-research.md) §3.2). Two of those are one-time ladders;
-  the refill is a ladder that **resets every day**
-  ([`08-magic.md`](08-magic.md) §6).
+- What Gems buy:
+  - **keys** — a silver or a gold one, a call each;
+  - **slots for good** — builders, explorers, hero slots, each on a doubling
+    ladder;
+  - **time** — finishing a build, a training line, a workshop item or an
+    explorer's trip at `rush.secondsPerGem`;
+  - **Mana** — a whole pool, on a ladder that resets daily
+    ([`08-magic.md`](08-magic.md) §6);
+  - **Knowledge** — a point at a fixed price, alone or all a technology
+    still misses ([`07-research.md`](07-research.md) §3.2);
+  - **relics** — the store's fragment pack, a forged replica, a premium
+    Shrine ([`09-relics.md`](09-relics.md)).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
-  call spends — so the two banners have two prices without a second Gem price
-  ([`10-heroes.md`](10-heroes.md) §6.1).
-- Faucet: **1,250 up front** — 500 to start and 750 across the quest chain
-  ([`12-quests.md`](12-quests.md) §2.2) — and **500 at the Survey's last
-  level**. There is no recurring Gem faucet: past those, Gems are bought.
+  call spends ([`10-heroes.md`](10-heroes.md) §6.1).
+- Faucet: **500 to start**, **750 across the quest chain**
+  ([`12-quests.md`](12-quests.md) §2.2), **500 at the Survey's last level**,
+  and **the Portal** every week — its final ranking and its floor milestones
+  ([`19-world-map.md`](19-world-map.md)).
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
-- The six Gem packs are built and live in `store`. The
-  builders and the two keys are built and priced in Gems — a Gem price is not
-  a `store` entry. **A `store` entry is real money**; most of them grant Gems, and
-  the ones that do not (the Survey's paid column, the item bundles, the
-  banner set) grant a lot once and never a currency drip. Everything
-  else is designed, not built.
+- **A `store` entry is real money.** Everything else is priced in Gems.
 
-| SKU | Family | Price | Grants |
-|---|---|---|---|
-| **Gems ×500 / ×2,500 / ×5,000 / ×10,000 / ×25,000 / ×50,000** | currency | **$0.99 / $4.99 / $9.99 / $19.99 / $49.99 / $99.99** | Gems — built; six packs on a 3×2 grid (§2.2) |
-| **Silver key** | chance | Gems (500) | one common call — built |
-| **Gold key** | chance | Gems (1,500) | one golden call — built |
-| **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
-| Third builder | permanent comfort | Gems | +1 more — built |
-| **The Survey, paid column** | exploration | **$9.99**, once per kingdom | Gems on every one of 36 levels climbed by cells revealed, with gold keys, Stardust, relic fragments and chests, opened for every level already reached ([`25-the-survey.md`](25-the-survey.md)) — built |
-| Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
-| Shop refresh | consumable | Gems / ad | refreshes event stock |
-| Hero slot | one-time ladder | Gems | built |
-| **Item bundles** | comfort | **$1.99 / $4.99 / $9.99** | speed-ups, choice chests, or the builder's crate, into the Bag (§2.3) — built |
-| **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
+## 2. What is sold for money
 
-- The second builder is sold in two places: the offer raised by a refused
-  build ([`06-construction.md`](06-construction.md) §2) and a card in the
-  store.
+- Every product is one entry of `store`, whole: its name, art, price and
+  what it hands over — Gems, Bag items, a hero, slots for good.
+- Each sits on one **shelf**:
+
+| Shelf | What | Sold |
+|---|---|---|
+| `gems` | six Gem packs, Gems and nothing else (§2.2) | always |
+| `bag` | the item bundles (§2.3) | always |
+| `offer` | packs with a window of their own (§2.4) | when a trigger opens them |
+| `daily` | the pool the day's offers are drawn from (§2.5) | in today's draw |
+| `survey` | the Survey's paid column, **$9.99, once per kingdom** ([`25-the-survey.md`](25-the-survey.md)) | on the Survey |
+
+- The second builder is also sold, for Gems, by the offer a refused build
+  raises ([`06-construction.md`](06-construction.md) §2).
 
 ### 2.1 The store screen
 
 - One sheet, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
-- Five sections, in this order:
+- In this order:
 
 | Section | Content | Paid with |
 |---|---|---|
+| **First purchase** | what the first purchase adds (§2.6), until something is bought | — |
+| **Offers** | the offers on sale (§2.4): value seal, countdown, what is left, what lands | the monthly budget |
+| **Today** | the day's offers (§2.5), with the time to the next draw | the monthly budget |
 | **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | a key |
-| **Bundles** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
-| **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
-| **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
-| **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
+| **For the Bag** | the item bundles of §2.3. Shown once the Bag is open | the monthly budget |
+| **Relics** | the fragment pack | Gems |
+| **Keys** | one card per banner: what a key costs and how many the player holds | Gems |
+| **Crew** | a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands); at a ceiling it says so and sells nothing | Gems |
+| **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price. A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
 
 - The store shows no budget line, no `SIMULADO` mark, and no price greyed out
   for a short allowance. The budget, the profile and the word `SIMULADO`
@@ -111,7 +116,9 @@
 ### 2.2 The Gem ladder
 
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
-  buys 50,000. No tier is a better deal than another.
+  buys 50,000.
+- **A Gem pack is the floor.** Every other product hands over more than its
+  price buys as Gems; an offer many times more (§2.4).
 - Every Gem sink is priced to the ladder (§9). Anchors: a second builder is
   the $4.99 pack; a silver key is 500 Gems and a gold one 1,500; an hour of
   speed-up is 720 Gems.
@@ -122,11 +129,68 @@
 
 ### 2.3 The item bundles
 
-- Six bundles of Bag items, sold for money: speed-ups in a satchel, a crate
+- Six bundles of Bag items, always on sale: speed-ups in a satchel, a crate
   and a chest; choice chests in a sack and a cart; and the builder's crate.
 - **They grant no Gems.** A bundle hands over the items, into the Bag.
 - The row prints **what lands, line by line**, and the confirmation prints the
   same list above the price.
+
+### 2.4 Offers
+
+- An **offer** is a pack with a **window**: it opens on a trigger, closes on
+  its countdown (`hours`, 0 = never) and sells `limit` (0 = no limit).
+- What opens one (`opensOn`):
+
+| Trigger | Opens | Comes back |
+|---|---|---|
+| `always` | with the store | no |
+| `door` | when `door` opens | no |
+| `after` | when `after` is bought — the next step of a chain | no |
+| `townhall` | on every Townhall level from `townhall` on | yes |
+| `manaLow` | the pool below the ad threshold (§6) | yes |
+| `buildersBusy` | a build refused for want of a builder | yes |
+
+- A trigger that comes back opens the window again once the last one has
+  closed and `cooldownHours` have passed.
+- Nothing opens before the store's door.
+- **An offer that opens a slot is held back** while that slot would go over
+  its ceiling — never sold half-useful.
+- **Its value is computed**, never authored: what it hands over priced at the
+  game's own Gem prices — time at `rush.secondsPerGem` (a chest's hours as
+  time), a flask at the first refill's rung, a tome at the Knowledge price, a
+  key at the store's, a hero at its banner's guarantee, a slot at its next Gem
+  price — over the Gems its price buys as a pack, to the nearest 10%. It is
+  printed as a wax seal.
+- The catalogue:
+
+| Offer | Price | Opens | Holds |
+|---|---|---|---|
+| **The novice's pack** | $3.49 | the store's door | **a builder for good**, Gems, construction speed-ups, chests, keys |
+| The squire's pack · the knight's pack | $9.99 · $19.99 | each after the one before | Gems, gold keys, speed-ups, chests, tomes |
+| **A second explorer** | $4.99 | the world's door | **an explorer for good**, Gems, speed-ups, chests, flasks, keys |
+| **A seat at the war table** | $4.99 | the heroes' door | **a hero slot for good**, Gems, keys, chests, speed-ups |
+| A cask of Mana | $0.99 | Mana low; 24 h, back after 72 h | Gems, flasks, a Mana boost |
+| Rush the works | $5.99 | a refused build; 4 days, back after a week | Gems, construction speed-ups, chests |
+| The new charter | $9.99 | every Townhall level from 3; 48 h | Gems, construction speed-ups, chests, tomes |
+
+- Opening is decided by the live game, not by `advance()`: an offer produces
+  nothing, and a trigger met only inside a replayed absence opens nothing.
+
+### 2.5 Daily offers
+
+- **`offers.dailyCount` (3) a day**, drawn from the `daily` shelf among the
+  products the Townhall's level admits (`townhall`).
+- The draw changes at midnight UTC and is the same however often it is asked.
+- Each sells `limit` a day.
+
+### 2.6 The first purchase
+
+- **The first purchase of anything** — a Gem pack, an offer, the Survey —
+  also hands over `firstPurchase`: **a fixed Legendary hero** (the Elven
+  Princess) and keys, **all at once**.
+- Once per kingdom. A hero already held pays its duplicate fragments.
+- The store shows it at the top until something is bought; the hero arrives
+  on the call's reveal.
 
 ## 3. The simulated budget
 
@@ -302,6 +366,10 @@ One page, refreshed weekly:
 | Hero slot | 2,500, `×2` ($4.99 / $9.99) | `party.heroSlotGemCost*` |
 | Gem faucet | 500 start · 150/250/200/150 in the chain · 500 at the Survey's last level | `currencies`, `quests`, `survey.freeGems` |
 | Item bundles | **$1.99 / $4.99 / $9.99**, what each holds | `store` · `items` |
+| Offers | price, contents, trigger, window, limit, cooldown | `store` (shelf `offer`) |
+| Daily offers | **3 a day** from the `daily` shelf | `offers.dailyCount` · `store` (shelf `daily`) |
+| First purchase | the Elven Princess, 5 gold keys, 10 silver keys | `firstPurchase` |
+| Explorer | **2,500**, `×2`, **2** for sale | `world.explorerGemCost*`, `world.explorersForSale` |
 | Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
 | Ad eligibility | below half a pool | `ads.eligibleBelowFraction` |
 | Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `store` |
@@ -318,7 +386,8 @@ One page, refreshed weekly:
   ([`25-the-survey.md`](25-the-survey.md)).
 - **A season pass.** A seasonal reward ladder, its missions and its paid
   column.
-- **A login ladder.**
+- **A login ladder** — nor a second delivery of the first purchase the next
+  day.
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.
