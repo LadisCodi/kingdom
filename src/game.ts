@@ -547,6 +547,11 @@ export class Game {
   private storeTabPick: StoreTab | null = null;
   /** Where a splash opened from a sheet goes back to when it is closed. */
   private splashReturn: OverlayName | null = null;
+  private backFromSplash = false;
+  /** How many times the store has been opened this session — not counting a
+   *  return from its confirmation or a splash. The golden call's hero moves
+   *  on with it (ui/storeHeroes.ts). */
+  storeVisits = 0;
   /** When this session began: an offer splash shows from the session after
    *  its window opened (`offerSplash`). */
   sessionStartedAt = 0;
@@ -2108,7 +2113,11 @@ export class Game {
     this.offerSplashForced = null;
     const back = this.splashReturn;
     this.splashReturn = null;
-    if (back !== null) this.setOverlay(back);
+    if (back !== null) {
+      this.backFromSplash = true;
+      this.setOverlay(back);
+      this.backFromSplash = false;
+    }
     this.notify();
   }
 
@@ -3355,7 +3364,7 @@ export class Game {
           this.state.player.wallet, this.state.bag.held, this.state.heroes,
           this.state.kingdom.builders, this.state.world.explorersBought,
           BANNER_ORDER.map((b) => [this.freePull(b).left, this.freePull(b).ready, this.pullPrice(b).amount]),
-          this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(),
+          this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(), this.storeVisits,
         ]);
       }
       case 'heroes': return this.heroesSignature();
@@ -4690,9 +4699,11 @@ export class Game {
       recordEvent(this.state, { kind: 'signal', key: 'surveyOpened' });
       this.track('survey_opened');
     }
-    // Back from its own confirmation is not a new visit.
-    if (name === 'store' && this.openOverlay !== 'store' && this.openOverlay !== 'iapConfirm') {
+    // Back from its own confirmation, or from a splash opened from it, is
+    // not a new visit.
+    if (name === 'store' && this.openOverlay !== 'store' && this.openOverlay !== 'iapConfirm' && !this.backFromSplash) {
       this.track('store_opened', { from: this.openOverlay ?? this.scene });
+      this.storeVisits += 1;
     }
     if (name !== 'iapConfirm') this.iapDismissed();
     if (door !== undefined && !isDoorOpen(this.state, door)) {

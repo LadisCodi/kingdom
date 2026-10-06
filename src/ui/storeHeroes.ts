@@ -7,7 +7,8 @@
 //     the roster once before any comes round again;
 //   * the odds, on a tap;
 //   * the two calls, one banner each: the common call shows only its silver
-//     key, the golden call its featured Legendary (`banners.featuredHero`).
+//     key; the golden call (`showsHero`) a Legendary — a different one each
+//     time the store is opened, every one before any comes round again.
 //
 // The pity counters stay on the banners, always: a hidden pity counter is
 // the same as no pity counter.
@@ -66,6 +67,36 @@ function carousel(): HTMLElement {
   };
   show(showing ?? nextHero());
   return stage;
+}
+
+// ------------------------------------------------------ the banner's hero
+
+/** What a banner can stand: the heroes of the rarest rarity it calls. */
+function bannerLegends(id: BannerId): HeroId[] {
+  const weights = BANNERS[id].weights;
+  const rarest = (['Legendary', 'Rare', 'Common'] as const).find((r) => weights[r] > 0);
+  return rarest === undefined ? [] : HERO_ORDER.filter((h) => HEROES[h].rarity === rarest);
+}
+
+/** Per banner: its shuffle bag, the hero standing and the visit it stood
+ *  for. A new visit to the store draws the next. */
+const featured = new Map<BannerId, { bag: HeroId[]; hero: HeroId | null; visit: number }>();
+
+function featuredHero(id: BannerId, visit: number): HeroId | null {
+  const slot = featured.get(id) ?? { bag: [], hero: null, visit: -1 };
+  featured.set(id, slot);
+  if (slot.visit === visit && slot.hero !== null) return slot.hero;
+  if (slot.bag.length === 0) {
+    slot.bag = bannerLegends(id);
+    for (let i = slot.bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slot.bag[i], slot.bag[j]] = [slot.bag[j], slot.bag[i]];
+    }
+    if (slot.bag[0] === slot.hero && slot.bag.length > 1) [slot.bag[0], slot.bag[1]] = [slot.bag[1], slot.bag[0]];
+  }
+  slot.hero = slot.bag.shift() ?? null;
+  slot.visit = visit;
+  return slot.hero;
 }
 
 // ------------------------------------------------------------------ the keys
@@ -147,7 +178,8 @@ function banner(game: Game, id: BannerId): HTMLElement {
   const pity = legend !== null
     ? `A Legendary within ${formatExact(legend)} calls`
     : `A hero within ${formatExact(pullsToGuarantee(game.state, id))} calls`;
-  const hero = def.featuredHero === null ? null : spriteUrl(HEROES[def.featuredHero].sprite);
+  const stands = def.showsHero ? featuredHero(id, game.storeVisits) : null;
+  const hero = stands === null ? null : spriteUrl(HEROES[stands].sprite);
   return el('section', { class: `sth-banner is-${id}${hero === null ? '' : ' has-hero'}` },
     hero === null
       ? el('span', { class: `store-art sth-banner-key is-${def.key}`, role: 'img', 'aria-label': def.key })

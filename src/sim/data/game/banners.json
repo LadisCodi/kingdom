@@ -12,7 +12,7 @@
     "pullStardust": 50,
     "freePerDay": 5,
     "freeCooldownSeconds": 300,
-    "featuredHero": null
+    "showsHero": false
   },
   "advanced": {
     "key": "GoldKey",
@@ -27,6 +27,6 @@
     "pullStardust": 150,
     "freePerDay": 1,
     "freeCooldownSeconds": 0,
-    "featuredHero": "Pharao"
+    "showsHero": true
   }
 }

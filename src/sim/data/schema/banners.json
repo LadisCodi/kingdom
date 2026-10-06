@@ -20,11 +20,9 @@
     "pullStardust": { "type": "int" },
     "freePerDay": { "type": "int" },
     "freeCooldownSeconds": { "type": "int" },
-    "featuredHero": {
-      "type": "text",
-      "nullable": true,
-      "ref": "hero",
-      "doc": "The hero standing on this banner in the store's Heroes tab. Empty: the banner shows its key."
+    "showsHero": {
+      "type": "bool",
+      "doc": "The store's Heroes tab stands a hero on this banner: one of the rarest rarity it can call, a different one each time the store is opened, every one before any repeats. Off: the banner shows its key."
     }
   }
 }
