@@ -46,3 +46,9 @@ band · Signet — the emerald with its tower.
 
 `python3 -I cut.py sheet-<relic>.png ../../../../src/render/assets artifact_<relic>_frag`
 — by silhouette, each blob to the cell holding its centre, trimmed onto 128×128 at 90%.
+
+## The store's pack art (`src/ui/assets/art-fragments.png`)
+
+Attached `ref-store-art.png` (the store's hammer and keys) and `ref-pieces.png` (four
+fragments). An open wooden chest spilling glowing relic fragments, one object, true alpha.
+`-trim -resize 236x236 -extent 256x256` → `store-pack-raw.png`.

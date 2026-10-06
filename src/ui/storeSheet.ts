@@ -78,6 +78,21 @@ export function renderStoreSheet(game: Game): HTMLElement {
     }));
   });
 
+  // ---- relic fragments: a Gem-priced pack of random fragments of the
+  // relics already met (sim/relics.ts `openFragmentPack`).
+  const frag = game.fragmentPackOffer();
+  const fragments = !frag.available ? null : card({
+    art: el('span', { class: 'store-art is-fragments', role: 'img', 'aria-label': 'relic fragments' }),
+    name: 'Relic fragments',
+    desc: `${formatExact(frag.size)} fragments of the relics you have found, at random.`,
+  }, btn({
+    label: 'Buy',
+    kind: 'gem',
+    onClick: () => game.doBuyFragmentPack(),
+    cost: { Gems: frag.gems },
+    have: (c) => game.walletValue(c),
+  }));
+
   // ---- the Bag's bundles: a row each, what lands in the Bag
   // listed, and the speed-ups' Gem worth at the rush price — what the shelf
   // exists to compare.
@@ -145,6 +160,13 @@ export function renderStoreSheet(game: Game): HTMLElement {
     ...(itemBundles.length === 0 || !game.doorOpen('bag') ? [] : [
       el('div', { class: 'store-section' }, el('span', {}, 'For the Bag')),
       ...itemBundles,
+    ]),
+    ...(fragments === null ? [] : [
+      el('div', { class: 'store-section', 'data-coach': 'store-fragments' },
+        el('span', {}, 'Relics'),
+        el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
+          formatExact(game.walletValue('Gems')))),
+      fragments,
     ]),
     el('div', { class: 'store-section' },
       el('span', {}, 'Keys'),

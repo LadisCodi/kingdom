@@ -71,7 +71,8 @@ Every event is one row:
 | `townhall_level` | `level` |
 | `world_joined` | `board`, `players` (humans on it) |
 | `relic_restored` · `relic_levelled` | `relic`, `level` on a level |
-| `relic_forged` · `relic_chest` | `relic`, `slot` and `gems` on a forge |
+| `relic_forged` | `relic`, `slot`, `gems` |
+| `fragment_pack` | `gems`, `n` — the store's pack of random fragments |
 | `premium_shrine` | `n` (which), `gems` |
 | `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
 | `relic_activated` | `relic`, `level`, `shrine_level`, `mana` — a city relic woken in its Shrine |

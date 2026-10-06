@@ -433,6 +433,7 @@
 /* THE SHEET'S BLOCKS, each under its kit section heading: no rules of
  * their own, the heading is the separator. */
 .rl-block { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
+.rl-more { display: flex; justify-content: center; }
 .rl-note { margin: 0; text-align: center; font-size: var(--text-desc); color: var(--ink-muted); }
 /* The building card's tiles, two to a row: a relic's tile carries its next
  * value too (`+30% → +40%`), which the card's 112 px was never sized for. */

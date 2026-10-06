@@ -53,7 +53,7 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openRestorerChest, replicaPrice, restoreRelic,
+  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openFragmentPack, replicaPrice, restoreRelic,
   dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
 } from './sim/relics';
 import {
@@ -266,8 +266,6 @@ export interface RelicView {
   cast: { phase: CastPhase; leftMs: number; charges: number };
   /** The replica offer for its first missing fragment, or null. */
   forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
-  /** The Restorer's chest, once it is restored. */
-  chest: { gems: number; size: number } | null;
   /** A restored city relic's Shrine, and the Shrines it could move to; null
    *  for a world relic or one not restored (sim/hosts.ts). */
   host: { at: string | null; shrines: ShrineOption[] } | null;
@@ -1711,7 +1709,6 @@ export class Game {
       pending: def.pending,
       cast: this.castPhase(id),
       forge,
-      chest: restored ? { gems: RELIC_RULES.restorerChestGems, size: RELIC_RULES.restorerChestSize } : null,
       host: restored && relicKind(id) === 'world' ? {
         at: (() => {
           const c = this.myChapels().find((x) => x.relic === id);
@@ -1856,13 +1853,27 @@ export class Game {
     this.notify();
   }
 
-  doRestorerChest(id: ArtifactId): void {
-    const result = openRestorerChest(this.state, id);
+  /** The store's fragment pack: random fragments of the relics met. */
+  fragmentPackOffer(): { gems: number; size: number; available: boolean } {
+    return {
+      gems: RELIC_RULES.fragmentPackGems, size: RELIC_RULES.fragmentPackSize,
+      available: ARTIFACT_ORDER.some((id) => isMet(this.state, id)),
+    };
+  }
+
+  doBuyFragmentPack(): void {
+    const result = openFragmentPack(this.state);
     if (result.kind === 'Opened') {
       playSfx('gemSpend');
-      this.toast(`${formatExact(result.drops.length)} fragments of the ${ARTIFACTS[id].name}`);
+      const names = [...new Set(result.drops.map((d) => ARTIFACTS[d.relic].name))];
+      this.toast(`${formatExact(result.drops.length)} fragments: ${names.join(', ')}`);
     } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
+  }
+
+  /** The relic sheet's way to more fragments: the store, at its pack. */
+  openStoreForFragments(): void {
+    this.setOverlay('store');
   }
 
   /** The three-state walk, as the card reads it. `leftMs` is derived from a

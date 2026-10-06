@@ -8,7 +8,7 @@
 // it, or Level it up. Its spell, once restored, is cast from here.
 
 import type { Game, RelicView } from '../game';
-import { ARTIFACTS, RELIC_RULES } from '../sim/data/definitions';
+import { ARTIFACTS } from '../sim/data/definitions';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import { el, formatCountdown, formatDuration, formatExact } from './format';
@@ -343,16 +343,9 @@ export function renderRelicSheet(game: Game): HTMLElement {
     levelSection(game, view),
     ...(view.host === null ? [] : [sectionHead(view.kind === 'city' ? 'Shrine' : 'Chapel'), ...hostLines(game, view)]),
     ...(spell === null ? [] : [...(view.host === null ? [sectionHead('Spell')] : []), spell]),
-    ...(view.chest === null ? [] : [sectionHead("Restorer's chest"), el('div', { class: 'rl-block rl-chest' },
-      el('p', { class: 'rl-note' },
-        `${formatExact(view.chest.size)} fragments of this relic — the keystone one time in ${formatExact(RELIC_RULES.keystoneOneIn)}`),
-      btn({
-        label: 'Buy',
-        kind: 'gem',
-        cost: { Gems: view.chest.gems },
-        have: (c) => game.walletValue(c),
-        onClick: () => game.doRestorerChest(view.id),
-      }))]),
+    // MORE FRAGMENTS are the store's: one shortcut to its pack.
+    el('div', { class: 'rl-more' },
+      btn({ label: 'Store', icon: 'shop', onClick: () => game.openStoreForFragments() })),
   );
   // The whole height between the header and the nav, whatever it holds.
   const surface = sheet({ title: view.name, onClose: close, tall: true }, body);

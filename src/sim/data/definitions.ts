@@ -1499,7 +1499,7 @@ export const RELIC_RULES = balance.fragments as {
   keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
   replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
   replicaGemsPiece: number; replicaGemsKeystone: number;
-  restorerChestGems: number; restorerChestSize: number;
+  fragmentPackGems: number; fragmentPackSize: number;
   treasureEvery: number; perLairTier: number[]; perPackTier: Record<string, number>;
 };
 
