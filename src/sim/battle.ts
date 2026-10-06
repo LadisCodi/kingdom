@@ -56,6 +56,8 @@ export interface BoardSlot {
   /** Troops in the squad; 1 for a hero. */
   count: number;
   frontage: number;
+  /** Attack and Defence are ratings; `dmg` is what lands at an even pair (§7). */
+  atk: number;
   dmg: number;
   def: number;
   hpUnit: number;
@@ -119,6 +121,7 @@ export interface FighterSpec {
   id: string;
   name: string;
   type: UnitId;
+  atk: number;
   dmg: number;
   def: number;
   hp: number;
@@ -203,6 +206,7 @@ export function buildBoard(
       name: u.name,
       count: squad.count,
       frontage: u.frontage,
+      atk: u.atk,
       dmg: Math.max(1, Math.round(
         (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(squad.unitId) ?? 1) + rallyDmg))),
       def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0) + rallyDef,
@@ -227,6 +231,7 @@ export function buildBoard(
       name: f.name,
       count: 1,
       frontage: 1,
+      atk: Math.round(f.atk),
       dmg: f.dmg,
       def: f.def,
       hpUnit: f.hp,
@@ -244,6 +249,20 @@ export function buildBoard(
 const alive = (s: BoardSlot): number => Math.ceil(s.hpPool / s.hpUnit);
 
 const living = (board: Board): BoardSlot[] => board.slots.filter((s) => s.hpPool > 0);
+
+/**
+ * THE ATTACK AND DEFENCE RULE (§7), Heroes III's: the damage a blow carries
+ * is moved by how far the attacker's Attack stands from the target's
+ * Defence. Each point of Attack over adds `attackStepPerMille`, up to
+ * `attackCapPerMille`; each point of Defence over takes `defenceStepPerMille`
+ * off, down to `defenceCapPerMille`. Per mille, so the fight stays integer.
+ */
+export function attackMultiplier(atk: number, def: number): number {
+  const lead = Math.round(atk) - Math.round(def);
+  return lead >= 0
+    ? 1000 + Math.min(COMBAT.attackCapPerMille, COMBAT.attackStepPerMille * lead)
+    : 1000 - Math.min(COMBAT.defenceCapPerMille, COMBAT.defenceStepPerMille * -lead);
+}
 
 /**
  * The type fraction, as the integer pair it is authored as (§7).
@@ -356,7 +375,7 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     tick: number, side: Side, from: BoardSlot, target: BoardSlot, hits: number, base: number, skill?: SkillId,
   ): boolean => {
     const foe: Side = side === 'ours' ? 'theirs' : 'ours';
-    const raw = hits * Math.max(1, base - target.def);
+    const raw = Math.max(1, Math.floor((hits * base * attackMultiplier(from.atk, target.def)) / 1000));
     const { num, den } = fraction(from.type, target.type);
     let dealt = Math.floor((raw * num) / den);
     const absorbed = Math.min(shield[foe][target.id]!, dealt);
@@ -530,6 +549,7 @@ export const villainFighter = (id: VillainId): FighterSpec => {
     id,
     name: v.name,
     type: v.unitType,
+    atk: v.atk,
     dmg: v.dmg,
     def: v.def,
     hp: v.hp,

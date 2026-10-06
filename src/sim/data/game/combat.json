@@ -9,6 +9,10 @@
   },
   "combat": {
     "tickMs": 100,
+    "attackStepPerMille": 50,
+    "attackCapPerMille": 1500,
+    "defenceStepPerMille": 25,
+    "defenceCapPerMille": 750,
     "timeoutTicks": 1800,
     "typeAdvantageNum": 3,
     "typeAdvantageDen": 2,

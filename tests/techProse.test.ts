@@ -141,7 +141,7 @@ describe('one technology, one line', () => {
       .toBe('+10% per tap and delivery');
     expect(effectSentence({
       stat: 'unitAtk', op: 'percent', value: 10, target: { unitTag: 'Distance' },
-    })).toBe('+10% attack for every Distance unit');
+    })).toBe('+10% damage for every Distance unit');
     expect(effectSentence({ stat: 'knowledgeYield', op: 'percent', value: 5 }))
       .toBe('+5% on every lump of Knowledge');
     expect(effectSentence({ stat: 'landmarkKnowledge', op: 'percent', value: 20 }))

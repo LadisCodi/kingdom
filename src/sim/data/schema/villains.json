@@ -38,6 +38,11 @@
       "doc": "Seconds between two firings of a timed skill; 0 for a rally or spoils."
     },
     "dmg": { "type": "int" },
+    "atk": {
+      "type": "int",
+      "min": 0,
+      "doc": "Attack: each point over the target's Defence adds 5% to its damage, up to +150%."
+    },
     "def": { "type": "int" },
     "hp": { "type": "int", "min": 1 },
     "cooldown": { "type": "int" },

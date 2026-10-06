@@ -7,7 +7,7 @@
 // the golden log at the bottom is for.
 import { describe, expect, it } from 'vitest';
 import {
-  boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf, targetingFor,
+  attackMultiplier, boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf, targetingFor,
   type BattleEvent, type FighterSpec, type SquadSpec,
 } from '../src/sim/battle';
 import { COMBAT, LAIRS, UNITS, VILLAINS } from '../src/sim/data/definitions';
@@ -18,6 +18,7 @@ const body = (over: Partial<FighterSpec> = {}): FighterSpec => ({
   id: 'probe',
   name: 'Probe',
   type: 'Warrior',
+  atk: 0,
   dmg: 10,
   def: 0,
   hp: 100,
@@ -40,10 +41,25 @@ const ourAttacks = (events: readonly BattleEvent[]) => attacks(events)
   .filter((e) => e.from.side === 'ours');
 
 describe('the damage formula', () => {
-  // §7, worked by hand: 100 Warriors hit with `frontage` 50, each for
-  // `dmg 8 − def 1` against an Archer, and Warrior→Archer is a DISADVANTAGE
-  // (the archer beats the warrior), so the swing is three quarters.
-  it('is frontage × (dmg − def), then the type fraction, floored', () => {
+  /** The Attack/Defence step, per mille (§7): Heroes III's rule. */
+  const step = (atk: number, def: number) => attackMultiplier(atk, def);
+
+  it('moves damage 5% a point of Attack over Defence, 2.5% a point under, inside the caps', () => {
+    expect(step(5, 5)).toBe(1000);
+    expect(step(7, 5)).toBe(1000 + 2 * COMBAT.attackStepPerMille);
+    expect(step(5, 9)).toBe(1000 - 4 * COMBAT.defenceStepPerMille);
+    expect(step(200, 0)).toBe(1000 + COMBAT.attackCapPerMille);
+    expect(step(0, 200)).toBe(1000 - COMBAT.defenceCapPerMille);
+    // The caps the design names: +150% and −75%.
+    expect(COMBAT.attackCapPerMille).toBe(1500);
+    expect(COMBAT.defenceCapPerMille).toBe(750);
+  });
+
+  // §7, worked by hand: Warriors hit with `frontage` troops, each for its
+  // Damage moved by its Attack against the Archer's Defence, and
+  // Warrior→Archer is a DISADVANTAGE (the archer beats the warrior), so the
+  // swing is three quarters.
+  it('is frontage × damage × the Attack/Defence step, then the type fraction, floored', () => {
     const ours = buildBoard([squad('Warrior', 100)], []);
     const theirs = buildBoard([squad('Archer', 80)], []);
     const log = resolveBattle(ours, theirs);
@@ -52,17 +68,19 @@ describe('the damage formula', () => {
     const front = UNITS.Warrior.frontage;
     expect(front).toBeLessThan(100);
     expect(first.hits).toBe(front); // frontage, not the hundred standing there
-    expect(first.dealt).toBe(Math.floor((front * (UNITS.Warrior.dmg - UNITS.Archer.def) * 3) / 4));
+    const raw = Math.floor((front * UNITS.Warrior.dmg * step(UNITS.Warrior.atk, UNITS.Archer.def)) / 1000);
+    expect(first.dealt).toBe(Math.floor((raw * 3) / 4));
   });
 
-  it('never lets defence take a swing below one a troop', () => {
-    // A hero with def 50 against a unit that hits for 8: the floor is 1 each.
+  it('never lets defence take more than its cap off a swing', () => {
+    // A hero with Defence 200 against Warriors: three quarters off, no more.
     const ours = buildBoard([squad('Warrior', 10)], []);
-    const theirs = buildBoard([], [body({ def: 50, hp: 1000, type: 'Lancer' })]);
+    const theirs = buildBoard([], [body({ def: 200, hp: 1000, type: 'Lancer' })]);
     const log = resolveBattle(ours, theirs);
     const first = attacks(log.events)[0]!;
-    // Warrior beats Lancer: ten troops, one damage each, ×3/2.
-    expect(first.dealt).toBe(15);
+    // Warrior beats Lancer: ten troops, a quarter of their damage, ×3/2.
+    const raw = Math.floor((10 * UNITS.Warrior.dmg * (1000 - COMBAT.defenceCapPerMille)) / 1000);
+    expect(first.dealt).toBe(Math.floor((raw * 3) / 2));
   });
 
   it('spends troops whole, and keeps the remainder in the pool', () => {
@@ -72,10 +90,10 @@ describe('the damage formula', () => {
     const lost = log.events.find((e) => e.kind === 'troops_lost');
     expect(lost?.kind).toBe('troops_lost');
     if (lost?.kind !== 'troops_lost') return;
-    // frontage hits × (dmg − def) off a pool of a hundred troops; the troops
-    // that are left are what the pool covers, rounded up.
+    // frontage hits off a pool of a hundred troops; the troops that are left
+    // are what the pool covers, rounded up.
     const w = UNITS.Warrior;
-    const pool = 100 * w.hp - w.frontage * (w.dmg - w.def);
+    const pool = 100 * w.hp - Math.floor((w.frontage * w.dmg * step(w.atk, w.def)) / 1000);
     expect(lost.hpPool).toBe(pool);
     expect(lost.alive).toBe(Math.ceil(pool / w.hp));
   });
@@ -201,8 +219,11 @@ describe('a hero on the board', () => {
     expect(ours.slots[0]!.dmg).toBe(UNITS.Warrior.dmg * 3);
     const log = resolveBattle(ours, buildBoard([squad('Lancer', 60)], []));
     // The hero is wiped early; the squad's damage never changes after that.
-    const dealt = attacks(log.events).filter((e) => e.from.side === 'ours' && e.from.id === 0);
-    expect(new Set(dealt.map((e) => e.dealt)).size).toBeLessThanOrEqual(2);
+    // Every full-frontage swing lands the same, before and after it falls.
+    const dealt = attacks(log.events).filter((e) => e.from.side === 'ours' && e.from.id === 0
+      && e.hits === UNITS.Warrior.frontage);
+    expect(dealt.length).toBeGreaterThan(1);
+    expect(new Set(dealt.map((e) => e.dealt)).size).toBe(1);
   });
 });
 

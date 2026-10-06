@@ -144,6 +144,7 @@ export function partyBoard(party: Party): Board {
       id: h.id,
       name: def.name,
       type: def.unitType,
+      atk: body.atk,
       dmg: body.dmg,
       def: body.def,
       hp: body.hp,
