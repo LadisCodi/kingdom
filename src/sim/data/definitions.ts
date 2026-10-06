@@ -1485,9 +1485,10 @@ export const relicKind = (id: ArtifactId): RelicKind => ab(id).kind;
  *  city relic, a world source for a world one. */
 export const relicDoor = (id: ArtifactId): string => ab(id).door;
 
-/** The Shrines (`relics.json`'s `shrines`): the Mana each adds, and the
- *  Gems each premium Shrine costs — as many premium Shrines as prices. */
-export const SHRINE_RULES = balance.shrines as { manaCap: number; premiumGems: number[] };
+/** The Shrines (`relics.json`'s `shrines`): the Gems each premium Shrine
+ *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
+ *  own: it holds and wakes a relic (09-relics.md §2.1). */
+export const SHRINE_RULES = balance.shrines as { premiumGems: number[] };
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
