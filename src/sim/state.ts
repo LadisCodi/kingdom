@@ -567,6 +567,10 @@ export interface GameState {
       claimedPaid: number[];
       owned: boolean;
     };
+    /** THE FRIENDS' REWARD PATH (sim/friends.ts): which milestones have been
+     *  taken, by how many friends each asks. The friends themselves are the
+     *  social server's, not the save's (Docs/features/15-social.md §2.1). */
+    friends: { claimed: number[] };
   };
   player: {
     wallet: Wallet;

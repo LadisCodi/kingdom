@@ -1,13 +1,14 @@
 # 15 · The social layer
 
-> **Scope.** Identity, daily help, a persistent guild, a weekly collective bar,
-> and the co-op siege that clears the world map's landmarks. Card trading is
+> **Scope.** Identity, the friends list, daily help, a persistent guild, a
+> weekly collective bar, and the co-op siege that clears the world map's
+> landmarks. Card trading is
 > [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: designed, not built.** None of this layer exists; the shared
-> world board ([`19-world-map.md`](19-world-map.md)) is the only place other
-> kingdoms appear. Prototype population is five to ten named playtesters.
+> **Status: identity and the friends list built (§2, §2.1); the rest
+> designed, not built.** Prototype population is five to ten named
+> playtesters.
 
 ## 1. The server
 
@@ -16,7 +17,8 @@
 | City simulation, economy, events | client |
 | The world board — claims, armies, dungeons ([`19-world-map.md`](19-world-map.md)) | **server** |
 | Save | per-player |
-| Neighbours, guilds, help, collective bars | **server** |
+| Friends, neighbours, guilds, help, collective bars | **server** |
+| The friends' reward path — what was taken | client (save) |
 | Purchase-intent log, telemetry | **server** |
 
 - Shared tables are readable but never directly writable.
@@ -60,7 +62,71 @@
   never changed ([`19-world-map.md`](19-world-map.md) §1.3) (built).
 - **Optional email linking** on the anonymous account, for recovery. The
   *just play* path survives.
-- Not in scope: avatars, friend requests, chat, moderation.
+- A **friend code**: eight letters in two fours (`K7QD-M2XA`), handed out by
+  the server the first time anyone needs it; no 0/O or 1/I.
+- A **crest**: one of eight painted shields, picked from the friend code, so
+  a kingdom wears the same one everywhere.
+- Not in scope: chosen avatars, chat, moderation.
+
+### 2.1 The friends list
+
+Modelled on Theme Park's friends list (ITP-009/26). Mockup:
+[`../art/ui/mockups/m73-friends.png`](../art/ui/mockups/m73-friends.png).
+
+- **The door:** a knob hanging under the header, left of Settings. It opens
+  with Townhall 2 (the `friends` door). A red orb counts requests to answer
+  plus rewards to take.
+- **The cap:** 10 friends, held on both sides. At most 10 requests waiting
+  for an answer at once.
+- **The name first:** without a nickname the screen asks for one, then the
+  rest of it comes in. It is the world board's nickname: one name, unique,
+  never changed. A kingdom that went out onto the board first already has it.
+- **The screen, top to bottom:**
+  - **Requests**, three tabs: *Received* (accept / decline), *Sent*
+    (cancel), *Suggested* (add). A red seal counts the received and the sent.
+  - **Search** by friend code or by the start of a nickname; up to five found.
+  - **Invite:** the player's code on a brass plate (a tap copies it) and
+    *Invite*, which shares a message with the code and a link
+    (`?friend=<code>`) through the phone's share sheet, else the clipboard.
+    Opening the link searches the code the first time the list can.
+  - **Friends n/10**, the player included, ranked by Townhall level, then by
+    cells revealed. The first three wear a gold, silver or bronze ribbon with
+    their place; the rest a plain one. Each row: crest, name, Townhall tag,
+    last seen.
+  - **Friend rewards** at the foot (§2.2).
+- **The Townhall tag:** the Townhall icon and level on a pill coloured by
+  band of two levels — 1-2 green, 3-4 teal, 5-6 blue, 7-8 purple, 9-10 orange.
+- **Last seen**, roughly: *Online now* (under five minutes), *Today*,
+  *Yesterday*, *This week*, *n weeks ago*, *n months ago*.
+- **Asking someone who already asked you** is a yes.
+- **A profile** opens on a tap of a friend's row: crest, name and code,
+  Townhall, land revealed, last seen, place among friends; a section of
+  actions other systems add (none yet); *Remove* in the corner, behind a
+  confirmation.
+- **Suggestions:** players on the same world board first, then players seen
+  in the last 14 days nearest the player's Townhall; never anyone already a
+  friend or asked either way.
+- **Progress is reported** by the client with each hello (Townhall level,
+  cells revealed) and shown to friends as is (§1.1).
+- **Reads:** a hello every 10 s while the screen is open, every 60 s
+  elsewhere once the door is open.
+
+### 2.2 The friends' reward path
+
+- A reward at 1, 3, 5 and 10 friends who **count**: those whose Townhall has
+  reached level 2.
+- Each pays Gems and one Bag item; the last is the biggest. A reached reward
+  glows until tapped; any other shows what it holds on a tap.
+- Taken once each, kept in the save. A friend removed and added again pays
+  nothing twice. The path is put away once every reward is taken.
+- The count is the server's last word; the claim is the client's (§1.1).
+
+| Dial, in the order to reach for them | Where |
+|---|---|
+| Milestones, their Gems and items | `?dev=data` › Friends (`friends.milestones`, `gems`, `items`) |
+| The Townhall a friend must reach to count | `friends.countsFromTownhall` |
+| The cap on friends, on requests waiting | `friends.max`, `friends.maxSent` |
+| How many suggestions | `friends.suggestions` |
 
 ## 3. Neighbours and daily help
 
@@ -182,7 +248,7 @@ Submitted as they happen:
 ## 9. Deliberately not in this design
 
 - Chat
-- Avatars and friend requests
+- Chosen avatars; a crest is derived, not picked
 - A leaderboard at prototype population
 - Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §5)
 - Writing into another player's save

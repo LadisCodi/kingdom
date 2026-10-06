@@ -292,6 +292,33 @@
     "shard"
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-f1-friends.png",
+   "grid": {
+    "rows": 4,
+    "cols": 4
+   },
+   "fill": 0.86,
+   "names": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "friends",
+    null,
+    null,
+    null
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [

@@ -38,7 +38,7 @@ import type { CurrencyId } from '../sim/state';
 import { el, formatCount } from './format';
 import { heldOf, onHoldChange } from './hudHold';
 import { setAttr, setStyle, setText } from './domWrite';
-import { currencyIcon, iconEl } from './kit';
+import { currencyIcon, iconEl, setCta } from './kit';
 
 /** What the plaque shows, per kind. */
 const SLOT_ICON = {
@@ -103,8 +103,19 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
   });
 
+  // THE FRIENDS KNOB (Docs/features/15-social.md §2.1) hangs beside it on a
+  // rope of its own, and wears the red orb while someone asks to be friends
+  // or a reward on the friends' path waits.
+  const friendsKnob = el('button', {
+    class: 'hud-knob is-friends', type: 'button', 'aria-label': 'Friends', 'data-coach': 'friends',
+  }, iconEl('friends', { size: 'md' }));
+  friendsKnob.addEventListener('click', () => {
+    if (game.openOverlay === 'friends') game.dismiss();
+    else game.friends.open();
+  });
+
   // The coins anchored left; the rope, Mana and Gems anchored right.
-  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob, knowTab);
+  plank.append(coins, el('span', { class: 'hud-divider' }), el('div', { class: 'hud-right' }, manaGauge, gems), knob, friendsKnob, knowTab);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values
@@ -246,6 +257,10 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
       : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
     knob.classList.toggle('is-active', game.openOverlay === 'settings');
+    // Absent until its door opens, like the Knowledge tab.
+    friendsKnob.hidden = !game.doorOpen('friends');
+    friendsKnob.classList.toggle('is-active', game.openOverlay === 'friends' || game.openOverlay === 'friendProfile');
+    setCta(friendsKnob, friendsKnob.hidden ? 0 : game.friends.badge());
 
     const k = game.knowledgeInfo();
     const held = Math.max(0, k.value - heldOf('Knowledge'));

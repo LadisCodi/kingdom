@@ -29,7 +29,7 @@ import { ATLAS_CELLS } from './atlas.generated';
 export type UiIconName =
   | 'Berries' | 'Meat' | 'Fish' | 'Iron'
   | 'population' | 'builders' | 'workers' | 'harmony'
-  | 'build' | 'army' | 'research' | 'settings'
+  | 'build' | 'army' | 'research' | 'settings' | 'friends'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
   | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video'
   // The collection's own marks. `ascension` is the star on a hero's card and
@@ -116,7 +116,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations
-  build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️',
+  build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️', friends: '👥',
   // city status + affordances
   population: '👥', builders: '👷', workers: '🧑‍🌾', harmony: '🌸',
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',

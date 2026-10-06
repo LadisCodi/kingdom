@@ -67,7 +67,10 @@ import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
 import { RemoteWorldServer } from './worldServer/remote';
 import { renderNicknameSheet } from './ui/world/nicknameSheet';
-import { cloudAnalyticsSend, cloudWorldCall } from './persist/cloud';
+import { renderFriendProfile, renderFriendsSheet } from './ui/friends/friendsSheet';
+import { LocalSocialServer, LOCAL_SOCIAL_KEY, browserSocialStore } from './socialServer/local';
+import { RemoteSocialServer } from './socialServer/remote';
+import { cloudAnalyticsSend, cloudSocialCall, cloudWorldCall } from './persist/cloud';
 import { Analytics, browserAnalyticsStore } from './analytics/analytics';
 import { trackedWorld } from './analytics/worldEvents';
 import { mountWorldKnob } from './ui/worldKnob';
@@ -186,6 +189,15 @@ async function boot(): Promise<void> {
   // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
   const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
   game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
+  // The friends list follows the world: the `social` edge function beside
+  // the `world` one, else a stand-in peopled with made-up kingdoms
+  // (socialServer/local.ts).
+  game.friends.server = remoteWorld
+    ? new RemoteSocialServer(cloudSocialCall)
+    : new LocalSocialServer(browserSocialStore(), () => game.playerId);
+  // An invitation link (`?friend=CODE`) is searched the first time the
+  // friends list can.
+  game.friends.invitedBy = new URLSearchParams(location.search).get('friend');
   // The playtest's analytics (Docs/plans/analytics.md), when there is a
   // server to send them to: every world command is an event of its own.
   if (saveManager.cloudActive) {
@@ -278,6 +290,7 @@ async function boot(): Promise<void> {
   const resetSave = () => void saveManager.reset().then(() => {
     // The local world server's board goes with the save it was played from.
     try { localStorage.removeItem('kingdom.worldServer'); } catch { /* private window */ }
+    try { localStorage.removeItem(LOCAL_SOCIAL_KEY); } catch { /* private window */ }
     location.reload();
   });
 
@@ -310,6 +323,8 @@ async function boot(): Promise<void> {
     store: renderStoreSheet,
     payerProfile: renderPayerSheet,
     nickname: renderNicknameSheet,
+    friends: renderFriendsSheet,
+    friendProfile: renderFriendProfile,
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
@@ -904,6 +919,13 @@ async function boot(): Promise<void> {
         game.state.landmarks.claimed[tower.id] = true;
         runTick();
         game.enterWorld();
+      }),
+      // The friends list, opened whatever the Townhall, and one more of the
+      // stand-in's kingdoms asking to be friends (socialServer/local.ts).
+      button('👥 friends', () => {
+        game.state.tutorial.seen['door:friends'] = true;
+        void (game.friends.server?.devAsk?.() ?? Promise.resolve()).then(() => game.friends.open());
+        runTick();
       }),
       // The world server's stand-in rivals: play a turn as any of them, to
       // set up a board by hand. Their commands cost the player nothing.

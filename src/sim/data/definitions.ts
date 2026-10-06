@@ -2342,6 +2342,20 @@ export const SURVEY = balance.survey as {
   paidItems: string[];
 };
 
+/** The friends list — Docs/features/15-social.md §2.1: the caps the
+ *  social server holds a player to, and the reward path. `milestones`,
+ *  `gems` and `items` are parallel lists, one entry a reward. */
+export const FRIENDS = balance.friends as {
+  max: number;
+  maxSent: number;
+  countsFromTownhall: number;
+  suggestions: number;
+  milestones: number[];
+  gems: number[];
+  /** An item a milestone puts in the Bag, or '' for none. */
+  items: string[];
+};
+
 /** The season pass — Docs/features/20-season-pass.md. Two reward columns as
  *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
  *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
@@ -2483,4 +2497,5 @@ export const GAME_VERSION: string = pkg.version;
 // v93: the Shrine landmarks leave the map; their claims go (a migrator).
 // v94: a Shrine's relic (`Hosts` on a district), a zone's footprint (`W`,
 // `H` on a modifier's area), additive.
-export const SAVE_VERSION = 95;
+// v96: the friends' reward path (`Friends` on the kingdom), additive.
+export const SAVE_VERSION = 96;

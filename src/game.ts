@@ -153,6 +153,8 @@ import type { WorldServerApi } from './worldServer/local';
 import type { Analytics, AnalyticsContext } from './analytics/analytics';
 import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
 import { nicknameProblem } from './worldServer/nickname';
+import { FriendsClient } from './friendsClient';
+import type { Grant } from './sim/rewards';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import { boardNeighbors } from './sim/world/hex';
@@ -224,7 +226,10 @@ export type OverlayName =
   | 'delve'
   // The name the player goes out onto the world board under, asked the
   // first time out (Docs/features/19-world-map.md §1.3).
-  | 'nickname';
+  | 'nickname'
+  // The friends list, from the header, and a friend's profile over it
+  // (Docs/features/15-social.md §2.1).
+  | 'friends' | 'friendProfile';
 
 /** Fragments that landed, as one line: "A piece of the Dowsing Rod". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -318,6 +323,7 @@ export interface SpeedupScreen {
 const OVERLAY_DOOR: Partial<Record<OverlayName, DoorId>> = {
   research: 'research', build: 'build', heroes: 'heroes', relic: 'relics', bag: 'bag',
   world: 'world', army: 'world', knowledge: 'knowledge', store: 'store', survey: 'survey', nickname: 'world',
+  friends: 'friends', friendProfile: 'friends',
 };
 
 /** How the hero picker orders the heroes it offers. */
@@ -727,6 +733,7 @@ export class Game {
       const every = this.scene === 'world' ? this.worldServer.readEverySeconds() : 30;
       if (this.worldTicks % every === 0) void this.refreshWorld();
     }
+    this.friends.tick();
     for (const done of result.worldBuildsDone) {
       this.toast(worldBuildDone(done.what, done.level));
     }
@@ -3049,6 +3056,17 @@ export class Game {
       case 'payerProfile': return 'payer';
       // Rebuilt only when the answer changes: the field keeps what is typed.
       case 'nickname': return JSON.stringify([this.nicknameRefused, this.joiningWorld]);
+      // The friends screens move with the server's answer and what the
+      // player opened — never with what is typed, so a field keeps it — and
+      // once a minute, for "last seen".
+      case 'friends': case 'friendProfile': {
+        const f = this.friends;
+        const { at: _at, ...snap } = f.snap ?? { at: 0 };
+        return JSON.stringify([
+          snap, f.found, f.tab, f.openCode, f.confirmingRemove, [...f.busy], f.searching, f.naming,
+          f.nicknameRefused, this.state.kingdom.friends.claimed, Math.floor(this.now() / 60_000),
+        ]);
+      }
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
       case 'store':
@@ -4757,6 +4775,24 @@ export class Game {
   worldServer: WorldServerApi | null = null;
   /** What the server last said about the board. */
   worldView: WorldSnapshot | null = null;
+
+  /** The friends list (friendsClient.ts): its server is set by main. */
+  friends: FriendsClient = new FriendsClient(this, null);
+
+  /** The name the world board knows the player by, once they sit on one. */
+  worldNickname(): string | null {
+    return this.worldView?.seats.find((s) => s.you)?.name ?? null;
+  }
+
+  /** A reward off the friends' path, already paid: it flies to the header,
+   *  and what went into the Bag is said. */
+  paidFriendReward(reward: Grant): void {
+    playSfx('questComplete');
+    const items = Object.entries(reward.items).filter(([, n]) => (n ?? 0) > 0) as Array<[ItemId, number]>;
+    if (items.length > 0) this.toast(`${items.map(([id]) => itemWords(id)).join(', ')} — it is in the Bag`);
+    this.notify();
+    this.reward(reward.wallet);
+  }
   /** The dev tool's "play as": the seat world commands are made for, or
    *  null for the player's own. A rival's commands cost the player nothing. */
   actingSeat: number | null = null;
@@ -5418,6 +5454,8 @@ export class Game {
     if (this.worldServer !== null && this.worldSeated !== true) {
       void this.connectWorld().then(() => {
         if (this.worldSeated === true) this.goOutToWorld();
+        // A name taken on the friends list is the one the board knows too.
+        else if (this.worldSeated === false && this.friends.snap?.me) void this.doJoinWorld(this.friends.snap.me.nickname);
         else if (this.worldSeated === false) this.setOverlay('nickname');
         else this.toast(this.worldRefusal('Offline'));
         this.notify();

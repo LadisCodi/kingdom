@@ -31,5 +31,7 @@ describe('the server bundle', () => {
       return { w, replies };
     };
     expect(JSON.stringify(play(bundled.handleWorld))).toBe(JSON.stringify(play(handleWorld)));
+    // The friends list's rules ride in the same bundle, for the `social` function.
+    expect(typeof (bundled as unknown as { serveSocial?: unknown }).serveSocial).toBe('function');
   }, 30_000);
 });
