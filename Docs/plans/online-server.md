@@ -4,7 +4,8 @@
 > cloud save to a real server on Supabase, and then the social layer
 > ([`../features/15-social.md`](../features/15-social.md)) on top of it.
 >
-> **Status: steps 1 to 5b built.** The game uses the real server
+> **Status: steps 1–3, 5 and 5b built; step 4 is not in the prototype.**
+> The game uses the real server
 > when the cloud is configured (`?world=local` keeps the stand-in).
 
 ## 1. Steps
@@ -14,7 +15,7 @@
 | 1 | **The door** | every world request goes through `handleWorld` (`src/worldServer/handle.ts`); the server keeps the time; command ids; effects sent until acknowledged; the player's id is the signed-in user; `npm run server:bundle` |
 | 2 | **The world server** | a `world` edge function and a `boards` table on the Supabase project the cloud saves already use; `RemoteWorldServer` beside the stand-in; the client picks one by env |
 | 3 | **Seating** | a player is on no board until they first go out; then a nickname, and a rival's city on a shared board (19 §1.3) |
-| 4 | **Accounts** | optional email linking (15 §2) |
+| 4 | **Accounts** | optional email linking (15 §2) — not in the prototype |
 | 5 | **Friends** | the `social` edge function and its tables; the friends list (15 §2.1) |
 | 5b | **Daily help** | between friends (15 §3) |
 | 6 | **Guilds** | 15 §4 |
@@ -112,10 +113,6 @@ npx supabase functions deploy social
 ```
 
 - Anonymous sign-ins on (Authentication → Sign In / Up).
-- Email linking (15 §2) sends a code, not a link: the **Magic Link** and
-  **Change Email Address** templates (Authentication → Emails) carry
-  `{{ .Token }}`, and a custom SMTP sender is set — the built-in one only
-  mails the project's own team.
 - `.env.local` with the project URL and anon key turns the game onto it.
 
 ## 6. What the client still decides
