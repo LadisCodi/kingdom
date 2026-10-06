@@ -2,12 +2,6 @@
   "type": "object",
   "fields": {
     "name": { "type": "text", "doc": "What the store and the confirmation call it." },
-    "short": {
-      "type": "text",
-      "emptyOk": true,
-      "maxLength": 12,
-      "doc": "An offer: its name on its tab in the Offers screen. Empty: its name."
-    },
     "description": { "type": "text", "doc": "One line under the name: what it is for." },
     "sprite": {
       "type": "text",
@@ -16,7 +10,7 @@
     "art": {
       "type": "text",
       "emptyOk": true,
-      "doc": "An offer: its card's illustration in the Offers screen, render/assets/<art>.png. Empty: the card shows no picture."
+      "doc": "An offer: what stands in its splash's light, render/assets/<art>.png, a cut-out with no background. Empty: its hero, if it has one."
     },
     "shelf": {
       "type": "text",
@@ -107,7 +101,7 @@
     },
     "widget": {
       "type": "bool",
-      "doc": "An offer shown as a floating icon on the map, under the Survey, while it is on sale or its next-day part waits; a tap opens its splash. Its icon is `sprite`."
+      "doc": "An offer shown as a floating icon on the map, under the Survey, while it is on sale or its next-day part waits; a tap opens its splash. Its icon is `sprite` (until it lands: its hero's bust, or a picture of what it is)."
     }
   }
 }

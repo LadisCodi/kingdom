@@ -248,13 +248,13 @@ describe('the offer splash', () => {
 
       // Bought: tomorrow's part shows on the pill, then claims from the splash.
       expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, next.now())).toBe('Purchased');
-      expect(next.offerWidgets().map((w) => w.state)).toEqual(['waiting']);
+      expect(next.offerWidgets().filter((w) => w.sku === 'FirstPurchase').map((w) => w.state)).toEqual(['waiting']);
       vi.setSystemTime(dailyResetsAt(T0 + HOUR));
       const later = freshPresenter(state);
       expect(later.offerSplashOnScreen()).toEqual({ sku: 'FirstPurchase', mode: 'claim' });
       later.doClaimNextDay('FirstPurchase' as StoreSkuId);
       expect(later.offerSplashOnScreen()).toBeNull();
-      expect(later.offerWidgets()).toEqual([]);
+      expect(later.offerWidgets().filter((w) => w.sku === 'FirstPurchase')).toEqual([]);
     } finally {
       vi.useRealTimers();
     }
@@ -270,39 +270,40 @@ describe('the offer widget', () => {
       vi.setSystemTime(T0);
       const state = shop();
       const game = freshPresenter(state);
-      expect(game.offerWidgets()).toEqual([]);
+      const first = () => game.offerWidgets().filter((w) => w.sku === 'FirstPurchase');
+      expect(first()).toEqual([]);
       state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
       refreshOffers(state, game.now());
-      expect(game.offerWidgets().map((w) => [w.sku, w.state])).toEqual([['FirstPurchase', 'sale']]);
+      expect(first().map((w) => [w.sku, w.state])).toEqual([['FirstPurchase', 'sale']]);
       expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, game.now())).toBe('Purchased');
-      expect(game.offerWidgets().map((w) => w.state)).toEqual(['waiting']);
+      expect(first().map((w) => w.state)).toEqual(['waiting']);
       // A widget says it on the map, so the edge pill stays away.
       expect(game.nextDayPill()).toBeNull();
       vi.setSystemTime(dailyResetsAt(T0));
-      expect(game.offerWidgets().map((w) => w.state)).toEqual(['ready']);
+      expect(first().map((w) => w.state)).toEqual(['ready']);
       game.doClaimNextDay('FirstPurchase' as StoreSkuId);
-      expect(game.offerWidgets()).toEqual([]);
+      expect(first()).toEqual([]);
     } finally {
       vi.useRealTimers();
     }
   });
 });
 
-describe('the Offers screen', () => {
-  it('has a tab an offer on sale, the splash ones apart, and draws the open one\'s chain and gift', async () => {
+describe('an offer\'s sale', () => {
+  it('says its chain step, what it opens for good, and whether it is sold once ever', async () => {
     const { freshPresenter } = await import('./helpers');
     const state = shop();
-    state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
     const game = freshPresenter(state);
     refreshOffers(state, game.now());
-    game.openOffers('NovicePack1' as StoreSkuId);
-    const view = game.offersScreen();
-    expect(view.tabs.map((t) => t.id)).not.toContain('FirstPurchase');
-    expect(view.tabs.find((t) => t.open)?.id).toBe('NovicePack1');
-    expect(view.card?.chain).toEqual({ at: 1, of: 3 });
-    expect(view.card?.gifts.map((g) => g.icon)).toEqual(['builder']);
-    // The Gems have their own row, not a tile.
-    expect(view.card?.tiles.some((t) => t.kind === 'coin' && t.id === 'Gems')).toBe(false);
-    expect(view.card?.valuePercent).toBeGreaterThan(100);
+    const novice = game.offerSale('NovicePack1' as StoreSkuId);
+    expect(novice.chain).toEqual({ at: 1, of: 3 });
+    expect(novice.gifts.map((g) => g.icon)).toEqual(['builder']);
+    expect(novice.once).toBe(true);
+    expect(novice.valuePercent).toBeGreaterThan(100);
+    // A trigger that comes back sells a window at a time, not once ever.
+    offerTrigger(state, 'buildersBusy', game.now());
+    const build = game.offerSale(OFFER_ORDER.find((id) => STORE[id].opensOn === 'buildersBusy')!);
+    expect(build.once).toBe(false);
+    expect(build.closesAt).not.toBeNull();
   });
 });

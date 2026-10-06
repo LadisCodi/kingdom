@@ -199,8 +199,6 @@ export type OverlayName =
   // Short of a coin the Bag holds chests of (ui-inventory.md §3.9).
   | 'shortfall'
   | 'store' | 'payerProfile' | 'iapConfirm'
-  // The Offers screen: one tab an offer on sale (Docs/features/14-monetization.md §2.4).
-  | 'offers'
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
@@ -545,8 +543,6 @@ export class Game {
   upgradeDistrictId: string | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
   pendingSkuFrom: OverlayName | null = 'store';
-  /** The Offers screen's open tab; null → the first on sale. */
-  offersTab: StoreSkuId | null = null;
   /** When this session began: an offer splash shows from the session after
    *  its window opened (`offerSplash`). */
   sessionStartedAt = 0;
@@ -2101,46 +2097,31 @@ export class Game {
     this.notify();
   }
 
-  /** The Offers screen on an offer — or on the first on sale. */
-  openOffers(sku?: StoreSkuId): void {
-    this.offersTab = sku ?? null;
-    this.setOverlay('offers');
-  }
-
-  /** Change the Offers screen's tab. */
-  showOfferTab(sku: StoreSkuId): void {
-    this.offersTab = sku;
-    this.notify();
-  }
-
-  /** What the Offers screen draws: a tab an offer on sale, and the open one's
-   *  card — its value, window, chain step and what it opens for good. */
-  offersScreen(): OffersScreen {
-    const cards = this.offerCards().filter((c) => !STORE[c.id].splash);
-    const open = cards.find((c) => c.id === this.offersTab) ?? cards[0] ?? null;
-    if (open === null) return { tabs: [], card: null };
-    const s = STORE[open.id];
+  /** What an offer's splash draws beside its rewards: its window and what
+   *  is left of it, its value, its step in a chain ("I / III") and the slots
+   *  it opens for good. */
+  offerSale(sku: StoreSkuId): OfferSale {
+    const s = STORE[sku];
+    const w = offerWindow(this.state, sku);
     // The chain it belongs to: back along `after` to its first step, then
     // forward to its last.
-    let first: StoreSkuId = open.id;
+    let first: StoreSkuId = sku;
     while (STORE[first].after !== null) first = STORE[first].after!;
     const chain: StoreSkuId[] = [first];
     for (let next = OFFER_ORDER.find((id) => STORE[id].after === first); next !== undefined;
       next = OFFER_ORDER.find((id) => STORE[id].after === chain[chain.length - 1])) chain.push(next);
-    const gifts = [
-      ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder — for good.' : `${formatExact(s.builders)} builders — for good.`, text: 'Build two things at once.' }] : []),
-      ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer — for good.', text: 'Explore the world with one more at once.' }] : []),
-      ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot — for good.', text: 'One more hero in every party.' }] : []),
-    ];
     return {
-      tabs: cards.map((c) => ({ id: c.id, label: STORE[c.id].short || c.name, sprite: c.sprite, open: c.id === open.id })),
-      card: {
-        ...open,
-        art: s.art,
-        tiles: this.offerTiles(open.id).now.filter((t) => !(t.kind === 'coin' && t.id === 'Gems')),
-        chain: chain.length > 1 ? { at: chain.indexOf(open.id) + 1, of: chain.length } : null,
-        gifts,
-      },
+      closesAt: w?.closes ?? null,
+      left: s.limit > 0 ? Math.max(0, s.limit - (w?.bought ?? 0)) : null,
+      once: s.limit === 1 && (s.opensOn === 'always' || s.opensOn === 'door' || s.opensOn === 'after'),
+      valuePercent: skuValuePercent(this.state, sku),
+      chain: chain.length > 1 ? { at: chain.indexOf(sku) + 1, of: chain.length } : null,
+      gifts: [
+        ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder' : `${formatExact(s.builders)} builders`, text: 'Build two things at once' }] : []),
+        ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer', text: 'Explore the world with one more at once' }] : []),
+        ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot', text: 'One more hero in every party' }] : []),
+      ],
+      nextDayAt: nextDayWaiting(this.state, this.now()).find((d) => d.sku === sku)?.claimableAt ?? null,
     };
   }
 
@@ -6415,16 +6396,19 @@ export interface OfferWidget {
   at: number;
 }
 
-/** The Offers screen (`Game.offersScreen`). */
-export interface OffersScreen {
-  tabs: Array<{ id: StoreSkuId; label: string; sprite: string; open: boolean }>;
-  card: (OfferCard & {
-    art: string;
-    /** What lands, as tiles — the Gems are drawn on their own row. */
-    tiles: OfferTile[];
-    /** Its step in a chain of offers, "I / III". */
-    chain: { at: number; of: number } | null;
-    /** The slots it opens for good, the card's GIFT strip. */
-    gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
-  }) | null;
+/** An offer's sale, as its splash draws it (`Game.offerSale`). */
+export interface OfferSale {
+  /** When its window closes, or null if it waits until bought out. */
+  closesAt: number | null;
+  /** How many this window still sells, or null for no limit. */
+  left: number | null;
+  /** Sold once, ever — not once a window. */
+  once: boolean;
+  valuePercent: number;
+  /** Its step in a chain of offers, "I / III". */
+  chain: { at: number; of: number } | null;
+  /** The slots it opens for good, its GIFT panel. */
+  gifts: Array<{ icon: 'builder' | 'explorer' | 'heroSlot'; title: string; text: string }>;
+  /** Bought, and its next-day part not due yet: when it is. */
+  nextDayAt: number | null;
 }

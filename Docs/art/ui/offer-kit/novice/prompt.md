@@ -33,3 +33,32 @@ One sheet, a 2×2 layout, one piece per quadrant, each centred in its quadrant a
 Style: flat cartoon, bold dark-brown outline, two or three flat tones, warm materials (red wax, burlap, cloth, brass), draw as if shown 128 px wide, never glossy plastic. No drop shadows.
 Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
 ```
+
+## N3 — splash cut-out, true alpha (`src/render/assets/offer_novice_cutout.png`)
+
+Attached: `src/render/assets/hero_adventurer.png`, `src/render/assets/hero_adventurer_avatar.png`, `src/render/assets/offer_novice_art.png`, `src/render/assets/offer_first_purchase.png`, `Docs/art/ui/mockups/m86b-offer-first-purchase.png`.
+
+```
+GENERATE A NEW IMAGE. The attachments are references only — do not edit, crop or export any of them.
+- hero_adventurer.png (and hero_adventurer_avatar.png) is the hero: draw exactly this character (same face, curly dark hair, blue cap with red feather, blue coat, red scarf, blue pendant, satchel, patched brown trousers), no redesign.
+- offer_novice_art.png is the content: the same hero and treasure chest, but I need them as a CUT-OUT with no scenery.
+- m86b-offer-first-purchase.png shows how it is used: a character standing large on the left of a full-screen offer splash, with NO background of its own (the game draws the glow behind it).
+
+Picture: the Adventurer cheering, one fist raised high, full body visible, standing beside a big open wooden treasure chest with gold trim, the chest at his side and slightly in front of him. The chest spills faceted purple gems, winged hourglasses, a builder's hammer, a yellow builder's helmet and a couple of brass keys. Hero and chest form ONE compact cut-out group. Portrait composition, about 3:4.
+NO background at all: no ground, no grass, no sky, no clouds, no castle, no trees, no light rays, no glow, no shadow under the feet or chest. No text anywhere — no letters, numbers or tags with writing.
+Style: flat cartoon, bold dark-brown outline, two or three flat tones per surface, exactly like the attached hero; warm materials (wood, brass, gold), saturated, never glossy plastic. No drop shadows.
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+```
+
+## N4 — map icon, true alpha (`src/render/assets/offer_novice_1.png`)
+
+Same chat as N3, same five attachments (`offer_first_purchase.png` is the style/scale/framing anchor).
+
+```
+GENERATE A NEW IMAGE, separate from the previous one. The attachments are still references only — do not edit, crop or export any of them.
+- offer_first_purchase.png is our map icon for the first-purchase offer: make a sibling of it for the novice pack — same style, same scale, same framing, same bust-behind-chest composition, same golden glow and 4-point sparkles.
+- hero_adventurer_avatar.png / hero_adventurer.png is the subject: draw exactly this Adventurer (same face, curly dark hair, blue cap with red feather, blue coat, red scarf, blue pendant), no redesign.
+
+Picture: the Adventurer's head-and-shoulders bust, smiling, rising behind a small open wooden treasure chest with gold trim, purple gems spilling out, a builder's hammer and a yellow builder's helmet poking out of the chest. A soft golden glow from the chest, two or three 4-point sparkles. Square composition, subject centred, filling the canvas like the reference. It must read clearly at 64 px: big simple shapes, bold dark-brown outline, two or three flat tones per surface, nothing fiddly. No text, no letters, no numbers, no frame, no badge, no circle behind it.
+No drop shadows. Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+```

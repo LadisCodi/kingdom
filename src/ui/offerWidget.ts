@@ -7,18 +7,31 @@
 // written in place on every notify, so its scroll never restarts.
 
 import type { Game, OfferWidget } from '../game';
-import { HEROES } from '../sim/data/definitions';
+import { HEROES, STORE } from '../sim/data/definitions';
+import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatCountdown } from './format';
 import { setHidden } from './domWrite';
+import { iconEl, type IconName } from './kit';
 
-/** The icon: the offer's own art, or — until it lands — its hero's bust on
- *  the gold reward tile. */
+/** A picture of what an offer is for, while it has no icon of its own. */
+function kindIcon(sku: StoreSkuId): IconName {
+  const s = STORE[sku];
+  if (s.explorers > 0) return 'compass';
+  if (s.heroSlots > 0) return 'helmet';
+  if (s.opensOn === 'manaLow') return 'manaFlask';
+  if (s.opensOn === 'buildersBusy' || s.opensOn === 'townhall') return 'speedup';
+  return 'chest';
+}
+
+/** The icon: the offer's own art, or — until it lands — its hero's bust, or
+ *  a picture of what it is for, on the gold reward tile. */
 function icon(w: OfferWidget): HTMLElement {
   const url = spriteUrl(w.sprite);
   if (url !== null) return spriteImgAt(url, 'ofw-icon');
   const bust = w.hero === null ? null : spriteUrl(`${HEROES[w.hero].sprite}_avatar`);
-  return el('span', { class: 'ofw-icon is-fallback' }, ...(bust === null ? [] : [spriteImgAt(bust, 'ofw-bust')]));
+  return el('span', { class: 'ofw-icon is-fallback' },
+    bust === null ? iconEl(kindIcon(w.sku), { size: 'lg' }) : spriteImgAt(bust, 'ofw-bust'));
 }
 
 /** What the sign says. */
