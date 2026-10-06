@@ -24,9 +24,9 @@ import {
 import { parseCrest } from '../sim/crest';
 import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
-import { SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
+import { SEATS_PER_BOARD, SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE } from '../sim/world/camps';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, isBoardIndex } from '../sim/world/hex';
+import { PORTAL_INDICES, boardNeighbors, hexAt, hexDistance, isBoardIndex, ringOf } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
 import { WORLD_DISTRICTS, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
@@ -718,7 +718,7 @@ const coveringGarrisons = (b: ServerBoard, index: number, holder: number): Serve
 function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
   const h = b.hexes[a.target];
   if (a.purpose === 'portal') {
-    if (a.target === PORTAL_INDEX && portalOpen(t)) {
+    if (PORTAL_INDICES.includes(a.target) && portalOpen(t)) {
       a.phase = 'camp';
       a.at = null;
     } else turnHome(a, t);
@@ -826,7 +826,7 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
   if (!isBoardIndex(index)) return 'NoSuchHex';
   const h = b.hexes[index];
   if (purpose === 'portal') {
-    if (index !== PORTAL_INDEX) return 'NothingThere';
+    if (!PORTAL_INDICES.includes(index)) return 'NothingThere';
     if (!portalOpen(t)) return 'Shut';
     return b.armies.some((a) => a.owner === seat && a.purpose === 'portal' && a.phase !== 'home') ? 'Busy' : null;
   }
@@ -960,7 +960,7 @@ function returnDungeon(b: ServerBoard, d: NonNullable<ServerBoard['dungeons']>[n
   const taken = new Set(standingDungeons(b));
   const camped = new Set(b.armies.filter((a) => a.phase !== 'home').map((a) => a.target));
   const room = board.hexes.filter((h) => {
-    const ring = hexDistance(h.hex, hexAt(PORTAL_INDEX));
+    const ring = ringOf(h.hex);
     return ring >= 3 && wedgeIndexOf(h.hex) === d.wedge && h.seat === null && !h.features.some((f) => SITES.has(f))
       && h.index !== d.left && !nearCity.has(h.index) && !taken.has(h.index) && !camped.has(h.index)
       && b.hexes[h.index] === undefined;
@@ -1007,16 +1007,17 @@ export function roomReward(
 export function dungeonInfo(b: ServerBoard, index: number): { name: string; creature: LairId; bosses: string[] } {
   const d = WORLD_DUNGEON;
   const key = dungeonKey(b, index);
-  const word = (list: readonly string[], part: string) => list[randInt(b.seed, list.length, 'dungeonName', key, part)];
-  // Each sixth keeps its own first word — a board-wide offset plus the
-  // sixth — so two standing at once never share a name; one that comes back
-  // is told apart by its second.
-  const wedge = dungeonAt(b, index)?.wedge ?? 0;
-  const first = d.nameFirst[(randInt(b.seed, d.nameFirst.length, 'dungeonFirst') + wedge) % d.nameFirst.length];
+  // Each sixth of the world owns two names of its own — a world-wide offset
+  // plus twice the sixth — and its dungeon takes them in turn as it closes
+  // and comes back: two standing at once never share a name, and one that
+  // comes back is a new one (the data rules keep enough words for it).
+  const at = dungeonAt(b, index);
+  const combos = d.nameFirst.length * d.nameSecond.length;
+  const c = (randInt(b.seed, combos, 'dungeonName') + 2 * (at?.wedge ?? 0) + ((at?.n ?? 0) % 2)) % combos;
   const unit = dungeonAffinity(b, index);
   const creature = (Object.keys(LAIRS) as LairId[]).find((l) => LAIRS[l].guard.threat === unit) ?? 'Orcs';
   return {
-    name: `The ${first} ${word(d.nameSecond, 'second')}`,
+    name: `The ${d.nameFirst[c % d.nameFirst.length]} ${d.nameSecond[Math.floor(c / d.nameFirst.length) % d.nameSecond.length]}`,
     creature,
     bosses: Array.from({ length: d.depths }, (_, depth) => d.bossNames[randInt(b.seed, d.bossNames.length, 'dungeonBoss', key, depth)]),
   };
@@ -1321,7 +1322,7 @@ export function join(
   }
   if (player.prefer === undefined) {
     for (const b of [...w.boards].reverse()) {
-      const seat = b.seats.findIndex((s) => s?.bot === true);
+      const seat = rivalSeatFor(b);
       if (seat >= 0) {
         takeOver(b, seat, player, t);
         return { board: b, seat };
@@ -1329,15 +1330,16 @@ export function join(
     }
   }
   const seed = player.prefer?.seed ?? player.fresh?.seed ?? randInt(t >>> 0, 0x1_0000_0000, 'board', player.id);
-  const seat = player.prefer?.seat ?? randInt(seed, 6, 'seat', player.id);
+  // A new world's first player sits on the middle mini-board.
+  const seat = player.prefer?.seat ?? randInt(seed, SEATS_PER_BOARD, 'seat', player.id);
   let rival = 0;
   const b: ServerBoard = {
     id: player.prefer?.id ?? player.fresh?.id ?? `local-${seed.toString(36)}`,
     seed,
-    seats: Array.from({ length: 6 }, (_, i) => i === seat
+    seats: Array.from({ length: SEAT_INDICES.length }, (_, i) => i === seat
       ? { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 }
       : {
-        playerId: `bot-${i}`, name: WORLD.rivals[rival++ % WORLD.rivals.length] ?? `Rival ${i + 1}`, bot: true,
+        playerId: `bot-${i}`, name: rivalName(rival++), bot: true,
         nextMoveAt: t + Math.round(WORLD_BOTS.actEveryHours * HOUR * (0.25 + rand(seed, 'botFirst', i))), moves: 0,
       }),
     hexes: {},
@@ -1350,6 +1352,37 @@ export function join(
   };
   w.boards.push(b);
   return { board: b, seat };
+}
+
+/** The rivals' names, in turn; past the list, numbered: *Aldermoor II*. */
+function rivalName(i: number): string {
+  const names = WORLD.rivals;
+  if (names.length === 0) return `Rival ${i + 1}`;
+  const round = Math.floor(i / names.length);
+  const numeral = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII', ' IX', ' X'][round] ?? ` ${round + 1}`;
+  return `${names[i % names.length]}${numeral}`;
+}
+
+/**
+ * The rival's seat a new player takes on this world: on the mini-board with
+ * the most players that still has a rival — the middle one first — so a
+ * world fills board by board (Docs/plans/precious-deposits.md §3.1). -1
+ * when no rival is left.
+ */
+function rivalSeatFor(b: ServerBoard): number {
+  let best = -1;
+  let bestPlayers = -1;
+  for (let board = 0; board * SEATS_PER_BOARD < b.seats.length; board++) {
+    const seats = b.seats.slice(board * SEATS_PER_BOARD, (board + 1) * SEATS_PER_BOARD);
+    const rival = seats.findIndex((s) => s?.bot === true);
+    if (rival < 0) continue;
+    const players = seats.filter((s) => s?.bot === false).length;
+    if (players > bestPlayers) {
+      best = board * SEATS_PER_BOARD + rival;
+      bestPlayers = players;
+    }
+  }
+  return best;
 }
 
 /**

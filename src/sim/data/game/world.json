@@ -260,7 +260,22 @@
     "returnHoursMin": 12,
     "returnHoursMax": 24,
     "precious": 1,
-    "nameFirst": ["Sunken", "Hollow", "Drowned", "Ashen", "Weeping", "Forgotten", "Silent", "Shattered"],
+    "nameFirst": [
+      "Sunken",
+      "Hollow",
+      "Drowned",
+      "Ashen",
+      "Weeping",
+      "Forgotten",
+      "Silent",
+      "Shattered",
+      "Gilded",
+      "Hungering",
+      "Frozen",
+      "Blackened",
+      "Crimson",
+      "Thorned"
+    ],
     "nameSecond": ["Barrow", "Halls", "Deep", "Vault", "Crypt", "Warren", "Mines", "Catacombs"],
     "bossNames": [
       "the Hollow King",
