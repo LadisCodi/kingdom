@@ -144,6 +144,14 @@ Decided with the user on 2026-10-06, after 0.10.0 shipped.
   camera's frame; a tap there moves the camera.
 - **A fresh world** when it ships, by the 0.10.0 mechanism.
 
+**Built** (steps 1–6 below). Two things learnt on the way:
+
+- A rival's size is the ground it holds now: in a world of 41 rivals, one
+  whose ground was taken grows again rather than standing empty.
+- With the whole world revealed, the strategic zoom is crowded with labels;
+  the camera stops at one board across and the minimap shows the world.
+  Thinning the labels at the far zoom is still to do.
+
 ### 3.2 Steps
 
 Each step keeps the game playable; a world of ONE mini-board is the game

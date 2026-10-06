@@ -6,7 +6,7 @@
 // The plane is in CSS pixels at zoom 1, where a hex is HEX_W wide: the
 // tactical register (Docs/features/19-world-map.md §1.2).
 
-import { BOARD_RADIUS, HEX_DIRS, type Hex } from '../../sim/world/hex';
+import { HEX_DIRS, WORLD_RADIUS, type Hex } from '../../sim/world/hex';
 
 /** A hex's width at zoom 1 — the tactical register, ~3 across a phone. */
 export const HEX_W = 130;
@@ -80,6 +80,6 @@ export function regionEdges(region: readonly Hex[]): Array<{ hex: Hex; edge: num
   return out;
 }
 
-/** Half the board's extent on the plane, for clamping a pan. */
-export const BOARD_HALF_W = HEX_W * (BOARD_RADIUS + 0.5);
-export const BOARD_HALF_H = HEX_R * (1.5 * BOARD_RADIUS + 1) * TILT;
+/** Half the world's extent on the plane, for clamping a pan. */
+export const BOARD_HALF_W = HEX_W * (WORLD_RADIUS + 0.5);
+export const BOARD_HALF_H = HEX_R * (1.5 * WORLD_RADIUS + 1) * TILT;

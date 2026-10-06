@@ -9,7 +9,7 @@ import { generateBoard } from '../src/sim/world/board';
 import { dispatchExplorer, finishExplorerWithGems, homeIndex, returnsAt } from '../src/sim/world/explorers';
 import { scoutPay } from '../src/sim/world/scouting';
 import { boardOf } from '../src/sim/world/source';
-import { PORTAL_INDEX, boardNeighbors, hexIndex, rotate60 } from '../src/sim/world/hex';
+import { PORTAL_INDEX, boardNeighbors, hexIndex, localHex, miniBoardOf, rotate60, worldHex } from '../src/sim/world/hex';
 import { freshGame, fund, map, T0 } from './helpers';
 
 function exploring(): GameState {
@@ -40,7 +40,7 @@ describe('what a hex promises', () => {
       if (h.scout === null || h.role === 'portal') continue;
       expect(WORLD_SCOUTING.rewards[h.role].map((e) => e.reward)).toContain(h.scout.reward);
       if (h.role === 'inner') continue;
-      const twin = board.hexes[hexIndex(rotate60(h.hex))];
+      const twin = board.hexes[hexIndex(worldHex(miniBoardOf(h.hex), rotate60(localHex(h.hex))))];
       if (twin.scout !== null) expect(twin.scout).toEqual(h.scout);
     }
   });

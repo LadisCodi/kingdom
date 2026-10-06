@@ -7,7 +7,7 @@ import { UNITS, WORLD_BOTS, WORLD_CAMPS } from '../src/sim/data/definitions';
 import { buildBoard, generateEnemy } from '../src/sim/battle';
 import { SEAT_INDICES, generateBoard, type Board } from '../src/sim/world/board';
 import { campDifficulty, campShown, campTribute } from '../src/sim/world/camps';
-import { boardNeighbors, hexAt, hexDistance, hexIndex, rotate60 } from '../src/sim/world/hex';
+import { boardNeighbors, hexAt, hexDistance, hexIndex, localHex, miniBoardOf, rotate60, worldHex } from '../src/sim/world/hex';
 import { snapshotWorld } from '../src/sim/world/source';
 import { hexActions } from '../src/ui/world/worldActions';
 import {
@@ -72,7 +72,7 @@ describe('where camps stand', () => {
   it('is the same in every wedge past the inner ring, so no seat is luckier', () => {
     for (const h of data.hexes) {
       if (h.role === 'inner' || h.role === 'portal' || h.features.includes('Dungeon')) continue;
-      const twin = data.hexes[hexIndex(rotate60(h.hex))];
+      const twin = data.hexes[hexIndex(worldHex(miniBoardOf(h.hex), rotate60(localHex(h.hex))))];
       if (twin.features.includes('Dungeon')) continue;
       expect(twin.camp).toEqual(h.camp);
     }
@@ -143,12 +143,17 @@ describe('a camp guards its hex', () => {
 
   it('is beaten by a rival after its delay, without a fight', () => {
     const { b } = quietBoard();
-    const rival = b.seats.findIndex((s) => s?.bot);
-    const s = b.seats[rival]!;
-    s.nextMoveAt = T0;
+    // The rival beside the player, a sixth round the board: the camp beside
+    // its city is the player's turned (every wedge holds the same camps).
+    const rival = 1;
+    const turn = (i: number) => hexIndex(rotate60(hexAt(i)));
+    const { camp, via } = campNearHome(0);
+    const r = claim(b, rival, turn(via), T0);
+    if (!r.ok) throw new Error(r.why);
+    b.seats[rival]!.nextMoveAt = r.finishesAt;
     resolveTo(b, T0 + 30 * 24 * HOUR);
-    expect((b.beaten?.[rival] ?? []).length).toBeGreaterThan(0);
-    expect(Object.keys(b.botCamps?.[rival] ?? {}).length).toBeGreaterThan(0);
+    expect(Object.keys(b.botCamps?.[rival] ?? {})).toContain(String(turn(camp)));
+    expect(b.beaten?.[rival] ?? []).toContain(turn(camp));
     expect(WORLD_BOTS.maxHexes).toBeGreaterThan(0);
   });
 });

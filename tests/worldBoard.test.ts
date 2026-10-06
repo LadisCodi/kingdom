@@ -7,7 +7,8 @@ import balance from '../src/sim/data/balance';
 import { HOME_RING, SEATS, SEAT_INDICES, generateBoard, siteRoom, type Board } from '../src/sim/world/board';
 import { OUTER_SITE_ROOM } from '../src/sim/world/types';
 import {
-  BOARD_HEXES, HEX_DIRS, PORTAL_INDEX, hexDistance, hexIndex, hexNeighbors, rotate60,
+  BOARD_CENTRES, BOARD_COUNT, BOARD_HEXES, HEX_DIRS, PORTAL_INDEX, PORTAL_INDICES, hexDistance, hexIndex, hexNeighbors,
+  localHex, miniBoardOf, rotate60, worldHex,
 } from '../src/sim/world/hex';
 import { localWorld } from '../src/sim/world/source';
 
@@ -19,18 +20,20 @@ describe('the board', () => {
   it('gives every ring its role', () => {
     const count = (role: string) => board.hexes.filter((h) => h.role === role).length;
     expect([count('portal'), count('inner'), count('corridor'), count('home'), count('outer')])
-      .toEqual([1, 6, 54, 30, 36]);
-    expect(board.hexes[PORTAL_INDEX]).toMatchObject({ role: 'portal', terrain: null, features: [] });
+      .toEqual([1, 6, 54, 30, 36].map((n) => n * BOARD_COUNT));
+    for (const p of PORTAL_INDICES) expect(board.hexes[p]).toMatchObject({ role: 'portal', terrain: null, features: [] });
   });
 
-  it('seats six cities five hexes from the Portal and from each other', () => {
-    expect(SEATS).toHaveLength(6);
+  it('seats six cities a board, five hexes from its Portal and from each other', () => {
+    expect(SEATS).toHaveLength(6 * BOARD_COUNT);
     SEATS.forEach((s, i) => {
-      expect(hexDistance(s, { q: 0, r: 0 })).toBe(HOME_RING);
-      expect(hexDistance(s, SEATS[(i + 1) % 6])).toBe(5);
+      const b = Math.floor(i / 6);
+      expect(miniBoardOf(s)).toBe(b);
+      expect(hexDistance(s, BOARD_CENTRES[b])).toBe(HOME_RING);
+      expect(hexDistance(s, SEATS[b * 6 + ((i + 1) % 6)])).toBe(5);
       expect(board.hexes[SEAT_INDICES[i]]).toMatchObject({ seat: i, terrain: 'Grassland', features: [] });
     });
-    expect(board.hexes.filter((h) => h.seat !== null)).toHaveLength(6);
+    expect(board.hexes.filter((h) => h.seat !== null)).toHaveLength(6 * BOARD_COUNT);
   });
 
   it('is a pure function of its seed', () => {
@@ -42,10 +45,10 @@ describe('the board', () => {
     for (let seed = 1; seed <= 50; seed++) {
       const b = generateBoard('t', seed);
       for (const h of BOARD_HEXES) {
-        if (h.q === 0 && h.r === 0) continue;
         const here = b.hexes[hexIndex(h)];
-        if (here.role === 'inner') continue; // dealt, never turned
-        const turned = b.hexes[hexIndex(rotate60(h))];
+        if (here.role === 'inner' || here.role === 'portal') continue; // dealt, never turned
+        // Turned a sixth about its own board's Portal.
+        const turned = b.hexes[hexIndex(worldHex(miniBoardOf(h), rotate60(localHex(h))))];
         // A deposit stands on the same place in every wedge; which material
         // is the seat's deal.
         if (depositMaterial(here.features) !== null) {
@@ -105,16 +108,20 @@ describe('the board', () => {
       const b = generateBoard('t', seed * 104_729);
       for (const site of ['Dungeon', 'Sanctuary'] as const) {
         const at = b.hexes.filter((h) => h.features.includes(site));
-        expect(at, `${site} on seed ${seed}`).toHaveLength(6);
+        expect(at, `${site} on seed ${seed}`).toHaveLength(6 * BOARD_COUNT);
         for (const h of at) {
           expect(h.role).toBe('outer');
           expect(h.features).toEqual([site]);
           expect(nearCity.has(h.index)).toBe(false);
           expect(WORLD_GEN.featureRules[site].terrains).toContain(h.terrain);
         }
-        // One a wedge: each seat has its own, at the same place.
-        const nearest = SEATS.map((c) => Math.min(...at.map((h) => hexDistance(c, h.hex))));
-        expect(new Set(nearest).size).toBe(1);
+        // One a wedge: each seat has its own, at the same place on its board.
+        // (Each board rolls on a seed of its own, so the place differs between boards.)
+        for (let board = 0; board < BOARD_COUNT; board++) {
+          const nearest = SEATS.slice(board * 6, board * 6 + 6).map((c) => Math.min(...at
+            .filter((h) => miniBoardOf(h.hex) === board).map((h) => hexDistance(c, h.hex))));
+          expect(new Set(nearest).size).toBe(1);
+        }
       }
     }
   });
@@ -136,7 +143,7 @@ describe('the board', () => {
     const world = localWorld({ id: 'test', seed: 0x5eed, seat: 2 });
     const seats = world.seats();
     expect(seats.filter((s) => s.owner.you)).toEqual([seats[2]]);
-    expect(seats.filter((s) => !s.owner.you)).toHaveLength(5);
+    expect(seats.filter((s) => !s.owner.you)).toHaveLength(6 * BOARD_COUNT - 1);
     expect(world.controlOf(SEAT_INDICES[2])?.owner.you).toBe(true);
     expect(world.controlOf(PORTAL_INDEX)).toBeNull();
     expect(world.board()).toBe(world.board());

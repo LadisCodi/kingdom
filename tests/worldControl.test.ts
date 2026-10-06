@@ -55,7 +55,7 @@ describe('connecting to the world server', () => {
     await game.doJoinWorld('Mel');
     expect(game.worldSeated).toBe(true);
     expect(game.state.world.board.id).toBe('b-local-player');
-    expect(game.worldView?.seats.filter((s) => s.bot)).toHaveLength(5);
+    expect(game.worldView?.seats.filter((s) => s.bot)).toHaveLength(SEAT_INDICES.length - 1);
   });
 });
 

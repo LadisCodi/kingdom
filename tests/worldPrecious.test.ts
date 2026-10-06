@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { GOODS, WORLD_GEN } from '../src/sim/data/definitions';
 import { PRECIOUS } from '../src/sim/state';
 import { SEATS, SEAT_INDICES, dealDeposits, generateBoard, lumpMaterial } from '../src/sim/world/board';
-import { boardNeighbors, hexDistance } from '../src/sim/world/hex';
+import { BOARD_COUNT, boardNeighbors, hexDistance, miniBoardOf } from '../src/sim/world/hex';
 import { DEPOSIT_OF, depositMaterial } from '../src/sim/world/types';
 import {
   claim, collect, emptyWorld, join, preciousAt, preciousRate, resolveTo, snapshotOf,
@@ -63,12 +63,18 @@ describe('the deposits', () => {
 
     it(`hold 12 of each on the corridors and 2 of each on the inner ring, facing a weak seat (seed ${seed})`, () => {
       for (const id of PRECIOUS) {
-        expect(deposits.filter((h) => h.role === 'corridor' && depositMaterial(h.features) === id)).toHaveLength(12);
-        expect(deposits.filter((h) => h.role === 'inner' && depositMaterial(h.features) === id)).toHaveLength(2);
+        expect(deposits.filter((h) => h.role === 'corridor' && depositMaterial(h.features) === id)).toHaveLength(12 * BOARD_COUNT);
+        expect(deposits.filter((h) => h.role === 'inner' && depositMaterial(h.features) === id)).toHaveLength(2 * BOARD_COUNT);
       }
       for (const h of board.hexes.filter((x) => x.role === 'inner')) {
         const facing = SEATS.findIndex((s) => SEATS.every((o) => hexDistance(h.hex, s) <= hexDistance(h.hex, o)));
         expect(depositMaterial(h.features)).toBe(board.deposits[facing].weak);
+      }
+      // The bag is per board: every board deals each material 12 times.
+      for (let b = 0; b < BOARD_COUNT; b++) {
+        for (const id of PRECIOUS) {
+          expect(deposits.filter((h) => h.role === 'corridor' && miniBoardOf(h.hex) === b && depositMaterial(h.features) === id)).toHaveLength(12);
+        }
       }
     });
 
@@ -78,7 +84,7 @@ describe('the deposits', () => {
         expect(WORLD_GEN.featureRules[f].terrains).toContain(h.terrain);
         expect(h.features).toEqual([f]);
       }
-      expect(deposits).toHaveLength(6 * 6 + 6);
+      expect(deposits).toHaveLength((6 * 6 + 6) * BOARD_COUNT);
     });
   }
 });

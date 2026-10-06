@@ -32,7 +32,7 @@ export const HEX_DIRS: readonly Hex[] = [
 export const BOARD_RADIUS = 6;
 
 /** Rings of mini-boards round the middle one: 0 is one board, 1 is seven. */
-export const WORLD_RINGS = 0;
+export const WORLD_RINGS = 1;
 
 export const hexAdd = (a: Hex, b: Hex): Hex => ({ q: a.q + b.q, r: a.r + b.r });
 export const hexScale = (a: Hex, k: number): Hex => ({ q: a.q * k + 0, r: a.r * k + 0 });
@@ -143,13 +143,23 @@ export const BOARD_CENTRES: readonly Hex[] = (() => {
 
 export const BOARD_COUNT = BOARD_CENTRES.length;
 
-const BOARD_OF = new Map<string, number>();
+/** Lookups by coordinate, as flat tables rather than string-keyed maps: a
+ *  world of seven boards asks them millions of times a long replay. */
+const LOOK_OFF = 64;
+const LOOK_SPAN = 2 * LOOK_OFF;
+const lookAt = (h: Hex): number =>
+  (h.q < -LOOK_OFF || h.q >= LOOK_OFF || h.r < -LOOK_OFF || h.r >= LOOK_OFF ? -1 : (h.q + LOOK_OFF) * LOOK_SPAN + h.r + LOOK_OFF);
+
+const BOARD_OF = new Int16Array(LOOK_SPAN * LOOK_SPAN).fill(-1);
 BOARD_CENTRES.forEach((c, b) => {
-  for (const h of hexesWithin(c, BOARD_RADIUS)) BOARD_OF.set(`${h.q},${h.r}`, b);
+  for (const h of hexesWithin(c, BOARD_RADIUS)) BOARD_OF[lookAt(h)] = b;
 });
 
 /** Which mini-board a hex is on, or -1 off the world. */
-export const miniBoardOf = (h: Hex): number => BOARD_OF.get(`${h.q},${h.r}`) ?? -1;
+export const miniBoardOf = (h: Hex): number => {
+  const at = lookAt(h);
+  return at < 0 ? -1 : BOARD_OF[at];
+};
 
 /** The centre of the mini-board a hex is on — or, off the world, of the
  *  nearest one. */
@@ -173,24 +183,28 @@ export const worldHex = (board: number, local: Hex): Hex => hexAdd(BOARD_CENTRES
 /** Every hex of the world in its canonical order — by row (`r`), then by
  *  `q` — which is what a hex's INDEX means everywhere: the fog bitset, a
  *  march's path, the save. On a world of one board, the Portal is 63. */
-export const BOARD_HEXES: readonly Hex[] = (() => {
-  const out = [...BOARD_OF.keys()].map((k) => {
-    const [q, r] = k.split(',').map(Number);
-    return { q, r };
-  });
-  return out.sort((a, b) => a.r - b.r || a.q - b.q);
-})();
+export const BOARD_HEXES: readonly Hex[] = BOARD_CENTRES
+  .flatMap((c) => hexesWithin(c, BOARD_RADIUS))
+  .sort((a, b) => a.r - b.r || a.q - b.q);
 
 export const BOARD_SIZE = BOARD_HEXES.length;
 
-const INDEX = new Map<string, number>(BOARD_HEXES.map((h, i) => [`${h.q},${h.r}`, i]));
+/** How far the world reaches from its middle: the farthest hex's steps
+ *  from the origin — 6 for one board, 19 for seven. */
+export const WORLD_RADIUS = Math.max(...BOARD_HEXES.map((h) => hexDistance(h, { q: 0, r: 0 })));
+
+const INDEX = new Int32Array(LOOK_SPAN * LOOK_SPAN).fill(-1);
+BOARD_HEXES.forEach((h, i) => { INDEX[lookAt(h)] = i; });
 
 /** A hex's index in the world, or -1 when it is off it. */
-export const hexIndex = (h: Hex): number => INDEX.get(`${h.q},${h.r}`) ?? -1;
+export const hexIndex = (h: Hex): number => {
+  const at = lookAt(h);
+  return at < 0 ? -1 : INDEX[at];
+};
 
 export const hexAt = (index: number): Hex => BOARD_HEXES[index];
 
-export const onBoard = (h: Hex): boolean => INDEX.has(`${h.q},${h.r}`);
+export const onBoard = (h: Hex): boolean => hexIndex(h) >= 0;
 
 export const isBoardIndex = (index: unknown): index is number =>
   Number.isInteger(index) && (index as number) >= 0 && (index as number) < BOARD_SIZE;
