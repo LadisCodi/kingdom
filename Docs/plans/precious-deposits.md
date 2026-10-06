@@ -117,20 +117,51 @@ Each step lands with its tests green and the game playable.
 **Server:** steps 5 and later ship with a release (migration-free — boards
 are documents — but the world function and the reset go first).
 
-## 3. Phase 2 — a world of many boards (later)
+## 3. Phase 2 — a world of seven boards
 
-The map the player sees is one large board; it is generated as **mini-boards
-of six** (today's board), tiled in a honeycomb, so every six seats get a
-controlled layout and their own 3/2/1 bag. Decided: fixed size from the
-start (a cohort, not a growing map). To decide before it starts:
+Decided with the user on 2026-10-06, after 0.10.0 shipped.
 
-- **The centre:** one Portal at the world's centre and other contents at the
-  other mini-boards' centres (lairs, a sanctuary, contested deposits), or a
-  Portal on each.
-- **The seams:** what the shared outer rings hold, and whether a seam shows.
-- **Seating:** mini-board by mini-board or spread; rivals in empty seats or
-  none; a new world when one fills.
-- **Scope** of what is "the six's" today: the Portal ranking, the dungeon
-  race, raids, the Excavation — mini-board, neighbourhood or world.
-- **The server:** one document per world first (measured), one per
-  mini-board only if the population asks for it.
+### 3.1 The design
+
+- **A world is seven mini-boards**: one in the middle and six round it, in
+  a honeycomb — 42 seats, 889 hexes. To the player it is one board: hexes,
+  claims, armies, explorers and fog run across the seams as anywhere else.
+- **Every mini-board is today's board**: its own Portal at its centre, its
+  inner ring of deposits, its six seats and wedges, its own 3/2/1 bag and
+  its own roll (a seed of its own, from the world's).
+- **The seams are left rich**: where two mini-boards touch, their outer
+  rings lie side by side — twice the dungeons and sanctuaries, a frontier
+  two neighbourhoods contest.
+- **Seating, mini-board by mini-board**: a world is born with rivals in all
+  42 seats; a new player takes a rival's seat in the mini-board with the most
+  players that still has one (the middle one first). When no rival is left,
+  a new world opens.
+- **Everything is the world's**: one Portal ranking across all seven
+  Portals (a player dives any Portal their army reaches), the dungeon races
+  and the raids as today but over the whole world.
+- **Navigation**: the strategic zoom opens out to the whole world, and a
+  **minimap** in a corner shows the world, every kingdom's ground and the
+  camera's frame; a tap there moves the camera.
+- **A fresh world** when it ships, by the 0.10.0 mechanism.
+
+### 3.2 Steps
+
+Each step keeps the game playable; a world of ONE mini-board is the game
+of 0.10.0 until step 4 turns on seven.
+
+1. **Geometry.** One world geometry — every hex in world axial coordinates,
+   the world index, each hex's mini-board and its local ring and wedge,
+   the seats (42), the Portals (7) — in place of `BOARD_RADIUS`,
+   `BOARD_HEXES`, `SEAT_INDICES`, `PORTAL_INDEX` and the ring maths that
+   assume one centre. Built for N mini-boards, run with one.
+2. **Generation.** The world is its mini-boards, each generated as today on
+   local coordinates from its own seed and placed at its offset; the bag
+   and the inner ring per mini-board.
+3. **Server.** The world document: 42 seats, seating by mini-board, seven
+   Portals and one ranking, dungeons and their races per sixth (42 of
+   them), bots, raids; the fog bits sized for the world.
+4. **Seven.** The world grows to seven; the client's camera, clouds,
+   layout and renderer read the world's bounds; seat colours for 42.
+5. **Minimap.**
+6. **Fresh world** (store version 5, a migration) and **docs**
+   (19 rewritten for a world of seven).
