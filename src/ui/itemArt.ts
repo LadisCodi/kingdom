@@ -7,6 +7,7 @@ import { ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
 import type { CurrencyId, ItemId } from '../sim/state';
 import { el } from './format';
 import { iconEl, type IconName } from './kit';
+import { ATLAS_CELLS } from './kit/atlas.generated';
 
 /** A typed speed-up's badge on its tile (§3.5): a hammer for construction,
  *  a helmet for training, an anvil for workshops; General has none. */
@@ -22,9 +23,16 @@ const CHEST_ICON: Partial<Record<CurrencyId, IconName>> = {
 /** A boost's picture, by what it raises. */
 export const BOOST_ICON: Record<BoostKind, IconName> = { Rent: 'boostRent', Harvest: 'boostHarvest', Mana: 'boostMana' };
 
-/** An item's picture: the chest of its coin, the winged hourglass, the boost
- *  of its kind, the flask, the tome, the key itself. */
+/** Whether the atlas holds a picture drawn for this very item (sheets
+ *  UI-I2…I4): a timed one carries its duration on a ribbon and a speed-up
+ *  shows what it speeds up, so its tile needs no label and no badge. */
+const ownArt = (id: ItemId): boolean => ATLAS_CELLS.has(id);
+
+/** An item's picture: its own when it has one; else the chest of its coin,
+ *  the winged hourglass, the boost of its kind, the flask, the tome, the key
+ *  itself — so an item made in the data tool shows before its art lands. */
 export const itemIcon = (id: ItemId): IconName => {
+  if (ownArt(id)) return id as IconName;
   const def = ITEMS[id];
   switch (def.kind) {
     case 'key': return id as IconName;
@@ -37,10 +45,18 @@ export const itemIcon = (id: ItemId): IconName => {
   }
 };
 
-/** A tile's picture, with a speed-up's type badge at its lower left. */
-export function tileArt(id: ItemId): Node[] {
+/** A tile's picture and the size printed above it. An item drawn for itself
+ *  carries a duration in its art, so only a size the art cannot say (a
+ *  flask's share, a tome's pages) is printed; a borrowed picture gets the
+ *  label and a speed-up's type badge at its lower left. */
+export function tileArt(id: ItemId, size: string): Node[] {
   const def = ITEMS[id];
+  const own = ownArt(id);
   const art = iconEl(itemIcon(id), { size: 'lg' });
-  const badge = def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
-  return badge === undefined ? [art] : [art, el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' }))];
+  const out: Node[] = [];
+  if (size !== '' && !(own && def.seconds > 0)) out.push(el('span', { class: 'bag-tile-size' }, size));
+  out.push(art);
+  const badge = own || def.speeds === null ? undefined : SPEED_BADGE[def.speeds];
+  if (badge !== undefined) out.push(el('span', { class: 'bag-tile-badge' }, iconEl(badge, { size: 'sm' })));
+  return out;
 }

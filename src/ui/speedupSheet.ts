@@ -39,8 +39,7 @@ export function renderSpeedupSheet(game: Game): HTMLElement {
     ? [el('p', { class: 'spd-none' }, 'No speed-ups for this in the Bag')]
     : view.rows.map((r) => el('div', { class: 'spd-row' },
       el('div', { class: `bag-tile spd-tile is-tier-${r.def.tier}` },
-        el('span', { class: 'bag-tile-size' }, formatDuration(r.def.seconds)),
-        ...tileArt(r.id),
+        ...tileArt(r.id, formatDuration(r.def.seconds)),
         el('span', { class: 'bag-tile-count' }, formatExact(r.count))),
       el('div', { class: 'spd-row-name' }, r.def.name),
       btn({ label: 'Use', kind: 'primary', onClick: () => game.doSpeedup(r.id) })));

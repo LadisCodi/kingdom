@@ -103,8 +103,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
     'aria-label': `${itemName(item.def)}, ${formatExact(item.count)}`,
     'aria-expanded': picked ? 'true' : 'false',
   },
-    el('span', { class: 'bag-tile-size' }, sizeLabel(item.def)),
-    ...tileArt(item.id),
+    ...tileArt(item.id, sizeLabel(item.def)),
     el('span', { class: 'bag-tile-count' }, formatExact(item.count)),
     ...(item.fresh ? [el('span', { class: 'bag-tile-new' }, iconEl('sparkle', { size: 'sm' }))] : []),
   );
