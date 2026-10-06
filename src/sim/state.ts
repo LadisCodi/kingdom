@@ -387,6 +387,10 @@ export interface LairState {
   defeated: boolean;
   /** Claimed: the reward is paid and the lair is gone for good. */
   cleared: boolean;
+  /** What the spoils skills of the party that beat it add to the claim — a
+   *  share of its Knowledge and of its Hero XP (sim/skills.ts). Its hoard
+   *  took the Plunder when it fell. Absent = none. */
+  spoils?: { lore: number; seasoned: number };
 }
 
 /**
@@ -568,6 +572,9 @@ export interface GameState {
      *  (sim/heroLadder.ts). */
     ascension: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
+    /** Each hero's skill rank, bought with Stardust and material once its
+     *  level allows (sim/heroes.ts). Absent = rank 1. */
+    skillRanks: Partial<Record<HeroId, number>>;
     /** Extra HERO slots bought with Gems: one is free and every further one
      *  is Gems, always, up to the board's three
      *  (Docs/features/10-heroes.md §3). */

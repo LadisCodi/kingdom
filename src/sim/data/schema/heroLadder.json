@@ -35,6 +35,26 @@
           "type": "float",
           "min": 0,
           "doc": "How much every ascension point adds to a hero's Attack, Defense and HP, as a share of what its level gives: 0.02 is +2% a point."
+        },
+        "skillRankLevels": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "doc": "The level each skill rank after the first unlocks at (ranks 2 to 5). Each sits past a star's level cap, so a rank asks for an ascension too."
+        },
+        "skillRankStardust": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "Stardust each skill rank after the first costs (ranks 2 to 5)."
+        },
+        "skillRankMaterial": {
+          "type": "list",
+          "of": { "type": "int", "min": 0 },
+          "doc": "Precious material each skill rank after the first costs — the skill family's (ranks 2 to 5). Asked only once the world is open."
+        },
+        "skillRankStep": {
+          "type": "float",
+          "min": 0,
+          "doc": "What each rank adds, as a share of the rank-1 value: 0.25 makes rank 5 twice rank 1."
         }
       }
     }

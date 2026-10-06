@@ -308,7 +308,11 @@ describe('determinism', () => {
           ? `${e.tick} ${e.from.side[0]}${e.from.id}→${e.to.side[0]}${e.to.id} ${e.hits}×${e.dealt}`
           : e.kind === 'troops_lost'
             ? `${e.tick} ${e.at.side[0]}${e.at.id} left ${e.alive}`
-            : `${e.tick} ${e.at.side[0]}${e.at.id} wiped`));
+            : e.kind === 'slot_wiped'
+              ? `${e.tick} ${e.at.side[0]}${e.at.id} wiped`
+              : e.kind === 'skill'
+                ? `${e.tick} ${e.from.side[0]}${e.from.id} ${e.skill}`
+                : `${e.tick} ${e.at.side[0]}${e.at.id} ${e.kind}`));
     expect(shape).toMatchSnapshot();
   });
 });

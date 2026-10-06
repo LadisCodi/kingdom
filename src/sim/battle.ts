@@ -19,8 +19,9 @@
 // rather than a snapshot that drifts.
 
 import { BEATS } from './combat';
-import { COMBAT, UNITS, VILLAINS, type VillainId } from './data/definitions';
+import { COMBAT, UNITS, VILLAINS, type SkillId, type VillainId } from './data/definitions';
 import { randInt, type RngPart } from './rng';
+import { SKILLS, slotSkill, type SlotSkill } from './skills';
 import type { UnitId } from './state';
 
 export type Side = 'ours' | 'theirs';
@@ -63,6 +64,8 @@ export interface BoardSlot {
   /** What one of it is worth in the power estimate — the bar at the top of
    *  the battle screen is the sum of this over what is still standing. */
   power: number;
+  /** A hero's or a villain's skill, resolved to its rank (§9.3). */
+  skill?: SlotSkill;
 }
 
 export interface Board {
@@ -83,8 +86,18 @@ export type BattleEvent =
     to: SlotRef;
     /** Troops that reached the enemy this swing — `min(alive, frontage)`. */
     hits: number;
+    /** What reached its health, after any shield. */
     dealt: number;
+    /** A skill's strike rather than the slot's own swing (§9.3). */
+    skill?: SkillId;
+    /** What a shield soaked before `dealt`. */
+    absorbed?: number;
   }
+  /** A skill fires: its name over the fighter. A rally's at tick 0. */
+  | { kind: 'skill'; tick: number; from: SlotRef; skill: SkillId }
+  | { kind: 'healed'; tick: number; at: SlotRef; amount: number; alive: number; hpPool: number }
+  | { kind: 'shielded'; tick: number; at: SlotRef; amount: number }
+  | { kind: 'dazed'; tick: number; at: SlotRef; ticks: number }
   | { kind: 'troops_lost'; tick: number; at: SlotRef; alive: number; hpPool: number }
   | { kind: 'slot_wiped'; tick: number; at: SlotRef }
   | { kind: 'end'; tick: number; winner: Side; reason: 'wiped' | 'timeout' };
@@ -117,6 +130,8 @@ export interface FighterSpec {
   troopDmgMult: number;
   troopHpMult: number;
   troopDefBonus: number;
+  /** Its skill at its rank (§9.3). */
+  skill?: SlotSkill;
 }
 
 export interface SquadSpec {
@@ -158,10 +173,18 @@ export function buildBoard(
   const dmgMult = new Map<UnitId, number>();
   const hpMult = new Map<UnitId, number>();
   const defFlat = new Map<UnitId, number>();
+  // A RALLY (§9.3) is the type passive's rules for EVERY type: added on the
+  // excess, standing if its fighter falls.
+  let rallyDmg = 0;
+  let rallyHp = 0;
+  let rallyDef = 0;
   for (const f of fighters) {
     dmgMult.set(f.type, (dmgMult.get(f.type) ?? 1) + (f.troopDmgMult - 1));
     hpMult.set(f.type, (hpMult.get(f.type) ?? 1) + (f.troopHpMult - 1));
     defFlat.set(f.type, (defFlat.get(f.type) ?? 0) + f.troopDefBonus);
+    if (f.skill?.id === 'WarCry') rallyDmg += f.skill.amount / 1000;
+    if (f.skill?.id === 'Vigour') rallyHp += f.skill.amount / 1000;
+    if (f.skill?.id === 'Bulwark') rallyDef += f.skill.amount;
   }
 
   const slots: BoardSlot[] = [];
@@ -169,7 +192,7 @@ export function buildBoard(
     if (squad.count <= 0) continue;
     const u = UNITS[squad.unitId];
     const hpUnit = Math.max(1, Math.round(
-      u.hp * (hpMult.get(squad.unitId) ?? 1) * bonus.hpMult(squad.unitId)));
+      u.hp * ((hpMult.get(squad.unitId) ?? 1) + rallyHp) * bonus.hpMult(squad.unitId)));
     slots.push({
       id: slots.length,
       kind: 'troop',
@@ -181,8 +204,8 @@ export function buildBoard(
       count: squad.count,
       frontage: u.frontage,
       dmg: Math.max(1, Math.round(
-        (u.dmg + bonus.dmg(squad.unitId)) * (dmgMult.get(squad.unitId) ?? 1))),
-      def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0),
+        (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(squad.unitId) ?? 1) + rallyDmg))),
+      def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0) + rallyDef,
       hpUnit,
       hpPool: squad.count * hpUnit,
       cooldown: u.cooldown,
@@ -210,6 +233,7 @@ export function buildBoard(
       hpPool: Math.min(f.hp, f.hpNow ?? f.hp),
       cooldown: f.cooldown,
       power: f.power,
+      ...(f.skill ? { skill: f.skill } : {}),
     });
   }
   return { slots };
@@ -290,6 +314,21 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     ours: sides.ours.slots.map((s) => s.cooldown),
     theirs: sides.theirs.slots.map((s) => s.cooldown),
   };
+  // A timed skill's own clock, beside the attack's (§9.3).
+  const skillReady: Record<Side, number[]> = {
+    ours: sides.ours.slots.map((s) => s.skill?.every ?? 0),
+    theirs: sides.theirs.slots.map((s) => s.skill?.every ?? 0),
+  };
+  // What a heal may bring a slot back up to: what it walked in with.
+  const maxPool: Record<Side, number[]> = {
+    ours: sides.ours.slots.map((s) => (s.kind === 'hero' ? s.hpUnit : s.count * s.hpUnit)),
+    theirs: sides.theirs.slots.map((s) => (s.kind === 'hero' ? s.hpUnit : s.count * s.hpUnit)),
+  };
+  // Shields soak damage before health does.
+  const shield: Record<Side, number[]> = {
+    ours: sides.ours.slots.map(() => 0),
+    theirs: sides.theirs.slots.map(() => 0),
+  };
 
   const finish = (tick: number, winner: Side, reason: 'wiped' | 'timeout'): BattleLog => {
     events.push({ kind: 'end', tick, winner, reason });
@@ -301,34 +340,132 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
   if (living(sides.ours).length === 0) return finish(0, 'theirs', 'wiped');
   if (living(sides.theirs).length === 0) return finish(0, 'ours', 'wiped');
 
+  // The rallies have been in the board since it was built; they are named
+  // as the fight opens, so the screen can say who raised them.
+  for (const side of ['ours', 'theirs'] as Side[]) {
+    for (const slot of sides[side].slots) {
+      if (slot.skill !== undefined && SKILLS[slot.skill.id].kind === 'rally') {
+        events.push({ kind: 'skill', tick: 0, from: { side, id: slot.id }, skill: slot.skill.id });
+      }
+    }
+  }
+
+  /** One blow landing: the shield first, then the health, and the events.
+   *  True when it ended the fight. */
+  const land = (
+    tick: number, side: Side, from: BoardSlot, target: BoardSlot, hits: number, base: number, skill?: SkillId,
+  ): boolean => {
+    const foe: Side = side === 'ours' ? 'theirs' : 'ours';
+    const raw = hits * Math.max(1, base - target.def);
+    const { num, den } = fraction(from.type, target.type);
+    let dealt = Math.floor((raw * num) / den);
+    const absorbed = Math.min(shield[foe][target.id]!, dealt);
+    shield[foe][target.id]! -= absorbed;
+    dealt -= absorbed;
+    const before = alive(target);
+    target.hpPool = Math.max(0, target.hpPool - dealt);
+    const after = alive(target);
+    const at: SlotRef = { side: foe, id: target.id };
+    events.push({
+      kind: 'attack', tick, from: { side, id: from.id }, to: at, hits, dealt,
+      ...(skill ? { skill } : {}), ...(absorbed > 0 ? { absorbed } : {}),
+    });
+    if (after !== before) {
+      events.push({ kind: 'troops_lost', tick, at, alive: after, hpPool: target.hpPool });
+    }
+    if (target.hpPool <= 0) {
+      events.push({ kind: 'slot_wiped', tick, at });
+      if (living(sides[foe]).length === 0) return true;
+    }
+    return false;
+  };
+
+  /** A skill on its clock fires (§9.3). True when it ended the fight. */
+  const fire = (tick: number, side: Side, slot: BoardSlot, skill: SlotSkill): boolean => {
+    const foe: Side = side === 'ours' ? 'theirs' : 'ours';
+    const enemies = living(sides[foe]);
+    const allies = living(sides[side]);
+    const least = (list: BoardSlot[]): BoardSlot | null => (list.length === 0 ? null : list.reduce((b, s) => (
+      s.hpPool < b.hpPool || (s.hpPool === b.hpPool && s.id < b.id) ? s : b)));
+    const most = (list: BoardSlot[]): BoardSlot | null => (list.length === 0 ? null : list.reduce((b, s) => (
+      s.hpPool > b.hpPool || (s.hpPool === b.hpPool && s.id < b.id) ? s : b)));
+    const kind = SKILLS[skill.id].kind;
+    let targets: BoardSlot[] = [];
+    if (kind === 'strike') {
+      const front = enemies.filter((s) => s.row === 'front');
+      const back = enemies.filter((s) => s.row === 'back');
+      targets = skill.id === 'Volley' ? enemies
+        : skill.id === 'Cleave' ? (front.length > 0 ? front : enemies)
+          : [(skill.id === 'Crush' ? most(enemies)
+            : skill.id === 'Ambush' ? least(back.length > 0 ? back : enemies)
+              : least(enemies))].filter((s): s is BoardSlot => s !== null);
+    } else if (kind === 'heal') {
+      const max = maxPool[side];
+      const hurt = allies.filter((s) => s.hpPool < max[s.id]!);
+      // The most wounded: the lowest share of what it walked in with, compared
+      // without a division.
+      targets = skill.id === 'Wave' ? hurt : hurt.length === 0 ? [] : [hurt.reduce((b, s) => {
+        const sb = s.hpPool * max[b.id]!;
+        const bs = b.hpPool * max[s.id]!;
+        return sb < bs || (sb === bs && s.id < b.id) ? s : b;
+      })];
+    } else if (kind === 'shield') {
+      const front = allies.filter((s) => s.row === 'front');
+      const t = least(front.length > 0 ? front : allies);
+      targets = t === null ? [] : [t];
+    } else if (kind === 'daze') {
+      const threat = (s: BoardSlot): number => s.dmg * Math.min(alive(s), s.frontage);
+      const t = enemies.length === 0 ? null : enemies.reduce((b, s) => (
+        threat(s) > threat(b) || (threat(s) === threat(b) && s.id < b.id) ? s : b));
+      targets = t === null ? [] : [t];
+    }
+    if (targets.length === 0) return false;
+    events.push({ kind: 'skill', tick, from: { side, id: slot.id }, skill: skill.id });
+    for (const target of targets) {
+      if (kind === 'strike') {
+        if (target.hpPool <= 0) continue;
+        if (land(tick, side, slot, target, 1, Math.floor((slot.dmg * skill.amount) / 1000), skill.id)) return true;
+      } else if (kind === 'heal') {
+        const max = maxPool[side][target.id]!;
+        const amount = Math.max(1, Math.floor((max * skill.amount) / 1000));
+        const pool = Math.min(max, target.hpPool + amount);
+        const healed = pool - target.hpPool;
+        target.hpPool = pool;
+        events.push({
+          kind: 'healed', tick, at: { side, id: target.id }, amount: healed, alive: alive(target), hpPool: pool,
+        });
+      } else if (kind === 'shield') {
+        const amount = Math.floor((slot.hpUnit * skill.amount) / 1000);
+        shield[side][target.id] = Math.max(shield[side][target.id]!, amount);
+        events.push({ kind: 'shielded', tick, at: { side, id: target.id }, amount: shield[side][target.id]! });
+      } else if (kind === 'daze') {
+        ready[foe][target.id]! += skill.amount;
+        events.push({ kind: 'dazed', tick, at: { side: foe, id: target.id }, ticks: skill.amount });
+      }
+    }
+    return false;
+  };
+
   for (let tick = 1; tick <= COMBAT.timeoutTicks; tick++) {
     for (const side of ['ours', 'theirs'] as Side[]) {
       const foe: Side = side === 'ours' ? 'theirs' : 'ours';
       for (const slot of sides[side].slots) {
         if (slot.hpPool <= 0) continue;
         ready[side][slot.id] -= 1;
-        if (ready[side][slot.id]! > 0) continue;
-        ready[side][slot.id] = slot.cooldown;
-
-        const target = pickTarget(slot, sides[foe]);
-        if (target === null) break;
-
-        const hits = Math.min(alive(slot), slot.frontage);
-        const raw = hits * Math.max(1, slot.dmg - target.def);
-        const { num, den } = fraction(slot.type, target.type);
-        const dealt = Math.floor((raw * num) / den);
-
-        const before = alive(target);
-        target.hpPool = Math.max(0, target.hpPool - dealt);
-        const after = alive(target);
-        const at: SlotRef = { side: foe, id: target.id };
-        events.push({ kind: 'attack', tick, from: { side, id: slot.id }, to: at, hits, dealt });
-        if (after !== before) {
-          events.push({ kind: 'troops_lost', tick, at, alive: after, hpPool: target.hpPool });
+        if (ready[side][slot.id]! <= 0) {
+          ready[side][slot.id] = slot.cooldown;
+          const target = pickTarget(slot, sides[foe]);
+          if (target === null) break;
+          const hits = Math.min(alive(slot), slot.frontage);
+          if (land(tick, side, slot, target, hits, slot.dmg)) return finish(tick, side, 'wiped');
         }
-        if (target.hpPool <= 0) {
-          events.push({ kind: 'slot_wiped', tick, at });
-          if (living(sides[foe]).length === 0) return finish(tick, side, 'wiped');
+        const skill = slot.skill;
+        if (skill !== undefined && skill.every > 0) {
+          skillReady[side][slot.id] -= 1;
+          if (skillReady[side][slot.id]! <= 0) {
+            skillReady[side][slot.id] = skill.every;
+            if (fire(tick, side, slot, skill)) return finish(tick, side, 'wiped');
+          }
         }
       }
     }
@@ -350,7 +487,23 @@ export function survivorsOf(log: BattleLog, side: Side): Map<number, number> {
   }
   for (const e of log.events) {
     if (e.kind === 'troops_lost' && e.at.side === side) out.set(e.at.id, e.alive);
+    if (e.kind === 'healed' && e.at.side === side) out.set(e.at.id, e.alive);
     if (e.kind === 'slot_wiped' && e.at.side === side) out.set(e.at.id, 0);
+  }
+  return out;
+}
+
+/** Each slot's health when the dust settles: what it walked in with, less
+ *  every blow, back up with every heal. A hero carries it into the next
+ *  fight (10-heroes.md §2.8). */
+export function poolsAfter(log: BattleLog, side: Side): Map<number, number> {
+  const start = log.events[0];
+  if (start?.kind !== 'start') return new Map();
+  const out = new Map<number, number>();
+  for (const s of side === 'ours' ? start.ours : start.theirs) out.set(s.id, s.hpPool);
+  for (const e of log.events) {
+    if (e.kind === 'attack' && e.to.side === side) out.set(e.to.id, Math.max(0, (out.get(e.to.id) ?? 0) - e.dealt));
+    if (e.kind === 'healed' && e.at.side === side) out.set(e.at.id, e.hpPool);
   }
   return out;
 }
@@ -385,6 +538,7 @@ export const villainFighter = (id: VillainId): FighterSpec => {
     troopDmgMult: v.troopDmgMult,
     troopHpMult: v.troopHpMult,
     troopDefBonus: v.troopDefBonus,
+    skill: slotSkill(v.skill),
   };
 };
 

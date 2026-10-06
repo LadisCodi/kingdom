@@ -1619,12 +1619,25 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
 export type HeroRarity = 'Common' | 'Rare' | 'Legendary';
 export const HERO_RARITIES: HeroRarity[] = ['Common', 'Rare', 'Legendary'];
 
-export type HeroTrait =
-  | 'PartyDefence' | 'SupplyDiscount' | 'KnowledgeBonus' | 'FragmentBonus'
-  /** How many of the fallen are carried home alive. Read where a fight's
-   *  casualties are split (Docs/features/combat.md §4) — a hero with it is
-   *  worth bringing precisely when a fight is going to be expensive. */
-  | 'WoundedRecovery';
+/**
+ * A hero's or a villain's SKILL (Docs/features/10-heroes.md §2.5,
+ * combat.md §9.3): what it does in the fights it is in. The kinds are code
+ * (`sim/skills.ts`); which one a fighter has, and its numbers, are data.
+ */
+export type SkillId =
+  | 'Sharpshot' | 'Crush' | 'Cleave' | 'Ambush' | 'Volley'
+  | 'Mend' | 'Wave' | 'Shield' | 'Daze'
+  | 'WarCry' | 'Bulwark' | 'Vigour'
+  | 'Plunder' | 'Lore' | 'Seasoned' | 'FieldMedic';
+
+/** A skill as authored at rank 1. */
+export interface SkillDef {
+  id: SkillId;
+  /** Its X at rank 1, in the skill's own unit (`sim/skills.ts`). */
+  value: number;
+  /** Seconds between two firings; 0 for a rally or spoils. */
+  every: number;
+}
 
 /** One number a Legendary moves for the whole kingdom. */
 export interface HeroBoon {
@@ -1646,9 +1659,7 @@ export interface HeroDef {
    *  matchup chart as the troops. */
   rarity: HeroRarity;
   unitType: UnitId;
-  trait: HeroTrait;
-  traitValue: number;
-  traitText: string;
+  skill: SkillDef;
   /** The body it brings to the board: it hits for `dmg` every `cooldown`
    *  ticks with a frontage of one, and dies when its `hp` runs out — which
    *  stops it attacking and nothing else (Docs/features/combat.md §9.1). */
@@ -1704,178 +1715,151 @@ export interface VillainDef {
   troopDmgMult: number;
   troopHpMult: number;
   troopDefBonus: number;
+  /** Authored at its rank, as its stat block is: a villain has no ladder. */
+  skill: SkillDef;
 }
 
 export type VillainId = keyof typeof balance.villains;
 
 export const VILLAINS: Record<VillainId, VillainDef> = Object.fromEntries(
-  Object.entries(balance.villains).map(([id, v]) => [id, { id: id as VillainId, ...v }]),
+  Object.entries(balance.villains).map(([id, raw]) => {
+    const { skill, skillValue, skillEvery, ...v } = raw;
+    return [id, { id: id as VillainId, ...v, skill: { id: skill as SkillId, value: skillValue, every: skillEvery } }];
+  }),
 ) as Record<VillainId, VillainDef>;
 
 export const VILLAIN_ORDER = Object.keys(VILLAINS) as VillainId[];
 
-const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sprite' | 'traitText'>> = {
+const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sprite'>> = {
   Warden: {
     name: 'The Warden', title: 'Shield of the old wall', glyph: '🛡️', sprite: 'hero_warden',
-    traitText: 'The whole party fights harder to stay standing (+20% defence)',
   },
   Quartermaster: {
     name: 'The Quartermaster', title: 'Counts every biscuit', glyph: '📦',
     sprite: 'hero_quartermaster',
-    traitText: 'Packs light — expeditions cost a quarter less to supply',
   },
   Scholar: {
     name: 'The Scholar', title: 'Reads what the walls say', glyph: '📖', sprite: 'hero_scholar',
-    traitText: 'Brings back half again as much Knowledge',
   },
   RelicHunter: {
     name: 'The Relic-hunter', title: 'Knows a good lair by its smell', glyph: '🗝️',
     sprite: 'hero_relic_hunter',
-    traitText: 'Finds half again as many Fragments',
   },
   Scout: {
     name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
-    traitText: 'Knows the short road — a lair costs 40% less to supply',
   },
   Adventurer: {
     name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
     sprite: 'hero_adventurer',
-    traitText: 'Brings back 25% more fragments',
   },
   Bard: {
     name: 'The Bard', title: 'Sings the road shorter', glyph: '🎻',
     sprite: 'hero_bard',
-    traitText: 'Brings back 25% more Stardust',
   },
   BeastkinHunter: {
     name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
     sprite: 'hero_beastkin_hunter',
-    traitText: 'Lives off the land — a lair costs 15% less to supply',
   },
   Cleric: {
     name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
     sprite: 'hero_cleric',
-    traitText: 'Walks the field afterwards — 15% more of the fallen reach a bed',
   },
   Cook: {
     name: 'The Cook', title: 'Makes a week of three days’ rations', glyph: '🍲',
     sprite: 'hero_cook',
-    traitText: 'Packs light — expeditions cost 15% less to supply',
   },
   Gardener: {
     name: 'The Gardener', title: 'Patient with everything that grows', glyph: '🌿',
     sprite: 'hero_gardener',
-    traitText: 'The whole party fights harder to stay standing (+20% defence)',
   },
   Joker: {
     name: 'The Joker', title: 'Pockets what nobody was watching', glyph: '🃏',
     sprite: 'hero_joker',
-    traitText: 'Brings back 25% more fragments',
   },
   Merchant: {
     name: 'The Merchant', title: 'Never pays the asking price', glyph: '⚖️',
     sprite: 'hero_merchant',
-    traitText: 'Packs light — expeditions cost 15% less to supply',
   },
   Priest: {
     name: 'The Priest', title: 'Says the words that hold a line', glyph: '🕯️',
     sprite: 'hero_priest',
-    traitText: 'Says the words over them — 15% more of the fallen reach a bed',
   },
   Rogue: {
     name: 'The Rogue', title: 'Light fingers, lighter step', glyph: '🗡️',
     sprite: 'hero_rogue',
-    traitText: 'Brings back 25% more fragments',
   },
   ThreeMice: {
     name: 'Three Mice in a Coat', title: 'Nobody has ever asked', glyph: '🐭',
     sprite: 'hero_three_mouses',
-    traitText: 'Brings back 25% more Stardust',
   },
   Sellsword: {
     name: 'The Sellsword', title: 'Paid by the day, loyal by the hour', glyph: '⚔️',
     sprite: 'hero_warrior',
-    traitText: 'The whole party fights harder to stay standing (+20% defence)',
   },
   DarkKnight: {
     name: 'The Dark Knight', title: 'Owes somebody something', glyph: '🖤',
     sprite: 'hero_dark_knight',
-    traitText: 'The whole party fights harder to stay standing (+30% defence)',
   },
   Paladin: {
     name: 'The Paladin', title: 'Has never once been late', glyph: '🛡️',
     sprite: 'hero_paladin',
-    traitText: 'Carries them out himself — 25% more of the fallen reach a bed',
   },
   Wizard: {
     name: 'The Wizard', title: 'Certain about the wrong things, loudly', glyph: '🧙',
     sprite: 'hero_wizard',
-    traitText: 'Brings back 50% more Stardust',
   },
   Witch: {
     name: 'The Witch', title: 'Knows which mushrooms', glyph: '🌙',
     sprite: 'hero_witch',
-    traitText: 'Brings back 50% more Stardust',
   },
   Druid: {
     name: 'The Druid', title: 'Eats what the road offers', glyph: '🍃',
     sprite: 'hero_druid',
-    traitText: 'Knows which leaves close a wound — 25% more of the fallen reach a bed',
   },
   IceLancer: {
     name: 'The Ice Lancer', title: 'Colder than the depth she stands in', glyph: '❄️',
     sprite: 'hero_ice_lancer',
-    traitText: 'The whole party fights harder to stay standing (+30% defence)',
   },
   HolyWarrior: {
     name: 'The Holy Warrior', title: 'Digs where the light falls', glyph: '☀️',
     sprite: 'hero_holy_warrior',
-    traitText: 'Brings back 50% more fragments',
   },
   SavageWarrior: {
     name: 'The Savage', title: 'Takes the whole door with him', glyph: '🪓',
     sprite: 'hero_savage_warrior',
-    traitText: 'Brings back 50% more fragments',
   },
   Spymaster: {
     name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
     sprite: 'hero_spymaster',
-    traitText: 'Had the road scouted already — a lair costs 25% less to supply',
   },
   ElectricArcher: {
     name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
     sprite: 'hero_electric_archer',
-    traitText: 'Brings back 50% more Stardust',
   },
   GoldenDragon: {
     name: 'The Golden Dragon', title: 'Older than the lair, and bored of it', glyph: '🐉',
     sprite: 'hero_golden_dragon',
-    traitText: 'The whole party fights harder to stay standing (+45% defence)',
   },
   VampireLord: {
     name: 'The Vampire Lord', title: 'Collects, and has done for centuries', glyph: '🦇',
     sprite: 'hero_vampire_lord',
-    traitText: 'Brings back 85% more fragments',
   },
   Necromancer: {
     name: 'The Necromancer', title: 'Asks the previous expedition', glyph: '💀',
     sprite: 'hero_necromancer',
-    traitText: 'Brings back 85% more Stardust',
   },
   Pharao: {
     name: 'The Pharaoh', title: 'Was buried with better men', glyph: '𓂀',
     sprite: 'hero_pharao',
-    traitText: 'Death waits when he says so — 40% more of the fallen reach a bed',
   },
   ElvenPrincess: {
     name: 'The Elven Princess', title: 'Travels light, and expects you to', glyph: '🌸',
     sprite: 'hero_elven_princess',
-    traitText: 'Packs light — expeditions cost 40% less to supply',
   },
 };
 
 const heroBalance = balance.heroes as Record<HeroId, {
-  rarity: string; unitType: string; trait: string; traitValue: number;
+  rarity: string; unitType: string; skill: string; skillValue: number; skillEvery: number;
   dmg: number; def: number; hp: number; cooldown: number;
   dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
   troopDmgMult: number; troopHpMult: number; troopDefBonus: number;
@@ -1889,8 +1873,7 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       ...heroContent[id],
       rarity: b.rarity as HeroRarity,
       unitType: b.unitType as UnitId,
-      trait: b.trait as HeroTrait,
-      traitValue: b.traitValue,
+      skill: { id: b.skill as SkillId, value: b.skillValue, every: b.skillEvery },
       dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
       dmgPerLevel: b.dmgPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
       troopDmgMult: b.troopDmgMult,
@@ -2445,4 +2428,4 @@ export const GAME_VERSION: string = pkg.version;
 // (`ExplorersBought` on the world), additive.
 // v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
 // on `kingdom.heroes` (a migrator).
-export const SAVE_VERSION = 102;
+export const SAVE_VERSION = 103;

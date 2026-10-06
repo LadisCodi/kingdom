@@ -1130,6 +1130,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Levels: state.heroes.levels,
         Ascension: state.heroes.ascension,
         Fragments: state.heroes.fragments,
+        SkillRanks: state.heroes.skillRanks,
         HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
         Hurt: Object.fromEntries(Object.entries(state.heroes.hurt)
           .map(([id, h]) => [id, { Missing: h!.missing, AtUtc: iso(h!.at), Exhausted: h!.exhausted === true }])),
@@ -1168,6 +1169,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Hoard: g!.hoard,
           Defeated: g!.defeated,
           Cleared: g!.cleared,
+          ...(g!.spoils ? { Spoils: { Lore: g!.spoils.lore, Seasoned: g!.spoils.seasoned } } : {}),
         })),
       },
       // A relic is a level and a cast clock. The passives are re-derived on
@@ -1629,6 +1631,7 @@ export function deserialize(
       levels: { ...(heroesDto.Levels ?? {}) },
       ascension: { ...(heroesDto.Ascension ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
+      skillRanks: { ...(heroesDto.SkillRanks ?? {}) },
       // `PartySlotsPurchased` is gone: every troop slot is open from the
       // start, so an older save's count is simply not read.
       heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
@@ -1695,6 +1698,7 @@ export function deserialize(
         // was beaten, so a cleared one was also defeated.
         defeated: g.Defeated === true || g.Cleared === true,
         cleared: g.Cleared === true,
+        ...(g.Spoils ? { spoils: { lore: g.Spoils.Lore ?? 0, seasoned: g.Spoils.Seasoned ?? 0 } } : {}),
       };
     }
   }

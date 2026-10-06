@@ -246,3 +246,23 @@ button.hc { cursor: pointer; }
 }
 .hp-go { display: flex; justify-content: center; }
 .hp-go > .k-btn { min-width: 60%; }
+
+/* The skill's rank past the first, top right: a brass roman numeral. */
+.hc-rank {
+  position: absolute;
+  z-index: 3;
+  top: calc(var(--hc-w) * 0.04);
+  right: calc(var(--hc-w) * 0.05);
+  min-width: calc(var(--hc-w) * 0.2);
+  padding: 0 calc(var(--hc-w) * 0.03);
+  border-radius: calc(var(--hc-w) * 0.05);
+  background: linear-gradient(#f3d47a, #b8862e);
+  border: calc(var(--hc-w) * 0.015) solid var(--wood-dark);
+  color: var(--wood-dark);
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--hc-w) * 0.13);
+  line-height: 1.25;
+  text-align: center;
+}
+.hc.is-picked .hc-rank { display: none; }

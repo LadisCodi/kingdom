@@ -3,11 +3,38 @@
   "fields": {
     "rarity": { "type": "text", "options": ["Common", "Rare", "Legendary"] },
     "unitType": { "type": "text", "ref": "unit" },
-    "trait": {
+    "skill": {
       "type": "text",
-      "options": ["PartyDefence", "SupplyDiscount", "KnowledgeBonus", "FragmentBonus", "WoundedRecovery"]
+      "options": [
+        "Sharpshot",
+        "Crush",
+        "Cleave",
+        "Ambush",
+        "Volley",
+        "Mend",
+        "Wave",
+        "Shield",
+        "Daze",
+        "WarCry",
+        "Bulwark",
+        "Vigour",
+        "Plunder",
+        "Lore",
+        "Seasoned",
+        "FieldMedic"
+      ],
+      "doc": "What it does in the fights it is in (Docs/features/10-heroes.md §2.5). No skill twice within a rarity."
     },
-    "traitValue": { "type": "float" },
+    "skillValue": {
+      "type": "float",
+      "min": 0,
+      "doc": "At rank 1: % of its damage (a strike), % of max HP (a heal), % of its HP (a shield), seconds (a daze), % (a rally or spoils), DEF (Bulwark), points (Field medic)."
+    },
+    "skillEvery": {
+      "type": "float",
+      "min": 0,
+      "doc": "Seconds between two firings of a timed skill; 0 for a rally or spoils."
+    },
     "dmg": { "type": "int" },
     "def": { "type": "int" },
     "hp": { "type": "int", "min": 1 },
