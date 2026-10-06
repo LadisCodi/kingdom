@@ -27,7 +27,7 @@ import {
 import { techFlat, techMultiplier } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
-import { PORTAL_INDEX, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
+import { PORTAL_INDICES, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
 import { boardOf } from './source';
 import { payScout, type ScoutPay } from './scouting';
 import { fastestRoute, homeboundMs, outboundMs, type Route } from './travel';
@@ -119,24 +119,24 @@ function revealInto(bits: HexBits, trip: ExplorerTrip): void {
 
 export type FogState = 'Revealed' | 'Sensed' | 'Unknown';
 
-/** Every hex the player can see at `t`: the folded bitset, the city and the
- *  Portal, and whatever the explorers out have reached so far. */
+/** Every hex the player can see at `t`: the folded bitset, the city and
+ *  every Portal, and whatever the explorers out have reached so far. */
 export function worldFogAt(state: GameState, t: number): HexBits {
   const bits = copyBits(state.world.revealed);
   setBit(bits, homeIndex(state));
-  setBit(bits, PORTAL_INDEX);
+  for (const portal of PORTAL_INDICES) setBit(bits, portal);
   for (const trip of state.world.explorers) if (t >= revealsAt(trip)) revealInto(bits, trip);
   return bits;
 }
 
 /**
  * A hex is Revealed if the player can see it, Sensed if it is next to a hex
- * the player revealed, and Unknown otherwise. The Portal, revealed for
+ * the player revealed, and Unknown otherwise. A Portal, revealed for
  * everyone, senses nothing (19 §3).
  */
 export function fogStateOf(state: GameState, index: number, t: number, fog: HexBits = worldFogAt(state, t)): FogState {
   if (hasBit(fog, index)) return 'Revealed';
-  const sensed = boardNeighbors(index).some((n) => n !== PORTAL_INDEX && hasBit(fog, n));
+  const sensed = boardNeighbors(index).some((n) => !PORTAL_INDICES.includes(n) && hasBit(fog, n));
   return sensed ? 'Sensed' : 'Unknown';
 }
 
@@ -238,11 +238,11 @@ function foldHome(state: GameState, trip: ExplorerTrip): ExplorerHome {
   const before = countBits(state.world.revealed);
   // Its target pays its promise, once: only if the stored fog had not
   // revealed it yet.
-  const fresh = !hasBit(state.world.revealed, trip.target) && trip.target !== homeIndex(state) && trip.target !== PORTAL_INDEX;
+  const fresh = !hasBit(state.world.revealed, trip.target) && trip.target !== homeIndex(state) && !PORTAL_INDICES.includes(trip.target);
   revealInto(state.world.revealed, trip);
-  // The city and the Portal are always revealed; they are never stored.
+  // The city and the Portals are always revealed; they are never stored.
   clearBit(state.world.revealed, homeIndex(state));
-  clearBit(state.world.revealed, PORTAL_INDEX);
+  for (const portal of PORTAL_INDICES) clearBit(state.world.revealed, portal);
   const paid = fresh ? payScout(state, boardOf(state.world.board).hexes[trip.target]) : null;
   return { id: trip.id, target: trip.target, revealed: countBits(state.world.revealed) - before, paid };
 }

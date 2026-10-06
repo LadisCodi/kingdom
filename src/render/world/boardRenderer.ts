@@ -23,7 +23,7 @@ import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
   arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
-import { PORTAL_INDEX, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
+import { PORTAL_INDICES, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
 import { crestOf, type Crest } from '../../sim/crest';
 import { chargeUrl, fieldUrl } from '../../ui/crestArt';
@@ -326,14 +326,17 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       going ? null : formatCount(exploreGold(state, bh.index)));
   }
 
-  // The Portal's appointment, over its hex: when it opens, or how long it
-  // has left (19 §10.1).
+  // The Portals' appointment, over each: when they open, or how long they
+  // have left (19 §10.1) — all seven on the world's one clock.
   const portal = source.portal();
   if (portal !== null) {
-    const c = camera.hexToScreen(hexAt(PORTAL_INDEX));
     const left = Math.max(0, ((portal.open ? portal.closesAt : portal.opensAt) - now) / 1000);
-    drawPill(ctx, camera, c.x, c.y - camera.hexRadius * 0.75,
-      portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
+    for (const index of PORTAL_INDICES) {
+      const c = camera.hexToScreen(hexAt(index));
+      if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 3 || c.y > h + r * 3) continue;
+      drawPill(ctx, camera, c.x, c.y - camera.hexRadius * 0.75,
+        portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
+    }
   }
 
   // Under every city the player can see, its kingdom's name on a plank

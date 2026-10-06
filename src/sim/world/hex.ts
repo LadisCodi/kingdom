@@ -6,8 +6,13 @@
 // and that is the only distance the board ever counts.
 //
 // Axial `(q, r)`: `q` grows to the east, `r` to the south-east, and the third
-// cube coordinate is `-q - r`. The board is every hex within BOARD_RADIUS of
-// the centre, which is the Dark Portal.
+// cube coordinate is `-q - r`.
+//
+// THE WORLD is mini-boards in a honeycomb (Docs/plans/precious-deposits.md
+// §3): each every hex within BOARD_RADIUS of its centre, a Dark Portal; the
+// middle one at the origin and `WORLD_RINGS` rings of them round it. To the
+// player it is one board; rings, wedges and seats are counted on the
+// mini-board a hex belongs to.
 
 export interface Hex { q: number; r: number }
 
@@ -23,8 +28,11 @@ export const HEX_DIRS: readonly Hex[] = [
   { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
 ];
 
-/** Rings from the centre to the rim: 127 hexes. */
+/** Rings from a mini-board's centre to its rim: 127 hexes each. */
 export const BOARD_RADIUS = 6;
+
+/** Rings of mini-boards round the middle one: 0 is one board, 1 is seven. */
+export const WORLD_RINGS = 0;
 
 export const hexAdd = (a: Hex, b: Hex): Hex => ({ q: a.q + b.q, r: a.r + b.r });
 export const hexScale = (a: Hex, k: number): Hex => ({ q: a.q * k + 0, r: a.r * k + 0 });
@@ -37,8 +45,8 @@ export const hexDistance = (a: Hex, b: Hex): number => {
   return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
 };
 
-/** Which ring of the board a hex is on: 0 is the Portal. */
-export const ringOf = (h: Hex): number => hexDistance(h, { q: 0, r: 0 });
+/** Which ring of its mini-board a hex is on: 0 is its Portal. */
+export const ringOf = (h: Hex): number => hexDistance(h, centreOf(h));
 
 /** A sixth of a turn about the centre: HEX_DIRS[i] becomes HEX_DIRS[i + 1]. */
 export const rotate60 = (h: Hex): Hex => ({ q: h.q + h.r, r: 0 - h.q });
@@ -107,43 +115,97 @@ function cubeRound(x: number, y: number, z: number): Hex {
   return { q: rx + 0, r: rz + 0 };
 }
 
-// ------------------------------------------------------------- the board
+// ------------------------------------------------------------- the world
 
-/** Every hex of the board in its canonical order — by row (`r`), then by `q`
- *  — which is what a hex's INDEX means everywhere: the fog bitset, a march's
- *  path, the save. The Portal at the centre is index 63. */
-export const BOARD_HEXES: readonly Hex[] = (() => {
-  const out: Hex[] = [];
-  for (let r = -BOARD_RADIUS; r <= BOARD_RADIUS; r++) {
-    for (let q = -BOARD_RADIUS; q <= BOARD_RADIUS; q++) {
-      if (ringOf({ q, r }) <= BOARD_RADIUS) out.push({ q, r });
+/** From one mini-board's centre to the next: hexagons of radius R tile the
+ *  plane 2R + 1 apart, this way round. */
+const BOARD_STEP: Hex = { q: 2 * BOARD_RADIUS + 1, r: -BOARD_RADIUS };
+
+/** Every mini-board's centre — its Portal: the middle one first, then ring
+ *  by ring, each ring from the east round the way HEX_DIRS turns. A
+ *  mini-board's number is its place here. */
+export const BOARD_CENTRES: readonly Hex[] = (() => {
+  const out: Hex[] = [{ q: 0, r: 0 }];
+  for (let k = 1; k <= WORLD_RINGS; k++) {
+    // Ring k of the honeycomb, walked as hexRing walks hexes, on the board
+    // lattice whose unit steps are BOARD_STEP turned.
+    const step = (d: number) => rotateBy(BOARD_STEP, d);
+    let c = hexScale(step(0), k);
+    for (let side = 0; side < 6; side++) {
+      for (let i = 0; i < k; i++) {
+        out.push(c);
+        c = hexAdd(c, step((side + 2) % 6));
+      }
     }
   }
   return out;
+})();
+
+export const BOARD_COUNT = BOARD_CENTRES.length;
+
+const BOARD_OF = new Map<string, number>();
+BOARD_CENTRES.forEach((c, b) => {
+  for (const h of hexesWithin(c, BOARD_RADIUS)) BOARD_OF.set(`${h.q},${h.r}`, b);
+});
+
+/** Which mini-board a hex is on, or -1 off the world. */
+export const miniBoardOf = (h: Hex): number => BOARD_OF.get(`${h.q},${h.r}`) ?? -1;
+
+/** The centre of the mini-board a hex is on — or, off the world, of the
+ *  nearest one. */
+export function centreOf(h: Hex): Hex {
+  const b = miniBoardOf(h);
+  if (b >= 0) return BOARD_CENTRES[b];
+  let best = BOARD_CENTRES[0];
+  for (const c of BOARD_CENTRES) if (hexDistance(h, c) < hexDistance(h, best)) best = c;
+  return best;
+}
+
+/** A hex as its mini-board sees it: from that board's centre. */
+export const localHex = (h: Hex): Hex => {
+  const c = centreOf(h);
+  return { q: h.q - c.q, r: h.r - c.r };
+};
+
+/** A mini-board's local hex placed in the world. */
+export const worldHex = (board: number, local: Hex): Hex => hexAdd(BOARD_CENTRES[board], local);
+
+/** Every hex of the world in its canonical order — by row (`r`), then by
+ *  `q` — which is what a hex's INDEX means everywhere: the fog bitset, a
+ *  march's path, the save. On a world of one board, the Portal is 63. */
+export const BOARD_HEXES: readonly Hex[] = (() => {
+  const out = [...BOARD_OF.keys()].map((k) => {
+    const [q, r] = k.split(',').map(Number);
+    return { q, r };
+  });
+  return out.sort((a, b) => a.r - b.r || a.q - b.q);
 })();
 
 export const BOARD_SIZE = BOARD_HEXES.length;
 
 const INDEX = new Map<string, number>(BOARD_HEXES.map((h, i) => [`${h.q},${h.r}`, i]));
 
-/** A hex's index on the board, or -1 when it is off it. */
+/** A hex's index in the world, or -1 when it is off it. */
 export const hexIndex = (h: Hex): number => INDEX.get(`${h.q},${h.r}`) ?? -1;
 
 export const hexAt = (index: number): Hex => BOARD_HEXES[index];
 
-export const onBoard = (h: Hex): boolean => ringOf(h) <= BOARD_RADIUS;
+export const onBoard = (h: Hex): boolean => INDEX.has(`${h.q},${h.r}`);
 
 export const isBoardIndex = (index: unknown): index is number =>
   Number.isInteger(index) && (index as number) >= 0 && (index as number) < BOARD_SIZE;
 
-/** The Portal's index. */
-export const PORTAL_INDEX = hexIndex({ q: 0, r: 0 });
+/** Every Portal's index, by mini-board. */
+export const PORTAL_INDICES: readonly number[] = BOARD_CENTRES.map(hexIndex);
 
-/** The neighbours of a hex that are on the board, as indices, in HEX_DIRS
- *  order. */
+/** The middle mini-board's Portal. */
+export const PORTAL_INDEX = PORTAL_INDICES[0];
+
+/** The neighbours of a hex that are in the world, as indices, in HEX_DIRS
+ *  order — across a seam as anywhere else. */
 export const boardNeighbors = (index: number): number[] =>
   hexNeighbors(hexAt(index)).map(hexIndex).filter((i) => i >= 0);
 
-/** The board hexes within `radius` steps of a hex, as indices. */
+/** The world's hexes within `radius` steps of a hex, as indices. */
 export const boardWithin = (index: number, radius: number): number[] =>
   hexesWithin(hexAt(index), radius).map(hexIndex).filter((i) => i >= 0);
