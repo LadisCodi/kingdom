@@ -1937,8 +1937,9 @@ export interface BannerDef {
   legendaryPityAt: number;
   weights: Record<HeroRarity, number>;
   duplicateFragments: number;
-  /** The hero standing on this banner in the store; null → its key. */
-  featuredHero: HeroId | null;
+  /** The store stands a hero of its rarest rarity on this banner, a new one
+   *  each visit; false → its key. */
+  showsHero: boolean;
   fragmentsPerMiss: number;
   pullStardust: number;
   /** Free pulls a day for a rewarded ad, and how long between them. */

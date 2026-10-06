@@ -335,3 +335,24 @@ describe('the grouped offers widget', () => {
     }
   });
 });
+
+describe('a visit to the store', () => {
+  it('counts an opening, not a return from its confirmation or a splash', async () => {
+    const { freshPresenter } = await import('./helpers');
+    const state = shop();
+    const game = freshPresenter(state);
+    refreshOffers(state, game.now());
+    game.openStore();
+    expect(game.storeVisits).toBe(1);
+    game.openIap('GemsPouch', 'store');
+    game.setOverlay('store');
+    expect(game.storeVisits).toBe(1);
+    game.openOfferSplash('NovicePack1' as StoreSkuId, true);
+    game.closeOfferSplash();
+    expect(game.openOverlay).toBe('store');
+    expect(game.storeVisits).toBe(1);
+    game.setOverlay(null);
+    game.openStore();
+    expect(game.storeVisits).toBe(2);
+  });
+});
