@@ -419,7 +419,9 @@ export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number }
   // A card pack, which a room pays and a call never does.
-  | { kind: 'currency'; currency: CurrencyId; amount: number };
+  | { kind: 'currency'; currency: CurrencyId; amount: number }
+  // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
+  | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
 
 /**
  * A sequence of prizes, dealt one at a time.
@@ -1865,8 +1867,17 @@ export class Game {
     const result = openFragmentPack(this.state);
     if (result.kind === 'Opened') {
       playSfx('gemSpend');
-      const names = [...new Set(result.drops.map((d) => ARTIFACTS[d.relic].name))];
-      this.toast(`${formatExact(result.drops.length)} fragments: ${names.join(', ')}`);
+      // Dealt on the gacha's reveal, one piece at a time, same piece counted
+      // once; they fly to the Bag as the reveal closes (ui/rewardFly.ts).
+      const prizes: GachaPrize[] = [];
+      for (const d of result.drops) {
+        const same = prizes.find((p) => p.kind === 'relicFragment' && p.relic === d.relic && p.slot === d.slot);
+        if (same !== undefined && same.kind === 'relicFragment') same.amount += 1;
+        else prizes.push({ kind: 'relicFragment', relic: d.relic, slot: d.slot, amount: 1 });
+      }
+      // The keystones last, as heroes come last on a call: what the pack is for.
+      prizes.sort((a, b) => Number(a.kind === 'relicFragment' && a.slot === 5) - Number(b.kind === 'relicFragment' && b.slot === 5));
+      this.gachaReveal = { prizes, caption: 'Relic fragments' };
     } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }

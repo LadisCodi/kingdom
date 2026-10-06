@@ -21,6 +21,16 @@
   filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
 }
 
+/* Something on its way to the Bag: its own picture, a size up from a coin. */
+.rf-frag.is-bag > .icon { --icon-size: calc(var(--rpx) * 90); }
+.rf-bag-art {
+  display: block;
+  width: calc(var(--rpx) * 100);
+  height: calc(var(--rpx) * 100);
+  object-fit: contain;
+  filter: drop-shadow(0 calc(var(--rpx) * 4) calc(var(--rpx) * 4) rgba(40, 22, 10, 0.45));
+}
+
 /* The flash at the claim. */
 .rf-ring {
   position: absolute;

@@ -110,6 +110,21 @@
   border-radius: calc(var(--px) * 4);
   background: rgba(24, 15, 8, 0.7);
 }
+/* A RELIC FRAGMENT: its own piece of the relic, smooth art, the relic's name
+   under it; the keystone in the hero's gold frame — what the pack is for. */
+.gr-tile.is-relic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--px) * 6) calc(var(--px) * 3) calc(var(--px) * 3);
+}
+.gr-tile.is-relic .gr-art { flex: 1; min-height: 0; width: 80%; image-rendering: auto; object-position: center; }
+.gr-tile.is-relic .gr-tag { position: static; align-self: stretch; font-size: calc(var(--px) * 11); text-align: center; line-height: 1.15; white-space: normal; overflow: visible; text-overflow: clip; }
+.gr-tile.is-relic .gr-count { top: calc(var(--px) * 3); bottom: auto; }
+.gr-tile.is-relic.is-keystone {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 14) rgba(242, 178, 51, 0.75);
+}
 /* ---- a card and a pack (Docs/features/09-relics.md §11.5) --------------
  * The reveal deals cards now as well as calls. A card carries three things a
  * hero tile never did — its rarity ABOVE it, its name on a ribbon, and
