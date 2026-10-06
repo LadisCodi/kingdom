@@ -6,8 +6,7 @@
 /* THE WHOLE FRAME between the header and the bottom, not the tall sheet's
    frame less a strip of sky (kit.css): #overlay already pads itself by the
    header, so 100% hides nothing, and the strip was exactly the scroll a
-   phone had to do to reach the button. The pass screen bends the same rule
-   for the same reason (pass.css). */
+   phone had to do to reach the button. */
 .k-sheet.is-tall.is-board { max-height: 100%; }
 /* …AND THE WHOLE WIDTH: the frame's wood reaches the device's edges on the
    narrowest phone (the iPhone X), stepping over #overlay's 16-px side gutter,

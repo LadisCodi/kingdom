@@ -61,7 +61,7 @@ describe('the up-front Gem faucet', () => {
 describe('the Gem sinks the faucet has to reach', () => {
   // Promise 3: every paid ladder is earned FIRST. With the ruin first-clear
   // Gems gone (OQ-111) the up-front faucet NO LONGER reaches the second
-  // builder by play alone — the season pass's free column has to carry it. This
+  // builder by play alone. This
   // asserts the gap rather than hiding it: when OQ-111 is argued and a source
   // comes back, flip it to `toBeGreaterThanOrEqual`.
   it('falls short of the second builder since the ruin Gems left (OQ-111)', () => {

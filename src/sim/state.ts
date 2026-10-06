@@ -92,11 +92,8 @@ export type TomeId = 'Kingdom' | 'Sagas' | 'Atlas';
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
   | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
-  /** The season pass's paid column, for one season: it grants nothing on
-   *  purchase and opens the levels already reached (sim/pass.ts). */
-  | 'SeasonPass'
-  /** The Survey's paid column, once for the whole province: the same shape
-   *  (sim/survey.ts). */
+  /** The Survey's paid column, once for the whole province: it grants nothing
+   *  on purchase and opens the levels already reached (sim/survey.ts). */
   | 'Survey'
   /** The Bag's bundles: items for money (Docs/proposals/inventory.md §5). */
   | 'SpeedupSatchel' | 'SpeedupCrate' | 'SpeedupChest' | 'ResourceSack' | 'ResourceCart' | 'BuildersCrate';
@@ -373,63 +370,6 @@ export interface LairState {
 }
 
 /**
- * WHAT KIND OF ERRAND a mission is. The id is what the roll scores, so it is
- * stable for the life of a save: adding a fourteenth kind inserts one score
- * and leaves the other thirteen in the same relative order.
- */
-export type MissionKind =
-  | 'Population' | 'UpgradeDistricts' | 'RaiseTownhall' | 'CollectResource'
-  | 'DiscoverCells' | 'BuildDistricts' | 'TrainTroops' | 'LevelHeroes'
-  | 'UseItems';
-
-/**
- * WHAT ONE MISSION PAYS, besides the pass XP every mission pays.
- *
- * ONE THING, rolled when the mission is issued and stored on it — so it can be
- * read off the board before the work is done, which is what lets a player pick
- * what to do next by what it pays. A reward decided at CLAIM time would be a
- * surprise, and a surprise cannot be chosen between.
- *
- * Mana is a FRACTION OF THE POOL rather than an amount, the ad reward's rule:
- * a reward priced in the player's own production is worth the same fraction of
- * an afternoon at every stage of the game.
- */
-export type MissionReward =
-  | { kind: 'Gems'; amount: number }
-  | { kind: 'Mana'; fraction: number }
-  | { kind: 'Fragments'; n: number };
-
-/**
- * ONE ERRAND ON THE BOARD (sim/missions.ts).
- *
- * RELATIVE, always: `meter` names an odometer on `state.tallies` and `base` is
- * what it read the moment this was issued, so progress is `tally - base` and
- * nothing that happened before counts. There is no counter of its own to keep
- * in step with the sim.
- */
-export interface Mission {
-  uniqueId: string;
-  kind: MissionKind;
-  /** The odometer key this watches — `levels`, `collect:Wood`, `rooms`. */
-  meter: string;
-  /** That odometer's reading when this was issued. */
-  base: number;
-  /** How much more of it the mission asks for. */
-  target: number;
-  /** What the mission is ABOUT, when its kind is scoped: the currency to
-   *  collect. Carried so the label and the icon need no second lookup. */
-  subject: CurrencyId | null;
-  /** What finishing it pays. Rolled at issue, so the board can show it. */
-  reward: MissionReward;
-  /** The window that issued it, and what it was issued for — the rng key, so
-   *  re-rolling the same window is bit-identical. */
-  window: number;
-  slot: number;
-  /** Set once the reward has been taken. A claimed mission leaves the board. */
-  claimed: boolean;
-}
-
-/**
  * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
  *
  * Everything a trip will ever do is priced when it leaves: its path, its
@@ -526,39 +466,6 @@ export interface GameState {
      *  the player's local day (Docs/proposals/lairs.md §4.1), and the sim has
      *  no clock of its own to find out where that day is. */
     utcOffsetMinutes: number;
-    /**
-     * THE SEASON PASS (sim/pass.ts). Kingdom-scoped, like Knowledge: a habit
-     * is a property of the player, not of the city they happen to be
-     * playing. NOT on `state.collection`, which is wiped
-     * whole at the close.
-     */
-    pass: {
-      /** The `seasonAt` occurrence everything below belongs to. A stale one
-       *  reads as a fresh, empty pass — the same pull rule the chest follows,
-       *  so a season turns over with nothing scheduled. */
-      season: number;
-      /** Pass XP earned this season. Levels are DERIVED from it. */
-      xp: number;
-      /** Which cells of each column have been taken, by level. Claimed cell
-       *  by cell and out of order — buying the pass on level 12 leaves twelve
-       *  paid cells waiting — so neither can be a count. */
-      claimedFree: number[];
-      claimedPaid: number[];
-      /** The occurrence the paid column was bought for, or null. A comparison
-       *  rather than a flag, so nothing has to clear it. */
-      paidSeason: number | null;
-      /** The board. At most `MISSIONS.boardSize`; nothing on it expires. */
-      live: Mission[];
-      /** The last eight-hour window ISSUED FOR — a stamp, not a cursor. A
-       *  window that passed while the board was full is never owed later. */
-      lastWindow: number;
-      /** How many of each kind have been issued in `week`, so a board cannot
-       *  fill with eight of the same errand. */
-      issuedThisWeek: Partial<Record<MissionKind, number>>;
-      /** The Monday-aligned week `issuedThisWeek` belongs to. Stale reads as
-       *  an empty quota, the same pull rule as `season`. */
-      week: number;
-    };
     /** THE SURVEY (sim/survey.ts): one ladder over the whole province. Its
      *  level is derived from the cells revealed; what is stored is what has
      *  been taken, and whether the paid column is bought. It never resets. */
@@ -742,12 +649,6 @@ export interface GameState {
      */
     charges: Partial<Record<ArtifactId, number>>;
   };
-  /**
-   * The card collection — the live season only. Wiped whole at the close, so
-   * every field here is a season's worth and none of it crosses the boundary
-   * (sim/collection.ts).
-   */
-  /** Upgrade levels (instant, gold-bought); absent = level 0. */
   /** The modifier stack: artifact passives (permanent), actives and seasons
    *  (timed). Kingdom-scoped concepts, so this sits beside `upgrades` at the
    *  top level rather than inside `city`. See sim/modifiers.ts. */
@@ -758,32 +659,19 @@ export interface GameState {
    *  when it tops the house up — null once it has. */
   quests: { index: number; progress: number; rush?: { index: number; at: number | null } };
   /**
-   * THE LIFETIME ODOMETERS the season pass's missions read (sim/events.ts).
-   *
-   * One key per thing the sim announces — `levels`, `troops`, `collect:Wood`,
-   * `levels:Townhall` — and every one of them only ever goes UP. A mission is
-   * relative: it stores a BASE reading and asks for `meter - base`, which is
-   * only honest against a counter that cannot fall. `army.length` falls when a
-   * room kills soldiers and `wallet.Wood` falls when it is spent; baselining
-   * either would un-progress a mission, which reads as the game taking
-   * something back.
-   *
-   * TOP LEVEL, outside every season-stamped block, and deliberately: a live
-   * mission's base is a reading of one of these, so a wipe that touched them
-   * would silently move every mission on the board. A key nobody has bumped
-   * reads as 0, so nothing here needs initialising or migrating.
+   * THE LIFETIME ODOMETERS (sim/events.ts): one key per thing the sim
+   * announces — `levels`, `troops`, `collect:Wood`, `signal:<key>` — and every
+   * one of them only ever goes UP. Nothing in the game reads them; they are
+   * for the person reading a playtester's save (Docs/playtest.md §5). A key
+   * nobody has bumped reads as 0, so nothing here needs initialising or
+   * migrating.
    */
   tallies: Record<string, number>;
   /**
    * Set ONLY around the load path's catch-up advance (sim/save.ts), and the
-   * one thing that reads it is the odometer above.
-   *
-   * THE MISSIONS ARE ACTIVE-PLAY-ONLY, which is the single place in this
-   * codebase where offline replay and live ticking are meant to DISAGREE.
-   * Invariant 1 still holds inside each mode — a six-hour replay in one call
-   * and in six steps both run with this set and agree exactly, and the live
-   * path agrees with itself — and the exception is confined to `tallies`.
-   * Nothing else may read this flag.
+   * one thing that reads it is the odometer above: the tallies count active
+   * play only, so a replayed absence moves none of them. Nothing else may
+   * read this flag.
    *
    * Transient, like `lastCollectTapAt`: never saved, false on load.
    */

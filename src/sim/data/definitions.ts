@@ -2278,7 +2278,6 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
-  SeasonPass: { name: 'The season pass', description: 'The pass\u2019s second column, for the whole season.', sprite: 'season_pass' },
   Survey: { name: 'The Royal Survey', description: 'The Survey\u2019s second column, for the whole province.', sprite: 'season_pass' },
   // The Bag's bundles (Docs/proposals/inventory.md §5): speed-ups in a
   // satchel, a crate, a chest; choice chests in a sack and a cart; and the
@@ -2354,37 +2353,6 @@ export const FRIENDS = balance.friends as {
   gems: number[];
   /** An item a milestone puts in the Bag, or '' for none. */
   items: string[];
-};
-
-/** The season pass — Docs/features/20-season-pass.md. Two reward columns as
- *  parallel lists, one per reward kind; their length IS the ladder's. A pack column holds a `PackTier` or `''` for no pack at
- *  that rung, so the INDEX IS THE RUNG and a gap may never close up. */
-export const PASS = balance.pass as {
-  /** The length of the shared 28-day calendar (`sim/seasonClock.ts`). */
-  seasonDays: number;
-  missionXp: number;
-  levelXpBase: number;
-  levelXpGrowth: number;
-  freeFragments: number[]; freeGems: number[]; freeGoldKeys: number[]; freeStardust: number[];
-  paidFragments: number[]; paidGems: number[]; paidGoldKeys: number[]; paidStardust: number[];
-  /** An item a level puts in the Bag, or '' for none, per column. */
-  freeItems: string[]; paidItems: string[];
-};
-
-/** The missions that feed the pass — Docs/features/20-season-pass.md §3. A
- *  `*Band` is `[min, max]`, inclusive; the collect band is in MINUTES of the
- *  city's own production rather than in units. */
-export const MISSIONS = balance.missions as {
-  boardSize: number; perWindow: number; windowHours: number; weeklyQuota: number;
-  collectMinutesMin: number; collectMinutesMax: number; collectFloor: number;
-  populationBand: number[]; upgradeBand: number[]; revealBand: number[];
-  buildBand: number[]; troopsBand: number[]; heroLevelBand: number[];
-  itemsBand: number[];
-  /** The kinds that cannot be finished inside one session — they wait on a
-   *  builder, a delve or a technology. They pay a pack; everything else rolls. */
-  hardKinds: string[];
-  hardFragments: number; normalFragments: number;
-  rewardGems: number; rewardManaFraction: number;
 };
 
 // ------------------------------------------------------------ the timeline
@@ -2498,4 +2466,5 @@ export const GAME_VERSION: string = pkg.version;
 // v94: a Shrine's relic (`Hosts` on a district), a zone's footprint (`W`,
 // `H` on a modifier's area), additive.
 // v96: the friends' reward path (`Friends` on the kingdom), additive.
-export const SAVE_VERSION = 96;
+// v97: the season pass goes — `Pass` leaves the kingdom (a migrator).
+export const SAVE_VERSION = 97;

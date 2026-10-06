@@ -25,10 +25,8 @@ import artifacts from './game/artifacts.json';
 import currencies from './game/currencies.json';
 import relics from './game/relics.json';
 import quests from './game/quests.json';
-import pass from './game/pass.json';
 import survey from './game/survey.json';
 import social from './game/social.json';
-import missions from './game/missions.json';
 import heroLadder from './game/heroLadder.json';
 import store from './game/store.json';
 import items from './game/items.json';
@@ -57,10 +55,8 @@ const balance = {
   "currencies": currencies,
   ...relics,
   "quests": quests,
-  ...pass,
   ...survey,
   ...social,
-  ...missions,
   ...heroLadder,
   "store": store,
   "items": items,

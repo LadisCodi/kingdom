@@ -340,7 +340,7 @@ the nth point ever bought with Gold costs  knowledge.goldPriceBase × n^knowledg
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
 | **Knowledge** | technologies | the drip, lumps from landmarks, lairs, dungeon rooms, quests and events, Gold, Gems | kingdom | its tab under the plank (§3) |
-| **Stardust** | the hero ascension toll (`src/sim/heroes.ts`; [`10-heroes.md`](10-heroes.md) §4) | dungeon rooms and Portal floors (`worldDungeon.stardust`), calls (`banners.pullStardust` 50 / 150), the chain (`rewardStardust`, 140 total), the season pass and the survey | kingdom | the hero screens |
+| **Stardust** | the hero ascension toll (`src/sim/heroes.ts`; [`10-heroes.md`](10-heroes.md) §4) | dungeon rooms and Portal floors (`worldDungeon.stardust`), calls (`banners.pullStardust` 50 / 150), the chain (`rewardStardust`, 140 total) and the Survey | kingdom | the hero screens |
 
 - One job each. `knowledgeYield` multiplies a Knowledge lump; `stardustYield`
   is read by nothing (**OQ-113**).

@@ -26,7 +26,6 @@
 #app.in-world #map, #app.in-world .map-layer { visibility: hidden; }
 #app.in-world #quest,
 #app.in-world #daily,
-#app.in-world #season,
 #app.in-world #survey,
 #app.in-world #edge,
 #app.in-world #panel { display: none; }
