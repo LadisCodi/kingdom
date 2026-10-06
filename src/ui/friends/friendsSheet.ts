@@ -13,10 +13,10 @@
 
 import type { Game } from '../../game';
 import { lastSeenWords, type FriendsTab, type RankedKingdom } from '../../friendsClient';
-import { FRIENDS } from '../../sim/data/definitions';
+import { FRIEND_HELP, FRIENDS } from '../../sim/data/definitions';
 import { crestId } from '../../sim/crest';
 import type { KingdomView } from '../../socialServer/types';
-import { el, formatExact } from '../format';
+import { el, formatCountdown, formatExact } from '../format';
 import { btn, knob, sectionHead, sheet } from '../kit';
 import { expiresWords, inboxPane } from './inboxPane';
 import { tradePane } from './tradePane';
@@ -133,17 +133,41 @@ function friendsPanel(game: Game): HTMLElement {
   const f = game.friends;
   // The player is ranked with their friends, but drawn pinned above: the
   // list holds only the friends, their places counting the player's.
+  const now = game.now();
+  const left = f.snap?.helpsLeft ?? 0;
   const rows = f.ranked().filter((k) => !k.isMe).map((k) => kingdomRow(k, {
     rank: k,
     onTap: () => f.openProfile(k.code),
-    trailing: [el('span', { class: `fr-seen${lastSeenWords(k.seenAt, game.now()) === 'Online now' ? ' is-online' : ''}` },
-      lastSeenWords(k.seenAt, game.now()))],
+    trailing: [el('div', { class: 'fr-help' },
+      el('span', { class: `fr-seen${lastSeenWords(k.seenAt, now) === 'Online now' ? ' is-online' : ''}` },
+        lastSeenWords(k.seenAt, now)),
+      helpControl(game, k.code, left))],
   }));
   return el('section', { class: 'fr-list' },
-    sectionHead(`Friends ${formatExact(rows.length)}/${formatExact(FRIENDS.max)}`),
+    el('div', { class: 'wb-theirs-head' },
+      sectionHead(`Friends ${formatExact(rows.length)}/${formatExact(FRIENDS.max)}`),
+      ...(rows.length > 0 ? [el('span', { class: 'wb-fills' }, `Helps ${formatExact(left)}/${formatExact(FRIEND_HELP.perDay)}`)] : [])),
     ...(rows.length > 0
       ? [el('div', { class: 'fr-rows' }, ...rows)]
       : [el('p', { class: 'fr-empty' }, 'Add a kingdom above, or invite a friend with your code.')]));
+}
+
+/** A friend's Help (15 §3): once in any 24 hours each, within the helps
+ *  left; once given, how long until it can be given again. */
+function helpControl(game: Game, code: string, left: number): HTMLElement {
+  const f = game.friends;
+  const at = f.helpedAt(code);
+  if (at !== null) {
+    const again = Math.max(0, (at + 24 * 3_600_000 - game.now()) / 1000);
+    return el('span', { class: 'fr-helped' }, `Helped · again in ${formatCountdown(again)}`);
+  }
+  const help = btn({
+    label: 'Help', kind: 'primary', onClick: () => void f.help(code),
+    ...(f.busy.has(code) ? { disabledReason: 'Sending' } : left <= 0 ? { disabledReason: 'No helps left today' } : {}),
+  });
+  // The row opens the profile; the button only helps.
+  help.addEventListener('click', (e) => e.stopPropagation());
+  return help;
 }
 
 // ------------------------------------------------------------ a row
@@ -153,9 +177,10 @@ function kingdomRow(
   opts: { rank?: RankedKingdom; trailing?: Node[]; onTap?: () => void; note?: string; fine?: string },
 ): HTMLElement {
   const tappable = opts.onTap !== undefined;
-  const row = el(tappable ? 'button' : 'div', {
+  // A div that acts as a button, so a row may carry buttons of its own.
+  const row = el('div', {
     class: `fr-row${tappable ? ' is-tappable' : ''}`,
-    ...(tappable ? { type: 'button', 'aria-label': `${k.nickname}, open their profile` } : {}),
+    ...(tappable ? { role: 'button', tabindex: '0', 'aria-label': `${k.nickname}, open their profile` } : {}),
   },
   ...(opts.rank === undefined ? [] : [rankRibbon(opts.rank.rank)]),
   crestEl(k.nickname, k.crest),
@@ -168,7 +193,15 @@ function kingdomRow(
       : el('div', { class: 'fr-note' }, opts.note),
     ...(opts.fine === undefined ? [] : [el('div', { class: 'fr-fine' }, opts.fine)])),
   el('div', { class: 'fr-trail' }, ...(opts.trailing ?? [])));
-  if (tappable) row.addEventListener('click', opts.onTap!);
+  if (tappable) {
+    row.addEventListener('click', opts.onTap!);
+    row.addEventListener('keydown', (e) => {
+      if (e.target === row && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        opts.onTap!();
+      }
+    });
+  }
   return row;
 }
 

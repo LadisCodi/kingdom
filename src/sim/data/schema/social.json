@@ -29,6 +29,19 @@
         "wishHours": { "type": "int", "min": 1, "doc": "Hours a wish stands before its stake comes back." },
         "fillsPerDay": { "type": "int", "min": 1, "doc": "How many friends' wishes a player may fill in any 24 hours." }
       }
+    },
+    "friendHelp": {
+      "type": "object",
+      "doc": "Daily help between friends (Docs/features/15-social.md §3). A friend is helped once in any 24 hours.",
+      "fields": {
+        "perDay": { "type": "int", "min": 1, "doc": "How many friends a player may help in any 24 hours." },
+        "helperManaMinutes": {
+          "type": "int",
+          "min": 1,
+          "doc": "What a help pays the helper: this many minutes of their own Mana regeneration, at least 1 Mana."
+        },
+        "giftItem": { "type": "text", "ref": "item", "doc": "The item a helped friend finds in their Bag." }
+      }
     }
   }
 }

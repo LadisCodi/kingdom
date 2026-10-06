@@ -55,8 +55,8 @@ export interface RelicStatChange extends RelicStat {
  */
 const STAT_FACE: Partial<Record<ModifierStat, { icon: IconName; label: string }>> = {
   recoverySpeed: { icon: 'hourglass', label: 'Recovery speed' },
-  harvestStock: { icon: 'Wood', label: 'A node holds' },
-  harvestUnitsPerStrike: { icon: 'plus', label: 'A swing takes' },
+  harvestStock: { icon: 'Wood', label: 'Natural resources' },
+  harvestUnitsPerStrike: { icon: 'plus', label: 'Extraction speed' },
   workerStrikeSpeed: { icon: 'clock', label: 'Crew swing' },
   workerSpeed: { icon: 'workers', label: 'Crew walk' },
   taxRate: { icon: 'Gold', label: 'Tax rate' },

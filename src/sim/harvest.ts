@@ -70,9 +70,8 @@ export function effectiveStock(
   if (spec.stock <= 0) return 0; // bedrock stays bedrock
   const terrain = map.terrain.get(coordKey(cell));
   const m = terrain === undefined ? 1 : terrainYield(terrain, spec.currencyId);
-  // The relic's term is FLAT and lands AFTER the terrain multiplier, so a
-  // richer ground and a richer relic add rather than compounding — and `+1` is
-  // a real +20% on a five-unit Stone where a percentage would round away.
+  // The relic's term is a PERCENT (the Sickle of Plenty's), on the depot
+  // after the terrain multiplier, rounded to whole units below.
   // The tree's `cellStock` scales the depot with the ground, before the
   // relic's flat term — a richer kind of tree, not a richer relic.
   const held = spec.stock * m * techMultiplier(state, 'cellStock', { harvest: spec.id });

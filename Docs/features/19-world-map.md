@@ -93,6 +93,11 @@
     the kingdom's crest at its left end ([`15-social.md`](15-social.md)
     §2.2). A rival's city carries its name the same way, once it is out of
     the fog.
+- **A friend's city** ([`15-social.md`](15-social.md) §2.1) on the same
+  world shows through the fog: the city, its name and the ground it holds,
+  on the board and the minimap, at every zoom. It does not count as
+  explored. Seating ignores friendships: a friend is seen only when both
+  share a world.
 - The name is asked for the moment the world map opens, after its splash
   and its scene, or on the first tap of the world button if dismissed.
 - The server then seats them:

@@ -58,6 +58,11 @@ const store = {
     if (error) throw error;
     return (data as string | null) ?? null;
   },
+  async friendsOf(userId: string) {
+    const { data, error } = await admin.from('friendships').select('friend_id').eq('user_id', userId);
+    if (error) throw error;
+    return (data ?? []).map((r: { friend_id: string }) => r.friend_id);
+  },
 };
 
 Deno.serve(async (req) => {

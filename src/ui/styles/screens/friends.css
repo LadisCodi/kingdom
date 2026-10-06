@@ -90,8 +90,8 @@
   color: var(--ink);
   text-align: left;
 }
-button.fr-row { cursor: pointer; }
-button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.25); }
+.fr-row.is-tappable { cursor: pointer; }
+.fr-row.is-tappable:active:not(:has(.k-btn:active)) { transform: translateY(calc(var(--px) * 1)); box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(60, 36, 18, 0.25); }
 .fr-who { flex: 1; min-width: 0; }
 .fr-name {
   font-size: calc(var(--px) * 16);
@@ -504,6 +504,8 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 }
 .wb-slot.is-keystone { --slot: calc(var(--px) * 40); border-color: var(--gold-dark); }
 .wb-slot .icon { --icon-size: calc(var(--slot) * 0.8); }
+.wb-frag { width: 90%; height: 90%; object-fit: contain; }
+.wb-slot.is-missing .wb-frag { filter: brightness(0) invert(0.35); opacity: 0.28; }
 .wb-slot.is-held { opacity: 0.55; }
 /* A missing fragment: a chalk outline, pressable. */
 .wb-slot.is-missing { border-style: dashed; background: none; cursor: pointer; }
@@ -566,3 +568,8 @@ button.fr-row:active { transform: translateY(calc(var(--px) * 1)); box-shadow: i
 .wb-friend .wb-art { --wb-art: calc(var(--px) * 38); }
 .wb-lot-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .wb-friend .wb-end > .k-btn { min-width: calc(var(--px) * 64); min-height: calc(var(--px) * 40); }
+
+/* Daily help (15 §3): last seen over the Help button, or how long until it
+   can be given again. */
+.fr-help { display: flex; flex-direction: column; align-items: flex-end; gap: calc(var(--px) * 4); }
+.fr-helped { font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--leaf-dark); white-space: nowrap; }

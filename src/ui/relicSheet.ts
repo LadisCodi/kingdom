@@ -22,16 +22,26 @@ export const relicArt = (view: { sprite: string }, cls: string): HTMLElement => 
   return url ? spriteImgAt(url, cls) : el('span', { class: `${cls} is-glyph` }, iconEl('relics', { size: 'lg' }));
 };
 
-/** The six slots in a row: a shard where a fragment is held (with the count
- *  past one), a chalk outline where one is missing; the keystone last and
- *  larger. */
+/**
+ * ONE FRAGMENT'S OWN ART: its piece of the relic, broken off — slots 0–4 the
+ * pieces, 5 the keystone, the relic's heart (`<sprite>_frag<slot>.png`,
+ * Docs/art/ui/relics/fragments/). The generic shard while a relic has none.
+ */
+export function fragmentArt(sprite: string, slot: number, cls: string): HTMLElement {
+  const url = spriteUrl(`${sprite}_frag${slot}`);
+  return url ? spriteImgAt(url, cls) : iconEl('shard', { size: 'sm' });
+}
+
+/** The six slots in a row: each fragment's own piece where it is held (with
+ *  the count past one), its silhouette in chalk where it is missing — so the
+ *  player sees WHICH piece is missing; the keystone last and larger. */
 function slotRow(view: RelicView, big: boolean): HTMLElement {
   return el('div', { class: `rl-slots${big ? ' is-big' : ''}` }, ...view.slots.map((n, i) =>
     el('span', {
-      class: `rl-slot${i === 5 ? ' is-keystone' : ''}${n > 0 ? ' is-held' : ''}`,
+      class: `rl-slot${i === 5 ? ' is-keystone' : ''}${n > 0 ? ' is-held' : ' is-missing'}`,
       'aria-label': `${i === 5 ? 'Keystone' : `Piece ${i + 1}`}: ${n > 0 ? formatExact(n) : 'missing'}`,
     },
-      ...(n > 0 ? [iconEl('shard', { size: 'sm' })] : []),
+      fragmentArt(view.sprite, i, 'rl-frag'),
       ...(big && n > 1 ? [el('b', {}, formatExact(n))] : []))));
 }
 

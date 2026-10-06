@@ -11,6 +11,7 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| Does helping touch the other player's state, or only your own? (**OQ-34**) | 2026-10-06 | **Only your own, plus a gift they claim**: a help pays the helper Mana and leaves a speed-up in the friend's Bag as a delivery ([`features/15-social.md`](features/15-social.md) §3). |
 | Do generated missions expire? (**OQ-16**) | 2026-10-06 | **Moot: there are no missions.** The season pass and its mission board are gone; the Survey is the one reward ladder ([`features/25-the-survey.md`](features/25-the-survey.md)). |
 | Does a generated mission ever ask for Mana? (**OQ-17**) | 2026-10-06 | **Moot with the missions.** The rule it set still holds: nothing but a tap draws on Mana ([`features/08-magic.md`](features/08-magic.md)). |
 | How many albums does a free player complete in a season? (**OQ-88**) | 2026-10-06 | **Moot: there are no albums.** Cards and packs became relic fragments. |

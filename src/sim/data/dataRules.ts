@@ -77,7 +77,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
   // The friends list and trading with friends (Docs/features/15-social.md §2).
-  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends', 'trade'] },
+  { id: 'social', label: 'Friends', domain: 'Progression', view: 'form', noun: 'setting', groups: ['friends', 'trade', 'friendHelp'] },
   // The first-time experience (Docs/features/23-tutorials.md, 24-dialogue.md):
   // list order is the order scenes are considered in, as the quest chain's is.
   { id: 'scenes', label: 'Scenes', domain: 'Progression', view: 'ordered', noun: 'scene', source: 'scenes' },

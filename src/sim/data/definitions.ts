@@ -1359,8 +1359,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     passiveText: 'Richer ground, and more out of every swing',
     passive: {
       stats: [
-        { stat: 'harvestStock', scope: null, op: 'add' },
-        { stat: 'harvestUnitsPerStrike', scope: null, op: 'add' },
+        { stat: 'harvestStock', scope: null, op: 'mul' },
+        { stat: 'harvestUnitsPerStrike', scope: null, op: 'mul' },
       ],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
@@ -2299,6 +2299,13 @@ export const TRADE = balance.trade as {
   wishes: number;
   wishHours: number;
   fillsPerDay: number;
+};
+
+/** Daily help between friends — Docs/features/15-social.md §3. */
+export const FRIEND_HELP = balance.friendHelp as {
+  perDay: number;
+  helperManaMinutes: number;
+  giftItem: ItemId;
 };
 
 // ------------------------------------------------------------ the timeline

@@ -6,7 +6,7 @@
 // the camera to that place. Absent on the province and under a sheet.
 
 import type { Game } from '../../game';
-import { SEAT_COLORS } from '../../render/world/boardRenderer';
+import { SEAT_COLORS, withFriends } from '../../render/world/boardRenderer';
 import { hexToPlane, planeToHex } from '../../render/world/hexLayout';
 import { BOARD_HEXES, PORTAL_INDICES, WORLD_RADIUS } from '../../sim/world/hex';
 import { fogStateOf, worldFogAt } from '../../sim/world/explorers';
@@ -71,6 +71,7 @@ export function mountMinimap(game: Game, root: HTMLElement): void {
     const board = source.board();
     const fog = worldFogAt(state, now);
     const seats = source.seats();
+    const states = withFriends(source, board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog)));
     const colourOf = (owner: number | null): string | null => {
       if (owner === null) return null;
       const s = seats[owner];
@@ -82,7 +83,7 @@ export function mountMinimap(game: Game, root: HTMLElement): void {
       const p = hexToPlane(bh.hex);
       const x = p.x * k + ox;
       const y = p.y * k + oy;
-      const fogState = fogStateOf(state, bh.index, now, fog);
+      const fogState = states[bh.index];
       let fill = fogState === 'Unknown' ? MIST : fogState === 'Sensed' ? SENSED : GROUND[bh.terrain ?? 'Grassland'];
       const held = source.hexOf(bh.index);
       const city = bh.seat !== null ? colourOf(bh.seat) : null;

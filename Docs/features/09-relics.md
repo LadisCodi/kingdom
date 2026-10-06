@@ -58,7 +58,7 @@ never a discount, because a discount dies at 100%.
 | Relic | Effect | Moves |
 |---|---|---|
 | **Staff of Renewal** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
-| **Sickle of Plenty** | a node **holds +X more** and a swing **takes +X more** | `harvestStock` and `harvestUnitsPerStrike` |
+| **Sickle of Plenty** | **natural resources +X%** (what a node holds) and **extraction speed +X%** (what a swing takes) | `harvestStock` and `harvestUnitsPerStrike`, both multipliers |
 | **The Winged Hammer** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
 | **The Tribute Crown** | tax rate **+X%** | `taxRate` |
 | **The Stargazer's Orb** | Stardust from rooms **+X%** | `stardustYield` |
@@ -103,6 +103,9 @@ never a discount, because a discount dies at 100%.
 - **The close is a boundary**: offline replay ends it at the same instant as
   live ticking, and rent inside the aura is repriced there.
 - **On screen** (mockups M80–M85):
+  - **Every fragment has its own art**: a broken piece of that relic, the
+    keystone its heart in a gold rim (`<sprite>_frag<slot>`). A held slot
+    shows its piece; a missing one, the piece's silhouette in chalk.
   - The Bag's card says where the relic stands: **Awake · 52m**, **Asleep**
     with its own Activate, **In the Bag**, or its fragments as a silhouette.
   - **A Shrine has no effect of its own** — no Harmony, no Mana: it holds a
@@ -675,6 +678,9 @@ its window down. The map has to say two different things about them.
   spell is working.
 - **The wheel carries the relic's own glyph**, so two zones standing at once
   are told apart by whose they are rather than by where they happen to be.
+- **The tint is on the floor, behind what stands**: trees, buildings and
+  features stand in front of the enchanted ground. An awake Shrine's aura also
+  **breathes out**: a slow wave from the Shrine to the aura's edge, every 3.2 s.
 - The whole thing is drawn **before every other marker**: a zone is a fact
   about the world, so a placement outline or a cast preview must be able to sit
   on top of it and still be read.
