@@ -214,13 +214,21 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const shrine = () => {
         const view = game.shrineView(district);
         const held = view.holds === null ? null : game.relicCard(view.holds);
+        // The relic on its plinth, dim while it sleeps and lit while it is
+        // awake, beside its name and what it does (M82). How long a window
+        // lasts here is the card's own "Relic awake for" tile.
+        const url = held === null ? null : spriteUrl(held.sprite);
         return el('div', { class: 'dc-shrine rl-page' },
-          el('div', { class: `rl-line${held === null ? ' is-muted' : ''}` }, iconEl('Shrine', { size: 'sm' }),
-            el('span', {}, held === null
-              ? 'Empty — host a city relic, then activate it to wake its effect here'
-              : `${held.name}, level ${formatExact(held.level)}: ${held.now}`)),
-          el('div', { class: 'rl-line is-muted' }, iconEl('hourglass', { size: 'sm' }),
-            el('span', {}, `An activation here lasts ${formatDuration(Math.ceil(view.windowMs / 1000))}`)),
+          held === null
+            ? el('div', { class: 'rl-line is-muted' }, iconEl('Shrine', { size: 'sm' }),
+              el('span', {}, 'Empty — host a city relic, then activate it'))
+            : el('div', { class: `dc-shrine-held is-${held.status}` },
+              el('span', { class: 'dc-shrine-plinth' }, url
+                ? spriteImgAt(url, 'dc-shrine-art')
+                : el('span', { class: 'dc-shrine-art is-glyph' }, held.glyph)),
+              el('div', { class: 'dc-shrine-says' },
+                el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
+                el('span', {}, held.now))),
           ...(held === null ? [] : [spell(game, held.id, held)].filter((x): x is HTMLElement => x !== null)),
           ...(view.candidates.length === 0 ? [] : [el('div', { class: 'rl-host' },
             el('div', { class: 'rl-forge' },

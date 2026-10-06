@@ -302,3 +302,86 @@ export function drawClaimBubble(
   ctx.restore();
   return { x: tipX - w / 2, y: ty - tail - h, w, h: h + tail };
 }
+
+// -------------------------------------------------------- the Mana bubble
+
+/**
+ * A SLEEPING SHRINE'S BUBBLE (Docs/features/09-relics.md §11.6, M84): the
+ * collect bubble's parchment and rim, holding the Mana orb and what waking
+ * its relic costs — the price inked red while the pool is short of it.
+ * Returns its rect, so a tap on it wakes the relic.
+ */
+export function drawManaBubble(
+  ctx: CanvasRenderingContext2D,
+  bubbles: CollectBubbles,
+  id: string,
+  cost: string,
+  affordable: boolean,
+  font: string,
+  tipX: number,
+  tipY: number,
+  height: number,
+  clock: number,
+): BubbleRect {
+  const still = reducedMotion();
+  const pop = still ? 1 : bubbles.appear(id, clock);
+  const scale = pop >= 1 ? 1 : 1 - (1 - pop) ** 3 * (1 - 2.2 * pop);
+  const bob = still ? 0 : (Math.sin(clock / 260 + phaseOf(id)) * 0.5 + 0.5) * height * 0.14;
+  const h = height;
+  const tail = h * 0.22;
+  const pad = h * 0.18;
+  const orb = Math.round(h * 0.62);
+  const textPx = Math.max(11, Math.round(h * 0.42));
+  ctx.save();
+  ctx.font = `bold ${textPx}px ${font}`;
+  const textW = ctx.measureText(cost).width;
+  const w = pad + orb + h * 0.1 + textW + pad;
+  const r = h * 0.42;
+  const line = Math.max(1.5, h * 0.055);
+  const ty = tipY - bob;
+  ctx.translate(tipX, ty);
+  ctx.scale(scale, scale);
+  const x = -w / 2;
+  const y = -tail - h;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(tail * 0.7, y + h);
+  ctx.lineTo(0, 0);
+  ctx.lineTo(-tail * 0.7, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  const fill = ctx.createLinearGradient(0, y, 0, y + h);
+  fill.addColorStop(0, PARCHMENT_LIGHT);
+  fill.addColorStop(0.45, PARCHMENT);
+  fill.addColorStop(1, PARCHMENT);
+  ctx.shadowColor = 'rgba(40, 22, 10, 0.35)';
+  ctx.shadowBlur = h * 0.2;
+  ctx.shadowOffsetY = h * 0.07;
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = line;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = RIM;
+  ctx.stroke();
+  const midY = y + h / 2;
+  let cursor = x + pad;
+  drawIcon(ctx, 'Mana', cursor, midY - orb / 2, orb);
+  cursor += orb + h * 0.1;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = affordable ? RIM_INK : RIM_FULL;
+  ctx.fillText(cost, cursor, midY + textPx * 0.05);
+  ctx.restore();
+  return { x: tipX - w / 2, y: ty - tail - h, w, h: h + tail };
+}
+
+/** The price's ink on parchment: the rim's brown, darkened to read. */
+const RIM_INK = '#4a2e14';

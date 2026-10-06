@@ -30,6 +30,7 @@ import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
 import { mountRewardFly } from './ui/rewardFly';
 import { mountAdOfferPill } from './ui/adOfferPill';
+import { mountRelicAsleepPill } from './ui/relicAsleepPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
@@ -259,6 +260,7 @@ async function boot(): Promise<void> {
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
   mountExchangeChip(game, document.getElementById('worldtrade')!);

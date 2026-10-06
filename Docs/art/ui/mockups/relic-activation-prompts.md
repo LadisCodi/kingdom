@@ -3,7 +3,9 @@
 Mockups of the flow shipped in PR #182 (`Docs/features/09-relics.md` §2.1): a
 city relic hosted in a 1×1 Shrine sleeps until the player pays 20 Mana; the
 relic's level is its power and reach, the Shrine's level its window
-(5 min · 30 min · 1 h · 4 h · 8 h). For review, not yet decided.
+(5 min · 30 min · 1 h · 4 h · 8 h). Taken as the base on 2026-10-06 and built;
+the priced buttons keep the kit's price-over-slab layout rather than M80's
+inline chip.
 
 Attached to every prompt (`m80-refs/`):
 
