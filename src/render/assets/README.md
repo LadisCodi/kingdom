@@ -95,5 +95,4 @@ rather than an emoji. **Replace each with generated art** (Docs/features/22-prog
 | File | Stand-in | What it should be |
 |---|---|---|
 | `tavern_l1.png` | a copy of `housing_l4.png` | the Tavern, 2×1: a timbered inn with a hanging sign and a lit hearth |
-| `landmark_watchtower.png` | the Townhall's tower, cut out | a lone stone watchtower on a rise, a beacon basket on top |
 | `portrait_advisor.png` *(missing — the stage draws a lettered medallion)* | — | Isolde, the Royal Advisor, full figure (Docs/features/24-dialogue.md §6) |
