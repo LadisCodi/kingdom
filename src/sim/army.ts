@@ -431,6 +431,69 @@ export function trainUnit(
   return 'Queued';
 }
 
+/** How many one press of Train orders: the card's amount selector. */
+export type TrainAmount = 1 | 10 | 100 | 'all';
+export const TRAIN_AMOUNTS: readonly TrainAmount[] = [1, 10, 100, 'all'];
+
+/** How many more of a trainee the city has room for: beds for villagers, the
+ *  halls' capacity for soldiers. Queued trainees count against both. */
+export function trainRoom(state: GameState, trainee: TrainableId): number {
+  if (trainee === 'Villager') {
+    const pending = state.city.trainingQueue.filter((i) => i.trainee === 'Villager').length;
+    return Math.max(0, maxPopulation(state) - state.city.population - pending);
+  }
+  return Math.max(0, armyCap(state) - committedTroops(state));
+}
+
+/** What `count` of a trainee cost, bought one after the other — a villager's
+ *  price climbs with every one already on its way. */
+export function batchCost(state: GameState, trainee: TrainableId, count: number): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (trainee === 'Villager') {
+    const pending = state.city.trainingQueue.filter((i) => i.trainee === 'Villager').length;
+    let food = 0;
+    for (let i = 0; i < count; i++) food += populationCost(state.city.population + pending + i);
+    out.Food = food;
+    return out;
+  }
+  for (const [c, n] of Object.entries(trainCost(state, trainee))) out[c] = n * count;
+  return out;
+}
+
+/**
+ * What one press of Train orders at `amount`: a fixed amount is the order,
+ * whatever the purse says (its price is what the button shows, red where it
+ * is short); `all` is as many as both the room and the purse allow — at
+ * least one, so a purse that affords none still shows the price of one.
+ */
+export function trainPlan(
+  state: GameState, trainee: TrainableId, amount: TrainAmount,
+): { count: number; cost: Record<string, number> } {
+  if (amount !== 'all') return { count: amount, cost: batchCost(state, trainee, amount) };
+  const room = trainRoom(state, trainee);
+  let count = 1;
+  while (count < room && canAfford(state.city.wallet, batchCost(state, trainee, count + 1))) count += 1;
+  return { count, cost: batchCost(state, trainee, count) };
+}
+
+/**
+ * Queue `count` of a trainee as ONE order: all of them, or none — the room
+ * and the whole price are checked before anything is paid, so a refused
+ * order leaves the city as it was.
+ */
+export function trainBatch(
+  state: GameState, trainee: TrainableId, count: number, now = 0, at?: District,
+): TrainResult {
+  if (count > 1) {
+    if (trainRoom(state, trainee) < count) return trainee === 'Villager' ? 'AtMax' : 'ArmyAtCapacity';
+    if (!canAfford(state.city.wallet, batchCost(state, trainee, count))) return 'NotEnoughResources';
+  }
+  const first = trainUnit(state, trainee, now, at);
+  if (first !== 'Queued') return first;
+  for (let i = 1; i < count; i++) trainUnit(state, trainee, now, at);
+  return 'Queued';
+}
+
 /** Cancel the LAST unit queued of a type, refunding it in full. */
 export type CancelTrainingResult = 'Cancelled' | 'NotFound';
 

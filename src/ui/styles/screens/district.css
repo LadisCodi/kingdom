@@ -251,6 +251,7 @@
 /* THE PANEL: the bust, what it is, and the priced Train button in one row;
    a soldier's three numbers in a row of their own underneath. */
 .tr-info.k-section {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
@@ -269,6 +270,18 @@
   line-height: 1.25;
 }
 .tr-buy { justify-self: end; }
+/* THE AMOUNT: the kit's round knob, laid over the panel's top-right corner,
+   turning through x1 · x10 · x100 · All. */
+.tr-info > .k-btn.k-knob.tr-amount {
+  --knob-size: calc(var(--px) * 42);
+  position: absolute;
+  top: calc(var(--px) * -20);
+  right: calc(var(--px) * -6);
+  z-index: 2;
+  font-size: calc(var(--px) * 14);
+  letter-spacing: -0.03em;
+  color: rgba(40, 20, 8, 0.85);
+}
 /* In this panel the priced button is its narrowest: the Train slab's own
    width, the costs (and the time) wrapped over two lines above it, so the
    middle column keeps room for the name and the tags. */

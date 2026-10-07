@@ -21,14 +21,14 @@
 import type { Game } from '../game';
 import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
 import {
-  itemCount, lineFor, lineRemainingSeconds, lineRushCost, trainCost, trainSecondsAt,
-  trainingCompletesAt, trainingProgress,
+  itemCount, lineFor, lineRemainingSeconds, lineRushCost, trainPlan, trainRoom, trainSecondsAt,
+  trainingCompletesAt, trainingProgress, type TrainAmount,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration, formatExact, coach } from './format';
-import { action, btn, holdToRepeat, iconEl, isShort, progress, withTooltip, type LiveParts } from './kit';
+import { action, btn, holdToRepeat, iconEl, isShort, knob, progress, withTooltip, type LiveParts } from './kit';
 import { timerButton } from './speedupSheet';
 import type { IconName } from './kit/icon';
 import { unitPortrait } from './unitArt';
@@ -216,29 +216,33 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       }), 'card:finish-training'))));
 }
 
-/** Why Train is dead right now, in a few words; undefined when it is not.
- *  Being short of coin is not a gate (§6.4). */
-function gateOf(game: Game, trainee: TrainableId): string | undefined {
+/** Why Train is dead right now for an order of `count`, in a few words;
+ *  undefined when it is not. Being short of coin is not a gate (§6.4). */
+function gateOf(game: Game, trainee: TrainableId, count: number): string | undefined {
   const unit = trainee === 'Villager' ? null : UNITS[trainee];
-  const army = game.armyRoom();
-  return unit === null
-    ? (game.trainingInfo().atMax ? 'No house to live in' : undefined)
-    : unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)
-      ? `Needs ${TECHNOLOGIES[unit.requiredTech].name}`
-      : army.used + 1 > army.cap ? 'Max army reached' : undefined;
+  if (unit !== null && unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)) {
+    return `Needs ${TECHNOLOGIES[unit.requiredTech].name}`;
+  }
+  const room = trainRoom(game.state, trainee);
+  if (room === 0) return unit === null ? 'No house to live in' : 'Max army reached';
+  return room < count ? `Room for ${formatExact(room)}` : undefined;
 }
+
+/** The amount selector's face. */
+const amountLabel = (a: TrainAmount): string => (a === 'all' ? 'All' : `x${formatExact(a)}`);
 
 /** The panel for the building's one trainee: portrait, tags, flavour, the
  *  priced Train button (its training time is the building's own stat), a
  *  soldier's four numbers in a row of their own, and the batch at the foot. */
 function detail(game: Game, district: District, trainee: TrainableId, batch: HTMLElement): HTMLElement {
-  const cost = trainCost(game.state, trainee);
+  // What one press orders: the amount picked on the selector, priced whole.
+  const { count, cost } = trainPlan(game.state, trainee, game.trainAmount);
   const unit = trainee === 'Villager' ? null : UNITS[trainee];
 
   // A GATE keeps the button and disables it: where the price would be, the
   // priced frame says in a few words why it cannot be pressed. Being short of
   // coin is not a gate: the price stays, and its red term says so (§6.4).
-  const gate = gateOf(game, trainee);
+  const gate = gateOf(game, trainee, count);
   const buy = btn({
     label: 'Train',
     kind: 'primary',
@@ -253,12 +257,20 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   // building, not by this node (kit/holdRepeat.ts).
   holdToRepeat(buy, `train:${district.uniqueId}:${trainee}`, () => {
     const here = game.state.city.districts.find((d) => d.uniqueId === district.uniqueId);
-    if (here === undefined || gateOf(game, trainee) !== undefined) return false;
-    if (isShort(trainCost(game.state, trainee), (c) => game.walletValue(c))) return false;
+    const plan = trainPlan(game.state, trainee, game.trainAmount);
+    if (here === undefined || gateOf(game, trainee, plan.count) !== undefined) return false;
+    if (isShort(plan.cost, (c) => game.walletValue(c))) return false;
     return game.doTrain(trainee, here) === 'Queued';
   });
   buy.dataset.coach = 'card:train';
   if (gate !== undefined) buy.classList.add('is-gated');
+
+  // THE AMOUNT: one round knob on the panel's corner that turns through x1,
+  // x10, x100 and All — what Train orders, and what its price is for.
+  const amount = knob(amountLabel(game.trainAmount), () => game.cycleTrainAmount(), {
+    label: `Train ${game.trainAmount === 'all' ? 'as many as you can' : formatExact(game.trainAmount)} at a time`,
+  });
+  amount.classList.add('tr-amount');
 
   const tags = unit === null
     ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]
@@ -279,6 +291,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
     stat('hp', 'Health', unit.hp),
   ];
   return el('div', { class: `tr-info k-section${figures.length > 0 ? ' has-stats' : ''}` },
+    amount,
     el('div', { class: 'tr-who', title: `You have ${owned}` },
       unitPortrait(trainee, 'tr-portrait'),
       el('span', { class: 'tr-count' }, `x${formatExact(owned)}`)),

@@ -457,7 +457,14 @@ wood of its sides touches the screen's edges.
     the tiles' feet line up with Train's whenever the flavour is no taller
     than the bust. A gate keeps the button, disabled, and puts a padlock and a
     short reason where its price would be: *No house to live in*, *Max army
-    reached*, *Needs Archery*.
+    reached*, *Needs Archery*, *Room for 7*.
+  - **Amount.** A round wooden knob over the panel's top-right corner turns
+    through *x1*, *x10*, *x100* and *All* on each tap; every card shares it
+    for the session. Train orders that many as ONE order, priced whole — all
+    of them or none. *All* is as many as the room and the purse allow, at
+    least one. A fixed amount the room cannot hold is a gate (*Room for 7*).
+  - **Sound.** Train only clicks; the hall's batch sounds once, when its
+    line runs dry.
   - **Hold to train.** A tap on Train is one press. Held, it presses itself:
     after 0.35 s at 3 a second, climbing to 15 a second over 2.5 s. It stops
     on release, when the finger moves (a scroll), or where a tap would find
