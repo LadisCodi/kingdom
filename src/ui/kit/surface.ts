@@ -17,9 +17,11 @@ export const plank = (title: string, ...trailing: Array<Node | string>): HTMLEle
  *  any width). `sheet({ header })` builds one; a window that is not a kit
  *  sheet — the district card — places it as the first thing in its frame. */
 export const windowHead = (
-  title: string, buttons: readonly Node[], sub?: string,
+  title: string, buttons: readonly Node[], sub?: string, lead: readonly Node[] = [],
 ): HTMLElement =>
   el('div', { class: 'k-head' },
+    // `lead` is what sits at the band's left end — a hero card's rarity.
+    ...(lead.length ? [el('div', { class: 'k-head-lead' }, ...lead)] : []),
     // `sub` is a small word after the title, in the same letters a size
     // down — the district card's level, *Housing #3 Lv 2*.
     el('h2', { class: 'k-head-title' }, title,
@@ -72,6 +74,8 @@ export function sheet(
      * always there and always last), in order — a move, an info button.
      */
     actions?: readonly Node[];
+    /** What sits at the left end of the header's band — a hero's rarity. */
+    lead?: readonly Node[];
   },
   ...children: Array<Node | string>
 ): HTMLElement {
@@ -93,7 +97,7 @@ export function sheet(
       el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
       // THE HEADER: the title centred on the wooden band across the top of
       // the frame, the buttons anchored to its right, the close last.
-      ...(opts.bare ? [] : [windowHead(opts.title, [...(opts.actions ?? []), close])]),
+      ...(opts.bare ? [] : [windowHead(opts.title, [...(opts.actions ?? []), close], undefined, opts.lead)]),
       // The body scrolls; the header and its close do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.

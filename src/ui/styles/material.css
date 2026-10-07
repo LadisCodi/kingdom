@@ -137,6 +137,7 @@
 }
 .k-head > .k-head-title {
   grid-column: 2;
+  grid-row: 1;
   text-transform: none;
   letter-spacing: normal;
   min-width: 0;
@@ -166,8 +167,17 @@
 /* A small word after the title — the district card's level — in the same
    gradient letters, a size down. */
 .k-head-sub { font-size: 0.72em; }
+.k-head-lead {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
 .k-head-actions {
   grid-column: 3;
+  grid-row: 1;
   justify-self: end;
   display: flex;
   align-items: center;
