@@ -72,10 +72,11 @@ export const LAIR_AVATAR: Record<LairId, string> = {
   Drake: 'creature_drake_avatar',
 };
 
-/** The creature a lair's squad of each troop type IS, wherever it is drawn —
- *  the attack screen's enemy board and the fight's playback
- *  (Docs/art/originals/lairs/LOG.md). The same four in every lair; the drake
- *  is the Drake lair's face, never a squad's. */
+/** The creature an enemy squad of each troop type IS, wherever it is drawn —
+ *  the attack screen's enemy board and the fight's playback, in a lair, a
+ *  world dungeon or the Dark Portal (Docs/art/originals/lairs/LOG.md). The
+ *  same four everywhere; the drake is the Drake lair's face, never a
+ *  squad's. */
 export const UNIT_CREATURE_AVATAR: Record<UnitId, string> = {
   Warrior: 'creature_orc_avatar',
   Lancer: 'creature_goblin_avatar',

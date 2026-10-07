@@ -5985,6 +5985,8 @@ export class Game {
       title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
       subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
       prizes: [],
+      // A dungeon's squads are creatures, as the delve screen draws them.
+      enemyFaces: UNIT_CREATURE_AVATAR,
       backdrop: r.boss ? 'boss' : 'dungeon',
     });
     this.notify();
@@ -6012,7 +6014,13 @@ export class Game {
     }
     payMana(this.state, cost);
     this.applyWorldSnapshot(r.snapshot);
-    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [], backdrop: 'portal' });
+    this.openBattle(r.log, {
+      title: `The Dark Portal · floor ${formatCount(r.room)}`,
+      subtitle: 'The depths below',
+      prizes: [],
+      enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'portal',
+    });
     this.notify();
   }
 
