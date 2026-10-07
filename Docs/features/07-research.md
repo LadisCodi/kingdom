@@ -66,8 +66,8 @@
 - **Gems never complete a technology.** They buy Knowledge (§3.2), which is
   poured like any other; the Gold is always the city's
   ([`14-monetization.md`](14-monetization.md) §1).
-- There are 124 cards: **Kingdom 111 · Sagas 6 · Atlas 7**, totalling
-  **9,674,305 Gold and 607 Knowledge**. Prices per chapter are in
+- There are 123 cards: **Kingdom 110 · Sagas 6 · Atlas 7**, totalling
+  **4,732,305 Gold and 940 Knowledge**. Prices per chapter are in
   [`tech-tree.md`](tech-tree.md) §1.
 
 ### 1.1 Majors and minors

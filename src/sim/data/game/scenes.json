@@ -1750,7 +1750,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine — a grander shrine keeps it awake longer.",
+        "text": "It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine. It grows longer, wider and stronger.",
         "box": "auto",
         "point": "ui:relic-activate",
         "lock": "none",

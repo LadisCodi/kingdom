@@ -902,6 +902,31 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v108: A SHRINE HAS ONE LEVEL — the relic it holds carries its own
+    // window (09-relics.md §2.1). A Shrine above level 1 comes back to it,
+    // and an upgrade of one under way is dropped; nothing is refunded, as a
+    // build is never cancelled. A window already open keeps its end.
+    to: 108,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })?.Cities?.[0];
+      if (city === undefined) return;
+      const shrines = new Set<string>();
+      for (const d of (city.Districts ?? []) as Array<{ UniqueID: string; DefinitionID: string; Level: number }>) {
+        if (d.DefinitionID !== 'Shrine') continue;
+        shrines.add(d.UniqueID);
+        d.Level = 1;
+      }
+      // `QueueKinds` is a parallel array: both sides are filtered together.
+      const items = (city.QueueItems ?? []) as Array<{ DistrictID: string; TargetLevel?: number }>;
+      const kinds = (city.QueueKinds ?? []) as string[];
+      const isUpgrade = (q: { TargetLevel?: number }, i: number): boolean =>
+        (kinds[i] ?? (q.TargetLevel !== undefined ? 'upgrade' : 'build')) === 'upgrade';
+      const keep = items.map((q, i) => !(shrines.has(q.DistrictID) && isUpgrade(q, i)));
+      city.QueueItems = items.filter((_, i) => keep[i]);
+      if (city.QueueKinds !== undefined) city.QueueKinds = kinds.filter((_, i) => keep[i]);
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */

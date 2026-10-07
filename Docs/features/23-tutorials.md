@@ -256,7 +256,7 @@ nothing if it already is). Its lines are beats, like the first lair's.
 | *A relic set on this altar lends the kingdom its power. Tap the altar.* | the altar | the altar | the relic picker is open |
 | *There's the Staff. Its power makes the forests, crops and stone round the shrine grow back faster. Choose it.* | the Staff's card | the card | the Staff is in the slot |
 | *Now Select, and it takes its place.* | Select | Select | a Shrine holds the Staff |
-| *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine — a grander shrine keeps it awake longer.* | Activate | none | tap |
+| *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine. It grows longer, wider and stronger.* | Activate | none | tap |
 
 - Activating is pointed at, not required: a player short of Mana is never
   held on a line they cannot finish.

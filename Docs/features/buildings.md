@@ -58,7 +58,7 @@
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
 | **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
 | **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
-| **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **5** | holds and wakes one city relic — no Harmony, no Mana of its own |
+| **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **1** | holds and wakes one city relic — no Harmony, no Mana of its own; how long and how far the relic acts is the relic's level ([`09`](09-relics.md) §2.1) |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall

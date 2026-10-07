@@ -85,13 +85,6 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.populationCapacityPerLevel.length > 0) {
     add('homes', 'bed', 'Beds', 'Beds', levelIndexed(def.populationCapacityPerLevel, level));
   }
-  if (def.relicWindowMinutesPerLevel.length > 0) {
-    // How long one activation of its relic lasts; the aura's reach is the
-    // relic's level, not this building's.
-    const minutes = levelIndexed(def.relicWindowMinutesPerLevel, level);
-    add('window', 'hourglass', 'Relic awake for', 'Awake', formatDuration(minutes * 60), minutes,
-      (d) => signed(d, formatDuration(Math.abs(d) * 60)));
-  }
   if (def.influenceRadiusPerLevel.length > 0) {
     add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
     // The map draws the range around the building while its card is open;

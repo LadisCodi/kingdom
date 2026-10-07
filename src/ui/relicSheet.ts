@@ -177,8 +177,8 @@ function hostLines(game: Game, view: RelicView): HTMLElement[] {
  * A CITY RELIC'S ACTIVATION, once it is hosted (sim/hosts.ts; M81–M83):
  * asleep, a grey seal, the Activate button and what a window buys; short of
  * Mana, how soon the pool holds the price and a flask from the Bag; awake, a
- * gold bar running down the window. The relic's level sets the power and
- * reach; its Shrine's level, the window.
+ * gold bar running down the window. The relic's level sets the power, the
+ * reach and the window.
  */
 export function activation(game: Game, id: ArtifactId): HTMLElement | null {
   const a = game.relicActivation(id);

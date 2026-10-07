@@ -7,7 +7,7 @@
 > [`../tech-tree-editor.md`](../tech-tree-editor.md); the design is
 > [`../plans/tech-tree-rework.md`](../plans/tech-tree-rework.md).
 >
-> **Status.** Built: **124 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **123 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=data#tree`. The tables below are generated from that file.
 
 ## 1. The shape
@@ -42,7 +42,7 @@
 | 6 | 6 → 7 | 280 cells | 13 | 96 | 28 | 270,000 | Blue |
 | 7 | 7 → 8 | 340 cells | 13 | 149 | 40 | 569,000 | Blue |
 | 8 | 8 → 9 | 400 cells | 13 | 96 | 28 | 1,215,000 | Purple |
-| 9 | 9 → 10 | 460 cells | 13 | 149 | 40 | 2,565,000 | Golden |
+| 9 | 9 → 10 | 460 cells | 12 | 135 | 40 | 2,375,000 | Golden |
 
 ## 2. Chapter 1 — Townhall 1 → 2
 
@@ -190,7 +190,6 @@
 | **Mechanics** | the producers L9 · the producers L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Warlords** | the four halls L9 · the four halls L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 190,000 G · 14 K |  |
-| **Sacred Grounds** | the Shrine | 190,000 G · 14 K |  |
 | **Fishers I** | +15% crewStrikeSpeed — Docks | 190,000 G · 14 K |  |
 | **Warhorns II** | +10% unitAtk | 190,000 G · 14 K |  |
 | **Flowerbeds I** | +25% decorationHarmony | 190,000 G · 14 K |  |

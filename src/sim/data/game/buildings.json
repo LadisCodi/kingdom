@@ -81,8 +81,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 10, 20, 30],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Housing": {
     "name": "Housing",
@@ -141,8 +140,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Farm": {
     "name": "Farm",
@@ -210,8 +208,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "FarmLands": {
     "name": "crop plots",
@@ -259,8 +256,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Sawmill": {
     "name": "Sawmill",
@@ -328,8 +324,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Quarry": {
     "name": "Quarry",
@@ -397,8 +392,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Docks": {
     "name": "Docks",
@@ -466,8 +460,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Sanctum": {
     "name": "Sanctum",
@@ -535,8 +528,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Tavern": {
     "name": "Tavern",
@@ -590,8 +582,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Barracks": {
     "name": "Barracks",
@@ -659,8 +650,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "SpearHall": {
     "name": "Spear Hall",
@@ -728,8 +718,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "ShootingGrounds": {
     "name": "Shooting Grounds",
@@ -797,8 +786,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Stables": {
     "name": "Stables",
@@ -866,8 +854,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Infirmary": {
     "name": "Infirmary",
@@ -935,8 +922,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Carpenter": {
     "name": "Carpenter",
@@ -1004,8 +990,7 @@
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "MasonsYard": {
     "name": "Mason's Yard",
@@ -1073,8 +1058,7 @@
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Smelter": {
     "name": "Smelter",
@@ -1142,8 +1126,7 @@
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "RuneCarver": {
     "name": "Rune Carver",
@@ -1211,8 +1194,7 @@
     "queueLengthPerLevel": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0, 0, 0, 2, 4, 6],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Garden": {
     "name": "Garden",
@@ -1260,8 +1242,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 4,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Well": {
     "name": "Well",
@@ -1309,8 +1290,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 6,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Orchard": {
     "name": "Orchard",
@@ -1358,8 +1338,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 12,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Statue": {
     "name": "Statue",
@@ -1407,8 +1386,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 10,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Plaza": {
     "name": "Plaza",
@@ -1456,8 +1434,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 30,
     "harmonyCostPerLevel": [],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   },
   "Shrine": {
     "name": "Shrine",
@@ -1472,7 +1449,7 @@
     "trains": [],
     "crew": [],
     "size": { "x": 1, "y": 1 },
-    "maxLevel": 5,
+    "maxLevel": 1,
     "populationCapacityPerLevel": [],
     "taxBonusPerLevel": [],
     "goldPerMinutePerLevel": [],
@@ -1489,19 +1466,13 @@
     "bedsPerLevel": [],
     "heroXpBonusPerLevel": [],
     "armySlotsPerLevel": [],
-    "costPerLevel": [
-      { "cost": { "Gold": 2000 }, "goods": {} },
-      { "cost": { "Gold": 20000, "Stone": 2000 }, "goods": { "CutStone": 4 } },
-      { "cost": { "Gold": 60000, "Stone": 6000 }, "goods": { "CutStone": 10 } },
-      { "cost": { "Gold": 150000, "Stone": 15000 }, "goods": { "CutStone": 20, "Runestone": 2 } },
-      { "cost": { "Gold": 400000, "Stone": 40000 }, "goods": { "CutStone": 40, "Runestone": 5 } }
-    ],
+    "costPerLevel": [{ "cost": { "Gold": 2000 }, "goods": {} }],
     "instanceLinearGrowth": 0.5,
     "instanceExponentialGrowth": 1,
     "buildDurationSeconds": 600,
     "buildDurationDistrictGrowth": 1.2,
     "buildDurationDistanceGrowth": 1.22,
-    "upgradeDurationSeconds": 900,
+    "upgradeDurationSeconds": 0,
     "upgradeDurationLevelGrowth": 1.6,
     "upgradeDurationLateSeconds": 0,
     "upgradeDurationLateLevelGrowth": 0,
@@ -1511,8 +1482,7 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [],
-    "hostsRelic": true,
-    "relicWindowMinutesPerLevel": [5, 30, 60, 240, 480]
+    "hostsRelic": true
   },
   "WarCamp": {
     "name": "War Camp",
@@ -1566,7 +1536,6 @@
     "queueLengthPerLevel": [],
     "harmonySupply": 0,
     "harmonyCostPerLevel": [0, 0, 0, 0, 0],
-    "hostsRelic": false,
-    "relicWindowMinutesPerLevel": []
+    "hostsRelic": false
   }
 }

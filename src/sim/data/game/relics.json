@@ -5,6 +5,10 @@
     10,
     20
   ],
+  "cityLevels": {
+    "cycle": ["window", "radius", "effect"],
+    "windowMinutes": [30, 60, 120, 240, 480]
+  },
   "fragments": {
     "keystoneOneIn": 8,
     "keystoneWorth": 3,

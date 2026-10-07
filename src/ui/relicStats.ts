@@ -19,7 +19,7 @@ import { ARTIFACTS, ARTIFACT_COOLDOWN_SECONDS } from '../sim/data/definitions';
 import {
   activeChargesAt, activeDurationMsAt, activePowerAt, activeRadiusAt,
 } from '../sim/casting';
-import { passiveValueAtLevel } from '../sim/artifacts';
+import { passiveValueAtLevel, relicWindowMsAt } from '../sim/artifacts';
 import { auraRadiusAt } from '../sim/hosts';
 import { formatDuration, formatExact, formatNumber } from './format';
 import type { ModifierStat } from '../sim/modifiers';
@@ -98,11 +98,14 @@ export function relicStatsAt(id: ArtifactId, level: number): RelicStat[] {
     if (face === undefined) continue;
     out.push({ key: s.stat, icon: face.icon, label: face.label, value: say(s.op, value) });
   }
-  // A CITY RELIC'S LEVEL IS ITS POWER, and its reach is part of that: the
-  // aura round its Shrine widens a ring at each step (sim/hosts.ts).
+  // A CITY RELIC'S LEVEL IS ALL THREE of what an activation is worth — its
+  // number, its reach round the Shrine and how long it stays awake — and a
+  // level-up raises one of them, round a cycle (`cityRelicSteps`). The pair
+  // greys the two a level leaves alone.
   if (ARTIFACTS[id].activation !== null) {
     const radius = auraRadiusAt(id, level);
     out.push({ key: 'aura', icon: 'compass', label: 'Aura', value: `${formatExact((2 * radius + 1) ** 2)} cells` });
+    out.push({ key: 'window', icon: 'hourglass', label: 'Awake for', value: formatDuration(relicWindowMsAt(id, level) / 1000) });
   }
   return out;
 }
