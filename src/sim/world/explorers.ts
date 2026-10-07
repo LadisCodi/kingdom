@@ -28,7 +28,7 @@ import {
 import { techFlat, techMultiplier } from '../techEffects';
 import { SEAT_INDICES } from './board';
 import { clearBit, copyBits, countBits, emptyBits, hasBit, setBit, type HexBits } from './fogBits';
-import { PORTAL_INDICES, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
+import { BOARD_SIZE, PORTAL_INDICES, boardNeighbors, boardWithin, hexAt, hexDistance, isBoardIndex } from './hex';
 import { boardOf } from './source';
 import { payScout, type ScoutPay } from './scouting';
 import { fastestRoute, homeboundMs, outboundMs, type Route } from './travel';
@@ -161,6 +161,20 @@ export function fogStateOf(state: GameState, index: number, t: number, fog: HexB
   if (hasBit(fog, index)) return 'Revealed';
   const sensed = boardNeighbors(index).some((n) => !PORTAL_INDICES.includes(n) && hasBit(fog, n));
   return sensed ? 'Sensed' : 'Unknown';
+}
+
+/** Each hex's neighbours that can sense it — every one but a Portal. */
+let sensers: number[][] | null = null;
+
+/** `fogStateOf` for every hex of the world at once, by index: what a frame
+ *  of the board reads, without asking the neighbours of each hex anew. */
+export function fogStatesOf(fog: HexBits): FogState[] {
+  sensers ??= Array.from({ length: BOARD_SIZE }, (_, i) => boardNeighbors(i).filter((n) => !PORTAL_INDICES.includes(n)));
+  const out = new Array<FogState>(BOARD_SIZE);
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    out[i] = hasBit(fog, i) ? 'Revealed' : sensers[i].some((n) => hasBit(fog, n)) ? 'Sensed' : 'Unknown';
+  }
+  return out;
 }
 
 // ------------------------------------------------------------ commands
