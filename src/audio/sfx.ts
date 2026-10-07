@@ -7,7 +7,12 @@
 import boatSplashUrl from './sounds/boat_splash.ogg?url';
 import buildPlacedUrl from './sounds/build_placed.mp3?url';
 import chainFinishedUrl from './sounds/chain_finished.wav?url';
+import chestApplauseUrl from './sounds/chest_applause.ogg?url';
 import chestDrawUrl from './sounds/chest_draw.ogg?url';
+import chestFanfareUrl from './sounds/chest_fanfare.ogg?url';
+import chestFanfareLegendUrl from './sounds/chest_fanfare_legend.ogg?url';
+import chestPopUrl from './sounds/chest_pop.ogg?url';
+import chestRiserShortUrl from './sounds/chest_riser_short.ogg?url';
 import chestFlip1 from './sounds/chest_flip_01.ogg?url';
 import chestFlip2 from './sounds/chest_flip_02.ogg?url';
 import chestHeroUrl from './sounds/chest_hero.ogg?url';
@@ -96,7 +101,11 @@ export type SfxName =
   // (a Legendary's own), and the summary's chime.
   | 'chestLand' | 'chestUnlock' | 'chestOpen' | 'cardDraw' | 'cardFlip'
   | 'cardWhoosh' | 'cardSettle' | 'cardSparkle' | 'heroRiser' | 'heroNew'
-  | 'heroLegend' | 'chestSummary';
+  | 'heroLegend' | 'chestSummary'
+  // A WHOLE hero out of the chest is the rarest thing in it, and is
+  // celebrated: a short drum roll before the flip, the confetti cannons'
+  // pop, a full fanfare (a Legendary's own) and, for a Legendary, applause.
+  | 'heroRiserShort' | 'heroPop' | 'heroFanfare' | 'heroFanfareLegend' | 'heroApplause';
 
 interface SoundSpec {
   /** One or more takes — a random one plays each time (organic repeats). */
@@ -179,6 +188,13 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   heroNew: { urls: one(chestHeroUrl), volume: 0.6, jitter: 0 },
   heroLegend: { urls: one(chestLegendUrl), volume: 0.65, jitter: 0 },
   chestSummary: { urls: one(chestSummaryUrl), volume: 0.5, jitter: 0 },
+  // Epic Risers 3 cut whole · Rocket Explode Sparkle cut to 2.5 s ·
+  // Exciting Fanfare 01 and 05 · Applause cut to 3.5 s.
+  heroRiserShort: { urls: one(chestRiserShortUrl), volume: 0.45, jitter: 0 },
+  heroPop: { urls: one(chestPopUrl), volume: 0.45, jitter: 0.03 },
+  heroFanfare: { urls: one(chestFanfareUrl), volume: 0.6, jitter: 0 },
+  heroFanfareLegend: { urls: one(chestFanfareLegendUrl), volume: 0.65, jitter: 0 },
+  heroApplause: { urls: one(chestApplauseUrl), volume: 0.3, jitter: 0 },
 };
 
 let ctx: AudioContext | null = null;
