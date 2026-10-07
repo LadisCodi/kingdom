@@ -379,6 +379,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       const fill = card.querySelector<HTMLElement>('.k-fill');
       const to = Math.min(p.to, p.goal);
       if (fill !== null && !quiet) {
+        playSfx('barFill', { gain: skipping ? 0.6 : 1 });
         await play(fill, [
           { clipPath: `inset(0 ${(1 - p.from / p.goal) * 100}% 0 0)` },
           { clipPath: `inset(0 ${(1 - to / p.goal) * 100}% 0 0)` },
@@ -488,6 +489,15 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       const [x, y] = at(r);
       const hero = newHero(prize);
       const rarity = rarityOf(prize);
+      // Every face lands with a hit and its rarity's stinger — a common prize
+      // is still a prize. A whole hero is left to its celebration; a skip
+      // keeps only the hit for the commons, so a run of them doesn't pile up.
+      if (hero === null) {
+        playSfx('cardImpact');
+        const reveal: SfxName = rarity === 'Legendary' ? 'cardRevealLegend'
+          : rarity === 'Rare' ? 'cardRevealRare' : 'cardRevealCommon';
+        if (!skipping || reveal !== 'cardRevealCommon') playSfx(reveal);
+      }
       if (prize.kind === 'fragments' && prize.progress !== undefined) {
         await fillBar(card, prize.progress);
       }
@@ -496,7 +506,6 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         return;
       }
       if (rarity === 'Rare' || rarity === 'Legendary') {
-        sfx('cardSparkle');
         layer?.burst(x, y, { kind: 'spark', count: 22, colors: RARITY_LIGHT[rarity], speed: 300, size: 10, life: 900 });
       } else {
         layer?.burst(x, y, { kind: 'spark', count: 12, colors: GOLD, speed: 220, size: 8, life: 700 });

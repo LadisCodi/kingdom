@@ -14,6 +14,10 @@ import { setHidden, setText } from '../domWrite';
 import { el, formatCountdown, formatExact } from '../format';
 import { columnNotices, type Notice } from './model';
 
+/** News whose event sounds where it happens (game.ts), so its bubble
+ *  arriving adds no pop on top. */
+const VOICED = new Set(['news:built', 'news:worldBuild', 'news:explorer', 'news:armyHome', 'news:raided']);
+
 export function mountNoticeColumn(game: Game, root: HTMLElement): void {
   let drawn = '';
   /** The ids on screen, so a bubble that is new can pop in. */
@@ -65,7 +69,7 @@ export function mountNoticeColumn(game: Game, root: HTMLElement): void {
       const ids = new Set(notices.map((n) => n.id));
       const arrived = seen === null ? [] : notices.filter((n) => !seen!.has(n.id) && n.kind !== 'more');
       root.replaceChildren(...notices.map((n) => bubble(n, arrived.includes(n))));
-      if (arrived.length > 0) playSfx('pop');
+      if (arrived.some((n) => !VOICED.has(n.id))) playSfx('pop');
       seen = ids;
     }
     writeClocks();
