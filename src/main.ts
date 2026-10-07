@@ -89,7 +89,7 @@ import { mountOfferSplash } from './ui/offerSplash';
 import { mountNoticeColumn, mountStandingColumn } from './ui/notices/column';
 import { renderNoticeCard } from './ui/notices/card';
 import { mountOfferWidgets } from './ui/offerWidget';
-import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
+import { ABANDONED, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
 import { createPerfMeter } from './ui/perfHud';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -961,10 +961,17 @@ async function boot(): Promise<void> {
       // The world board, opened for real: a Watchtower is claimed — its
       // door (sim/doors.ts) — without finding it, and the player walks out.
       button('🌍 world', () => {
-        const tower = LANDMARKS.find((l) => l.kind === 'Watchtower');
+        // The Watchtower repaired and standing, without the lens or the minute.
+        const tower = ABANDONED.find((a) => a.districtId === 'Watchtower');
         if (tower === undefined) return;
         game.state.discoveries[`site:${tower.id}`] = true;
-        game.state.landmarks.claimed[tower.id] = true;
+        if (game.state.abandoned.repaired[tower.id] !== true) {
+          game.state.abandoned.repaired[tower.id] = true;
+          game.state.city.districts.push({
+            uniqueId: 'watchtower', definitionId: 'Watchtower', ordinal: 1, level: 1, assignedWorkers: 0,
+            location: tower.location, state: 'Built', visualVariant: 1,
+          });
+        }
         runTick();
         game.enterWorld();
       }),

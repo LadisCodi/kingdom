@@ -38,11 +38,11 @@
 | **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** (captain of the guard) steps forward, the Warrior, the Barracks, soldiers | revealing a lair's ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
+| **Session 2–3** | **the Watchtower**, repaired with the lens the Orcs carried: the world door, **the Atlas** | the Orcs' prize; the repair, forced by a scene |
 | **Day 1–2** | the Thorned Shrine, the Sanctum; Bureaucracy, the end of chapter 2 | claiming the shrine; the chain |
 | **Day 2** | **the Tavern**: the banner, **the first hero**, **the Sagas** | building the Tavern |
 | **Day 2–3** | Townhall 3, Mining, the Harpies | the chain; the fog |
 | **Day 4–6** | Townhall 4, chapter 4, workshops and refined goods | Magistracy; 160 cells revealed |
-| **Day 5–7** | **the Watchtower**: the world door, **the Atlas** | claiming the Watchtower |
 | **Week 2+** | decorations and Harmony, Townhall 5–10, the deep lairs | the Townhall ladder |
 
 ## 3. The doors
@@ -55,12 +55,12 @@
 | **Relics** (nav) | the kingdom has held a card or a pack | padlocked — *Clear a lair to open this* |
 | **Store** (nav), and the Gems on the plank | the Townhall reaches **level 2** | padlocked — *Raise the Townhall to level 2 to open this* |
 | **Survey** pill ([`25-the-survey.md`](25-the-survey.md)) | the Townhall reaches **level 2**, with the Store | absent |
-| **The world** (map knob, bottom right above the nav) | the **Watchtower** is claimed | hidden until the Watchtower is sighted, then padlocked — *Claim the Watchtower to open this* |
+| **The world** (map knob, bottom right above the nav) | the **Watchtower** stands, repaired | hidden until the Watchtower is sighted, then padlocked — *Repair the Watchtower to open this* |
 | **Knowledge** tab | Research opens | absent |
 | **Season** pill | a card or a pack held | absent |
 | **The tree** | always open | — |
 | **The Sagas** (found) | a **Tavern** stands | not on the shelf |
-| **The Atlas** (found) | the **Watchtower** is claimed | not on the shelf |
+| **The Atlas** (found) | the **Watchtower** stands, repaired | not on the shelf |
 | **The banner** (in the Store and the Tavern) | a Tavern stands | padlocked in the Store |
 
 - A padlocked tab is its empty plate and a brass padlock — **no icon, no
@@ -81,7 +81,7 @@
 |---|---|---|---|
 | **Kingdom** | the tree | from the first minute | everything the kingdom learns, in nine chapters |
 | **Sagas** | found | a Tavern stands | heroes, and the Tavern that hosts them |
-| **Atlas** | found | the Watchtower is claimed | sight, landmarks, and the world beyond |
+| **Atlas** | found | the Watchtower is repaired | sight, landmarks, and the world beyond |
 
 - **The tree is one book** read in chapters, each opened on revealed cells and
   closed by a finale that opens the next Townhall level
@@ -100,12 +100,18 @@
 |---|---|---|---|
 | **The Orcs** (lair, tier 1) | 6 rings south of the Townhall, past the shrine; its ground (radius 2) lies past the first Townhall's reach, so it is found at Townhall 2 | **the Warden steps forward**; the raid clock starts | the hoard, 3 Knowledge, Hero XP; **the first card pack** (quest `DriveThemOut`) |
 | **The Thorned Shrine** (landmark) | inside the Orcs' ground | — | +10 max Mana, 3 Knowledge |
-| **The Watchtower** (landmark, new kind) | 5 rings north of the Townhall — reached at Townhall 2 — 10,000 Gold | — | **the world door and the Atlas open**; discovers **8 rings** round it instead of 5; +10 max Mana, 3 Knowledge |
+| **The Watchtower** (a ruin) | 5 rings north of the Townhall — reached at Townhall 2 | its lens is in the Orcs' prize | repaired in a minute: **the world door and the Atlas open**; discovers **8 rings** round it; +10 max Mana, 3 Knowledge |
 
 - **A landmark inside a standing lair's ground cannot be claimed.** The
   Thorned Shrine waits for the Orcs to fall.
-- The Watchtower is claimed like any landmark. Its kind is what makes it a
-  door; its price is authored in the map editor.
+- **The Watchtower is repaired, not claimed**: an abandoned building
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3) that needs **the
+  Watchtower's lens** — the Orcs' prize hands it over — plus 200 Gold, 100
+  Wood and a builder for one minute.
+- **The repair is forced**: the moment it can be paid, on the main screen, a
+  scene takes the player to the tower and lets them press only *Repair*. When
+  the tower stands and nothing is open, a second takes them out to the world
+  ([`23-tutorials.md`](23-tutorials.md) §4.3).
 - **The world door opens the world board**
   ([`19-world-map.md`](19-world-map.md)): the knob takes the player out to
   the board and, wearing the castle, back home. Cartography, in the Atlas the
@@ -185,8 +191,10 @@ Columns 1–3 wide, read down the page, that converge on one finale:
 | What each card costs | [`tech-tree.md`](tech-tree.md) | `?dev=data#tree` |
 | What each chapter asks for in revealed cells | 0 · 20 · 100 · 160 · 220 · 280 · 340 · 400 · 460 | `?dev=data#tree` |
 | What finishing a chapter pays | a card pack each | `?dev=data#tree` (`eraRewards`) |
-| The Watchtower's place and price | (−2, −8) · 10,000 Gold | `?dev=data#map` |
-| The Watchtower's discover radius | 8 | `exploration` › `fog.watchtowerDiscoverRadius` |
+| The Watchtower's place | (−3, −5) | `?dev=data#map` (an abandoned building) |
+| The Watchtower's price, minute and lens | 200 Gold, 100 Wood · 60 s · `WatchtowerLens` | `buildings` › Watchtower (`costPerLevel`, `buildDurationSeconds`, `repairItem`) |
+| Where the lens comes from | the tier-1 lair's prize — the Orcs | `garrisons` › tier 1 › `rewardItems` |
+| The Watchtower's discover radius | 8 | `buildings` › Watchtower › `fogDiscoverRadius` |
 | The first pack | a Green pack on `DriveThemOut` | `quests` › `rewardPack` |
 | Hero XP per Tavern level | +10% | `buildings` › `Tavern` › `heroXpBonusPerLevel` |
 | Which quest opens Research and Build | `Woodcraft` · `GrowingTown` | `sim/doors.ts` |

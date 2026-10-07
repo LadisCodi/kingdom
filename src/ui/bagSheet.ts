@@ -98,6 +98,12 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
       el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.openStore('supplies') })));
   }
+  // A piece a ruin needs is spent by its repair, never from the Bag.
+  if (item.def.kind === 'part') {
+    return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
+      el('div', { class: 'bag-pop-name' }, itemName(item.def)),
+      el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)));
+  }
   // A speed-up is spent from a timer, so its popover goes to one (§3.5).
   if (item.def.kind === 'speedup') {
     const job = game.firstJobFor(item.id);

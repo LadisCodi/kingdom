@@ -507,11 +507,12 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   lairCleared: () => ['', ...(STATIC_IDS.lair ?? [])],
   bookOpen: () => ['Kingdom', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
-  sighted: () => ['', 'mountain', 'landmark', 'lair', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? [])],
+  sighted: () => ['', 'mountain', 'landmark', 'lair', 'abandoned', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? []), ...ABANDONED_IDS],
   doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag'],
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
+  canRepair: () => ABANDONED_IDS,
   // '' is any relic: chosen in the picker, or standing in a Shrine.
   relicPicked: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],
   relicHosted: (doc) => ['', ...Object.keys(doc.artifacts ?? {})],

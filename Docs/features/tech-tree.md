@@ -204,7 +204,7 @@
 - **Outside the pacing**: never required by a chapter or a Townhall level.
 - **Priced like the tree**: Knowledge and Gold, the Knowledge of a tree card
   at the same Gold — 3 to 600 G, 4 to 2,500 G, 5 to 4,000 G, 7 above.
-- **Sagas** opens on a Tavern standing; **Atlas** on the Watchtower claimed.
+- **Sagas** opens on a Tavern standing; **Atlas** on the Watchtower repaired.
 
 ### 11.1 Sagas
 

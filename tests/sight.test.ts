@@ -1,12 +1,12 @@
 // SIGHTING (Docs/features/01-map-and-fog.md §4.1): a tall thing past the fog
 // shows as a silhouette while a revealed cell lies close enough to it.
 import { describe, expect, it } from 'vitest';
-import { FOG, LANDMARKS, LAIRS } from '../src/sim/data/definitions';
+import { FOG, LAIRS } from '../src/sim/data/definitions';
 import { advance } from '../src/sim/commands';
 import { footprintAt } from '../src/sim/grid';
 import { sightedAt, sightedThings } from '../src/sim/sight';
 import { parseCoordKey, type Coord } from '../src/sim/state';
-import { freshGame, map, reveal, T0 } from './helpers';
+import { freshGame, map, reveal, T0, WATCHTOWER } from './helpers';
 
 /** A cell `d` cells west of the block's left edge, on its top row. */
 const westOf = (anchor: Coord, d: number): Coord => ({ x: anchor.x - d, y: anchor.y });
@@ -57,12 +57,12 @@ describe('sighting', () => {
     expect(sightedThings(state, map).every((t) => t.kind !== 'mountain' || t.size > 1)).toBe(true);
   });
 
-  it('sees the Watchtower from further than a shrine', () => {
-    expect(FOG.sight.watchtower).toBeGreaterThan(FOG.sight.landmark);
-    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+  it('sees the Watchtower\'s ruin from further than a shrine', () => {
+    const tower = WATCHTOWER;
+    expect(tower.sight).toBeGreaterThan(FOG.sight.landmark);
     const state = freshGame();
     state.fog.revealed = {};
-    reveal(state, [westOf(tower.location, FOG.sight.watchtower)]);
+    reveal(state, [westOf(tower.location, tower.sight)]);
     expect(sightedAt(state, map, tower.location)?.id).toBe(tower.id);
   });
 

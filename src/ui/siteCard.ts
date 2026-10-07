@@ -9,7 +9,7 @@
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  DISTRICTS, FOG, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
+  DISTRICTS, FOG, ITEMS, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
 } from '../sim/data/definitions';
 import { nextBuildCost } from '../sim/districts';
 import type { LairView, RaidableId } from '../sim/lairs';
@@ -17,7 +17,8 @@ import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import type { LairId } from '../sim/state';
+import type { ItemId, LairId } from '../sim/state';
+import { itemIcon } from './itemArt';
 import { el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, sectionHead, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
@@ -126,6 +127,14 @@ export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement
     el('p', { class: 'lm-note' },
       'Left to the fog when its people fled. Repair it and it is yours, '
       + 'exactly as if you had built it.'),
+    // A ruin missing a piece — the Watchtower's lens — says which, and
+    // whether the Bag holds it.
+    ...(def.repairItem === '' ? [] : [(() => {
+      const item = def.repairItem as ItemId;
+      const held = game.itemHeld(item) > 0;
+      return el('p', { class: `lm-note lm-need${held ? ' is-held' : ''}` },
+        iconEl(itemIcon(item)), `Needs ${ITEMS[item].name} — ${held ? 'in the Bag' : 'not found yet'}`);
+    })()]),
     // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
     el('div', { class: 'lc-go', 'data-coach': 'repair' }, btn({
       label: 'Repair',

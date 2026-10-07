@@ -152,6 +152,12 @@
     "hostsRelic": {
       "type": "bool",
       "doc": "Holds one city relic, whose effect acts over its aura while an activation lasts (09-relics.md §2.1). A host has one level: how long and how far the relic acts is the relic's own level. It is moved, never built for Gold."
+    },
+    "repairItem": {
+      "type": "text",
+      "ref": "item",
+      "emptyOk": true,
+      "doc": "An item repairing this building's ruin also asks for, and spends (01-map-and-fog.md §6.3). Empty: none."
     }
   }
 }

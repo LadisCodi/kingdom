@@ -2,18 +2,17 @@
 // any at level 5, named and more at levels 8–10 and the Fortress — and never
 // anything while the world is shut.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, LANDMARKS, TECHNOLOGIES, WORLD_BUILD } from '../src/sim/data/definitions';
+import { DISTRICTS, TECHNOLOGIES, WORLD_BUILD } from '../src/sim/data/definitions';
 import { techGoodsCost } from '../src/sim/research';
 import { upgradeGoodsCost } from '../src/sim/districts';
 import { addGood } from '../src/sim/goods';
 import { preciousAsked, resolvePrice, worldUpgradeGoods } from '../src/sim/precious';
 import { PRECIOUS, type GameState, type TechId } from '../src/sim/state';
-import { freshGame } from './helpers';
+import { freshGame, raiseWatchtower } from './helpers';
 
 const worldOpen = (): GameState => {
   const state = freshGame();
-  const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
-  state.landmarks.claimed[tower.id] = true;
+  raiseWatchtower(state);
   return state;
 };
 

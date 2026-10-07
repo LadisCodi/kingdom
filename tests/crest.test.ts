@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { CHARGES, TINCTURES, crestId, crestOf, defaultCrest, parseCrest } from '../src/sim/crest';
-import { LANDMARKS } from '../src/sim/data/definitions';
 import { isDoorOpen } from '../src/sim/doors';
 import { deserialize, serialize } from '../src/sim/save';
 import { memorySocial, serveSocial } from '../src/socialServer/serve';
@@ -13,7 +12,7 @@ import type { SocialCommand } from '../src/socialServer/types';
 import { memoryBoards, serveWorld } from '../src/worldServer/serve';
 import type { JoinResult } from '../src/worldServer/handle';
 import type { WorldSnapshot } from '../src/worldServer/types';
-import { firstGame, map, T0 } from './helpers';
+import { firstGame, map, T0, raiseWatchtower } from './helpers';
 
 describe('a crest', () => {
   it('is a tincture and a charge, written with a dot, and nothing else', () => {
@@ -50,10 +49,9 @@ describe('the profile in the save', () => {
 describe('the friends door', () => {
   it('opens with the world AND a name, not before', () => {
     const state = firstGame();
-    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
     state.kingdom.profile.nickname = 'Oakville';
     expect(isDoorOpen(state, 'friends')).toBe(false);
-    state.landmarks.claimed[tower.id] = true;
+    raiseWatchtower(state);
     state.kingdom.profile.nickname = null;
     expect(isDoorOpen(state, 'friends')).toBe(false);
     state.kingdom.profile.nickname = 'Oakville';

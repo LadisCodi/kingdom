@@ -4,7 +4,7 @@
     "fights": 3,
     "takeSeconds": 300,
     "heroXp": 500,
-    "rewardItems": { "ConstructionSpeedup15m": 1 }
+    "rewardItems": { "ConstructionSpeedup15m": 1, "WatchtowerLens": 1 }
   },
   {
     "tier": 2,

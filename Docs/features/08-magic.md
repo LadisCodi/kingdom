@@ -86,10 +86,10 @@ Claiming a landmark, permanently:
 - Lifts the fog five cells around it as **Discovered, never Revealed**
   ([`01-map-and-fog.md`](01-map-and-fog.md) §4).
 
-Eleven landmarks on the map:
+Six landmarks on the map, and the Watchtower, which counts as one once
+repaired ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3):
 
-- A full sweep **roughly doubles the base pool** (100 → 210), and so what
-  every ad pays.
+- A full sweep takes the base pool **100 → 170**, and so what every ad pays.
 - Production does not move with landmarks.
 
 | City | pool | one ad pays |

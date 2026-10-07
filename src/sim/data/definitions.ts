@@ -387,7 +387,7 @@ export const BAG = balance.bag;
 export const NOTICES = balance.notices;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
-export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
+export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key' | 'part';
 
 /** What a boost raises. */
 export type BoostKind = 'Rent' | 'Harvest' | 'Mana';
@@ -564,7 +564,7 @@ export type SceneCondition =
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
-  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing'
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen'
   | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
@@ -790,6 +790,9 @@ export interface DistrictDef {
    *  activated: the Shrine. One level — how long and how far the relic acts
    *  is the relic's own level (Docs/features/09-relics.md §2.1). */
   hostsRelic: boolean;
+  /** An item repairing this building's ruin also asks for, and spends —
+   *  the Watchtower's lens (Docs/features/01-map-and-fog.md §6.3). '' = none. */
+  repairItem: string;
 }
 
 /**
@@ -2501,4 +2504,6 @@ export const GAME_VERSION: string = pkg.version;
 // v108: a Shrine has one level; a relic carries its own window — a Shrine
 // above level 1 comes back to it, its upgrade under way dropped (a migrator).
 // v109: a lair is a path of fights — `Won` on a lair, additive.
-export const SAVE_VERSION = 109;
+// v110: the Watchtower is a ruin to repair, not a landmark to claim; a
+// claimed one stands repaired, and the chain closes up (a migrator).
+export const SAVE_VERSION = 110;

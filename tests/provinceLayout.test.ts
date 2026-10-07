@@ -2,13 +2,13 @@
 // first Townhalls can see and reach, pinned against the authored map so a
 // map edit cannot quietly undo the order the opening is built on.
 import { describe, expect, it } from 'vitest';
-import { ABANDONED, FOG, LAIRS, LANDMARKS, levelIndexed } from '../src/sim/data/definitions';
+import { ABANDONED, FOG, LAIRS, levelIndexed } from '../src/sim/data/definitions';
 import { advance } from '../src/sim/commands';
 import { footprintAt, townhallDistance } from '../src/sim/grid';
 import { lairZoneCells, zoneLairsAt } from '../src/sim/lairZone';
 import { sightedAt, sightedThings } from '../src/sim/sight';
 import { coordKey, parseCoordKey, type LairId } from '../src/sim/state';
-import { freshGame, map, reveal, T0 } from './helpers';
+import { freshGame, map, reveal, T0, WATCHTOWER } from './helpers';
 
 const reachAt = (level: number): number => levelIndexed(FOG.reachPerTownhallLevel, level);
 
@@ -20,7 +20,7 @@ const revealedTo = (ring: number) => {
   return state;
 };
 
-const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+const tower = WATCHTOWER;
 
 /** The first thing to the south: the Thorned Shrine's ruin, on the Orcs'
  *  ground — once a landmark, now the province's one Shrine site. */
@@ -39,7 +39,7 @@ describe('the province opens to the south', () => {
   it('shows the Shrine\'s ruin, south, and the Watchtower, north, while the Townhall is at level 1 — and the Orcs\' camp', () => {
     const state = revealedTo(reachAt(1));
     const seen = sightedThings(state, map);
-    expect(seen.filter((t) => t.kind === 'landmark').map((t) => t.id)).toEqual([tower.id]);
+    expect(seen.some((t) => t.kind === 'abandoned' && t.id === tower.id)).toBe(true);
     expect(seen.some((t) => t.kind === 'abandoned' && t.id === shrine.id)).toBe(true);
     // South on screen is +x +y; north is −x −y.
     expect(shrine.location.x + shrine.location.y).toBeGreaterThan(0);

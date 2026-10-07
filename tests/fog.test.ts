@@ -428,7 +428,7 @@ describe('a site announces itself when it comes into view', () => {
   it('fires when a paid reveal brings one into view', () => {
     const state = newGame(map, T0);
     state.city.wallet.Gold = 100_000;
-    townhall(state).level = 2; // the nearest sanctuary sits at ring 5
+    townhall(state).level = 3; // the nearest sanctuary sits at ring 7
     const target = LANDMARKS.reduce((a, b) =>
       townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
     const toward = (c: Coord) =>
@@ -438,7 +438,8 @@ describe('a site announces itself when it comes into view', () => {
     // and stop the moment something is sighted — which must happen before the
     // player ever stands on it.
     for (let i = 0; i < 30; i++) {
-      if (state.pendingDiscoveries.some((k) => k.startsWith('site:'))) break;
+      // Other sites — the Watchtower's ruin — may come into view on the way.
+      if (state.pendingDiscoveries.includes(siteDiscoveryKey(target.id))) break;
       const next = [...map.terrain.keys()].map(parseCoordKey)
         .filter((c) => fogState(state, map, c) === 'Discovered'
           && isPayable(state, map, c) && explorationGate(map, c) === null)

@@ -140,7 +140,7 @@ A `bonus` names its effects, and each is four fields:
 |---|---|---|---|
 | **Kingdom** | the tree | from the first minute | everything the kingdom learns, in nine chapters |
 | **Sagas** | found | a **Tavern** stands | heroes, and the Tavern that hosts them |
-| **Atlas** | found | the **Watchtower** is claimed | sight, landmarks, the world beyond |
+| **Atlas** | found | the **Watchtower** is repaired | sight, landmarks, the world beyond |
 
 - **One tree** holds the city, the army and the magic, mixed in every chapter;
   its content is [`tech-tree.md`](tech-tree.md).
@@ -236,7 +236,7 @@ A `bonus` names its effects, and each is four fields:
   level. **It costs Knowledge and Gold** like every card, so it competes with
   the chapters for the bar.
 - **The two that ship** are found in the province itself: the **Sagas** with
-  the first Tavern, the **Atlas** with the Watchtower.
+  the first Tavern, the **Atlas** with the Watchtower repaired.
 - **Later ones** are the pattern for a far lair, an event or the world map.
 - A found book **arrives open and stays open.** It cannot be lost, spent, or
   traded away.

@@ -926,8 +926,50 @@ const MIGRATIONS: readonly Migration[] = [
       city.QueueItems = items.filter((_, i) => keep[i]);
       if (city.QueueKinds !== undefined) city.QueueKinds = kinds.filter((_, i) => keep[i]);
     },
+  },  {
+    // v110: THE WATCHTOWER IS REPAIRED, NOT CLAIMED (22-progression.md §5).
+    // Its landmark leaves the map for an abandoned building of the same
+    // name. A kingdom that had claimed it keeps it standing, repaired; one
+    // that had beaten the Orcs gets the lens they carried, so it can repair
+    // it. In the chain, the repair takes `OldStones`' place and leaves its
+    // own at the end: the index past that place moves down by one.
+    to: 110,
+    migrate: (modules) => {
+      const lm = modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined;
+      const claimed = lm?.Claimed?.includes('NorthWatch') === true;
+      if (lm?.Claimed !== undefined) lm.Claimed = lm.Claimed.filter((id) => id !== 'NorthWatch');
+      const abandoned = (modules['kingdom.abandoned'] ??= { Repaired: [] }) as { Repaired?: string[] };
+      abandoned.Repaired ??= [];
+      if (claimed) {
+        if (!abandoned.Repaired.includes('NorthWatch')) abandoned.Repaired.push('NorthWatch');
+        const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })?.Cities?.[0];
+        if (city !== undefined) {
+          city.Districts ??= [];
+          city.Districts.push({
+            UniqueID: 'watchtower', DefinitionID: 'Watchtower', Ordinal: 1, VisualVariant: 1,
+            AssignedWorkers: 0, Level: 1, GridLocation: { x: -3, y: -5 }, ConstructionState: 'Built',
+          });
+        }
+      } else {
+        const lairs = (modules['kingdom.lairs'] as { Lairs?: Array<{ LairID: string; Cleared?: boolean }> })?.Lairs ?? [];
+        if (lairs.some((l) => l.LairID === 'Orcs' && l.Cleared === true)) {
+          const bag = (modules['kingdom.bag'] ??= { Held: {}, Fresh: [], Badge: 0 }) as { Held?: Record<string, number> };
+          bag.Held ??= {};
+          bag.Held.WatchtowerLens = Math.max(1, bag.Held.WatchtowerLens ?? 0);
+        }
+      }
+      // The chain of v109: `OldStones` at 32, `TheWatchtower` at 66 (frozen
+      // here as history). The repair now sits at 32; everything past 66
+      // moves down by one, and a kingdom standing on the old 66 goes on.
+      const quests = modules['kingdom.quests'] as { Index?: number; Progress?: number } | undefined;
+      if (quests !== undefined && (quests.Index ?? 0) > THE_WATCHTOWER_AT_V109) quests.Index = (quests.Index ?? 0) - 1;
+      else if (quests !== undefined && quests.Index === THE_WATCHTOWER_AT_V109) quests.Progress = 0;
+    },
   },
 ];
+
+/** Where `TheWatchtower` stood in the v109 chain, frozen as history. */
+const THE_WATCHTOWER_AT_V109 = 66;
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
 const WAR_DRUMS_AT_V73 = 26;
