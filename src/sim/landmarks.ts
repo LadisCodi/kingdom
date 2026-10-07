@@ -25,7 +25,7 @@
 
 import { roundPrice } from './roundPrice';
 import { lairHolding } from './lairZone';
-import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
+import { ABANDONED, FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState, recordVisibleSites } from './fog';
 import { landmarkClaimLump, payKnowledge } from './knowledge';
 import { resolve } from './modifiers';
@@ -112,14 +112,20 @@ export const visibleLandmarks = (state: GameState, map: MapData): LandmarkDef[] 
 export const claimedLandmarkCount = (state: GameState): number =>
   Object.keys(state.landmarks.claimed).length;
 
-/** The world's door: the Watchtower claimed. */
-export const watchtowerClaimed = (state: GameState): boolean =>
-  LANDMARKS.some((l) => l.kind === 'Watchtower' && state.landmarks.claimed[l.id] === true);
+/** The old watchtower's ruin, wherever the map puts it: the abandoned
+ *  building whose district is the Watchtower. */
+const WATCHTOWER_SITES = ABANDONED.filter((a) => a.districtId === 'Watchtower');
 
-/** Has a Watchtower come out of the dark — sighted once, remembered for good
- *  (`discoveries`, sim/discovery.ts)? */
+/** The world's door: the Watchtower repaired and standing
+ *  (Docs/features/22-progression.md §5). */
+export const watchtowerClaimed = (state: GameState): boolean =>
+  state.city.districts.some((d) => d.definitionId === 'Watchtower' && d.state === 'Built');
+
+/** Has the Watchtower come out of the dark — its silhouette sighted, or its
+ *  ruin discovered, once, remembered for good? */
 export const watchtowerSighted = (state: GameState): boolean =>
-  LANDMARKS.some((l) => l.kind === 'Watchtower' && state.discoveries[`site:${l.id}`] === true);
+  WATCHTOWER_SITES.some((a) => state.signals.sightedAt[a.id] !== undefined
+    || state.discoveries[`site:${a.id}`] === true || state.abandoned.repaired[a.id] === true);
 
 /** Every landmark cell, for the renderer. */
 export const landmarkCells = allLandmarkCells;

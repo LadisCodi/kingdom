@@ -273,11 +273,11 @@ and research**.
 |---|---|
 | The whole map's fog | 2,522,803,392 |
 | The technology tree, 167 techs | 592,385 |
-| Landmark claims | 2,000 · 10,000 (the Watchtower) · 25,000 ×5 · 100,000 ×4 |
+| Landmark claims | 10,000 · 25,000 ×3 · 100,000 ×2 |
 | Buildings and upgrades | on a count and level curve |
 | **Wonder levels** (designed, not built) | **unbounded** — [`16-wonders.md`](16-wonders.md) |
 
-- The quest chain pays **16,215 Gold across 67 quests**
+- The quest chain pays **15,465 Gold across 67 quests**
   ([`12-quests.md`](12-quests.md)).
 - Every row except Wonder levels is one-time: landmark claims total
   **537,000**.

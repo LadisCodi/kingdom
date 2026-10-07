@@ -4,7 +4,7 @@
 // and the first-purchase reward.
 import { describe, expect, it } from 'vitest';
 import {
-  DAILY_POOL, HERO_ORDER, KINGDOM_DEF, LANDMARKS, OFFERS, OFFER_ORDER, STORE, WORLD,
+  DAILY_POOL, HERO_ORDER, KINGDOM_DEF, OFFERS, OFFER_ORDER, STORE, WORLD,
 } from '../src/sim/data/definitions';
 import { newGame } from '../src/sim/newGame';
 import {
@@ -16,7 +16,7 @@ import { addToWallet, getWallet, townhall, type GameState, type StoreSkuId } fro
 import { buyStoreSku, choosePayerProfile } from '../src/sim/store';
 import { recordWatchedRefill, watchedRefillsLeft } from '../src/sim/manaRefill';
 import { buyExplorer, explorerGemCost, explorerSlots } from '../src/sim/world/explorers';
-import { map, T0 } from './helpers';
+import { map, T0, raiseWatchtower } from './helpers';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -146,7 +146,7 @@ describe('an offer window', () => {
   it('opens an explorer when every explorer is out', () => {
     const state = shop(3);
     const sku = byTrigger('explorersBusy');
-    state.landmarks.claimed[LANDMARKS.find((l) => l.kind === 'Watchtower')!.id] = true;
+    raiseWatchtower(state);
     state.research.completed.push('Cartography');
     refreshOffers(state, T0);
     expect(offerOn(state, sku, T0)).toBe(false);
@@ -277,7 +277,7 @@ describe('the value a pack prints', () => {
 describe('an explorer bought', () => {
   it('waits for Cartography, then adds one out at once, on a rising Gem price', () => {
     const state = shop();
-    state.landmarks.claimed[LANDMARKS.find((l) => l.kind === 'Watchtower')!.id] = true;
+    raiseWatchtower(state);
     addToWallet(state.player.wallet, 'Gems', 1_000_000);
     const first = explorerGemCost(state);
     expect(buyExplorer(state)).toBe('Bought');

@@ -25,7 +25,7 @@ import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type Coord, type FeatureId, type GameState, type LairId, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, map, T0, tickAt,
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, map, T0, tickAt, raiseWatchtower
 } from './helpers';
 
 
@@ -94,8 +94,8 @@ describe('the quest chain', () => {
       'MusterCompany',                            // 29   a company, led by the Warden
       'DriveThemOut',                             // 30   THE FIRST FIGHT — and the
                                                   //   first card pack
-      'OldStones', 'Attuned',                     // 31-32 the shrine the Orcs held:
-                                                  //   claiming it opens Magic
+      'TheWatchtower', 'Attuned',                 // 31-32 the tower the Orcs robbed:
+                                                  //   its lens opens the world
       'Mapmakers', 'Surveyors',                   // 33-34 exploration becomes a system
       'Watered', 'Fallow', 'MoreRoom',            // 35-37 the rows above Urban Planning
       'SecondStory', 'Chisels', 'Stoneworks',     // 38-40 a storey, then stone
@@ -108,13 +108,13 @@ describe('the quest chain', () => {
 
     // Then the city the tutorial deferred, the Townhall ladder, and the world.
     inOrder('FirstSummon', 'Fellowship', 'Architect', 'GrandCapital', 'DeepSeams', 'TheSanctum',
-      'Magistrate', 'Borough', 'SecondLair', 'TheWatchtower');
+      'Magistrate', 'Borough', 'SecondLair');
     expect(QUESTS.at(-1)).toMatchObject({ id: 'DeeperStill', goalType: 'TrainArmy' });
     // The first quest that pays relic fragments is the first fight's.
     expect(QUESTS.find((q) => q.rewardFragments > 0)!.id).toBe('DriveThemOut');
-    // The Watchtower is asked for by KIND.
+    // The Watchtower is a ruin to repair, with the lens the Orcs left.
     expect(QUESTS.find((q) => q.id === 'TheWatchtower'))
-      .toMatchObject({ goalType: 'ClaimLandmarks', goalTarget: 'Watchtower' });
+      .toMatchObject({ goalType: 'RepairDistrict', goalTarget: 'Watchtower' });
   });
 
   // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
@@ -161,11 +161,10 @@ describe('the quest chain', () => {
     state.heroes.owned.push('Cook', 'Bard');
     expect(isQuestComplete(state, fellowship)).toBe(true);
 
-    // A landmark goal may name a KIND: the Watchtower, and only it.
+    // The Watchtower's repair counts the tower however it came to stand.
     const tower = QUESTS.find((q) => q.id === 'TheWatchtower')!;
-    state.landmarks.claimed.ThornedShrine = true;
     expect(questValue(state, tower)).toBe(0);
-    state.landmarks.claimed.NorthWatch = true;
+    raiseWatchtower(state);
     expect(isQuestComplete(state, tower)).toBe(true);
   });
 
@@ -414,8 +413,8 @@ describe('quests fund the research tree', () => {
   // technology the OPENING asks for, prerequisites included, has to be
   // affordable out of what the chain itself has paid, with NO drip at all.
   // Zero drip is the worst case: the player who does the whole opening in one
-  // sitting. The one thing this may lean on is the lump a claim pays, because
-  // `OldStones` IS a claim.
+  // sitting. The one thing this may lean on is the lump the Watchtower pays
+  // when it stands, because `TheWatchtower` IS its repair.
   //
   // NARROWED 2026-09-09 to end at `Attuned`. Past the Sanctum the chain stops
   // funding its own research and the base rate takes over (§3): a player at
@@ -509,7 +508,8 @@ describe('quests fund the research tree', () => {
     // the chain asks for the book that only a found lair opens.
     // 16,465: `Fellowship` at 250 asks for three heroes once the banner has
     // had time to answer — the kingdom starts with none.
-    expect(chain).toBe(16_465);
+    // 15,465: `TheWatchtower` takes `OldStones`' place and its 170.
+    expect(chain).toBe(15_465);
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).

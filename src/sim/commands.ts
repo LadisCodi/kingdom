@@ -19,7 +19,7 @@ import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lair
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
 import { recordEvent } from './events';
-import { grantItem } from './bag';
+import { grantItem, itemCount, takeItem } from './bag';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
 } from './timeline';
@@ -28,7 +28,7 @@ import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
 import { accrueMana } from './mana';
-import { accrueKnowledge, payKnowledge, territoryKnowledge } from './knowledge';
+import { accrueKnowledge, landmarkClaimLump, payKnowledge, territoryKnowledge } from './knowledge';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { claimBandReward, completeTech, isTechComplete, type ResearchResult } from './research';
@@ -48,7 +48,7 @@ import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, cellsOfRect, completesAt, districtById,
   districtOccupies, getWallet,
   districtCells, newId, remainingSeconds, townhall,
-  type ArtifactId, type Coord, type District, type DistrictId, type GameState,
+  type ItemId, type ArtifactId, type Coord, type District, type DistrictId, type GameState,
   type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
@@ -223,7 +223,15 @@ export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord):
 
 export type RepairRefusal =
   | 'NotFound' | 'NotRevealed' | 'LairHeld' | 'NoBuilderFree' | 'CountLimit' | 'NeedsHarmony'
-  | 'NotEnoughResources' | 'NotEnoughGoods';
+  | 'NotEnoughResources' | 'NotEnoughGoods' | 'MissingItem';
+
+/** The item repairing this ruin also asks for — the Watchtower's lens — or
+ *  null. */
+export const repairItemOf = (id: string): ItemId | null => {
+  const site = ABANDONED.find((a) => a.id === id);
+  const item = site === undefined ? '' : DISTRICTS[site.districtId].repairItem;
+  return item === '' ? null : item as ItemId;
+};
 
 /**
  * Why an abandoned building cannot be repaired right now, or null if it can
@@ -247,6 +255,8 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, buildGoodsCost(state, site.districtId))) return 'NotEnoughGoods';
+  const item = repairItemOf(id);
+  if (item !== null && itemCount(state, item) < 1) return 'MissingItem';
   return null;
 }
 
@@ -259,7 +269,12 @@ export function repairAbandoned(state: GameState, map: MapData, id: string): Rep
   if (refusal !== null) return refusal;
   const site = ABANDONED.find((a) => a.id === id)!;
   const started = startBuild(state, map, site.districtId, site.location);
-  if (started === 'Started') state.abandoned.repaired[id] = true;
+  if (started === 'Started') {
+    state.abandoned.repaired[id] = true;
+    // The piece the ruin was missing goes into it.
+    const item = repairItemOf(id);
+    if (item !== null) takeItem(state, item, 1);
+  }
   return started;
 }
 
@@ -497,6 +512,10 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     district.state = 'Built';
     revealAroundDistrict(state, map, district); // the new building pushes back the fog
     recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
+    // The Watchtower stands: what claiming a landmark pays, it pays — a lump
+    // of Knowledge (its Mana is `manaCap`'s, its eight rings its own fog
+    // radius, the world's door `watchtowerClaimed`).
+    if (district.definitionId === 'Watchtower') payKnowledge(state, landmarkClaimLump(state));
   } else {
     district.level = item.targetLevel ?? district.level + 1;
     // A level may reveal further (the Townhall's does): its ring lands now.

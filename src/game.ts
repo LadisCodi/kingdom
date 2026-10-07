@@ -3025,6 +3025,9 @@ export class Game {
       this.toast('Clear the fog off it first');
     } else if (result === 'LairHeld') {
       this.toast('A lair holds its ground — clear it first');
+    } else if (result === 'MissingItem') {
+      const item = DISTRICTS[site.districtId].repairItem as ItemId;
+      this.toast(`It needs ${ITEMS[item]?.name ?? 'a missing piece'} — find it first`);
     } else {
       this.toast(this.refusalWords(result, site.districtId, 1));
     }

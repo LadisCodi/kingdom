@@ -2,23 +2,26 @@
 // places that open a mechanic when claimed, the heroes the story brings, and
 // what a save from before the doors reads as.
 import { describe, expect, it } from 'vitest';
-import { ABANDONED, FOG, HERO_LADDER, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
-import { advance, repairRefusal } from '../src/sim/commands';
-import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
+import { ABANDONED, DISTRICTS, FOG, HERO_LADDER, QUESTS } from '../src/sim/data/definitions';
+import { advance, repairAbandoned, repairRefusal } from '../src/sim/commands';
+import { claimLair } from '../src/sim/expeditions';
+import { watchtowerClaimed } from '../src/sim/landmarks';
 import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
 import { lairZoneCells } from '../src/sim/lairZone';
 import { pull, pullPrice } from '../src/sim/heroes';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect } from '../src/sim/doors';
-import { grantItem, useItem } from '../src/sim/bag';
+import { grantItem, itemCount, useItem } from '../src/sim/bag';
 import { openRelicDoor } from '../src/sim/relics';
 import { townhall } from '../src/sim/state';
 import { cellsOfRect, coordKey, type TomeId } from '../src/sim/state';
-import { addBuilt, clearLair, firstGame, freshGame, fund, map, reveal, T0 } from './helpers';
+import {
+  addBuilt, clearLair, firstGame, freshGame, fund, map, raiseWatchtower, reveal, T0, WATCHTOWER,
+} from './helpers';
 
 const TOMES: TomeId[] = ['Kingdom', 'Sagas', 'Atlas'];
 const shrine = ABANDONED.find((a) => a.id === 'ThornedShrine')!;
-const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+const tower = WATCHTOWER;
 
 describe('the books open on the world', () => {
   it('opens the kingdom\'s one tree and nothing else for a new kingdom', () => {
@@ -37,7 +40,7 @@ describe('the books open on the world', () => {
     addBuilt(state, 'Tavern', { x: 3, y: 1 });
     expect(isTomeOpen(state, 'Sagas')).toBe(true);
     expect(isTomeOpen(state, 'Atlas')).toBe(false);
-    state.landmarks.claimed[tower.id] = true;
+    raiseWatchtower(state);
     expect(watchtowerClaimed(state)).toBe(true);
     expect(isTomeOpen(state, 'Atlas')).toBe(true);
   });
@@ -65,16 +68,37 @@ describe('the places that open a mechanic', () => {
     expect(repairRefusal(state, map, shrine.id)).toBeNull();
   });
 
-  it('lets the Watchtower see further than a shrine', () => {
-    expect(FOG.watchtowerDiscoverRadius).toBeGreaterThan(FOG.claimDiscoverRadius);
-    const state = freshGame();
-    reveal(state, [tower.location]);
-    fund(state, { Gold: 99_999 });
-    expect(claimLandmark(state, map, tower.location)).toBe('Claimed');
-    const far = { x: tower.location.x, y: tower.location.y - FOG.watchtowerDiscoverRadius };
+  // THE WATCHTOWER IS REPAIRED, NOT CLAIMED (22-progression.md §5): with
+  // the lens the Orcs carried off, in a minute, and then it sees eight rings
+  // and opens the world.
+  it('repairs the Watchtower with the Orcs\' lens, in a minute, and it opens the world', () => {
+    const radius = DISTRICTS.Watchtower.fogDiscoverRadius;
+    expect(radius).toBeGreaterThan(FOG.claimDiscoverRadius);
+    const state = firstGame();
+    state.lastAdvance = T0;
+    reveal(state, cellsOfRect(tower.location, DISTRICTS.Watchtower.size));
+    fund(state, { Gold: 99_999, Wood: 99_999 });
+    expect(repairRefusal(state, map, tower.id)).toBe('MissingItem');
+    grantItem(state, 'WatchtowerLens', 1);
+    expect(repairRefusal(state, map, tower.id)).toBeNull();
+    expect(repairAbandoned(state, map, tower.id)).toBe('Started');
+    expect(itemCount(state, 'WatchtowerLens')).toBe(0);
+    expect(isDoorOpen(state, 'world')).toBe(false);
+    advance(state, map, T0 + 60_000);
+    expect(watchtowerClaimed(state)).toBe(true);
+    expect(isDoorOpen(state, 'world')).toBe(true);
+    expect(isTomeOpen(state, 'Atlas')).toBe(true);
+    const far = { x: tower.location.x, y: tower.location.y - radius };
     if (map.terrain.has(coordKey(far))) {
       expect(state.fog.discovered[coordKey(far)] || state.fog.revealed[coordKey(far)]).toBe(true);
     }
+  });
+
+  it('hands the lens over with the Orcs\' prize', () => {
+    const state = freshGame();
+    state.lairs.Orcs = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: true, cleared: false };
+    expect(claimLair(state, 'Orcs').result).toBe('Claimed');
+    expect(itemCount(state, 'WatchtowerLens')).toBe(1);
   });
 });
 

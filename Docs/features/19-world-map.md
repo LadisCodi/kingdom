@@ -578,7 +578,7 @@ gates them; *Cartography* opens the first explorer.
 
 ### 7.6 What they buy
 
-- **Never while the world is shut.** Until the Watchtower is claimed, no
+- **Never while the world is shut.** Until the Watchtower is repaired, no
   price asks for precious material: its terms are left off.
 - **Early: a few, by name.** A building's level 4 asks 2 of one material
   and its level 5 asks 3 of another (the Townhall 5), the three asked for

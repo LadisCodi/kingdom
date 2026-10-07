@@ -59,6 +59,7 @@
 | **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
 | **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
 | **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **1** | holds and wakes one city relic — no Harmony, no Mana of its own; how long and how far the relic acts is the relic's level ([`09`](09-relics.md) §2.1) |
+| **Watchtower** | 1×1 | its ruin, with the Watchtower's lens | 1 | **1** | sees 8 rings round it, +10 max Mana — and opens the world door and the Atlas ([`22`](22-progression.md) §5) |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall

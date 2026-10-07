@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildBoard, poolsAfter, resolveBattle, survivorsOf, type BattleEvent, type FighterSpec,
 } from '../src/sim/battle';
-import { HEROES, HERO_LADDER, HERO_ORDER, LANDMARKS, VILLAINS } from '../src/sim/data/definitions';
+import { HEROES, HERO_LADDER, HERO_ORDER, VILLAINS } from '../src/sim/data/definitions';
 import {
   buySkillRank, skillRank, skillRankBlock, skillRankPrice,
 } from '../src/sim/heroes';
@@ -13,7 +13,7 @@ import { SKILLS, maxSkillRank, rankValue, skillSentence, slotSkill } from '../sr
 import { serialize, deserialize } from '../src/sim/save';
 import { attackLair, claimLair } from '../src/sim/expeditions';
 import { addToWallet, getWallet, type HeroId, type UnitId } from '../src/sim/state';
-import { addAllTrainers, freshGame, fund, map, reveal, T0, toLastFight } from './helpers';
+import { addAllTrainers, freshGame, fund, map, reveal, T0, toLastFight, raiseWatchtower } from './helpers';
 import { LAIRS } from '../src/sim/data/definitions';
 
 const body = (over: Partial<FighterSpec> = {}): FighterSpec => ({
@@ -123,8 +123,7 @@ describe('the ranks', () => {
     const state = owned();
     state.heroes.levels[HERO] = HERO_LADDER.skillRankLevels[0]!;
     expect(skillRankPrice(state, HERO)!.goods).toEqual({});
-    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
-    state.landmarks.claimed[tower.id] = true;
+    raiseWatchtower(state);
     const material = SKILLS[HEROES[HERO].skill.id].material;
     expect(skillRankPrice(state, HERO)!.goods).toEqual({ [material]: HERO_LADDER.skillRankMaterial[0] });
     addToWallet(state.kingdom.wallet, 'Stardust', 10_000);

@@ -80,7 +80,7 @@ export const DOOR_HINT: Record<DoorId, string> = {
   relics: 'Clear a lair to open this.',
   store: 'Raise the Townhall to level 2 to open this.',
   survey: 'Raise the Townhall to level 2 to open this.',
-  world: 'Claim the Watchtower to open this.',
+  world: 'Repair the Watchtower to open this.',
   bag: 'Find a chest to open this.',
   friends: 'Choose your name on the world map to open this.',
 };

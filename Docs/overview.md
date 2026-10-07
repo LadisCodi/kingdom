@@ -186,7 +186,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   chapter whole pays a card pack
   ([`features/07-research.md`](features/07-research.md) §2.1).
 - **Found books are found, not bought** — the Sagas when a Tavern stands, the
-  Atlas when the Watchtower is claimed. A found book is narrow and deep: it
+  Atlas when the Watchtower is repaired. A found book is narrow and deep: it
   does one thing no general book does.
 - **Personalisation comes from which books you own and in what order**, not from
   a renunciation. Nothing is locked away by choosing; two kingdoms differ

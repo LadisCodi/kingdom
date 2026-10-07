@@ -10,8 +10,8 @@ import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { grantItem, useItem } from '../src/sim/bag';
 import { handPlace } from '../src/ui/stage/targets';
-import { addBuilt, firstGame, freshPresenter, reveal } from './helpers';
-import { FOG, LAIRS, LANDMARKS } from '../src/sim/data/definitions';
+import { addBuilt, firstGame, freshPresenter, reveal, WATCHTOWER } from './helpers';
+import { LAIRS, LANDMARKS } from '../src/sim/data/definitions';
 
 /** Every `data-coach` key the UI source writes: literals, and the prefix of
  *  every templated one (`tech:${id}` → `tech:`). */
@@ -216,11 +216,11 @@ describe('the conditions read the kingdom', () => {
   it('sees what stands past the fog, by kind, landmark kind or lair', () => {
     const game = freshPresenter(firstGame());
     game.state.fog.revealed = {}; // the opening's own ground already sights the tower
-    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
-    expect(conditionHolds(game, args('sighted' as never, 'Watchtower'))).toBe(false);
-    reveal(game.state, [{ x: tower.location.x, y: tower.location.y + FOG.sight.watchtower }]);
-    expect(conditionHolds(game, args('sighted' as never, 'Watchtower'))).toBe(true);
-    expect(conditionHolds(game, args('sighted' as never, 'landmark'))).toBe(true);
+    const tower = WATCHTOWER;
+    expect(conditionHolds(game, args('sighted' as never, tower.id))).toBe(false);
+    reveal(game.state, [{ x: tower.location.x, y: tower.location.y + tower.sight }]);
+    expect(conditionHolds(game, args('sighted' as never, tower.id))).toBe(true);
+    expect(conditionHolds(game, args('sighted' as never, 'abandoned'))).toBe(true);
     expect(conditionHolds(game, args('sighted' as never, ''))).toBe(true);
   });
 

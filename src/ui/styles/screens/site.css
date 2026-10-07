@@ -232,6 +232,14 @@
   line-height: 1.35;
   text-align: center;
 }
+.lm-need {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 6);
+  color: var(--clay-dark, var(--ink));
+}
+.lm-need.is-held { color: var(--leaf-dark); }
 .lm-note.is-claimed {
   display: flex;
   align-items: center;

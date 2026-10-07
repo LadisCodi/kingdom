@@ -1597,7 +1597,7 @@
   {
     "id": "towerSighted",
     "trigger": "sighted",
-    "triggerTarget": "Watchtower",
+    "triggerTarget": "NorthWatch",
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
@@ -1607,7 +1607,7 @@
         "side": "left",
         "text": "Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we’ll know. I hope it’s friendly.",
         "box": "auto",
-        "point": "landmark:NorthWatch",
+        "point": "abandoned:NorthWatch",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
@@ -1619,7 +1619,7 @@
   },
   {
     "id": "watchtowerSeen",
-    "trigger": "landmarkSeen",
+    "trigger": "abandonedRevealed",
     "triggerTarget": "NorthWatch",
     "triggerAmount": 0,
     "anywhere": false,
@@ -1628,9 +1628,9 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I’d love to sketch it.",
+        "text": "An old watchtower! Its great lens is gone — torn out. From its top you could see past the mountains. Oh, I’d love to sketch it.",
         "box": "auto",
-        "point": "landmark:NorthWatch",
+        "point": "abandoned:NorthWatch",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
@@ -1641,19 +1641,68 @@
     ]
   },
   {
-    "id": "world",
-    "trigger": "doorOpen",
-    "triggerTarget": "world",
+    "id": "watchtowerRepair",
+    "trigger": "canRepair",
+    "triggerTarget": "NorthWatch",
     "triggerAmount": 0,
-    "anywhere": true,
+    "anywhere": false,
     "skippable": true,
     "lines": [
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Other kingdoms, Your Majesty. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.",
+        "text": "The lens the Orcs carried off — it belongs to the old watchtower! Let’s put it back. Tap the tower.",
+        "box": "auto",
+        "point": "abandoned:NorthWatch",
+        "lock": "target",
+        "until": "siteOpen",
+        "untilTarget": "NorthWatch",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Set the lens and mend the stair. One minute, and we’ll see past the mountains. Repair it!",
+        "box": "auto",
+        "point": "ui:repair",
+        "lock": "target",
+        "until": "repairing",
+        "untilTarget": "NorthWatch",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      }
+    ]
+  },
+  {
+    "id": "world",
+    "trigger": "doorOpen",
+    "triggerTarget": "world",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "lines": [
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.",
         "box": "auto",
         "point": "ui:world",
+        "lock": "target",
+        "until": "worldOpen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "surprised"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Other kingdoms. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.",
+        "box": "auto",
+        "point": "",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",

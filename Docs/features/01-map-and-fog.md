@@ -125,7 +125,7 @@ both.
 
 | Site | Cells |
 |---|---|
-| Every landmark (shrine, standing stones, leyspring, watchtower) | 1×1 |
+| Every landmark (standing stones, leyspring) | 1×1 |
 | Every lair | 2×2 |
 
 - The footprint is **square**, and the feature is **drawn once** across the
@@ -231,9 +231,8 @@ lies close enough to it.
 |---|---|---|
 | Mountain 1×1 · 2×2 · 3×3 | never · 4 · 5 | `fog.sight.mountainBySize` |
 | Shrine, standing stones, leyspring | 3 | `fog.sight.landmark` |
-| Watchtower | 4 | `fog.sight.watchtower` |
 | A lair not yet found | its own, past its ground: Orcs 3, Harpies 3, Goblins 3, Wolf riders 3, Drake 4 | `sight` on the lair, in the map editor |
-| An abandoned building (§6.3), as its ruin | its own: the opening's 3 | `sight` on the building, in the map editor |
+| An abandoned building (§6.3), as its ruin | its own: the opening's 3, the Watchtower's 4 | `sight` on the building, in the map editor |
 | Forests, berries, game, shoals | never | — |
 
 - **Measured from revealed cells only**, Chebyshev, to the nearest cell of its
@@ -339,9 +338,9 @@ fallback past ring 14. The province reaches ring 23.
 The near map is laid out so the first Townhalls look one way at a time
 (`tests/provinceLayout.test.ts`):
 
-- **South first.** The Thorned Shrine (4 rings) is sighted from the first
-  ring; with the Watchtower to the north, the only landmarks in sight while
-  the Townhall is at level 1.
+- **South first.** The Thorned Shrine's ruin (4 rings) is sighted from the
+  first ring; with the Watchtower's ruin to the north, the only sites in
+  sight while the Townhall is at level 1.
 - **The Orcs** (6 rings, south, past the shrine) show from ring 3, as the
   player reaches the shrine. Their ground (radius 2) starts at ring 4 and
   holds the shrine, so they are found at Townhall 2 and cleared before it is
@@ -358,9 +357,10 @@ The near map is laid out so the first Townhalls look one way at a time
   more.
 - **The Harpies** show from Townhall 2's last ring: the camp that holds the
   gold is in sight before the player can reach it.
-- **The Watchtower** (5 rings north) is sighted from Townhall 1's ground and
-  reached at Townhall 2: the world map's door is in view from the start. The
-  Fallen Stones (7 rings) are sighted from ring 4, at Townhall 2.
+- **The Watchtower's ruin** (5 rings north) is sighted from Townhall 1's
+  ground and reached at Townhall 2: the world map's door is in view from the
+  start (§6.3). The Fallen Stones (7 rings), the nearest landmark, are
+  sighted from ring 4, at Townhall 2.
 
 ### The landmark tiers
 
@@ -368,15 +368,11 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Tier | Cost | Count |
 |---|---|---|
-| The near one | **2,000** | 1 |
-| The middle ring | **25,000** | 5 |
-| The far ring | **100,000** | 4 |
+| The near one — the Fallen Stones | **10,000** | 1 |
+| The middle ring | **25,000** | 3 |
+| The far ring | **100,000** | 2 |
 
 - The nearest sanctuary is the cheapest; the far ring is the dearest.
-- **The Watchtower** (`NorthWatch`, 5 rings north, **10,000**) is a landmark
-  of its own kind: claimed like any other, it discovers **8** rings round it
-  rather than 5 and opens the world door and the Atlas
-  ([`22-progression.md`](22-progression.md) §5).
 - **A landmark inside a standing lair's ground cannot be claimed**
   (`LairHeld`): the Thorned Shrine waits for the Orcs.
 
@@ -455,6 +451,13 @@ them, to be found and repaired.
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3,
   [`06-construction.md`](06-construction.md) §1). It is refused as a build is
   — no builder free, the count cap reached, a coin short.
+- **A ruin may be missing a piece** (`buildings` › `repairItem`): repairing
+  it also asks for that item from the Bag, and spends it. **The Watchtower**
+  (`NorthWatch`, 5 rings north) is the one: it needs **the Watchtower's
+  lens**, which the Orcs carry and their prize hands over. Repaired — 200
+  Gold, 100 Wood, **one minute** — it discovers **8 rings** round it, adds
+  +10 max Mana and 3 Knowledge as a landmark claim does, and opens the world
+  door and the Atlas ([`22-progression.md`](22-progression.md) §5).
 - **No technology is asked.** The technology that unlocks a building opens
   building more of it; its levels stay gated as for any other.
 - **While abandoned it only takes up its cells**: no production, store, crew,
@@ -504,7 +507,8 @@ them, to be found and repaired.
 | How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.countStep`, `fog.countGrowth` |
 | Taps to clear a cell | 5 | `fog.tapsToReveal` |
 | The floor under a cell's price | 1 | `fog.minCost` |
-| Claim discover radius | 5 (the Watchtower 8) | `fog.claimDiscoverRadius`, `fog.watchtowerDiscoverRadius` |
+| Claim discover radius | 5 | `fog.claimDiscoverRadius` |
+| The Watchtower's discover radius | 8 | `buildings` › Watchtower › `fogDiscoverRadius` |
 | How often a treasure is due | every 5 cells revealed | `treasure.everyReveals` |
 | What a treasure pays | 120 s of the kingdom's production, floored at 10 Gold · 5 Food · 5 Wood · 5 Stone | `treasure.workSeconds`, `treasure.floor` |
 | Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |

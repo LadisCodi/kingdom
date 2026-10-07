@@ -15,7 +15,7 @@ import { choosePayerProfile } from '../src/sim/store';
 import { freshWorld } from '../src/sim/world/explorers';
 import { Camera } from '../src/render/camera';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, type DistrictDef,
+  ABANDONED, DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, type DistrictDef,
 } from '../src/sim/data/definitions';
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import { districtCount } from '../src/sim/districts';
@@ -390,3 +390,20 @@ export function clearAround(state: GameState, center: Coord, radius: number): vo
     for (let dy = -radius; dy <= radius; dy++) delete state.features[coordKey({ x: center.x + dx, y: center.y + dy })];
   }
 }
+
+/** The old watchtower's ruin, as the map authors it (01-map-and-fog.md §6.3). */
+export const WATCHTOWER = ABANDONED.find((a) => a.districtId === 'Watchtower')!;
+
+/**
+ * The Watchtower repaired and standing — the world's door open — without the
+ * lens, the builder or the minute (Docs/features/22-progression.md §5). A
+ * test about what the world opens says so here in one line; the repair is
+ * held to its contract in tests/abandoned.test.ts.
+ */
+export const raiseWatchtower = (state: GameState): void => {
+  state.abandoned.repaired[WATCHTOWER.id] = true;
+  state.city.districts.push({
+    uniqueId: 'watchtower', definitionId: 'Watchtower', ordinal: 1, level: 1, assignedWorkers: 0,
+    location: WATCHTOWER.location, state: 'Built', visualVariant: 1,
+  });
+};
