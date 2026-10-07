@@ -1135,3 +1135,8 @@
 
 /* A hero's fragment (ui/heroFragment.ts): its own picture, at an icon's size. */
 .icon.hero-frag { object-fit: contain; background: none; }
+
+/* A POWER: the army boards' crossed swords and the figure (kit `powerTag`). */
+.k-power { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); vertical-align: middle; white-space: nowrap; }
+.k-power > .icon { --icon-size: calc(var(--px) * 20); flex: none; }
+.k-power > b { font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }

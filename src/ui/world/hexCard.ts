@@ -33,7 +33,7 @@ import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
 import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
-import { action, btn, chip, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
+import { action, btn, chip, costChips, iconEl, powerTag, sectionHead, sheet, type IconName } from '../kit';
 import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
@@ -722,7 +722,7 @@ export function renderWorldBuilding(game: Game): HTMLElement {
     const mine = h.garrison != null && h.garrison.owner === game.worldSeat();
     parts.push(sectionHead('Garrison'), action({
       label: mine ? 'Recall' : 'Garrison', kind: mine ? 'secondary' : 'primary',
-      info: mine ? `An army of ${formatCount(h.garrison!.power)} power stands here` : 'Station an army here: it fights raiders and rivals',
+      info: mine ? el('span', {}, 'An army of ', powerTag(h.garrison!.power), ' stands here') : 'Station an army here: it fights raiders and rivals',
       onClick: () => (mine ? void game.doRecallArmy(h.garrison!.army) : game.openArmy(index, 'garrison')),
     }));
   }

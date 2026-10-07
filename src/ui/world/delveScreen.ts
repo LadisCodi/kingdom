@@ -17,7 +17,7 @@ import type { CurrencyId, HeroId, PreciousId, UnitId } from '../../sim/state';
 import { nextRoom, roomPower, roomReward } from '../../worldServer/core';
 import type { ArmyView, DungeonView } from '../../worldServer/types';
 import { el, formatCount } from '../format';
-import { action, btn, chip, iconEl, sheet } from '../kit';
+import { action, btn, chip, iconEl, powerTag, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
 import { waitRow } from './dispatchSheet';
 import { homeboundMs } from '../../sim/world/travel';
@@ -89,10 +89,10 @@ function roomNode(
     const material = info === undefined ? null
       : lumpMaterial(game.worldSource().board(), game.worldSeat(), 'room', info.key, depth, room);
     parts.push(el('div', { class: 'dv-plaque' },
-      el('p', { class: 'dv-plaque-title' }, `Room ${formatCount(room)} · Power ${formatCount(power)}`),
+      el('p', { class: 'dv-plaque-title' }, `Room ${formatCount(room)} · `, powerTag(power)),
       payChips(pay, material === null ? null : { id: material, amount: pay.precious })));
   } else if (state === 'is-ahead' && !boss) {
-    parts.push(el('div', { class: 'dv-tag' }, el('span', { class: 'dv-tag-power' }, `Power ${formatCount(power)}`)));
+    parts.push(el('div', { class: 'dv-tag' }, el('span', { class: 'dv-tag-power' }, powerTag(power))));
   }
   if (boss && state !== 'is-cleared') {
     // The boss's chest stands open: what beating him pays.
