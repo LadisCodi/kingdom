@@ -20,6 +20,7 @@
 // upright is hidden or under a rim. The ground and what stands are kept,
 // and slide under a pan (keepLayers): only this canvas is drawn every frame.
 
+import { worldStoreReady } from '../../sim/world/stores';
 import type { GameState } from '../../sim/state';
 import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
@@ -1271,9 +1272,11 @@ function drawHeldMarks(
   const s = held.stores;
   if (held.burnt) {
     // Burning: the fire says it all; its store waits under it.
-  } else if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
+  } else if (!worldStoreReady(held)) {
+    // Nothing ready to collect yet.
+  } else if (s !== null && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, s.currency);
-  } else if (held.precious != null && held.held && held.active && held.precious.amount >= 1) {
+  } else if (held.precious != null) {
     // Its precious store, ready: a bubble with the material (19 §7.4).
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, held.precious.id);
   }

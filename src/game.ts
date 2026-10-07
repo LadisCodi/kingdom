@@ -163,6 +163,7 @@ import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
 import { type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
+import { worldStoreReady } from './sim/world/stores';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -217,6 +218,9 @@ export type OverlayName =
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
   | 'world'
+  // A district's empty building slot, and what can be built in it; a built
+  // one, what it does and its next level (Docs/proposals/world-menus.md §3.3).
+  | 'worldSlot' | 'worldBuilding'
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
   | 'army'
@@ -562,7 +566,7 @@ export class Game {
   heroPick: HeroPick | null = null;
   /** The relic picker, while it is open (`openRelicPicker`): the Shrine it
    *  chooses for, and the one slot as it stands — null is empty. */
-  relicPick: { shrineId: string; slot: ArtifactId | null } | null = null;
+  relicPick: { shrineId: string; slot: ArtifactId | null; chapel?: number } | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -4255,6 +4259,7 @@ export class Game {
 
   /** The relics the picker offers: every restored city relic, in order. */
   relicPickList(): RelicView[] {
+    if (this.relicPick?.chapel !== undefined) return this.worldRelicsRestored().map((id) => this.relicCard(id));
     return ARTIFACT_ORDER
       .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1)
       .map((id) => this.relicCard(id));
@@ -4263,6 +4268,7 @@ export class Game {
   /** Is this relic already in a Shrine — this one or another? Its card in
    *  the picker wears the Shrine mark. */
   relicPickHosted(id: ArtifactId): boolean {
+    if (relicKind(id) === 'world') return this.myChapels().some((c) => c.relic === id);
     return hostOf(this.state, id) !== null;
   }
 
@@ -4293,6 +4299,11 @@ export class Game {
   relicPickConfirm(): void {
     const pick = this.relicPick;
     if (pick === null) return;
+    // A world relic leaves its old Chapel on its own: the server moves it.
+    if (pick.chapel !== undefined) {
+      this.applyRelicPick();
+      return;
+    }
     const from = pick.slot === null ? null : hostOf(this.state, pick.slot);
     if (from !== null && from.uniqueId !== pick.shrineId) {
       playSfx('click');
@@ -4316,6 +4327,13 @@ export class Game {
     const pick = this.relicPick;
     if (pick === null) return;
     this.relicPick = null;
+    if (pick.chapel !== undefined) {
+      const held = this.worldSource().hexOf(pick.chapel)?.relic?.id ?? null;
+      this.openWorldBuilding(pick.chapel, 'Chapel');
+      if (pick.slot !== null && pick.slot !== held) void this.doHostWorldRelic(pick.slot, pick.chapel);
+      else if (pick.slot === null && held !== null) void this.doUnhostWorldRelic(held);
+      return;
+    }
     this.setOverlay(null);
     const shrine = shrines(this.state).find((d) => d.uniqueId === pick.shrineId);
     this.inspectedDistrictId = pick.shrineId;
@@ -4330,6 +4348,10 @@ export class Game {
   relicPickCancel(): void {
     const pick = this.relicPick;
     this.relicPick = null;
+    if (pick?.chapel !== undefined) {
+      this.openWorldBuilding(pick.chapel, 'Chapel');
+      return;
+    }
     this.setOverlay(null);
     if (pick !== null) this.inspectedDistrictId = pick.shrineId;
     this.notify();
@@ -4810,7 +4832,9 @@ export class Game {
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
     // The picker and the shortfall go back to the sheet they came from, so the
     // hex that sheet is about stays chosen under them.
-    if (name !== 'world' && name !== 'army' && name !== 'speedup' && name !== 'shortfall') this.selectedHex = null;
+    if (name !== 'world' && name !== 'army' && name !== 'speedup' && name !== 'shortfall'
+      && name !== 'worldSlot' && name !== 'worldBuilding' && name !== 'relicPicker') this.selectedHex = null;
+    if (name !== 'worldBuilding' && name !== 'relicPicker') this.worldBuilding = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
@@ -5292,6 +5316,8 @@ export class Game {
   scene: 'province' | 'world' = 'province';
   /** The world hex the dispatch sheet is about. */
   selectedHex: number | null = null;
+  /** The building of the selected hex whose popup is open. */
+  worldBuilding: WorldUpgrade | null = null;
   /** The world's camera, handed over by main once the canvas exists. */
   worldCamera: HexCamera | null = null;
 
@@ -5623,6 +5649,7 @@ export class Game {
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
+      NoSlot: 'Every slot of this district is taken',
       NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
@@ -6023,8 +6050,56 @@ export class Game {
       this.dismiss();
       return;
     }
+    // A ready store of the player's own is collected, as a city building's
+    // is: the hex opens its card only when there is nothing to take.
+    const held = this.actingSeat === null ? this.worldSource().hexOf(index) : null;
+    if (held !== null && held.owner === this.worldSeat() && worldStoreReady(held)) {
+      void this.doCollectHex(index);
+      return;
+    }
     this.selectedHex = index;
     this.setOverlay('world');
+  }
+
+  /** A district's empty slot: the buildings that could go in it. */
+  openWorldSlot(index: number): void {
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('worldSlot');
+  }
+
+  /** A district's building: what it does, and its next level. */
+  openWorldBuilding(index: number, building: WorldUpgrade): void {
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('worldBuilding');
+    this.worldBuilding = building;
+    this.notify();
+  }
+
+  /** Back from a slot or a building to the hex's card. */
+  backToHex(): void {
+    if (this.selectedHex === null) {
+      this.dismiss();
+      return;
+    }
+    this.setOverlay('world');
+  }
+
+  /** Build in a district's empty slot, and go back to its card. */
+  doBuildInSlot(index: number, building: WorldUpgrade, gold: number): void {
+    this.backToHex();
+    void this.doUpgradeHex(index, building, 1, gold);
+  }
+
+  /** The relic picker over a Chapel: its one slot, the world relics. */
+  openChapelPicker(index: number): void {
+    const h = this.worldSource().hexOf(index);
+    if (h === null || !h.chapel) return;
+    this.relicPick = { shrineId: String(index), slot: h.relic?.id ?? null, chapel: index };
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('relicPicker');
   }
 
   /** Bring a hex into view. */

@@ -480,14 +480,25 @@ gates them; *Cartography* opens the first explorer.
 
 - **An upgrade is built into a district that stands**, with Gold and a
   builder's time, and shows on its hex.
-- **The Fortress is the first, and fits any district**: three levels,
-  garrisoned by an army, covering its hex and the six around it (§6.1).
+- **A district has slots for its upgrades**: one; two on bare ground (the
+  Rural district), which has no feature to work (`worldBuild.districts.*.slots`).
+  An upgrade takes a slot from the moment it starts; raising its level
+  takes none. A Shrine district's own Chapel fills its slot.
+- **The Fortress fits any district**: three levels, garrisoned by an army,
+  covering its hex and the six around it (§6.1).
+- **The Chapel** hosts one world relic ([`../proposals/relic-restoration.md`](../proposals/relic-restoration.md) §5.2).
+- **On the district's card**: each slot, empty (a tap opens the buildings
+  that fit it, and a tap on one builds it) or holding its building (a tap
+  opens what it does and its next level; a Chapel's relic socket opens the
+  relic picker).
 
 ### 7.3 Stores
 
 - **A producing district fills a store of its own**, as a province building
   does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
-- **A tap on its hex collects the store into the city's wallet**, free.
+- **A tap on its hex collects the store into the city's wallet**, free,
+  once it is a quarter full or holds a precious lump; otherwise the tap
+  opens the district's card.
 - **Yield and store size are authored amounts per district**, times what the
   owner's research adds (`improvementYield`, `improvementStore`). The city
   sends that boost when it joins and after a research that moves it; the

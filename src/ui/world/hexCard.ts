@@ -1,0 +1,359 @@
+// THE HEX CARD — a world hex as the city's building card (Docs/proposals/
+// world-menus.md §2–§3.3; mockups m83b, m84c–e).
+//
+// Free ground has two sections: THE HEX (the ground: its art, how far it
+// is, its terrain, its feature, the march across it) and DISTRICT (what it
+// becomes, its yield and its Build). Once built, the hex and its district
+// are one thing: one head, one band of tiles, and BUILDINGS — the
+// district's slots, each empty (a tap opens the slot picker) or holding a
+// Fortress or a Chapel (a tap opens its popup).
+//
+// A ready store is not here: a tap on the hex collects it, as on a city
+// building. Nor is a raid to come: the board draws its arrow.
+
+import type { Game } from '../../game';
+import type { BoardHex } from '../../sim/world/board';
+import { ARTIFACTS, WORLD_BUILD } from '../../sim/data/definitions';
+import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
+import { hexAt, hexDistance } from '../../sim/world/hex';
+import { hexTravelMs } from '../../sim/world/travel';
+import { worldImprovementBoost } from '../../sim/world/boost';
+import { getGood } from '../../sim/goods';
+import { worldUpgradeGoods } from '../../sim/precious';
+import type { CurrencyId, GoodId } from '../../sim/state';
+import { claimGold, districtOf, districtRate, upgradeLevel } from '../../worldServer/core';
+import type { HexControl } from '../../sim/world/source';
+import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
+import { spriteImgAt, spriteUrl } from '../../render/sprites';
+import { el, formatCount, formatDuration, formatExact, formatShort } from '../format';
+import { action, btn, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
+import { crestEl } from '../friends/kingdomBits';
+import { emptyRelicSlot } from '../relicPicker';
+import { relicArt } from '../relicSheet';
+import { chapelRoom, hexWork } from './worldActions';
+import { FEATURE_NAME, TERRAIN_NAME } from './hexNames';
+
+/** A feature's mark on its tile: what it is worked for. */
+const FEATURE_ICON: Partial<Record<WorldFeature, IconName>> = {
+  Forest: 'Wood', Mountain: 'Stone', FertileLand: 'FarmLands', Game: 'Meat', Landmark: 'Knowledge',
+  Sanctuary: 'Mana', HeartwoodGrove: 'Heartwood', StarfallCrater: 'Starmetal', MoonglassSpires: 'Moonglass',
+};
+
+/** What a building does, in one line. */
+const BUILDING_LINE: Record<WorldUpgrade, string> = {
+  Fortress: 'Its garrison fights raiders',
+  Chapel: 'Hosts a world relic',
+};
+
+const buildingSprite = (b: WorldUpgrade, level: number): string =>
+  (b === 'Fortress' ? fortressSprite(Math.max(1, level)) : 'whex_chapel');
+
+/** What a district does for the city, in one sentence. */
+function districtLine(bh: BoardHex, d: WorldDistrict): string {
+  const def = WORLD_BUILD.districts[d];
+  const material = depositMaterial(bh.features);
+  if (material !== null) return `Digs ${material} for your city.`;
+  if (d === 'Shrine') return 'Raises your Mana’s ceiling. Its Chapel hosts a world relic.';
+  if (def.produces === 'Food') return 'Farms Food for your city.';
+  if (def.produces === '') return 'Works its ground for your city.';
+  return `${def.produces === 'Gold' ? 'Pays' : 'Brings'} ${def.produces} to your city.`;
+}
+
+/** The art in a portrait: a sprite, drawn larger than its tile and clipped. */
+function portrait(sprite: string | null, fallback: IconName): HTMLElement {
+  const url = sprite === null ? null : spriteUrl(sprite);
+  return el('div', { class: 'dc-portrait k-section wd-portrait' },
+    el('div', { class: 'dc-portrait-mask' }, url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(fallback, { size: 'lg' })),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+}
+
+/** The bare ground's art: its feature's drawing, or its terrain plate. */
+const groundSprite = (bh: BoardHex): string => {
+  const combo = comboOf(bh.terrain ?? 'Grassland', bh.features);
+  return combo !== null ? COMBO_SPRITE[combo] : PLATE_SPRITE[bh.terrain ?? 'Grassland'];
+};
+
+interface Tile { icon: IconName; label: string; value: string; bad?: boolean }
+
+/** A band of the city card's tiles. */
+const tiles = (list: readonly Tile[]): HTMLElement => el('div', { class: 'dc-stats wd-stats' },
+  ...list.map((f) => el('div', { class: `dc-stat k-section${f.bad ? ' is-bad' : ''}`, 'aria-label': `${f.label} ${f.value}` },
+    iconEl(f.icon, { size: 'lg' }),
+    el('div', { class: 'dc-stat-body', 'aria-hidden': 'true' },
+      el('div', { class: 'dc-stat-label' }, f.label),
+      el('b', { class: 'dc-stat-value' }, f.value)))));
+
+/** "1 hex from your city", with the boot. */
+function distanceLine(game: Game, index: number): HTMLElement {
+  const n = hexDistance(hexAt(game.homeHex()), hexAt(index));
+  return el('p', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }),
+    `${formatCount(n)} ${n === 1 ? 'hex' : 'hexes'} from your city`);
+}
+
+/** The ground's own tiles: terrain, feature, the march across it. */
+function groundTiles(bh: BoardHex): Tile[] {
+  const feature = bh.features[0];
+  return [
+    { icon: 'tile', label: 'Terrain', value: TERRAIN_NAME[bh.terrain ?? 'Grassland'] },
+    ...(feature === undefined ? [] : [{ icon: FEATURE_ICON[feature] ?? 'tile', label: 'Feature', value: FEATURE_NAME[feature] }]),
+    { icon: 'boot', label: 'March', value: `${formatDuration(Math.round(hexTravelMs(bh, 'army') / 1000))} / hex` },
+  ];
+}
+
+/** What a district on this hex makes and holds, as the city card says it. */
+function yieldTiles(game: Game, bh: BoardHex, h: HexControl | null): Tile[] {
+  const rate = districtRate(bh, worldImprovementBoost(game.state));
+  const out: Tile[] = [];
+  if (rate.currency !== null) {
+    const coin = rate.currency as IconName;
+    out.push(h?.stores != null
+      ? { icon: coin, label: 'Storage', value: `${formatShort(Math.floor(h.stores.amount))}/${formatShort(h.stores.cap)}`, bad: h.stores.amount >= h.stores.cap }
+      : { icon: coin, label: 'Storage', value: formatShort(rate.cap) });
+    out.push({ icon: coin, label: 'Income', value: `${formatShort(rate.perHour)} /h` });
+  }
+  // A deposit's precious store, beside its coin's.
+  if (h?.precious != null && h.precious.cap > 0) {
+    out.push({ icon: h.precious.id, label: h.precious.id, value: `${formatShort(Math.floor(h.precious.amount))}/${formatShort(h.precious.cap)}` });
+  } else if (h === null) {
+    const material = depositMaterial(bh.features);
+    if (material !== null) out.push({ icon: material, label: 'Yields', value: material });
+  }
+  return out;
+}
+
+/** The player's shield, at the left of the title plank. */
+function withShield(game: Game, root: HTMLElement): HTMLElement {
+  const me = game.worldSource().seats()[game.worldSeat()];
+  const head = root.querySelector('.k-head');
+  if (me !== undefined && head !== null) {
+    head.prepend(el('span', { class: 'wd-shield', 'aria-hidden': 'true' }, crestEl(me.owner.name, me.owner.crest ?? null, 'md')));
+  }
+  return root;
+}
+
+// ------------------------------------------------------------ free ground
+
+/**
+ * FREE GROUND (m83b): THE HEX, then DISTRICT with its Build. `reason` says
+ * why it cannot be built yet, when it cannot.
+ */
+export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason: string | undefined): HTMLElement {
+  const district = districtOf(bh)!;
+  const def = WORLD_BUILD.districts[district];
+  const source = game.worldSource();
+  const held = source.board().hexes.filter((x) => source.hexOf(x.index)?.owner === game.worldSeat()).length;
+  const gold = claimGold(held);
+  const hex = el('div', { class: 'dc-head' },
+    portrait(groundSprite(bh), 'tile'),
+    el('div', { class: 'dc-what-col' }, distanceLine(game, bh.index)));
+  const build = btn({
+    label: 'Build', kind: 'primary', cost: { Gold: gold }, have: (c: CurrencyId) => game.walletValue(c),
+    disabledReason: reason,
+    onClick: () => void game.doClaimHex(bh.index, gold),
+  });
+  const districtHead = el('div', { class: 'dc-head' },
+    portrait(DISTRICT_SPRITE[district], 'build'),
+    el('div', { class: 'dc-what-col' },
+      el('p', { class: 'wd-name' }, def.name),
+      el('div', { class: 'dc-what' }, districtLine(bh, district)),
+      ...(reason === undefined ? [] : [el('p', { class: 'k-reason is-blocked' }, iconEl('padlock', { size: 'sm' }), reason)])),
+    el('div', { class: 'dc-upgrade' }, build));
+  return sheet({ title, onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      sectionHead('The hex'), hex, tiles(groundTiles(bh)),
+      sectionHead('District'), districtHead,
+      tiles([...yieldTiles(game, bh, null),
+        { icon: 'hourglass', label: 'Build', value: formatDuration(WORLD_BUILD.claim.buildSeconds) }])));
+}
+
+// ------------------------------------------------------------ your district
+
+/** What stands in each of a district's slots, in order: its buildings, then
+ *  the empty ones. A building going up stands in its slot already. */
+export function districtSlots(bh: BoardHex, h: HexControl): Array<{ building: WorldUpgrade; level: number; going: boolean } | null> {
+  const district = districtOf(bh);
+  const n = district === null ? 0 : WORLD_BUILD.districts[district].slots;
+  const built: Array<{ building: WorldUpgrade; level: number; going: boolean }> = [];
+  const level = (b: WorldUpgrade) => upgradeLevel({ fortress: h.fortress, chapel: h.chapel === true ? 1 : 0 }, b);
+  for (const b of ['Fortress', 'Chapel'] as const) {
+    const going = h.work?.upgrade === b;
+    if (level(b) > 0 || going) built.push({ building: b, level: level(b), going });
+  }
+  return [...built, ...Array.from({ length: Math.max(0, n - built.length) }, () => null)];
+}
+
+/** One slot: its building's art, name and level — or the empty well. */
+function slotEl(game: Game, index: number, slot: ReturnType<typeof districtSlots>[number], h: HexControl): HTMLElement {
+  if (slot === null) {
+    const b = el('button', { class: 'wd-slot is-empty', type: 'button', 'aria-label': 'Build here' },
+      el('span', { class: 'hc-plus', 'aria-hidden': 'true' }, '+'),
+      el('span', { class: 'wd-slot-name' }, 'Build here'));
+    b.addEventListener('click', () => game.openWorldSlot(index));
+    return b;
+  }
+  const name = WORLD_BUILD.upgrades[slot.building].name;
+  const art = spriteUrl(buildingSprite(slot.building, slot.level));
+  const b = el('button', { class: `wd-slot${slot.going ? ' is-going' : ''}`, type: 'button', 'aria-label': name },
+    el('span', { class: 'wd-slot-art' }, art ? spriteImgAt(art, 'wd-slot-img') : iconEl('build', { size: 'lg' })),
+    el('span', { class: 'wd-slot-name' }, name),
+    ...(slot.building === 'Fortress' && slot.level > 0 ? [el('span', { class: 'wd-slot-level' }, `Lv ${formatExact(slot.level)}`)] : []),
+    ...(slot.going ? [el('span', { class: 'wd-slot-level' }, iconEl('hourglass', { size: 'sm' }), 'Building')] : []));
+  b.addEventListener('click', () => game.openWorldBuilding(index, slot.building));
+  // A Chapel's relic socket at its top right: a tap opens the relic picker.
+  if (slot.building === 'Chapel' && !slot.going) {
+    const relic = h.relic == null ? null : game.relicCard(h.relic.id);
+    const socket = el('button', { class: 'wd-socket', type: 'button', 'aria-label': relic === null ? 'Host a relic' : `Change ${relic.name}` },
+      relic === null ? el('span', { class: 'hc-plus', 'aria-hidden': 'true' }, '+') : relicArt(relic, 'wd-socket-art'));
+    socket.addEventListener('click', (e) => {
+      e.stopPropagation();
+      game.openChapelPicker(index);
+    });
+    return el('div', { class: 'wd-slot-wrap' }, b, socket);
+  }
+  return el('div', { class: 'wd-slot-wrap' }, b);
+}
+
+/**
+ * THE PLAYER'S DISTRICT (m84c, m84d): one card. `extra` carries what the
+ * dispatch sheet still says about it — being claimed, cut off, burnt, a
+ * builder at work — as rows under the tiles.
+ */
+export function renderOwnDistrict(game: Game, bh: BoardHex, h: HexControl, extra: readonly HTMLElement[]): HTMLElement {
+  const district = h.district;
+  const def = WORLD_BUILD.districts[district];
+  const head = el('div', { class: 'dc-head' },
+    portrait(DISTRICT_SPRITE[district], 'build'),
+    el('div', { class: 'dc-what-col' },
+      el('div', { class: 'dc-what' }, districtLine(bh, district)),
+      distanceLine(game, bh.index)));
+  const slots = h.held ? districtSlots(bh, h) : [];
+  return withShield(game, sheet({ title: def.name, onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      head,
+      tiles([...yieldTiles(game, bh, h), ...groundTiles(bh).filter((t) => t.label !== 'Feature')]),
+      ...extra,
+      ...(slots.length === 0 ? [] : [
+        sectionHead('Buildings'),
+        el('div', { class: 'wd-slots' }, ...slots.map((s) => slotEl(game, bh.index, s, h))),
+      ]))));
+}
+
+// ------------------------------------------------------------ the slot picker
+
+/** Why a building cannot go into this district now, or undefined. */
+function slotRefusal(game: Game, h: HexControl, b: WorldUpgrade): string | undefined {
+  if (h.burnt) return 'Repair it first';
+  if (!h.active) return 'Cut off from your city';
+  if (h.work !== null) return 'A builder is at work here';
+  if (b === 'Chapel') {
+    const room = chapelRoom(game.worldSource(), game.worldSeat());
+    if (room.built >= room.allowed) return `Hold ${formatCount(room.allowed * WORLD_BUILD.chapelsPerHexes)} hexes for another`;
+  }
+  return undefined;
+}
+
+/** A building's card in the slot picker: the city's Build drawer card. A
+ *  tap builds it, as a tap on a city card places it. */
+function slotCard(game: Game, index: number, h: HexControl, b: WorldUpgrade): HTMLElement {
+  const level = WORLD_BUILD.upgrades[b].levels[0];
+  const goods = Object.entries(worldUpgradeGoods(game.state, b, 1)) as Array<[GoodId, number]>;
+  const blocked = slotRefusal(game, h, b);
+  const shortGold = game.walletValue('Gold') < level.gold;
+  const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
+  const art = spriteUrl(buildingSprite(b, 1));
+  const room = b === 'Chapel' ? chapelRoom(game.worldSource(), game.worldSeat()) : null;
+  const card = el('button', { class: `bld-card${blocked !== undefined ? ' is-locked' : ''}`, type: 'button' },
+    el('div', { class: 'bld-art' }, art ? spriteImgAt(art) : iconEl('build', { size: 'lg' })),
+    el('div', { class: 'bld-name' }, WORLD_BUILD.upgrades[b].name),
+    el('div', { class: 'bld-promise' }, BUILDING_LINE[b]),
+    ...(blocked !== undefined ? [] : [el('div', { class: 'bld-cost' },
+      costChips({ Gold: level.gold }, (c) => game.walletValue(c)),
+      ...goods.map(([g, n]) => el('span', { class: `k-chip${getGood(game.state.city.goods, g) < n ? ' is-short' : ''}` },
+        iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))))]),
+    el('div', { class: 'bld-foot' },
+      el('span', { class: 'bld-foot-time' }, iconEl('hourglass', { size: 'sm' }), formatDuration(level.buildSeconds)),
+      ...(room === null ? [] : [el('span', { class: 'bld-foot-built' }, `Built ${formatExact(room.built)}/${formatExact(room.allowed)}`)])));
+  if (blocked !== undefined) {
+    card.disabled = true;
+    card.querySelector('.bld-art')!.append(el('div', { class: 'bld-ribbon' }, iconEl('padlock', { size: 'sm' }), el('span', {}, blocked)));
+    return card;
+  }
+  card.addEventListener('click', () => {
+    if (shortGold || shortGoods) {
+      if (shortGold) game.shake(['Gold']);
+      card.classList.remove('is-refused');
+      void card.offsetWidth; // restart the animation on a second tap
+      card.classList.add('is-refused');
+      return;
+    }
+    game.doBuildInSlot(index, b, level.gold);
+  });
+  return card;
+}
+
+/** THE SLOT PICKER (m84e): what can be built in an empty slot. */
+export function renderWorldSlot(game: Game): HTMLElement {
+  const index = game.selectedHex;
+  const h = index === null ? null : game.worldSource().hexOf(index);
+  if (index === null || h === null) return el('div');
+  const standing = new Set(districtSlots(game.worldSource().board().hexes[index], h).flatMap((s) => (s === null ? [] : [s.building])));
+  const offer = (['Fortress', 'Chapel'] as const).filter((b) => !standing.has(b));
+  return sheet({ title: `Build in ${WORLD_BUILD.districts[h.district].name}`, onClose: () => game.backToHex() },
+    el('div', { class: 'bld-row wd-slot-row' }, ...offer.map((b) => slotCard(game, index, h, b))));
+}
+
+// ------------------------------------------------------------ a building
+
+/** A building's popup: what it does, and its next level. A Fortress also
+ *  says who mans it; a Chapel shows its relic's socket. */
+export function renderWorldBuilding(game: Game): HTMLElement {
+  const index = game.selectedHex;
+  const b = game.worldBuilding;
+  const h = index === null ? null : game.worldSource().hexOf(index);
+  if (index === null || b === null || h === null) return el('div');
+  const def = WORLD_BUILD.upgrades[b];
+  const level = upgradeLevel({ fortress: h.fortress, chapel: h.chapel === true ? 1 : 0 }, b);
+  const back = () => game.backToHex();
+  const parts: HTMLElement[] = [];
+  const next = def.levels[level];
+  const work = hexWork(h);
+  const goingUp = h.work?.upgrade === b;
+  // The next level, priced inside its button (the shipped cost style).
+  let upgrade: HTMLElement[] = [];
+  if (!goingUp && level > 0 && next !== undefined) {
+    const goods = Object.entries(worldUpgradeGoods(game.state, b, level + 1)) as Array<[GoodId, number]>;
+    upgrade = [el('div', { class: 'dc-upgrade' }, btn({
+      label: 'Upgrade', kind: 'primary', cost: { Gold: next.gold }, have: (c: CurrencyId) => game.walletValue(c),
+      costExtra: goods.map(([g, n]) => ({ icon: g, amount: formatCount(n), short: getGood(game.state.city.goods, g) < n })),
+      disabledReason: h.work !== null ? 'A builder is at work here' : !h.active ? 'Cut off from your city' : h.burnt ? 'Repair it first' : undefined,
+      onClick: () => void game.doUpgradeHex(index, b, level + 1, next.gold),
+    }))];
+  }
+  parts.push(el('div', { class: 'dc-head' },
+    portrait(buildingSprite(b, Math.max(1, level)), 'build'),
+    el('div', { class: 'dc-what-col' },
+      el('div', { class: 'dc-what' }, `${BUILDING_LINE[b]}.`),
+      ...(next !== undefined && !goingUp && level > 0 ? [el('p', { class: 'wd-far' }, `Level ${formatExact(level + 1)} takes ${formatDuration(next.buildSeconds)}`)] : [])),
+    ...upgrade));
+  if (goingUp && work !== null) parts.push(el('p', { class: 'wd-line' }, `${work.what} — ${formatDuration(Math.max(0, Math.ceil((work.endsAt - game.now()) / 1000)))} left`));
+  if (b === 'Fortress' && level > 0) {
+    const mine = h.garrison != null && h.garrison.owner === game.worldSeat();
+    parts.push(sectionHead('Garrison'), action({
+      label: mine ? 'Recall' : 'Garrison', kind: mine ? 'secondary' : 'primary',
+      info: mine ? `An army of ${formatCount(h.garrison!.power)} power stands here` : 'Station an army here: it fights raiders and rivals',
+      onClick: () => (mine ? void game.doRecallArmy(h.garrison!.army) : game.openArmy(index, 'garrison')),
+    }));
+  }
+  if (b === 'Chapel' && h.chapel === true) {
+    const relic = h.relic == null ? null : game.relicCard(h.relic.id);
+    const socket = el('button', { class: 'wd-chapel-socket', type: 'button', 'aria-label': relic === null ? 'Host a relic' : `Change ${relic.name}` },
+      relic === null ? emptyRelicSlot() : relicArt(relic, 'rl-art'),
+      el('span', { class: 'wd-chapel-what' }, relic === null
+        ? 'Empty — host a restored world relic'
+        : `${ARTIFACTS[relic.id].name}, level ${formatExact(h.relic?.level ?? 0)}`));
+    socket.addEventListener('click', () => game.openChapelPicker(index));
+    parts.push(sectionHead('Relic'), socket);
+  }
+  return sheet({ title: level > 0 && b === 'Fortress' ? `${def.name} Lv ${formatExact(level)}` : def.name, onClose: back },
+    el('div', { class: 'wd-card' }, ...parts));
+}

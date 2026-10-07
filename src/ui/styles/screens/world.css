@@ -62,6 +62,123 @@
 .wd-line { margin: 0; font-size: calc(var(--px) * 15); color: var(--ink); }
 .wd-march { display: flex; justify-content: flex-start; }
 
+/* THE HEX CARD (Docs/proposals/world-menus.md §2): the city card's head,
+ * tiles and portrait, in sections; a district's building slots. */
+.wd-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 2) calc(var(--px) * 6) calc(var(--px) * 10);
+}
+/* A hex sprite is a tile with what stands on it rising above: its middle
+ * sits a little lower than the middle of its canvas. */
+.wd-portrait .dc-portrait-art { width: 135%; translate: -50% -52%; }
+.wd-name { margin: 0; font-size: calc(var(--px) * 17); font-weight: var(--weight-title); color: var(--ink); line-height: 1.1; }
+.wd-far {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  margin: calc(var(--px) * 4) 0 0;
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
+}
+.wd-card .dc-what-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 2); }
+.wd-card .k-reason.is-blocked { display: flex; align-items: center; gap: calc(var(--px) * 4); margin: calc(var(--px) * 4) 0 0; font-size: var(--text-desc); }
+/* The hex's tiles stand upright — the mark over its name and value — so
+ * four fit a row: the ground's facts beside the district's. */
+.wd-stats { --stat-gap: calc(var(--px) * 8); flex-wrap: nowrap; }
+.wd-stats > .dc-stat.k-section {
+  flex: 1 1 0;
+  width: auto;
+  height: auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 6) calc(var(--px) * 3);
+  text-align: center;
+}
+.wd-stats > .dc-stat > .icon { --icon-size: calc(var(--px) * 34); }
+.wd-stats .dc-stat-body { width: 100%; }
+.wd-stats .dc-stat-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The player's shield, at the left end of the title plank. */
+.k-head > .wd-shield {
+  position: absolute;
+  left: calc(var(--px) * 6);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 1;
+}
+
+/* BUILDINGS: square slots of darker paper, a building's art in each, or the
+ * dashed well an empty one is (the relic slot's). */
+.wd-slots { display: flex; justify-content: center; gap: calc(var(--px) * 12); }
+.wd-slot-wrap { position: relative; }
+.wd-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 116);
+  height: calc(var(--px) * 124);
+  padding: calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid color-mix(in srgb, var(--wood-dark) 35%, transparent);
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.18);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.wd-slot.is-empty {
+  justify-content: center;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--gold-dark) 60%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, var(--parchment-shade));
+}
+.wd-slot.is-going .wd-slot-art { opacity: 0.6; }
+.wd-slot-art { flex: 1; min-height: 0; display: grid; place-items: center; width: 100%; }
+.wd-slot-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wd-slot-name { font-size: var(--text-desc); font-weight: var(--weight-title); line-height: 1.1; }
+.wd-slot-level { display: flex; align-items: center; gap: calc(var(--px) * 2); font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); }
+/* A Chapel's relic socket: a brass-rimmed round well over its top right. */
+.wd-socket {
+  position: absolute;
+  top: calc(var(--px) * -8);
+  right: calc(var(--px) * -8);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  padding: 0;
+  border: calc(var(--px) * 3) solid var(--gold-dark);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gold) 18%, var(--parchment-shade));
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(40, 22, 10, 0.4);
+  cursor: pointer;
+}
+.wd-socket .hc-plus { font-size: calc(var(--px) * 22); }
+.wd-socket-art { width: 86%; height: 86%; object-fit: contain; }
+/* The slot picker's row, centred: two cards. */
+.wd-slot-row { justify-content: center; }
+/* A Chapel's popup: its socket, and what is in it. */
+.wd-chapel-socket {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 12);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.wd-chapel-socket .rl-art { width: calc(var(--px) * 88); height: calc(var(--px) * 88); object-fit: contain; }
+.wd-chapel-what { font-size: var(--text-desc); font-weight: var(--weight-strong); }
+
 /* THE DOOR — a round wooden knob, the compass carved into it, bottom right
  * just above the nav, level with the quest scroll's foot; padlocked in brass
  * until the Watchtower is claimed. Above the map, below the district card (6)

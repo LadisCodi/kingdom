@@ -15,7 +15,7 @@ import {
 import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
-import { depositMaterial, type WorldFeature, type WorldTerrain } from '../../sim/world/types';
+import { depositMaterial } from '../../sim/world/types';
 import { ARTIFACTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
@@ -29,47 +29,12 @@ import type { SpeedJob } from '../../sim/speedups';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
 import { scoutPay } from '../../sim/world/scouting';
 import { campLoot } from '../../sim/world/fights';
+import { districtOf } from '../../worldServer/core';
+import { renderFreeGround, renderOwnDistrict } from './hexCard';
+import { FEATURE_NAME, FOG_NAME, ROLE_NAME, TERRAIN_NAME, hexTitle, seatName } from './hexNames';
+
+export { hexTitle, seatName };
 import { gemsToFinish } from '../../sim/rush';
-
-const TERRAIN_NAME: Record<WorldTerrain, string> = {
-  Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert',
-};
-
-const FEATURE_NAME: Record<WorldFeature, string> = {
-  Forest: 'Forest', Mountain: 'Mountains', FertileLand: 'Fertile land', Game: 'Wild game',
-  Dungeon: 'Dungeon', Sanctuary: 'Sanctuary', Landmark: 'Landmark',
-  HeartwoodGrove: 'Heartwood Grove', StarfallCrater: 'Starfall Crater', MoonglassSpires: 'Moonglass Spires',
-};
-
-const ROLE_NAME: Record<BoardHex['role'], string> = {
-  portal: 'The centre', inner: 'The inner ring', corridor: 'A corridor',
-  home: 'The home ring', outer: 'The outer ring',
-};
-
-const FOG_NAME: Record<FogState, string> = { Revealed: 'Revealed', Sensed: 'Sensed', Unknown: 'Unknown' };
-
-/** What the sheet is called: whose city, what stands there, what it is,
- *  or that nobody knows. */
-export function hexTitle(game: Game, bh: BoardHex, fog: FogState): string {
-  if (bh.role === 'portal') return 'The Dark Portal';
-  const control = game.worldSource().controlOf(bh.index);
-  if (bh.seat !== null && control?.owner.you) return 'Your city';
-  if (fog === 'Unknown') return 'Unknown ground';
-  if (bh.seat !== null && control !== null && !control.owner.you) return `${control.owner.name}'s city`;
-  if (fog === 'Sensed') return 'Misty ground';
-  // A district, standing or going up, is what the hex is called.
-  const held = game.worldSource().hexOf(bh.index);
-  if (held !== null) return WORLD_BUILD.districts[held.district].name;
-  const main = bh.features[0];
-  return main !== undefined ? FEATURE_NAME[main] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
-}
-
-/** "Your" or "Lady Maren's". */
-export function seatName(game: Game, seat: number | null): string {
-  if (seat === null) return 'Nobody’s';
-  const s = game.worldSource().seats()[seat];
-  return s === undefined || s.owner.you ? 'Your' : `${s.owner.name}'s`;
-}
 
 /** Who holds a hex and how it stands, for the lines under the title. */
 function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
@@ -302,6 +267,18 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   const distance = hexDistance(hexAt(home), hexAt(index));
   const control = game.worldSource().controlOf(index);
 
+  // The redesigned cards (Docs/proposals/world-menus.md §3.2, §3.3): free
+  // ground the player has seen, and the player's own district.
+  if (game.actingSeat === null && bh.seat === null) {
+    const held = game.worldSource().hexOf(index);
+    if (held !== null && held.owner === game.worldSeat()) return renderOwnDistrict(game, bh, held, ownStatus(game, index, held));
+    const unguarded = bh.camp === null || game.worldSource().campBeaten(index);
+    if (held === null && fog === 'Revealed' && unguarded && districtOf(bh) !== null) {
+      const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }).find((a) => a.kind === 'claim');
+      return renderFreeGround(game, bh, hexTitle(game, bh, fog), claim === undefined ? 'Build beside ground you hold' : undefined);
+    }
+  }
+
   const lines: HTMLElement[] = [];
   const where = index === home
     ? 'Your province, seen from the world'
@@ -421,6 +398,32 @@ function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
 function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<typeof hexWork>>): HTMLElement {
   return waitRow(game, work.what, work.startedAt, work.endsAt, gemsToFinish((work.endsAt - game.now()) / 1000),
     () => void game.doFinishHexWork(index), { kind: 'hex', index });
+}
+
+/** What the player's district card says beyond its tiles: being claimed,
+ *  cut off, burnt and its repair, a builder at work. */
+function ownStatus(game: Game, index: number, h: NonNullable<ReturnType<ReturnType<Game['worldSource']>['hexOf']>>): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const work = hexWork(h);
+  if (!h.held) {
+    out.push(el('p', { class: 'wd-line' }, 'Being claimed'));
+  } else if (!h.active) {
+    out.push(el('p', { class: 'wd-line is-cut' }, 'Cut off from your city, it makes nothing'));
+  }
+  if (h.burnt) {
+    out.push(el('p', { class: 'wd-line is-cut' }, 'Burnt by raiders — it makes nothing until it is repaired'));
+    const repair = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[index], { revealed: true })
+      .find((a) => a.kind === 'repair');
+    if (repair !== undefined && repair.kind === 'repair') {
+      out.push(action({
+        label: 'Repair', kind: 'primary', cost: { Gold: repair.gold }, have: (c: CurrencyId) => getWallet(game.state.city.wallet, c),
+        info: formatDuration(repair.seconds),
+        onClick: () => void game.doRepairHex(index, repair.gold),
+      }));
+    }
+  }
+  if (work !== null) out.push(hexWorkRow(game, index, work));
+  return out;
 }
 
 /** For the explorers chip: how many are out of how many. */

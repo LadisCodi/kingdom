@@ -2066,6 +2066,8 @@ export interface WorldDistrictDef {
   produces: '' | 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
   perHour: number;
   store: number;
+  /** How many buildings it holds: a Fortress, a Chapel (19 §7.2). */
+  slots: number;
 }
 
 /** An upgrade built into a district that stands, and its levels (19 §7.2). */

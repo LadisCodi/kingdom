@@ -225,7 +225,13 @@
                 "min": 0,
                 "doc": "What it adds to its store an hour, while its hex is active. The Rural district’s is a tenth of a full level-1 House."
               },
-              "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+              "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." },
+              "slots": {
+                "type": "int",
+                "min": 1,
+                "max": 2,
+                "doc": "How many buildings (a Fortress, a Chapel) it holds. One; two on bare ground, which has no feature to work."
+              }
             }
           }
         },
