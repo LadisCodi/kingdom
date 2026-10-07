@@ -1,0 +1,13 @@
+CREATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references.
+
+The FIRST attached image is the STYLE: hero sheets already made for this game. The SECOND is a sheet of villains drawn for the same game whose DESIGNS are right but whose rendering is TOO DETAILED for it: too many small texture strokes, scales, rivets, folds and painted shading.
+
+Redraw the villains of the second image — the same characters, the same poses, the same costumes, colours, weapons and silhouettes, in the same order and the same layout — but in EXACTLY the flat style of the first image:
+- bold, clean, uniform dark-brown outlines on every shape;
+- large flat areas of colour, with ONE shadow tone and ONE small highlight per material, and nothing else;
+- no texture strokes, no hatching, no scale or chainmail patterns (a few simple shapes suggest them at most), no more than a handful of rivets, no painted gradients;
+- simplify every small detail away: the figure must read at 64 px tall, so nothing thinner than the outline;
+- the same friendly chunky proportions as the heroes: large head, big hands and boots.
+They stay villains — the scowls, the glowing eyes, the eerie light — only the rendering gets simpler.
+
+One landscape image, 3:2, each figure in its own part of the canvas as in the second image, the same height, full body, with a clear empty band between figures. Do not draw grid lines, cell borders, labels, captions, names, text, shadows, ground, pedestal or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

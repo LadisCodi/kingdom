@@ -51,9 +51,16 @@ screen) attached. `field` came first; the other three also attach the
 | The Ledger Keeper | The Counting House | a quill-hilted rapier, a chained ledger, riding boots and spurs; a spiral in the monocle (Daze) |
 | The Star Seer | Star Observatory | an astrolabe staff, a falling star in her palm (Crush) |
 
-- Raw sheets in `../originals/villain-sheets/`; prompts in
-  `villains-sheet-<n>.prompt.txt`, with
-  `../originals/hero-style-tests/anchor.png` attached.
+- Two passes. `villains-sheet-<n>.prompt.txt` (with
+  `../originals/hero-style-tests/anchor.png` attached) set the designs but
+  came back more detailed than the heroes — scales, rivets, texture strokes
+  (`../originals/villain-sheets/sheet-<n>-detailed.png`).
+  `villains-flatten.prompt.txt`, with the anchor and the detailed sheet
+  attached, redrew the same designs in the heroes' flat hand: these are the
+  shipped `sheet-<n>.png`.
+- Sheet 1's first two figures touch (the soul-smoke, the notes), so it is
+  cut after clearing a 13 px seam of least alpha between each pair of
+  figures; `cut_heroes.py` then finds three blobs.
 
 ## Deliberately not in this design
 

@@ -27,6 +27,7 @@ type Effect =
     size: number; color: string;
   }
   | { kind: 'shock'; at: Pt; start: number; end: number; size: number; color: string }
+  | { kind: 'helmet'; at: Pt; vx: number; vy: number; spin: number; start: number; end: number; size: number }
   | { kind: 'beam'; from: Pt; to: Pt; start: number; end: number; color: string }
   | { kind: 'mote'; at: Pt; vx: number; vy: number; start: number; end: number; size: number; color: string };
 
@@ -66,6 +67,8 @@ export interface FxLayer {
   /** A ring breaking: `n` chips of `of` thrown up and out, tumbling as
    *  they fall. */
   chips(at: Pt, t: number, n: number, of: keyof typeof CHIPS): void;
+  /** `n` steel helmets hopping off a slot and tumbling down: men falling. */
+  helmets(at: Pt, t: number, n: number): void;
   /** One ring of air going out from `at`: the thud of something landing. */
   shock(at: Pt, t: number, size: number, color?: string): void;
   /** Draw the clock's `t`, dropping whatever has finished. */
@@ -250,6 +253,15 @@ export function createFxLayer(): FxLayer {
         });
       }
     },
+    helmets(at, t, n) {
+      for (let i = 0; i < n; i += 1) {
+        const side = (i % 2 === 0 ? 1 : -1) * (0.5 + Math.random() * 0.5);
+        effects.push({
+          kind: 'helmet', at: { x: at.x + side * 10 * u, y: at.y }, vx: side * 0.05 * u, vy: -0.12 * u,
+          spin: side * 0.012, start: t + i * 60, end: t + i * 60 + 620, size: 7 * u,
+        });
+      }
+    },
     shock(at, t, size, color = '#fff6dc') {
       effects.push({ kind: 'shock', at, start: t, end: t + 380, size: size * u, color });
     },
@@ -311,6 +323,28 @@ export function createFxLayer(): FxLayer {
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            ctx.restore();
+            ctx.globalAlpha = 1;
+            break;
+          }
+          case 'helmet': {
+            // Up, over and down: a little steel dome with its brim and nose
+            // guard, outlined like the rest of the board.
+            const age = t - e.start;
+            const s = e.size;
+            ctx.save();
+            ctx.translate(e.at.x + e.vx * age, e.at.y + e.vy * age + 0.0006 * u * age * age);
+            ctx.rotate(e.spin * age);
+            ctx.globalAlpha = Math.min(1, 4 * (1 - p));
+            ctx.lineWidth = 1.3 * u;
+            ctx.strokeStyle = OUTLINE;
+            ctx.fillStyle = '#aab3bd';
+            ctx.beginPath(); ctx.arc(0, 0, s, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#7d8793';
+            ctx.fillRect(-s * 1.25, 0, s * 2.5, s * 0.45); ctx.strokeRect(-s * 1.25, 0, s * 2.5, s * 0.45);
+            ctx.fillRect(-s * 0.15, 0, s * 0.3, s * 0.9); ctx.strokeRect(-s * 0.15, 0, s * 0.3, s * 0.9);
+            ctx.fillStyle = '#e4e9ee';
+            ctx.beginPath(); ctx.arc(-s * 0.35, -s * 0.45, s * 0.22, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
             ctx.globalAlpha = 1;
             break;
