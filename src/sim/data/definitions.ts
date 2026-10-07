@@ -40,7 +40,8 @@ export interface TechnologyDef {
    *  `unlocks` or `effects` — this is only the fallback that generator reaches
    *  for when there is nothing in the data to read. */
   description: string;
-  glyph: string;
+  /** A cell of the UI atlas, by name. */
+  icon: string;
   /** Which tome this sits in, and which band of it. The shelf IS the layout:
    *  one page per book, read top to bottom, with an era bar wherever the next
    *  band begins (Docs/features/07-research.md §2). Both are SHAPE — they
@@ -87,7 +88,7 @@ export interface TechnologyDef {
 /**
  * Every technology in the game, built from the one file that holds them.
  *
- * `tech-tree.json` is a technology's whole home now — name, prose, glyph,
+ * `tech-tree.json` is a technology's whole home now — name, prose, icon,
  * what KIND it is and what it unlocks, its price and clock, its slot on its
  * tome page and what it needs before it — and `?dev=tree` is what writes it
  * (Docs/tech-tree-editor.md). There is no `Technologies` sheet: the tree's
@@ -126,7 +127,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       id,
       name: node.name,
       description: node.description ?? '',
-      glyph: node.glyph,
+      icon: node.icon,
       kind: node.kind,
       unlocks: node.unlocks ?? [],
       tome: slot.tome,

@@ -394,7 +394,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
         : `${id} — ${doc.validation.errors.find((e) => e.tech === id)?.message
           ?? 'off the page — drag it into a slot'}`,
     },
-    el('b', {}, `${node.glyph} ${node.name}`),
+    el('b', {}, node.name),
     el('span', { class: 'tre-item-where' }, isPlaced(node)
       // The book is named only when it is NOT the one on screen: under the
       // heading of the open page it would be on every row and say nothing.
@@ -426,7 +426,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   function draftForm(): HTMLElement {
     const id = el('input', { class: 'tre-search', placeholder: 'Id — Bellows' });
     const name = el('input', { class: 'tre-search', placeholder: 'Name' });
-    const glyph = el('input', { class: 'tre-search', placeholder: 'Glyph', value: '📜' });
+    const icon = el('input', { class: 'tre-search', placeholder: 'Icon — an atlas name', value: 'research' });
     // PROSE only for a mechanic. Every other kind's line comes from what it
     // unlocks or moves, so a box asking for one here would be asking for
     // something the create is about to drop.
@@ -443,7 +443,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
       const newId = id.value.trim();
       const problem = doc.create(newId, tome, Number(era.value), {
         name: name.value,
-        glyph: glyph.value,
+        icon: icon.value,
         description: description.value,
         kind: kind.value as TechKind,
         gold: Math.round(Number(gold.value)),
@@ -457,7 +457,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     });
     return el('div', { class: 'ed-card tre-draft' },
       el('h2', {}, 'New technology'),
-      id, name, glyph,
+      id, name, icon,
       field('kind', kind), proseRow, field('era', era),
       field('gold', gold),
       make);
@@ -818,11 +818,11 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   function inspector(id: string): HTMLElement {
     const node = doc.node(id);
     if (node === null) return el('div', { class: 'ed-card' }, 'That technology is gone.');
-    const card = el('div', { class: 'ed-card' }, el('h2', {}, `${node.glyph} ${id}`));
+    const card = el('div', { class: 'ed-card' }, el('h2', {}, id));
 
     // ---- identity
     card.append(field('name', text(node.name, (v) => doc.update(id, { name: v }))));
-    card.append(field('glyph', text(node.glyph, (v) => doc.update(id, { glyph: v }))));
+    card.append(field('icon', text(node.icon, (v) => doc.update(id, { icon: v }))));
     // PROSE, or the sentence that replaced it. A technology whose unlocks or
     // effects say what it does has its line generated (`sim/techProse.ts`), so
     // there is nothing here to type — and it is shown as a NOTE rather than a

@@ -103,7 +103,7 @@ and lairs — is authored by coordinate, so it lives in
 `src/sim/data/region-map.json` and is edited at `?dev=data#map`
 (`Docs/map-editor.md`). A **technology is whole** in
 `src/sim/data/tech-tree.json`, edited at `?dev=data#tree`
-(`Docs/tech-tree-editor.md`): its name and glyph, what KIND it is
+(`Docs/tech-tree-editor.md`): its name and icon (an atlas cell), what KIND it is
 (`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold and
 Knowledge, its slot on its tome's three-column page, and what it requires. What
 it SAYS is not authored at all — the card is generated from its unlocks or its

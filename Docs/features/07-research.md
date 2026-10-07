@@ -19,7 +19,7 @@
   district level, a unit, a terrain, a mechanic, or one numeric step.
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
   `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name
-  and glyph, its KIND, what it unlocks or what it moves, its Gold and
+  and icon, its KIND, what it unlocks or what it moves, its Gold and
   Knowledge, its slot on its tome page and what it requires.
 - **What a technology SAYS is generated from what it does**
   (`src/sim/techProse.ts`) — from its `unlocks`, or from one sentence per
@@ -469,7 +469,7 @@ the Sanctum and its levels.
 | First-clear lump | 3 | `delve.firstClearKnowledge` |
 | Chain Knowledge | 41 total | `quests` › `rewardKnowledge` |
 | What opens a found book | §2 | `sim/research.ts` `TOME_OPENS` |
-| **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **A whole technology** — name, icon, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many chapters the tree has, and what each asks for | 9 chapters; 0 · 20 · 100 · 160 · 220 · 280 · 340 · 400 · 460 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | What finishing a chapter pays | a card pack per chapter | `tech-tree.json` `eraRewards` |

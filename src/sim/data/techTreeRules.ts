@@ -57,7 +57,9 @@ export const TECH_KINDS: TechKind[] = ['unlock', 'bonus', 'mechanic'];
 /** One technology, whole. */
 export interface TechNodeDoc {
   name: string;
-  glyph: string;
+  /** Its picture: a cell of the UI atlas, by name (`src/ui/kit/atlas.generated.ts`;
+   *  `tests/icons.test.ts` holds every one to a drawn cell). */
+  icon: string;
   /**
    * `mechanic` only — the one kind whose effect is code, so the one kind with
    * nothing in its own data to read. Every other card's line is GENERATED
@@ -413,7 +415,7 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       errors.push({ message: `"${id}" is not a legal technology id`, tech: id });
     }
     if ((node.name ?? '').trim() === '') errors.push({ message: `${id} has no name`, tech: id });
-    if ((node.glyph ?? '').trim() === '') errors.push({ message: `${id} has no glyph`, tech: id });
+    if ((node.icon ?? '').trim() === '') errors.push({ message: `${id} has no icon`, tech: id });
     // PROSE, in both directions. A technology whose unlocks or effects speak
     // for themselves carries none: the card is generated from the data
     // (`sim/techProse.ts`), so a line typed beside it is a second answer that

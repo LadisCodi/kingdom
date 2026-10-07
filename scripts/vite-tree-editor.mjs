@@ -55,7 +55,7 @@ const json = (v) => JSON.stringify(v);
  */
 const nodeBlock = (id, n) => {
   const lines = [
-    `      "name": ${json(n.name)}, "glyph": ${json(n.glyph)}, "kind": ${json(n.kind)}`,
+    `      "name": ${json(n.name)}, "icon": ${json(n.icon)}, "kind": ${json(n.kind)}`,
   ];
   // PROSE is a `mechanic`'s alone. Every other card's line is generated from
   // its unlocks or effects (`src/sim/techProse.ts`), so a description beside
