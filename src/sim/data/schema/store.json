@@ -56,8 +56,18 @@
     },
     "opensOn": {
       "type": "text",
-      "options": ["always", "door", "after", "townhall", "manaLow", "buildersBusy"],
-      "doc": "An offer: what opens its window. always: from the start. door: when `door` opens. after: when `after` is bought. townhall: every Townhall level from `townhall` on. manaLow: the pool below the ad threshold. buildersBusy: a build refused for want of a builder. The last three open again once the window has closed and `cooldownHours` have passed."
+      "options": [
+        "always",
+        "door",
+        "after",
+        "townhall",
+        "manaLow",
+        "manaOut",
+        "buildersBusy",
+        "explorersBusy",
+        "heroesBenched"
+      ],
+      "doc": "An offer: what opens its window. always: from the start. door: when `door` opens. after: the day after `after` is bought (UTC). townhall: every Townhall level from `townhall` on. manaLow: the pool below the ad threshold. manaOut: the pool empty and no ad refill left today. buildersBusy: a build refused for want of a builder. explorersBusy: every explorer out. heroesBenched: more heroes than hero slots. The first four wait `offers.spacingHours` after another window opens; the needs open at once. Every trigger but always, door and after opens again once the window has closed and `cooldownHours` have passed."
     },
     "door": {
       "type": "text",
@@ -86,7 +96,7 @@
     "townhall": {
       "type": "int",
       "min": 0,
-      "doc": "The Townhall level it waits for. opensOn townhall: the first level that opens it. daily: the level it joins the pool at."
+      "doc": "The Townhall level it waits for: no offer opens below it, whatever its trigger. opensOn townhall: the first level that opens it. daily: the level it joins the pool at."
     },
     "hours": { "type": "int", "min": 0, "doc": "How long its window stays open. 0: until it is bought out." },
     "limit": { "type": "int", "min": 0, "doc": "How many a window sells (a daily: a day). 0: no limit." },

@@ -185,7 +185,7 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 | `powerStart`, `powerStep` per depth | `worldDungeon.powerStart`, `worldDungeon.powerStep` |
 | Depths, and rooms per depth | `worldDungeon.depths`, `worldDungeon.roomsPerDepth` |
 | Reward base and per-room growth (×1.06) | `worldDungeon.rewardBase`, `worldDungeon.rewardGrowth` |
-| Gold, Hero XP, Stardust per room (×20, ×10, ×2) | `worldDungeon.gold`, `.heroXp`, `.stardust` |
+| Gold, Hero XP, Stardust per room (×20, ×30, ×2) | `worldDungeon.gold`, `.heroXp`, `.stardust` |
 | Knowledge per room (×0.25, at least 1) | `worldDungeon.knowledge` |
 | Boss power and reward (×1.6, ×3) | `worldDungeon.bossMultiplier`, `.bossRewardMultiplier` |
 | Boss chest and fragment pool | a `bosses` collection *(designed)* |

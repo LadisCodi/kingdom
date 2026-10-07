@@ -156,7 +156,7 @@ export function buyStoreSku(state: GameState, sku: StoreSkuId, now: number): Buy
   for (let i = 0; i < s.builders; i++) grantBuilder(state);
   state.heroes.heroSlotsPurchased += s.heroSlots;
   state.world.explorersBought += s.explorers;
-  if (s.shelf === 'offer') recordOfferPurchase(state, sku, now);
+  if (s.shelf === 'offer') recordOfferPurchase(state, sku);
   scheduleNextDay(state, sku, now);
   return 'Purchased';
 }

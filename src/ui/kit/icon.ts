@@ -77,6 +77,9 @@ export type UiIconName =
   // One undiscovered map cell, its borders running past its corners so it
   // reads as a cell of the grid: the mark of a quest that reveals the map.
   | 'tile'
+  // One hex of the world board, grass on earth: what the world ranking
+  // counts a kingdom in.
+  | 'hex'
   // The nav bar's two that were borrowing a picture: the Store's market stall
   // (it wore the Gems) and the Heroes' knight's helmet (it wore the shield).
   | 'shop' | 'helmet'
@@ -134,7 +137,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // the upgrade popup
   cross: '✗', arrowUp: '⬆', compass: '🧭', bed: '🛏️',
   // the fog
-  tile: '⬛',
+  tile: '⬛', hex: '⬢',
   // the nav bar
   shop: '🏪', helmet: '⛑️',
   // the Bag

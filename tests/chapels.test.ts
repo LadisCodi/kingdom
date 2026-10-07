@@ -58,8 +58,10 @@ describe('the Chapel', () => {
     expect(b.hexes[index].chapel).toBe(1);
     expect(hasChapel(b, index)).toBe(true);
     expect(upgradeRefusal(b, seat, index, 'Chapel', t)).toBe('MaxLevel');
-    // The Fortress is a separate upgrade on the same district.
-    expect(upgradeRefusal(b, seat, index, 'Fortress', t)).toBeNull();
+    // The Fortress is a separate building: it needs a second slot, which
+    // only bare ground has.
+    expect(upgradeRefusal(b, seat, index, 'Fortress', t))
+      .toBe(districtOf(data.hexes[index]) === 'Rural' ? null : 'NoSlot');
     expect(snapshotOf(b, seat, t).hexes.find((h) => h.index === index)?.chapel).toBe(true);
   });
 

@@ -9,7 +9,8 @@ import {
   type BagTab,
 } from './sim/bag';
 import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
-import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
+import { forgetRested, heroCanFight, heroHp, heroMaxHp, heroRestEndsAt, restedHeroes } from './sim/heroHealth';
+import { newsOf, postNews, readNews, type News, type NewsGroup } from './sim/notices';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
@@ -64,13 +65,13 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
-import { availableRoster, type TrainResult } from './sim/army';
+import { availableRoster, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
   type SpeedJob,
 } from './sim/speedups';
-import { partyPower, typeMultiplier } from './sim/combat';
+import { heroPower, partyPower, typeMultiplier } from './sim/combat';
 import {
   attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
   type LairBlock, type LairPreview,
@@ -114,12 +115,13 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
-import { addHeroXp, boonText, pullPrice } from './sim/heroes';
+import { ascensionFragmentCost, isMaxAscension } from './sim/heroLadder';
+import { addHeroXp, boonText, heroEntry, heroUnlockCost, ownsHeroId, pullPrice } from './sim/heroes';
 import {
   boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
-  offerWindow, offersOn, refreshOffers, skuValuePercent,
+  offerComesBack, offerWindow, offersOn, refreshOffers, skuValuePercent,
 } from './sim/offers';
-import type { PayerProfile, StoreSkuId } from './sim/state';
+import type { PayerProfile, PortalPrize, StoreSkuId } from './sim/state';
 import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
@@ -137,18 +139,20 @@ import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
+import { worldRanking, type RankedSeat } from './sim/world/ranking';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
-  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
+  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, fogStateOf, freeExplorers, homeIndex, returnsAt, revealsAt,
   worldFogAt, type ExplorerHome,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
+import { CAMP_TITLE } from './ui/world/hexNames';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
-import { fastestRoute, type Route } from './sim/world/travel';
+import { fastestRoute, homeboundMs, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
-import { hexAt, hexIndex } from './sim/world/hex';
+import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { Analytics, AnalyticsContext } from './analytics/analytics';
@@ -162,6 +166,7 @@ import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
 import { type GoodId, type PreciousId, type WorldBuildWhat } from './sim/state';
 import { districtOf } from './worldServer/core';
+import { worldStoreReady } from './sim/world/stores';
 import { Floaters } from './render/floaters';
 import { CollectBubbles } from './render/collectBubbles';
 import { lairArtAt, lairBubbleAt, UNIT_CREATURE_AVATAR } from './render/lairMap';
@@ -216,24 +221,34 @@ export type OverlayName =
   // A hex of the world board, and what can be done there — the dispatch
   // sheet (Docs/features/19-world-map.md §1.2).
   | 'world'
+  // A district's empty building slot, and what can be built in it; a built
+  // one, what it does and its next level (Docs/proposals/world-menus.md §3.3).
+  | 'worldSlot' | 'worldBuilding'
   // An army composed for the world board, on the lair attack's screen
   // (Docs/features/19-world-map.md §4).
   | 'army'
   // A world dungeon's descent: its rooms, the race, the army camped there
   // (Docs/features/19-world-map.md §8.2).
   | 'delve'
+  // The Dark Portal's descent: its floors, the ranking on them, the army
+  // camped below (Docs/proposals/world-menus.md §3.10).
+  | 'portal'
   // The name the player goes out onto the world board under, asked the
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname'
   // The friends list, from the header, and a friend's profile over it
   // (Docs/features/15-social.md §2.1).
   | 'friends' | 'friendProfile'
+  // The world ranking, from its widget on the board (19-world-map.md §12).
+  | 'ranking'
   // The shield editor, from the pencil on the player's own card (§2.2).
   | 'crestEditor'
   // Asking a kingdom by its name or code, from the requests list (§2.1).
   | 'friendSearch'
   // The wish board (§2.4): a wish made in two steps, and a fill's window.
-  | 'wishNeed' | 'wishGive' | 'wishFilled';
+  | 'wishNeed' | 'wishGive' | 'wishFilled'
+  // A notice's card, from its bubble (Docs/features/26-notices.md §5).
+  | 'notice';
 
 /** Fragments that landed, as one line: "A piece of the Staff of Renewal". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -371,6 +386,14 @@ export type HeroPickSort = 'level' | 'rarity';
  * slots it wants and what to do with the answer, and the picker hands the
  * screen back when it closes.
  */
+/** What a hero is doing now (`Game.heroStateOf`), as its card marks it. */
+export type HeroState =
+  | { kind: 'ready' }
+  | { kind: 'resting'; restMs: number }
+  | { kind: 'marching'; at: number | null }
+  | { kind: 'camped'; where: 'dungeon' | 'portal' | 'camp' }
+  | { kind: 'guarding' };
+
 export interface HeroPick {
   title: string;
   /** One per slot asked for, in slot order; null = free. */
@@ -380,6 +403,8 @@ export interface HeroPick {
   onSelect: (heroes: HeroId[]) => void;
   filter: UnitId | 'All';
   sort: HeroPickSort;
+  /** Chosen for a fight: each card prints its hero's power. */
+  fight: boolean;
 }
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
@@ -422,11 +447,24 @@ export interface Banner {
  */
 export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
-  | { kind: 'fragments'; heroId: HeroId; amount: number }
-  // A card pack, which a room pays and a call never does.
+  | { kind: 'fragments'; heroId: HeroId; amount: number; progress?: FragmentProgress }
   | { kind: 'currency'; currency: CurrencyId; amount: number }
+  // Into the Bag: a call's speed-up or chest.
+  | { kind: 'item'; item: ItemId; amount: number }
   // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
   | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
+
+/**
+ * Where a call's fragments of one hero leave them: toward RECRUITING a hero
+ * not yet owned, or toward the next ascension point of one who is. `from` and
+ * `to` are the fragments held before and after the call (the bar fills
+ * between them); `recruited` says the call filled the recruiting bar and the
+ * hero joined (Docs/features/10-heroes.md §8.3).
+ */
+export interface FragmentProgress {
+  toward: 'recruit' | 'ascension';
+  from: number; to: number; goal: number; recruited: boolean;
+}
 
 /**
  * A sequence of prizes, dealt one at a time.
@@ -436,8 +474,14 @@ export type GachaPrize =
  * §2.5). Hence the optional half — a banner and a call count are what a PULL
  * has to say about itself, and a fight says something else.
  */
+/** What a reveal is opened FROM (ui/gachaScreen.ts): the silver-bound chest
+ *  of the common call, the gold one of the golden call, the relic chest of a
+ *  fragment pack, the war chest of a fight's spoils. */
+export type RevealChest = 'common' | 'golden' | 'relic' | 'spoils';
+
 export interface GachaReveal {
   banner?: BannerId;
+  chest: RevealChest;
   /** How many calls this was — the screen says "×10" rather than counting
    *  prizes, which condense and would undercount. */
   calls?: number;
@@ -450,29 +494,35 @@ export interface GachaReveal {
  * Collapse a batch into prizes.
  *
  * Two rules do all the work. **Same thing, one widget with a count**: ten
- * calls that each paid 50 Stardust are one 500, and four fragments of the
+ * calls that each paid 25 Stardust are one 250, and four fragments of the
  * same hero are one stack of four — otherwise a ten-call is a wall of
  * identical tiles nobody reads. And **heroes last**, because they are what
  * the player called for: the sequence should arrive at them rather than open
- * with them and then spend nine tiles winding down.
+ * with them and then spend nine tiles winding down. Before them: the
+ * currencies, then the Bag's items, then the fragments.
  */
 export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
   const heroes: GachaPrize[] = [];
   const fragments = new Map<HeroId, number>();
-  let stardust = 0;
+  const currencies = new Map<CurrencyId, number>();
+  const items = new Map<ItemId, number>();
+  const addFragments = (id: HeroId, n: number): void => {
+    fragments.set(id, (fragments.get(id) ?? 0) + n);
+  };
   for (const p of pulls) {
     // A duplicate is not a hero prize — it already paid its fragments, and
     // showing it as a hero would promise a roster entry that is already there.
     if (p.heroId !== null && !p.duplicate) heroes.push({ kind: 'hero', heroId: p.heroId });
-    if (p.fragmentsOf !== null && p.fragments > 0) {
-      fragments.set(p.fragmentsOf, (fragments.get(p.fragmentsOf) ?? 0) + p.fragments);
+    if (p.fragmentsOf !== null && p.fragments > 0) addFragments(p.fragmentsOf, p.fragments);
+    for (const l of p.loot) {
+      if (l.kind === 'fragments') addFragments(l.heroId, l.amount);
+      else if (l.kind === 'currency') currencies.set(l.currency, (currencies.get(l.currency) ?? 0) + l.amount);
+      else items.set(l.item, (items.get(l.item) ?? 0) + l.amount);
     }
-    stardust += p.stardust;
   }
   return [
-    ...(stardust > 0
-      ? [{ kind: 'currency', currency: 'Stardust', amount: stardust } as GachaPrize]
-      : []),
+    ...[...currencies].map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount })),
+    ...[...items].map(([item, amount]): GachaPrize => ({ kind: 'item', item, amount })),
     ...[...fragments].map(([heroId, amount]): GachaPrize => ({
       kind: 'fragments', heroId, amount,
     })),
@@ -493,6 +543,8 @@ export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
  * events left, `result` for the two seconds the plaque needs, `rewards` while
  * the prize sequence deals, `done` when only the way out is left.
  */
+export type BattleBackdrop = 'field' | 'dungeon' | 'boss' | 'portal';
+
 export interface BattlePlayback {
   log: BattleLog;
   title: string;
@@ -501,6 +553,9 @@ export interface BattlePlayback {
   /** What the ENEMY's troops look like, by type: a lair fields creatures,
    *  not the player's own soldiers. Absent, both sides wear the unit busts. */
   enemyFaces?: Partial<Record<UnitId, string>>;
+  /** The ground it is fought on (battleScreen.ts): the field outside a lair,
+   *  a dungeon room, a depth's boss hall, the Portal's depths. */
+  backdrop: BattleBackdrop;
   /** Wall clock at the first tick. */
   startedAt: number;
   /** THE PLAYBACK'S CLOCK, which a speed change rebases: the fight's own
@@ -508,11 +563,23 @@ export interface BattlePlayback {
   clockAt: number;
   clockMs: number;
   speed: number;
+  /** A stretch of wall clock the replay runs `factor` times slower through:
+   *  the last blow's slow motion (`slowBattle`). */
+  slow?: { from: number; until: number; factor: number };
   phase: 'playing' | 'result' | 'rewards' | 'done';
 }
 
 /** The fight's own milliseconds a playback has reached at `now`. */
-const playbackMs = (b: BattlePlayback, now: number): number => b.clockMs + (now - b.clockAt) * b.speed;
+// Never earlier than `clockMs`: a held clock (`holdBattle`) has its
+// `clockAt` in the future, and the replay stands still until it arrives.
+// A slow stretch takes back what it slowed, so the clock stays a pure
+// function of `now` and nothing has to run when the stretch ends.
+const playbackMs = (b: BattlePlayback, now: number): number => {
+  const run = Math.max(0, now - b.clockAt);
+  const slowed = b.slow === undefined ? 0
+    : Math.max(0, Math.min(now, b.slow.until) - Math.max(b.slow.from, b.clockAt)) * (1 - b.slow.factor);
+  return b.clockMs + (run - slowed) * b.speed;
+};
 
 /** How long the plaque waits after the last blow. */
 export const BATTLE_RESULT_DELAY_MS = 2000;
@@ -543,7 +610,7 @@ export class Game {
   heroPick: HeroPick | null = null;
   /** The relic picker, while it is open (`openRelicPicker`): the Shrine it
    *  chooses for, and the one slot as it stands — null is empty. */
-  relicPick: { shrineId: string; slot: ArtifactId | null } | null = null;
+  relicPick: { shrineId: string; slot: ArtifactId | null; chapel?: number } | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which building the upgrade popup is about. Null when it is closed — the
@@ -615,7 +682,6 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
-  private bannerQueue: Banner[] = [];
   private questWasComplete = false;
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
@@ -691,15 +757,13 @@ export class Game {
     // The store's offers, on the same latch and for the same reason: a
     // trigger met by a tap opens its window on that tap (sim/offers.ts).
     refreshOffers(this.state, this.now());
-    // Move fresh sim discoveries into the banner queue BEFORE listeners run,
-    // so the banner component sees them on this very render. A RESOURCE is
-    // never announced: its coin lands on the plank under the player's own
-    // tap. A SITE is, unless a scene introduces it — the advisor says it.
+    // A fresh SITE is a news (Docs/features/26-notices.md §2.1), unless a
+    // scene introduces it — the advisor says it. A RESOURCE is never one:
+    // its coin lands on the plank under the player's own tap.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
-      if (kind !== 'site' || this.sceneIntroduces(id)) continue;
-      const banner = siteBanner(id);
-      if (banner) this.queueBanner(banner);
+      if (kind !== 'site' || this.sceneIntroduces(id) || siteBanner(id) === null) continue;
+      postNews(this.state, { group: 'sighted', key: `sighted:${id}`, at: this.now(), site: id });
     }
     // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
     // again, and announced to whoever draws padlocks and plays scenes.
@@ -731,14 +795,6 @@ export class Game {
     for (const fn of this.changeListeners) fn();
   }
 
-  queueBanner(banner: Banner): void {
-    this.bannerQueue.push(banner);
-  }
-
-  /** The next queued banner, if any (consumed by the banner component). */
-  takeBanner(): Banner | null {
-    return this.bannerQueue.shift() ?? null;
-  }
   shake(currencies: CurrencyId[]): void {
     playSfx('error'); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
@@ -801,16 +857,16 @@ export class Game {
     }
     this.friends.tick();
     this.maybeAskName();
-    for (const done of result.worldBuildsDone) {
-      this.toast(worldBuildDone(done.what, done.level));
-    }
     // A relic whose window closed — here or while away — asks to be woken.
     for (const r of result.relicsAsleep) {
       if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
-    // An explorer home says what it found; the board already shows where.
-    // The target's promise, if it kept one, is paid and named (19 §3.2).
-    for (const home of result.explorersHome) this.explorerHomeToast(home);
+    // An explorer home is a news (sim/notices.ts); the target's promise, if
+    // it kept one, is paid here (19 §3.2).
+    for (const home of result.explorersHome) this.payExplorer(home);
+    if (result.explorersHome.length > 0) playSfx('explorerHome');
+    // A garrison come down on the city: a far horn, whatever it took.
+    if (result.raids.length > 0) playSfx('raidAlarm');
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -818,6 +874,9 @@ export class Game {
     // A haul lands in the building's store, not the purse, so it pops no
     // number: the store's bubble is what says there is something to collect.
     for (const d of result.deposits) this.collectBubbles.bump(d.cell);
+    // A hall's batch is done when its line runs dry: one sound for it, not
+    // one per soldier.
+    if (result.linesDone.length > 0) playSfx('unitTrained');
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
       this.floaters.add(townhall(this.state).location, `+${formatExact(result.trainedPopulation)}`, 'population');
@@ -835,35 +894,9 @@ export class Game {
       if (out) this.boatsOut.add(w.id);
       else this.boatsOut.delete(w.id);
     }
-    for (const item of result.completedItems) {
-      const district = districtById(this.state, item.districtUniqueId);
-      if (!district) continue;
-      const def = DISTRICTS[district.definitionId];
-      this.queueBanner(item.kind === 'build'
-        ? {
-          title: 'Construction complete!', icon: def.glyph, name: def.name,
-          desc: def.description, sprite: `${def.sprite}_l1`, tone: 'leaf',
-          sfx: 'constructionComplete'
-        }
-        : {
-          title: 'Upgrade complete!', icon: def.glyph, name: def.name,
-          desc: `Now level ${district.level}`, tone: 'leaf',
-          sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
-        });
-    }
-    // A raid landing while the player is HERE gets a line: a store that
-    // quietly empties under their eyes is the one thing this feature must
-    // never do silently. What an absence cost is on each lair's card, as the
-    // hoard it carries (Docs/proposals/lairs.md §6), so a catch-up that
-    // resolves a night of raids says so ONCE rather than in a stack of toasts.
-    const raided = result.raids.filter((r) => Object.keys(r.took).length > 0);
-    if (raided.length === 1) {
-      const raid = raided[0];
-      const took = Object.entries(raid.took).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
-      this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
-    } else if (raided.length > 1) {
-      this.toast(`${raided.length} raids on the city while you were away`);
-    }
+    // A construction or an upgrade finished, a raid landed: each is a news
+    // the sim filed (sim/notices.ts), and its bubble is the announcement.
+    if (result.completedItems.length > 0 || result.worldBuildsDone.length > 0) playSfx('constructionComplete');
     this.notify();
   }
 
@@ -1469,7 +1502,7 @@ export class Game {
       this.notify();
       return;
     }
-    playSfx('research');
+    playSfx('spellCast');
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
@@ -1491,7 +1524,7 @@ export class Game {
       this.notify();
       return;
     }
-    playSfx('research');
+    playSfx('relicWake');
     this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
     const host = hostOf(this.state, id);
     if (host !== null) {
@@ -1912,7 +1945,7 @@ export class Game {
       }
       // The keystones last, as heroes come last on a call: what the pack is for.
       prizes.sort((a, b) => Number(a.kind === 'relicFragment' && a.slot === 5) - Number(b.kind === 'relicFragment' && b.slot === 5));
-      this.gachaReveal = { prizes, caption: 'Relic fragments' };
+      this.gachaReveal = { prizes, caption: 'Relic fragments', chest: 'relic' };
     } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
@@ -2088,10 +2121,10 @@ export class Game {
     if (this.unlockOnScreen() !== null) return null;
     const now = this.now();
     const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
-    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false };
+    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false, auto: true };
     const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
       && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
-    return sku === undefined ? null : { sku, mode: 'buy', browse: false };
+    return sku === undefined ? null : { sku, mode: 'buy', browse: false, auto: true };
   }
 
   /** The offer splash again, from the store or the offers widget: the same
@@ -2104,7 +2137,7 @@ export class Game {
     const ready = nextDayReady(this.state, this.now()).includes(sku);
     this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
     this.offerSplashForced = {
-      sku, browse,
+      sku, browse, auto: false,
       mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy',
     };
     this.setOverlay(null);
@@ -2168,7 +2201,7 @@ export class Game {
     return {
       closesAt: w?.closes ?? null,
       left: s.limit > 0 ? Math.max(0, s.limit - (w?.bought ?? 0)) : null,
-      once: s.limit === 1 && (s.opensOn === 'always' || s.opensOn === 'door' || s.opensOn === 'after'),
+      once: s.limit === 1 && !offerComesBack(sku),
       valuePercent: skuValuePercent(this.state, sku),
       chain: chain.length > 1 ? { at: chain.indexOf(sku) + 1, of: chain.length } : null,
       gifts: [
@@ -2807,6 +2840,17 @@ export class Game {
         gems: explorerRushCost(trip, now),
       };
     }
+    if (job.kind === 'army') {
+      const a = this.worldView?.armies.find((x) => x.id === job.armyId);
+      if (a === undefined || a.at === null) return null;
+      const from = a.phase === 'home' ? a.at - homeboundMs(a.stepMs) : a.departedAt;
+      const total = a.at - from;
+      return {
+        title: `Army · ${a.phase === 'home' ? 'coming home' : 'on the way'}`, icon: 'army',
+        progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
+        gems: gemsToFinish((a.at - now) / 1000),
+      };
+    }
     if (job.kind === 'hex') {
       const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
       const work = h === null ? null : hexWork(h);
@@ -2854,6 +2898,11 @@ export class Game {
   speedupScreen(): SpeedupScreen | null {
     const job = this.speedJob;
     if (job === null) return null;
+    // An army's arrival is the server's: read it again from the last snapshot.
+    if (job.kind === 'army') {
+      const a = this.worldView?.armies.find((x) => x.id === job.armyId);
+      job.at = a !== undefined && a.at !== null && (a.phase === 'out' || a.phase === 'home') ? a.at : 0;
+    }
     const now = this.now();
     const left = jobRemainingSeconds(this.state, job, now);
     const facts = this.jobFacts(job);
@@ -2887,6 +2936,17 @@ export class Game {
       if (home !== null) this.explorerHomeToast(home);
       return true;
     }
+    if (job.kind === 'army') {
+      if (this.worldServer === null) return false;
+      const r = await this.worldServer.hurryArmy(job.armyId, seconds);
+      if (!r.ok) {
+        this.toast(this.worldRefusal(r.why));
+        return false;
+      }
+      job.at = r.finishesAt;
+      this.applyWorldSnapshot(r.snapshot);
+      return true;
+    }
     if (job.kind !== 'hex' || this.worldServer === null) return false;
     const r = await this.worldServer.hurry(job.index, seconds);
     if (!r.ok) {
@@ -2905,27 +2965,28 @@ export class Game {
   async doSpeedup(id: ItemId, n = 1): Promise<void> {
     const job = this.speedJob;
     if (job === null) return;
-    if (job.kind === 'hex' || job.kind === 'explorer') {
+    if (job.kind === 'hex' || job.kind === 'explorer' || job.kind === 'army') {
       if (speedupRefusal(this.state, job, id, n, this.now()) !== null) return;
       if (await this.speedAway(job, ITEMS[id].seconds * n)) {
         spendSpeedups(this.state, job, id, n);
-        playSfx('click');
+        playSfx('speedup');
       }
-    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('click');
+    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('speedup');
     this.afterSpeedup();
   }
 
   async doAutoSpeedup(): Promise<void> {
     const job = this.speedJob;
     if (job === null) return;
-    if (job.kind === 'hex' || job.kind === 'explorer') {
+    if (job.kind === 'hex' || job.kind === 'explorer' || job.kind === 'army') {
       // One move by the whole plan, then the items it took.
       const plan = autoPlan(this.state, job, this.now());
       const seconds = plan.reduce((s, p) => s + ITEMS[p.id].seconds * p.n, 0);
       if (seconds > 0 && await this.speedAway(job, seconds)) {
         for (const p of plan) spendSpeedups(this.state, job, p.id, p.n);
+        playSfx('speedup');
       }
-    } else useAuto(this.state, this.map, job, this.now());
+    } else if (useAuto(this.state, this.map, job, this.now()) === 'Used') playSfx('speedup');
     this.afterSpeedup();
   }
 
@@ -2939,6 +3000,7 @@ export class Game {
       if (d) this.doFinishTraining(d);
     } else if (job.kind === 'workshop') this.doRushWorkshopItem(job.districtId);
     else if (job.kind === 'explorer') this.doFinishExplorer(job.tripId);
+    else if (job.kind === 'army') void this.doFinishArmyMarch(job.armyId).then(() => this.afterSpeedup());
     else void this.doFinishHexWork(job.index).then(() => this.afterSpeedup());
     this.afterSpeedup();
   }
@@ -3262,7 +3324,7 @@ export class Game {
         const pulls: PullResult[] = heroes.map((h) => ({
           result: 'Pulled', heroId: h, rarity: HEROES[h].rarity, duplicate: heldBefore.has(h),
           fragments: (this.state.heroes.fragments[h] ?? 0) - (fragmentsBefore[h] ?? 0), fragmentsOf: h,
-          stardust: 0, guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
+          loot: [], guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
         }));
         if (pulls.length > 0) this.openReveal('advanced', pulls);
       }
@@ -3336,7 +3398,27 @@ export class Game {
   private openReveal(banner: BannerId, pulls: readonly PullResult[]): void {
     const prizes = gachaPrizes(pulls);
     if (prizes.length === 0) return;
-    this.gachaReveal = { banner, calls: pulls.length, prizes };
+    // ENOUGH FRAGMENTS RECRUIT. A call that brings a stranger's fragments to
+    // the recruiting price recruits them on the spot — the reveal is where
+    // the player watches the bar fill, so it is where the hero joins.
+    for (const p of prizes) {
+      if (p.kind !== 'fragments') continue;
+      const held = this.state.heroes.fragments[p.heroId] ?? 0;
+      if (!ownsHeroId(this.state, p.heroId)) {
+        const recruited = unlockHero(this.state, p.heroId) === 'Unlocked';
+        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(), recruited };
+      } else {
+        const entry = heroEntry(this.state, p.heroId);
+        if (!isMaxAscension(entry)) {
+          p.progress = { toward: 'ascension', from: held - p.amount, to: held, goal: ascensionFragmentCost(entry.ascension), recruited: false };
+        }
+      }
+    }
+    // A recruit is what the call was for: it comes after the other
+    // fragments, just before the heroes.
+    const rank = (p: GachaPrize): number => (p.kind === 'hero' ? 2 : p.kind === 'fragments' && p.progress?.recruited ? 1 : 0);
+    prizes.sort((a, b) => rank(a) - rank(b));
+    this.gachaReveal = { banner, calls: pulls.length, prizes, chest: banner === 'advanced' ? 'golden' : 'common' };
   }
 
   /**
@@ -3875,15 +3957,7 @@ export class Game {
       if (quest.rewardGems > 0) haul.Gems = (haul.Gems ?? 0) + quest.rewardGems;
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
-      if (finished) {
-        this.queueBanner({
-          title: 'The chain is done',
-          icon: '👑',
-          name: 'Your kingdom stands on its own',
-          desc: 'No more guidance — build whatever you like from here.',
-          sfx: 'chainFinished',
-        });
-      }
+      if (finished) postNews(this.state, { group: 'chainDone', key: 'chainDone', at: this.now() });
     }
     this.notify();
     if (haul !== null) this.reward(haul);
@@ -3960,6 +4034,7 @@ export class Game {
   /** Fly to a lair and open its card — what the quest chain does when it
    *  points at one. */
   showLair(lairId: LairId): void {
+    if (this.scene === 'world') this.leaveWorld();
     this.setOverlay(null);
     this.inspectedSite = LAIRS[lairId].location;
     this.inspectedDistrictId = null;
@@ -4025,6 +4100,7 @@ export class Game {
       subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
       prizes: [],
       enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'field',
     });
     this.notify();
   }
@@ -4216,6 +4292,7 @@ export class Game {
 
   /** The relics the picker offers: every restored city relic, in order. */
   relicPickList(): RelicView[] {
+    if (this.relicPick?.chapel !== undefined) return this.worldRelicsRestored().map((id) => this.relicCard(id));
     return ARTIFACT_ORDER
       .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1)
       .map((id) => this.relicCard(id));
@@ -4224,6 +4301,7 @@ export class Game {
   /** Is this relic already in a Shrine — this one or another? Its card in
    *  the picker wears the Shrine mark. */
   relicPickHosted(id: ArtifactId): boolean {
+    if (relicKind(id) === 'world') return this.myChapels().some((c) => c.relic === id);
     return hostOf(this.state, id) !== null;
   }
 
@@ -4254,6 +4332,11 @@ export class Game {
   relicPickConfirm(): void {
     const pick = this.relicPick;
     if (pick === null) return;
+    // A world relic leaves its old Chapel on its own: the server moves it.
+    if (pick.chapel !== undefined) {
+      this.applyRelicPick();
+      return;
+    }
     const from = pick.slot === null ? null : hostOf(this.state, pick.slot);
     if (from !== null && from.uniqueId !== pick.shrineId) {
       playSfx('click');
@@ -4277,6 +4360,13 @@ export class Game {
     const pick = this.relicPick;
     if (pick === null) return;
     this.relicPick = null;
+    if (pick.chapel !== undefined) {
+      const held = this.worldSource().hexOf(pick.chapel)?.relic?.id ?? null;
+      this.openWorldBuilding(pick.chapel, 'Chapel');
+      if (pick.slot !== null && pick.slot !== held) void this.doHostWorldRelic(pick.slot, pick.chapel);
+      else if (pick.slot === null && held !== null) void this.doUnhostWorldRelic(held);
+      return;
+    }
     this.setOverlay(null);
     const shrine = shrines(this.state).find((d) => d.uniqueId === pick.shrineId);
     this.inspectedDistrictId = pick.shrineId;
@@ -4291,6 +4381,10 @@ export class Game {
   relicPickCancel(): void {
     const pick = this.relicPick;
     this.relicPick = null;
+    if (pick?.chapel !== undefined) {
+      this.openWorldBuilding(pick.chapel, 'Chapel');
+      return;
+    }
     this.setOverlay(null);
     if (pick !== null) this.inspectedDistrictId = pick.shrineId;
     this.notify();
@@ -4305,7 +4399,7 @@ export class Game {
    * way the screen that opened it comes back.
    */
   openHeroPicker(opts: {
-    slots: number; selected?: readonly HeroId[]; title?: string;
+    slots: number; selected?: readonly HeroId[]; title?: string; fight?: boolean;
     onSelect: (heroes: HeroId[]) => void;
   }): void {
     const slots: Array<HeroId | null> = Array.from({ length: Math.max(1, opts.slots) },
@@ -4317,6 +4411,7 @@ export class Game {
       onSelect: opts.onSelect,
       filter: 'All',
       sort: 'level',
+      fight: opts.fight === true,
     };
     playSfx('click');
     this.setOverlay('heroPicker');
@@ -4432,12 +4527,35 @@ export class Game {
     this.openHeroPicker({
       slots: this.heroSlotsOpen(),
       selected: this.partyHeroes,
+      fight: true,
       onSelect: (heroes) => { this.partyHeroes = heroes; },
     });
   }
 
   heroLevelOf(heroId: HeroId): number {
     return heroLevel(this.state, heroId);
+  }
+
+  /** What a hero is doing: free, resting from a fight, or away with an army
+   *  — marching (out or home, `at` when that leg ends), camped in a dungeon,
+   *  the Portal or at a camp it is ready to attack, or standing guard in a
+   *  Fortress. */
+  heroStateOf(heroId: HeroId): HeroState {
+    const army = this.state.world.armies.find((a) => a.heroes.includes(heroId));
+    if (army !== undefined) {
+      const view = this.worldView?.armies.find((a) => a.id === army.id);
+      const phase = view?.phase ?? this.worldSource().armies().find((a) => a.id === army.id)?.phase ?? 'out';
+      if (phase === 'camp') return { kind: 'camped', where: army.purpose === 'clear' ? 'camp' : army.purpose === 'portal' ? 'portal' : 'dungeon' };
+      if (phase === 'garrison') return { kind: 'guarding' };
+      return { kind: 'marching', at: view?.at ?? null };
+    }
+    const health = this.heroHealthOf(heroId);
+    return health.exhausted ? { kind: 'resting', restMs: health.restMs } : { kind: 'ready' };
+  }
+
+  /** What a hero adds to an army's power (sim/combat.ts `heroPower`). */
+  heroPowerOf(heroId: HeroId): number {
+    return heroPower(HEROES[heroId], heroLevel(this.state, heroId), this.state.heroes.ascension[heroId] ?? 0);
   }
 
   /** A hero's HP as it stands — the wound the last fight left, mending
@@ -4497,6 +4615,7 @@ export class Game {
     about: {
       title: string; subtitle: string; prizes: GachaPrize[];
       enemyFaces?: Partial<Record<UnitId, string>>;
+      backdrop: BattleBackdrop;
     },
   ): void {
     this.battle = {
@@ -4505,6 +4624,7 @@ export class Game {
       subtitle: about.subtitle,
       prizes: about.prizes,
       enemyFaces: about.enemyFaces,
+      backdrop: about.backdrop,
       startedAt: this.now(),
       clockAt: this.now(),
       clockMs: 0,
@@ -4535,15 +4655,44 @@ export class Game {
     const now = this.now();
     b.clockMs = b.log.ticks * COMBAT.tickMs;
     b.clockAt = now;
+    b.slow = undefined;
     this.advanceBattle(now);
   }
 
   /** Which tick of the fight the screen should be drawing at `now`. Past the
    *  end it stays at the end, so a slow frame cannot skip the last blow. */
   battleTick(now: number): number {
+    return Math.floor(this.battleMs(now) / COMBAT.tickMs);
+  }
+
+  /** The same clock in milliseconds of the fight, for what moves between
+   *  two ticks — a flying arrow, a lunge. Stops at the end like the tick. */
+  battleMs(now: number): number {
     const b = this.battle;
     if (b === null) return 0;
-    return Math.min(b.log.ticks, Math.floor(playbackMs(b, now) / COMBAT.tickMs));
+    return Math.min(b.log.ticks * COMBAT.tickMs, playbackMs(b, now));
+  }
+
+  /** Freeze the replay for `ms` of real time: the weight of a heavy blow.
+   *  The screen's, not the fight's — the log does not move, only when it is
+   *  shown. */
+  holdBattle(ms: number): void {
+    const b = this.battle;
+    if (b === null || b.phase !== 'playing') return;
+    const now = this.now();
+    b.clockMs = playbackMs(b, now);
+    b.clockAt = now + ms;
+  }
+
+  /** Run the replay `factor` times slower for the next `ms` of real time:
+   *  the last blow, in slow motion. Screen-only, like the hold. */
+  slowBattle(factor: number, ms: number): void {
+    const b = this.battle;
+    if (b === null || b.phase !== 'playing') return;
+    const now = this.now();
+    b.clockMs = playbackMs(b, now);
+    b.clockAt = Math.max(now, b.clockAt);
+    b.slow = { from: b.clockAt, until: b.clockAt + ms, factor };
   }
 
   /**
@@ -4562,8 +4711,8 @@ export class Game {
     // behind it.
     for (;;) {
       if (b.phase === 'playing' && elapsed >= fight) {
+        // Its sound is the plaque's (battleScreen.ts), which lands a beat later.
         b.phase = 'result';
-        playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
         moved = true;
         continue;
       }
@@ -4572,7 +4721,7 @@ export class Game {
         // place in the game that already knows how to hand things over one
         // at a time.
         b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
-        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils', chest: 'spoils' };
         moved = true;
         continue;
       }
@@ -4686,12 +4835,26 @@ export class Game {
     return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
 
+  /** How many one press of Train orders (the card's x1 · x10 · x100 · All).
+   *  A presenter's choice, kept for the session: every card shares it. */
+  trainAmount: TrainAmount = 1;
+
+  /** The amount selector's tap: the next amount, round. */
+  cycleTrainAmount(): void {
+    this.trainAmount = TRAIN_AMOUNTS[(TRAIN_AMOUNTS.indexOf(this.trainAmount) + 1) % TRAIN_AMOUNTS.length];
+    this.notify();
+  }
+
+  /** Train at the card's amount: one order of that many, all or none. Silent
+   *  — the button clicks; the batch sounds when it is done (`tick`). */
   doTrain(unitId: TrainableId, at?: District): TrainResult {
-    const result = trainUnit(this.state, unitId, this.now(), at);
-    if (result === 'Queued') playSfx('unitTrained');
+    const plan = trainPlan(this.state, unitId, this.trainAmount);
+    const result = trainBatch(this.state, unitId, plan.count, this.now(), at);
     if (result === 'NotEnoughResources') {
-      const cost = trainCost(this.state, unitId) as Wallet;
-      const name = unitId === 'Villager' ? 'a villager' : `a ${UNITS[unitId].name}`;
+      const cost = plan.cost as Wallet;
+      const name = unitId === 'Villager'
+        ? (plan.count === 1 ? 'a villager' : `${formatExact(plan.count)} villagers`)
+        : (plan.count === 1 ? `a ${UNITS[unitId].name}` : `${formatExact(plan.count)} ${UNITS[unitId].name}s`);
       if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
@@ -4771,7 +4934,9 @@ export class Game {
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
     // The picker and the shortfall go back to the sheet they came from, so the
     // hex that sheet is about stays chosen under them.
-    if (name !== 'world' && name !== 'army' && name !== 'speedup' && name !== 'shortfall') this.selectedHex = null;
+    if (name !== 'world' && name !== 'army' && name !== 'speedup' && name !== 'shortfall'
+      && name !== 'worldSlot' && name !== 'worldBuilding' && name !== 'relicPicker') this.selectedHex = null;
+    if (name !== 'worldBuilding' && name !== 'relicPicker') this.worldBuilding = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
@@ -5253,6 +5418,8 @@ export class Game {
   scene: 'province' | 'world' = 'province';
   /** The world hex the dispatch sheet is about. */
   selectedHex: number | null = null;
+  /** The building of the selected hex whose popup is open. */
+  worldBuilding: WorldUpgrade | null = null;
   /** The world's camera, handed over by main once the canvas exists. */
   worldCamera: HexCamera | null = null;
 
@@ -5265,6 +5432,12 @@ export class Game {
 
   /** The friends list (friendsClient.ts): its server is set by main. */
   friends: FriendsClient = new FriendsClient(this, null);
+
+  /** The world ranking (19 §12): the kingdoms of the player's world by the
+   *  hexes each holds, as the server last told it; null off a board. */
+  worldRanking(): RankedSeat[] | null {
+    return this.worldView === null ? null : worldRanking(this.worldView);
+  }
 
   /** The name the world board knows the player by, once they sit on one. */
   worldNickname(): string | null {
@@ -5386,6 +5559,8 @@ export class Game {
   /** The crest last sent to the world board, so a board that has not
    *  caught up yet is not told twice. `undefined`: nothing sent. */
   private crestSentToWorld: string | null | undefined = undefined;
+  /** The Townhall level last sent to the world board, likewise. */
+  private townhallSentToWorld: number | undefined = undefined;
 
   /** The crest the player's kingdom wears (sim/crest.ts). */
   myCrest(): Crest {
@@ -5476,6 +5651,13 @@ export class Game {
       this.crestSentToWorld = profile.crest;
       void this.worldServer?.setCrest(profile.crest);
     }
+    // And its Townhall, which the ranking shows: told again whenever the
+    // board's number is behind the city's.
+    const level = townhall(this.state).level;
+    if (you !== undefined && (you.townhall ?? null) !== level && this.townhallSentToWorld !== level) {
+      this.townhallSentToWorld = level;
+      void this.worldServer?.setTownhall(level);
+    }
     const mine = this.state.world.board;
     if (snap.board.id !== mine.id || snap.board.seed !== mine.seed || snap.board.seat !== mine.seat) {
       this.state.world.board = { ...snap.board };
@@ -5488,7 +5670,13 @@ export class Game {
     // applied are new.
     const fresh = snap.effects.filter((e) => (e.seq ?? 0) > this.state.world.effectSeq);
     for (const e of fresh) {
-      if (e.kind === 'armyHome') receiveArmy(this.state, e);
+      if (e.kind === 'armyHome') {
+        receiveArmy(this.state, e);
+        const count = (list: Array<{ count: number }>): number => list.reduce((n, x) => n + x.count, 0);
+        postNews(this.state, {
+          group: 'armyHome', key: `armyHome:${e.armyId}`, at: e.at, troops: count(e.troops), fallen: count(e.fallen),
+        });
+      }
       else if (e.kind === 'loot') {
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
         // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
@@ -5515,14 +5703,42 @@ export class Game {
           this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
         }
         this.reward({ Gold: e.gold, ...made, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+      } else if (e.kind === 'portalClosed') {
+        // A Portal opening closed with the player in its ranking: a place
+        // that pays waits to be claimed, any other is news (26 §2).
+        if (e.gems > 0) {
+          if (!this.state.world.portalPrizes.some((p) => p.event === e.event)) {
+            this.state.world.portalPrizes.push({ event: e.event, place: e.place, of: e.of, floor: e.floor, gems: e.gems });
+          }
+        } else {
+          postNews(this.state, {
+            group: 'portal', key: `portal:closed:${e.event}`, at: e.at, open: false, place: e.place, of: e.of, floor: e.floor,
+          });
+        }
       } else if (e.kind === 'goods') {
         // Precious material from the Exchange: an offer taken, or one back.
         addGood(this.state.city.goods, e.lot.id, e.lot.amount);
-        this.toast(e.text);
-      } else this.toast(e.text);
+        postNews(this.state, { group: 'world', key: `world:${e.seq ?? e.at}`, at: e.at, text: e.text, good: true });
+      } else {
+        postNews(this.state, {
+          group: 'world', key: `world:${e.seq ?? e.at}`, at: e.at, text: e.text, good: e.good,
+          ...(e.hex === undefined ? {} : { hex: e.hex }),
+        });
+      }
     }
+    if (fresh.some((e) => e.kind === 'armyHome')) playSfx('armyHome');
     if (fresh.length > 0) {
       this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
+      this.persist?.();
+    }
+    // The Portal opening: every player on the board is told, once an
+    // opening (19 §10.3).
+    if (snap.portal.open && snap.portal.opensAt > this.state.world.portalAnnounced) {
+      this.state.world.portalAnnounced = snap.portal.opensAt;
+      postNews(this.state, {
+        group: 'portal', key: `portal:open:${snap.portal.opensAt}`, at: snap.portal.opensAt, open: true,
+        closesAt: snap.portal.closesAt,
+      });
       this.persist?.();
     }
     if (this.actingSeat === null) this.worldServer?.acknowledge(this.state.world.effectSeq);
@@ -5577,13 +5793,15 @@ export class Game {
       NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
       Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
       OwnGround: 'That ground is yours already',
-      Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
+      Shut: 'The Portal is shut',
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',
+      Marching: 'Your army is on the road — hurry it instead',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
+      NoSlot: 'Every slot of this district is taken',
       NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
@@ -5634,6 +5852,29 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
   }
 
+  /** Bring an army to where it is going now, with Gems for the time left. */
+  async doFinishArmyMarch(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const a = this.worldView?.armies.find((x) => x.id === armyId);
+    if (a === undefined || a.at === null) return;
+    const left = Math.max(0, (a.at - this.now()) / 1000);
+    const gems = gemsToFinish(left);
+    if (getWallet(this.state.player.wallet, 'Gems') < gems) {
+      this.shake(['Gems']);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.hurryArmy(armyId, left + 1);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.player.wallet.Gems = getWallet(this.state.player.wallet, 'Gems') - gems;
+    playSfx('gemSpend');
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
   /** Build an upgrade into a district, or raise it a level. */
   async doUpgradeHex(index: number, what: WorldUpgrade, level: number, gold: number): Promise<void> {
     await this.worldCommand(index, what, level, gold, (asSeat) => this.worldServer!.upgrade(index, what, asSeat));
@@ -5677,7 +5918,7 @@ export class Game {
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
     for (const [g, n] of Object.entries(goods)) addGood(this.state.city.goods, g as GoodId, -(n as number));
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
-    playSfx('click');
+    playSfx('buildPlaced');
     // Started from a free builder's row: the sheet was only in the way.
     if (this.openOverlay === 'builder') this.openOverlay = null;
     this.applyWorldSnapshot(r.snapshot);
@@ -5688,9 +5929,13 @@ export class Game {
   /** Where the army being composed is going, and to do what. */
   armyTarget: number | null = null;
   armyPurpose: ArmyPurpose = 'attack';
+  /** The menu the army screen was opened from: a sent army goes back to it,
+   *  to be watched on its way. */
+  private armyReturnTo: OverlayName | null = null;
 
   /** Compose an army for a hex, on the attack screen. */
   openArmy(target: number, purpose: ArmyPurpose): void {
+    this.armyReturnTo = this.openOverlay === 'army' ? this.armyReturnTo : this.openOverlay;
     this.armyTarget = target;
     this.armyPurpose = purpose;
     this.selectedHex = target;
@@ -5778,12 +6023,41 @@ export class Game {
       target, purpose: this.armyPurpose,
     });
     this.armyTarget = null;
-    this.dismiss();
+    // Back to the menu it was sent from — the camp, the dungeon, the Portal —
+    // which now shows the army on its way. None: the board.
+    const back = this.armyReturnTo;
+    this.armyReturnTo = null;
+    if (back === null) this.dismiss();
+    else { this.selectedHex = target; this.setOverlay(back); }
+    playSfx('armyMarch');
     this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
     this.applyWorldSnapshot(r.snapshot);
   }
 
   /** Fight the next room of the dungeon an army camps at, and watch it. */
+  /** Fight the camp an army waits at, and watch it (19 §5.4). */
+  async doFightCamp(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    if (this.refuseFight()) return;
+    const cost = fightMana(this.state);
+    const r = await this.worldServer.fightCamp(armyId);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    payMana(this.state, cost);
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, {
+      title: CAMP_TITLE[r.creature],
+      subtitle: r.won ? 'Beaten — the loot comes home with the army' : 'Beaten back',
+      prizes: [],
+      enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'field',
+    });
+    this.notify();
+  }
+
   async doDelveRoom(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
     if (this.refuseFight()) return;
@@ -5809,6 +6083,9 @@ export class Game {
       title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
       subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
       prizes: [],
+      // A dungeon's squads are creatures, as the delve screen draws them.
+      enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: r.boss ? 'boss' : 'dungeon',
     });
     this.notify();
   }
@@ -5835,7 +6112,13 @@ export class Game {
     }
     payMana(this.state, cost);
     this.applyWorldSnapshot(r.snapshot);
-    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [] });
+    this.openBattle(r.log, {
+      title: `The Dark Portal · floor ${formatCount(r.room)}`,
+      subtitle: 'The depths below',
+      prizes: [],
+      enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'portal',
+    });
     this.notify();
   }
 
@@ -5848,6 +6131,7 @@ export class Game {
       this.notify();
       return;
     }
+    playSfx('armyRecall');
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -5857,12 +6141,26 @@ export class Game {
     this.toast(home.revealed > 0
       ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
       : `Your explorer is home — nothing new out there${found}`);
+    this.payExplorer(home);
+  }
+
+  /** What an explorer's promise paid, flown into the header. */
+  private payExplorer(home: ExplorerHome): void {
     if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
   }
 
   /** The dungeon the delve screen is about, the depth it shows (null: the
    *  player's current one), and what the last room fought there paid. */
   delveHex: number | null = null;
+  /** The Portal whose descent is open. */
+  portalHex: number | null = null;
+
+  /** The Dark Portal's descent, from its card. */
+  openPortalDescent(index: number): void {
+    this.portalHex = index;
+    playSfx('click');
+    this.setOverlay('portal');
+  }
   delveDepth: number | null = null;
   delveSpoils: {
     won: boolean; depth: number; room: number; boss: boolean; lost: number;
@@ -5902,7 +6200,7 @@ export class Game {
       return;
     }
     pay(this.state.city.wallet, cost);
-    playSfx('click');
+    playSfx('tribute');
     this.toast(`The camp of ${CAMP_CREATURE[camp.creature]} takes the tribute and leaves`);
     this.applyWorldSnapshot(r.snapshot);
   }
@@ -5961,10 +6259,108 @@ export class Game {
   private goOutToWorld(): void {
     this.dismiss();
     this.scene = 'world';
-    // Out onto the board at the player's own city, up close.
-    this.worldCamera?.focusHex(hexAt(homeIndex(this.state)));
+    // Out onto the board at the player's own city, up close — or at the hex
+    // a notice's Go asked for, with its card open.
+    const arrival = this.worldArrival;
+    this.worldArrival = null;
+    this.worldCamera?.focusHex(hexAt(arrival ?? homeIndex(this.state)));
+    if (arrival !== null) {
+      this.selectedHex = arrival;
+      this.openOverlay = 'world';
+    }
     void this.refreshWorld();
     this.notify();
+  }
+
+  /** The hex the next trip out lands on, instead of home. */
+  private worldArrival: number | null = null;
+
+  // ------------------------------------------------------------- notices
+
+  /** The card open over the notices, as it was when its bubble was tapped
+   *  (Docs/features/26-notices.md §5): a news is read the moment it opens,
+   *  so its card keeps what it said. */
+  noticeCard: { id: string; news: News[]; heroes: HeroId[] } | null = null;
+
+  /** Open a bubble's card. A news group is read as it opens; so is the
+   *  rested heroes' mark. */
+  openNotice(id: string): void {
+    const t = this.now();
+    const group = id.startsWith('news:') ? id.slice('news:'.length) as NewsGroup : null;
+    const news = group === null ? [] : newsOf(this.state, group);
+    const heroes = id === 'state:heroRested' ? restedHeroes(this.state, t) : [];
+    this.noticeCard = { id, news, heroes };
+    if (group !== null) readNews(this.state, group);
+    if (heroes.length > 0) forgetRested(this.state, t);
+    this.track('notice_opened', { id, count: Math.max(news.length, heroes.length, 1) });
+    playSfx('click');
+    this.setOverlay('notice');
+  }
+
+  /** The Portal ranking Gems won and not yet claimed, oldest first. */
+  portalPrizes(): readonly PortalPrize[] {
+    return this.state.world.portalPrizes;
+  }
+
+  /** CLAIM a Portal opening's ranking Gems (19 §10.4). */
+  claimPortalPrize(event: number): void {
+    const prize = this.state.world.portalPrizes.find((p) => p.event === event);
+    if (prize === undefined) return;
+    this.state.world.portalPrizes = this.state.world.portalPrizes.filter((p) => p !== prize);
+    addToWallet(this.state.player.wallet, 'Gems', prize.gems);
+    this.track('portal_prize_claimed', { place: prize.place, gems: prize.gems });
+    this.reward({ Gems: prize.gems });
+    this.persist?.();
+    this.notify();
+  }
+
+  /** The Portal nearest the player's city: where a Portal notice's Go
+   *  leads (19 §10 — every board has its own). */
+  nearestPortal(): number {
+    const home = hexAt(homeIndex(this.state));
+    return [...PORTAL_INDICES].sort((a, b) => hexDistance(hexAt(a), home) - hexDistance(hexAt(b), home))[0];
+  }
+
+  /** Heroes a fight exhausted who are whole again (sim/heroHealth.ts). */
+  restedHeroes(): HeroId[] {
+    return restedHeroes(this.state, this.now());
+  }
+
+  /** GO: glide to a building in the province and open its card — home from
+   *  the board first if out on it. */
+  focusDistrict(uniqueId: string): void {
+    const d = districtById(this.state, uniqueId);
+    if (d === undefined) return;
+    if (this.scene === 'world') this.leaveWorld();
+    this.setOverlay(null);
+    this.inspectedSite = null;
+    this.inspectedDistrictId = d.uniqueId;
+    this.camera.centerOnCell(d.location, DISTRICTS[d.definitionId].size, CAMERA_GLIDE_MS);
+    this.notify();
+  }
+
+  /** GO: glide to a site in the province — a landmark, a lair, a ruin. */
+  focusSite(cell: Coord): void {
+    if (this.scene === 'world') this.leaveWorld();
+    this.setOverlay(null);
+    this.inspectedDistrictId = null;
+    this.inspectedSite = cell;
+    this.camera.centerOnCell(cell, undefined, CAMERA_GLIDE_MS);
+    this.notify();
+  }
+
+  /** GO: a hex of the world board with its card open — out onto the board
+   *  first if at home. */
+  goToHex(index: number): void {
+    if (this.scene !== 'world') {
+      this.worldArrival = index;
+      this.enterWorld();
+      return;
+    }
+    this.dismiss();
+    this.worldCamera?.focusHex(hexAt(index));
+    this.selectedHex = index;
+    this.setOverlay('world');
   }
 
   /** Back to the province. */
@@ -5984,8 +6380,56 @@ export class Game {
       this.dismiss();
       return;
     }
+    // A ready store of the player's own is collected, as a city building's
+    // is: the hex opens its card only when there is nothing to take.
+    const held = this.actingSeat === null ? this.worldSource().hexOf(index) : null;
+    if (held !== null && held.owner === this.worldSeat() && worldStoreReady(held)) {
+      void this.doCollectHex(index);
+      return;
+    }
     this.selectedHex = index;
     this.setOverlay('world');
+  }
+
+  /** A district's empty slot: the buildings that could go in it. */
+  openWorldSlot(index: number): void {
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('worldSlot');
+  }
+
+  /** A district's building: what it does, and its next level. */
+  openWorldBuilding(index: number, building: WorldUpgrade): void {
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('worldBuilding');
+    this.worldBuilding = building;
+    this.notify();
+  }
+
+  /** Back from a slot or a building to the hex's card. */
+  backToHex(): void {
+    if (this.selectedHex === null) {
+      this.dismiss();
+      return;
+    }
+    this.setOverlay('world');
+  }
+
+  /** Build in a district's empty slot, and go back to its card. */
+  doBuildInSlot(index: number, building: WorldUpgrade, gold: number): void {
+    this.backToHex();
+    void this.doUpgradeHex(index, building, 1, gold);
+  }
+
+  /** The relic picker over a Chapel: its one slot, the world relics. */
+  openChapelPicker(index: number): void {
+    const h = this.worldSource().hexOf(index);
+    if (h === null || !h.chapel) return;
+    this.relicPick = { shrineId: String(index), slot: h.relic?.id ?? null, chapel: index };
+    this.selectedHex = index;
+    playSfx('click');
+    this.setOverlay('relicPicker');
   }
 
   /** Bring a hex into view. */
@@ -6012,7 +6456,7 @@ export class Game {
     if (target === null) return;
     const result = dispatchExplorer(this.state, target, this.now());
     if (result.kind === 'Sent') {
-      playSfx('click');
+      playSfx('explorerDepart');
       this.dismiss();
       return;
     }
@@ -6132,6 +6576,12 @@ export class Game {
    * and for the same reason. A coin on the plank is a coin you spend from
    * anywhere; neither of those is one.
    */
+  /** The calls whose keys the plank shows in place of the coins — while the
+   *  store's Heroes tab is open — or null. */
+  hudKeys(): BannerId[] | null {
+    return this.openOverlay === 'store' && this.storeTabs().open === 'heroes' ? [...BANNER_ORDER] : null;
+  }
+
   visibleCurrencies(): CurrencyId[] {
     // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
     //
@@ -6146,6 +6596,9 @@ export class Game {
     // buy nothing here. Same move the plaque under it already makes
     // (`hudSlot`): show the reading the player can act on, not all of them.
     if (this.openOverlay === 'heroes') return ['HeroXp', 'Stardust'];
+    // The store's calls spend keys, which `hudKeys` puts on the plank: the
+    // city's coins buy nothing there.
+    if (this.hudKeys() !== null) return [];
     // The tree spends Gold AND the clock, so unlike the roster this one keeps
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy
@@ -6180,8 +6633,14 @@ export class Game {
   }
 
   hudSlot(): {
-    kind: 'population' | 'workers' | 'builders' | 'army'; value: number; max: number;
+    kind: 'population' | 'workers' | 'builders' | 'army' | 'explorers'; value: number; max: number;
   } {
+    // Looking at ground in the mist → the explorers free to send there.
+    if (this.scene === 'world' && this.openOverlay === 'world' && this.selectedHex !== null
+      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex, this.now()) !== 'Revealed') {
+      const max = explorerSlots(this.state);
+      return { kind: 'explorers', value: freeExplorers(this.state), max };
+    }
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
       const max = builderCount(this.state);
@@ -6307,7 +6766,7 @@ const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
  * Returns null for an id no longer in the workbook, so a save that remembers
  * a site somebody has since deleted degrades to silence rather than a crash.
  */
-function siteBanner(id: string): Banner | null {
+export function siteBanner(id: string): Banner | null {
   const landmark = LANDMARKS.find((l) => l.id === id);
   if (landmark) {
     const art = LANDMARK_ART[landmark.kind];
@@ -6575,6 +7034,9 @@ export interface OfferSplashView {
   sku: StoreSkuId;
   mode: 'buy' | 'claim' | 'waiting';
   browse: boolean;
+  /** Opened by the game at the start of a session, not by the player: only
+   *  this one sounds. */
+  auto: boolean;
 }
 
 /** The store's tabs (ui/storeSheet.ts). */

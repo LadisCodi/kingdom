@@ -1,9 +1,10 @@
 /* THE STORE (ui/storeSheet.ts, ui/storeHeroes.ts), after the mockups m95–m98:
  * a screen of its own over a magic merchant's shop, soft and dim so the
- * wares are what the eye finds; a title plank and its close, a strip of
- * wooden tabs, and the open tab's page — nailed wood frames, red cloth
- * ribbons, parchment tiles, wax seals and gold gem buttons, the kit the offer
- * splash is made of. The column keeps the iPhone X's width at most. */
+ * wares are what the eye finds; a strip of wooden tabs with the close beside
+ * it, fixed, and under it the open tab's page, the one thing that scrolls —
+ * nailed wood frames, red cloth ribbons, parchment tiles, wax seals and gold
+ * gem buttons, the kit the offer splash is made of. The column runs the
+ * iPhone X's full width, edge to edge, and keeps that width on anything wider. */
 
 /* The shop behind: the art, a warm dark wash over it so the panels read. */
 #overlay:has(.k-sheet.is-store) {
@@ -13,93 +14,83 @@
   justify-content: flex-start;
   padding: var(--hud-h) 0 0;
 }
-.k-sheet.is-store {
+/* (`:not` to outweigh material.css, which sizes every drawer.) */
+.k-sheet.is-store:not(.is-centred) {
+  --win-w: calc(var(--rpx) * 1125);
   height: 100%;
   max-height: 100%;
-  width: 100%;
-  max-width: calc(var(--px) * 402);
   margin: 0 auto;
 }
-.k-sheet.is-store > .k-panel { background: none; border: 0; box-shadow: none; }
+.k-sheet.is-store > .k-panel { padding: 0; background: none; border: 0; box-shadow: none; }
 .k-sheet.is-store > .k-panel > .k-frame { display: none; }
-.k-sheet.is-store > .k-panel > .k-sheet-body { padding: 0; scrollbar-width: none; }
-.k-sheet.is-store > .k-panel > .k-sheet-body::-webkit-scrollbar { display: none; }
+.k-sheet.is-store > .k-panel > .k-sheet-body { padding: 0; overflow-y: hidden; }
 
 .stx {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--nav-h, 0px) + var(--px) * 16);
+  height: 100%;
+  min-height: 0;
 }
 
-/* ----------------------------------------------------- the head and tabs */
+/* ------------------------------------------------- the tabs and the close */
 
 .stx-head {
-  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin: 0 calc(var(--px) * 40) calc(var(--px) * 8);
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8) calc(var(--px) * 4) 0 calc(var(--px) * 6);
 }
-.stx-title {
-  margin: 0;
-  min-width: calc(var(--px) * 200);
-  height: calc(var(--px) * 46);
-  display: grid;
-  place-items: center;
-  padding: 0 calc(var(--px) * 30);
-  border-style: solid;
-  border-width: 0 calc(var(--px) * 30);
-  border-image: url('../../assets/offer-plaque.png') 0 60 fill / 0 calc(var(--px) * 30) / 0 stretch;
-  color: #fbe6c8;
-  font-family: var(--font-ornate);
-  font-weight: var(--weight-ornate);
-  font-size: calc(var(--px) * 28);
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 16, 4, 0.85);
-}
-.stx-head > .k-close { position: absolute; right: calc(var(--px) * -40); top: 50%; left: auto; transform: translateY(-50%); }
+.stx-head > .k-close { position: relative; top: auto; right: auto; flex: none; }
 
-.stx-tabs { display: flex; gap: calc(var(--px) * 5); margin-bottom: calc(var(--px) * 10); }
+.stx-tabs { flex: 1; min-width: 0; display: flex; gap: calc(var(--px) * 4); }
 .stx-tab {
   position: relative;
   flex: 1 1 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 6) calc(var(--px) * 2) calc(var(--px) * 5);
+  justify-content: center;
+  gap: calc(var(--px) * 3);
+  min-width: 0;
+  height: calc(var(--px) * 32);
+  padding: 0 calc(var(--px) * 2);
   border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 8) calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 4);
+  border-radius: calc(var(--px) * 7);
   background: linear-gradient(var(--wood-light), var(--wood));
   box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 3) 0 rgba(30, 14, 4, 0.5);
   color: #fbe6c8;
   font: inherit;
-  font-size: calc(var(--px) * 13);
+  font-size: calc(var(--px) * 12);
   font-weight: var(--weight-title);
   text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 16, 4, 0.6);
+  white-space: nowrap;
   cursor: pointer;
 }
-.stx-tab > .icon { --icon-size: calc(var(--px) * 34); }
+.stx-tab > .icon { --icon-size: calc(var(--px) * 20); flex: none; }
 .stx-tab.is-open {
   background: linear-gradient(#fff6dc, var(--parchment));
   border-color: var(--gold-dark);
   color: var(--ink);
   text-shadow: none;
-  transform: translateY(calc(var(--px) * 2));
-  box-shadow: 0 0 calc(var(--px) * 10) rgba(255, 205, 96, 0.7);
-}
-.stx-dot {
-  position: absolute;
-  top: calc(var(--px) * -4);
-  right: calc(var(--px) * -3);
-  width: calc(var(--px) * 13);
-  height: calc(var(--px) * 13);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
+  transform: translateY(calc(var(--px) * 1));
+  box-shadow: 0 0 calc(var(--px) * 8) rgba(255, 205, 96, 0.7);
 }
 
-.stx-page { flex: 1; }
+/* The page scrolls under the fixed strip. Its top keeps room for what stands
+ * proud of the first frame — an offer's figure and its seal. It is a column,
+ * so a tab that should fit the screen (the heroes) can take what is left. */
+.stx-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: calc(var(--px) * 24) calc(var(--px) * 4) calc(var(--nav-h, 0px) + var(--px) * 16);
+}
+.stx-page::-webkit-scrollbar { display: none; }
+.stx-page > * { flex: none; }
 .stx-list { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
 .stx-locked {
   display: flex;
@@ -172,22 +163,46 @@
   object-position: 50% 100%;
   filter: drop-shadow(0 calc(var(--px) * 3) calc(var(--px) * 2) rgba(30, 16, 6, 0.35));
 }
+.stx-offer-figure.is-hero {
+  position: relative;
+  z-index: 1;
+  width: 150%;
+  max-height: calc(var(--px) * 240);
+  margin: calc(var(--px) * -64) 0 calc(var(--px) * -10) calc(var(--px) * -26);
+}
 .stx-offer-figure.is-empty { display: grid; place-items: center; align-self: center; width: 100%; margin: 0; }
 .stx-offer-figure.is-empty > .icon { --icon-size: calc(var(--px) * 80); }
 .stx-offer-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
+/* An offer's name on the calls' plank, red, nailed over the frame's top
+ * edge in the body's column, half above it. */
+.stx-offer-body { padding-top: calc(var(--px) * 12); }
 .stx-offer-name {
-  align-self: flex-start;
-  max-width: 82%;
-  padding: calc(var(--px) * 3) calc(var(--px) * 12);
-  background: linear-gradient(#c43a2c, #8e2219);
-  border-top: calc(var(--px) * 2) solid #e7b347;
-  border-bottom: calc(var(--px) * 2) solid #e7b347;
-  color: #fbe6c8;
+  --rb-h: calc(var(--px) * 36);
+  --rb-cap: calc(var(--rb-h) * 115 / 169);
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--px) * -18 - var(--rb-h) / 2);
+  left: calc(34% - var(--px) * 4);
+  max-width: calc(66% - var(--px) * 8);
+  display: flex;
+  align-items: center;
+  height: var(--rb-h);
+  box-sizing: border-box;
+  padding: 0 0 calc(var(--px) * 2);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--rb-cap);
+  border-image: url('../../assets/plank-red.png') 0 115 fill / 0 var(--rb-cap) stretch;
+  color: #fff6e0;
   font-family: var(--font-ornate);
   font-weight: var(--weight-ornate);
   font-size: calc(var(--px) * 16);
-  line-height: 1.1;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.8);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(60, 30, 10, 0.35));
 }
+.stx-offer-name > span { overflow: hidden; text-overflow: ellipsis; }
 .stx-offer-pitch { margin: 0; color: var(--ink-muted); font-size: calc(var(--px) * 12); line-height: 1.25; }
 .stx-offer-tiles { display: flex; gap: calc(var(--px) * 3); }
 .stx-offer-tiles > .ofs-tile { flex: 0 0 calc(var(--px) * 46); }
@@ -208,8 +223,9 @@
 .stx-offer-foot > .stx-timer { margin-right: auto; }
 .stx-seal {
   position: absolute;
-  top: calc(var(--px) * -26);
-  right: calc(var(--px) * -20);
+  z-index: 3; /* over the name's plank, which runs under it */
+  top: calc(var(--px) * -32);
+  right: calc(var(--px) * -4);
   display: grid;
   place-items: center;
   width: calc(var(--px) * 64);
@@ -303,17 +319,22 @@
 
 /* ------------------------------------------------------------ the heroes */
 
-.sth { display: flex; flex-direction: column; gap: calc(var(--px) * 14); }
-.sth-top { position: relative; height: calc(var(--px) * 280); }
+/* The tab fits the screen: the two calls keep their height and the top
+ * band — the carousel, the keys, the title — takes what is left, down to a
+ * floor under which the page scrolls instead. */
+.stx-page > .sth { flex: 1 0 auto; }
+.sth { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
+.sth-top { position: relative; flex: 1 1 0; min-height: calc(var(--px) * 170); max-height: calc(var(--px) * 280); margin: 0 calc(var(--px) * 8); }
 
 /* The carousel: one hero at a time, drifting right to left and fading in
- * and out, standing on the left of the top band. */
+ * and out, standing large on the left of the top band and down behind the
+ * common call's frame, which hides his feet. */
 .sth-carousel {
   position: absolute;
-  left: calc(var(--px) * -6);
-  bottom: calc(var(--px) * -10);
-  width: 62%;
-  height: 112%;
+  left: calc(var(--px) * -10);
+  bottom: calc(var(--px) * -130);
+  width: 66%;
+  height: calc(100% + var(--px) * 140);
   pointer-events: none;
 }
 .sth-carousel::before {
@@ -344,32 +365,9 @@
   @keyframes sth-fade { 0%, 100% { opacity: 0; } 16%, 84% { opacity: 1; } }
 }
 
-.sth-keys { position: absolute; top: 0; right: 0; display: flex; gap: calc(var(--px) * 6); }
-.sth-key {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--px) * 4);
-  padding: calc(var(--px) * 2) calc(var(--px) * 3) calc(var(--px) * 2) calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 14);
-  background: rgba(40, 20, 6, 0.75);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  color: #fbe6c8;
-  font-weight: var(--weight-title);
-}
-.sth-key-plus {
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 22);
-  height: calc(var(--px) * 22);
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #7fd65a, var(--leaf-dark) 75%);
-  cursor: pointer;
-}
 .sth-title {
   position: absolute;
-  top: calc(var(--px) * 46);
+  top: calc(var(--px) * 8);
   right: 0;
   max-width: 50%;
   margin: 0;
@@ -384,7 +382,7 @@
 .sth-odds {
   position: absolute;
   right: calc(var(--px) * 4);
-  top: calc(var(--px) * 150);
+  bottom: calc(var(--px) * 6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -402,16 +400,17 @@
 .sth-odds > .k-tip { left: auto; right: 0; width: calc(var(--px) * 240); max-width: none; text-shadow: none; text-align: left; color: var(--ink); font-weight: var(--weight-body); }
 .sth-odds > .k-tip::after { left: auto; right: calc(var(--px) * 16); }
 
-/* A call: a framed banner, its name on a cloth ribbon — steel blue for the
- * common call, red for the golden — its key or its hero, its free calls,
- * its two buttons and its pity. */
+/* A call: a framed banner, its name on a plank, its key or its hero, its
+ * free calls, its two buttons and its pity. */
 .sth-banner {
   position: relative;
-  min-height: calc(var(--px) * 150);
   border-style: solid;
   border-width: calc(var(--px) * 18);
   border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 18) / 0 stretch;
 }
+/* The golden call is the better call, and its frame says so: the gold plate
+ * with brass nails in place of the wood. */
+.sth-banner.is-advanced { border-image-source: url('../../assets/plate-gold.png'); border-image-slice: 64 fill; }
 .sth-banner-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: calc(var(--px) * 5); }
 /* With a hero: the hero stands on the left of the top half, rising out of
  * the frame, beside the name and the free calls; the calls and the pity
@@ -419,53 +418,63 @@
 .sth-banner.has-hero .sth-banner-body { display: grid; grid-template-columns: 38% 1fr; column-gap: calc(var(--px) * 6); row-gap: calc(var(--px) * 5); }
 .sth-banner.has-hero .sth-banner-ribbon,
 .sth-banner.has-hero .sth-free { grid-column: 2; }
-.sth-banner.has-hero .sth-calls,
-.sth-banner.has-hero .sth-pity { grid-column: 1 / -1; }
-.sth-banner.has-hero .sth-banner-ribbon { justify-self: start; }
+.sth-banner.has-hero .sth-calls { grid-column: 1 / -1; }
 .sth-banner.has-hero .sth-free { min-height: calc(var(--px) * 40); }
 .sth-banner.has-hero { margin-top: calc(var(--px) * 34); }
-
+/* The hero rises out of the frame and stands behind the Free call's plate. */
+/* A call's name on a plank, as the army boards' — blue for the common call,
+ * gold for the golden — nailed over the frame's top edge, half above it, the
+ * same height on both. */
+.sth-banner { --rb-h: calc(var(--px) * 40); --frame: calc(var(--px) * 18); }
+.sth-banner-body { padding-top: calc(var(--rb-h) / 2 + var(--px) * 2); }
 .sth-banner-ribbon {
-  align-self: flex-start;
-  padding: calc(var(--px) * 4) calc(var(--px) * 16);
-  background: linear-gradient(#4a7fb5, #2c5583);
-  border-top: calc(var(--px) * 2) solid #c9d6e2;
-  border-bottom: calc(var(--px) * 2) solid #c9d6e2;
+  --rb-cap: calc(var(--rb-h) * 115 / 169);
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--frame) * -1 - var(--rb-h) / 2);
+  left: calc(var(--px) * 4);
+  display: flex;
+  align-items: center;
+  height: var(--rb-h);
+  box-sizing: border-box;
+  padding: 0 0 calc(var(--px) * 2);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--rb-cap);
+  border-image: url('../../assets/plank-blue.png') 0 115 fill / 0 var(--rb-cap) stretch;
   color: #fff6e0;
   font-family: var(--font-ornate);
   font-weight: var(--weight-ornate);
   font-size: calc(var(--px) * 20);
+  white-space: nowrap;
   text-shadow: 0 calc(var(--px) * 2) 0 rgba(10, 20, 40, 0.7);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(60, 30, 10, 0.35));
 }
+.sth-banner.has-hero .sth-banner-ribbon { left: auto; right: calc(var(--px) * 4); }
 .sth-banner.is-advanced .sth-banner-ribbon {
-  background: linear-gradient(#c43a2c, #8e2219);
-  border-color: #e7b347;
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.8);
-}
-.sth-banner-key {
-  position: absolute;
-  z-index: 2;
-  right: calc(var(--px) * -6);
-  top: calc(var(--px) * -22);
-  width: calc(var(--px) * 64);
-  height: calc(var(--px) * 64);
-  transform: rotate(-18deg);
+  border-image-source: url('../../assets/plank-gold-full.png');
+  color: #5a3a12;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 240, 200, 0.6);
 }
 .sth-banner-hero {
   position: absolute;
-  z-index: 1;
-  left: calc(var(--px) * -14);
-  bottom: calc(100% - var(--px) * 86);
-  width: 40%;
-  height: calc(var(--px) * 150);
+  z-index: 0;
+  left: calc(var(--px) * -12);
+  top: calc(var(--px) * -64);
+  bottom: calc(var(--px) * 14);
+  width: 44%;
+  height: auto;
   object-fit: contain;
   object-position: 50% 100%;
+  pointer-events: none;
   filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 210, 110, 0.55));
 }
 .sth-free { color: var(--ink); font-size: calc(var(--px) * 13); font-weight: var(--weight-strong); }
-.sth-calls { display: flex; gap: calc(var(--px) * 6); }
+.sth-calls { display: flex; align-items: stretch; gap: calc(var(--px) * 6); }
 .sth-calls > .k-btn { flex: 1 1 0; }
-.sth-pity { color: var(--ink-muted); font-size: calc(var(--px) * 11); }
+/* Both slabs on one line: each plate as tall as the taller, its slab at the
+ * foot whatever sits over it — a word or a price. */
+.sth-calls > .k-btn.k-btn.k-btn.has-cost:not(.k-knob) { justify-content: space-between; } /* over the kit's :hover too */
 
 /* In a narrow card the kit's price slab fits the card, not its own floor. */
 .stx-card > .k-btn.k-btn:not(.k-knob):not(.has-cost),

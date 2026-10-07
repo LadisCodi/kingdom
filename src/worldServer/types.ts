@@ -91,7 +91,13 @@ export type WorldEffect = { seq?: number } & (
     fallen: Array<{ unitId: UnitId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
-  | { kind: 'report'; at: number; text: string; good: boolean }
+  /** A line for the notices; `hex` is where it happened, when it has a
+   *  place (Docs/features/26-notices.md §2.1). */
+  | { kind: 'report'; at: number; text: string; good: boolean; hex?: number }
+  /** A Portal opening closed and the player had gone down: their place
+   *  in its ranking and the Gems it pays, claimed from the notices
+   *  (19 §10.4, 26-notices.md §2.2). `event` names the opening. */
+  | { kind: 'portalClosed'; at: number; event: number; place: number; of: number; floor: number; gems: number }
   /** Precious material the server hands back: an offer the closed
    *  Exchange still held. */
   | { kind: 'goods'; at: number; lot: Lot; text: string }
@@ -116,8 +122,6 @@ export interface PortalState {
   event: number;
   /** How deep each seat has gone this opening, and when it got there. */
   floors: Record<number, { floor: number; at: number }>;
-  /** Floors each seat cleared on a UTC day — only a clear spends one. */
-  attempts: Record<number, { day: number; used: number }>;
   /** Who reached each milestone floor first this opening. */
   milestones: Record<number, number>;
   /** The last opening whose close has been paid out. */
@@ -130,6 +134,10 @@ export interface ServerSeat {
   /** The crest its kingdom chose (`<tincture>.<charge>`, sim/crest.ts);
    *  absent while it wears its nickname's (`setCrest`). */
   crest?: string;
+  /** Its Townhall's level, as its client last sent it (`setTownhall`);
+   *  absent until it has. Nothing on the board turns on it: the ranking
+   *  shows it. */
+  townhall?: number;
   /** A stand-in rival the server plays (local only). */
   bot: boolean;
   /** When a bot makes its next move. */
@@ -299,6 +307,10 @@ export interface SeatView {
   bot: boolean;
   /** The crest its kingdom chose; null while it wears its nickname's. */
   crest?: string | null;
+  /** Its Townhall's level; null until its client has sent one. */
+  townhall?: number | null;
+  /** Nobody sits in it: a city waiting for a player. */
+  free?: boolean;
   /** A friend of the player's (15 §2.1): their city shows through the fog. */
   friend?: boolean;
 }
@@ -308,9 +320,8 @@ export interface PortalView {
   /** When it next opens, or when it closes if it is open. */
   opensAt: number;
   closesAt: number;
-  /** The player's deepest floor this opening, and clears left today. */
+  /** The player's deepest floor this opening. */
   floor: number;
-  attemptsLeft: number;
   /** Every seat that has gone down, deepest first, earliest first. */
   ranking: Array<{ seat: number; floor: number }>;
 }
@@ -356,11 +367,13 @@ export interface DungeonView {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
+  /** An army on the road is not called back, only hurried. */
+  | 'Marching'
 
   /** A world relic's host (relic-restoration.md §5.2). */
-  | 'NoChapel' | 'TooManyChapels' | 'NotAWorldRelic'
+  | 'NoChapel' | 'TooManyChapels' | 'NoSlot' | 'NotAWorldRelic'
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */
@@ -386,6 +399,17 @@ export type CollectResult =
 
 export type SendResult =
   | { ok: true; army: string; arrivesAt: number; snapshot: WorldSnapshot }
+  | { ok: false; why: Refusal };
+
+/** A camp fought on its player's word: the fight, for the battle screen. */
+export type CampFightResult =
+  | {
+    ok: true; won: boolean; log: import('../sim/battle').BattleLog;
+    /** Soldiers this fight cost. */
+    lost: number;
+    creature: import('../sim/state').LairId;
+    snapshot: WorldSnapshot;
+  }
   | { ok: false; why: Refusal };
 
 /** A dungeon room fought: the fight itself, for the battle screen, and

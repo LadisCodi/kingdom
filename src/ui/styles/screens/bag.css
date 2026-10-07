@@ -16,17 +16,6 @@
 .bag-pane { min-height: 0; overflow-y: auto; overflow-x: clip; }
 /* A tab with nothing in it is still there, greyed — the wood gone dull. */
 .bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
-/* Something new in it: a small red wax dot at the plate's corner. */
-.bag-dot {
-  position: absolute;
-  top: calc(var(--px) * -3);
-  right: calc(var(--px) * -2);
-  width: calc(var(--px) * 12);
-  height: calc(var(--px) * 12);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
-  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
-}
 
 /* THE GRID: four plates a row; the popover spans the row under its tile. */
 .bag-grid {
@@ -606,41 +595,3 @@
 .dc-shrine-says { display: flex; flex-direction: column; gap: calc(var(--px) * 2); min-width: 0; color: var(--ink); }
 .dc-shrine-says > span { color: var(--ink-muted); font-size: var(--text-desc); }
 
-/* THE ASLEEP TAB on the map's right edge (M85): a wooden slab with the
- * relic's art, its line and an Activate chip, sliding in like the ad tab. */
-.rs-tab {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 6) calc(var(--px) * 8) calc(var(--px) * 6) calc(var(--px) * 6);
-  background: url('../../assets/tex-wood.jpg') 0 0 / calc(var(--px) * 256) calc(var(--px) * 256);
-  border: var(--outline) solid var(--wood-dark);
-  border-right: none;
-  border-radius: calc(var(--px) * 12) 0 0 calc(var(--px) * 12);
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.18), 0 calc(var(--px) * 3) 0 var(--wood-dark);
-  transform: translateX(110%);
-}
-.rs-tab.is-in { animation: ad-tab-in var(--motion-sheet) ease-out forwards; }
-@media (prefers-reduced-motion: reduce) {
-  .rs-tab { transform: none; }
-  .rs-tab.is-in { animation: none; }
-}
-.rs-tab-body {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 6);
-  max-width: calc(var(--px) * 150);
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--ink-inverse);
-  font: inherit;
-  font-weight: var(--weight-strong);
-  font-size: var(--text-desc);
-  line-height: 1.15;
-  text-align: left;
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 18, 8, 0.6);
-  cursor: pointer;
-}
-.rs-tab-art { display: grid; place-items: center; flex: none; width: calc(var(--px) * 40); height: calc(var(--px) * 40); }
-.rs-tab-img { width: 100%; height: 100%; object-fit: contain; filter: saturate(0.5) brightness(0.9); }

@@ -8,7 +8,7 @@ import { BOARD_RADIUS, PORTAL_INDEX, boardNeighbors, hexAt, hexIndex } from '../
 import { setBit } from '../src/sim/world/fogBits';
 import { hexActions } from '../src/ui/world/worldActions';
 import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
-import { hexTitle } from '../src/ui/world/dispatchSheet';
+import { hexTitle } from '../src/ui/world/hexNames';
 import { fogStateOf } from '../src/sim/world/explorers';
 import type { Game } from '../src/game';
 import { firstGame, freshGame, freshPresenter, T0 } from './helpers';

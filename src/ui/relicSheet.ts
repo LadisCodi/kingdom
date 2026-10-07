@@ -275,18 +275,20 @@ const sparesTerm = (have: number, need: number) =>
  * down to wood.
  */
 function levelSection(game: Game, view: RelicView): HTMLElement {
-  const held = view.slots.filter((n) => n > 0).length;
   const head = el('div', { class: 'rl-level-head' },
     el('b', {}, view.restored ? `Level ${formatExact(view.level)}` : 'Not restored'),
     ...(view.restored ? [] : [el('span', {}, `${formatExact(view.spares)} spares`)]));
   const press: HTMLElement[] = [];
   if (view.restored) {
+    // The set a level takes is the slot row above, not a term in the price:
+    // a fragment beside the Stardust read as a second resource (Runestone).
+    if (!view.hasSet) press.push(el('p', { class: 'rl-note' }, 'A piece in every slot to level up'));
     press.push(btn({
       label: 'Level up',
       kind: view.status === 'asleep' ? 'secondary' : 'primary',
       cost: { Stardust: view.levelStardust },
       have: (c) => game.walletValue(c),
-      costExtra: [{ icon: 'shard', amount: `${formatExact(held)} / ${formatExact(view.slots.length)}`, short: !view.hasSet }],
+      ...(view.hasSet ? {} : { disabledReason: 'A piece in every slot to level up' }),
       onClick: () => game.doLevelRelic(view.id),
     }));
   } else if (view.canRestore) {

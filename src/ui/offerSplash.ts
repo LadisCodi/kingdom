@@ -24,7 +24,7 @@ import { offerIcon } from './offerWidget';
 import { itemIcon } from './itemArt';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
-import { btn, closeKnob, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
+import { btn, closeKnob, ctaBadge, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
 import { itemLine, itemName } from './itemText';
 
 /** A hero's round-cornered portrait, or its glyph while the art is missing. */
@@ -172,7 +172,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
   /** Live countdowns: the element and the instant it counts to. */
   let clocks: Array<[HTMLElement, number]> = [];
 
-  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting', browse: OfferWidget[]): void => {
+  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting', browse: OfferWidget[], auto: boolean): void => {
     const s = STORE[sku];
     const tiles = game.offerTiles(sku);
     const sale = game.offerSale(sku);
@@ -225,7 +225,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
       const tab = el('button', {
         class: `ofs-tab${w.sku === sku ? ' is-open' : ''}${w.state === 'ready' ? ' is-ready' : ''}`,
         type: 'button', role: 'tab', 'aria-selected': w.sku === sku ? 'true' : 'false', 'aria-label': w.name,
-      }, offerIcon(w));
+      }, offerIcon(w), ...(w.state === 'ready' ? [ctaBadge(1, `offer-tab:${w.sku}`)] : []));
       tab.addEventListener('click', () => game.openOfferSplash(w.sku, true));
       return tab;
     }));
@@ -254,7 +254,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     root.replaceChildren(screen);
     const title = screen.querySelector<SVGSVGElement>('.ofs-ribbon-title');
     if (title !== null) fitRibbonTitle(title);
-    if (mode !== 'waiting') playSfx('unlock');
+    if (auto) playSfx('offerSplash');
   };
 
   const refresh = (): void => {
@@ -264,7 +264,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     if (key !== showing) {
       showing = key;
       if (on === null) root.replaceChildren();
-      else build(on.sku, on.mode, browse);
+      else build(on.sku, on.mode, browse, on.auto);
     }
     for (const [node, at] of clocks) {
       const text = formatCountdown(Math.max(0, Math.ceil((at - game.now()) / 1000)));
@@ -272,30 +272,6 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     }
   };
 
-  game.onChange(refresh);
-  refresh();
-}
-
-/** The pill on the right edge for a bought pack's next-day part: a countdown
- *  until tomorrow, then a glowing "Claim". It opens the splash. */
-export function mountNextDayPill(game: Game, root: HTMLElement): void {
-  const label = el('b', { class: 'nd-tab-label' }, '');
-  const tab = el('button', { class: 'ad-tab nd-tab', type: 'button', 'aria-label': 'Tomorrow’s reward' },
-    iconEl('chest', { size: 'lg' }), label);
-  let sku: StoreSkuId | null = null;
-  tab.addEventListener('click', () => { if (sku !== null) game.openOfferSplash(sku); });
-  root.replaceChildren(tab);
-
-  const refresh = (): void => {
-    const pill = game.nextDayPill();
-    const showing = pill !== null && !game.hasOpenSheet() && game.offerSplashOnScreen() === null;
-    root.hidden = !showing;
-    if (!showing) return;
-    sku = pill!.sku;
-    tab.classList.add('is-in');
-    tab.classList.toggle('is-ready', pill!.ready);
-    label.textContent = pill!.ready ? 'Claim' : formatCountdown(Math.max(0, Math.ceil((pill!.at - game.now()) / 1000)));
-  };
   game.onChange(refresh);
   refresh();
 }

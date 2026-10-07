@@ -2,7 +2,7 @@
 // places that open a mechanic when claimed, the heroes the story brings, and
 // what a save from before the doors reads as.
 import { describe, expect, it } from 'vitest';
-import { ABANDONED, FOG, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
+import { ABANDONED, FOG, HERO_LADDER, LANDMARKS, QUESTS } from '../src/sim/data/definitions';
 import { advance, repairRefusal } from '../src/sim/commands';
 import { claimLandmark, watchtowerClaimed } from '../src/sim/landmarks';
 import { isTomeOpen, researchRefusal, TOME_OPENS } from '../src/sim/research';
@@ -94,6 +94,22 @@ describe('the first hero', () => {
     expect(result.result).toBe('Pulled');
     expect(result.heroId).not.toBe(null);
     expect(state.heroes.owned).toEqual([result.heroId]);
+  });
+
+  it('the first two calls, on either banner, are each a new hero', () => {
+    const orders = [['basic', 'basic'], ['basic', 'advanced'], ['advanced', 'basic'], ['advanced', 'advanced']] as const;
+    for (let seed = 1; seed <= 50; seed++) {
+      for (const order of orders) {
+        const state = firstGame();
+        state.seed = seed;
+        for (const banner of order) {
+          const result = pull(state, banner, { free: true });
+          expect(result.heroId).not.toBe(null);
+          expect(result.duplicate).toBe(false);
+        }
+        expect(state.heroes.owned.length).toBe(HERO_LADDER.firstCallsNewHero);
+      }
+    }
   });
 });
 

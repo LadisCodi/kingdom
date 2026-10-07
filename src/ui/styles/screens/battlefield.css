@@ -2,9 +2,10 @@
    §2.5). A full-bleed board: the bar at the top, six rows of slots, and
    nothing else — the fight is the content, so the frame gets out of its way.
 
-   Everything here snaps. `steps(2)` on the flash and no transition on the
-   skull: a pixel-art fight reads as a series of states, and a slot that fades
-   between them looks like a bug in the sprite rather than a hit. */
+   The STATES snap — `steps(2)` on the flash, no transition on the skull — and
+   the MOTION is on top of them: the swings and flinches are animations on
+   the slots (battleScreen.ts), what flies between slots is the effects
+   canvas (battleFx.ts), and the numbers float in a layer of their own. */
 
 .bs {
   position: absolute;
@@ -170,6 +171,28 @@
   color: var(--ink);
 }
 
+/* HEALTH: a lacquer inlay in the slot's wooden ring — leaf for ours, clay
+   for theirs — that empties round the dial as the slot is hurt. What a blow
+   just took stays pale for a beat before the groove swallows it, so a heavy
+   hit reads as a chunk, not a tick. */
+@property --life { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --ghost { syntax: '<number>'; inherits: false; initial-value: 1; }
+.bs-life {
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  border-radius: 50%;
+  pointer-events: none;
+  --fill: var(--leaf);
+  background: conic-gradient(
+    var(--fill) calc(var(--life) * 1turn),
+    #fff1c9 0deg calc(var(--ghost) * 1turn),
+    var(--wood-dark) 0deg);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - var(--px) * 4), #000 calc(100% - var(--px) * 4 + 0.5px));
+  mask: radial-gradient(closest-side, transparent calc(100% - var(--px) * 4), #000 calc(100% - var(--px) * 4 + 0.5px));
+  transition: --life 90ms linear, --ghost 420ms ease-in 240ms;
+}
+.bs-slot.is-theirs .bs-life { --fill: var(--clay); }
+
 /* HURT: a white frame for two frames. */
 @keyframes bs-hit {
   from { background: var(--parchment); border-color: var(--clay); filter: brightness(2.4); }
@@ -194,36 +217,212 @@
 .bs-slot.is-dead .bs-skull { display: grid; }
 .bs-slot.is-dead .bs-skull .icon { transform: scale(0.7); filter: brightness(1.8); }
 .bs-slot.is-dead .bs-portrait { opacity: 0.55; }
+.bs-skull { z-index: 2; }
+/* The skull is STAMPED: it comes down from above and lands, a beat after
+   the ring cracks. */
+.bs-slot.is-dead .bs-skull .icon { animation: bs-stamp 240ms cubic-bezier(0.5, 0, 0.75, 0) 140ms both; }
+@keyframes bs-stamp {
+  from { transform: scale(2.2); opacity: 0; }
+  to { transform: scale(0.7); opacity: 1; }
+}
+/* A hero's portrait slumps in its broken ring. */
+.bs-slot.is-hero .bs-portrait { transition: rotate 320ms cubic-bezier(0.3, 1.6, 0.5, 1), translate 320ms ease-out; }
+.bs-slot.is-hero.is-dead .bs-portrait { rotate: -14deg; translate: 0 6%; }
 
-/* A SKILL FIRING: its name rises off the fighter, a heal's number off its
-   target, and fades. */
-.bs-pop {
+/* CRACKS (battleScreen.ts `crackSvg`): grooves cut into the ring, each with
+   a lit lower lip, run in from the rim as it breaks. On the defeat plaque
+   too. */
+.bs-crack {
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  width: calc(100% + var(--px) * 8);
+  height: calc(100% + var(--px) * 8);
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+.bs-crack path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  animation: bs-crack 200ms ease-out both;
+}
+.bs-crack .is-groove { stroke: var(--wood-dark); stroke-width: 4.5; }
+.bs-crack .is-edge { stroke: rgba(255, 241, 201, 0.75); stroke-width: 4.5; transform: translate(1.3px, 1.6px); }
+.bs-slot.is-hero .bs-crack .is-edge { stroke: var(--gold); }
+@keyframes bs-crack { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+
+/* A SKILL (battleScreen.ts `charge`, `cast`).
+
+   THE AURA: a glow round the ring in the skill's tint — the caster charging,
+   a rally landing on every slot of its side. Light, so it is the one thing
+   here with no material: it is what the materials are lit by. */
+.bs-aura {
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 calc(var(--px) * 16) calc(var(--px) * 6) var(--glow, #ffd36a),
+    inset 0 0 calc(var(--px) * 10) calc(var(--px) * 2) var(--glow, #ffd36a);
+}
+
+/* THE RIBBON: a strip of dyed cloth across the line between the armies,
+   swallow-tailed, woven, stitched along both edges, naming the skill. It
+   unrolls from the middle and drifts off toward the side that cast it. */
+.bs-ribbon {
   position: absolute;
   left: 50%;
-  top: calc(var(--px) * -6);
-  translate: -50% 0;
-  z-index: 2;
-  padding: 0 calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 6);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
+  z-index: 3;
+  translate: -50% -50%;
+  padding: calc(var(--px) * 6) calc(var(--px) * 30);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 calc(var(--px) * 2), transparent calc(var(--px) * 2) calc(var(--px) * 4)),
+    linear-gradient(rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.22)),
+    var(--cloth, #a8452a);
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--px) * 14) 50%, 100% 100%, 0 100%, calc(var(--px) * 14) 50%);
+  filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.55));
+  pointer-events: none;
+  white-space: nowrap;
+  animation: bs-ribbon 1300ms ease-out both;
+}
+.bs-ribbon::before {
+  /* The stitching. */
+  content: '';
+  position: absolute;
+  inset: calc(var(--px) * 3) calc(var(--px) * 10);
+  border-block: calc(var(--px) * 1.5) dashed rgba(255, 241, 201, 0.55);
+}
+.bs-ribbon span {
+  position: relative;
   font-family: var(--font-body);
   font-weight: var(--weight-title);
-  font-size: calc(var(--px) * 11);
-  color: var(--ink);
-  white-space: nowrap;
+  font-size: calc(var(--px) * 18);
+  color: var(--parchment);
+  -webkit-text-stroke: calc(var(--px) * 3) rgba(60, 36, 18, 0.8);
+  paint-order: stroke fill;
+}
+@keyframes bs-ribbon {
+  0% { scale: 0 1; opacity: 1; transform: none; }
+  16% { scale: 1.08 1; }
+  24% { scale: 1 1; }
+  78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(var(--drift)); }
+}
+.bs-ribbon.is-ours { --drift: calc(var(--px) * 14); }
+.bs-ribbon.is-theirs { --drift: calc(var(--px) * -14); }
+
+/* A SHIELD: a bubble of glass light round the slot, until it has soaked all
+   it can; it wobbles when struck and shatters when spent. */
+.bs-bubble {
+  position: absolute;
+  inset: calc(var(--px) * -9);
+  z-index: 2;
+  border-radius: 50%;
   pointer-events: none;
-  animation: bs-pop 900ms ease-out forwards;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.7) 0 7%, transparent 16%),
+    radial-gradient(circle, transparent 58%, rgba(143, 200, 255, 0.35) 70%, rgba(191, 227, 255, 0.9) 77%, transparent 80%);
+  animation: bs-bubble 280ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
 }
-.bs-pop.is-heal { background: none; border: none; color: #3fae4b; font-size: calc(var(--px) * 15);
-  text-shadow: 0 calc(var(--px) * 1) 0 var(--wood-dark); }
-@keyframes bs-pop {
-  from { opacity: 0; transform: translateY(calc(var(--px) * 6)); }
-  15% { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(calc(var(--px) * -14)); }
+@keyframes bs-bubble { from { scale: 0.4; opacity: 0; } }
+
+/* A DAZE: three stars circling over the slot for as long as it lasts. The
+   ring is squashed flat, so it reads as round the head, not round the face. */
+.bs-stars {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * -2);
+  width: 0;
+  height: 0;
+  z-index: 3;
+  scale: 1 0.5;
+  pointer-events: none;
+  filter: drop-shadow(0 0 calc(var(--px) * 1) #3c2412) drop-shadow(0 0 calc(var(--px) * 1) #3c2412);
 }
-/* A shield soaking for it: a ring of steady blue. A daze: the slot dims. */
-.bs-slot.is-shielded { box-shadow: 0 0 0 calc(var(--px) * 3) #6fb6ff, 0 0 calc(var(--px) * 10) #6fb6ff; }
+.bs-stars i {
+  position: absolute;
+  width: calc(var(--px) * 17);
+  height: calc(var(--px) * 17);
+  margin: calc(var(--px) * -8.5);
+  background: #ffd36a;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  transform: translateX(calc(var(--px) * 30));
+  animation: bs-orbit 900ms linear infinite;
+}
+.bs-stars i:nth-child(2) { animation-delay: -300ms; }
+.bs-stars i:nth-child(3) { animation-delay: -600ms; }
+@keyframes bs-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-ribbon { animation-name: bs-float-calm; }
+  .bs-bubble,
+  .bs-stars i { animation: none; }
+  .bs-stars i:nth-child(2) { rotate: 120deg; }
+  .bs-stars i:nth-child(3) { rotate: 240deg; }
+}
+
+/* THE LAYERS OVER THE BOARD: the effects canvas (src/ui/battleFx.ts) and
+   the numbers. Neither takes a tap. */
+.bs-fx,
+.bs-floats,
+.bs-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* The white of the last blow, over everything but the plaque. */
+.bs-flash { background: #fff8e6; opacity: 0; }
+
+/* A DEFEAT turns the field grey under its plaque. */
+.bs-board { transition: filter 700ms ease-out; }
+.bs.is-lost .bs-board { filter: grayscale(0.75) brightness(0.8); }
+
+/* THE CLASH: the crossed swords on the bar come down as the armies arrive
+   (battleScreen.ts `INTRO_MS`). */
+.bs-bar.is-clash::after { animation: bs-clash 380ms cubic-bezier(0.3, 1.6, 0.5, 1) 420ms both; }
+@keyframes bs-clash {
+  from { scale: 2.6; rotate: -30deg; opacity: 0; }
+  to { scale: 1; rotate: 0deg; opacity: 0.9; }
+}
+
+/* A NUMBER OFF A BLOW: it lands big, settles and drifts up. Blows that land
+   close together on one slot grow the same number (battleScreen.ts
+   `MERGE_MS`), which restarts this. Cream for an even blow; amber and larger
+   when the type chart was on the attacker's side, smaller and duller when
+   it was against; leaf for a heal; sky in brackets for what a shield ate. */
+.bs-float {
+  position: absolute;
+  translate: -50% -50%;
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 20);
+  line-height: 1;
+  color: #fff6dc;
+  -webkit-text-stroke: calc(var(--px) * 4) var(--wood-dark);
+  paint-order: stroke fill;
+  white-space: nowrap;
+  animation: bs-float 900ms ease-out forwards;
+}
+.bs-float.is-adv { color: #ffb13b; font-size: calc(var(--px) * 27); }
+.bs-float.is-dis { color: #d9c9a8; font-size: calc(var(--px) * 15); }
+.bs-float.is-heal { color: #8fe26c; }
+.bs-float.is-shield { color: #8fc8ff; font-size: calc(var(--px) * 15); }
+@keyframes bs-float {
+  0% { opacity: 0; transform: scale(1.7); }
+  12% { opacity: 1; transform: scale(1); }
+  65% { opacity: 1; transform: translateY(calc(var(--px) * -18)); }
+  100% { opacity: 0; transform: translateY(calc(var(--px) * -30)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bs-float { animation-name: bs-float-calm; }
+  @keyframes bs-float-calm { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+}
+
+/* A daze also dims the slot. */
 .bs-slot.is-dazed .bs-portrait { filter: saturate(0.4) brightness(0.8); }
 
 /* ------------------------------------------------------- how it turned out */
@@ -233,6 +432,7 @@
    player asked when they pressed the button. */
 .bs-plaque {
   position: absolute;
+  z-index: 4;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -249,9 +449,34 @@
 }
 .bs-plaque.is-won { color: var(--gold); }
 .bs-plaque.is-lost { border-color: var(--clay); color: var(--parchment); }
+/* A victory drops in and bounces; a defeat lands heavy, askew. */
+.bs-plaque.is-won { animation: bs-plaque-won 520ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.bs-plaque.is-lost { animation: bs-plaque-lost 380ms cubic-bezier(0.5, 0, 0.75, 0) both; rotate: -3deg; }
+@keyframes bs-plaque-won {
+  from { scale: 2; opacity: 0; }
+  55% { scale: 0.94; opacity: 1; }
+  to { scale: 1; }
+}
+@keyframes bs-plaque-lost {
+  from { scale: 1.5; rotate: -9deg; opacity: 0; }
+  to { scale: 1; rotate: -3deg; opacity: 1; }
+}
+.bs-plaque .bs-crack { inset: 0; width: 100%; height: 100%; }
+.bs-plaque-word { position: relative; z-index: 2; }
+.bs-plaque .bs-crack .is-edge { stroke: rgba(255, 241, 201, 0.35); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-plaque.is-won,
+  .bs-plaque.is-lost,
+  .bs-bar.is-clash::after,
+  .bs-slot.is-dead .bs-skull .icon,
+  .bs-crack path { animation: none; }
+  .bs-slot.is-hero .bs-portrait { transition: none; }
+}
 /* The way out hangs under the plaque, in the middle of the field (M16). */
 .bs-exit {
   position: absolute;
+  z-index: 4;
   top: calc(50% + 44px);
   left: 50%;
   translate: -50% 0;

@@ -1,7 +1,7 @@
 // THE CALL TO ACTION: one badge for every "there is something for you here"
-// in the game — a small scrying orb on its host's corner, a red halo
-// breathing behind it, a glint stirring inside, and the count on it when
-// there is more than one thing waiting ("2" … "9", then "9+").
+// in the game — a red enamel stud on its host's corner that gives a small
+// nudge every few seconds, and the count on it when there is more than one
+// thing waiting ("2" … "9", then "9+").
 //
 // The look is kit.css's `.k-cta`. This file only decides two things CSS
 // cannot:
@@ -10,7 +10,7 @@
 //     fresh each second would restart its animation each second and never get
 //     past its first frames. So a badge takes its phase from the page clock:
 //     its animation delay is set, at creation, to where one shared timeline
-//     stands NOW, plus an offset of its own — so no two orbs stir in step.
+//     stands NOW, plus an offset of its own — so no two nudge in step.
 //     The offset comes from the badge's KEY, a name for what it marks (a
 //     tech id, a hero, a cell), so a rebuilt badge lands on the same offset
 //     and carries on exactly where the last one was. A badge on a lasting
@@ -24,16 +24,15 @@
 
 import { el } from '../format';
 
-/** The two loops, in ms — kept equal to kit.css's `k-cta-wake` / `k-cta-halo`. */
+/** The nudge's loop, in ms — kept equal to kit.css's `k-cta-nudge`. */
 const WAKE_MS = 6400;
-const HALO_MS = 11000; // 5.5 s each way, alternating
 
 /** "2" … "9", then "9+"; nothing for one. */
 const label = (count: number): string | null =>
   count > 9 ? '9+' : count > 1 ? String(count) : null;
 
 /** Write the count only when it changes: a lasting host refreshes every
- *  tick, and re-setting the attribute would dirty the orb's style for nothing. */
+ *  tick, and re-setting the attribute would dirty the badge's style for nothing. */
 function setCount(badge: HTMLElement, count: number): void {
   const text = label(count);
   if ((badge.dataset.count ?? null) === text) return;
@@ -59,11 +58,7 @@ export function ctaBadge(count = 1, key?: string): HTMLElement {
   const badge = el('span', { class: 'k-cta', 'aria-hidden': 'true' });
   const now = performance.now();
   const f = key === undefined ? Math.random() : fraction(key);
-  // The halo gets its own share of the offset, so the orb and its glow do not
-  // move as one either.
-  const g = key === undefined ? Math.random() : fraction(`${key}:halo`);
   badge.style.setProperty('--cta-wake-delay', `${-((now + f * WAKE_MS) % WAKE_MS)}ms`);
-  badge.style.setProperty('--cta-halo-delay', `${-((now + g * HALO_MS) % HALO_MS)}ms`);
   setCount(badge, count);
   return badge;
 }

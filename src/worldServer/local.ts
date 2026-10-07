@@ -17,7 +17,7 @@ import {
 } from './handle';
 import { normalNickname } from './nickname';
 import type {
-  CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerWorld,
+  CollectResult, CampFightResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerWorld,
   WorldSnapshot,
 } from './types';
 
@@ -45,6 +45,9 @@ export interface WorldServerApi {
   /** Take `seconds` off a builder's work on a hex — a speed-up, paid for by
    *  the client from its Bag. */
   hurry(index: number, seconds: number): Promise<CommandResult>;
+  /** Take `seconds` off an army's march — a speed-up or Gems, paid for by
+   *  the client. */
+  hurryArmy(armyId: string, seconds: number): Promise<CommandResult>;
   /** Host a world relic in the Chapel on a hex, at its level — sent again
    *  when it levels up. */
   hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult>;
@@ -56,7 +59,10 @@ export interface WorldServerApi {
   setBoost(boost: SeatBoost): Promise<void>;
   /** The crest the player chose, or null for their nickname's. */
   setCrest(crest: string | null): Promise<void>;
+  /** The player's Townhall level, for the ranking. */
+  setTownhall(level: number): Promise<void>;
   delveRoom(armyId: string): Promise<DelveResult>;
+  fightCamp(armyId: string): Promise<CampFightResult>;
   descendPortal(armyId: string): Promise<DelveResult>;
   /** The last effect the client has applied AND saved: the next request
    *  tells the server, which then stops sending it. */
@@ -100,8 +106,13 @@ export class LocalWorldServer implements WorldServerApi {
   private ack = 0;
 
   /** `clock` is the server's: the device's own in the game, the test's in
-   *  a test. */
-  constructor(private store: WorldStore, private clock: () => number = () => Date.now()) {
+   *  a test. `offset` is how far ahead of the device it runs — nothing in
+   *  play; the dev bar's Portal button moves it to an opening. */
+  constructor(
+    private store: WorldStore,
+    private clock: () => number = () => Date.now(),
+    private offset: () => number = () => 0,
+  ) {
     let world: ServerWorld | null = null;
     try {
       const text = store.load();
@@ -199,6 +210,10 @@ export class LocalWorldServer implements WorldServerApi {
     return this.ask({ kind: 'hurry', index, seconds });
   }
 
+  async hurryArmy(armyId: string, seconds: number): Promise<CommandResult> {
+    return this.ask({ kind: 'hurryArmy', armyId, seconds });
+  }
+
   async hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> {
     return this.ask({ kind: 'hostRelic', index, relic, level });
   }
@@ -223,12 +238,20 @@ export class LocalWorldServer implements WorldServerApi {
     this.ask({ kind: 'setCrest', crest });
   }
 
+  async setTownhall(level: number): Promise<void> {
+    this.ask({ kind: 'setTownhall', level });
+  }
+
   async recall(armyId: string, asSeat?: number): Promise<CommandResult> {
     return this.ask({ kind: 'recall', armyId }, asSeat);
   }
 
   async delveRoom(armyId: string): Promise<DelveResult> {
     return this.ask({ kind: 'delveRoom', armyId });
+  }
+
+  async fightCamp(armyId: string): Promise<CampFightResult> {
+    return this.ask({ kind: 'fightCamp', armyId });
   }
 
   async descendPortal(armyId: string): Promise<DelveResult> {
@@ -239,9 +262,9 @@ export class LocalWorldServer implements WorldServerApi {
     this.ack = Math.max(this.ack, seq);
   }
 
-  /** The stand-in keeps the device's own time. */
+  /** The stand-in keeps the device's own time, unless the dev bar moved it. */
   clockOffset(): number {
-    return 0;
+    return this.offset();
   }
 
   /** A read costs nothing here: every second. */

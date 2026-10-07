@@ -406,9 +406,10 @@ export function claimLair(state: GameState, lairId: LairId): ClaimReport {
  * What beating a lair pays on top of its hoard (Docs/proposals/lairs.md §5),
  * for the card that shows it before the fight and the fight that pays it.
  *
- * Hero XP by tier: the fight taught the party something whether or not the
- * garrison was holding anything, and a tier-5 lair teaches more than the
- * orcs'. And the first-clear Knowledge lump — once per lair for the life of
+ * Hero XP by tier (`garrisons.heroXp`): the fight taught the party something
+ * whether or not the garrison was holding anything, and a tier-5 lair teaches
+ * far more than the orcs' — a lair is a one-off, and the early ones are what
+ * carry a first party up its first levels. And the first-clear Knowledge lump — once per lair for the life of
  * the kingdom, since `lairBlock` refuses a cleared one; Conquest, Vigils and
  * Sanctified Ruins ride on it (sim/knowledge.ts).
  */
@@ -417,7 +418,7 @@ export const lairClearReward = (
 ): { heroXp: number; knowledge: number } => {
   const spoils = state.lairs[lairId]?.spoils;
   return {
-    heroXp: Math.round(LAIRS[lairId].tier * (1 + (spoils?.seasoned ?? 0))),
+    heroXp: roundPrice(garrisonForTier(LAIRS[lairId].tier).heroXp * (1 + (spoils?.seasoned ?? 0))),
     knowledge: Math.round(firstClearLump(state) * (1 + (spoils?.lore ?? 0))),
   };
 };

@@ -26,13 +26,14 @@ import { spoilsOf, type Spoils } from '../sim/skills';
 import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEATS_PER_BOARD, SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
-import { CAMP_CREATURE } from '../sim/world/camps';
+import { CAMP_CREATURE, campFightBoard } from '../sim/world/camps';
+import { onGround } from '../sim/world/terrainCombat';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexDistance, isBoardIndex, ringOf } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
-import { WORLD_DISTRICTS, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
+import { WORLD_DISTRICTS, WORLD_UPGRADES, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CampFightResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
   RaidPlan, SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
 } from './types';
 
@@ -137,6 +138,14 @@ export function setCrest(b: ServerBoard, seat: number, crest: string | null): vo
   else s.crest = crest!;
 }
 
+/** A seat's Townhall level, for the ranking to show (19 §12). Nothing on
+ *  the board turns on it. */
+export function setTownhall(b: ServerBoard, seat: number, level: number): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined || !Number.isInteger(level) || level < 1) return;
+  s.townhall = level;
+}
+
 /**
  * Take a seat's multipliers on its districts' output and stores. A rate
  * changes only at an event, so every store is settled to `t` first: what was
@@ -205,13 +214,7 @@ const beatenNow = (b: ServerBoard, seat: number, t: number): number[] =>
 /** The camp's army: its creature's lair is its formation's type, as a lair's
  *  garrison is (18 §2), rolled under the hex. */
 function campBoard(b: ServerBoard, index: number): FightBoard {
-  const camp = campAt(b, index)!;
-  const plan = generateEnemy({
-    seed: b.seed, parts: ['camp', index], budget: camp.power, affinity: LAIRS[camp.creature].guard.threat,
-    // A camp of a creature fields what its lair does.
-    ...(LAIRS[camp.creature].guard.mix ? { mix: LAIRS[camp.creature].guard.mix } : {}),
-  });
-  return buildBoard(plan.squads, plan.fighters);
+  return campFightBoard(b.seed, index, campAt(b, index)!);
 }
 
 /** Pay a camp off: the client paid its tribute; the camp is beaten for this
@@ -359,17 +362,19 @@ function raidDistrict(b: ServerBoard, seat: number, index: number, c: number, t:
   const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
   const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
   if (g !== undefined) {
-    const log = resolveBattle(campBoard(b, c), g.board);
+    // Fought on the raided district's ground (19 §4.2).
+    const ground = boardData(b).hexes[index];
+    const log = resolveBattle(onGround(campBoard(b, c), ground), onGround(g.board, ground));
     const theirs = boardAfter(log, g.board, 'theirs');
     g.board = theirs.board;
     addFallen(g.fallen, theirs.fallen);
     const lost = theirs.fallen.reduce((n, f) => n + f.count, 0);
     if (log.winner === 'theirs') {
-      report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true);
+      report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true, index);
       return;
     }
     h.garrison = null;
-    report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false);
+    report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false, index);
     sendHome(b, g, t);
   }
   const keep = 1 - WORLD_CAMPS.raidShare;
@@ -378,7 +383,7 @@ function raidDistrict(b: ServerBoard, seat: number, index: number, c: number, t:
   if ((h.precious ?? 0) > 0) h.precious = (h.precious ?? 0) * keep;
   h.burnt = true;
   const currency = districtRate(boardData(b).hexes[index]).currency;
-  report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false);
+  report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false, index);
 }
 
 const capitalise = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -428,7 +433,25 @@ export function upgradeRefusal(b: ServerBoard, seat: number, index: number, upgr
     if (hasChapel(b, index)) return 'MaxLevel';
     if (chapelsOf(b, seat) >= chapelsAllowed(b, seat)) return 'TooManyChapels';
   }
+  // A building that is not there yet takes a slot of its own (19 §7.2).
+  if (upgradeLevel(h, upgrade) === 0 && slotsUsed(b, index) >= districtSlots(b, index)) return 'NoSlot';
   return null;
+}
+
+/** How many buildings the district on `index` holds: one, two on bare
+ *  ground (19 §7.2). */
+export function districtSlots(b: ServerBoard, index: number): number {
+  const d = districtOf(boardData(b).hexes[index]);
+  return d === null ? 0 : WORLD_BUILD.districts[d].slots;
+}
+
+/** The buildings standing or going up in the district on `index` — a
+ *  Shrine district's own Chapel among them. */
+export function slotsUsed(b: ServerBoard, index: number): number {
+  const h = b.hexes[index];
+  if (h === undefined) return 0;
+  return WORLD_UPGRADES.filter((u) => (u === 'Chapel' ? hasChapel(b, index) : upgradeLevel(h, u) > 0)
+    || h.work?.upgrade === u).length;
 }
 
 /** An upgrade's level on a hex: 0 for none. */
@@ -496,9 +519,9 @@ export function unhostRelic(b: ServerBoard, seat: number, relic: ArtifactId, t: 
 
 /** A hex lost — taken or denied: its relic goes home to whoever held it, at
  *  its level, and the Chapel stands empty (relic-restoration.md §5.3). */
-function relicGoesHome(b: ServerBoard, h: ServerHex, holder: number, t: number): void {
+function relicGoesHome(b: ServerBoard, h: ServerHex, holder: number, t: number, index: number): void {
   if (h.relic === undefined || h.relic === null) return;
-  report(b, holder, t, `${ARTIFACTS[h.relic].name} came home from the ground you lost`, false);
+  report(b, holder, t, `${ARTIFACTS[h.relic].name} came home from the ground you lost`, false, index);
   h.relic = null;
 }
 
@@ -710,6 +733,27 @@ export function hurry(b: ServerBoard, seat: number, index: number, seconds: numb
   return { ok: true, finishesAt: ends - ms, snapshot: snapshotOf(b, seat, t) };
 }
 
+/** A speed-up from the Bag, or Gems, on an army on the road: `seconds` off
+ *  its march out or home. Its whole route moves with it — its departure and
+ *  its arrival together — so where it stands on the board stays true; the
+ *  whole of what is left, and it arrives now. Paid for by the client. */
+export function hurryArmy(b: ServerBoard, seat: number, armyId: string, seconds: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat) return { ok: false, why: 'NoArmy' };
+  if ((a.phase !== 'out' && a.phase !== 'home') || a.at === null || !(seconds > 0)) return { ok: false, why: 'Busy' };
+  const ms = Math.min(seconds * 1000, Math.max(0, a.at - t));
+  a.at -= ms;
+  if (a.phase === 'out') a.departedAt -= ms;
+  const finishesAt = a.at;
+  // Hurried all the way: it gets there now, as `applyDue` would land it.
+  if (a.at <= t) {
+    if (a.phase === 'home') sendHome(b, a, t);
+    else arrive(b, a, t);
+  }
+  return { ok: true, finishesAt, snapshot: snapshotOf(b, seat, t) };
+}
+
 /** Empty a district's store into its owner's purse: whole units only, the
  *  fraction left to carry. */
 export function collect(b: ServerBoard, seat: number, index: number, t: number): CollectResult {
@@ -750,8 +794,10 @@ function nextSeq(b: ServerBoard, seat: number): number {
   return seqs[seat];
 }
 
-const report = (b: ServerBoard, seat: number, t: number, text: string, good: boolean): void =>
-  owe(b, seat, { kind: 'report', at: t, text, good });
+/** A line for a seat's notices, and the hex it happened on when it has one
+ *  (Docs/features/26-notices.md §2.1). */
+const report = (b: ServerBoard, seat: number, t: number, text: string, good: boolean, hex?: number): void =>
+  owe(b, seat, { kind: 'report', at: t, text, good, ...(hex === undefined ? {} : { hex }) });
 
 const seatName = (b: ServerBoard, seat: number | null): string =>
   seat === null ? 'nobody' : b.seats[seat]?.name ?? 'a rival';
@@ -835,55 +881,38 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     return;
   }
   if (a.purpose === 'clear') {
-    // A camp is fought on arrival, as an attack is; won, it is beaten for
-    // this seat and pays its loot (19 §5.4).
+    // At a camp the army waits, ready, for its player to call the attack
+    // (`fightCamp`, 19 §5.4). No camp to fight: back home.
     const camp = campAt(b, a.target);
     if (camp !== null && guarded(b, a.owner, a.target, t)) {
-      const fighters = a.board.slots;
-      const log = resolveBattle(a.board, campBoard(b, a.target));
-      const after = boardAfter(log, a.board, 'ours');
-      a.board = after.board;
-      addFallen(a.fallen, after.fallen);
-      const name = CAMP_CREATURE[camp.creature];
-      if (log.winner === 'ours') {
-        beat(b, a.owner, a.target, t);
-        const sp = spoilsOf(fighters);
-        owe(b, a.owner, {
-          kind: 'loot', at: t, knowledge: 0, stardust: 0,
-          gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
-          heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
-          hours: (camp.power / 1000) * WORLD_CAMPS.productionHoursPer1000Power,
-          precious: {
-            id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
-            amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
-          },
-        });
-        report(b, a.owner, t, `Your army beat the camp of ${name}`, true);
-      } else {
-        report(b, a.owner, t, `Your army was beaten back by the camp of ${name}`, false);
-      }
-    } else report(b, a.owner, t, 'Your army found no camp there and turned back', false);
-    turnHome(a, t);
+      a.phase = 'camp';
+      a.at = null;
+      report(b, a.owner, t, `Your army reached the camp of ${CAMP_CREATURE[camp.creature]} and is ready to attack`, true, a.target);
+    } else {
+      report(b, a.owner, t, 'Your army found no camp there and turned back', false, a.target);
+      turnHome(a, t);
+    }
     return;
   }
   if (a.purpose === 'claim') {
     if (h !== undefined && h.owner === null && touches(b, a.owner, a.target, t)) {
       h.owner = a.owner;
       recomputeChains(b, t);
-      report(b, a.owner, t, 'Your army took ground nobody held', true);
-    } else report(b, a.owner, t, 'Your army found nothing to claim and turned back', false);
+      report(b, a.owner, t, 'Your army took ground nobody held', true, a.target);
+    } else report(b, a.owner, t, 'Your army found nothing to claim and turned back', false, a.target);
     turnHome(a, t);
     return;
   }
   // An attack (19 §6): every covering garrison in turn, then the hex.
   if (h === undefined || h.owner === null || h.owner === a.owner) {
-    report(b, a.owner, t, 'Your army found nobody to fight and turned back', false);
+    report(b, a.owner, t, 'Your army found nobody to fight and turned back', false, a.target);
     turnHome(a, t);
     return;
   }
   const holder = h.owner;
   for (const g of coveringGarrisons(b, a.target, holder)) {
-    const log = resolveBattle(a.board, g.board);
+    const ground = boardData(b).hexes[a.target];
+    const log = resolveBattle(onGround(a.board, ground), onGround(g.board, ground));
     const ours = boardAfter(log, a.board, 'ours');
     const theirs = boardAfter(log, g.board, 'theirs');
     a.board = ours.board;
@@ -891,28 +920,28 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     g.board = theirs.board;
     addFallen(g.fallen, theirs.fallen);
     if (log.winner === 'theirs') {
-      report(b, a.owner, t, `Your army was beaten back by ${seatName(b, holder)}'s Fortress`, false);
-      report(b, holder, t, `Your Fortress held against ${seatName(b, a.owner)}`, true);
+      report(b, a.owner, t, `Your army was beaten back by ${seatName(b, holder)}'s Fortress`, false, a.target);
+      report(b, holder, t, `Your Fortress held against ${seatName(b, a.owner)}`, true, g.target);
       turnHome(a, t);
       return;
     }
     b.hexes[g.target].garrison = null;
-    report(b, holder, t, `Your Fortress garrison fell to ${seatName(b, a.owner)}`, false);
+    report(b, holder, t, `Your Fortress garrison fell to ${seatName(b, a.owner)}`, false, g.target);
     sendHome(b, g, t);
   }
   // Nobody left standing in the way: taken beside the attacker's ground,
   // denied anywhere else. Either way its relic goes home.
-  relicGoesHome(b, h, holder, t);
+  relicGoesHome(b, h, holder, t, a.target);
   if (touches(b, a.owner, a.target, t)) {
     h.owner = a.owner;
-    report(b, a.owner, t, `Your army took ground from ${seatName(b, holder)}`, true);
-    report(b, holder, t, `${seatName(b, a.owner)} took your ground`, false);
+    report(b, a.owner, t, `Your army took ground from ${seatName(b, holder)}`, true, a.target);
+    report(b, holder, t, `${seatName(b, a.owner)} took your ground`, false, a.target);
   } else {
     h.owner = null;
     h.stored = 0;
     h.work = null;
-    report(b, a.owner, t, `Your army denied ${seatName(b, holder)} their ground`, true);
-    report(b, holder, t, `${seatName(b, a.owner)} drove you off your ground`, false);
+    report(b, a.owner, t, `Your army denied ${seatName(b, holder)} their ground`, true, a.target);
+    report(b, holder, t, `${seatName(b, a.owner)} drove you off your ground`, false, a.target);
   }
   h.garrison = null;
   recomputeChains(b, t);
@@ -986,18 +1015,16 @@ function launch(
   return a;
 }
 
-/** Call an army home: out of its Fortress, or turned round on the road. */
+/** Call an army home from where it stands: its Fortress, a dungeon or the
+ *  Portal. An army on the road is not called back, only hurried. */
 export function recall(b: ServerBoard, seat: number, armyId: string, t: number): CommandResult {
   resolveTo(b, t);
   const a = b.armies.find((x) => x.id === armyId);
   if (a === undefined || a.owner !== seat) return { ok: false, why: 'NoArmy' };
   if (a.phase === 'home') return { ok: false, why: 'Busy' };
-  if (a.phase === 'garrison' || a.phase === 'camp') {
-    if (b.hexes[a.target]?.garrison === a.id) b.hexes[a.target].garrison = null;
-    turnHome(a, t);
-  } else {
-    turnHome(a, t, t - a.departedAt);
-  }
+  if (a.phase === 'out') return { ok: false, why: 'Marching' };
+  if (b.hexes[a.target]?.garrison === a.id) b.hexes[a.target].garrison = null;
+  turnHome(a, t);
   return { ok: true, finishesAt: a.at!, snapshot: snapshotOf(b, seat, t) };
 }
 
@@ -1029,13 +1056,13 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
   owe(b, closer, {
     kind: 'loot', at: t, from: 'boss',
     gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
-    heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
+    heroXp: roundPrice(last.heroXp * WORLD_DUNGEON.closeHeroXpMultiplier), stardust: Math.round(last.stardust * k),
     precious: { id: lumpMaterial(boardData(b), closer, 'close', dungeonKey(b, index)), amount: Math.round(last.precious * k) },
   });
-  report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true);
+  report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true, index);
   for (const a of b.armies) {
     if (a.purpose !== 'delve' || a.target !== index || a.phase === 'home') continue;
-    if (a.owner !== closer) report(b, a.owner, t, `${seatName(b, closer)} cleared the dungeon first — it is closed`, false);
+    if (a.owner !== closer) report(b, a.owner, t, `${seatName(b, closer)} cleared the dungeon first — it is closed`, false, index);
     if (a.phase === 'camp') turnHome(a, t);
   }
   for (const progress of Object.values(b.delves)) delete progress[index];
@@ -1178,6 +1205,50 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   return { ok: true, won, log, ...next, lost, snapshot: snapshotOf(b, seat, t) };
 }
 
+// ------------------------------------------------------------ camps
+
+/** Fight the camp an army waits at, on its player's word (19 §5.4): won,
+ *  the camp is beaten for that seat and pays its loot. Either way, what is
+ *  left of the army marches home. */
+export function fightCamp(b: ServerBoard, seat: number, armyId: string, t: number): CampFightResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat || a.purpose !== 'clear' || a.phase !== 'camp') return { ok: false, why: 'NoArmy' };
+  const camp = campAt(b, a.target);
+  if (camp === null || !guarded(b, seat, a.target, t)) {
+    turnHome(a, t);
+    return { ok: false, why: 'NothingThere' };
+  }
+  const fighters = a.board.slots;
+  const ground = boardData(b).hexes[a.target];
+  const log = resolveBattle(onGround(a.board, ground), onGround(campBoard(b, a.target), ground));
+  const after = boardAfter(log, a.board, 'ours');
+  a.board = after.board;
+  addFallen(a.fallen, after.fallen);
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
+  const won = log.winner === 'ours';
+  const name = CAMP_CREATURE[camp.creature];
+  if (won) {
+    beat(b, seat, a.target, t);
+    const sp = spoilsOf(fighters);
+    owe(b, seat, {
+      kind: 'loot', at: t, knowledge: 0, stardust: 0,
+      gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
+      heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
+      hours: (camp.power / 1000) * WORLD_CAMPS.productionHoursPer1000Power,
+      precious: {
+        id: lumpMaterial(boardData(b), seat, 'camp', a.target, seat),
+        amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
+      },
+    });
+    report(b, seat, t, `Your army beat the camp of ${name}`, true, a.target);
+  } else {
+    report(b, seat, t, `Your army was beaten back by the camp of ${name}`, false, a.target);
+  }
+  turnHome(a, t);
+  return { ok: true, won, log, lost, creature: camp.creature, snapshot: snapshotOf(b, seat, t) };
+}
+
 // ------------------------------------------------------------ the Portal
 
 /** The UTC day of `t`. */
@@ -1194,7 +1265,7 @@ export const portalClosesAt = (k: number): number => portalOpensAt(k) + WORLD_PO
 export const portalOpen = (t: number): boolean => t >= portalOpensAt(portalEvent(t)) && t < portalClosesAt(portalEvent(t));
 
 export const freshPortal = (t: number): ServerBoard['portal'] => ({
-  event: portalEvent(t), floors: {}, attempts: {}, milestones: {}, closed: portalEvent(t) - 1,
+  event: portalEvent(t), floors: {}, milestones: {}, closed: portalEvent(t) - 1,
 });
 
 /** The Portal's state for the opening `t` is in; a stale one is wiped. */
@@ -1218,11 +1289,11 @@ function closePortal(b: ServerBoard, t: number): void {
   const justClosed = t >= portalClosesAt(k) ? k : k - 1;
   if (b.portal.closed >= justClosed) return;
   if (b.portal.event === justClosed) {
-    rankingOf(b.portal).forEach((r, place) => {
-      const gems = WORLD_PORTAL.rankGems[place] ?? 0;
-      if (gems > 0) owe(b, r.seat, { kind: 'loot', at: t, gold: 0, knowledge: 0, heroXp: 0, stardust: 0, gems });
-      report(b, r.seat, t, `The Portal closed — you placed ${place + 1} of ${rankingOf(b.portal).length}, at floor ${r.floor}`, place < 3);
-    });
+    const ranking = rankingOf(b.portal);
+    ranking.forEach((r, place) => owe(b, r.seat, {
+      kind: 'portalClosed', at: t, event: justClosed, place: place + 1, of: ranking.length, floor: r.floor,
+      gems: WORLD_PORTAL.rankGems[place] ?? 0,
+    }));
   }
   b.portal.closed = justClosed;
   for (const a of b.armies) if (a.purpose === 'portal' && a.phase === 'camp') turnHome(a, t, 0);
@@ -1249,9 +1320,6 @@ export function floorReward(
   };
 }
 
-const attemptsUsed = (p: ServerBoard['portal'], seat: number, t: number): number =>
-  p.attempts[seat]?.day === dayOf(t) ? p.attempts[seat].used : 0;
-
 /** Go down the next floor with the army in the Portal. Floors are taken one
  *  at a time; a clear spends an attempt, a failure spends nothing. */
 export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: number): DelveResult {
@@ -1260,7 +1328,6 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
   if (a === undefined || a.owner !== seat || a.phase !== 'camp' || a.purpose !== 'portal') return { ok: false, why: 'NoArmy' };
   if (!portalOpen(t)) return { ok: false, why: 'Shut' };
   const p = portalOf(b, t);
-  if (attemptsUsed(p, seat, t) >= WORLD_PORTAL.attemptsPerDay) return { ok: false, why: 'NoAttempts' };
   const floor = (p.floors[seat]?.floor ?? 0) + 1;
   if (floor > WORLD_PORTAL.floors) return { ok: false, why: 'NothingThere' };
   const plan = generateEnemy({ seed: b.seed, parts: ['portal', p.event, floor], budget: floorPower(floor), affinity: 'Any' });
@@ -1272,12 +1339,11 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
   const won = log.winner === 'ours';
   if (won) {
     p.floors[seat] = { floor, at: t };
-    p.attempts[seat] = { day: dayOf(t), used: attemptsUsed(p, seat, t) + 1 };
     let gems = 0;
     if (floor % WORLD_PORTAL.milestoneEvery === 0 && p.milestones[floor] === undefined) {
       p.milestones[floor] = seat;
       gems = WORLD_PORTAL.milestoneGems;
-      report(b, seat, t, `First to floor ${floor} of the Portal`, true);
+      report(b, seat, t, `First to floor ${floor} of the Portal`, true, a.target);
     }
     const { precious, ...pay } = withSpoils(floorReward(floor), sp);
     owe(b, seat, {
@@ -1299,7 +1365,6 @@ function portalView(b: ServerBoard, seat: number, t: number): PortalView {
     opensAt: open ? portalOpensAt(k) : portalOpensAt(t >= portalClosesAt(k) ? k + 1 : k),
     closesAt: open ? portalClosesAt(k) : portalClosesAt(t >= portalClosesAt(k) ? k + 1 : k),
     floor: p?.floors[seat]?.floor ?? 0,
-    attemptsLeft: Math.max(0, WORLD_PORTAL.attemptsPerDay - (p === null ? 0 : attemptsUsed(p, seat, t))),
     ranking: p === null ? [] : rankingOf(p),
   };
 }
@@ -1534,7 +1599,7 @@ function takeOver(b: ServerBoard, seat: number, player: { id: string; name: stri
     h.precious = 0;
     h.work = null;
   }
-  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.campsBack, b.raids, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
+  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.campsBack, b.raids, b.botCamps, b.seenCamps, b.portal.floors]) {
     if (perSeat !== undefined) delete perSeat[seat];
   }
   b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };
@@ -1581,6 +1646,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     at: t,
     seats: b.seats.map((s, i) => ({
       seat: i, name: s?.name ?? 'A free city', you: i === seat, bot: s?.bot ?? false, crest: s?.crest ?? null,
+      townhall: s?.townhall ?? null, ...(s === null || s === undefined ? { free: true } : {}),
     })),
     hexes,
     armies,

@@ -130,7 +130,7 @@ export function hexActions(
   if (bh.role === 'portal') {
     const portal = source.portal();
     const mine = source.armies().find((a) => a.owner === seat && a.purpose === 'portal' && a.phase !== 'home');
-    if (mine !== undefined) return mine.phase === 'camp' ? [{ kind: 'descend', army: mine.id }, { kind: 'recall', army: mine.id }] : [{ kind: 'recall', army: mine.id }];
+    if (mine !== undefined) return mine.phase === 'camp' ? [{ kind: 'descend', army: mine.id }, { kind: 'recall', army: mine.id }] : [];
     return portal?.open ? [{ kind: 'army', purpose: 'portal' }] : [];
   }
   // A dungeon: never held, open to any army (19 §8.1). Everything about it
@@ -143,7 +143,7 @@ export function hexActions(
   // fight it, or pay it off (19 §5.4).
   if (h === null && bh.camp !== null && !source.campBeaten(bh.index)) {
     const mine = source.armies().find((a) => a.owner === seat && a.target === bh.index && a.purpose === 'clear' && a.phase !== 'home');
-    if (mine !== undefined) return [{ kind: 'recall', army: mine.id }];
+    if (mine !== undefined) return [];
     return [{ kind: 'army', purpose: 'clear' }, { kind: 'tribute', cost: campTribute(bh.camp.power) }];
   }
   if (h === null) {

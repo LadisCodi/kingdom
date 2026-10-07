@@ -90,34 +90,6 @@ body {
 #battle:empty { display: none; }
 #battle { position: absolute; inset: 0; z-index: 90; }
 
-/* THE RIGHT-EDGE COLUMN: every slab that slides in from the right lives here,
-   in one vertical stack, flush to the right edge of the FRAME (#app) rather
-   than the viewport — everything inside positions against the frame.
-
-   A column rather than two absolutely-positioned widgets, because each one
-   has to know whether the others are there: two slabs pinned to `top: 50%`
-   land on top of each other, and nudging one by a hand-measured offset breaks
-   the moment either changes height or the other is hidden. Here a hidden slab
-   is `display: none`, so the stack closes up and what is left stays centred.
-
-   Order is urgency: the raid countdown first, the rewarded offer under it.
-   `pointer-events` is off on the column and back on for each slab, so the gap
-   between them is still map the player can tap. */
-#edge {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 4; /* under the overlay scrim, over the map */
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: calc(var(--px) * 8);
-  max-width: 82%;
-  pointer-events: none;
-}
-#edge > * { pointer-events: auto; }
-#adoffer[hidden], #relicasleep[hidden] { display: none; }
 
 /* The battle screen's card panel. A sibling of #overlay at the same z-index
    and AFTER it in the markup, so it stacks over the sheet it belongs to while

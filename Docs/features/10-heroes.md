@@ -22,7 +22,7 @@
   equip into limited slots. A relic is an **album**: its own nine cards a
   season, completed once, and a permanent level with no cap and no slot.
 - A hero's ascension is **five stars of six points** — thirty ascensions —
-  and each **full star** is worth **eight levels**, up to **level 50**. A
+  and **every point** is worth **ten levels**, up to **level 310**. A
   relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
   **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
@@ -78,7 +78,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Attack and Defence are ratings, read against the other side's by the
   Heroes III rule ([`combat.md`](combat.md) §7); Damage is what its blow takes off.
 - `atk`, `dmg`, `def` and `hp` grow per level (`atkPerLevel`, `dmgPerLevel`,
-  `defPerLevel`, `hpPerLevel`); `cooldown` does not move.
+  `defPerLevel`, `hpPerLevel`), small steps over a 310-level ladder;
+  `cooldown` does not move.
 - It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
   again when the fight ends.
 
@@ -129,15 +130,15 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Five ranks.** Rank 1 comes with the hero.
 - **A rank UNLOCKS at a level and is then BOUGHT** with Stardust and the
   skill family's precious material. It is never raised on its own.
-- The unlock levels are the first past a star's level cap, so each rank asks
-  for an ascension too:
+- The unlock levels are the first past a full star's level cap, so each rank
+  asks for an ascension too:
 
   | Rank | Unlocks at level | Stars | Stardust | Material |
   |---|---|---|---|---|
-  | 2 | 11 | 1 | 100 | 2 |
-  | 3 | 19 | 2 | 200 | 4 |
-  | 4 | 27 | 3 | 400 | 8 |
-  | 5 | 35 | 4 | 800 | 12 |
+  | 2 | 71 | 1 | 100 | 2 |
+  | 3 | 131 | 2 | 200 | 4 |
+  | 4 | 191 | 3 | 400 | 8 |
+  | 5 | 251 | 4 | 800 | 12 |
 
 - **Each rank adds 25% of the rank-1 value**: rank 5 is twice rank 1. What
   grows is the X; never how often it fires.
@@ -241,8 +242,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | | Raise | Cost |
 |---|---|---|
 | **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
-| **Ascension** | +1 point of the current star: **every stat +2%**; a **full star** also lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
+| **Level** | +1, up to the ascension's cap | Hero XP: `round(20 × 1.0165^level)` — 20 for level 2, 3,140 for level 310, **192,333** for the whole ladder |
+| **Ascension** | +1 point of the current star: **every stat +2%** and the cap **+10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -252,6 +253,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Without that second door, fragments of a stranger pile up against a door
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
+- **A call that brings them to ten recruits on the spot**, in the reveal
+  (§8.3). Fragments from anywhere else wait for the roster's Recruit button.
 - **Recruiting is not an ascension.** A hero recruited with fragments starts
   with every star empty, exactly as a pulled one does. Change on a bigger pile
   carries over.
@@ -263,26 +266,36 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Every point lifts Attack, Damage, Defence and HP by 2%** of what the level gives —
   +60% with every star full. The card, the board, the power estimate and the
   HP bar all read the one formula.
-- **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
-  five.
+- **Every point moves the level cap +10**: 10 with no point, 70 a star, 310
+  at thirty.
 - **Every point of a star costs the same**, and each star costs twice the one
   before.
 
 | Star | Fragments a point | Stardust a point | Cap once full |
 |---|---|---|---|
-| 1 | 1 | 4 | 18 |
-| 2 | 2 | 8 | 26 |
-| 3 | 4 | 16 | 34 |
-| 4 | 8 | 32 | 42 |
-| 5 | 16 | 64 | **50** (max) |
+| 1 | 1 | 4 | 70 |
+| 2 | 2 | 8 | 130 |
+| 3 | 4 | 16 | 190 |
+| 4 | 8 | 32 | 250 |
+| 5 | 16 | 64 | **310** (max) |
 | **All 30** | **186** | **744** | |
 
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
   today is levelled with the XP the Commons earned.
-- **The XP curve flattens because the ladder is long**: the growth carries
-  the length and the TOTAL is what is held steady. Whether that survives a
-  playtest is **OQ-79**.
+- **Easy early, hard late.** The first ten levels cost ~200 Hero XP, a full
+  first star (level 70) ~2,600, five stars ~192,000. A tier-1 lair carries a
+  hero past its first ten levels; the late levels ask for dungeons cleared to
+  the bottom. Whether that survives a playtest is **OQ-79**.
+
+  | Source | Hero XP |
+  |---|---|
+  | A lair, once (`garrisons.heroXp`) | 500 · 1,500 · 4,000 · 10,000 · 25,000 by tier |
+  | A camp (`worldCamps.heroXpPerPower`) | 0.1 a point of power — 30–240 |
+  | A dungeon room (`worldDungeon.heroXp`) | ~2,980 for all 24 rooms |
+  | **Closing a dungeon** (`worldDungeon.closeHeroXpMultiplier`) | its last boss ×20 — **12,200** |
+  | The Portal, all 40 floors | ~11,700 |
+  | Scouting a hex | 100 · 150 · 250 by ring |
 - **Fragments are per hero**, a counter beside the hero, as today.
 - The Stardust toll totals **744** to max one hero. The toll is **Stardust's
   only sink**; whether the trickle is oversized is **OQ-78**.
@@ -297,9 +310,9 @@ Every faucet is a fight or a banner. Room and floor amounts are
 
 | Currency | Source |
 |---|---|
-| **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor |
-| **Fragments** | a duplicate or a miss on a call · boss chests, from a per-boss pool (not built, OQ-80) |
-| **Stardust** | every dungeon room and Portal floor · **every call, hero or not** · the quest chain and the Survey |
+| **Hero XP** | every lair cleared · every camp · every world-map dungeon room and Portal floor · **a dungeon closed** (the big lump) · a call's loot |
+| **Fragments** | a call's loot · a duplicate · boss chests, from a per-boss pool (not built, OQ-80) |
+| **Stardust** | every dungeon room and Portal floor · a call's loot · the quest chain and the Survey |
 
 - The chain is **army → hero → lairs and dungeon rooms → XP and Stardust →
   levels.** A player who never fights makes no progress on the
@@ -318,15 +331,14 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|---|
 | Key | Silver | Gold |
 | A key costs | **500 Gems** | **1,500 Gems** |
-| Base hero chance | **6%** | **12%** |
+| Base hero chance | **5%** | **5%** |
 | Soft pity from | pull 40 | pull 30 |
 | A hero guaranteed at | pull **60** | pull **50** |
 | A Legendary guaranteed at | — | pull **40** |
-| Rarity weights | 80 Common / 20 Rare | 75 Rare / 25 Legendary |
+| Rarity weights | 55 Common / 45 Rare | 75 Rare / 25 Legendary |
 | Pool | ~26 heroes | ~18 heroes |
-| A duplicate pays | 20 Fragments | 40 Fragments |
-| A miss pays | 3 Fragments | 6 Fragments |
-| Every call pays | 50 Stardust | 150 Stardust |
+| A duplicate pays | 10 Fragments | 10 Fragments |
+| Every call draws | 2–3 prizes (§6.4) | 2–3 richer prizes (§6.4) |
 | Free calls a day | **5**, one every 5 minutes | **1** |
 
 - **A banner's rarity weights are its pool.** A weight of zero excludes a
@@ -334,6 +346,8 @@ Every faucet is a fight or a banner. Room and floor amounts are
   Legendary is golden-call only, and Rare is in both.
 - **The golden call is the only door to a Legendary**, and its ordinary pull is
   already stronger — a Rare floor against a Common one.
+- **Both calls bring a hero equally often.** The golden one brings a better
+  one, and its loot is worth more.
 - **The first call on the common banner is free.** The button reads
   **"Call — free"**, not a price of zero; a ten-call over it charges nine.
 
@@ -342,6 +356,9 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **The first call on the common banner is free and always a hero**: only the
   hit is forced, the hero is still the roll's
   ([`22-progression.md`](22-progression.md) §6).
+- **The first two calls, counted across both banners, are each a new hero**
+  (`heroLadder` › `firstCallsNewHero`): the hit is forced and the hero is one
+  not yet owned.
 - **The banner hangs in the Tavern.** Until a Tavern stands, the Heroes tab
   and the Store's banner are padlocked. **The kingdom starts with no hero**:
   its first is this free call, and no hero is ever granted by the story.
@@ -365,15 +382,36 @@ Every faucet is a fight or a banner. Room and floor amounts are
   hard one, and resets on any hero.
 - **A Legendary pity** runs only on the golden banner, increments on **every**
   call, and resets only on a Legendary.
-- **No dead pulls.** A duplicate converts to Fragments. A miss pays Fragments
-  and Stardust.
+- **No dead pulls.** Every call draws its loot (§6.4). A duplicate converts
+  to Fragments.
 - **Rolls are a deterministic hash of `(seed, namespace, bannerId,
   pullNumber)`**, not a stream — one draw for hit/miss, one for rarity, one for
   the hero within it.
 - **The pool prefers a hero the player does not own**, so breadth comes before
   a duplicate.
 
-### 6.4 The ten-call
+### 6.4 The loot
+
+- **Every call draws 2 or 3 prizes** from its banner's loot table, hero or
+  not; each count is as likely and each prize is a weighted draw. A hero, when
+  the roll hits, comes on top.
+- **Most of a call is for the town and the levels.** About half the prizes
+  are fragments — about one a call — and the rest is Stardust, Hero XP,
+  speed-ups and resource chests.
+- **A fragment is of any hero of its rarity the banner calls**, owned or not:
+  toward a recruit, or toward the next star.
+- The golden table holds the same kinds, each worth more: Legendary
+  fragments, more Stardust and Hero XP, 1 h speed-ups and chests.
+
+| Prize (% of the draws) | The common call | The golden call |
+|---|---|---|
+| 1 Fragment | 25 Common · 20 Rare | 15 Legendary · 30 Rare |
+| Stardust | 10 × 10 · 9 × 25 · 2 × 100 | 3 × 10 · 8 × 25 · 10 × 100 |
+| Hero XP | 10 × 50 · 10 × 200 | 10 × 200 · 10 × 500 |
+| A speed-up — construction, training, workshop | 4, of 5 min | 4, of 1 h |
+| A resource chest — Food, Wood, Stone, Gold | 8, of 10 min | 8, of 1 h |
+
+### 6.5 The ten-call
 
 - **×10 is ten calls at ten keys**, no discount: the value of a batch is the
   pity it walks, not a price break.
@@ -426,28 +464,34 @@ Each of these is data, not code:
 
 - Opened by tapping a card; a **centred window** with the hero's **name on
   its plank** and the close that goes back to the roster.
-- The **title** under the plank, then **the stage**: the hero on its rarity's
-  painted vault, in the card's gilt frame, the **rarity** on a cloth ribbon
-  top-left, the **unit type** on its banner top-right, and an **arrow each
-  side** that steps to the previous or next hero.
-- Then one section each, under a section head:
-  - **Ascension** — the five stars, under them what the next point does
-    (*Next: stats +2%*, plus *· level cap n* on the point that finishes a
-    star), and **Ascend** with
-    its Stardust toll and fragment count over it. Every star full: *Fully
-    ascended*.
-- **The card fits the screen.** The stage gives up height to the sections,
-  down to a floor; only a screen too short for that scrolls.
-  - **Stats** — Attack, Damage, Defence and Health, a tile each, in one row.
-  - **Skill** — its name, its rank pips and what it does at its rank; under
-    it the next rank, with its price and **Upgrade**, or a padlock saying what
-    is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
-    that can be bought now lights the card's orb.
+- **The header** carries the **rarity** on a cloth ribbon at its left end
+  and the **unit type** on a small banner before the close; a long name sets
+  smaller to fit between them. The hero's title is not shown.
+- **The stage** under the header, the card's largest piece: the hero on its
+  rarity's painted vault, the full width of the window, fading into the
+  paper at its foot.
+- **Stats** on the stage, a column down its left edge beside the hero:
+  Attack, Damage, Defence and Health, each its icon beside its label over
+  its value, in white with no background. A stat that rose — a level, an
+  ascension — punches, and its gain floats up beside it in green.
+- **Ascension**, on the stage with no background of its own (owned heroes
+  only): the five stars in its top-left corner, and **Ascend** with its
+  Stardust toll and fragment count over it at its foot, right. Every star
+  full: no button.
+- Then one tile each, with no section head — only the boon keeps one; the
+  card fits the screen without scrolling:
+  - **Skill** — one widget: its name, its rank pips and what it does at its
+    rank; at its foot the next rank's price and **Upgrade** (what the next
+    rank does is not shown), or a padlock saying what is missing (*Reach
+    level 11*, *Ascend, then reach level 19*). A rank that can be bought now
+    lights the card's orb. A rank bought punches its new pip and every number
+    in the sentence that grew, and the gain floats up beside the pips in
+    green.
   - **Kingdom boon** — on the six that have one.
   - On the roster, a skill past rank 1 shows as a brass numeral on the card.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
     Hero XP price over it. At the ascension's ceiling the button is gone and
-    the tray says *Ascend them to go further*; at the last level, *At the
+    the tray shows *Ascend to* over the stars to reach — the next star full; at the last level, *At the
     ceiling*.
 - **An unowned hero gets the same card**, stats and passive and all, without
   Ascension, on a stone stage with a silhouette. **Fragments** takes the
@@ -456,29 +500,61 @@ Each of these is data, not code:
 
 ### 8.3 The reveal
 
-What a call paid, and the only screen in the game that covers everything but
-the rewarded video.
+What a call paid, opened from a chest — the only screen in the game that
+covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 
-- **A grid of prize widgets that deals itself**, one every tenth of a second.
-  A call is the one moment the player paid for a surprise; a finished grid
-  handed over at once is a receipt.
-- **The prompt to leave appears only when the last tile has landed.** A screen
-  saying *tap to finish* while it is still dealing is asking to be skipped.
-- **A ten-call condenses.** Same thing, one widget with a count: ten calls
-  paying 50 Stardust each are one 500, and four fragments of one hero are one
-  stack of four. Otherwise a ten is a wall of identical tiles nobody reads.
-- **Heroes come last**, so the sequence arrives at what the player called for
-  rather than opening with it.
-- **A hero interrupts.** When the next tile would be a hero, the sequence
-  stops and the hero takes the whole screen — portrait, name, rarity — because
-  a roster entry arriving is a different size of event from four fragments and
-  must not be a tile a thumb is already moving past. Tap to carry on.
-- **One tap, three meanings**, in this order: put a hero curtain away and
-  carry on; deal the rest at once, never skipping a curtain; leave. Skipping
-  to the end is what a thumb tries first, and a screen that ignores it feels
-  stuck.
+- **A stage of its own**: a treasure hall at night, torches, a red carpet.
+  The kingdom is not seen behind it.
+- **The chest says where the rewards come from**: silver-bound for the common
+  call, gold for the golden call, violet for a relic fragment pack, a rope-tied
+  war chest for spoils. Every reveal of RANDOM rewards uses it.
+- **The sequence**:
+  1. the chest drops onto the carpet with a count of the cards inside and
+     opens on its own — the player already paid;
+  2. the first card rises face down — *Tap to reveal*;
+  3. a tap flips it;
+  4. the next tap sends it to its own place on the stage — smaller and
+     dimmed — while the next card rises.
+- **The cards are papers**, in the research book's materials: the back an
+  aged sheet with a medieval ink drawing that says how rare the card is before
+  it turns — a plain rule (no rarity), a compass rose (Common), knotwork and
+  blue leaves (Rare), an illuminated border with a crowned sun in red and gold
+  (Legendary); a reward a torn page
+  with the name in ink under a thin rule; a whole hero the roster's own card
+  (its rarity's face in the thin gilt frame), its name on a parchment slip and
+  NEW in red wax on its corner.
+- **A hero not yet recruited is a silhouette** on their fragments card, as
+  on the heroes menu; a recruit's turns to colour as the seal lands.
+- **Fragments show where they leave the hero**: a bar under the card fills
+  from what was held to what is held now — toward recruiting (gold) or the
+  next ascension point (blue).
+- **A bar that reaches the recruiting price recruits the hero**: it flares,
+  the NEW wax seal is pressed onto the card, and the hero is celebrated as a whole one.
+- **The places are the summary.** When the last card lands the chest sinks
+  away, every card lights up, a *Rewards* plaque and **Collect** appear. No
+  separate receipt is drawn.
+- **A ten-call condenses.** Same thing, one card with a count: three draws
+  of 25 Stardust are one 75, two Food chests one card of two, and four
+  fragments of one hero one stack of four.
+- **The order:** currencies, then items, then fragments. **Heroes come last**, so the sequence arrives at what the player called for.
+- **A whole new hero is the rarest thing in a chest, and is celebrated.**
+  Before the flip its card back glows and trembles in its rarity over a drum
+  roll (a Legendary's longer). The flip darkens the room, flashes, shakes the
+  screen, raises rays, fires two confetti cannons, rains confetti, sets off
+  fireworks round the card and plays a full fanfare (a Legendary's grander,
+  with applause); a plaque — *A new hero answers* / *A legend answers* — and
+  the hero's name, title and rarity. The celebration cannot be tapped away
+  in its first second. A relic's keystone glows the same way before its flip.
+- **A tap during an animation finishes it.** **Skip** deals every other card
+  at once and still stops at each new hero.
 - A duplicate is **not** drawn as a hero. It already paid its fragments, and a
-  hero tile would promise a roster entry that is already there.
+  hero card would promise a roster entry that is already there.
+- Every beat has its sound (land, latch, lid, draw, flip, whoosh, settle,
+  sparkle, riser, pop, fanfare, applause, summary chime) and its particles (dust, sparks,
+  confetti, embers). Reduced motion keeps the beats and drops the motion.
+- **The music changes while a chest is open**: the harp fades out under a
+  lively tavern tune, which ducks under a hero's fanfare; Collect fades the
+  harp back in where it was. The music mute silences both.
 - **The banners sit on the store**, padlocked until a Tavern stands. Moving
   them into the Tavern — **tapping it is how one is called**
   ([`14-monetization.md`](14-monetization.md) §2.1) — is designed, not built.
@@ -512,9 +588,19 @@ how many slots it wants (1…n) and what to do with the answer.
   - the unit type's icon, top left;
   - its level and its ascension stars at the foot;
   - its HP bar inside the frame over the foot — the game's progress bar;
-    on a small card, the small HP bar hung over the bottom edge;
+    on a small card, the small HP bar hung over the bottom edge; no bar
+    when it is unhurt;
+  - in a picker opened for a fight, its **power** in place of the level —
+    what it adds to the army's (`heroPowerPerDmg` × its damage);
   - a green check, top right, when it holds a slot;
-  - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
+  - what it is doing when it cannot be chosen, as an animated mark at the
+    top right and a pill in the level's place:
+    - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown;
+    - marching with an army, out or home: a boot stepping, dust kicked up;
+      the time left on that leg;
+    - camped in a dungeon or the Portal: a torch flickering at a dungeon's
+      mouth; *Dungeon*;
+    - garrisoning a Fortress: a shield gleaming; *On guard*.
   - No name: the illustration is enough.
 - **Top**: the filter bar — `All`, then one tab per unit type heroes fight
   as — and the sort (level ↔ rarity).
@@ -540,7 +626,7 @@ how many slots it wants (1…n) and what to do with the answer.
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
 | What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
-| How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
+| How long a hero's ladder is | 10 a point, 310 in all | `heroLadder.heroLevelsPerAscension`, `heroLadder.heroLevelsPerStar` (extra on a full star, 0), `heroLadder.heroMaxLevel` |
 | What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
@@ -548,8 +634,8 @@ how many slots it wants (1…n) and what to do with the answer.
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
-| What a miss and a duplicate pay | §6.1 | `banners.fragmentsPerMiss`, `duplicateFragments` |
-| What a call pays in Stardust | §6.1 | `banners.pullStardust` |
+| What a duplicate pays | §6.1 | `banners.duplicateFragments` |
+| What a call draws | §6.4 | `banners.loot`, `lootDrawsMin`, `lootDrawsMax` |
 | The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design

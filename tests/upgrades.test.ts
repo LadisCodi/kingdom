@@ -443,11 +443,11 @@ describe('the Sagas lines reach their numbers', () => {
     expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(22); // +10% at L1
   });
 
-  it('Warm Welcome pays more Stardust on every call', () => {
+  it('Warm Welcome pays more Stardust from calls', () => {
     const state = freshGame();
-    const base = callStardust(state, 'basic');
+    const base = callStardust(state, 100);
     completeRanks(state, 'WarmWelcome', 1);
-    expect(callStardust(state, 'basic'))
+    expect(callStardust(state, 100))
       .toBe(Math.round(base * (1 + share('WarmWelcome', 1, 'summonStardust'))));
   });
 });

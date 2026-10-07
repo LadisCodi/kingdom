@@ -100,3 +100,62 @@ existing SFX fallback behaviour applies.
 **Tone note.** The audit's positioning is cozy: nothing here should read as a
 threat. `delve_failed` and `mana_full` are the two cues most likely to be
 mis-designed as alarms, and both should be soft.
+
+## The battle playback
+
+`src/audio/sounds/battle_<name>[_NN].ogg`, cut from the sound collection
+(silence trimmed, a tail fade, mono, a hit levelled by mean, a stinger to
+−16 LUFS); `_NN` takes alternate at random. They are not fetched at boot:
+`warmBattleSfx()` brings them down when a deploy sheet opens, or when a
+fight's playback does. The mix is `BATTLE_MIX` in
+`sfx.ts`; `tests/battleSounds.test.ts` holds every name to a file.
+
+| Name | Plays when | Source |
+|---|---|---|
+| `battleStart` | The armies march on | Battle Viking Horn Call |
+| `swordHit` · `lanceHit` · `cavalryHit` | A Warrior's (or melee hero's) · Lancer's · Cavalry's blow lands | Sword Hits Type 2 · Spear Pierce Through Flesh (Heavy Edgy) · Body Hit Punch Kick Fight |
+| `cavalryCharge` | A cavalry line sets off | Horse Snort |
+| `arrowLoose` · `arrowHit` | An archer looses · an arrow (or a bolt) lands | Bow Crossbow Arrow Shoot Type 1 · Wood Hit |
+| `boltCast` | A ranged hero looses, a care skill is cast | Light Wand Whoosh |
+| `squadDown` · `skullStamp` · `heroDown` | A ring cracks · its skull lands · a hero falls | Swing Hit Wood Shield Break · Pixel Thud · Body Fall |
+| `skillCharge` · `ribbon` | A skill charges · its ribbon unrolls | Pixel Skill Ready · Cloth Movement Fast |
+| `volley` · `cleave` · `crush` · `ambush` · `sharpshot` | That skill | Mass Loose · Big Sword Hit · Rock Impact Heavy Slam · Pixel Phase Swish · Rapid Shot Critical |
+| `heal` · `shieldUp` · `shieldSoak` · `shieldBreak` · `daze` | A heal lands · a shield goes up, soaks, shatters · a daze | Pixel Simple Heal · Pixel Bubble Deflect · Metallic Bubble · Glass Small · Charm |
+| `warCry` · `bulwark` · `vigour` | A rally is named | Bravery · Shield Buff V1 · Heavenly Positive Buff |
+| `finalBlow` | The last blow's slow motion | Alien Strike (cinematic) |
+| `victory` · `defeat` | The plaque lands | RPG Fanfares · Victory 1 · Defeat 1 Short |
+
+## Music
+
+One track at a time; the highest that is on plays (`src/audio/music.ts`).
+All levelled to the harp (−16.6 LUFS); the three moments restart from their
+top each time they take over, the harp resumes where it was.
+
+| Track | Plays while | Source |
+|---|---|---|
+| `music-tavern-loop` (feast) | A chest is being opened | Tavern (loop), sound collection |
+| `music-battle` | A fight plays back, until its plaque lands | *Battlefront Ode*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
+| `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Preparing for the Assault*, whole, 2.5 s fade at the tail — same collection |
+| The town playlist | Everything else: a random song first, then each in turn, the next crossfading in over the last 5 s | Harp Peaceful (loop), four rounds of it · *Adventurer's Anthem* · *Legendary Age* · *Friendly Folks* — Owl Theory, Ultimate RPG Music Collection |
+
+## The chest's cards, the world board, magic
+
+Cut like the battle's (a hit levelled by mean, a stinger to −16 LUFS), one
+file each in `src/audio/sounds/`.
+
+| Name | Plays when | Source |
+|---|---|---|
+| `cardImpact` | Any card but a whole hero turns face up | Drum Hit 01 |
+| `cardRevealCommon` · `cardRevealRare` · `cardRevealLegend` | On top of it, by the card's rarity (a skip keeps only the hit for a common) | RPG Fanfares Pick Up Coin (four takes) · Item Get 1 Short · Fairy Magical 01 |
+| `barFill` | A fragments bar fills | Count Prize Long |
+| `explorerDepart` · `explorerHome` | An explorer sets out · comes home | Harpsichord Level Start · Level Complete |
+| `armyMarch` · `armyRecall` · `armyHome` | An army marches · is called back · comes home | Battle Intro 1 Short Drums Only · Horn 01 · Quest Complete Short |
+| `tribute` | A camp is paid off | Coins in Sack Dropped on Wood |
+| `raidAlarm` | A lair's garrison came down on the city | Battle Viking Horn Call Far |
+| `speedup` | A speed-up takes time off a wait | Clock Tick (four takes) |
+| `spellCast` · `relicWake` | A world relic's spell · a city relic woken | Casting Magic · Arcane Symbol Activate |
+
+A world build started or finished sounds as a city one does (`buildPlaced`,
+`constructionComplete`). A news whose event already sounded — a build, an
+explorer or army home, a raid — arrives in the notices column without the
+`pop`.

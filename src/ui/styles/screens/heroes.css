@@ -22,39 +22,48 @@
 /* -------------------------------------------------------------- the card -- */
 
 .k-sheet.is-centred:has(.hd) { max-width: calc(var(--px) * 380); max-height: 94%; }
-/* THE CARD FITS THE SCREEN. The stage is the give: it takes the height the
-   sections leave, down to a floor, so the body scrolls only on a screen too
-   short for even that. */
-.k-sheet.is-centred:has(.hd) > .k-panel > .k-sheet-body { display: flex; flex-direction: column; }
-.hd { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
-.hd > :not(.hd-stage) { flex: none; }
-.hd > .k-section-head { margin: calc(var(--px) * 6) 0 0; }
-.hd-subtitle {
-  color: var(--ink-muted);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-strong);
-  text-align: center;
+/* THE HEADER carries the rarity's ribbon at its left end and the type's
+   badge before the close; the name takes what is between, and a long one
+   sets smaller to fit it (`--name-len`, its characters). */
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-head > .k-head-title {
+  font-size: min(var(--text-title), calc(var(--px) * 300 / var(--name-len, 1)));
 }
 
-/* THE STAGE: the hero on its rarity's painted vault (hero-stage-*.jpg), in
-   the hero card's gilt frame, the rarity's ribbon top-left, the type's
-   banner top-right, and an arrow each side hanging over the frame's edge. */
+/* THE STAGE RUNS EDGE TO EDGE: the body is pulled out to the paper's edge
+   and up under the plank, and everything but the stage is pushed back in.
+   The stage keeps its height; the sections under it scroll. */
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-head { margin-bottom: calc(var(--head-rise) * -1 - var(--rpx) * 12); }
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-sheet-body {
+  --bleed: calc(var(--win-pad) - var(--win-rail));
+  margin-inline: calc(var(--bleed) * -1);
+}
+.hd {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+}
+.hd > * { flex: none; }
+.hd > :not(.hd-stage) { margin-inline: var(--bleed); }
+.hd > .k-section-head { margin-top: calc(var(--px) * 6); margin-bottom: 0; }
+
+/* THE STAGE: the hero on its rarity's painted vault (hero-stage-*.jpg),
+   the full width of the window and anchored to its top, fading into the
+   paper at its foot; the rarity's ribbon top-left, the type's badge
+   top-right, and the ascension laid on the fade with no tray of its own. */
 .hd-stage {
-  --stage-w: calc(var(--px) * 336);
+  --stage-w: 100cqw;
   position: relative;
-  flex: 0 1 auto;
-  align-self: center;
-  width: var(--stage-w);
-  height: calc(var(--stage-w) * 0.75);
-  min-height: calc(var(--px) * 150);
-  margin-inline: calc(var(--px) * 14);
+  height: calc(var(--stage-w) * 0.9);
 }
 .hd-stage::before {
   content: '';
   position: absolute;
-  inset: calc(var(--stage-w) * 0.022);
-  border-radius: calc(var(--stage-w) * 0.03);
+  inset: 0;
   background: var(--stage-bg) center / cover no-repeat;
+  -webkit-mask: linear-gradient(to top, transparent 0, #000 34%);
+  mask: linear-gradient(to top, transparent 0, #000 34%);
 }
 .hd-stage.is-common { --stage-bg: url('../../assets/hero-stage-common.jpg'); }
 .hd-stage.is-rare { --stage-bg: url('../../assets/hero-stage-rare.jpg'); }
@@ -69,40 +78,33 @@
   left: 50%;
   bottom: calc(var(--stage-w) * 0.04);
   translate: -50% 0;
-  height: 92%;
+  height: 94%;
   width: auto;
-  max-width: 70%;
+  max-width: 80%;
   object-fit: contain;
   object-position: center bottom;
+  -webkit-mask: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 0.25) 14%, #000 34%);
+  mask: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 0.25) 14%, #000 34%);
+}
+/* With nothing laid over it (a hero not found yet) the hero is not faded. */
+.hd-stage:not(:has(> .hd-ascend)) > .hd-art {
+  -webkit-mask: linear-gradient(to top, transparent 0, #000 10%);
+  mask: linear-gradient(to top, transparent 0, #000 10%);
 }
 .hd-art.is-glyph { display: grid; place-items: center; width: 50%; font-size: calc(var(--stage-w) * 0.2); }
-/* The hero card's gilt frame, nine-sliced the same way (heroPicker.css). */
-.hd-frame {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-style: solid;
-  border-color: transparent;
-  border-width: calc(var(--stage-w) * 0.045);
-  border-image: url('../../assets/hero-card-frame.png') 50 / calc(var(--stage-w) * 0.045) stretch;
-}
 
-/* The rarity, as a cloth ribbon (hero-rarity-*.png) pinned over the frame's
-   top-left corner; the word is the game's, set on the cloth. */
+/* The rarity, as a cloth ribbon (hero-rarity-*.png) at the header's left
+   end; the word is the game's, set on the cloth. */
 .hd-rarity {
-  position: absolute;
-  top: calc(var(--px) * -4);
-  left: calc(var(--px) * -8);
-  z-index: 1;
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 108);
+  width: calc(var(--px) * 84);
   aspect-ratio: 384 / 160;
   padding: 0 calc(var(--px) * 14) calc(var(--px) * 3) calc(var(--px) * 16);
   box-sizing: border-box;
   background: var(--ribbon) center / 100% 100% no-repeat;
   color: var(--ink-inverse);
-  font-size: var(--text-body);
+  font-size: calc(var(--px) * 15);
   font-weight: var(--weight-title);
   --ribbon-ink: rgba(30, 14, 40, 0.75);
   text-shadow: 0 calc(var(--px) * 1) 0 var(--ribbon-ink), 0 0 calc(var(--px) * 2) var(--ribbon-ink);
@@ -111,25 +113,21 @@
 .hd-rarity.is-rare { --ribbon: url('../../assets/hero-rarity-rare.png'); }
 .hd-rarity.is-legendary { --ribbon: url('../../assets/hero-rarity-legendary.png'); }
 
-/* What it fights as: the card's type banner, larger, with the word under
-   the symbol, hanging from the frame's top-right corner. */
+/* What it fights as: the card's type banner, the word under the symbol,
+   on the header before the close. */
 .hd-type {
-  position: absolute;
-  top: calc(var(--stage-w) * 0.012);
-  right: calc(var(--stage-w) * 0.05);
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0;
-  width: calc(var(--px) * 66);
+  width: calc(var(--px) * 46);
   aspect-ratio: 146 / 161;
-  padding-bottom: calc(var(--px) * 12);
+  padding-bottom: calc(var(--px) * 8);
   box-sizing: border-box;
   background: var(--hc-banner) center / 100% 100% no-repeat;
   color: var(--ink-inverse);
-  font-size: calc(var(--px) * 12);
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-title);
   line-height: 1;
   text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.6);
@@ -139,22 +137,27 @@
 .hd-type.is-Archer { --hc-banner: url('../../assets/hero-banner-archer.png'); }
 .hd-type.is-Cavalry { --hc-banner: url('../../assets/hero-banner-cavalry.png'); }
 .hd-type > .icon {
-  --icon-size: calc(var(--px) * 26);
+  --icon-size: calc(var(--px) * 18);
   filter: brightness(0) invert(1) drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.55));
 }
 
-/* The arrows: the game's round wood knob, half over the frame's edge.
-   `.k-btn.k-knob` to outrank material.css's knob, which would draw it at its
-   default size — a pebble on the frame. */
-.hd-stage > .k-btn.k-knob {
-  --knob-size: calc(var(--px) * 40);
+/* THE ASCENSION ON THE STAGE: the stars in its top-left corner, and the
+   price over Ascend laid bare on the vault's fade into the paper, right. */
+.hd-stage > .hd-stars {
   position: absolute;
-  top: 50%;
   z-index: 1;
-  translate: 0 -50%;
+  top: calc(var(--px) * 10);
+  left: calc(var(--px) * 10);
+  --asc-size: calc(var(--px) * 26);
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(255, 244, 220, 0.7));
 }
-.hd-stage > .hd-prev { left: calc(var(--px) * -18); }
-.hd-stage > .hd-next { right: calc(var(--px) * -18); }
+.hd-stage > .hd-ascend {
+  position: absolute;
+  z-index: 1;
+  right: var(--bleed);
+  bottom: 0;
+}
+.hd-stage > .hd-ascend .hd-buy > .k-btn:not(.k-knob) { min-width: calc(var(--px) * 112); }
 
 /* A SECTION'S TRAY: what it reads on the left, its price over its button on
    the right — the upgrade popup's buying block, split in two. */
@@ -186,27 +189,83 @@
   font-weight: var(--weight-strong);
 }
 
-/* The ascension: the five stars, big — the ladder the player is chasing —
-   and what the next point does under them. */
-.hd-asc { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
-.hd-stars { --asc-size: calc(var(--px) * 34); }
-.hd-ascend.is-max .hd-stars { --asc-size: calc(var(--px) * 44); }
-.hd-asc-line { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; }
-
-/* The stats: four parchment tiles in one row — Attack, Damage, Defence,
-   Health — the icon over the label and the value. */
-.hd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--px) * 4); }
-.hd-stat.k-section {
+/* The stats: a column down the stage's left edge, under the stars, beside
+   the hero — no tile, white letters on a soft cast shadow so they read on
+   any vault. */
+.hd-stage > .hd-stats {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--px) * 46);
+  left: calc(var(--px) * 10);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 4) calc(var(--px) * 2);
+  gap: calc(var(--px) * 8);
+  color: var(--ink-inverse);
+  --stat-shadow: rgba(24, 10, 4, 0.75);
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) var(--stat-shadow), 0 0 calc(var(--px) * 4) var(--stat-shadow);
 }
-.hd-stat > .icon { --icon-size: calc(var(--px) * 24); flex: none; }
-.hd-stat-text { display: flex; flex-direction: column; align-items: center; min-width: 0; line-height: 1.1; }
-.hd-stat-label { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
-.hd-stat-value { font-size: var(--text-title); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
+.hd-stat { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.hd-stat > .icon {
+  --icon-size: calc(var(--px) * 24);
+  flex: none;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 2) var(--stat-shadow));
+}
+.hd-stat-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.05; }
+.hd-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
+.hd-stat-value { font-size: calc(var(--px) * 20); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
+
+/* A STAT THAT ROSE (a level, an ascension): its value punches, and its gain
+   floats up off it in green and fades. */
+.hd-stat { position: relative; }
+.hd-stat-value { display: inline-block; transform-origin: left center; }
+.hd-stat.is-up .hd-stat-value { animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hd-stat-gain {
+  position: absolute;
+  left: calc(100% + var(--px) * 18);
+  bottom: 0;
+  color: var(--leaf);
+  font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 calc(var(--px) * 1) 0 #1d3a10, 0 0 calc(var(--px) * 4) rgba(14, 30, 6, 0.8);
+  animation: hd-stat-gain 1.4s ease-out both;
+}
+/* The skill's rise: the pip just filled and every number in its sentence
+   that grew punch, and the gain floats up beside the pips — over the name's
+   row, where it covers no words. */
+.hd-skill-num { display: inline-block; transform-origin: center; animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.k-pip.is-new { animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hd-skill-gain {
+  color: var(--leaf);
+  font-size: calc(var(--px) * 20);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 calc(var(--px) * 1) 0 #1d3a10, 0 0 calc(var(--px) * 3) rgba(14, 30, 6, 0.6);
+  animation: hd-stat-gain 1.4s ease-out both;
+}
+@keyframes hd-stat-punch {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); color: var(--leaf); }
+  100% { transform: scale(1); }
+}
+@keyframes hd-stat-gain {
+  0% { opacity: 0; translate: 0 calc(var(--px) * 6); }
+  15% { opacity: 1; translate: 0 0; }
+  70% { opacity: 1; }
+  100% { opacity: 0; translate: 0 calc(var(--px) * -26); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hd-stat.is-up .hd-stat-value, .hd-skill-num, .k-pip.is-new { animation: none; }
+  .hd-stat-gain, .hd-skill-gain { animation-name: hd-stat-fade; }
+}
+@keyframes hd-stat-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 /* The passive, and the boon under it on the six that have one. */
 .hd-passive.k-section {
@@ -221,20 +280,31 @@
 .hd-passive > .icon { --icon-size: calc(var(--px) * 30); flex: none; }
 .hd-passive.is-boon { border-color: var(--gold-dark); }
 
-/* The skill: its name and rank pips over what it does, and the next rank
-   in a tray under it. */
-.hd-skill-wrap { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+/* The skill, one widget: its name and rank pips over what it does, and at
+   its foot the next rank's price and Upgrade, or what is missing. */
 .hd-skill.k-section {
   display: flex;
-  align-items: center;
-  gap: calc(var(--px) * 10);
+  flex-direction: column;
+  gap: calc(var(--px) * 3);
   padding: calc(var(--px) * 8) calc(var(--px) * 12);
 }
-.hd-skill > .icon { --icon-size: calc(var(--px) * 32); flex: none; }
-.hd-skill-text { display: flex; flex-direction: column; gap: calc(var(--px) * 3); min-width: 0; }
 .hd-skill-name { display: flex; align-items: center; gap: calc(var(--px) * 8); font-size: var(--text-title); }
 .hd-skill-says { font-size: var(--text-body); font-weight: var(--weight-strong); color: var(--ink); }
-.hd-rank .hd-read-line > b { font-size: var(--text-body); }
+.hd-skill-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--px) * 12);
+  margin-top: calc(var(--px) * 4);
+}
+.hd-skill-foot > * { flex: none; }
+.hd-skill-foot > .k-btn:not(.k-knob):not(.has-cost) { margin-inline: 0; }
+.hd-skill-foot > .hd-note { max-width: none; }
+.hd-skill-foot > .k-btn:not(.k-knob) { min-width: calc(var(--px) * 136); }
+
+/* At the ascension's level cap: the stars to reach to go further. */
+.hd-note.hd-cap { flex-direction: column; align-items: flex-end; gap: calc(var(--px) * 4); }
+.hd-cap-stars { --asc-size: calc(var(--px) * 22); }
 
 /* The level (or the fragments), as words over the game's green bar. */
 .hd-read { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }

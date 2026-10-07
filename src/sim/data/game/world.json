@@ -208,22 +208,65 @@
   "worldBuild": {
     "claim": { "gold": 1000, "goldGrowth": 1.35, "buildSeconds": 1800 },
     "districts": {
-      "Rural": { "name": "Rural district", "feature": "None", "produces": "Gold", "perHour": 360, "store": 2880 },
-      "LoggingCamp": { "name": "Logging Camp", "feature": "Forest", "produces": "Wood", "perHour": 30, "store": 240 },
-      "Quarry": { "name": "Quarry", "feature": "Mountain", "produces": "Stone", "perHour": 20, "store": 160 },
-      "FarmLands": { "name": "Farm Lands", "feature": "FertileLand", "produces": "Food", "perHour": 45, "store": 360 },
-      "HuntingGrounds": { "name": "Hunting Grounds", "feature": "Game", "produces": "Food", "perHour": 45, "store": 360 },
+      "Rural": {
+        "name": "Rural district",
+        "feature": "None",
+        "produces": "Gold",
+        "perHour": 360,
+        "store": 2880,
+        "slots": 2
+      },
+      "LoggingCamp": {
+        "name": "Logging Camp",
+        "feature": "Forest",
+        "produces": "Wood",
+        "perHour": 30,
+        "store": 240,
+        "slots": 1
+      },
+      "Quarry": { "name": "Quarry", "feature": "Mountain", "produces": "Stone", "perHour": 20, "store": 160, "slots": 1 },
+      "FarmLands": {
+        "name": "Farm Lands",
+        "feature": "FertileLand",
+        "produces": "Food",
+        "perHour": 45,
+        "store": 360,
+        "slots": 1
+      },
+      "HuntingGrounds": {
+        "name": "Hunting Grounds",
+        "feature": "Game",
+        "produces": "Food",
+        "perHour": 45,
+        "store": 360,
+        "slots": 1
+      },
       "Observatory": {
         "name": "Observatory",
         "feature": "Landmark",
         "produces": "Knowledge",
         "perHour": 0.16666666666666666,
-        "store": 8
+        "store": 8,
+        "slots": 1
       },
-      "Shrine": { "name": "Shrine", "feature": "Sanctuary", "produces": "", "perHour": 0, "store": 0 },
-      "GroveCamp": { "name": "Grove Camp", "feature": "HeartwoodGrove", "produces": "", "perHour": 0, "store": 0 },
-      "StarmetalDig": { "name": "Starmetal Dig", "feature": "StarfallCrater", "produces": "", "perHour": 0, "store": 0 },
-      "SpireQuarry": { "name": "Spire Quarry", "feature": "MoonglassSpires", "produces": "", "perHour": 0, "store": 0 }
+      "Shrine": { "name": "Shrine", "feature": "Sanctuary", "produces": "", "perHour": 0, "store": 0, "slots": 1 },
+      "GroveCamp": { "name": "Grove Camp", "feature": "HeartwoodGrove", "produces": "", "perHour": 0, "store": 0, "slots": 1 },
+      "StarmetalDig": {
+        "name": "Starmetal Dig",
+        "feature": "StarfallCrater",
+        "produces": "",
+        "perHour": 0,
+        "store": 0,
+        "slots": 1
+      },
+      "SpireQuarry": {
+        "name": "Spire Quarry",
+        "feature": "MoonglassSpires",
+        "produces": "",
+        "perHour": 0,
+        "store": 0,
+        "slots": 1
+      }
     },
     "upgrades": {
       "Fortress": {
@@ -256,11 +299,12 @@
     "rewardBase": [1, 2.2, 4.5],
     "rewardGrowth": 1.06,
     "gold": 20,
-    "heroXp": 10,
+    "heroXp": 30,
     "stardust": 2,
     "knowledge": 0.25,
     "bossRewardMultiplier": 3,
     "closeRewardMultiplier": 2,
+    "closeHeroXpMultiplier": 20,
     "returnHoursMin": 12,
     "returnHoursMax": 24,
     "precious": 1,
@@ -296,7 +340,6 @@
     "openWeekday": 5,
     "openDays": 3,
     "floors": 40,
-    "attemptsPerDay": 3,
     "powerStart": 400,
     "powerGrowth": 1.1,
     "rewardBase": 1.5,
@@ -315,6 +358,12 @@
     "feature": { "Forest": 1.5, "Mountain": 3, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
     "portal": 1
   },
+  "worldTerrainCombat": [
+    { "ground": "Plains", "unit": "Cavalry", "attack": 0.1 },
+    { "ground": "Desert", "unit": "Cavalry", "attack": -0.1 },
+    { "ground": "Forest", "unit": "Archer", "attack": -0.1 },
+    { "ground": "Mountain", "unit": "Lancer", "attack": 0.1 }
+  ],
   "worldCamps": {
     "share": 0.65,
     "lurkingShare": 0.4,

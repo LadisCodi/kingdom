@@ -13,7 +13,6 @@
   --nav-gap: calc(var(--rpx) * 22);
   --nav-icon: calc(var(--rpx) * 92);
   --nav-label: calc(var(--rpx) * 32);
-  --nav-badge: calc(var(--rpx) * 52);     /* the scrying orb: "something to do here" */
 
   position: relative;
   z-index: 10;
@@ -43,18 +42,19 @@
  * the bar would have padded for. Keyed on what is actually mounted, like the
  * settings knob, so it cannot drift from what is on screen. */
 #ui.has-menu,
-#ui.has-card { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
+#ui.has-card,
+#ui.has-battle { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
 #ui.has-menu > #navbar.nav,
-#ui.has-card > #navbar.nav {
+#ui.has-card > #navbar.nav,
+#ui.has-battle > #navbar.nav {
   transform: translateY(calc(100% + var(--rpx) * 20));
   pointer-events: none;
   transition-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);
 }
-/* Slid away, its orbs stop breathing: a loop nobody can see still paints. */
-#ui.has-menu > #navbar.nav .k-cta::before,
-#ui.has-menu > #navbar.nav .k-cta::after,
-#ui.has-card > #navbar.nav .k-cta::before,
-#ui.has-card > #navbar.nav .k-cta::after { animation-play-state: paused; }
+/* Slid away, its badges stop nudging: a loop nobody can see still paints. */
+#ui.has-menu > #navbar.nav .k-cta,
+#ui.has-card > #navbar.nav .k-cta,
+#ui.has-battle > #navbar.nav .k-cta { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   #navbar.nav { transition: none; }
 }
@@ -102,10 +102,9 @@
   filter: drop-shadow(0 calc(var(--rpx) * 4) 0 rgba(40, 22, 10, 0.45));
 }
 
-/* THE CALL TO ACTION is the kit's orb (`.k-cta`, kit/cta.ts), a size up on
-   its tab's corner. */
+/* THE CALL TO ACTION is the kit's badge (`.k-cta`, kit/cta.ts), on its tab's
+   corner. */
 #navbar.nav .nav-tab > .k-cta {
-  --cta-size: var(--nav-badge);
   top: calc(var(--rpx) * -12);
   right: calc(var(--rpx) * -10);
 }

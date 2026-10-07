@@ -30,17 +30,21 @@
 #app.in-world #quest,
 #app.in-world #daily,
 #app.in-world #survey,
-#app.in-world #edge,
 #app.in-world #panel { display: none; }
+
+/* The board's left column, in the flow under the header where the
+ * province's Survey widget sits, above the offer widgets: the explorers
+ * chip, and the ranking's widget under it. */
+#worldleft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: flex-start;
+}
+#app:not(.in-world) #worldleft { display: none; }
 
 /* THE EXPLORERS CHIP — the builders' parchment plaque, top left under the
  * header: a compass and how many are free of how many. */
-#worldchip {
-  position: absolute;
-  left: 0;
-  top: var(--hud-h);
-  z-index: 3;
-}
 #worldchip[hidden] { display: none; }
 .world-chip-label { font-weight: var(--weight-strong); }
 
@@ -62,6 +66,125 @@
 .wd-line { margin: 0; font-size: calc(var(--px) * 15); color: var(--ink); }
 .wd-march { display: flex; justify-content: flex-start; }
 
+/* THE HEX CARD (Docs/proposals/world-menus.md §2): the city card's head,
+ * tiles and portrait, in sections; a district's building slots. */
+.wd-card {
+  --slot-size: calc(var(--px) * 46); /* a board's rounds, as the battle sheet's */
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 2) calc(var(--px) * 6) calc(var(--px) * 10);
+}
+/* A hex sprite is a tile with what stands on it rising above: its middle
+ * sits a little lower than the middle of its canvas. */
+.wd-portrait .dc-portrait-art { width: 135%; translate: -50% -52%; }
+.wd-name { margin: 0; font-size: calc(var(--px) * 17); font-weight: var(--weight-title); color: var(--ink); line-height: 1.1; }
+.wd-far {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  margin: calc(var(--px) * 4) 0 0;
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
+}
+.wd-card .dc-what-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 2); }
+.wd-blocked { display: flex; align-items: center; gap: calc(var(--px) * 4); margin: 0; font-size: var(--text-desc); font-weight: var(--weight-strong); }
+/* The hex's tiles stand upright — the mark over its name and value — so
+ * four fit a row: the ground's facts beside the district's. */
+.wd-stats { --stat-gap: calc(var(--px) * 8); flex-wrap: nowrap; }
+.wd-stats > .dc-stat.k-section {
+  flex: 1 1 0;
+  width: auto;
+  max-width: calc(var(--px) * 112);
+  height: auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 6) calc(var(--px) * 3);
+  text-align: center;
+}
+.wd-stats > .dc-stat > .icon { --icon-size: calc(var(--px) * 34); }
+.wd-stats .dc-stat-body { width: 100%; }
+.wd-stats .dc-stat-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The player's shield, at the left end of the title plank. */
+.k-head > .wd-shield {
+  position: absolute;
+  left: calc(var(--px) * 6);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 1;
+}
+
+/* BUILDINGS: square slots of darker paper, a building's art in each, or the
+ * dashed well an empty one is (the relic slot's). */
+.wd-slots { display: flex; justify-content: center; gap: calc(var(--px) * 12); }
+.wd-slot-wrap { position: relative; }
+.wd-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 116);
+  height: calc(var(--px) * 124);
+  padding: calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid color-mix(in srgb, var(--wood-dark) 35%, transparent);
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(60, 36, 16, 0.18);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.wd-slot.is-empty {
+  justify-content: center;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--gold-dark) 60%, transparent);
+  background: color-mix(in srgb, var(--gold) 12%, var(--parchment-shade));
+}
+.wd-slot.is-going .wd-slot-art { opacity: 0.6; }
+.wd-slot-art { flex: 1; min-height: 0; display: grid; place-items: center; width: 100%; }
+.wd-slot-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wd-slot-name { font-size: var(--text-desc); font-weight: var(--weight-title); line-height: 1.1; }
+.wd-slot-level { display: flex; align-items: center; gap: calc(var(--px) * 2); font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); }
+/* A Chapel's relic socket: a brass-rimmed round well over its top right. */
+.wd-socket {
+  position: absolute;
+  top: calc(var(--px) * -8);
+  right: calc(var(--px) * -8);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  padding: 0;
+  border: calc(var(--px) * 3) solid var(--gold-dark);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gold) 18%, var(--parchment-shade));
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(40, 22, 10, 0.4);
+  cursor: pointer;
+}
+.wd-socket .hc-plus { font-size: calc(var(--px) * 22); }
+.wd-socket-art { width: 86%; height: 86%; object-fit: contain; }
+/* The slot picker's row, centred: two cards. */
+.wd-slot-row { justify-content: center; }
+/* A Chapel's popup: its socket, and what is in it. */
+.wd-chapel-socket {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 12);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.wd-chapel-socket .rl-art { width: calc(var(--px) * 88); height: calc(var(--px) * 88); object-fit: contain; }
+.wd-chapel-what { font-size: var(--text-desc); font-weight: var(--weight-strong); }
+
 /* THE DOOR — a round wooden knob, the compass carved into it, bottom right
  * just above the nav, level with the quest scroll's foot; padlocked in brass
  * until the Watchtower is claimed. Above the map, below the district card (6)
@@ -74,11 +197,27 @@
 }
 #worldknob[hidden] { display: none; }
 .world-knob.k-knob {
-  width: calc(var(--px) * 56);
-  height: calc(var(--px) * 56);
-  min-height: calc(var(--px) * 56);
+  width: calc(var(--px) * 64);
+  height: calc(var(--px) * 64);
+  min-height: calc(var(--px) * 64);
+  border: 0;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.45));
+  transition: transform 90ms ease-out, filter 90ms ease-out;
 }
-.world-knob .icon { --icon-size: calc(var(--px) * 34); }
+/* Each face is the whole knob, painted (Docs/art/ui/knob/): the compass at
+   home, the castle out on the board. Pressed, it is pushed into the frame. */
+.world-knob-face {
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/world-knob-city.png') center / contain no-repeat;
+}
+.world-knob-home { display: none; background-image: url('../../assets/world-knob-home.png'); }
+.world-knob.k-knob:active {
+  transform: scale(0.93);
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1) rgba(40, 22, 10, 0.45)) brightness(0.9);
+}
 .world-knob-lock {
   position: absolute;
   right: calc(var(--px) * -4);
@@ -86,12 +225,10 @@
   display: none;
   filter: drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.6));
 }
-.world-knob-lock .icon { --icon-size: calc(var(--px) * 24); }
-.world-knob-out, .world-knob-home { display: contents; }
-.world-knob-home { display: none; }
+.world-knob-lock .icon { --icon-size: calc(var(--px) * 26); }
 .world-knob.is-away .world-knob-out { display: none; }
-.world-knob.is-away .world-knob-home { display: contents; }
-.world-knob.is-locked .world-knob-out .icon { filter: grayscale(1) brightness(0.8); opacity: 0.8; }
+.world-knob.is-away .world-knob-home { display: block; }
+.world-knob.is-locked .world-knob-out { filter: grayscale(1) brightness(0.8); opacity: 0.85; }
 .world-knob.is-locked .world-knob-lock { display: block; }
 .world-knob.is-shaking .world-knob-lock { animation: nav-lock-shake 380ms ease-in-out; }
 .world-knob.is-unlocking .world-knob-lock {
@@ -256,7 +393,8 @@
 .dv-count { font-weight: var(--weight-strong); font-size: calc(var(--px) * 12); }
 .dv-lost { color: #ffb4a4; font-weight: var(--weight-strong); font-size: calc(var(--px) * 11); }
 .dv-power { margin-left: auto; font-weight: var(--weight-title); }
-.dv-calls { display: flex; gap: calc(var(--px) * 8); justify-content: flex-end; }
+.dv-calls { display: flex; gap: calc(var(--px) * 8); justify-content: space-between; align-items: flex-end; }
+.dv-calls.is-one { justify-content: center; }
 
 .has-spoils { position: relative; }
 .dv-spoils {
@@ -345,3 +483,265 @@
   box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(255, 255, 255, 0.35), 0 calc(var(--rpx) * 6) calc(var(--rpx) * 10) rgba(30, 18, 8, 0.45);
 }
 .wmini-canvas { display: block; width: 100%; height: 100%; cursor: pointer; touch-action: none; }
+
+/* Ground in the mist: a cloud over the tile; a Sensed hex's shapes faint
+ * under it. */
+.wd-mist .wd-mist-ground { opacity: 0.45; filter: blur(calc(var(--px) * 1.5)) saturate(0.6); }
+.wd-mist .wd-mist-cloud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120%;
+  height: auto;
+  translate: -50% -50%;
+}
+.wd-mist.is-sensed .wd-mist-cloud { opacity: 0.8; }
+
+/* A camp's difficulty: a wax seal pressed onto the enemy's plank, ahead of
+ * its name, in the colour the board writes it in. */
+.wd-seal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 46);
+  height: calc(var(--px) * 46);
+  margin-block: calc(var(--px) * -8);
+  margin-inline-end: calc(var(--px) * -4);
+  background: url('../../assets/offer-seal.png') center / contain no-repeat;
+  color: #fff6e0;
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 10, 4, 0.8);
+  rotate: -12deg;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.4));
+}
+.wd-seal.is-easy { background-image: url('../../assets/seal-done.png'); }
+.wd-seal.is-fair { background-image: url('../../assets/seal-available.png'); color: #5a3a12; text-shadow: none; }
+.k-headpanel-head:has(> .wd-seal) > .k-headpanel-title { flex: 1; }
+/* The ground a camp stands on, in one line: each fact its mark and its
+ * value. A tap opens what the ground does to each troop type. */
+.wd-ground.k-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: calc(var(--px) * 6);
+  width: 100%;
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.wd-ground-fact { display: flex; align-items: center; gap: calc(var(--px) * 4); min-width: 0; }
+.wd-ground-fact > .icon { flex: none; }
+.wd-ground-value {
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wd-ground > .k-tip { max-width: calc(var(--px) * 260); }
+/* What beating a camp pays, as chips. */
+.wd-loot { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--px) * 8); }
+/* Two answers to one camp, side by side: Negotiate's price on its plate,
+ * Attack's slab level with Negotiate's. */
+.wd-choices { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: calc(var(--px) * 8); align-items: end; }
+.wd-choices > .k-btn.k-btn.k-btn:not(.k-knob) { width: 100%; min-width: 0; max-width: none; }
+.wd-choices > .k-btn:not(.has-cost) { margin-bottom: calc(var(--px) * 6); }
+.wd-choices > .k-btn.has-cost > .k-btn-label { min-width: 0; }
+/* A camp's price is three coins: set a little smaller, so it fits half a row. */
+.wd-choices .k-btn-cost { gap: calc(var(--px) * 5); font-size: var(--text-desc); }
+.wd-choices .k-cost > .icon { --icon-size: calc(var(--rpx) * 56); margin-block: calc(var(--rpx) * -8); }
+
+/* A cloth ribbon across the card's top: what the hex is waiting for. */
+.wd-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--px) * 6);
+  height: calc(var(--px) * 34);
+  margin: 0 calc(var(--px) * -6);
+  padding: calc(var(--px) * 2) 0 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 36);
+  border-image: url('../../assets/ribbon-purple.png') 0 100 fill / 0 calc(var(--px) * 36) stretch;
+  color: #fff6e0;
+  font-weight: var(--weight-title);
+  font-size: var(--text-desc);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 10, 40, 0.9);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(25, 12, 4, 0.45));
+}
+/* The Portal's portrait is the board's own drawing, on a canvas. */
+.wd-portal-art > canvas { width: 100%; height: 100%; display: block; }
+.wd-portal-art > img { width: 100%; height: 100%; display: block; object-fit: contain; }
+/* Open, the Portal breathes violet light. */
+.wd-portal-art.is-open > img { animation: wd-portal-breathe 1.3s ease-in-out infinite alternate; }
+@keyframes wd-portal-breathe {
+  from { filter: drop-shadow(0 0 calc(var(--px) * 2) rgb(190 90 255 / 0.4)) brightness(1); }
+  to { filter: drop-shadow(0 0 calc(var(--px) * 9) rgb(220 130 255 / 0.9)) brightness(1.12); }
+}
+@media (prefers-reduced-motion: reduce) { .wd-portal-art.is-open > img { animation: none; } }
+/* The ranking: the friends list's rows, the player's own lit gold. */
+.wd-ranks { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
+.wd-rank.is-you { background: color-mix(in srgb, var(--gold) 30%, var(--parchment-shade)); }
+.wd-rank-floor { font-weight: var(--weight-title); }
+/* The card's foot: its main action, and Recall beside it. */
+.wd-foot { display: flex; justify-content: center; gap: calc(var(--px) * 10); }
+
+/* The deployment's widgets: a plate of darker paper with a small header. */
+.wd-widget { display: flex; flex-direction: column; gap: calc(var(--px) * 4); padding: calc(var(--px) * 6) calc(var(--px) * 8); min-width: 0; }
+.wd-widget-title { font-size: var(--text-helper); font-weight: var(--weight-title); letter-spacing: 0.06em; text-transform: uppercase; color: var(--wood-dark, var(--ink-muted)); }
+.wd-widget-chips { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 6); }
+.wd-widget-ground { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.wd-widget-art { flex: none; display: grid; place-items: center; width: calc(var(--px) * 40); height: calc(var(--px) * 40); }
+.wd-widget-what { min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 1); }
+.wd-widget-name { font-weight: var(--weight-title); font-size: var(--text-desc); }
+.wd-widget .wd-far { margin: 0; font-size: var(--text-helper); }
+.wd-edge { display: flex; align-items: center; gap: calc(var(--px) * 3); font-size: var(--text-helper); font-weight: var(--weight-strong); color: var(--ink-muted); }
+.wd-edge.is-good { color: var(--leaf-dark); }
+.wd-edge.is-bad { color: var(--clay); }
+
+/* A dungeon's race: the world ranking's rows, in a space of their own that
+ * scrolls when more kingdoms are in it than fit. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body:has(> .wd-race-card) { display: flex; flex-direction: column; }
+.wd-race-card { flex: 1 1 auto; min-height: 0; }
+.wd-race { flex: 0 1 auto; min-height: calc(var(--px) * 140); overflow-y: auto; overflow-x: clip; padding: 0 calc(var(--px) * 2); }
+.wd-race-line { margin: 0; }
+.wd-race-at { font-size: calc(var(--px) * 17); }
+
+/* THE DELVE, m91b: the band under the title, the stair with the depths down
+ * its right edge, every kingdom's shield on its room, the army docked. */
+.dv-band {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 5) calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 6);
+  background: var(--parchment-shade);
+  color: var(--ink);
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(0, 0, 0, 0.35);
+}
+.dv-band .dv-where { color: var(--ink); }
+.dv-band .dv-race-line { color: var(--ink-muted); }
+.dv-stage { position: relative; display: flex; gap: calc(var(--px) * 6); }
+.dv-stage > .dv-descent { flex: 1; min-width: 0; }
+.dv-depths { flex: none; display: flex; flex-direction: column; gap: calc(var(--px) * 8); padding-top: calc(var(--px) * 6); }
+.dv-depth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 46);
+  padding: calc(var(--px) * 6) 0 calc(var(--px) * 8);
+  background: none;
+  border: 0;
+  border-image: url('../../assets/nav-tab.png') 30 30 50 fill / calc(var(--px) * 10) calc(var(--px) * 10) calc(var(--px) * 16) stretch;
+  color: var(--parchment);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
+  font: inherit;
+  font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
+  cursor: pointer;
+}
+.dv-depth.is-on { border-image-source: url('../../assets/nav-tab-down.png'); filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 200, 80, 0.8)); }
+.dv-depth.is-locked { filter: saturate(0.4) brightness(0.8); cursor: default; }
+.dv-depth-count { display: flex; align-items: center; gap: calc(var(--px) * 1); font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
+.dv-depth-count .icon { --icon-size: calc(var(--px) * 14); }
+/* A room's disc, with the kingdoms that stand on it planted above. */
+.dv-node { position: relative; display: flex; flex-direction: column; align-items: center; }
+.dv-flags { display: flex; margin-bottom: calc(var(--px) * -6); z-index: 1; }
+.dv-flags > .dv-flag + .dv-flag { margin-left: calc(var(--px) * -10); }
+.dv-flag { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(0, 0, 0, 0.5)); }
+.dv-flag-name {
+  margin-top: calc(var(--px) * -4);
+  height: calc(var(--px) * 20);
+  padding: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 14);
+  border-image: url('../../assets/ribbon-brown.png') 0 100 fill / 0 calc(var(--px) * 14) stretch;
+  color: #fff6e0;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  line-height: calc(var(--px) * 18);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 14, 4, 0.8);
+}
+.dv-flag.is-you { scale: 1.2; z-index: 2; filter: drop-shadow(0 0 calc(var(--px) * 8) rgba(120, 170, 255, 0.85)); }
+.dv-flag.is-you .dv-flag-name { border-image-source: url('../../assets/ribbon-blue.png'); }
+.dv-boss-name {
+  height: calc(var(--px) * 30);
+  padding: calc(var(--px) * 2) 0 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 30);
+  border-image: url('../../assets/ribbon-red.png') 0 100 fill / 0 calc(var(--px) * 30) stretch;
+  color: #fff6e0;
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 14);
+  line-height: calc(var(--px) * 26);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 10, 4, 0.9);
+}
+.dv-chest-art { flex: none; width: calc(var(--px) * 64); height: calc(var(--px) * 56); background: url('../../assets/chest/chest-golden-open.png') center / contain no-repeat; }
+.dv-dock { --slot-size: calc(var(--px) * 46); }
+.dv-dock .bt-army { margin: 0; }
+.dv-room.is-frontier .dv-plaque { min-width: calc(var(--px) * 180); }
+.dv-plaque .dv-pay { flex-direction: row; flex-wrap: wrap; }
+.dv-disc.is-boss .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
+/* A squad's losses so far, under its count; a hero's wounds under its card. */
+.bt-lost { position: absolute; bottom: calc(var(--px) * -16); left: 50%; translate: -50% 0; color: var(--clay); font-weight: var(--weight-title); font-size: calc(var(--px) * 11); }
+.bt-field-hero { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); }
+
+/* THE PORTAL'S DESCENT (m92): the delve's pieces in violet stone, the shaft
+ * scrolling between the band and the dock. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .dv-body.is-portal { height: 100%; min-height: 0; }
+.dv-body.is-portal {
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(150, 80, 255, 0.22), transparent 65%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(10, 0, 30, 0.5) 100%),
+    url('../../assets/portal-rock.png') 0 0 / calc(var(--px) * 320) calc(var(--px) * 320),
+    #221832;
+}
+.dv-body.is-portal > .dv-stage { flex: 1 1 0; min-height: 0; }
+.pt-shaft { overflow-y: auto; overflow-x: clip; padding-bottom: calc(var(--px) * 8); }
+.dv-body.is-portal .dv-disc:not(.is-boss) { background-image: url('../../assets/portal-node.png'); }
+.dv-body.is-portal .dv-room.is-frontier .dv-disc:not(.is-boss) { background-image: url('../../assets/portal-node-lit.png'); filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(170, 90, 255, 0.8)); }
+.dv-body.is-portal .dv-tag { color: #e4d4ff; }
+.pt-marks { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 2); }
+.pt-milestone { gap: calc(var(--px) * 3); }
+/* The leader: the friends list's gold rank ribbon over its shield. */
+.dv-flag.is-leader::before {
+  content: '';
+  width: calc(var(--px) * 18);
+  height: calc(var(--px) * 24);
+  margin-bottom: calc(var(--px) * -6);
+  background: url('../../assets/rank-gold.png') center / contain no-repeat;
+}
+
+/* The delve's and the Portal's scrollers, and a dungeon's race list, scroll
+ * without a bar: the stair is the scroller (as the Build row and the book). */
+.pt-shaft,
+.wd-race,
+.k-sheet-body:has(> .dv-body) { scrollbar-width: none; }
+.pt-shaft::-webkit-scrollbar,
+.wd-race::-webkit-scrollbar,
+.k-sheet-body:has(> .dv-body)::-webkit-scrollbar { display: none; }
+/* An army on the road, in the dock: its wait's words on the dock's wood. */
+.dv-dock .tr-batch-what,
+.dv-dock .tr-batch-total { color: var(--ink-inverse); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+
+/* The Portal's ribbon rides over the top edge of the shaft's stone, a little
+ * proud of it, so everything under it sits higher (as the window's title
+ * plank stands proud of its frame). */
+.dv-body.is-portal > .wd-ribbon {
+  position: relative;
+  z-index: 2;
+  margin-top: calc(var(--px) * -20);
+  margin-bottom: calc(var(--px) * -4);
+}
+.k-sheet.is-panes > .k-panel > .k-sheet-body:has(> .dv-body.is-portal) { padding-top: calc(var(--px) * 14); overflow: visible; }

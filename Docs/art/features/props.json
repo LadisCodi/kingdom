@@ -73,6 +73,11 @@
     "what": "a small pool of impossibly clear water welling up between pale rocks, lit from within with a soft cyan glow, faint motes of light rising off its surface and a delicate rim of frost-white crystal growing around its edge. Magical but quiet — no beam, no explosion",
     "scale": 0.95
   },
+  "landmark_watchtower": {
+    "name": "A TALL WATCHTOWER",
+    "what": "a lone, very TALL and slender round watchtower of warm cream stone, about four times as tall as it is wide, the tallest thing on the map: a sturdy slightly flared base with a small arched wooden door, a few narrow slit windows climbing the shaft, a crenellated lookout gallery near the top, and above it a steep pointed cone roof of rich blue tiles with a golden finial and a long blue-and-gold pennant streaming from it. A wooden ladder or a few barrels and a couple of rounded bushes at its foot. Proud and lonely, built to see the whole world from — the WHOLE tower, from its foot to the tip of its flag, is inside the frame",
+    "scale": 0.9
+  },
   "ruin_barrow": {
     "name": "A BURIAL BARROW",
     "what": "a low grassy mound with a dark stone doorway broken open in its side, two leaning standing stones flanking the entrance and a slab fallen across the threshold. Long grass over the mound, a cold dark opening. Old, quiet and unwelcoming",

@@ -1,9 +1,10 @@
 // The offers on the map (Docs/features/14-monetization.md §2.6), grouped as
-// one widget under the Survey's widget, top left: the icon of the offer that
-// leads — one with something to claim, else the first on sale — a red badge
-// counting them when there is more than one, and a small wooden sign whose
-// words scroll by: the lead's name, the time to tomorrow's part, or "Claim!".
-// A tap opens the lead's splash with every offer in a row along its top.
+// one widget under the Survey's widget, top left: the icon of one offer —
+// turning to the next each time its sign has scrolled its whole name by,
+// with a short fade — on a soft golden glow with a few sparkles coming and
+// going over it (the splash's light, quieter), and a small wooden sign whose
+// words scroll by: its name, the time to tomorrow's part, or "Claim!". A tap
+// opens the one on show's splash with every offer in a row along its top.
 //
 // Built again only when the set of offers changes; the sign's words are
 // written in place on every notify, so its scroll never restarts.
@@ -48,15 +49,21 @@ function words(game: Game, w: OfferWidget): string {
 export function mountOfferWidgets(game: Game, root: HTMLElement): void {
   let key = '';
   let lead: OfferWidget | null = null;
+  /** Which offer is on show: the next one each lap of the sign. */
+  let turn = 0;
   // The words twice, one after the other, so the scroll loops without a
   // seam: the track moves by exactly one copy and starts again.
   const texts = [el('span', { class: 'ofw-text' }, ''), el('span', { class: 'ofw-text', 'aria-hidden': 'true' }, '')];
-  const badge = el('span', { class: 'ofw-count', 'aria-hidden': 'true' }, '');
   const iconSlot = el('span', { class: 'ofw-slot' });
+  // A sparkle at each spot, on its own delay, so they never light together.
+  const sparkles = [['78%', '14%', 1, 0], ['16%', '30%', 0.7, 1.3], ['70%', '68%', 0.8, 2.4]] as const;
   const node = el('button', { class: 'ofw', type: 'button', 'aria-label': 'Offers' },
+    el('span', { class: 'ofw-glow', 'aria-hidden': 'true' }),
     iconSlot,
-    el('span', { class: 'ofw-dot', 'aria-hidden': 'true' }),
-    badge,
+    ...sparkles.map(([left, top, s, delay]) => el('span', {
+      class: 'ofw-sparkle', 'aria-hidden': 'true',
+      style: `left:${left};top:${top};--s:${s};animation-delay:${delay}s`,
+    })),
     el('span', { class: 'ofw-sign' }, el('span', { class: 'ofw-track' }, ...texts)));
   node.addEventListener('click', () => { if (lead !== null) game.openOfferSplash(lead.sku, true); });
   root.replaceChildren(node);
@@ -66,21 +73,37 @@ export function mountOfferWidgets(game: Game, root: HTMLElement): void {
     const showing = list.length > 0 && !game.hasOpenSheet() && game.offerSplashOnScreen() === null;
     setHidden(root, !showing);
     if (!showing) return;
-    lead = list[0];
+    // The next offer each lap of the sign, in order — only what the widget
+    // shows, not the sim.
+    lead = list[turn % list.length];
     const next = `${lead.sku}:${lead.state}`;
     if (next !== key) {
+      const turned = key !== '' && list.length > 1;
       key = next;
       iconSlot.replaceChildren(offerIcon(lead));
+      if (turned) {
+        node.classList.remove('is-turning');
+        void node.offsetWidth; // restart the fade
+        node.classList.add('is-turning');
+      }
     }
     const text = words(game, lead);
     for (const t of texts) if (t.textContent !== text) t.textContent = text;
-    const count = formatCount(list.length);
-    if (badge.textContent !== count) badge.textContent = count;
-    badge.hidden = list.length < 2;
     node.classList.toggle('is-ready', lead.state === 'ready');
     node.setAttribute('aria-label', list.length > 1 ? `${formatCount(list.length)} offers` : lead.name);
   };
 
   game.onChange(refresh);
+  // The next offer comes when the sign has carried the whole of this one's
+  // words past: on each lap of its scroll. Without motion there is no lap,
+  // so a clock of the same length stands in.
+  const track = node.querySelector<HTMLElement>('.ofw-track')!;
+  const turnNext = (): void => { turn += 1; refresh(); };
+  track.addEventListener('animationiteration', turnNext);
+  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) setInterval(turnNext, ROTATE_MS);
   refresh();
 }
+
+/** One lap of the sign (offer.css `ofw-scroll`): how long an offer stays
+ *  when nothing moves. */
+const ROTATE_MS = 7000;

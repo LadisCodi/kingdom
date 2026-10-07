@@ -35,10 +35,11 @@
         "freeGems": { "type": "list", "of": { "type": "int" }, "doc": "Free column: Gems." },
         "paidGems": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Gems." },
         "paidGoldKeys": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: gold keys." },
-        "paidFragments": {
+        "paidSilverKeys": { "type": "list", "of": { "type": "int", "min": 0 }, "doc": "Paid column: silver keys." },
+        "paidHeroXp": {
           "type": "list",
           "of": { "type": "int", "min": 0 },
-          "doc": "Paid column: relic fragments a level pays, of relics already met."
+          "doc": "Paid column: Hero XP, with the Tavern’s and the tree’s bonuses on it as any Hero XP."
         },
         "paidStardust": { "type": "list", "of": { "type": "int" }, "doc": "Paid column: Stardust." },
         "freeItems": {

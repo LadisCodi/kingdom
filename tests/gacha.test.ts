@@ -4,7 +4,7 @@
 // Node, no DOM. `gachaPrizes` is a pure function on `PullResult[]` precisely
 // so the shape the reveal screen draws is testable without one — the screen
 // then only owns the timing.
-import { grantItem } from '../src/sim/bag';
+import { grantItem, itemCount } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
@@ -17,7 +17,7 @@ import {
 import { heroMaxHp } from '../src/sim/heroHealth';
 import { partyPower } from '../src/sim/combat';
 import type { PullResult } from '../src/sim/heroes';
-import { HERO_LADDER, HEROES } from '../src/sim/data/definitions';
+import { BANNERS, HERO_LADDER, HEROES } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
 import { freshGame, freshPresenter } from './helpers';
 
@@ -29,7 +29,7 @@ const result = (over: Partial<PullResult> = {}): PullResult => ({
   duplicate: false,
   fragments: 0,
   fragmentsOf: null,
-  stardust: 0,
+  loot: [],
   guaranteed: false,
   guaranteedLegendary: false,
   ...over,
@@ -87,16 +87,26 @@ describe('fragments are the second door to a hero', () => {
 
 describe('a batch condenses into prizes', () => {
   it('sums one currency into one widget', () => {
-    const prizes = gachaPrizes([
-      result({ stardust: 50 }), result({ stardust: 50 }), result({ stardust: 50 }),
-    ]);
+    const dust = (amount: number) => result({ loot: [{ kind: 'currency', currency: 'Stardust', amount }] });
+    const prizes = gachaPrizes([dust(50), dust(50), dust(50)]);
     expect(prizes).toEqual([{ kind: 'currency', currency: 'Stardust', amount: 150 }]);
+  });
+
+  it('stacks items and loot fragments with the rest', () => {
+    const prizes = gachaPrizes([
+      result({ loot: [{ kind: 'item', item: 'FoodChest10m', amount: 1 }, { kind: 'fragments', heroId: 'Bard', amount: 1 }] }),
+      result({ loot: [{ kind: 'item', item: 'FoodChest10m', amount: 1 }], fragments: 10, fragmentsOf: 'Bard' }),
+    ]);
+    expect(prizes).toEqual([
+      { kind: 'item', item: 'FoodChest10m', amount: 2 },
+      { kind: 'fragments', heroId: 'Bard', amount: 11 },
+    ]);
   });
 
   it('stacks fragments per hero rather than per call', () => {
     const prizes = gachaPrizes([
-      result({ fragments: 3, fragmentsOf: 'Bard' }),
-      result({ fragments: 3, fragmentsOf: 'Bard' }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
       result({ fragments: 6, fragmentsOf: 'Wizard' }),
     ]);
     const frags = prizes.filter((p): p is Extract<GachaPrize, { kind: 'fragments' }> =>
@@ -109,9 +119,9 @@ describe('a batch condenses into prizes', () => {
 
   it('puts heroes last, so the sequence arrives at them', () => {
     const prizes = gachaPrizes([
-      result({ stardust: 50 }),
-      result({ heroId: 'Wizard', rarity: 'Rare', stardust: 50 }),
-      result({ fragments: 3, fragmentsOf: 'Bard', stardust: 50 }),
+      result({ loot: [{ kind: 'currency', currency: 'Stardust', amount: 50 }] }),
+      result({ heroId: 'Wizard', rarity: 'Rare' }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
     ]);
     expect(prizes[prizes.length - 1]).toEqual({ kind: 'hero', heroId: 'Wizard' });
   });
@@ -155,9 +165,9 @@ describe('the presenter hands a call to the reveal screen', () => {
     game.doPullMany('basic', 10);
 
     expect(game.gachaReveal!.calls).toBe(10);
-    // Ten calls never draw ten Stardust tiles.
-    const currencies = game.gachaReveal!.prizes.filter((p) => p.kind === 'currency');
-    expect(currencies).toHaveLength(1);
+    // Ten calls never draw ten Stardust tiles: one widget a currency.
+    const currencies = game.gachaReveal!.prizes.flatMap((p) => p.kind === 'currency' ? [p.currency] : []);
+    expect(new Set(currencies).size).toBe(currencies.length);
   });
 
   it('opens nothing when the purse cannot pay', () => {
@@ -270,36 +280,37 @@ describe('a level costs Hero XP', () => {
   });
 });
 
-// A full star is worth eight levels and a point of one is worth none: the
-// cap climbs 10, 18, 26, 34, 42, 50 (Docs/features/10-heroes.md §4).
-describe('a full star raises the level cap', () => {
-  it('caps at ten with no star, eight more a star, and fifty at the top', () => {
+// Every point is worth ten levels, as in Kingshot: the cap climbs 10, 20,
+// 30… and every star full is 310 (Docs/features/10-heroes.md §4).
+describe('every ascension point raises the level cap', () => {
+  it('caps at ten with none, ten more a point, and 310 at the top', () => {
     const per = HERO_LADDER.ascensionStepsPerStar;
     expect(heroLevelCap(0)).toBe(10);
-    expect(heroLevelCap(per - 1)).toBe(10);
-    expect(heroLevelCap(per)).toBe(18);
+    expect(heroLevelCap(1)).toBe(20);
+    expect(heroLevelCap(per)).toBe(10 + 10 * per);
     expect(fullStars(per * 2 + 3)).toBe(2);
-    expect(heroLevelCap(maxAscension())).toBe(50);
+    expect(heroLevelCap(maxAscension())).toBe(310);
   });
 
-  it('holds the level at the cap until the star is finished', () => {
+  it('holds the level at the cap until the next point', () => {
     const state = freshGame();
     grantHero(state, 'Bard');
     addToWallet(state.kingdom.wallet, 'HeroXp', 1_000_000);
     state.heroes.levels.Bard = 10;
-    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar - 1;
+    state.heroes.ascension.Bard = 0;
     expect(levelUpHero(state, 'Bard')).toBe('AscensionCapped');
-    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar;
+    state.heroes.ascension.Bard = 1;
     expect(levelUpHero(state, 'Bard')).toBe('Levelled');
   });
 
-  it('keeps the XP curve payable over fifty levels', () => {
-    // 1.6 a level is fine over ten and absurd over fifty: level 50 alone
-    // would cost 4e11. The curve flattens as the ladder stretches.
+  it('keeps the XP curve payable over the whole ladder', () => {
+    // Over 310 levels the curve has to be nearly flat: 1.09 a level would
+    // make level 309 cost 4e11. The whole ladder costs about what fifty
+    // levels did.
     let total = 0;
-    for (let l = 1; l < 50; l += 1) total += xpLevelCost(l);
+    for (let l = 1; l < HERO_LADDER.heroMaxLevel; l += 1) total += xpLevelCost(l);
     expect(xpLevelCost(1)).toBeLessThan(200);
-    expect(xpLevelCost(49)).toBeLessThan(10_000);
+    expect(xpLevelCost(HERO_LADDER.heroMaxLevel - 1)).toBeLessThan(10_000);
     expect(total).toBeLessThan(200_000);
   });
 });
@@ -326,5 +337,36 @@ describe('an ascension point lifts every stat', () => {
     expect(heroStats(state, 'Bard').dmg).toBeGreaterThan(before.stats.dmg);
     expect(heroMaxHp(state, 'Bard')).toBeGreaterThan(before.hp);
     expect(power(maxAscension())).toBeGreaterThan(power(0));
+  });
+});
+
+describe('a call draws its loot (Docs/features/10-heroes.md §6.4)', () => {
+  it('pays only what its table names, into the purse and the Bag', () => {
+    const state = freshGame();
+    grantItem(state, 'GoldKey', 200);
+    const table = BANNERS.advanced.loot;
+    const items = new Set(table.flatMap((e) => (e.reward === 'Item' ? [e.item] : [])));
+    for (let i = 0; i < 200; i++) {
+      for (const l of pull(state, 'advanced').loot) {
+        if (l.kind === 'fragments') expect(BANNERS.advanced.weights[HEROES[l.heroId].rarity]).toBeGreaterThan(0);
+        if (l.kind === 'item') {
+          expect(items.has(l.item)).toBe(true);
+          expect(itemCount(state, l.item)).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  // The Kingshot shape: about one fragment a call, and most of what a call
+  // draws is for the town and the levels rather than a hero.
+  it('draws about one fragment a call', () => {
+    const state = freshGame();
+    grantItem(state, 'SilverKey', 1000);
+    let fragments = 0;
+    for (let i = 0; i < 1000; i++) {
+      for (const l of pull(state, 'basic').loot) if (l.kind === 'fragments') fragments += l.amount;
+    }
+    expect(fragments / 1000).toBeGreaterThan(0.9);
+    expect(fragments / 1000).toBeLessThan(1.4);
   });
 });

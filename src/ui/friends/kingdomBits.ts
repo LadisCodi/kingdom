@@ -33,5 +33,13 @@ export function townhallTag(level: number): HTMLElement {
     `Townhall ${formatExact(level)}`);
 }
 
+/** A place on a podium: a hanging ribbon, gold, silver and bronze, plain
+ *  wood past the third. */
+export function rankRibbon(rank: number | null): HTMLElement {
+  const tone = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'plain';
+  return el('span', { class: `fr-rank is-${tone}`, ...(rank === null ? { 'aria-hidden': 'true' } : { 'aria-label': `Place ${formatExact(rank)}` }) },
+    rank === null ? '' : formatExact(rank));
+}
+
 /** Accept, decline and add: the kit's painted knob, drawn a size up. */
 export const roundKnob = (b: HTMLButtonElement): HTMLButtonElement => { b.classList.add('fr-round'); return b; };

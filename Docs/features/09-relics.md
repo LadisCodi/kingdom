@@ -107,8 +107,8 @@ never a discount, because a discount dies at 100%.
     button; the store sells a **Relic fragments** pack for Gems — 5 bound
     fragments of the relics already found, at random (900 Gems,
     `relics.fragments.fragmentPackGems` · `fragmentPackSize`).
-    It opens on the **gacha's reveal**, one piece a tile, keystones last in
-    gold; closing it, the pieces **fly to the nav's Bag** — as everything that
+    It opens on the **gacha's reveal** from the violet **relic chest**, one
+    piece a card, keystones last in gold; closing it, the pieces **fly to the nav's Bag** — as everything that
     lands in the Bag does, from wherever it was claimed.
   - **Every fragment has its own art**: a broken piece of that relic, the
     keystone its heart in a gold rim (`<sprite>_frag<slot>`). A held slot
@@ -142,8 +142,9 @@ never a discount, because a discount dies at 100%.
   - Houses an awake Crown pays, and buildings with crews an awake Hammer
     speeds, wear a **+X%** badge.
   - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
-  - A window that closes raises a tab on the right edge — **The Tribute Crown
-    is asleep** · Activate — one tab for all of them (*2 relics are asleep*).
+  - A window that closes raises the *Relic asleep* notice
+    ([`26-notices.md`](26-notices.md) §2.2) — **The Tribute Crown is asleep**
+    — one bubble for all of them (*2 relics are asleep*); Go opens the relic.
 
 ### 2.2 The world relics' spells
 

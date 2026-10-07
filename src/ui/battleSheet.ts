@@ -29,10 +29,10 @@
 
 import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import type { UnitId, Wallet } from '../sim/state';
+import type { HeroId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
-import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
+import { btn, headPanel, hpBar, iconEl, sectionHead, sheet } from './kit';
 import { unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
 
@@ -57,6 +57,9 @@ export interface BattleView {
   fallen: number;
   actionLabel: string;
   onFight: () => void;
+  /** What the fight is about beyond the two boards — a world fight's loot
+   *  and ground — side by side over the price row. */
+  widgets?: readonly HTMLElement[];
   /** Why the fight cannot start. A power SHORTFALL is never one of these: it
    *  warns and lets the player go anyway. */
   blocked: string | null;
@@ -89,6 +92,40 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
     trailing: [iconEl('power', { size: 'sm' }), formatExact(power)],
     cls: `bt-army ${cls}`,
   }, ...groups);
+
+/** The enemy's board alone — its red plank, its power and its squads — for
+ *  a screen that shows what a fight is against before it is composed (a
+ *  world camp's card). */
+export const enemyPanel = (squads: readonly EnemySquad[], power: number, portrait: (u: UnitId) => HTMLElement): HTMLElement =>
+  armyBox('Enemy', power, 'is-enemy', [slotGroup('Troops', squads.map((s) => squadCell(portrait(s.unitId), s.count)), 0, 'is-troops')]);
+
+/** An army already in the field — camped at a dungeon or in the Portal —
+ *  as the deployment draws the player's own: troops above, heroes below,
+ *  the empty slots kept so it reads as the same board. Nothing on it is
+ *  pressed: what went out is what fights (Docs/proposals/world-menus.md
+ *  §3.9). A squad's losses so far ride under its count; a hero's wounds on
+ *  a bar under its card. */
+export function fieldArmyPanel(
+  game: Game,
+  army: {
+    power: number;
+    troops: ReadonlyArray<{ unitId: UnitId; count: number; lost: number }>;
+    heroes: ReadonlyArray<{ heroId: HeroId; hp: number; hpMax: number }>;
+  },
+): HTMLElement {
+  const troops = army.troops.map((s) => {
+    const cell = squadCell(unitBust(s.unitId, 'k-portrait-art'), s.count);
+    cell.classList.add('is-mine');
+    if (s.lost > 0) cell.append(el('span', { class: 'bt-lost' }, `−${formatExact(s.lost)}`));
+    return cell;
+  });
+  const heroes = army.heroes.map((h) => el('span', { class: 'bt-field-hero' },
+    heroCard(game, h.heroId, { small: true }), hpBar(Math.round(h.hp), Math.round(h.hpMax))));
+  return armyBox('Your army', army.power, 'is-mine', [
+    slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
+    ...(heroes.length > 0 ? [slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
+  ]);
+}
 
 /** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
  *  they get more room and a shape of their own beside the troops' rounds. */
@@ -221,6 +258,7 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     partyBoard(game, view),
     sectionHead('Troops'),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
+    ...(view.widgets === undefined || view.widgets.length === 0 ? [] : [el('div', { class: 'bt-widgets' }, ...view.widgets)]),
     actionBox(game, view),
   );
   // TALL: the two boards, the roster and the button are all read together,

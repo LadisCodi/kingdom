@@ -4,6 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import type { SimTrack } from './analytics';
+import type { News } from './notices';
 import { DISTRICTS } from './data/definitions';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
@@ -451,6 +452,21 @@ export interface WorldState {
   /** The last world-server effect applied (WorldEffect.seq): those at or
    *  below it are not applied again when the server sends them again. */
   effectSeq: number;
+  /** When the last Portal opening the player was told of opened (epoch ms;
+   *  0 = none): its news is filed once (26-notices.md §2.1). */
+  portalAnnounced: number;
+  /** Portal ranking Gems won and not yet claimed, one per opening
+   *  (19 §10.4, 26-notices.md §2.2). */
+  portalPrizes: PortalPrize[];
+}
+
+/** A closed Portal opening's place for the player, and what it pays. */
+export interface PortalPrize {
+  event: number;
+  place: number;
+  of: number;
+  floor: number;
+  gems: number;
 }
 
 export interface WorldArmyOut {
@@ -778,8 +794,10 @@ export interface GameState {
    * of its seed (sim/world/board.ts).
    */
   world: WorldState;
-  /** Discoveries made since the UI last drained them. Transient — a banner
-   *  missed at quit simply doesn't replay. */
+  /** The news inbox (Docs/features/26-notices.md §7, sim/notices.ts):
+   *  newest first, capped, kept until each bubble is opened. */
+  notices: News[];
+  /** Discoveries made since the UI last drained them. Transient. */
   pendingDiscoveries: string[];
   /** Analytics events made since the game last drained them (sim/analytics.ts).
    *  Transient, never saved. */

@@ -14,7 +14,7 @@ import type { JoinResult, SendArmyRequest, WorldCommand, WorldCommandKind, World
 import { newOpId, type WorldConnect, type WorldServerApi } from './local';
 import type { WorldBody } from './serve';
 import type {
-  CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, WorldSnapshot,
+  CollectResult, CampFightResult, CommandResult, DelveResult, SeatBoost, SendResult, WorldSnapshot,
 } from './types';
 
 /** One trip to the server: its answer, or whether trying again could help. */
@@ -81,12 +81,14 @@ export class RemoteWorldServer implements WorldServerApi {
   reportSeen(indices: number[]): Promise<CommandResult> { return this.command({ kind: 'reportSeen', indices }); }
   finish(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'finish', index }, asSeat); }
   hurry(index: number, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurry', index, seconds }); }
+  hurryArmy(armyId: string, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurryArmy', armyId, seconds }); }
   hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> { return this.command({ kind: 'hostRelic', index, relic, level }); }
   unhostRelic(relic: ArtifactId): Promise<CommandResult> { return this.command({ kind: 'unhostRelic', relic }); }
   collect(index: number, asSeat?: number): Promise<CollectResult> { return this.command({ kind: 'collect', index }, asSeat); }
   sendArmy(req: SendArmyRequest, asSeat?: number): Promise<SendResult> { return this.command({ kind: 'sendArmy', req }, asSeat); }
   recall(armyId: string, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'recall', armyId }, asSeat); }
   delveRoom(armyId: string): Promise<DelveResult> { return this.command({ kind: 'delveRoom', armyId }); }
+  fightCamp(armyId: string): Promise<CampFightResult> { return this.command({ kind: 'fightCamp', armyId }); }
   descendPortal(armyId: string): Promise<DelveResult> { return this.command({ kind: 'descendPortal', armyId }); }
 
   async setBoost(boost: SeatBoost): Promise<void> {
@@ -95,6 +97,10 @@ export class RemoteWorldServer implements WorldServerApi {
 
   async setCrest(crest: string | null): Promise<void> {
     await this.send({ kind: 'setCrest', crest });
+  }
+
+  async setTownhall(level: number): Promise<void> {
+    await this.send({ kind: 'setTownhall', level });
   }
 
   acknowledge(seq: number): void {

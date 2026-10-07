@@ -467,10 +467,10 @@ export const TECH_STATS = {
     reads: 'heroes.ts#addHeroXp',
   },
   summonStardust: {
-    what: 'the multiplier on the Stardust every call on a banner pays',
+    what: 'the multiplier on the Stardust a call on a banner draws',
     ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} Stardust from every call' },
-    reads: 'heroes.ts#pullStardust',
+    says: { percent: '{v} Stardust from calls' },
+    reads: 'heroes.ts#callStardust',
   },
 } as const satisfies Record<string, StatDef>;
 

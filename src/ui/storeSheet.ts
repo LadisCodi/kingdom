@@ -1,7 +1,8 @@
 // THE STORE (Docs/features/14-monetization.md §2.1), after the mockups
 // Docs/art/ui/mockups/m95–m98: a screen of its own — a magic merchant's shop
 // behind it, soft and out of focus, so the wares are what the eye finds —
-// with its title plank, its close and a strip of wooden tabs:
+// with a strip of wooden tabs and its close along the top, fixed, over the
+// open tab's page, which scrolls:
 //
 //   * Offers (while there is one): a banner each, its figure, its name, a
 //     summary of what it gives and its price — a tap opens its splash — and,
@@ -24,7 +25,7 @@ import { GEM_PACK_ORDER, HEROES, KINGDOM_DEF, STORE } from '../sim/data/definiti
 import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
-import { btn, closeKnob, currencyIcon, iconEl, sheet, type IconName } from './kit';
+import { btn, closeKnob, ctaBadge, currencyIcon, iconEl, sheet, type IconName } from './kit';
 import { offerTile } from './offerSplash';
 import { kindIcon } from './offerWidget';
 import { heroesTab } from './storeHeroes';
@@ -75,7 +76,7 @@ function tabStrip(game: Game, tabs: StoreTab[], open: StoreTab): HTMLElement {
       class: `stx-tab${t === open ? ' is-open' : ''}`, type: 'button', role: 'tab',
       'aria-selected': t === open ? 'true' : 'false',
     }, iconEl(TAB[t].icon, { size: 'lg' }), el('span', {}, TAB[t].label),
-    ...(news(t) && t !== open ? [el('span', { class: 'stx-dot', 'aria-hidden': 'true' })] : []));
+    ...(news(t) && t !== open ? [ctaBadge(1, `store-tab:${t}`)] : []));
     b.addEventListener('click', () => game.setStoreTab(t));
     return b;
   }));
@@ -90,11 +91,13 @@ const ribbon = (text: string, extra?: HTMLElement): HTMLElement =>
 /** What stands on an offer's banner: its cut-out, its hero, or its icon. */
 function offerFigure(id: StoreSkuId): HTMLElement {
   const s = STORE[id];
-  const url = (s.art !== '' ? spriteUrl(s.art) : null)
-    ?? (s.hero !== null ? spriteUrl(HEROES[s.hero].sprite) : null)
-    ?? spriteUrl(s.sprite);
+  const art = s.art !== '' ? spriteUrl(s.art) : null;
+  const hero = art === null && s.hero !== null ? spriteUrl(HEROES[s.hero].sprite) : null;
+  const url = art ?? hero ?? spriteUrl(s.sprite);
   return url === null ? el('span', { class: 'stx-offer-figure is-empty' }, iconEl(kindIcon(id), { size: 'lg' }))
-    : spriteImgAt(url, 'stx-offer-figure');
+    // A hero stands taller and narrower than a cut-out: it is drawn larger,
+    // rising out of the frame, so it reads as large as one.
+    : spriteImgAt(url, `stx-offer-figure${hero !== null ? ' is-hero' : ''}`);
 }
 
 function offerBanner(game: Game, card: OfferCard): HTMLElement {
@@ -227,8 +230,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         : gemsTab(game);
   const close = closeKnob(() => game.dismiss(), 'Close the store');
   const body = el('div', { class: 'stx' },
-    el('header', { class: 'stx-head' }, el('h1', { class: 'stx-title' }, 'Store'), close),
-    tabStrip(game, tabs, open),
+    el('header', { class: 'stx-head' }, tabStrip(game, tabs, open), close),
     el('div', { class: 'stx-page', 'data-keep-scroll': `store-${open}` }, page));
   tickCountdowns(game);
   const screen = sheet({ title: 'Store', onClose: () => game.dismiss(), tall: true, bare: true }, body);

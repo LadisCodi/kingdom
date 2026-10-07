@@ -1,0 +1,22 @@
+CREATE A NEW IMAGE. Do not edit or export the attached files: they are ONLY references. The first is the STYLE reference — art already made for this game: heroes, a building and a grass tile; the third, a background for this same screen. Match that style exactly. The second is the LAYOUT reference — the battle screen your image goes behind.
+
+=== STYLE ===
+Flat 2D cartoon illustration for a cozy medieval-fantasy mobile strategy game, the same hand as the style reference: bold clean dark-brown outlines, flat colour with simple cel shading (one shadow tone and one small highlight per material), no gradients, no photographic textures, no painterly brushwork, no 3D render. Big simple readable shapes. Lit from the top left.
+
+=== WHAT THIS IS ===
+A full-screen BACKGROUND for the battle screen of the game: the floor of a battlefield seen from DIRECTLY ABOVE (top-down, 90 degrees overhead, no horizon, no perspective, no sky). Portrait, 2:3. On top of it the game draws two armies as round medallion tokens with cream and gold rings: the enemy in the upper half, the player in the lower half, facing each other across the middle (see the layout reference: your image replaces its plain brown background).
+
+So the background must never compete with the tokens:
+- The central 70% of the image is calm: mostly one ground material, low contrast, few small details, no strong shapes, no bright spots.
+- Overall mid-to-dark values and slightly muted colour, so cream and gold tokens pop on top of it. Darker toward the edges and corners (a soft vignette drawn as flat darker tones, not an airbrush).
+- The interesting props go at the left and right edges and in the corners, partly cut off by the frame.
+- Symmetric enough that neither army has a better side.
+
+=== THE PLACE ===
+The THIRD attached image is a background already made for this same screen (the outdoor field). Match its treatment exactly — top-down view, the same line weight, the same density of detail, the same value range, calm middle, props only at the edges and corners. Only the place changes:
+The boss's hall at the bottom of a dungeon: a floor of large dark polished flagstones in deep slate and plum tones, with a wide very faint engraved circle in the middle (barely visible, it must not compete with the tokens). In the four corners: tall iron braziers with flames, the bases of thick carved stone pillars, hanging chains, a few heaps of gold coins and skulls, torn crimson banners on the floor. A more dramatic, ominous mood than an ordinary dungeon room, but still readable and cozy-cartoon, not horror.
+
+=== AVOID ===
+No characters, no creatures, no soldiers, no tokens, no medallions, no UI, no frames, no text, no letters, no numbers, no logo, no watermark. No perspective view, no horizon. Fill the whole canvas edge to edge: no border, no transparency.
+
+Raw image only — do not resize, verify or post-process it. Give me the download link for the PNG.

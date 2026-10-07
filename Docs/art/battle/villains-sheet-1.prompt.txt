@@ -1,0 +1,19 @@
+CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — hero sheets already made for this game. Match that style exactly: it is LOCKED; do not drift.
+
+=== STYLE ===
+Flat 2D cartoon illustration for a cozy medieval-fantasy mobile strategy game, NOT 3D, NOT Pixar, NOT a render, NOT anime. Bold, clean dark-brown outlines on every shape, uniform in weight. Flat colour with simple cel shading: one shadow tone and one small highlight per material, no gradients, no textures, no ambient occlusion. Big simple readable shapes, friendly slightly chunky proportions — large head, big hands and boots. Small simple eyes, expressive faces. Warm saturated palette, steel grey for metal, gold accents. Lit from the top left. Draw as if shown 200 px tall: nothing thinner than the outline.
+
+=== WHAT THESE ARE ===
+VILLAINS: the bosses that wait at the bottom of the dungeons, the heroes' enemies. Imposing and clearly villainous — scowls, sneers, a sinister grin, a darker palette than the heroes, a touch of glowing eyes or eerie light — but drawn in exactly the same friendly cartoon hand as the heroes: more storybook villain than horror. No gore: macabre stops at bones, skulls and coloured smoke. No mounts, no pets, no extra characters.
+
+=== COMPOSITION ===
+One landscape image, 3:2, three villains side by side, each in its own third of the canvas, the same height (about 80% of the canvas height), full body, standing, facing the viewer with a touch of 3/4. Both hands and both feet visible; every weapon entirely inside its third. Nothing crosses into a neighbouring third: keep a clear 40 px empty band between figures. Each villain is a different being — vary body type, height and silhouette as described.
+
+=== THE THREE VILLAINS ===
+1. THE BARROW THANE — the undead king of the Hollow Barrow, a sword-and-shield fighter who mends his own wounds. A tall gaunt skeleton king, broad-shouldered, standing planted. Bone-white skull face with a heavy jaw and a sneering grin, two pale green lights for eyes. A rusted iron crown with three tall points, a moth-eaten crimson royal cloak with a ragged hem and a grey fur collar, old bronze scale armour over his ribs. In one hand a broad notched bronze sword, in the other a big round bronze shield with a grassy burial-mound emblem. A thin wisp of pale green soul-smoke curls from his shield hand.
+
+2. THE DROWNED CHOIR — the ghost of a chapel choir-mistress who drowned with her singers in the Sunken Chapel; she fights at range by singing. A slender ghostly woman, sea-green skin, long dripping dark-teal hair tangled with seaweed, hollow glowing white eyes, mouth open mid-hymn. A tattered white choir robe with a red collar, soaked and torn at the hem, small barnacles and a starfish on it, bare feet. One hand raised conducting with a pale whalebone baton; three or four musical notes made of water swirl from her mouth and baton toward the right — those notes are what she fires. An open waterlogged hymn book hangs from her belt on a chain.
+
+3. THE SLAG WARDEN — the guardian of the Drowned Ironworks, a defender who fights with a long-handled tool. A hulking, barrel-chested figure made of cooled black slag and riveted iron plates, bright orange molten cracks glowing between them, the widest and heaviest of the three. A foundry helmet with a narrow slit visor and glowing orange eyes behind it, a heavy leather smith's apron. Planted with feet apart, a huge riveted iron plate strapped across his front like a shield. In both hands a long iron foundry poker ending in a spear point, held upright. A little steam rising from his shoulders.
+
+Do not draw grid lines, cell borders, labels, captions, names, text, shadows, ground, pedestal or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

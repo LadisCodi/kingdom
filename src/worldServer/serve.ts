@@ -47,9 +47,9 @@ export type Served =
 /** Every command the server takes. A record, not a list, so a command added
  *  to `WorldCommands` and missing here is a type error, not a 400 online. */
 const KIND_TABLE: Record<WorldCommandKind, true> = {
-  join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true,
-  collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, descendPortal: true, setBoost: true,
-  setCrest: true, hostRelic: true, unhostRelic: true,
+  join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true, hurryArmy: true,
+  collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, fightCamp: true, descendPortal: true, setBoost: true,
+  setCrest: true, setTownhall: true, hostRelic: true, unhostRelic: true,
 };
 const KINDS: ReadonlySet<string> = new Set(Object.keys(KIND_TABLE));
 
@@ -67,6 +67,7 @@ export function badBody(body: unknown): string | null {
   if (cmd === null || typeof cmd !== 'object' || !KINDS.has(cmd.kind as WorldCommandKind)) return 'cmd';
   if (cmd.kind === 'join' && typeof cmd.nickname !== 'string') return 'nickname';
   if (cmd.kind === 'setCrest' && cmd.crest !== null && (typeof cmd.crest !== 'string' || cmd.crest.length > 32)) return 'crest';
+  if (cmd.kind === 'setTownhall' && (!Number.isInteger(cmd.level) || (cmd.level as number) < 1 || (cmd.level as number) > 999)) return 'level';
   return null;
 }
 
@@ -124,7 +125,7 @@ async function seatNewPlayer(store: BoardStore, req: WorldRequest, nickname: str
 }
 
 function refusal(kind: WorldCommandKind, why: 'NotARival' | 'NoBoard'): unknown {
-  return kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest' ? null : { ok: false, why };
+  return kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest' || kind === 'setTownhall' ? null : { ok: false, why };
 }
 
 /** Boards in memory, for the tests — and the shape the tables keep. */

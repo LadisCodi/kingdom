@@ -382,6 +382,8 @@ export const RUSH = balance.rush;
 
 // The Bag's own settings (Docs/plans/relics-and-bag.md).
 export const BAG = balance.bag;
+/** The notices column and the news inbox (Docs/features/26-notices.md). */
+export const NOTICES = balance.notices;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
 export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
@@ -1941,11 +1943,24 @@ export interface BannerDef {
   /** The store stands a hero of its rarest rarity on this banner, a new one
    *  each visit; false → its key. */
   showsHero: boolean;
-  fragmentsPerMiss: number;
-  pullStardust: number;
+  /** How many prizes a call draws from `loot`, each count as likely. */
+  lootDrawsMin: number;
+  lootDrawsMax: number;
+  loot: BannerLoot[];
   /** Free pulls a day for a rewarded ad, and how long between them. */
   freePerDay: number;
   freeCooldownSeconds: number;
+}
+
+/** One line of a banner's loot table (Docs/features/10-heroes.md §6.4). */
+export interface BannerLoot {
+  reward: 'Fragments' | 'Stardust' | 'HeroXp' | 'Item';
+  /** Fragments: of a hero of this rarity. '' otherwise. */
+  rarity: HeroRarity | '';
+  /** Item: which. '' otherwise. */
+  item: ItemId | '';
+  amount: number;
+  weight: number;
 }
 
 const bannerContent: Record<BannerId, { name: string }> = {
@@ -1979,6 +1994,8 @@ export interface GarrisonDef {
   tier: number;
   takeSeconds: number;
   supplies: Wallet;
+  /** Hero XP a lair of this tier teaches when its prize is claimed. */
+  heroXp: number;
   /** Items a lair of this tier puts in the Bag when its prize is claimed. */
   rewardItems: Partial<Record<ItemId, number>>;
 }
@@ -2066,6 +2083,8 @@ export interface WorldDistrictDef {
   produces: '' | 'Gold' | 'Wood' | 'Food' | 'Stone' | 'Knowledge';
   perHour: number;
   store: number;
+  /** How many buildings it holds: a Fortress, a Chapel (19 §7.2). */
+  slots: number;
 }
 
 /** An upgrade built into a district that stands, and its levels (19 §7.2). */
@@ -2097,6 +2116,11 @@ export interface WorldTravelDef {
 
 export const WORLD_TRAVEL = balance.worldTravel as WorldTravelDef;
 
+/** What a hex's ground does to a fight on it, for both sides (19 §4.2). */
+export interface WorldTerrainCombatRule { ground: string; unit: UnitId; attack: number }
+
+export const WORLD_TERRAIN_COMBAT = balance.worldTerrainCombat as readonly WorldTerrainCombatRule[];
+
 /** A dungeon's depths and rooms, and what a room pays (19 §8.1). */
 export interface WorldDungeonDef {
   depths: number;
@@ -2113,6 +2137,8 @@ export interface WorldDungeonDef {
   bossRewardMultiplier: number;
   /** Closing a dungeon pays its last boss again, this many times over. */
   closeRewardMultiplier: number;
+  /** …and its last boss's Hero XP this many times over: the big prize. */
+  closeHeroXpMultiplier: number;
   /** A closed dungeon comes back after a roll between these many hours. */
   returnHoursMin: number;
   returnHoursMax: number;
@@ -2131,7 +2157,6 @@ export interface WorldPortalDef {
   openWeekday: number;
   openDays: number;
   floors: number;
-  attemptsPerDay: number;
   powerStart: number;
   powerGrowth: number;
   rewardBase: number;
@@ -2218,7 +2243,9 @@ export const AD = balance.ads;
 /** Where a SKU is sold (Docs/features/14-monetization.md §2). */
 export type StoreShelf = 'gems' | 'bag' | 'offer' | 'daily' | 'survey';
 /** What opens an offer's window (sim/offers.ts). */
-export type OfferTrigger = 'always' | 'door' | 'after' | 'townhall' | 'manaLow' | 'buildersBusy';
+export type OfferTrigger =
+  | 'always' | 'door' | 'after' | 'townhall'
+  | 'manaLow' | 'manaOut' | 'buildersBusy' | 'explorersBusy' | 'heroesBenched';
 
 /** A real-money SKU of the SIMULATED store (Docs/features/14-monetization.md
  *  §2), whole in `data/game/store.json`. Nothing here ever charges: the price
@@ -2283,7 +2310,7 @@ export const OFFER_ORDER = onShelf('offer');
 export const DAILY_POOL = onShelf('daily');
 
 /** How many daily offers a day shows. */
-export const OFFERS = balance.offers as { dailyCount: number };
+export const OFFERS = balance.offers as { dailyCount: number; spacingHours: number };
 
 /** Monthly simulated budgets by payer profile, in dollars
  *  (Docs/features/14-monetization.md §3). */
@@ -2303,7 +2330,8 @@ export const SURVEY = balance.survey as {
   freeGems: number[];
   paidGems: number[];
   paidGoldKeys: number[];
-  paidFragments: number[];
+  paidSilverKeys: number[];
+  paidHeroXp: number[];
   paidStardust: number[];
   /** An item a level puts in the Bag, or '' for none, per column. */
   freeItems: string[];
@@ -2457,4 +2485,6 @@ export const GAME_VERSION: string = pkg.version;
 // (`ExplorersBought` on the world), additive.
 // v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
 // on `kingdom.heroes` (a migrator).
-export const SAVE_VERSION = 103;
+// v106: every ascension point raises the level cap, and the level runs to
+// 310 — a hero's level is rescaled to the new ladder (a migrator).
+export const SAVE_VERSION = 106;

@@ -113,19 +113,16 @@ describe('chrome metrics', () => {
   // The right edge is `#edge` now, laid out in flow, so a new slab (the raid
   // countdown was one, until the lairs moved it onto the map) needs no
   // arithmetic at all.
-  it('stacks the right-edge slabs in one column, so they cannot land on each other', () => {
+  it('stacks every notice in one column, so no two can land on each other', () => {
     const markup = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-    const column = markup.match(/<div id="edge">([\s\S]*?)<\/div>\s*<\/div>/);
-    expect(column, '#edge is missing from index.html').not.toBeNull();
-    expect(column![1]).toContain('id="adoffer"');
+    expect(markup, '#notices is missing from index.html').toContain('<div id="notices"></div>');
 
     // …and nothing else aims at the middle of the right edge on its own.
     const offenders: string[] = [];
     for (const [name, css] of sheets) {
       for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
         const selector = rule[1].trim();
-        if (!/right:\s*0/.test(rule[2]) || !/top:\s*50%/.test(rule[2])) continue;
-        if (selector !== '#edge') offenders.push(`${name}: ${selector}`);
+        if (/right:\s*0/.test(rule[2]) && /top:\s*50%/.test(rule[2])) offenders.push(`${name}: ${selector}`);
       }
     }
     expect(offenders).toEqual([]);

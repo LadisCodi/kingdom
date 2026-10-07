@@ -12,7 +12,7 @@
 import { upgradeRefusal } from '../sim/commands';
 import type { Game } from '../game';
 import { adjacencyInEffect } from '../sim/adjacency';
-import { lineFor, trainCost } from '../sim/army';
+import { lineFor, trainPlan } from '../sim/army';
 import { DISTRICTS } from '../sim/data/definitions';
 import {
   canMoveDistrict, requiredPopulation, upgradeCost, upgradeDuration, upgradeGoodsCost,
@@ -60,7 +60,13 @@ export function districtCardSignature(game: Game, district: District): string {
     // How many of its trainee the player owns, shown under the portrait.
     def.trains.map((t) => (t === 'Villager' ? s.city.population
       : s.army.filter((u) => u.definitionId === t).length)),
-    def.trains.map((t) => shorts(trainCost(s, t) as Record<string, number>)),
+    // The Train amount picked, and the order it prices against the purse
+    // ("All" moves with the purse itself).
+    game.trainAmount,
+    def.trains.map((t) => {
+      const plan = trainPlan(s, t, game.trainAmount);
+      return [plan.count, shorts(plan.cost as Record<string, number>)];
+    }),
     // Not the whole readout: its progress and remaining seconds tick, and
     // the queue row already carries those as a live part.
     (({ queued, cost, atMax }) => [queued, cost, atMax])(game.trainingInfo()),

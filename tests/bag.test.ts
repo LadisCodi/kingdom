@@ -148,12 +148,12 @@ describe('the keys', () => {
 
 describe('items as rewards', () => {
   it('a quest that names items puts them in the Bag when claimed', () => {
-    // Lumber: hold 30 Wood — a goal met by funding the purse.
-    const quest = QUESTS.find((q) => q.id === 'Lumber')!;
-    expect(Object.keys(quest.rewardItems).length).toBeGreaterThan(0);
+    // A CompleteTech quest — a goal met by marking its tech done.
+    const quest = QUESTS.find((q) => q.goalType === 'CompleteTech' && Object.keys(q.rewardItems).length > 0)!;
+    expect(quest).toBeDefined();
     const state = freshGame();
     state.quests.index = QUESTS.indexOf(quest);
-    state.city.wallet.Wood = 1000;
+    state.research.completed.push(quest.goalTarget as never);
     for (const id of Object.keys(quest.rewardItems)) expect(itemCount(state, id as never)).toBe(0);
     expect(claimQuest(state)).toBe('Claimed');
     for (const [id, n] of Object.entries(quest.rewardItems)) expect(itemCount(state, id as never)).toBe(n);

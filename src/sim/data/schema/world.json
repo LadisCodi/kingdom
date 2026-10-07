@@ -225,7 +225,13 @@
                 "min": 0,
                 "doc": "What it adds to its store an hour, while its hex is active. The Rural district’s is a tenth of a full level-1 House."
               },
-              "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." }
+              "store": { "type": "int", "min": 0, "doc": "The most its store holds; a full store stops it." },
+              "slots": {
+                "type": "int",
+                "min": 1,
+                "max": 2,
+                "doc": "How many buildings (a Fortress, a Chapel) it holds. One; two on bare ground, which has no feature to work."
+              }
             }
           }
         },
@@ -337,6 +343,11 @@
           "min": 0,
           "doc": "Closing a dungeon pays its last boss again, this many times over, to whoever closed it."
         },
+        "closeHeroXpMultiplier": {
+          "type": "float",
+          "min": 0,
+          "doc": "Closing a dungeon pays its last boss's Hero XP this many times over — the big Hero XP prize, for clearing it to the bottom."
+        },
         "returnHoursMin": {
           "type": "float",
           "min": 0,
@@ -377,11 +388,6 @@
         },
         "openDays": { "type": "int", "min": 1, "max": 6, "doc": "Days it stays open; it is shut the rest of the week." },
         "floors": { "type": "int", "min": 1, "doc": "How deep it goes." },
-        "attemptsPerDay": {
-          "type": "int",
-          "min": 1,
-          "doc": "Floors a player may clear a UTC day. A failed fight spends nothing."
-        },
         "powerStart": { "type": "int", "min": 1, "doc": "What the first floor fields." },
         "powerGrowth": { "type": "float", "min": 1, "doc": "Each floor fields this many times the one above." },
         "rewardBase": {
@@ -439,6 +445,39 @@
           "doc": "By feature, multiplied in for each the hex holds."
         },
         "portal": { "type": "float", "min": 0.1, "doc": "The Portal’s hex, which has no terrain." }
+      }
+    },
+    "worldTerrainCombat": {
+      "type": "list",
+      "doc": "What a hex's ground does to a fight on it, for both sides: a terrain or a feature, a troop type, and the share of its attack added (or, below 0, taken). A hex's terrain and each of its features add up.",
+      "of": {
+        "type": "object",
+        "fields": {
+          "ground": {
+            "type": "text",
+            "options": [
+              "Grassland",
+              "Plains",
+              "Desert",
+              "Forest",
+              "Mountain",
+              "FertileLand",
+              "Game",
+              "Sanctuary",
+              "Landmark",
+              "HeartwoodGrove",
+              "StarfallCrater",
+              "MoonglassSpires"
+            ],
+            "doc": "A terrain or a feature."
+          },
+          "unit": {
+            "type": "text",
+            "options": ["Warrior", "Lancer", "Archer", "Cavalry"],
+            "doc": "The troop type it moves."
+          },
+          "attack": { "type": "float", "min": -0.9, "max": 2, "doc": "Share of attack: 0.1 is +10%." }
+        }
       }
     },
     "worldCamps": {

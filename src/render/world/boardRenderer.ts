@@ -20,6 +20,7 @@
 // upright is hidden or under a rim. The ground and what stands are kept,
 // and slide under a pan (keepLayers): only this canvas is drawn every frame.
 
+import { worldStoreReady } from '../../sim/world/stores';
 import type { GameState } from '../../sim/state';
 import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
@@ -298,6 +299,15 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // The Portals' appointment, over each: when they open, or how long they
   // have left (19 §10.1) — all seven on the world's one clock.
   const portal = source.portal();
+  // An open Portal's magic, over its painted art: drawn every frame.
+  if (portal?.open && portalSprite(source) !== null) {
+    for (const index of PORTAL_INDICES) {
+      if (states[index] === 'Unknown') continue;
+      const c = camera.hexToScreen(hexAt(index));
+      if (!onScreen(c)) continue;
+      drawPortalMagic(ctx, camera, c, index, clock);
+    }
+  }
   if (portal !== null) {
     const left = Math.max(0, ((portal.open ? portal.closesAt : portal.opensAt) - now) / 1000);
     for (const index of PORTAL_INDICES) {
@@ -565,8 +575,14 @@ function drawGroundLayer(
     g.save();
     hexPath(g, c.x, c.y, r);
     g.clip();
-    if (bh.role === 'portal') {
+    if (bh.role === 'portal' && portalSprite(frame.source) === null) {
       drawPortalGround(g, c.x, c.y, r);
+    } else if (bh.role === 'portal') {
+      // The painted Portal carries its own ring of grass: it stands on
+      // grassland's plate so it meets its neighbours.
+      g.fillStyle = PLATE_COLOR.Grassland;
+      g.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+      drawSprite(g, variant(hexArt('Grassland', [], null, hw < STRATEGIC_PX).plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
     } else if (bh.terrain !== null) {
       const art = hexArt(bh.terrain, bh.features, held?.district ?? null, hw < STRATEGIC_PX);
       g.fillStyle = PLATE_COLOR[bh.terrain];
@@ -684,6 +700,10 @@ function drawArmy(
   if (!garrisoned && a.at !== null) {
     drawPill(ctx, camera, x, y - size * (aspect ?? 1) - 8, formatCountdown(Math.max(0, a.at - now) / 1000));
   }
+  // The player's own army carries its power under it, wherever it stands —
+  // camped at a dungeon, in a Fortress, on the road — so a card need not
+  // say that it is there (Docs/proposals/world-menus.md §3.8).
+  if (trail) drawCampPower(ctx, camera, x, y + size * 0.42, formatCount(Math.round(a.power)), '#1f4fa0');
 }
 
 // ------------------------------------------------------------------ a hex
@@ -1063,7 +1083,9 @@ function drawStanding(
       const mine = bh.index === homeIndex(frame.state);
       drawProp(g, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
     } else if (bh.role === 'portal') {
-      drawPortal(g, c.x, c.y, r);
+      const sprite = portalSprite(frame.source);
+      if (sprite === null) drawPortal(g, c.x, c.y, r);
+      else drawProp(g, sprite, c.x, c.y + r * FOOT * TILT, hw * PORTAL_WIDTH);
     } else if (art !== null) {
       // The district, which carries its feature in its art; or the feature,
       // with the district's stand-in in front of it until it has art.
@@ -1174,6 +1196,157 @@ function drawProp(ctx: CanvasRenderingContext2D, sprite: string, x: number, foot
   drawSprite(ctx, sprite, x - width / 2, footY - height, width, height);
 }
 
+/** The Portal's painted art, shut or open (Docs/art/world/portal/), or null
+ *  while it is not on disk. */
+function portalSprite(source: WorldSource): string | null {
+  const sprite = source.portal()?.open ? 'whex_portal_open' : 'whex_portal';
+  return spriteUrl(sprite) === null ? null : sprite;
+}
+
+const reducedMotionQuery = typeof matchMedia === 'function'
+  ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+/** Where the pit sits in `whex_portal_open.png`, as fractions of the canvas,
+ *  and its half-width; the canvas's own aspect. */
+const PORTAL_PIT = { x: 0.487, y: 0.575, rx: 0.16 };
+const PORTAL_ASPECT = 367 / 512;
+/** The painted Portal's width, in hex widths (drawStanding). */
+const PORTAL_WIDTH = 1.1;
+
+/** An OPEN Portal's magic, over its painted art: a glow that breathes, a
+ *  column of light, the vortex turning, motes circling the rim and sparks
+ *  rising out of the pit. Still under reduced motion; only the glow and
+ *  the vortex at the strategic zoom. */
+function drawPortalMagic(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, c: { x: number; y: number }, key: number, now: number,
+): void {
+  const hw = camera.hexWidth;
+  const r = camera.hexRadius;
+  const clock = reducedMotionQuery?.matches ? 0 : now;
+  const W = hw * PORTAL_WIDTH;
+  const H = W * PORTAL_ASPECT;
+  const top = c.y + r * FOOT * TILT - H;
+  const px = c.x - W / 2 + PORTAL_PIT.x * W;
+  const py = top + PORTAL_PIT.y * H;
+  const rx = PORTAL_PIT.rx * W;
+  const ry = rx * 0.48;
+  const breathe = 0.5 + 0.5 * Math.sin(clock / 650);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+
+  // The glow, breathing: an ellipse of violet light over the pit and the
+  // stones' inner faces.
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.scale(1, ry / rx);
+  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, rx * 2.1);
+  glow.addColorStop(0, `rgba(220, 120, 255, ${(0.35 + 0.2 * breathe).toFixed(3)})`);
+  glow.addColorStop(0.45, `rgba(150, 60, 230, ${(0.16 + 0.1 * breathe).toFixed(3)})`);
+  glow.addColorStop(1, 'rgba(90, 30, 160, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx * 2.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // The vortex: three arms spiralling in, turning.
+  const spin = clock / 1100;
+  ctx.lineCap = 'round';
+  for (let arm = 0; arm < 3; arm++) {
+    const base = spin + (arm / 3) * Math.PI * 2;
+    for (let s = 0; s < 14; s++) {
+      const t0 = s / 14;
+      const t1 = (s + 1) / 14;
+      const at = (t: number) => {
+        const a = base + t * Math.PI * 2.2;
+        const rad = rx * 0.92 * (1 - t);
+        return { x: Math.cos(a) * rad, y: Math.sin(a) * rad };
+      };
+      const p0 = at(t0);
+      const p1 = at(t1);
+      ctx.strokeStyle = `rgba(255, ${Math.round(170 + 70 * t0)}, 255, ${(0.08 + 0.4 * t0).toFixed(3)})`;
+      ctx.lineWidth = Math.max(1, rx * (0.16 - 0.1 * t0));
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    }
+  }
+  // Its heart, flaring.
+  const heart = ctx.createRadialGradient(0, 0, 0, 0, 0, rx * 0.45);
+  heart.addColorStop(0, `rgba(255, 235, 255, ${(0.55 + 0.3 * breathe).toFixed(3)})`);
+  heart.addColorStop(1, 'rgba(230, 140, 255, 0)');
+  ctx.fillStyle = heart;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  if (hw < STRATEGIC_PX) {
+    ctx.restore();
+    return;
+  }
+
+  // The column of light, rising out of the pit and fading up.
+  const beamH = H * 0.95;
+  const beam = ctx.createLinearGradient(0, py, 0, py - beamH);
+  beam.addColorStop(0, `rgba(200, 110, 255, ${(0.22 + 0.12 * breathe).toFixed(3)})`);
+  beam.addColorStop(1, 'rgba(160, 80, 255, 0)');
+  ctx.fillStyle = beam;
+  ctx.beginPath();
+  ctx.moveTo(px - rx * 0.75, py);
+  ctx.lineTo(px - rx * 0.35, py - beamH);
+  ctx.lineTo(px + rx * 0.35, py - beamH);
+  ctx.lineTo(px + rx * 0.75, py);
+  ctx.closePath();
+  ctx.fill();
+
+  const spark = (x: number, y: number, size: number, alpha: number): void => {
+    if (alpha <= 0.01) return;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    g.addColorStop(0, `rgba(255, 240, 255, ${alpha.toFixed(3)})`);
+    g.addColorStop(0.3, `rgba(225, 130, 255, ${(alpha * 0.7).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(160, 60, 255, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  // Motes circling the rim, twinkling.
+  for (let m = 0; m < 7; m++) {
+    const speed = 0.6 + hash01(key, 600 + m) * 0.6;
+    const a = clock / 1000 * speed + hash01(key, 700 + m) * Math.PI * 2;
+    const orbit = 1.1 + hash01(key, 800 + m) * 0.35;
+    const twinkle = 0.5 + 0.5 * Math.sin(clock / 260 + m * 1.7);
+    spark(px + Math.cos(a) * rx * orbit, py + Math.sin(a) * ry * orbit - rx * 0.12, hw * 0.014, 0.35 + 0.45 * twinkle);
+  }
+
+  // Sparks rising out of the pit: each on its own loop, swaying as it
+  // climbs, swelling then fading.
+  for (let k = 0; k < 16; k++) {
+    const period = 1800 + hash01(key, 900 + k) * 1600;
+    const f = (clock / period + hash01(key, 1000 + k)) % 1;
+    const a = hash01(key, 1100 + k) * Math.PI * 2;
+    const from = Math.sqrt(hash01(key, 1200 + k)) * 0.8;
+    const x = px + Math.cos(a) * rx * from + Math.sin(f * Math.PI * 2 + k) * rx * 0.25 * f;
+    const y = py + Math.sin(a) * ry * from - f * H * (0.55 + hash01(key, 1300 + k) * 0.35);
+    const life = Math.sin(f * Math.PI);
+    spark(x, y, hw * (0.012 + 0.012 * (1 - f)), 0.9 * life);
+  }
+  ctx.restore();
+}
+
+/** The Portal's card portrait: its painted art, shut or open. */
+export function portalPortrait(open: boolean, px: number): HTMLElement {
+  const url = spriteUrl(open ? 'whex_portal_open' : 'whex_portal');
+  if (url === null) return portalThumb(px);
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = '';
+  img.draggable = false;
+  return img;
+}
+
 /** The Portal's hex has no ground: cracked dark stone. */
 function drawPortalGround(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   const g = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r * 1.1);
@@ -1211,6 +1384,22 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
     ctx.fill();
     ctx.stroke();
   }
+}
+
+/** The Portal as the board draws it, alone on a small canvas: its card's
+ *  portrait (Docs/proposals/world-menus.md §3.6). */
+export function portalThumb(px: number): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+  canvas.width = canvas.height = Math.round(px * dpr);
+  const ctx = canvas.getContext('2d');
+  if (ctx !== null) {
+    ctx.scale(dpr, dpr);
+    const r = px * 0.62;
+    drawPortalGround(ctx, px / 2, px / 2, r);
+    drawPortal(ctx, px / 2, px * 0.56, r);
+  }
+  return canvas;
 }
 
 // ------------------------------------------------------------ held ground
@@ -1271,9 +1460,11 @@ function drawHeldMarks(
   const s = held.stores;
   if (held.burnt) {
     // Burning: the fire says it all; its store waits under it.
-  } else if (s !== null && held.held && held.active && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
+  } else if (!worldStoreReady(held)) {
+    // Nothing ready to collect yet.
+  } else if (s !== null && s.cap > 0 && s.amount >= Math.max(1, s.cap * 0.25)) {
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, s.currency);
-  } else if (held.precious != null && held.held && held.active && held.precious.amount >= 1) {
+  } else if (held.precious != null) {
     // Its precious store, ready: a bubble with the material (19 §7.4).
     drawBubble(ctx, camera, c.x, c.y - r * 0.55, held.precious.id);
   }

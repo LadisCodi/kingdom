@@ -53,13 +53,13 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'exploration', label: 'Exploration', domain: 'World', view: 'form', noun: 'setting', groups: ['fog', 'treasure', 'knowledge', 'raid', 'delve'] },
   // The shared hex board (Docs/features/19-world-map.md): marches, explorers
   // and how a board is rolled.
-  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldCamps', 'worldScouting', 'worldPrecious'] },
+  { id: 'world', label: 'World board', domain: 'World', view: 'form', noun: 'setting', groups: ['world', 'worldGen', 'worldBuild', 'worldBots', 'worldDungeon', 'worldPortal', 'worldTravel', 'worldTerrainCombat', 'worldCamps', 'worldScouting', 'worldPrecious'] },
 
   { id: 'buildings', label: 'Buildings', domain: 'City', view: 'entity', noun: 'building', source: 'districts' },
   { id: 'goods', label: 'Goods', domain: 'City', view: 'table', noun: 'good', source: 'goods' },
   { id: 'adjacency', label: 'Adjacency', domain: 'City', view: 'table', noun: 'rule', source: 'adjacency' },
   { id: 'economy', label: 'Economy', domain: 'City', view: 'form', noun: 'setting',
-    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'bag'] },
+    groups: ['tap', 'storage', 'taxes', 'mana', 'city', 'kingdom', 'harmony', 'worker', 'training', 'rush', 'bag', 'notices'] },
 
   { id: 'tree', label: 'Tech tree', domain: 'Research', view: 'canvas', noun: 'technology', file: 'src/sim/data/tech-tree.json' },
 
@@ -726,9 +726,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (s.after === id) push(id, ['after'], 'cannot follow itself');
       else if (s.after !== null && shelfOf.get(s.after as string) !== 'offer') push(id, ['after'], 'follows something that is not an offer');
       if (s.opensOn === 'townhall' && !(num(s.townhall) > 0)) push(id, ['townhall'], 'opens on a Townhall level — which one?');
-      const repeats = s.opensOn === 'townhall' || s.opensOn === 'manaLow' || s.opensOn === 'buildersBusy';
-      if (repeats && !(num(s.hours) > 0)) push(id, ['hours'], 'a trigger that comes back needs a window that closes');
-      if (!repeats && num(s.cooldownHours) > 0) push(id, ['cooldownHours'], 'only manaLow, buildersBusy and townhall come back');
+      // A need may be met once for good (a slot); the recurring triggers sell
+      // again and again, so their window has to close.
+      const recurring = ['townhall', 'manaLow', 'manaOut', 'buildersBusy'].includes(s.opensOn as string);
+      const repeats = recurring || s.opensOn === 'explorersBusy' || s.opensOn === 'heroesBenched';
+      if (recurring && !(num(s.hours) > 0)) push(id, ['hours'], 'a trigger that comes back needs a window that closes');
+      if (!repeats && num(s.cooldownHours) > 0) push(id, ['cooldownHours'], 'always, door and after never come back');
     }
     if (shelfOf.get('Survey') !== 'survey') push('Survey', ['shelf'], 'the Survey must exist, sold on the Survey');
   },
@@ -739,6 +742,15 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (!(num(b.heroChance) > 0 && num(b.heroChance) <= 1)) push(id, ['heroChance'], 'is a fraction, above 0 and at most 1');
       if (num(b.softPityAt) >= num(b.hardPityAt)) push(id, ['softPityAt'], `soft pity (${b.softPityAt}) must come before hard pity (${b.hardPityAt})`);
       if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
+      if (num(b.lootDrawsMin) > num(b.lootDrawsMax)) push(id, ['lootDrawsMin'], `at most lootDrawsMax (${b.lootDrawsMax})`);
+      const loot = list(b.loot) as Array<Record<string, unknown>>;
+      if (num(b.lootDrawsMax) > 0 && !loot.some((e) => num(e.weight) > 0)) push(id, ['loot'], 'a call that draws prizes needs one with a weight');
+      loot.forEach((e, i) => {
+        const fragments = e.reward === 'Fragments';
+        if (fragments && !(num(w[String(e.rarity)]) > 0)) push(id, ['loot', i, 'rarity'], 'fragments of a rarity this banner calls');
+        if (!fragments && e.rarity !== '') push(id, ['loot', i, 'rarity'], 'only fragments name a rarity');
+        if ((e.reward === 'Item') !== (e.item !== '')) push(id, ['loot', i, 'item'], e.reward === 'Item' ? 'an item prize names its item' : 'only an item prize names an item');
+      });
     }
   },
   artifacts: (doc, push) => {
@@ -879,8 +891,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
     if (new Set(ranks).size !== 1) push(null, ['heroLadder', 'skillRankLevels'], 'a skill rank has a level, a Stardust price and a material price: the three lists are one length');
     // The cap with no star is what is left once every star has added its
     // levels, and a hero must start able to reach at least level 1.
-    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars) < 1) {
-      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars add more levels than heroMaxLevel holds');
+    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars)
+      - num(l.heroLevelsPerAscension) * num(l.ascensionStars) * num(l.ascensionStepsPerStar) < 1) {
+      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars and their points add more levels than heroMaxLevel holds');
     }
   },
 };

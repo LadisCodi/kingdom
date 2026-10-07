@@ -14,6 +14,7 @@
     "superWhaleMonthlyUsd": 2000
   },
   "offers": {
-    "dailyCount": 3
+    "dailyCount": 3,
+    "spacingHours": 20
   }
 }

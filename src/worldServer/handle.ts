@@ -16,12 +16,12 @@ import type { Board } from '../sim/battle';
 import type { ArtifactId, HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
-  claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, join, owedTo, recall, repair, reportSeen, resolveTo,
-  sendArmy, setBoost, setCrest, snapshotOf, tribute, unhostRelic, upgrade,
+  claim, collect, delveRoom, fightCamp, descendPortal, finish, hostRelic, hurry, hurryArmy, join, owedTo, recall, repair, reportSeen, resolveTo,
+  sendArmy, setBoost, setCrest, setTownhall, snapshotOf, tribute, unhostRelic, upgrade,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
 import type {
-  ArmyPurpose, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard,
+  ArmyPurpose, CollectResult, CampFightResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard,
   ServerWorld, WorldSnapshot,
 } from './types';
 
@@ -49,15 +49,20 @@ export interface WorldCommands {
   finish: { cmd: { index: number }; reply: CommandResult };
   /** A speed-up from the Bag: `seconds` off a builder's work on a hex. */
   hurry: { cmd: { index: number; seconds: number }; reply: CommandResult };
+  /** A speed-up or Gems: `seconds` off an army's march, out or home. */
+  hurryArmy: { cmd: { armyId: string; seconds: number }; reply: CommandResult };
   collect: { cmd: { index: number }; reply: CollectResult };
   reportSeen: { cmd: { indices: number[] }; reply: CommandResult };
   sendArmy: { cmd: { req: SendArmyRequest }; reply: SendResult };
   recall: { cmd: { armyId: string }; reply: CommandResult };
   delveRoom: { cmd: { armyId: string }; reply: DelveResult };
+  fightCamp: { cmd: { armyId: string }; reply: CampFightResult };
   descendPortal: { cmd: { armyId: string }; reply: DelveResult };
   setBoost: { cmd: { boost: SeatBoost }; reply: null };
   /** The crest the player chose, or null for their nickname's. */
   setCrest: { cmd: { crest: string | null }; reply: null };
+  /** The player's Townhall level, for the ranking (19 §12). */
+  setTownhall: { cmd: { level: number }; reply: null };
   /** Host a world relic, at its level, in the Chapel on a hex — or send its
    *  new level after a level-up (relic-restoration.md §5.2). */
   hostRelic: { cmd: { index: number; relic: ArtifactId; level: number }; reply: CommandResult };
@@ -151,14 +156,17 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'repair': return repair(b, seat, cmd.index, t);
     case 'finish': return finish(b, seat, cmd.index, t);
     case 'hurry': return hurry(b, seat, cmd.index, cmd.seconds, t);
+    case 'hurryArmy': return hurryArmy(b, seat, cmd.armyId, cmd.seconds, t);
     case 'collect': return collect(b, seat, cmd.index, t);
     case 'reportSeen': return reportSeen(b, seat, cmd.indices, t);
     case 'sendArmy': return sendArmy(b, seat, cmd.req, t);
     case 'recall': return recall(b, seat, cmd.armyId, t);
     case 'delveRoom': return delveRoom(b, seat, cmd.armyId, t);
+    case 'fightCamp': return fightCamp(b, seat, cmd.armyId, t);
     case 'descendPortal': return descendPortal(b, seat, cmd.armyId, t);
     case 'setBoost': setBoost(b, seat, cmd.boost, t); return null;
     case 'setCrest': setCrest(b, seat, cmd.crest); return null;
+    case 'setTownhall': setTownhall(b, seat, cmd.level); return null;
     case 'hostRelic': return hostRelic(b, seat, cmd.index, cmd.relic, cmd.level, t);
     case 'unhostRelic': return unhostRelic(b, seat, cmd.relic, t);
     case 'join': case 'snapshot': throw new Error(`${cmd.kind} is not a command`);
@@ -167,7 +175,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
 
 /** A player not seated anywhere. */
 function refusedFor(kind: WorldCommandKind): unknown {
-  if (kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest') return null;
+  if (kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest' || kind === 'setTownhall') return null;
   return { ok: false, why: 'NoBoard' };
 }
 

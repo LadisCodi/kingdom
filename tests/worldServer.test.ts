@@ -13,7 +13,7 @@ import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } f
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
   floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
-  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade,
+  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade, hurryArmy,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -317,7 +317,7 @@ describe('armies', () => {
     expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.good)).toBe(true);
   });
 
-  it('calls a garrison home, and turns a march round on the road', () => {
+  it('calls a garrison home, but never an army on the road', () => {
     const { b, seat } = quietBoard();
     const out = sendArmy(b, seat, { purpose: 'attack', target: PORTAL_INDEX, heroes: [], board: army(100, 'r') }, T0);
     expect(out.ok).toBe(false); // nobody holds the Portal
@@ -327,6 +327,7 @@ describe('armies', () => {
     b.hexes[next].fortress = 1;
     const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h') }, T0 + CLAIM_MS);
     if (!g.ok) throw new Error(g.why);
+    expect(recall(b, seat, g.army, T0 + CLAIM_MS + 1)).toEqual({ ok: false, why: 'Marching' });
     resolveTo(b, g.arrivesAt);
     expect(b.hexes[next].garrison).toBe(g.army);
     const r = recall(b, seat, g.army, g.arrivesAt + 1000);
@@ -498,7 +499,26 @@ describe('the Dark Portal', () => {
     expect(loot?.kind === 'loot' && loot.precious?.amount).toBe(floorReward(WORLD_PORTAL.preciousEvery).precious);
   });
 
-  it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {
+  it('an army on the road, hurried, arrives sooner by the seconds paid, its route moving with it, and at once when they cover the rest', () => {
+    const { b, seat } = quietBoard();
+    const opens = portalOpensAt(portalEvent(T0) + 1);
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, opens);
+    if (!r.ok) throw new Error(r.why);
+    const a = b.armies.find((x) => x.id === r.army)!;
+    const left = r.arrivesAt - opens;
+    const departed = a.departedAt;
+    const h = hurryArmy(b, seat, r.army, left / 2000, opens);
+    expect(h.ok && h.finishesAt).toBe(r.arrivesAt - left / 2);
+    expect(a.departedAt).toBe(departed - left / 2);
+    expect(a.phase).toBe('out');
+    // More than is left: it is there now.
+    const done = hurryArmy(b, seat, r.army, left, opens);
+    expect(done.ok).toBe(true);
+    expect(a.phase).toBe('camp');
+    // Nothing on the road to hurry.
+    expect(hurryArmy(b, seat, r.army, 60, opens)).toEqual({ ok: false, why: 'Busy' });
+  });
+  it('takes floors one at a time, as often as Mana pays for, and pays the ranking at the close', () => {
     const { b, seat } = quietBoard();
     const opens = portalOpensAt(portalEvent(T0) + 1);
     expect(sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, T0))
@@ -508,20 +528,19 @@ describe('the Dark Portal', () => {
     const there = r.arrivesAt;
     resolveTo(b, there);
     expect(b.armies[0].phase).toBe('camp');
-    for (let i = 0; i < WORLD_PORTAL.attemptsPerDay; i++) {
+    // No daily cap: every floor is fought for its Mana (19 §10.3).
+    // Four floors in a row on one day: past the three the old daily cap allowed.
+    for (let i = 0; i < 4; i++) {
       const f = descendPortal(b, seat, r.army, there + i);
       expect(f.ok && f.won).toBe(true);
     }
-    expect(descendPortal(b, seat, r.army, there + 10)).toEqual({ ok: false, why: 'NoAttempts' });
-    expect(snapshotOf(b, seat, there + 10).portal.floor).toBe(WORLD_PORTAL.attemptsPerDay);
-    // A new UTC day brings the clears back.
-    const nextDay = (Math.floor(there / DAY) + 1) * DAY + 1;
-    expect(descendPortal(b, seat, r.army, nextDay).ok).toBe(true);
+    expect(snapshotOf(b, seat, there + 10).portal.floor).toBe(4);
     drainEffects(b, seat);
     // The close: the ranking pays, and the diver walks home.
     resolveTo(b, portalClosesAt(portalEvent(opens)));
     const owed = drainEffects(b, seat);
-    expect(owed.some((e) => e.kind === 'loot' && (e.gems ?? 0) > 0)).toBe(true);
+    const closed = owed.find((e) => e.kind === 'portalClosed');
+    expect(closed?.kind === 'portalClosed' && [closed.place, closed.gems]).toEqual([1, WORLD_PORTAL.rankGems[0]]);
     expect(b.armies[0]?.phase ?? 'home').toBe('home');
   });
 });

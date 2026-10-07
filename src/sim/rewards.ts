@@ -11,6 +11,7 @@ import { CURRENCIES, ITEMS } from './data/definitions';
 import { grantItem } from './bag';
 import { dropFragments, type FragmentDrop } from './relics';
 import { payKnowledge } from './knowledge';
+import { addHeroXp } from './heroes';
 import { addToWallet, type CurrencyId, type GameState, type ItemId, type Wallet } from './state';
 
 /** Items by count — a Bag in miniature. */
@@ -44,6 +45,8 @@ export function payWallet(state: GameState, wallet: Wallet): void {
   for (const [c, n] of Object.entries(wallet) as Array<[CurrencyId, number]>) {
     if (!n) continue;
     if (c === 'Knowledge') payKnowledge(state, n);
+    // Hero XP with the bonuses every Hero XP gets (the Tavern, the tree).
+    else if (c === 'HeroXp') addHeroXp(state, n);
     else if (CURRENCIES[c].scope === 'player') addToWallet(state.player.wallet, c, n);
     else if (CURRENCIES[c].scope === 'kingdom') addToWallet(state.kingdom.wallet, c, n);
     else addToWallet(state.city.wallet, c, n);

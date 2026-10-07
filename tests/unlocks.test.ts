@@ -88,7 +88,7 @@ describe('the presenter', () => {
   it('waits for a reveal on screen to be read', () => {
     const game = freshPresenter(firstGame());
     game.unlockQueue.push('relics');
-    game.gachaReveal = { prizes: [], caption: 'Spoils' };
+    game.gachaReveal = { prizes: [], caption: 'Spoils', chest: 'spoils' };
     expect(game.unlockOnScreen()).toBeNull();
     game.gachaReveal = null;
     expect(game.unlockOnScreen()).toBe('relics');

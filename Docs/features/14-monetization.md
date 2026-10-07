@@ -94,12 +94,14 @@
 - One screen, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
 - Its own backdrop: a magic merchant's shop, soft and out of focus, under a
-  warm dark wash. A title plank, its close, and a strip of wooden tabs:
+  warm dark wash. No title: a strip of wooden tabs with the close beside it,
+  fixed at the top, over the open tab's page, which scrolls. The page runs
+  the full width of the iPhone X:
 
 | Tab | Content | Paid with |
 |---|---|---|
 | **Offers** — only while there is an offer or a daily offer | a banner per offer on sale (§2.4): its figure, name, pitch, up to four reward tiles (+N), value seal, countdown, price — a tap opens its splash; under them **Today** (§2.5) with the time to the next draw | the monthly budget |
-| **Heroes** | the keys held, each with a **+** that buys one (Gems); **Call for aid** over a carousel of the roster — one hero at a time drifting right to left and fading into the next, every hero once before any repeats; **Odds** on a tap; a banner per call: the common call shows its silver key, the golden call (`showsHero`) a Legendary, a different one each time the store is opened, every one before any repeats; free calls today, *Call once* (free, an ad, or a key) and *Call ×10*, the pity. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | keys |
+| **Heroes** | the keys held, on the header's plank in place of the coins, each with a **+** that buys one (Gems); **Call for aid** over a carousel of the roster — one hero at a time drifting right to left and fading into the next, every hero once before any repeats; **Odds** on a tap; a banner per call: the common call shows its silver key, the golden call (`showsHero`) a Legendary, a different one each time the store is opened, every one before any repeats; free calls today, *Call* (free, an ad, or a key) and *Call ×10*; the pity is under **Odds**. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | keys |
 | **Supplies** | the Bag's bundles (§2.3), the relic fragment pack, and the crew: a builder, an explorer (once *Cartography* is researched), a hero slot (once a Tavern stands) — at a ceiling it says so | money · Gems |
 | **Gems** | six packs in a 3×2 grid — count over art over price. A tap opens the **confirmation** (§3.2) | the monthly budget |
 
@@ -140,18 +142,25 @@
   its countdown (`hours`, 0 = never) and sells `limit` (0 = no limit).
 - What opens one (`opensOn`):
 
-| Trigger | Opens | Comes back |
-|---|---|---|
-| `always` | with the store | no |
-| `door` | when `door` opens | no |
-| `after` | when `after` is bought — the next step of a chain | no |
-| `townhall` | on every Townhall level from `townhall` on | yes |
-| `manaLow` | the pool below the ad threshold (§6) | yes |
-| `buildersBusy` | a build refused for want of a builder | yes |
+| Trigger | Opens | Kind | Comes back |
+|---|---|---|---|
+| `always` | with the store | own | no |
+| `door` | when `door` opens | own | no |
+| `after` | the day (UTC) after `after` is bought — the next step of a chain | own | no |
+| `townhall` | on every Townhall level from `townhall` on | own | yes |
+| `manaLow` | the pool below the ad threshold (§6) | need | yes |
+| `manaOut` | the pool empty and no ad refill left today | need | yes |
+| `buildersBusy` | a build refused for want of a builder | need | yes |
+| `explorersBusy` | every explorer out | need | yes |
+| `heroesBenched` | more heroes than hero slots | need | yes |
 
 - A trigger that comes back opens the window again once the last one has
   closed and `cooldownHours` have passed.
-- Nothing opens before the store's door.
+- Nothing opens before the store's door, nor below the offer's `townhall`
+  level, whatever its trigger.
+- **One at a time**: an offer on its *own* trigger waits while another window
+  opened less than `offers.spacingHours` (20) ago, and opens alone, in shelf
+  order. A *need* opens at once, and counts.
 - **An offer that opens a slot is held back** while that slot would go over
   its ceiling — never sold half-useful.
 - **Its value is computed**, never authored: what it hands over priced at the
@@ -162,16 +171,16 @@
   printed as a wax seal.
 - The catalogue:
 
-| Offer | Price | Opens | Holds |
-|---|---|---|---|
-| **First Purchase Reward** | $4.99 | the heroes' door; full screen (§2.6) | **the Elven Princess**, keys, Gems; tomorrow her fragments, Gems, Hero XP |
-| **The novice's pack** | $3.49 | the store's door | **a builder for good**, Gems, construction speed-ups, chests, keys |
-| The squire's pack · the knight's pack | $9.99 · $19.99 | each after the one before | Gems, gold keys, speed-ups, chests, tomes |
-| **A second explorer** | $4.99 | the world's door | **an explorer for good**, Gems, speed-ups, chests, flasks, keys |
-| **A seat at the war table** | $4.99 | the heroes' door | **a hero slot for good**, Gems, keys, chests, speed-ups |
-| A cask of Mana | $0.99 | Mana low; 24 h, back after 72 h | Gems, flasks, a Mana boost |
-| Rush the works | $5.99 | a refused build; 4 days, back after a week | Gems, construction speed-ups, chests |
-| The new charter | $9.99 | every Townhall level from 3; 48 h | Gems, construction speed-ups, chests, tomes |
+| Offer | Price | Opens | When, roughly | Holds |
+|---|---|---|---|---|
+| **The novice's pack** | $3.49 | the store's door | session 1 (Townhall 2) | **a builder for good**, Gems, construction speed-ups, chests, keys |
+| The squire's pack · the knight's pack | $9.99 · $19.99 | each the day after the one before is bought | day 1+ | Gems, gold keys, speed-ups, chests, tomes |
+| **First Purchase Reward** | $4.99 | the heroes' door; full screen (§2.6) | day 2 (the Tavern) | **the Elven Princess**, keys, Gems; tomorrow her fragments, Gems, Hero XP |
+| **A seat at the war table** | $4.99 | a hero without a slot | day 2–3 (the second hero) | **a hero slot for good**, Gems, keys, chests, speed-ups |
+| Rush the works | $5.99 | a refused build, from Townhall 3; 4 days, back after a week | day 2–3+ | Gems, construction speed-ups, chests |
+| A cask of Mana | $0.99 | Mana out and the day's ads spent, from Townhall 3; 24 h, back after 72 h | day 2–3+ | Gems, flasks, a Mana boost |
+| The new charter | $9.99 | every Townhall level from 4; 48 h | day 4–6 | Gems, construction speed-ups, chests, tomes |
+| **A second explorer** | $4.99 | every explorer out | day 5–7+ (the world) | **an explorer for good**, Gems, speed-ups, chests, flasks, keys |
 
 - Opening is decided by the live game, not by `advance()`: an offer produces
   nothing, and a trigger met only inside a replayed absence opens nothing.
@@ -187,7 +196,8 @@
 ### 2.5 Daily offers
 
 - **`offers.dailyCount` (3) a day**, drawn from the `daily` shelf among the
-  products the Townhall's level admits (`townhall`).
+  products the Townhall's level admits (`townhall`): from Townhall 3, the
+  golden key from Townhall 4.
 - The draw changes at midnight UTC and is the same however often it is asked.
 - Each sells `limit` a day.
 
@@ -206,8 +216,9 @@
   session.
 - The splash's button is the **price**: it goes straight to the confirmation
   (§3.2), which returns to the map.
-- Bought, the splash shows tomorrow's part **locked**; a **pill** on the
-  right edge counts down to it, then glows **Claim**. At the start of a
+- Bought, the splash shows tomorrow's part **locked**; the *Tomorrow's part*
+  notice ([`26-notices.md`](26-notices.md) §2.2) counts down to it, then glows
+  and offers **Claim**. At the start of a
   session with a part ready, the splash opens on it, and its button claims.
 - Any product may carry a next-day part (`nextDay*`); a hero's fragments
   need the product's `hero`.
@@ -219,8 +230,7 @@
   if its window closes), *Tomorrow in …*, then **Claim!** with a red dot.
 - A tap opens the lead's splash with **every offer in a row along its top**,
   to step from one to the next. A splash opened by the session has no row.
-- A `widget` offer's next-day part is shown there, not on the right-edge
-  pill.
+- A `widget` offer's next-day part is shown there, not as a notice.
 
 ## 3. The simulated budget
 
@@ -396,7 +406,8 @@ One page, refreshed weekly:
 | Hero slot | 2,500, `×2` ($4.99 / $9.99) | `party.heroSlotGemCost*` |
 | Gem faucet | 500 start · 150/250/200/150 in the chain · 500 at the Survey's last level | `currencies`, `quests`, `survey.freeGems` |
 | Item bundles | **$1.99 / $4.99 / $9.99**, what each holds | `store` · `items` |
-| Offers | price, contents, trigger, window, limit, cooldown | `store` (shelf `offer`) |
+| Offers | price, contents, trigger, Townhall floor, window, limit, cooldown | `store` (shelf `offer`) |
+| Offer spacing | **20 h** between offers that open on their own | `offers.spacingHours` |
 | Daily offers | **3 a day** from the `daily` shelf | `offers.dailyCount` · `store` (shelf `daily`) |
 | First-purchase pack | $4.99 · the Elven Princess, 10 + 10 keys, 300 Gems · tomorrow 10 fragments, 200 Gems, 1,500 Hero XP | `store.FirstPurchase` |
 | Explorer | **2,500**, `×2`, **2** for sale | `world.explorerGemCost*`, `world.explorersForSale` |

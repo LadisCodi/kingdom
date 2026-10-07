@@ -31,7 +31,7 @@ import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import {
   BANNERS, DISTRICTS, HERO_LADDER, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
-  type BannerId, type HeroBoon, type HeroRarity,
+  type BannerId, type BannerLoot, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
@@ -45,7 +45,7 @@ import { SKILLS, maxSkillRank } from './skills';
 import { resolvePrice } from './precious';
 import { canAffordGoods, payGoods } from './goods';
 import { recordEvent } from './events';
-import { itemCount, takeItem } from './bag';
+import { grantItem, itemCount, takeItem } from './bag';
 
 // ------------------------------------------------------------ the collection
 
@@ -344,13 +344,14 @@ export function buyHeroSlot(state: GameState): BuyHeroSlotResult {
  * had gone and earned one. It is levelled with what the Commons brought back
  * instead (Docs/features/10-heroes.md §4).
  */
-export function addHeroXp(state: GameState, amount: number): void {
+export function addHeroXp(state: GameState, amount: number): number {
   // The Sagas' Tales (+%/rank) and every Tavern level, rounded once here so
   // XP stays a whole number.
   const paid = Math.round(resolve(state, 'heroXp',
     techValue(state, 'heroXp', amount) * tavernXpMultiplier(state)));
   addToWallet(state.kingdom.wallet, 'HeroXp', paid);
   recordResourceDiscovery(state, 'HeroXp');
+  return paid;
 }
 
 /** What every standing Tavern does to Hero XP: its level's TOTAL percent,
@@ -367,10 +368,10 @@ export function tavernXpMultiplier(state: GameState): number {
 
 // ------------------------------------------------------------------ the pull
 
-/** The Stardust one call pays: the banner's, raised by the Sagas' Warm
- *  Welcome (`summonStardust`). Whole units. */
-export const callStardust = (state: GameState, banner: BannerId): number =>
-  Math.round(BANNERS[banner].pullStardust * techMultiplier(state, 'summonStardust'));
+/** Stardust a call's loot pays: the authored amount, raised by the Sagas'
+ *  Warm Welcome (`summonStardust`). Whole units. */
+export const callStardust = (state: GameState, amount: number): number =>
+  Math.round(amount * techMultiplier(state, 'summonStardust'));
 
 export const STANDARD_BANNER: BannerId = 'basic';
 
@@ -480,6 +481,12 @@ export function rarityFor(
   return rarities[rarities.length - 1]!;
 }
 
+/** One prize a call drew from its banner's loot table, as paid. */
+export type CallLoot =
+  | { kind: 'fragments'; heroId: HeroId; amount: number }
+  | { kind: 'currency'; currency: 'Stardust' | 'HeroXp'; amount: number }
+  | { kind: 'item'; item: ItemId; amount: number };
+
 export interface PullResult {
   result: 'Pulled' | 'NotEnoughKeys' | 'NothingToPull';
   heroId: HeroId | null;
@@ -487,11 +494,11 @@ export interface PullResult {
   rarity: HeroRarity | null;
   /** True when the hero was already owned and converted to Fragments. */
   duplicate: boolean;
-  /** Fragments paid — from a duplicate, or the consolation on a miss. */
+  /** Fragments a duplicate paid. Loot fragments are in `loot`. */
   fragments: number;
   fragmentsOf: HeroId | null;
-  /** Stardust paid — the same on every pull of this banner, hero or not. */
-  stardust: number;
+  /** The prizes the call drew from its loot table, hero or not. */
+  loot: CallLoot[];
   /** Whether hard pity delivered this one. */
   guaranteed: boolean;
   /** Whether the Legendary guarantee delivered this one. */
@@ -566,12 +573,68 @@ export function claimFreePull(
 }
 
 /**
+ * A call's prizes from its banner's loot table (Docs/features/10-heroes.md
+ * §6.4): `lootDrawsMin`…`lootDrawsMax` of them, each count as likely, each
+ * prize a weighted draw. Paid as they are drawn. Every roll is keyed by
+ * `(banner, pullNumber, draw)`, so a ten-call is ten taps.
+ */
+export function drawLoot(state: GameState, banner: BannerId, n: number): CallLoot[] {
+  const b = BANNERS[banner];
+  const table = b.loot.filter((e) => e.weight > 0);
+  const total = table.reduce((sum, e) => sum + e.weight, 0);
+  if (table.length === 0 || b.lootDrawsMax <= 0) return [];
+  const span = Math.max(0, b.lootDrawsMax - b.lootDrawsMin) + 1;
+  const count = b.lootDrawsMin + Math.floor(rand(state.seed, 'gachaLootCount', banner, n) * span);
+  const out: CallLoot[] = [];
+  for (let i = 0; i < count; i += 1) {
+    let cut = rand(state.seed, 'gachaLoot', banner, n, i) * total;
+    let entry: BannerLoot = table[table.length - 1]!;
+    for (const e of table) {
+      cut -= e.weight;
+      if (cut < 0) { entry = e; break; }
+    }
+    const paid = payLoot(state, banner, entry, rand(state.seed, 'gachaFrag', banner, n, i));
+    if (paid !== null) out.push(paid);
+  }
+  return out;
+}
+
+function payLoot(state: GameState, banner: BannerId, e: BannerLoot, roll: number): CallLoot | null {
+  switch (e.reward) {
+    case 'Fragments': {
+      // Anyone of that rarity the banner calls, owned or not: a fragment of a
+      // held hero climbs the stars, of a missing one toward a recruit.
+      const rarity = e.rarity === '' ? null : e.rarity;
+      const pool = rarity !== null && BANNERS[banner].weights[rarity] > 0
+        ? heroesOfRarity(rarity) : bannerHeroes(state, banner);
+      if (pool.length === 0) return null;
+      const heroId = pool[Math.floor(roll * pool.length)]!;
+      state.heroes.fragments[heroId] = (state.heroes.fragments[heroId] ?? 0) + e.amount;
+      return { kind: 'fragments', heroId, amount: e.amount };
+    }
+    case 'Stardust': {
+      const amount = callStardust(state, e.amount);
+      addToWallet(state.kingdom.wallet, 'Stardust', amount);
+      recordResourceDiscovery(state, 'Stardust');
+      return { kind: 'currency', currency: 'Stardust', amount };
+    }
+    case 'HeroXp':
+      return { kind: 'currency', currency: 'HeroXp', amount: addHeroXp(state, e.amount) };
+    case 'Item':
+      if (e.item === '') return null;
+      grantItem(state, e.item, e.amount);
+      return { kind: 'item', item: e.item, amount: e.amount };
+  }
+}
+
+/**
  * One pull on one banner.
  *
- * Three decisions, three independent hash draws, all keyed by
- * `(seed, namespace, banner, pullNumber)` — never a stream, so a new consumer
- * cannot shift every later roll and a replay cannot desync (`rng.ts`):
+ * Independent hash draws, all keyed by `(seed, namespace, banner,
+ * pullNumber)` — never a stream, so a new consumer cannot shift every later
+ * roll and a replay cannot desync (`rng.ts`):
  *
+ *   0. the loot, drawn on every call (`drawLoot`)
  *   1. hit or miss, against the soft-pity ramp
  *   2. on a hit, WHICH RARITY, by the banner's weights
  *   3. within that rarity, which hero — preferring unowned
@@ -588,7 +651,7 @@ export function pull(
   const b = BANNERS[banner];
   const miss: PullResult = {
     result: 'NotEnoughKeys', heroId: null, rarity: null, duplicate: false,
-    fragments: 0, fragmentsOf: null, stardust: 0,
+    fragments: 0, fragmentsOf: null, loot: [],
     guaranteed: false, guaranteedLegendary: false,
   };
   const price = pullPrice(state, banner);
@@ -597,32 +660,32 @@ export function pull(
   if (bannerHeroes(state, banner).length === 0) return { ...miss, result: 'NothingToPull' };
 
   if (cost > 0) takeItem(state, price.key, cost);
-  const stardust = callStardust(state, banner);
-  addToWallet(state.kingdom.wallet, 'Stardust', stardust);
-  recordResourceDiscovery(state, 'Stardust');
 
   const n = pullCount(state, banner);
+  const loot = drawLoot(state, banner, n);
   // THE FIRST CALL CANNOT MISS (Docs/features/22-progression.md §6): the
   // standard banner's first call is the free one, and a free call that pays
   // Fragments is a tutorial that teaches the wrong lesson. Only the hit is
   // forced; which hero is still the roll's.
   const firstCall = banner === STANDARD_BANNER && n === 0;
+  // THE FIRST CALLS ACROSS EVERY BANNER ARE A NEW HERO: a quest that asks for
+  // heroes must never wait on a roll. The hit is forced and the hero is one
+  // the player does not own; which one is still the roll's.
+  const starter = Object.values(state.gacha.pullCounts).reduce((sum, c) => sum + c, 0)
+    < HERO_LADDER.firstCallsNewHero;
+  const forcedHit = firstCall || starter;
   const pity = pityCount(state, banner);
   const legPity = legendaryPityCount(state, banner);
   state.gacha.pullCounts[banner] = n + 1;
 
   const roll = rand(state.seed, 'gacha', banner, n);
-  if (!firstCall && roll >= heroChanceAt(pity, banner)) {
-    // Never a dead pull: a miss still pays Fragments toward someone this
-    // banner could have given you.
+  if (!forcedHit && roll >= heroChanceAt(pity, banner)) {
+    // Never a dead pull: the loot was drawn whatever the roll said.
     state.gacha.pityCounters[banner] = pity + 1;
     state.gacha.legendaryPity[banner] = legPity + 1;
-    const pool = bannerHeroes(state, banner);
-    const target = pool[Math.floor(rand(state.seed, 'gachaFrag', banner, n) * pool.length)]!;
-    state.heroes.fragments[target] = (state.heroes.fragments[target] ?? 0) + b.fragmentsPerMiss;
     return {
       result: 'Pulled', heroId: null, rarity: null, duplicate: false,
-      fragments: b.fragmentsPerMiss, fragmentsOf: target, stardust,
+      fragments: 0, fragmentsOf: null, loot,
       guaranteed: false, guaranteedLegendary: false,
     };
   }
@@ -639,6 +702,13 @@ export function pull(
       if (alt.length > 0) { rarity = r; pool = alt; break; }
     }
   }
+  if (starter && pool.every((id) => ownsHeroId(state, id))) {
+    // This rarity is complete: a starter call moves to one that is not.
+    for (const r of bannerRarities(banner)) {
+      const alt = bannerPool(state, banner, r).filter((id) => !ownsHeroId(state, id));
+      if (alt.length > 0) { rarity = r; pool = alt; break; }
+    }
+  }
 
   state.gacha.pityCounters[banner] = 0;
   state.gacha.legendaryPity[banner] = rarity === 'Legendary' ? 0 : legPity + 1;
@@ -651,8 +721,8 @@ export function pull(
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
     fragmentsOf: outcome === 'Duplicate' ? heroId : null,
-    stardust,
-    guaranteed: firstCall || pity >= b.hardPityAt - 1,
+    loot,
+    guaranteed: forcedHit || pity >= b.hardPityAt - 1,
     guaranteedLegendary: forced && rarity === 'Legendary',
   };
 }
@@ -666,7 +736,6 @@ export interface GuaranteedCall {
   /** The player already had them, so the call paid Fragments instead. */
   duplicate: boolean;
   fragments: number;
-  stardust: number;
 }
 
 /**
@@ -674,11 +743,12 @@ export interface GuaranteedCall {
  * golden call (Docs/features/09-relics.md §5, §10), and so far its only
  * caller.
  *
- * It is a CALL, so it pays the banner's Stardust and converts a hero the
- * player already owns into that banner's duplicate Fragments, exactly as a
- * rolled one does. It is GUARANTEED, so it does three things a roll does not:
+ * It is a CALL, so it converts a hero the player already owns into that
+ * banner's duplicate Fragments, exactly as a rolled one does. It is
+ * GUARANTEED, so it does four things a roll does not:
  *
  *  - it charges NOTHING. The five albums were the price.
+ *  - it draws NO loot: the loot table is a roll, and this call has none.
  *  - it spends NO `rand`. There is nothing to decide, so there is no roll to
  *    key — which is also why it can never desync a replay (invariant 4).
  *  - it moves NO counter. `pullCounts` keys future rolls and the two pity
@@ -689,14 +759,11 @@ export function callGuaranteed(
   state: GameState, banner: BannerId, heroId: HeroId,
 ): GuaranteedCall {
   const b = BANNERS[banner];
-  addToWallet(state.kingdom.wallet, 'Stardust', callStardust(state, banner));
-  recordResourceDiscovery(state, 'Stardust');
   const outcome = grantHero(state, heroId, b.duplicateFragments);
   return {
     heroId,
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
-    stardust: callStardust(state, banner),
   };
 }
 

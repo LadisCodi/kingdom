@@ -121,7 +121,9 @@
   Its levels 2–5 are unlocked by the Sagas.
 - **Every hero comes from the banner.** The kingdom starts with none.
 - **The first call is free and always a hero** — a random one. Quest
-  `FirstSummon` asks for it; `Fellowship` asks for three heroes later.
+  `FirstSummon` asks for it; `Fellowship` asks for two heroes later.
+- **The first two calls, on either banner, are each a new hero**
+  (`heroLadder` › `firstCallsNewHero`).
 - Before the Tavern the attack sheet shows no hero slots: the Orcs are
   fought by soldiers alone.
 - The Warden and Bess speak in the tutorial as the captain of the guard and

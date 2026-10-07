@@ -9,10 +9,10 @@
 // shown (ui/heroCard.ts).
 //
 // THE CARD is a centred window (mockup hero-detail-A): the name on the
-// plank, the hero on its rarity's stage, then a section each for the
-// ascension, the stats, the passive and the level — the upgrade popup's
-// section heads, parchment tiles, price line and button. A hero not found
-// yet gets the same window with its fragments where the level was.
+// plank, the hero on its rarity's stage with the ascension laid over its
+// foot, then the skill, the boon (under its head) and the level as
+// parchment tiles with no heads of their own. A hero not found yet gets the
+// same window with its fragments where the level was.
 //
 // Two views, one overlay — the nav tab stays put and `game.openHeroId`
 // decides which of them draws. That lives on the presenter, not here, for
@@ -25,7 +25,7 @@
 // a second made the grid blink, because a fresh `<img>` decodes before its
 // first paint.
 
-import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { HERO_LADDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, nextSkillRankLevel, rosterView,
@@ -33,7 +33,7 @@ import {
 } from '../sim/heroes';
 import { SKILLS, maxSkillRank, skillSentence } from '../sim/skills';
 import {
-  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
+  ascensionFragmentCost, heroLevelCap, maxAscension, xpLevelCost,
 } from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
@@ -41,7 +41,7 @@ import type { Game } from '../game';
 import { el, formatExact, formatNumber } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
-  btn, iconEl, knob, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
+  btn, iconEl, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
 } from './kit';
 import type { IconName } from './kit';
 import { ascensionStars } from './ascensionStars';
@@ -107,11 +107,6 @@ const RARITY_LABEL: Record<HeroRarity, string> = {
 /** Step to the hero before or after this one, wrapping. Comparing two of them
  *  is most of what this screen is for, and a trip back through the grid to do
  *  it is three taps where this is one. */
-function step(id: HeroId, by: 1 | -1): HeroId {
-  const i = HERO_ORDER.indexOf(id);
-  return HERO_ORDER[(i + by + HERO_ORDER.length) % HERO_ORDER.length]!;
-}
-
 /** A hero's illustration. The art is always CONTAINED in its box and never
  *  cropped. */
 function heroArt(def: HeroDef): HTMLElement {
@@ -119,27 +114,57 @@ function heroArt(def: HeroDef): HTMLElement {
   return url ? spriteImgAt(url, 'hd-art') : el('div', { class: 'hd-art is-glyph' }, def.glyph);
 }
 
-/** The hero on its rarity's stage: the rarity's ribbon top-left, the type's
- *  banner top-right, an arrow each side to step the roster. */
-function stage(game: Game, def: HeroDef, id: HeroId, owned: boolean): HTMLElement {
-  const arrow = (by: 1 | -1) => {
-    const k = knob(by === 1 ? '›' : '‹', () => {
-      game.openHeroId = step(id, by);
-      game.notify();
-    }, { label: by === 1 ? 'Next hero' : 'Previous hero' });
-    k.classList.add(by === 1 ? 'hd-next' : 'hd-prev');
-    return k;
+type StatKey = 'atk' | 'dmg' | 'def' | 'hp';
+
+/** The stats each hero's card last drew. A rebuild that finds a stat higher
+ *  than this — a level, an ascension — plays the rise on it. */
+const lastStats = new Map<HeroId, Record<StatKey, number>>();
+
+/** The four stats, a column down the stage's left edge beside the hero:
+ *  bare, white on the vault — the icon beside its label over its value. A
+ *  stat that rose since the card last drew punches, and its gain floats up
+ *  off it in green. */
+function stats(game: Game, id: HeroId): HTMLElement {
+  const s = heroStats(game.state, id);
+  const now: Record<StatKey, number> = { atk: s.atk, dmg: s.dmg, def: s.def, hp: s.hp };
+  const before = lastStats.get(id);
+  lastStats.set(id, now);
+  const stat = (key: StatKey, label: string) => {
+    const gain = before ? now[key] - before[key] : 0;
+    return el('div', { class: `hd-stat${gain > 0 ? ' is-up' : ''}` },
+      iconEl(key),
+      el('div', { class: 'hd-stat-text' },
+        el('span', { class: 'hd-stat-label' }, label),
+        el('b', { class: 'hd-stat-value' }, formatExact(now[key]))),
+      ...(gain > 0 ? [el('span', { class: 'hd-stat-gain', 'aria-hidden': 'true' }, `+${formatExact(gain)}`)] : []));
   };
-  return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${owned ? '' : ' is-missing'}` },
+  return el('div', { class: 'hd-stats' },
+    stat('atk', 'Attack'),
+    stat('dmg', 'Damage'),
+    stat('def', 'Defence'),
+    stat('hp', 'Health'));
+}
+
+/** The hero on its rarity's stage: an owned hero's ascension stars in its
+ *  top-left corner, the stats down its left edge, the Ascend laid over the
+ *  foot of the vault. */
+function stage(game: Game, def: HeroDef, id: HeroId, view: RosterEntry): HTMLElement {
+  const over = view.owned ? ascension(game, id, view) : null;
+  return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${view.owned ? '' : ' is-missing'}` },
     heroArt(def),
-    el('span', { class: 'hd-frame', 'aria-hidden': 'true' }),
-    el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]),
-    el('span', { class: `hd-type is-${def.unitType}` },
-      iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType),
-    arrow(-1),
-    arrow(1),
+    ...(view.owned ? [ascensionStars(view.entry.ascension, 'hd-stars')] : []),
+    stats(game, id),
+    ...(over ? [over] : []),
   );
 }
+
+/** The rarity's ribbon and the type's badge ride the window's header: the
+ *  ribbon at its left end, the badge before the close. */
+const rarityRibbon = (def: HeroDef): HTMLElement =>
+  el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]);
+const typeBadge = (def: HeroDef): HTMLElement =>
+  el('span', { class: `hd-type is-${def.unitType}` },
+    iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType);
 
 /** A section's two halves: what it reads on the left, its price and button
  *  on the right. */
@@ -159,30 +184,16 @@ function reading(label: string, have: number, of: number): HTMLElement {
     bar.root);
 }
 
-/** The stars, and under them what the next point does: every point lifts
- *  every stat, and the one that finishes a star lifts the level cap too. */
-function ascensionRead(ascension: number): HTMLElement {
-  const per = HERO_LADDER.ascensionStepsPerStar;
-  const points = ascension - fullStars(ascension) * per;
-  const stats = `Next: stats +${formatNumber(HERO_LADDER.statsPerAscension * 100, 1)}%`;
-  const line = ascension >= maxAscension()
-    ? 'Fully ascended'
-    : points === per - 1
-      ? `${stats} · level cap ${formatExact(heroLevelCap(ascension + 1))}`
-      : stats;
-  return el('div', { class: 'hd-asc' },
-    ascensionStars(ascension, 'hd-stars'),
-    el('div', { class: 'hd-asc-line' }, line));
-}
-
-function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
+/** The ascension's price and button, laid over the foot of the stage; the
+ *  stars are in the stage's top-left corner. Fully ascended: nothing. */
+function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement | null {
   const a = view.entry.ascension;
-  if (a >= maxAscension()) return tray('hd-ascend is-max', ascensionRead(a), null);
+  if (a >= maxAscension()) return null;
   const toll = ascensionStardustCost(a);
   const need = ascensionFragmentCost(a);
   const shortDust = game.walletValue('Stardust') < toll;
   const shortFrags = view.entry.fragments < need;
-  return tray('hd-ascend', ascensionRead(a), buy(
+  return el('div', { class: 'hd-ascend' }, buy(
     // Both prices over the button that spends them: the Stardust toll is a
     // wallet row, the fragments are a counter beside the hero, and one shown
     // without the other is a button whose refusal has no reason.
@@ -209,8 +220,10 @@ function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   // do instead: a disabled button still offers a press, and the press is not
   // the answer — the Ascend above is.
   if (lv >= view.levelCap) {
+    // What to reach: the stars with one more point — every point lifts the cap.
+    const target = view.entry.ascension + 1;
     return tray('hd-level', read,
-      el('div', { class: 'hd-note' }, iconEl('ascension', { size: 'sm' }), 'Ascend them to go further'));
+      el('div', { class: 'hd-note hd-cap' }, 'Ascend to', ascensionStars(target, 'hd-cap-stars')));
   }
   const cost = xpLevelCost(lv);
   const short = game.walletValue('HeroXp') < cost;
@@ -239,34 +252,74 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   ));
 }
 
-/** The skill's mark, by what it does. */
-const SKILL_ICON: Record<string, IconName> = {
-  strike: 'atk', heal: 'hp', shield: 'def', daze: 'sparkle', rally: 'crest', spoils: 'sparkle',
-};
+/** The skill rank each hero's card last drew — the stats' `lastStats`, for
+ *  the skill. */
+const lastSkillRank = new Map<HeroId, number>();
+
+/** A number in a skill's sentence, with its unit: *187.5%*, *2.5 s*. */
+const SKILL_NUMBER = /(\d+(?:\.\d+)?)(%| s)?/g;
+
+/** What the skill does at its rank, and what it gained. Risen from `from`,
+ *  every number that grew punches in the sentence, and its gain is returned
+ *  to float up beside the pips, where it covers no words. */
+function skillSays(def: HeroDef, rank: number, from: number | null): { says: HTMLElement; gains: string[] } {
+  const now = skillSentence(def.skill, rank);
+  const says = el('div', { class: 'hd-skill-says' });
+  const gains: string[] = [];
+  if (from === null) {
+    says.append(now);
+    return { says, gains };
+  }
+  const before = [...skillSentence(def.skill, from).matchAll(SKILL_NUMBER)].map((m) => Number(m[1]));
+  let at = 0;
+  let i = 0;
+  for (const m of now.matchAll(SKILL_NUMBER)) {
+    const gain = Number(m[1]) - (before[i++] ?? Number(m[1]));
+    if (gain <= 0) continue;
+    says.append(now.slice(at, m.index), el('span', { class: 'hd-skill-num' }, m[0]));
+    gains.push(`+${formatNumber(gain, 1)}${m[2] ?? ''}`);
+    at = m.index + m[0].length;
+  }
+  says.append(now.slice(at));
+  return { says, gains };
+}
+
+/** The rank pips; a pip just filled punches. */
+function skillPips(rank: number, top: number, from: number | null): HTMLElement {
+  const row = pips(rank, top);
+  if (from !== null) {
+    [...row.children].slice(from, rank).forEach((p) => p.classList.add('is-new'));
+  }
+  return row;
+}
 
 /**
- * THE SKILL (Docs/features/10-heroes.md §2.5): what it does at its rank, and
- * under it the next rank — its price and Upgrade, or what is missing. A level
- * only UNLOCKS a rank; the rank is bought.
+ * THE SKILL (Docs/features/10-heroes.md §2.5): one widget — its name, its
+ * rank pips and what it does at its rank, and at its foot the next rank's
+ * price and Upgrade, or what is missing. A level only UNLOCKS a rank; the
+ * rank is bought.
  */
 function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   const def = HEROES[id];
   const info = SKILLS[def.skill.id];
   const rank = owned ? skillRank(game.state, id) : 1;
   const top = maxSkillRank();
-  const head = el('div', { class: 'hd-skill k-section' },
-    iconEl(SKILL_ICON[info.kind] ?? 'sparkle'),
-    el('div', { class: 'hd-skill-text' },
-      el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), pips(rank, top)),
-      el('div', { class: 'hd-skill-says' }, skillSentence(def.skill, rank))));
-  if (!owned || rank >= top) return head;
+  // Rose since the card last drew: the new pip and the numbers that grew
+  // play the rise.
+  const last = owned ? lastSkillRank.get(id) : undefined;
+  if (owned) lastSkillRank.set(id, rank);
+  const from = last !== undefined && rank > last ? last : null;
+  const { says, gains } = skillSays(def, rank, from);
+  const card = (foot: HTMLElement | null) => el('div', { class: 'hd-skill k-section' },
+    el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), skillPips(rank, top, from),
+      ...gains.map((g) => el('span', { class: 'hd-skill-gain', 'aria-hidden': 'true' }, g))),
+    says,
+    ...(foot ? [foot] : []));
+  if (!owned || rank >= top) return card(null);
   const unlock = nextSkillRankLevel(rank)!;
-  const next = el('div', { class: 'hd-read' },
-    el('div', { class: 'hd-read-line' }, el('b', {}, `Rank ${formatExact(rank + 1)}: `), skillSentence(def.skill, rank + 1)));
-  const level = game.heroLevelOf(id);
-  if (level < unlock) {
+  if (game.heroLevelOf(id) < unlock) {
     const cap = heroLevelCap(game.state.heroes.ascension[id] ?? 0);
-    return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next,
+    return card(el('div', { class: 'hd-skill-foot' },
       el('div', { class: 'hd-note' }, iconEl('padlock', { size: 'sm' }),
         cap < unlock ? `Ascend, then reach level ${formatExact(unlock)}` : `Reach level ${formatExact(unlock)}`)));
   }
@@ -276,7 +329,7 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   for (const [good, n] of Object.entries(price.goods)) {
     terms.push({ icon: good as IconName, amount: formatExact(n ?? 0), short: block === 'NotEnoughMaterial' });
   }
-  return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next, buy(
+  return card(el('div', { class: 'hd-skill-foot' },
     priceLine(terms),
     btn({
       label: 'Upgrade',
@@ -284,45 +337,27 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
       onClick: () => game.doBuySkillRank(id),
       disabledReason: block === 'NotEnoughStardust' ? 'Not enough Stardust'
         : block === 'NotEnoughMaterial' ? `Not enough ${info.material}` : undefined,
-    }),
-  )));
+    })));
 }
 
 function detail(game: Game, id: HeroId): HTMLElement {
   const def = HEROES[id];
   const view = rosterView(game.state).find((h) => h.id === id)!;
-  const s = heroStats(game.state, id);
   const owned = view.owned;
-
-  const statTile = (icon: 'atk' | 'dmg' | 'def' | 'hp', label: string, value: number) =>
-    el('div', { class: 'hd-stat k-section' },
-      iconEl(icon),
-      el('div', { class: 'hd-stat-text' },
-        el('span', { class: 'hd-stat-label' }, label),
-        el('b', { class: 'hd-stat-value' }, formatExact(value))));
 
   // THE BOON, on the six that have one (Docs/proposals/legendary-boons.md):
   // the thing no Common or Rare has, on while the hero is owned.
   const boon = game.heroBoonText(id);
 
   return el('div', { class: 'hd' },
-    el('div', { class: 'hd-subtitle' }, def.title),
-    stage(game, def, id, owned),
+    // The hero's title (`def.title`) is kept in the data but not shown.
     // AN UNOWNED HERO GETS THE SAME CARD. What the player is deciding is
     // whether to chase this one, and that is a question about its type, its
     // numbers and what it does.
-    ...(owned ? [sectionHead('Ascension'), ascension(game, id, view)] : []),
-    sectionHead('Stats'),
-    el('div', { class: 'hd-stats' },
-      statTile('atk', 'Attack', s.atk),
-      statTile('dmg', 'Damage', s.dmg),
-      statTile('def', 'Defence', s.def),
-      statTile('hp', 'Health', s.hp)),
-    sectionHead('Skill'),
+    stage(game, def, id, view),
     skill(game, id, owned),
     ...(boon !== null ? [sectionHead('Kingdom boon'),
       el('div', { class: 'hd-passive k-section is-boon' }, iconEl('crest'), boon)] : []),
-    sectionHead(owned ? 'Level' : 'Fragments'),
     owned ? level(game, id, view) : fragments(game, id, view),
   );
 }
@@ -340,12 +375,18 @@ export function renderHeroesSheet(game: Game): HTMLElement {
     return surface;
   }
   // The card's close goes back to the roster: it is a window opened over it.
-  return sheet(
+  const card = sheet(
     {
       title: HEROES[open].name,
       onClose: () => { game.openHeroId = null; game.notify(); },
       centred: true,
+      lead: [rarityRibbon(HEROES[open])],
+      actions: [typeBadge(HEROES[open])],
     },
     detail(game, open),
   );
+  // The name shares the band with the ribbon and the badge, so a long one
+  // sets smaller (heroes.css, `--name-len`).
+  card.style.setProperty('--name-len', String(HEROES[open].name.length));
+  return card;
 }

@@ -403,15 +403,10 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   font-weight: var(--weight-strong);
 }
 
-/* The next-day pill: the ad tab's slab, with a countdown or "Claim". */
-.nd-tab-label { font-size: calc(var(--px) * 12); white-space: nowrap; }
-.nd-tab.is-ready { animation: nd-glow 1.6s ease-in-out infinite; }
-@keyframes nd-glow { 50% { filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 205, 96, 0.9)); } }
-
 /* ------------------------------------------------- the widget on the map */
 
 /* Under the Survey's widget, top left (ui/offerWidget.ts): the offer's icon
- * bobbing gently, a red dot when something waits, and a small wooden sign
+ * bobbing gently, the call to action when something waits, and a small wooden sign
  * whose words scroll by. */
 #offerwidgets {
   display: flex;
@@ -434,7 +429,41 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   font: inherit;
   cursor: pointer;
 }
+/* The light it stands in: a soft golden bloom, breathing slowly — no rays,
+ * and quieter than the splash's, so it draws the eye without nagging. */
+.ofw-glow {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * 36);
+  width: calc(var(--px) * 136);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  /* Strong to past the icon's edge, so the gold shows round it, then gone. */
+  background: radial-gradient(closest-side, rgba(255, 206, 70, 0.95), rgba(252, 182, 45, 0.8) 50%, rgba(240, 156, 30, 0.35) 72%, transparent);
+  filter: blur(calc(var(--px) * 6));
+  pointer-events: none;
+  animation: ofw-breathe 3.6s ease-in-out infinite;
+}
+@keyframes ofw-breathe {
+  0%, 100% { opacity: 0.6; scale: 0.94; }
+  50% { opacity: 0.9; scale: 1.04; }
+}
+/* A sparkle over it: lights, swells and goes, then waits a long while. */
+.ofw-sparkle {
+  position: absolute;
+  z-index: 2;
+  width: calc(var(--px) * 18 * var(--s, 1));
+  aspect-ratio: 1;
+  margin: calc(var(--px) * -9 * var(--s, 1));
+  background: url('../../assets/sparkle.png') center / contain no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  animation: ofs-twinkle 3.6s ease-in-out infinite;
+}
 .ofw-icon {
+  position: relative;
+  z-index: 1;
   width: calc(var(--px) * 70);
   height: calc(var(--px) * 70);
   object-fit: contain;
@@ -452,18 +481,6 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 @keyframes ofw-bob { 50% { transform: translateY(calc(var(--px) * -3)); } }
 .ofw:active .ofw-icon { transform: translateY(calc(var(--px) * 1)) scale(0.96); animation: none; }
 
-.ofw-dot {
-  position: absolute;
-  top: calc(var(--px) * 2);
-  right: calc(var(--px) * 6);
-  width: calc(var(--px) * 14);
-  height: calc(var(--px) * 14);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-  display: none;
-}
-.ofw.is-ready .ofw-dot { display: block; }
 .ofw.is-ready .ofw-icon { animation: ofw-bob 2.8s ease-in-out infinite, nd-glow 1.6s ease-in-out infinite; }
 
 /* The sign: the panels' wooden plaque, its words scrolling right to left. */
@@ -496,35 +513,17 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 }
 @keyframes ofw-scroll { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) {
-  .ofw-icon, .ofw-track { animation: none; }
+  .ofw-icon, .ofw-track, .ofw-glow { animation: none; }
+  .ofw-sparkle { display: none; }
 }
 
 /* --------------------------------------------- the grouped offers widget */
 
-/* How many offers wait behind the one widget: a red enamel badge on its
- * corner (the dot stays for "something to claim"). */
 .ofw-slot { display: contents; }
-.ofw-count {
-  position: absolute;
-  top: 0;
-  left: calc(var(--px) * 2);
-  min-width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  padding: 0 calc(var(--px) * 5);
-  border-radius: calc(var(--px) * 10);
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-  color: #fff;
-  font-size: calc(var(--px) * 11);
-  font-weight: var(--weight-title);
-  line-height: calc(var(--px) * 16);
-  text-align: center;
-}
-.ofw-count[hidden] { display: none; }
 
 /* The splash opened from it: every offer in a row along the top — small
  * wooden squares, the one on screen raised in parchment, one with something
- * to claim marked with the red dot. */
+ * to claim marked with the call to action. */
 .ofs-tabs {
   position: relative;
   z-index: 3;
@@ -555,16 +554,14 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 .ofs-tab .ofw-icon { width: 100%; height: 100%; animation: none; filter: none; }
 .ofs-tab .ofw-icon.is-fallback { border-radius: calc(var(--px) * 6); }
 .ofs-tab .ofw-icon.is-fallback > .icon { --icon-size: calc(var(--px) * 30); }
-.ofs-tab.is-ready::after {
-  content: '';
-  position: absolute;
-  top: calc(var(--px) * -4);
-  right: calc(var(--px) * -4);
-  width: calc(var(--px) * 12);
-  height: calc(var(--px) * 12);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-}
 /* The row takes the top: the light and its figure start lower. */
 .ofs-screen.has-tabs .ofs-hero { top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92); height: 60%; }
+
+/* The widget turning to the next offer: its picture and its sign fade in. */
+.ofw.is-turning > .ofw-slot,
+.ofw.is-turning > .ofw-sign { animation: ofw-turn 600ms ease-out both; }
+@keyframes ofw-turn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ofw.is-turning > .ofw-slot,
+  .ofw.is-turning > .ofw-sign { animation: none; }
+}

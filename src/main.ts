@@ -2,19 +2,21 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+import { portalEvent, portalOpen, portalOpensAt } from './worldServer/core';
 import { renderHeroPicker } from './ui/heroPicker';
 import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
-import { startMusic } from './audio/music';
+import { setMusterMusic, startMusic } from './audio/music';
+import { warmBattleSfx } from './audio/sfx';
 import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, BANNERS, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { dropFragments, giveRelic, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
@@ -30,8 +32,6 @@ import { deserialize, isPrototypeStale, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
 import { mountRewardFly } from './ui/rewardFly';
-import { mountAdOfferPill } from './ui/adOfferPill';
-import { mountRelicAsleepPill } from './ui/relicAsleepPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
@@ -56,9 +56,13 @@ import { renderShortfallSheet } from './ui/shortfallSheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
+import { renderWorldBuilding, renderWorldSlot } from './ui/world/hexCard';
+import { renderPortalScreen } from './ui/world/portalScreen';
 import { renderArmySheet } from './ui/world/armySheet';
 import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
+import { mountRankingWidget } from './ui/world/rankingWidget';
+import { renderRankingSheet } from './ui/world/rankingSheet';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
@@ -81,7 +85,9 @@ import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
-import { mountNextDayPill, mountOfferSplash } from './ui/offerSplash';
+import { mountOfferSplash } from './ui/offerSplash';
+import { mountNoticeColumn } from './ui/notices/column';
+import { renderNoticeCard } from './ui/notices/card';
 import { mountOfferWidgets } from './ui/offerWidget';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
@@ -95,7 +101,6 @@ import { choosePayerProfile, PAYER_PROFILES } from './sim/store';
 import type { PayerProfile } from './sim/state';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
@@ -104,6 +109,9 @@ import { recordResourceDiscovery } from './sim/discovery';
 import { addToWallet, getWallet, type CurrencyId } from './sim/state';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
+
+/** How far ahead of the device the dev world's clock runs (ms). */
+const DEV_CLOCK_KEY = 'kingdom.devClockMs';
 
 /** The dev bar's resource buttons (main.ts dev bar): what each adds — a
  *  material, null, doubles what is held (at least 1,000). */
@@ -195,7 +203,14 @@ async function boot(): Promise<void> {
   // is up (worldServer/remote.ts), else a stand-in in the browser under its
   // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
   const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
-  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
+  // A dev clock for the stand-in: how far ahead of the device the world runs
+  // (the dev bar's Portal button), so a timed event can be played any day.
+  const devClockMs = (): number => {
+    if (!new URLSearchParams(location.search).has('dev')) return 0;
+    try { return Number(localStorage.getItem(DEV_CLOCK_KEY)) || 0; } catch { return 0; }
+  };
+  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall)
+    : new LocalWorldServer(browserStore(), () => Date.now() + devClockMs(), devClockMs);
   // The friends list follows the world: the `social` edge function beside
   // the `world` one, else a stand-in peopled with made-up kingdoms
   // (socialServer/local.ts).
@@ -262,16 +277,14 @@ async function boot(): Promise<void> {
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountSurveyPill(game, document.getElementById('survey')!);
-  mountBanner(game, document.getElementById('notice')!);
+  mountNoticeColumn(game, document.getElementById('notices')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
-  mountAdOfferPill(game, document.getElementById('adoffer')!);
-  mountNextDayPill(game, document.getElementById('nextday')!);
   mountOfferWidgets(game, document.getElementById('offerwidgets')!);
-  mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
+  mountRankingWidget(game, document.getElementById('worldrank')!);
   mountMinimap(game, document.getElementById('worldmini')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
@@ -325,6 +338,9 @@ async function boot(): Promise<void> {
     mana: renderManaSheet,
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
+    worldSlot: renderWorldSlot,
+    portal: renderPortalScreen,
+    worldBuilding: renderWorldBuilding,
     army: renderArmySheet,
     delve: renderDelveScreen,
     builder: renderBuilderSheet,
@@ -335,6 +351,8 @@ async function boot(): Promise<void> {
     nickname: renderNicknameSheet,
     friends: renderFriendsSheet,
     friendProfile: renderFriendProfile,
+    ranking: renderRankingSheet,
+    notice: renderNoticeCard,
     crestEditor: renderCrestEditor,
     friendSearch: renderFriendSearch,
     wishNeed: renderWishNeed,
@@ -369,6 +387,7 @@ async function boot(): Promise<void> {
     purse: () => JSON.stringify(game.state.city.wallet),
     bag: () => bagSignature(game),
     survey: () => JSON.stringify(game.surveyScreen()),
+    ranking: () => JSON.stringify(game.worldRanking()),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
@@ -505,6 +524,19 @@ async function boot(): Promise<void> {
   const syncScene = () => appRoot.classList.toggle('in-world', game.scene === 'world');
   game.onChange(syncScene);
   syncScene();
+  // War drums while a party is mustered on a deploy sheet — a lair's or an
+  // army's (src/audio/music.ts) — and in the hero picker opened from one,
+  // which hands back to it. A fight played from it outranks them.
+  // The battle's sounds come down then too, so they are ready by the first blow.
+  const isDeploy = (o: string | null) => o === 'lair' || o === 'army';
+  const syncMuster = () => {
+    const mustering = isDeploy(game.openOverlay)
+      || (game.openOverlay === 'heroPicker' && isDeploy(game.heroPick?.returnTo ?? null));
+    setMusterMusic(mustering);
+    if (mustering) warmBattleSfx();
+  };
+  game.onChange(syncMuster);
+  syncMuster();
 
   // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
   // sheets: a legacy full-screen menu has no "beside" to tap. #overlay is
@@ -751,6 +783,18 @@ async function boot(): Promise<void> {
       dropFragments(game.state, 'any', 24, ['dev', devDrops++]);
       runTick();
     };
+    // A chest on demand (ui/gachaScreen.ts): a REAL call on a banner, the
+    // keys handed over first, or a real relic pack with the Gems for it.
+    const devCall = (banner: 'basic' | 'advanced', count: number) => {
+      grantItem(game.state, BANNERS[banner].key, count);
+      if (count === 1) game.doPull(banner);
+      else game.doPullMany(banner, count);
+    };
+    const devRelicPack = () => {
+      for (const door of [...LAIR_ORDER, 'room', 'boss', 'portal', 'scouting']) openRelicDoor(game.state, door);
+      addToWallet(game.state.player.wallet, 'Gems', game.fragmentPackOffer().gems);
+      game.doBuyFragmentPack();
+    };
     // Three of every item, so the Bag's tiles, popovers and Use ×N can be
     // seen before anything in the game pays an item.
     const someItems = () => {
@@ -825,6 +869,9 @@ async function boot(): Promise<void> {
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
       button('🧩 fragments', someFragments), button('🎒 items', someItems),
+      button('🪙 call ×1', () => devCall('basic', 1)), button('🪙 call ×10', () => devCall('basic', 10)),
+      button('👑 call ×1', () => devCall('advanced', 1)), button('👑 call ×10', () => devCall('advanced', 10)),
+      button('🔮 relic pack', devRelicPack),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {
@@ -919,6 +966,17 @@ async function boot(): Promise<void> {
         game.state.landmarks.claimed[tower.id] = true;
         runTick();
         game.enterWorld();
+      }),
+      // The Dark Portal, open now: the stand-in's clock moves on to its next
+      // opening (19 §10.2), and the page reloads on it. Forward only.
+      button('🌀 Portal', () => {
+        const now = game.now();
+        let k = portalEvent(now);
+        if (portalOpen(now)) { game.toast('The Portal is open'); game.notify(); return; }
+        if (portalOpensAt(k) <= now) k += 1;
+        const ahead = portalOpensAt(k) - now + 60_000;
+        try { localStorage.setItem(DEV_CLOCK_KEY, String((Number(localStorage.getItem(DEV_CLOCK_KEY)) || 0) + ahead)); } catch { return; }
+        location.reload();
       }),
       // The whole world in view, to look the board over without exploring it.
       button('🗺 reveal', () => {

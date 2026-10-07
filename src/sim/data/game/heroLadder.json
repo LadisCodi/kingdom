@@ -7,14 +7,16 @@
     "fragmentsPerStepGrowth": 2,
     "ascensionStardustBase": 4,
     "ascensionStardustGrowth": 2,
-    "xpLevelCostBase": 100,
-    "xpLevelCostGrowth": 1.09,
-    "heroLevelsPerStar": 8,
+    "xpLevelCostBase": 20,
+    "xpLevelCostGrowth": 1.0165,
+    "heroLevelsPerStar": 0,
+    "heroLevelsPerAscension": 10,
     "statsPerAscension": 0.02,
-    "heroMaxLevel": 50,
-    "skillRankLevels": [11, 19, 27, 35],
+    "heroMaxLevel": 310,
+    "skillRankLevels": [71, 131, 191, 251],
     "skillRankStardust": [100, 200, 400, 800],
     "skillRankMaterial": [2, 4, 8, 12],
-    "skillRankStep": 0.25
+    "skillRankStep": 0.25,
+    "firstCallsNewHero": 2
   }
 }

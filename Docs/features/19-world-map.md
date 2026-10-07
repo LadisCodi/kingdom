@@ -14,7 +14,7 @@
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
 > `worldCamps`; Dungeons
-> and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
+> and the delve screen (§8.1–§8.2), the ranking (§12) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Stand-in rivals in every free seat claim, build, beat
 > camps, man a Fortress and now and then
 > attack on their own.
@@ -169,6 +169,8 @@
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 - **One trip per hex.** No explorer is sent to a hex one already out will
   reveal — its target, or a hex within its reveal.
+- **While a hex in the mist is open, the header's plaque counts the free
+  explorers** (*2/3*), as it counts free builders while building.
 - **A hex an explorer is out to shows the trip** in place of Explore: what
   it is doing (on the way, exploring, coming home), one bar for the whole
   trip, and **Finish**: Gems for the time left until it is home, at
@@ -257,6 +259,25 @@
   walked, a dashed line along the hexes still to go, ringed on the hex it is
   bound for — the target out, the city home. A rival's army shows only itself.
 
+### 4.2 The ground of a fight
+
+- **A fight on a hex is fought on its ground**: a camp cleared, a raid on a
+  district, an attack on a rival's garrisons. A dungeon's rooms and the
+  Portal's floors are below ground and take none.
+- **Each rule names a terrain or a feature, a troop type, and a share of
+  its attack** (`worldTerrainCombat`); a hex's terrain and features add up.
+- **It is the ground's, so it holds for both sides.**
+
+| Ground | Troop | Attack |
+|---|---|---|
+| Plains | Cavalry | +10% |
+| Desert | Cavalry | −10% |
+| Forest | Archers | −10% |
+| Mountain | Lancers | +10% |
+
+- **The deployment shows it**: under the roster, the fight's LOOT and its
+  TERRAIN — the ground, the march there, and each rule that applies.
+
 ## 5. Control, claiming and connection
 
 ### 5.1 Claiming
@@ -343,7 +364,11 @@ accident.**
   against the strongest party they could send: Very easy (green) · Easy ·
   Fair · Hard · Deadly (red). The camp's sheet names the difficulty.
 - **Fighting it**: an army sent to *clear* it — the party screen, march and
-  slot of an attack (§4) — fights on arrival.
+  slot of an attack (§4) — **waits at the camp** when it arrives. The
+  player is told (the *Your army is ready* notice) and calls the fight
+  from the camp's sheet: **Attack**, paid in Mana like a dungeon room, and
+  watched. **Withdraw** marches it home instead. Fought, won or lost, the
+  army marches home.
   - Won: the camp is beaten for that player, and pays when the army is
     home, by its power:
     - Gold (`goldPerPower`) and Hero XP (`heroXpPerPower`);
@@ -351,6 +376,9 @@ accident.**
       city's own production per 1,000 power;
     - a lump of precious material (§7.4).
   - The camp's sheet shows what it pays before the army is sent.
+  - On its way, the camp's sheet docks the army as a dungeon's: its board,
+    its bar to arrival and **Finish**. A march to a camp is not called
+    back, only hurried. There: its board, **Withdraw** and **Attack**.
   - Lost: the army walks home with its survivors; the camp stands, whole.
 - **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
   It is the training cost of the soldiers a winning army would lose
@@ -480,14 +508,25 @@ gates them; *Cartography* opens the first explorer.
 
 - **An upgrade is built into a district that stands**, with Gold and a
   builder's time, and shows on its hex.
-- **The Fortress is the first, and fits any district**: three levels,
-  garrisoned by an army, covering its hex and the six around it (§6.1).
+- **A district has slots for its upgrades**: one; two on bare ground (the
+  Rural district), which has no feature to work (`worldBuild.districts.*.slots`).
+  An upgrade takes a slot from the moment it starts; raising its level
+  takes none. A Shrine district's own Chapel fills its slot.
+- **The Fortress fits any district**: three levels, garrisoned by an army,
+  covering its hex and the six around it (§6.1).
+- **The Chapel** hosts one world relic ([`../proposals/relic-restoration.md`](../proposals/relic-restoration.md) §5.2).
+- **On the district's card**: each slot, empty (a tap opens the buildings
+  that fit it, and a tap on one builds it) or holding its building (a tap
+  opens what it does and its next level; a Chapel's relic socket opens the
+  relic picker).
 
 ### 7.3 Stores
 
 - **A producing district fills a store of its own**, as a province building
   does ([`03-economy.md`](03-economy.md) §3.2). A full store stops it.
-- **A tap on its hex collects the store into the city's wallet**, free.
+- **A tap on its hex collects the store into the city's wallet**, free,
+  once it is a quarter full or holds a precious lump; otherwise the tap
+  opens the district's card.
 - **Yield and store size are authored amounts per district**, times what the
   owner's research adds (`improvementYield`, `improvementStore`). The city
   sends that boost when it joins and after a research that moves it; the
@@ -597,7 +636,9 @@ A hex holds **none or one**. A feature decides the district built there
 - **Each player delves for themselves**: their own progress, room by room.
 - **But closing it is a race.** The first player to beat a dungeon's last boss
   closes it for everyone:
-  - they are paid that boss again, `closeRewardMultiplier` (2) times over;
+  - they are paid that boss again, `closeRewardMultiplier` (2) times over,
+    and its Hero XP `closeHeroXpMultiplier` (20) times over — the big Hero XP
+    prize ([`10-heroes.md`](10-heroes.md) §4.2);
   - every army camped there walks home, and everyone's progress in it is gone;
   - the others are told who closed it.
 - **A closed dungeon comes back** after a roll between `returnHoursMin` and
@@ -630,28 +671,37 @@ A hex holds **none or one**. A feature decides the district built there
 
 - **The dungeon's sheet has one button, Delve**, which opens the delve: a
   full-height menu.
-- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8* and
-  who holds it.
-- **The race**: a rope with a banner per player who has cleared a room, at
-  how far they have gone, the player's own blue; and who closes it and is
-  paid for it.
-- **Depth tabs**: one per depth; a depth not yet reached is locked.
-- **The descent**: the depth's rooms down a stair in the rock, one node each:
+- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8*, who
+  holds it, and who closes it and is paid for it.
+- **Depth tabs** down the right edge: one per depth, ticked once cleared,
+  locked until reached, each counting the kingdoms in it.
+- **The descent**: the depth's rooms down a stair in the rock, one node each,
+  with **every kingdom's shield on the room it has reached** — the
+  player's own larger, *You*:
   - cleared — dimmed, ticked;
-  - **the frontier** — lit, the creature's portrait, its power against the
-    army's, and what it pays, its precious lump included;
-  - ahead — hazed, its power only;
-  - **the boss** at the foot — larger, named, his chest open with what he
-    pays.
-- **The army**, docked at the foot: its heroes with their HP, its squads
-  with their counts and the soldiers lost so far, its power; **Fight** (the
-  frontier, priced in Mana, §4) and **Recall**. On its way: when it arrives, and Recall. None
-  there: **Send**.
+  - **the frontier** — lit, its power and what it pays, its precious lump
+    included;
+  - ahead — its power only;
+  - **the boss** at the foot — his face, his name, his chest open with what
+    he pays. No other room shows its enemy.
+- **The army**, docked at the foot, as the deployment draws it: its power,
+  its squads (up to 6) with their counts and the soldiers lost so far, its
+  heroes (up to 3) with their HP. **Withdraw** and **Attack** (the frontier,
+  at once, priced in Mana, §4). On its way: the same board, a bar to its
+  arrival with the time left, **Finish** (Speed up when the Bag holds a
+  General speed-up; Gems otherwise); it is withdrawn only once it is there.
+  None there: **Send**. To bring more troops, withdraw and send another
+  army.
 - **After a fight**, once it has played: the spoils over the descent — what
   the room paid and the soldiers it cost — with **Fight next** (or **Fight
   again** after a defeat) and **Back**.
 - **On the map**, a dungeon's hex carries a ring filled as far as the player
   has gone, *13/24*, and a red badge while their army is camped there.
+- **Every army of the player's carries its power** on a label under it, on
+  the road, camped or in a Fortress.
+- **The dungeon's card** has Delve, how deep the player has gone, and the
+  race: every kingdom in it as the world ranking's rows, furthest first,
+  opened on the player's own.
 
 ## 9. Generation
 
@@ -715,7 +765,10 @@ the centre is for.
 - Never controllable, never buildable, by anyone.
 - **Always revealed, for everyone, with no fog.**
 - Armies march through it; it carries no connection and is nobody's hex.
-- Between events it shows the portal dark, and a counter to the next opening.
+- Between events it shows the portal dark, and a counter to the next opening;
+  open, its vortex lit (`whex_portal`, `whex_portal_open`), turning, with a
+  breathing glow, a column of light, motes circling the rim and sparks rising
+  out of the pit — still under reduced motion.
 
 ### 10.2 Cadence
 
@@ -728,18 +781,29 @@ The fixed appointment is worth more than the surprise.
   enter regardless of where their territory is**.
 - A **maximum depth** of 40 floors (`worldPortal.floors`), tuned so nobody empties it in one event.
 - Floors are taken **one at a time, no skipping**.
-- **Three attempts a day**, restored at a fixed hour. **An attempt is spent only
-  on clearing a floor — failing costs nothing.**
-- **Every floor fought costs Mana** (§4), won or lost.
+- **No daily cap.** **Every floor fought costs Mana** (§4), won or lost —
+  Mana is what paces it, and more of it is bought or watched for.
 - Descending costs casualties, and **an army in the Portal is not on the board**:
   it defends nothing while it is down there.
 - Ranked by **deepest floor reached**, ties broken by **who got there first**.
 
-The attempt limit is what keeps the ranking a measure of strength and decisions
-rather than hours on the sofa, and what stretches the event across its three
-days instead of settling it on the first night. In production it is also the
-natural Gem sale — extra attempts, which is a better thing to sell than
-finishing instantly.
+### 10.3a The descent
+
+- **The Portal's card has one button, Descend**, which opens the descent: a
+  full-height menu built as the delve (§8.2).
+- A ribbon with when it closes; *Your floor 12 of 40*.
+- **The shaft**: the forty floors going down, cleared ticked, the frontier
+  with its power and pay, the floors ahead with their power and what is
+  worth going down for (a pack, a milestone). It opens on the frontier.
+- **The ranking is on the floors**: every kingdom's shield on its deepest
+  floor, the player's own *You*, the leader under the gold rank ribbon.
+- **The army**, docked as the delve's: Withdraw and **Descend** (the next
+  floor, in Mana); on its way, its bar and Finish. None down there: Send.
+- **An army's march can be hurried** — out or home — by General speed-ups
+  or by Gems for the time left (`rush.secondsPerGem`); its route moves with
+  it, so it stands where it should on the board.
+- **An army on the road is never called back** — to a camp, a Fortress, a
+  dungeon or the Portal. It is recalled only from where it stands.
 
 ### 10.4 What it pays
 
@@ -751,7 +815,9 @@ finishing instantly.
   Descend button says when the next floor pays one.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
-- **By final rank** — Top 1 / Top 2–3 / Top 4–6.
+- **By final rank** — Top 1 / Top 2–3 / Top 4–6, in Gems (`worldPortal.rankGems`),
+  claimed from the notices once the opening closes
+  ([`26-notices.md`](26-notices.md) §2.2).
 
 ## 11. What the world pays the province
 
@@ -768,7 +834,31 @@ The outer scope feeds the inner one.
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
 
-## 12. The dials, in the order to reach for them
+## 12. The ranking
+
+Every kingdom in the world, ordered by the hexes it holds. It pays nothing;
+it is there to compare.
+
+- **Hexes** = the city + every hex whose district stands under it. A hex still
+  being claimed does not count yet.
+- **Order**: most hexes first. Kingdoms with as many hexes share a place
+  (1, 2, 2, 4).
+- **Who**: every seat of the world, players and stand-in rivals alike; a free
+  city is not ranked.
+- **The widget** (mockup m100): on the world board, top left, under the
+  explorers chip — "Ranking", the player's place and their hexes. A tap opens
+  the list. Hidden behind any sheet.
+- **The list** (mockup m101): one row a kingdom — its place on a ribbon (gold,
+  silver, bronze, then wood), its crest, its name, its Townhall, a mark if it
+  is a friend, its hexes. It scrolls.
+  - The player's own row is gilded, and pinned again at the foot with how
+    far the next place up is ("2 hexes behind #10"), or "First in this world".
+  - A tap on a row closes the list and glides to that kingdom's city.
+- **The Townhall** is told to the world server by each player's client, so a
+  kingdom shows one once its player has been on the board. The stand-in rivals
+  have none.
+
+## 13. The dials, in the order to reach for them
 
 | Dial | Moves | Reach for it when |
 |---|---|---|
@@ -792,10 +882,9 @@ The outer scope feeds the inner one.
 | **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
-| **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
 | **Reveal radius** (1, upgrading to 2) | how fast the board opens | exploring becomes the bottleneck |
 
-## 13. Deliberately not in this design
+## 14. Deliberately not in this design
 
 - **Attacking a city.** A city hex is never attackable, by anyone, ever.
 - **Cascading conquest** — no hex falls because a neighbour did.
@@ -812,6 +901,7 @@ The outer scope feeds the inner one.
 - **Reusing `grid.ts`** for the lattice.
 - **A rule that forbids continuous conflict.** The price in troops is the only
   brake.
+- **Rewards for a place in the ranking**, or a ranking by anything but hexes.
 
 **Open questions:** OQ-3 (season length — the shard is six players on 127 hexes,
 the season is not set), OQ-122 in

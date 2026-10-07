@@ -7,7 +7,7 @@
 // it is the function it hands you.
 
 import type { CurrencyId, Wallet } from '../../sim/state';
-import { el, formatExact } from '../format';
+import { el, formatCount, formatExact } from '../format';
 import { currencyIcon, iconEl, type IconName } from './icon';
 
 /** icon + amount, e.g. one term of a cost. `short` turns it clay. */
@@ -51,7 +51,9 @@ export function isShort(cost: Wallet, have?: (c: CurrencyId) => number): boolean
  * a pill inside a slab reads as a control inside a control. Just icon and
  * number, inheriting the button's ink — except a term the player cannot pay,
  * which turns clay. That red IS the reason the button is disabled, which is
- * why an unaffordable action needs no separate reason line.
+ * why an unaffordable action needs no separate reason line. A number rolls
+ * up at ten thousand as the plank's coins do (*9,999*, then *10k*), so a
+ * price never outgrows its button.
  *
  * Returns null for a free action, so a button with nothing to charge stays a
  * single line rather than growing an empty second one.
@@ -65,7 +67,7 @@ export function costTerms(
     ...(Object.entries(cost ?? {}) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => ({
-        icon: c, amount: formatExact(n), short: have !== undefined && have(c) < n,
+        icon: c, amount: formatCount(n), short: have !== undefined && have(c) < n,
       })),
     ...(extra ?? []),
   ];
@@ -100,6 +102,13 @@ export function costChips(cost: Wallet, have?: (c: CurrencyId) => number): HTMLE
     { class: 'k-chips' },
     ...entries.map(([c, n]) => chip(c, n, have !== undefined && have(c) < n)),
   );
+}
+
+/** A POWER, wherever one is written: the crossed swords and the figure, as
+ *  the army boards show it — never the word "Power". */
+export function powerTag(n: number): HTMLElement {
+  return el('span', { class: 'k-power', 'aria-label': `Power ${formatExact(Math.round(n))}` },
+    iconEl('power', { size: 'sm' }), el('b', {}, formatExact(Math.round(n))));
 }
 
 /** icon + value + unit — "1.5 per minute", "radius 3". */
@@ -230,6 +239,18 @@ export function hpBar(hp: number, max: number): HTMLElement {
 export const restMarks = (): HTMLElement =>
   el('span', { class: 'k-zzz', 'aria-hidden': 'true' },
     el('span', {}, 'Z'), el('span', {}, 'Z'), el('span', {}, 'Z'));
+
+/** AWAY WITH AN ARMY — the marks beside the Zs, at the same corner and in
+ *  the same spirit: a boot stepping out with dust kicked up behind it
+ *  (marching), a torch flickering at a dungeon's mouth (camped below
+ *  ground), a shield with light running across it (on guard). */
+export const marchMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-march', 'aria-hidden': 'true' },
+    el('span', { class: 'k-dust' }), el('span', { class: 'k-dust' }), iconEl('boot', { size: 'sm' }));
+export const delveMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-delve', 'aria-hidden': 'true' }, el('span', { class: 'k-torch' }), iconEl('dungeon', { size: 'sm' }));
+export const guardMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-guard', 'aria-hidden': 'true' }, iconEl('def', { size: 'sm' }));
 
 /** How long a rest has left, as `3h 20m` / `12m` / `<1m`, in its pill. */
 export function restLeft(ms: number): HTMLElement {

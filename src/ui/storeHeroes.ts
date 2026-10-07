@@ -99,18 +99,6 @@ function featuredHero(id: BannerId, visit: number): HeroId | null {
   return slot.hero;
 }
 
-// ------------------------------------------------------------------ the keys
-
-function keyCounter(game: Game, banner: BannerId): HTMLElement {
-  const offer = game.keyOffer(banner);
-  const plus = el('button', {
-    class: 'sth-key-plus', type: 'button',
-    'aria-label': `Buy a ${offer.key === 'GoldKey' ? 'gold' : 'silver'} key for ${formatExact(offer.cost)} Gems`,
-  }, iconEl('plus', { size: 'sm' }));
-  plus.addEventListener('click', () => game.doBuyKeys(banner));
-  return el('div', { class: 'sth-key' }, iconEl(offer.key as IconName, { size: 'sm' }), el('b', {}, formatExact(offer.held)), plus);
-}
-
 /** The odds, both calls, as the tooltip a tap on "Odds" opens. */
 function oddsText(game: Game): string {
   return BANNER_ORDER.map((banner) => {
@@ -135,12 +123,12 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
   const free = def.freePerDay > 0 ? game.freePull(banner) : null;
   let b: HTMLElement;
   if (price.amount === 0) {
-    b = btn({ label: 'Call once', note: 'Free', kind: 'primary', onClick: () => game.doPull(banner) });
+    b = btn({ label: 'Call', note: 'Free', kind: 'primary', onClick: () => game.doPull(banner) });
   } else if (free !== null && free.ready) {
-    b = btn({ label: 'Call once', note: 'Free', icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
+    b = btn({ label: 'Call', note: 'Free', icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
   } else {
     b = btn({
-      label: 'Call once', kind: 'primary',
+      label: 'Call', kind: 'primary',
       onClick: () => game.doPull(banner),
       costExtra: [keyTerm(game, price.key, price.amount)],
     });
@@ -174,21 +162,17 @@ function freeLine(game: Game, banner: BannerId): HTMLElement {
 
 function banner(game: Game, id: BannerId): HTMLElement {
   const def = BANNERS[id];
-  const legend = pullsToLegendary(game.state, id);
-  const pity = legend !== null
-    ? `A Legendary within ${formatExact(legend)} calls`
-    : `A hero within ${formatExact(pullsToGuarantee(game.state, id))} calls`;
   const stands = def.showsHero ? featuredHero(id, game.storeVisits) : null;
   const hero = stands === null ? null : spriteUrl(HEROES[stands].sprite);
   return el('section', { class: `sth-banner is-${id}${hero === null ? '' : ' has-hero'}` },
-    hero === null
-      ? el('span', { class: `store-art sth-banner-key is-${def.key}`, role: 'img', 'aria-label': def.key })
-      : spriteImgAt(hero, 'sth-banner-hero'),
+    // The common call shows nothing but its calls: smaller than the golden
+    // call, which reads as the better one.
+    ...(hero === null ? [] : [spriteImgAt(hero, 'sth-banner-hero')]),
     el('div', { class: 'sth-banner-body' },
       el('div', { class: 'sth-banner-ribbon' }, el('span', {}, def.name)),
       freeLine(game, id),
-      el('div', { class: 'sth-calls' }, callSlot(game, id), tenCall(game, id)),
-      el('span', { class: 'sth-pity' }, pity)));
+      // How soon a hero or a Legendary comes is under Odds.
+      el('div', { class: 'sth-calls' }, callSlot(game, id), tenCall(game, id))));
 }
 
 export function heroesTab(game: Game): HTMLElement {
@@ -200,7 +184,6 @@ export function heroesTab(game: Game): HTMLElement {
   return el('div', { class: 'sth' },
     el('div', { class: 'sth-top' },
       carousel(),
-      el('div', { class: 'sth-keys' }, ...BANNER_ORDER.map((b) => keyCounter(game, b))),
       el('h2', { class: 'sth-title' }, 'Call for aid'),
       odds),
     ...BANNER_ORDER.map((b) => banner(game, b)));

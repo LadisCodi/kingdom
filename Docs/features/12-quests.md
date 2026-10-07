@@ -98,7 +98,7 @@
 | **33–36** · old magic | `OldStones` · `Attuned` · `Mapmakers` · `Surveyors` | the Thorned Shrine the Orcs held, Consecration, 90 and 120 cells cleared | **Magic** |
 | **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
 | **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
-| **50–57** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, three heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **50–57** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, two heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
 | **58–64** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
 | **65–68** · the world | `Leylines` · `SecondLair` · `TheWatchtower` · `DeeperStill` | three landmarks, the Harpies, **the Watchtower**, a hundred soldiers | **the world door**, **the Atlas** |
 
@@ -148,6 +148,8 @@
   Forestry.
 - The first call on the standard banner is free, **and it is always a hero**
   ([`22-progression.md`](22-progression.md) §6).
+- **The first two calls, on either banner, are each a new hero**
+  (`heroLadder` › `firstCallsNewHero`), so `Fellowship` never waits on a roll.
 - The three research beats at 23–25 (`Levies` · `Sawpits` · `Regrowth`) pay
   80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
