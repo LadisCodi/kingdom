@@ -16,17 +16,6 @@
 .bag-pane { min-height: 0; overflow-y: auto; overflow-x: clip; }
 /* A tab with nothing in it is still there, greyed — the wood gone dull. */
 .bag-tab.is-empty:not(.is-open) { filter: saturate(0.4) brightness(0.85); }
-/* Something new in it: a small red wax dot at the plate's corner. */
-.bag-dot {
-  position: absolute;
-  top: calc(var(--px) * -3);
-  right: calc(var(--px) * -2);
-  width: calc(var(--px) * 12);
-  height: calc(var(--px) * 12);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
-  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
-}
 
 /* THE GRID: four plates a row; the popover spans the row under its tile. */
 .bag-grid {

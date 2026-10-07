@@ -67,23 +67,6 @@
   .nt-bubble.is-new, .nt-bubble.is-glowing { animation: none; }
 }
 
-/* The count, on a red wax seal at the top right of the rim. */
-.nt-seal {
-  position: absolute;
-  top: calc(var(--px) * -5);
-  right: calc(var(--px) * -6);
-  display: grid;
-  place-items: center;
-  min-width: calc(var(--px) * 22);
-  height: calc(var(--px) * 22);
-  padding: 0 calc(var(--px) * 3);
-  background: url('../../assets/offer-seal.png') center / contain no-repeat;
-  color: #fff6e0;
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-title);
-  line-height: 1;
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(60, 10, 6, 0.8);
-}
 /* The other view's seal, at the bottom left: the globe or the castle. */
 .nt-badge {
   position: absolute;

@@ -24,7 +24,7 @@ import { offerIcon } from './offerWidget';
 import { itemIcon } from './itemArt';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
-import { btn, closeKnob, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
+import { btn, closeKnob, ctaBadge, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
 import { itemLine, itemName } from './itemText';
 
 /** A hero's round-cornered portrait, or its glyph while the art is missing. */
@@ -225,7 +225,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
       const tab = el('button', {
         class: `ofs-tab${w.sku === sku ? ' is-open' : ''}${w.state === 'ready' ? ' is-ready' : ''}`,
         type: 'button', role: 'tab', 'aria-selected': w.sku === sku ? 'true' : 'false', 'aria-label': w.name,
-      }, offerIcon(w));
+      }, offerIcon(w), ...(w.state === 'ready' ? [ctaBadge(1, `offer-tab:${w.sku}`)] : []));
       tab.addEventListener('click', () => game.openOfferSplash(w.sku, true));
       return tab;
     }));

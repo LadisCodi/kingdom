@@ -16,7 +16,7 @@ import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
 import { ITEMS } from '../sim/data/definitions';
 import type { CurrencyId, Wallet } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
-import { btn, currencyIcon, iconEl, knob, sheet } from './kit';
+import { btn, ctaBadge, currencyIcon, iconEl, knob, sheet } from './kit';
 import { relicTab } from './relicSheet';
 import { BOOST_ICON, tileArt } from './itemArt';
 import { BOOST_WHAT, chestCoin, itemLine, itemName, sizeLabel } from './itemText';
@@ -43,7 +43,7 @@ function tabRow(game: Game, view: BagScreen): HTMLElement {
       'aria-selected': open ? 'true' : 'false',
     },
       el('span', { class: 'bld-tab-label' }, tab),
-      ...(info.fresh ? [el('span', { class: 'bag-dot', 'aria-label': 'New' })] : []),
+      ...(info.fresh ? [ctaBadge(1, `bag-tab:${tab}`)] : []),
     );
     b.addEventListener('click', () => game.openBagTab(tab));
     return b;

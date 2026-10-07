@@ -25,7 +25,7 @@ import { GEM_PACK_ORDER, HEROES, KINGDOM_DEF, STORE } from '../sim/data/definiti
 import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatCountdown, formatExact, formatUsd } from './format';
-import { btn, closeKnob, currencyIcon, iconEl, sheet, type IconName } from './kit';
+import { btn, closeKnob, ctaBadge, currencyIcon, iconEl, sheet, type IconName } from './kit';
 import { offerTile } from './offerSplash';
 import { kindIcon } from './offerWidget';
 import { heroesTab } from './storeHeroes';
@@ -76,7 +76,7 @@ function tabStrip(game: Game, tabs: StoreTab[], open: StoreTab): HTMLElement {
       class: `stx-tab${t === open ? ' is-open' : ''}`, type: 'button', role: 'tab',
       'aria-selected': t === open ? 'true' : 'false',
     }, iconEl(TAB[t].icon, { size: 'lg' }), el('span', {}, TAB[t].label),
-    ...(news(t) && t !== open ? [el('span', { class: 'stx-dot', 'aria-hidden': 'true' })] : []));
+    ...(news(t) && t !== open ? [ctaBadge(1, `store-tab:${t}`)] : []));
     b.addEventListener('click', () => game.setStoreTab(t));
     return b;
   }));

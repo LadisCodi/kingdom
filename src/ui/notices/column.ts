@@ -11,7 +11,8 @@ import { playSfx } from '../../audio/sfx';
 import type { Game } from '../../game';
 import { NOTICES } from '../../sim/data/definitions';
 import { setHidden, setText } from '../domWrite';
-import { el, formatCountdown, formatExact } from '../format';
+import { el, formatCountdown } from '../format';
+import { ctaBadge } from '../kit';
 import { columnNotices, type Notice } from './model';
 
 /** News whose event sounds where it happens (game.ts), so its bubble
@@ -33,7 +34,7 @@ export function mountNoticeColumn(game: Game, root: HTMLElement): void {
       'data-notice': n.id,
     },
     el('span', { class: 'nt-face' }, n.art.make()));
-    if (n.count > 1) b.append(el('span', { class: 'nt-seal' }, formatExact(n.count)));
+    if (n.count > 1) b.append(ctaBadge(n.count, `notice:${n.id}`));
     // A seal of the other view, when the subject is not where the player is.
     const here = game.scene === 'world' ? 'world' : 'province';
     if (n.view !== null && n.view !== here) b.append(el('span', { class: `nt-badge is-${n.view}`, 'aria-hidden': 'true' }));

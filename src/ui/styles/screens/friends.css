@@ -50,27 +50,10 @@
   text-align: center;
 }
 
-/* THE TABS: the Build menu's wooden plates, List and Inbox, a red wax seal
-   of what is unread on the Inbox's corner. */
+/* THE TABS: the Build menu's wooden plates, List, Trade and Inbox, the
+   kit's call to action on a tab with something waiting. */
 .fr-tabs { margin-bottom: calc(var(--px) * 8); }
 .bld-tabs.fr-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.fr-count {
-  position: absolute;
-  top: calc(var(--px) * -6);
-  right: calc(var(--px) * -4);
-  display: grid;
-  place-items: center;
-  min-width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  padding: 0 calc(var(--px) * 5);
-  border-radius: calc(var(--px) * 10);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-title);
-  color: #fff6e0;
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(60, 10, 4, 0.7);
-  background: radial-gradient(circle at 35% 30%, #f07a63, var(--clay) 55%, #8e2a1c);
-  box-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(40, 22, 10, 0.6);
-}
 
 /* A KINGDOM'S ROW: a parchment card in a thin wood border, lit from above
    (the Settings rows' material). */
