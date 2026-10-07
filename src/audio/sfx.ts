@@ -11,7 +11,10 @@ import barFillUrl from './sounds/bar_fill.ogg?url';
 import boatSplashUrl from './sounds/boat_splash.ogg?url';
 import buildPlacedUrl from './sounds/build_placed.mp3?url';
 import cardImpactUrl from './sounds/card_impact.ogg?url';
-import cardRevealCommonUrl from './sounds/card_reveal_common.ogg?url';
+import cardRevealCommon1 from './sounds/card_reveal_common_01.ogg?url';
+import cardRevealCommon2 from './sounds/card_reveal_common_02.ogg?url';
+import cardRevealCommon3 from './sounds/card_reveal_common_03.ogg?url';
+import cardRevealCommon4 from './sounds/card_reveal_common_04.ogg?url';
 import cardRevealLegendUrl from './sounds/card_reveal_legend.ogg?url';
 import cardRevealRareUrl from './sounds/card_reveal_rare.ogg?url';
 import chainFinishedUrl from './sounds/chain_finished.wav?url';
@@ -61,7 +64,10 @@ import rewardPop2 from './sounds/reward_pop_02.wav?url';
 import rewardPop3 from './sounds/reward_pop_03.wav?url';
 import scrollCloseUrl from './sounds/scroll_close.ogg?url';
 import scrollOpenUrl from './sounds/scroll_open.ogg?url';
-import speedupUrl from './sounds/speedup.ogg?url';
+import speedup1 from './sounds/speedup_01.ogg?url';
+import speedup2 from './sounds/speedup_02.ogg?url';
+import speedup3 from './sounds/speedup_03.ogg?url';
+import speedup4 from './sounds/speedup_04.ogg?url';
 import spellCastUrl from './sounds/spell_cast.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
 import tributeUrl from './sounds/tribute.ogg?url';
@@ -296,15 +302,18 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   heroFanfareLegend: { urls: one(chestFanfareLegendUrl), volume: 0.65, jitter: 0 },
   heroApplause: { urls: one(chestApplauseUrl), volume: 0.3, jitter: 0 },
   // Cut from the collection like the battle's: a hit levelled by mean, a
-  // stinger to -16 LUFS. Drum Hit 01 · RPG Fanfares Item Pickup 1, Item Get
-  // 1 Short, Item Get 2 · Count Prize Long.
+  // stinger to -16 LUFS. Drum Hit 01 · RPG Fanfares Pick Up Coin (four
+  // takes), Item Get 1 Short · Fairy Magical 01 · Count Prize Long.
   cardImpact: { urls: one(cardImpactUrl), volume: 0.4, jitter: 0.04 },
-  cardRevealCommon: { urls: one(cardRevealCommonUrl), volume: 0.4, jitter: 0.02 },
+  cardRevealCommon: {
+    urls: [cardRevealCommon1, cardRevealCommon2, cardRevealCommon3, cardRevealCommon4], volume: 0.4, jitter: 0.02,
+  },
   cardRevealRare: { urls: one(cardRevealRareUrl), volume: 0.5, jitter: 0 },
   cardRevealLegend: { urls: one(cardRevealLegendUrl), volume: 0.6, jitter: 0 },
   barFill: { urls: one(barFillUrl), volume: 0.3, jitter: 0 },
   // Harpsichord Level Start and Level Complete · Battle Intro 1 Short Drums
-  // Only · Horn 01 · Brass Positive Long · Coins in Sack Dropped on Wood.
+  // Only · Horn 01 · RPG Fanfares Quest Complete Short · Coins in Sack
+  // Dropped on Wood.
   explorerDepart: { urls: one(explorerDepartUrl), volume: 0.4, jitter: 0 },
   explorerHome: { urls: one(explorerHomeUrl), volume: 0.4, jitter: 0 },
   armyMarch: { urls: one(armyMarchUrl), volume: 0.45, jitter: 0 },
@@ -313,8 +322,8 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   tribute: { urls: one(tributeUrl), volume: 0.5, jitter: 0.05 },
   // Battle Viking Horn Call Far.
   raidAlarm: { urls: one(raidAlarmUrl), volume: 0.4, jitter: 0 },
-  // Time Warp Reverse Spell Cast · Casting Magic · Activate Glyph Forcefield.
-  speedup: { urls: one(speedupUrl), volume: 0.4, jitter: 0.04 },
+  // Clock Tick (four takes) · Casting Magic · Arcane Symbol Activate.
+  speedup: { urls: [speedup1, speedup2, speedup3, speedup4], volume: 0.45, jitter: 0.04 },
   spellCast: { urls: one(spellCastUrl), volume: 0.45, jitter: 0.02 },
   relicWake: { urls: one(relicWakeUrl), volume: 0.45, jitter: 0 },
 };
