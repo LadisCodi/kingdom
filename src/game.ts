@@ -6297,6 +6297,14 @@ export class Game {
     this.setOverlay('notice');
   }
 
+  /** A news bubble left unread on screen long enough goes (26 §3): its group
+   *  is read, as opening it would, without the card. */
+  dismissNews(id: string): void {
+    if (!id.startsWith('news:')) return;
+    readNews(this.state, id.slice('news:'.length) as NewsGroup);
+    this.notify();
+  }
+
   /** The Portal ranking Gems won and not yet claimed, oldest first. */
   portalPrizes(): readonly PortalPrize[] {
     return this.state.world.portalPrizes;

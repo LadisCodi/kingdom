@@ -7,7 +7,7 @@ import { validPlacementCells } from '../src/sim/districts';
 import { newsOf, postNews, readNews, type News } from '../src/sim/notices';
 import { deserialize, serialize } from '../src/sim/save';
 import { completesAt, townhall, type GameState } from '../src/sim/state';
-import { allNotices, columnNotices } from '../src/ui/notices/model';
+import { allNotices, columnNotices, newsNotices } from '../src/ui/notices/model';
 import { trainUnit } from '../src/sim/army';
 import { addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0 } from './helpers';
 
@@ -131,7 +131,7 @@ describe('a training queue', () => {
 });
 
 describe('the column', () => {
-  it('shows every notice while they fit, else a +N over the first ones', () => {
+  it('shows every news while they fit, else a +N over the first ones', () => {
     const game = freshPresenter();
     const groups: News[] = [
       world('w', T0 + 1),
@@ -142,7 +142,7 @@ describe('the column', () => {
     ];
     for (const n of groups) {
       postNews(game.state, n);
-      const all = allNotices(game).map((x) => x.id);
+      const all = newsNotices(game).map((x) => x.id);
       const shown = columnNotices(game, 4);
       if (all.length <= 4) {
         expect(shown.map((x) => x.id)).toEqual(all);
@@ -153,7 +153,7 @@ describe('the column', () => {
       expect(shown[0].rows).toHaveLength(all.length);
       expect(shown.slice(1).map((x) => x.id)).toEqual(all.slice(0, 3));
     }
-    expect(allNotices(game).length).toBeGreaterThan(4);
+    expect(newsNotices(game).length).toBeGreaterThan(4);
     // The newest news leads the news.
     expect(allNotices(game).find((n) => n.kind === 'news')?.id).toBe('news:sighted');
   });
