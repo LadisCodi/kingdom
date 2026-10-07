@@ -444,8 +444,8 @@ Each of these is data, not code:
   only): the five stars in its top-left corner, and **Ascend** with its
   Stardust toll and fragment count over it at its foot, right. Every star
   full: no button.
-- Then one section each, under a section head; the stage keeps its height
-  and the sections scroll:
+- Then one tile each, with no section head — only the boon keeps one; the
+  card fits the screen without scrolling:
   - **Skill** — one widget: its name, its rank pips and what it does at its
     rank; at its foot the next rank's price and **Upgrade** (what the next
     rank does is not shown), or a padlock saying what is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank

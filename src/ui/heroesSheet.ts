@@ -10,9 +10,9 @@
 //
 // THE CARD is a centred window (mockup hero-detail-A): the name on the
 // plank, the hero on its rarity's stage with the ascension laid over its
-// foot, then a section each for the skill and the level — the
-// upgrade popup's section heads, parchment tiles, price line and button. A hero not found
-// yet gets the same window with its fragments where the level was.
+// foot, then the skill, the boon (under its head) and the level as
+// parchment tiles with no heads of their own. A hero not found yet gets the
+// same window with its fragments where the level was.
 //
 // Two views, one overlay — the nav tab stays put and `game.openHeroId`
 // decides which of them draws. That lives on the presenter, not here, for
@@ -291,11 +291,9 @@ function detail(game: Game, id: HeroId): HTMLElement {
     // whether to chase this one, and that is a question about its type, its
     // numbers and what it does.
     stage(game, def, id, view),
-    sectionHead('Skill'),
     skill(game, id, owned),
     ...(boon !== null ? [sectionHead('Kingdom boon'),
       el('div', { class: 'hd-passive k-section is-boon' }, iconEl('crest'), boon)] : []),
-    sectionHead(owned ? 'Level' : 'Fragments'),
     owned ? level(game, id, view) : fragments(game, id, view),
   );
 }
