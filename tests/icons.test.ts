@@ -10,7 +10,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
-import { CURRENCIES, DISTRICTS, ITEMS } from '../src/sim/data/definitions';
+import { CURRENCIES, DISTRICTS, ITEMS, TECH_ORDER, TECHNOLOGIES } from '../src/sim/data/definitions';
 
 
 const cells = new Set(Object.keys(ICON_INDEX));
@@ -28,14 +28,9 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * `noPendingArtIsAlreadyDrawn` is what stops it rotting: the moment a sheet
  * lands, leaving the name here fails.
  */
-const AWAITING_ART: readonly string[] = [
-  // The Tavern (Docs/features/22-progression.md §6): its card icon and its
-  // locked variant wait on the building's sheet.
-  'Tavern',
-  // The War Camp (Docs/features/19-world-map.md §4): its card icon and its
-  // locked variant wait on the world board's art pass.
-  'WarCamp',
-];
+// Nothing is waiting: the Tavern and the War Camp were drawn with the
+// technologies' sheet (UI-T1). A name goes here only while its art is owed.
+const AWAITING_ART: readonly string[] = [];
 
 const pending = new Set(AWAITING_ART);
 const outstanding = (missing: string[]): string[] => missing.filter((n) => !pending.has(n));
@@ -147,5 +142,12 @@ describe('the chrome materials', () => {
     expect(stems.length).toBeGreaterThan(0);
     const have = new Set([...assets].map((f) => f.replace(/\.[a-z]+$/, '')));
     expect(stems.filter((s) => !have.has(s))).toEqual([]);
+  });
+});
+
+describe('a technology\'s icon', () => {
+  it('is a drawn cell of the atlas, never an emoji', () => {
+    const undrawn = TECH_ORDER.filter((id) => !cells.has(TECHNOLOGIES[id].icon));
+    expect(undrawn.map((id) => `${id} → ${TECHNOLOGIES[id].icon}`)).toEqual([]);
   });
 });

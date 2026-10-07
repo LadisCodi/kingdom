@@ -202,7 +202,7 @@ export class TreeDoc {
       this.pushDown(tome, era, slot.row);
       this.doc.technologies[id] = {
         name: fields.name?.trim() || id,
-        glyph: fields.glyph?.trim() || '📜',
+        icon: fields.icon?.trim() || 'research',
         kind: fields.kind ?? 'unlock',
         ...(fields.description?.trim() ? { description: fields.description.trim() } : {}),
         tome,

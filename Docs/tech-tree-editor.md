@@ -42,7 +42,7 @@ in one place. What it SAYS is not authored at all (§3.1).
 
 ```json
 "Saws": {
-  "name": "Saws", "glyph": "🪚", "kind": "unlock",
+  "name": "Saws", "icon": "Sawmill", "kind": "unlock",
   "tome": "Civics", "era": 1, "row": 2, "col": 0,
   "requires": ["Forestry"],
   "gold": 175, "knowledge": 2,
@@ -56,7 +56,7 @@ technology says is generated from what it does (§3.1).
 | Field | Means |
 |---|---|
 | the key | the `TechId`. `TechId` **is** `keyof` this file, so a new one is a type the moment it is saved |
-| `name` · `glyph` | what the player reads on the card |
+| `name` · `icon` | what the player reads and sees on the card; `icon` is a cell of the UI atlas by name, and `tests/icons.test.ts` refuses one that is not drawn |
 | `description` | **`mechanic` only** — the one kind with nothing in its own data to read (§3.1). Every other line is generated |
 | `kind` | `unlock`, `bonus` or `mechanic` (§3) |
 | `tome` · `era` | which book, which band — the book says how many it has (`eras`) |
@@ -98,7 +98,7 @@ Nobody types it. A technology's line is **generated from what it does**
 | `bonus` | one sentence per effect, from the stat's `says` in the registry | *+1 Wood per tap and delivery from a forest* |
 | `mechanic` | its `description`, the only written prose left in the tree | *Reading the ground — a bad matchup costs a tenth less.* |
 
-In the game the card shows only the glyph and the name; the line is read in
+In the game the card shows only the icon and the name; the line is read in
 the info panel a tap opens ([`features/07-research.md`](features/07-research.md)
 §5.4). In the editor it is on the card, because a designer arranging a page is
 reading what each one does.
@@ -191,7 +191,7 @@ ungated until it is placed again.
 
 **Errors** (they do not stop a save — see below):
 
-- an illegal id, or no name or glyph
+- an illegal id, or no name or icon
 - prose on a technology whose `unlocks` or `effects` already say what it does
 - no prose on a `mechanic`, whose effect is code and whose card has nothing
   else to read
@@ -255,7 +255,7 @@ status bar goes back.
 | middle | the open book's page: three columns of slots, era bars between bands |
 | right | the selected technology's fields, its unlocks, and the problem list |
 
-- **+ new technology** asks for an id, name, glyph, kind, era and Gold — and
+- **+ new technology** asks for an id, name, icon, kind, era and Gold — and
   for prose only when the kind is `mechanic`, because every
   other card writes its own line. It drops the result at the end of that band,
   placed. Then say what it unlocks or moves; the problem list will be asking
@@ -281,7 +281,7 @@ status bar goes back.
 - **Click a connector to cut it.** `⇢ link` is the same gesture for cards that
   are NOT on neighbouring rows: select one, press it, click the other.
   `take the slot's default` puts the drop's guess back.
-- **Everything in the inspector is editable** — name, glyph, Gold, Knowledge,
+- **Everything in the inspector is editable** — name, icon, Gold, Knowledge,
   kind, what it unlocks or moves, `planned`. Switching the kind clears
   the fields that no longer mean anything. Where the prose box would be, a
   technology that says it itself shows **the sentence the player will read**,

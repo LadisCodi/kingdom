@@ -12,42 +12,42 @@
   },
   "technologies": {
     "Forestry": {
-      "name": "Forestry", "glyph": "🪓", "kind": "unlock",
+      "name": "Forestry", "icon": "Wood", "kind": "unlock",
       "tome": "Kingdom", "era": 1, "row": 0, "col": 1,
       "requires": [],
       "gold": 20, "knowledge": 2,
       "unlocks": [{"harvest":"Forest"}, {"harvest":"Berries"}, {"districtLevel":{"id":"Townhall","level":2}}]
     },
     "Agriculture": {
-      "name": "Agriculture", "glyph": "🌾", "kind": "unlock",
+      "name": "Agriculture", "icon": "FarmLands", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 1, "col": 1,
       "requires": ["Forestry"],
       "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"FarmLands"}]
     },
     "Farming": {
-      "name": "Farming", "glyph": "🚜", "kind": "unlock",
+      "name": "Farming", "icon": "Farm", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 2, "col": 0,
       "requires": ["Agriculture"],
       "gold": 25, "knowledge": 1,
       "unlocks": [{"district":"Farm"}]
     },
     "Hunting": {
-      "name": "Hunting", "glyph": "🏹", "kind": "unlock",
+      "name": "Hunting", "icon": "Meat", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 2, "col": 1,
       "requires": ["Agriculture"],
       "gold": 30, "knowledge": 1,
       "unlocks": [{"harvest":"Meat"}]
     },
     "Saws": {
-      "name": "Saws", "glyph": "🪚", "kind": "unlock",
+      "name": "Saws", "icon": "Sawmill", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 2, "col": 2,
       "requires": ["Agriculture"],
       "gold": 30, "knowledge": 2,
       "unlocks": [{"district":"Sawmill"}]
     },
     "SawpitsI": {
-      "name": "Sawpits I", "glyph": "🪵", "kind": "bonus",
+      "name": "Sawpits I", "icon": "Wood", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 3, "col": 0,
       "requires": ["Saws"],
       "gold": 120, "knowledge": 1,
@@ -56,7 +56,7 @@
       ]
     },
     "TradeRoutesI": {
-      "name": "Trade Routes I", "glyph": "💰", "kind": "bonus",
+      "name": "Trade Routes I", "icon": "boostRent", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 3, "col": 1,
       "requires": ["Farming", "Hunting", "Saws"],
       "gold": 100, "knowledge": 1,
@@ -65,14 +65,14 @@
       ]
     },
     "Warrior": {
-      "name": "Warrior", "glyph": "⚔️", "kind": "unlock",
+      "name": "Warrior", "icon": "Warrior", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 3, "col": 2,
       "requires": ["Hunting"],
       "gold": 500, "knowledge": 2,
       "unlocks": [{"district":"Barracks"}, {"unit":"Warrior"}]
     },
     "IrrigationI": {
-      "name": "Irrigation I", "glyph": "💧", "kind": "bonus",
+      "name": "Irrigation I", "icon": "wateringCan", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 4, "col": 0,
       "requires": ["TradeRoutesI"],
       "gold": 120, "knowledge": 2,
@@ -81,7 +81,7 @@
       ]
     },
     "ReforestingI": {
-      "name": "Reforesting I", "glyph": "🌱", "kind": "bonus",
+      "name": "Reforesting I", "icon": "sapling", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 4, "col": 1,
       "requires": ["SawpitsI"],
       "gold": 100, "knowledge": 1,
@@ -90,14 +90,14 @@
       ]
     },
     "Consecration": {
-      "name": "Consecration", "glyph": "🔯", "kind": "unlock",
+      "name": "Consecration", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 4, "col": 2,
       "requires": ["Warrior"],
       "gold": 400, "knowledge": 3,
       "unlocks": [{"district":"Sanctum"}]
     },
     "CropRotationI": {
-      "name": "Crop Rotation I", "glyph": "🔄", "kind": "bonus",
+      "name": "Crop Rotation I", "icon": "sapling", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 5, "col": 0,
       "requires": ["IrrigationI"],
       "gold": 100, "knowledge": 4,
@@ -106,35 +106,35 @@
       ]
     },
     "UrbanPlanning": {
-      "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
+      "name": "Urban Planning", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 5, "col": 1,
       "requires": ["IrrigationI", "Consecration"],
       "gold": 200, "knowledge": 3,
       "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
     },
     "Pickaxes": {
-      "name": "Pickaxes", "glyph": "⛏️", "kind": "unlock",
+      "name": "Pickaxes", "icon": "Stone", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 5, "col": 2,
       "requires": ["ReforestingI"],
       "gold": 25, "knowledge": 2,
       "unlocks": [{"harvest":"Stone"}]
     },
     "Masonry": {
-      "name": "Masonry", "glyph": "🧱", "kind": "unlock",
+      "name": "Masonry", "icon": "Quarry", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 6, "col": 0,
       "requires": ["UrbanPlanning", "Pickaxes"],
       "gold": 100, "knowledge": 3,
       "unlocks": [{"district":"Quarry"}]
     },
     "Hospitality": {
-      "name": "Hospitality", "glyph": "🍺", "kind": "unlock",
+      "name": "Hospitality", "icon": "Tavern", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 6, "col": 2,
       "requires": ["UrbanPlanning"],
       "gold": 400, "knowledge": 3,
       "unlocks": [{"district":"Tavern"}]
     },
     "GranariesI": {
-      "name": "Granaries I", "glyph": "📦", "kind": "bonus",
+      "name": "Granaries I", "icon": "chestFood", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 7, "col": 0,
       "requires": ["Masonry"],
       "gold": 150, "knowledge": 2,
@@ -143,7 +143,7 @@
       ]
     },
     "CarpentryI": {
-      "name": "Carpentry I", "glyph": "🔨", "kind": "bonus",
+      "name": "Carpentry I", "icon": "build", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 7, "col": 1,
       "requires": ["Masonry"],
       "gold": 60, "knowledge": 2,
@@ -152,7 +152,7 @@
       ]
     },
     "SchoolingI": {
-      "name": "Schooling I", "glyph": "🧺", "kind": "bonus",
+      "name": "Schooling I", "icon": "population", "kind": "bonus",
       "tome": "Kingdom", "era": 2, "row": 7, "col": 2,
       "requires": ["Hospitality"],
       "gold": 300, "knowledge": 3,
@@ -161,28 +161,28 @@
       ]
     },
     "Bureaucracy": {
-      "name": "Bureaucracy", "glyph": "📜", "kind": "unlock",
+      "name": "Bureaucracy", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 8, "col": 1,
       "requires": ["GranariesI", "CarpentryI", "SchoolingI"],
       "gold": 800, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":3}}]
     },
     "Mining": {
-      "name": "Mining", "glyph": "⚒️", "kind": "unlock",
+      "name": "Mining", "icon": "Smelter", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 9, "col": 0,
       "requires": ["Bureaucracy"],
       "gold": 2000, "knowledge": 3,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}, {"harvest":"MountainGold"}]
     },
     "Infirmary": {
-      "name": "Infirmary", "glyph": "🩹", "kind": "unlock",
+      "name": "Infirmary", "icon": "Infirmary", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 9, "col": 2,
       "requires": ["Bureaucracy"],
       "gold": 2000, "knowledge": 3,
       "unlocks": [{"district":"Infirmary"}]
     },
     "StonecuttingI": {
-      "name": "Stonecutting I", "glyph": "⛏️", "kind": "bonus",
+      "name": "Stonecutting I", "icon": "Stone", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 10, "col": 0,
       "requires": ["Mining"],
       "gold": 2000, "knowledge": 3,
@@ -191,28 +191,28 @@
       ]
     },
     "Aqueducts": {
-      "name": "Aqueducts", "glyph": "🚰", "kind": "unlock",
+      "name": "Aqueducts", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 10, "col": 1,
       "requires": ["Mining", "Infirmary"],
       "gold": 2000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Housing","level":3}}]
     },
     "Archery": {
-      "name": "Archery", "glyph": "🎯", "kind": "unlock",
+      "name": "Archery", "icon": "Archer", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 10, "col": 2,
       "requires": ["Infirmary"],
       "gold": 2000, "knowledge": 3,
       "unlocks": [{"district":"ShootingGrounds"}, {"unit":"Archer"}]
     },
     "TimberFraming": {
-      "name": "Timber Framing", "glyph": "🏗️", "kind": "unlock",
+      "name": "Timber Framing", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 11, "col": 1,
       "requires": ["StonecuttingI", "Aqueducts", "Archery"],
       "gold": 2000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Farm","level":3}}, {"districtLevel":{"id":"Sawmill","level":3}}, {"districtLevel":{"id":"Quarry","level":3}}, {"districtLevel":{"id":"Docks","level":3}}]
     },
     "Communities": {
-      "name": "Communities", "glyph": "🏠", "kind": "bonus",
+      "name": "Communities", "icon": "population", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 12, "col": 0,
       "requires": ["TimberFraming"],
       "gold": 2000, "knowledge": 4,
@@ -221,14 +221,14 @@
       ]
     },
     "Sailing": {
-      "name": "Sailing", "glyph": "⛵", "kind": "unlock",
+      "name": "Sailing", "icon": "boat", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 12, "col": 1,
       "requires": ["TimberFraming"],
       "gold": 2000, "knowledge": 4,
       "unlocks": [{"terrain":"Water"}]
     },
     "FletchingI": {
-      "name": "Fletching I", "glyph": "🏹", "kind": "bonus",
+      "name": "Fletching I", "icon": "typeArcher", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 12, "col": 2,
       "requires": ["TimberFraming"],
       "gold": 2000, "knowledge": 5,
@@ -237,14 +237,14 @@
       ]
     },
     "Fishing": {
-      "name": "Fishing", "glyph": "🐟", "kind": "unlock",
+      "name": "Fishing", "icon": "Docks", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 13, "col": 0,
       "requires": ["Communities", "Sailing"],
       "gold": 2000, "knowledge": 4,
       "unlocks": [{"district":"Docks"}]
     },
     "TradeRoutesII": {
-      "name": "Trade Routes II", "glyph": "💰", "kind": "bonus",
+      "name": "Trade Routes II", "icon": "boostRent", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 13, "col": 1,
       "requires": ["Sailing"],
       "gold": 2000, "knowledge": 5,
@@ -253,7 +253,7 @@
       ]
     },
     "TreasureHuntersI": {
-      "name": "Treasure Hunters I", "glyph": "💎", "kind": "bonus",
+      "name": "Treasure Hunters I", "icon": "chest", "kind": "bonus",
       "tome": "Kingdom", "era": 3, "row": 13, "col": 2,
       "requires": ["Sailing"],
       "gold": 2000, "knowledge": 5,
@@ -262,49 +262,49 @@
       ]
     },
     "Magistracy": {
-      "name": "Magistracy", "glyph": "🏛️", "kind": "unlock",
+      "name": "Magistracy", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 3, "row": 14, "col": 1,
       "requires": ["Fishing", "TradeRoutesII"],
       "gold": 3000, "knowledge": 6,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":4}}]
     },
     "Townhouses": {
-      "name": "Townhouses", "glyph": "🏘️", "kind": "unlock",
+      "name": "Townhouses", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 15, "col": 0,
       "requires": ["Magistracy"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Housing","level":4}}]
     },
     "StoneDressing": {
-      "name": "Stone Dressing", "glyph": "🗿", "kind": "unlock",
+      "name": "Stone Dressing", "icon": "MasonsYard", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 15, "col": 1,
       "requires": ["Magistracy"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"district":"MasonsYard"}]
     },
     "Spears": {
-      "name": "Spears", "glyph": "🔱", "kind": "unlock",
+      "name": "Spears", "icon": "Lancer", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 15, "col": 2,
       "requires": ["Magistracy"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
     "Architecture": {
-      "name": "Architecture", "glyph": "📐", "kind": "unlock",
+      "name": "Architecture", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 16, "col": 1,
       "requires": ["Townhouses", "StoneDressing", "Spears"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Farm","level":4}}, {"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":4}}, {"districtLevel":{"id":"Docks","level":4}}]
     },
     "Joinery": {
-      "name": "Joinery", "glyph": "🪑", "kind": "unlock",
+      "name": "Joinery", "icon": "Carpenter", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 0,
       "requires": ["Architecture"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"district":"Carpenter"}]
     },
     "SawpitsII": {
-      "name": "Sawpits II", "glyph": "🪵", "kind": "bonus",
+      "name": "Sawpits II", "icon": "Wood", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 1,
       "requires": ["Architecture"],
       "gold": 8000, "knowledge": 5,
@@ -313,14 +313,14 @@
       ]
     },
     "WarbandII": {
-      "name": "Warband II", "glyph": "🎖️", "kind": "unlock",
+      "name": "Warband II", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 2,
       "requires": ["Architecture"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Barracks","level":4}}, {"districtLevel":{"id":"SpearHall","level":4}}, {"districtLevel":{"id":"ShootingGrounds","level":4}}, {"districtLevel":{"id":"Stables","level":4}}]
     },
     "GuildHallsI": {
-      "name": "Guild Halls I", "glyph": "⚙️", "kind": "bonus",
+      "name": "Guild Halls I", "icon": "anvil", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 18, "col": 0,
       "requires": ["Joinery", "SawpitsII"],
       "gold": 8000, "knowledge": 5,
@@ -329,7 +329,7 @@
       ]
     },
     "LumberjacksI": {
-      "name": "Lumberjacks I", "glyph": "🪓", "kind": "bonus",
+      "name": "Lumberjacks I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 18, "col": 1,
       "requires": ["Joinery", "SawpitsII", "WarbandII"],
       "gold": 8000, "knowledge": 5,
@@ -338,7 +338,7 @@
       ]
     },
     "ShieldWallI": {
-      "name": "Shield Wall I", "glyph": "🛡️", "kind": "bonus",
+      "name": "Shield Wall I", "icon": "def", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 18, "col": 2,
       "requires": ["SawpitsII", "WarbandII"],
       "gold": 8000, "knowledge": 9,
@@ -347,7 +347,7 @@
       ]
     },
     "CarpentryII": {
-      "name": "Carpentry II", "glyph": "🔨", "kind": "bonus",
+      "name": "Carpentry II", "icon": "build", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 19, "col": 0,
       "requires": ["GuildHallsI", "LumberjacksI"],
       "gold": 8000, "knowledge": 5,
@@ -356,7 +356,7 @@
       ]
     },
     "WoodshedsI": {
-      "name": "Woodsheds I", "glyph": "🪵", "kind": "bonus",
+      "name": "Woodsheds I", "icon": "chestWood", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 19, "col": 2,
       "requires": ["LumberjacksI"],
       "gold": 8000, "knowledge": 9,
@@ -365,28 +365,28 @@
       ]
     },
     "Charter": {
-      "name": "Charter", "glyph": "📜", "kind": "unlock",
+      "name": "Charter", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 20, "col": 1,
       "requires": ["CarpentryII"],
       "gold": 12000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":5}}]
     },
     "Ironmongery": {
-      "name": "Ironmongery", "glyph": "🔩", "kind": "unlock",
+      "name": "Ironmongery", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 21, "col": 1,
       "requires": ["Charter"],
       "gold": 9000, "knowledge": 7, "goods": {"Planks":2,"CutStone":2},
       "unlocks": [{"districtLevel":{"id":"Farm","level":5}}, {"districtLevel":{"id":"Sawmill","level":5}}, {"districtLevel":{"id":"Quarry","level":5}}, {"districtLevel":{"id":"Docks","level":5}}]
     },
     "Terraces": {
-      "name": "Terraces", "glyph": "🏡", "kind": "unlock",
+      "name": "Terraces", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 0,
       "requires": ["Ironmongery"],
       "gold": 9000, "knowledge": 7, "goods": {"Planks":2,"CutStone":2},
       "unlocks": [{"districtLevel":{"id":"Housing","level":5}}]
     },
     "FarmhandsI": {
-      "name": "Farmhands I", "glyph": "🧑‍🌾", "kind": "bonus",
+      "name": "Farmhands I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 1,
       "requires": ["Ironmongery"],
       "gold": 9000, "knowledge": 7,
@@ -395,14 +395,14 @@
       ]
     },
     "Cavalry": {
-      "name": "Cavalry", "glyph": "🐎", "kind": "unlock",
+      "name": "Cavalry", "icon": "Cavalry", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 22, "col": 2,
       "requires": ["Ironmongery"],
       "gold": 9000, "knowledge": 7, "goods": {"Planks":2,"CutStone":2},
       "unlocks": [{"district":"Stables"}, {"unit":"Cavalry"}]
     },
     "TradeRoutesIII": {
-      "name": "Trade Routes III", "glyph": "💰", "kind": "bonus",
+      "name": "Trade Routes III", "icon": "boostRent", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 23, "col": 0,
       "requires": ["Terraces", "FarmhandsI"],
       "gold": 9000, "knowledge": 7,
@@ -411,21 +411,21 @@
       ]
     },
     "WarbandIII": {
-      "name": "Warband III", "glyph": "🎖️", "kind": "unlock",
+      "name": "Warband III", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 23, "col": 2,
       "requires": ["FarmhandsI", "Cavalry"],
       "gold": 9000, "knowledge": 7,
       "unlocks": [{"districtLevel":{"id":"Barracks","level":5}}, {"districtLevel":{"id":"SpearHall","level":5}}, {"districtLevel":{"id":"ShootingGrounds","level":5}}, {"districtLevel":{"id":"Stables","level":5}}]
     },
     "Gardening": {
-      "name": "Gardening", "glyph": "🌷", "kind": "unlock",
+      "name": "Gardening", "icon": "Garden", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 24, "col": 0,
       "requires": ["TradeRoutesIII"],
       "gold": 9000, "knowledge": 7,
       "unlocks": [{"district":"Garden"}, {"district":"Orchard"}]
     },
     "DeepMining": {
-      "name": "Deep Mining", "glyph": "🪙", "kind": "bonus",
+      "name": "Deep Mining", "icon": "Gold", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 24, "col": 1,
       "requires": ["TradeRoutesIII", "WarbandIII"],
       "gold": 9000, "knowledge": 7,
@@ -434,7 +434,7 @@
       ]
     },
     "BardingI": {
-      "name": "Barding I", "glyph": "🐴", "kind": "bonus",
+      "name": "Barding I", "icon": "typeCavalry", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 24, "col": 2,
       "requires": ["WarbandIII"],
       "gold": 9000, "knowledge": 12,
@@ -443,7 +443,7 @@
       ]
     },
     "RichSoilI": {
-      "name": "Rich Soil I", "glyph": "🌱", "kind": "bonus",
+      "name": "Rich Soil I", "icon": "boostHarvest", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 25, "col": 0,
       "requires": ["Gardening", "DeepMining"],
       "gold": 9000, "knowledge": 7, "anyPrecious": 5,
@@ -452,14 +452,14 @@
       ]
     },
     "AttunementII": {
-      "name": "Attunement II", "glyph": "🔮", "kind": "unlock",
+      "name": "Attunement II", "icon": "RuneCarver", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 25, "col": 1,
       "requires": ["Gardening", "DeepMining"],
       "gold": 9000, "knowledge": 7,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":4}}, {"district":"RuneCarver"}]
     },
     "SmokehousesI": {
-      "name": "Smokehouses I", "glyph": "🐟", "kind": "bonus",
+      "name": "Smokehouses I", "icon": "chestFood", "kind": "bonus",
       "tome": "Kingdom", "era": 5, "row": 25, "col": 2,
       "requires": ["DeepMining"],
       "gold": 9000, "knowledge": 12,
@@ -468,49 +468,49 @@
       ]
     },
     "Exchequer": {
-      "name": "Exchequer", "glyph": "💰", "kind": "unlock",
+      "name": "Exchequer", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 5, "row": 26, "col": 1,
       "requires": ["RichSoilI", "AttunementII"],
       "gold": 14000, "knowledge": 5, "goods": {"Planks":2,"CutStone":2}, "anyPrecious": 5,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":6}}]
     },
     "Manors": {
-      "name": "Manors", "glyph": "🏰", "kind": "unlock",
+      "name": "Manors", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 0,
       "requires": ["Exchequer"],
       "gold": 20000, "knowledge": 9, "goods": {"Planks":3,"CutStone":3,"Iron":1},
       "unlocks": [{"districtLevel":{"id":"Housing","level":6}}]
     },
     "Waterwheels": {
-      "name": "Waterwheels", "glyph": "🎡", "kind": "unlock",
+      "name": "Waterwheels", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 1,
       "requires": ["Exchequer"],
       "gold": 20000, "knowledge": 9, "goods": {"Planks":3,"CutStone":3,"Iron":1},
       "unlocks": [{"districtLevel":{"id":"Farm","level":6}}, {"districtLevel":{"id":"Sawmill","level":6}}, {"districtLevel":{"id":"Quarry","level":6}}, {"districtLevel":{"id":"Docks","level":6}}]
     },
     "Fortifications": {
-      "name": "Fortifications", "glyph": "🧱", "kind": "unlock",
+      "name": "Fortifications", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 27, "col": 2,
       "requires": ["Exchequer"],
       "gold": 20000, "knowledge": 9, "goods": {"Planks":3,"CutStone":3,"Iron":1},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":6}}, {"districtLevel":{"id":"SpearHall","level":6}}, {"districtLevel":{"id":"ShootingGrounds","level":6}}, {"districtLevel":{"id":"Stables","level":6}}]
     },
     "Sculpture": {
-      "name": "Sculpture", "glyph": "🗽", "kind": "unlock",
+      "name": "Sculpture", "icon": "Statue", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 28, "col": 0,
       "requires": ["Manors", "Waterwheels"],
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"district":"Well"}, {"district":"Statue"}]
     },
     "Tactics": {
-      "name": "Tactics", "glyph": "🗺️", "kind": "mechanic",
+      "name": "Tactics", "icon": "power", "kind": "mechanic",
       "description": "Reading the ground — a bad matchup costs a tenth less.",
       "tome": "Kingdom", "era": 6, "row": 28, "col": 2,
       "requires": ["Waterwheels", "Fortifications"],
       "gold": 20000, "knowledge": 9
     },
     "ApprenticesI": {
-      "name": "Apprentices I", "glyph": "🧰", "kind": "bonus",
+      "name": "Apprentices I", "icon": "anvil", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 29, "col": 0,
       "requires": ["Sculpture"],
       "gold": 20000, "knowledge": 9,
@@ -519,7 +519,7 @@
       ]
     },
     "IrrigationII": {
-      "name": "Irrigation II", "glyph": "💧", "kind": "bonus",
+      "name": "Irrigation II", "icon": "wateringCan", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 29, "col": 1,
       "requires": ["Sculpture", "Tactics"],
       "gold": 20000, "knowledge": 9,
@@ -528,7 +528,7 @@
       ]
     },
     "VigourI": {
-      "name": "Vigour I", "glyph": "❤️", "kind": "bonus",
+      "name": "Vigour I", "icon": "hp", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 29, "col": 2,
       "requires": ["Tactics"],
       "gold": 20000, "knowledge": 14,
@@ -537,14 +537,14 @@
       ]
     },
     "AttunementIII": {
-      "name": "Attunement III", "glyph": "🔮", "kind": "unlock",
+      "name": "Attunement III", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 30, "col": 1,
       "requires": ["ApprenticesI", "IrrigationII"],
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":5}}]
     },
     "CarpentryIII": {
-      "name": "Carpentry III", "glyph": "🔨", "kind": "bonus",
+      "name": "Carpentry III", "icon": "build", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 31, "col": 0,
       "requires": ["AttunementIII"],
       "gold": 20000, "knowledge": 9, "anyPrecious": 10,
@@ -553,7 +553,7 @@
       ]
     },
     "PoulticesI": {
-      "name": "Poultices I", "glyph": "🩹", "kind": "bonus",
+      "name": "Poultices I", "icon": "Infirmary", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 31, "col": 1,
       "requires": ["AttunementIII"],
       "gold": 20000, "knowledge": 9, "anyPrecious": 10,
@@ -562,7 +562,7 @@
       ]
     },
     "GamekeepingI": {
-      "name": "Gamekeeping I", "glyph": "🦌", "kind": "bonus",
+      "name": "Gamekeeping I", "icon": "Meat", "kind": "bonus",
       "tome": "Kingdom", "era": 6, "row": 31, "col": 2,
       "requires": ["AttunementIII"],
       "gold": 20000, "knowledge": 14,
@@ -571,28 +571,28 @@
       ]
     },
     "Chancery": {
-      "name": "Chancery", "glyph": "🖋️", "kind": "unlock",
+      "name": "Chancery", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 32, "col": 1,
       "requires": ["CarpentryIII", "PoulticesI"],
       "gold": 30000, "knowledge": 6, "goods": {"Planks":3,"CutStone":3,"Iron":1}, "anyPrecious": 10,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":7}}]
     },
     "Mansions": {
-      "name": "Mansions", "glyph": "🏯", "kind": "unlock",
+      "name": "Mansions", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 33, "col": 0,
       "requires": ["Chancery"],
       "gold": 42000, "knowledge": 14, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Housing","level":7}}]
     },
     "Bastions": {
-      "name": "Bastions", "glyph": "🏰", "kind": "unlock",
+      "name": "Bastions", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 33, "col": 2,
       "requires": ["Chancery"],
       "gold": 42000, "knowledge": 14, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":7}}, {"districtLevel":{"id":"SpearHall","level":7}}, {"districtLevel":{"id":"ShootingGrounds","level":7}}, {"districtLevel":{"id":"Stables","level":7}}]
     },
     "TradeRoutesIV": {
-      "name": "Trade Routes IV", "glyph": "💰", "kind": "bonus",
+      "name": "Trade Routes IV", "icon": "boostRent", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 34, "col": 0,
       "requires": ["Mansions"],
       "gold": 42000, "knowledge": 14,
@@ -601,21 +601,21 @@
       ]
     },
     "Windmills": {
-      "name": "Windmills", "glyph": "🌬️", "kind": "unlock",
+      "name": "Windmills", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 34, "col": 1,
       "requires": ["Mansions", "Bastions"],
       "gold": 42000, "knowledge": 14, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Farm","level":7}}, {"districtLevel":{"id":"Sawmill","level":7}}, {"districtLevel":{"id":"Quarry","level":7}}, {"districtLevel":{"id":"Docks","level":7}}]
     },
     "SecondSanctum": {
-      "name": "Second Sanctum", "glyph": "🛕", "kind": "unlock",
+      "name": "Second Sanctum", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 34, "col": 2,
       "requires": ["Bastions"],
       "gold": 42000, "knowledge": 14,
       "unlocks": [{"districtCount":"Sanctum"}]
     },
     "CivicTreasuryI": {
-      "name": "Civic Treasury I", "glyph": "🏦", "kind": "bonus",
+      "name": "Civic Treasury I", "icon": "Gold", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 35, "col": 0,
       "requires": ["TradeRoutesIV", "Windmills"],
       "gold": 42000, "knowledge": 14,
@@ -624,7 +624,7 @@
       ]
     },
     "SawpitsIII": {
-      "name": "Sawpits III", "glyph": "🪵", "kind": "bonus",
+      "name": "Sawpits III", "icon": "Wood", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 35, "col": 1,
       "requires": ["TradeRoutesIV", "Windmills", "SecondSanctum"],
       "gold": 42000, "knowledge": 14,
@@ -633,7 +633,7 @@
       ]
     },
     "WarhornsI": {
-      "name": "Warhorns I", "glyph": "📯", "kind": "bonus",
+      "name": "Warhorns I", "icon": "atk", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 35, "col": 2,
       "requires": ["Windmills", "SecondSanctum"],
       "gold": 42000, "knowledge": 20,
@@ -642,7 +642,7 @@
       ]
     },
     "MinersI": {
-      "name": "Miners I", "glyph": "⛏️", "kind": "bonus",
+      "name": "Miners I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 36, "col": 1,
       "requires": ["CivicTreasuryI", "SawpitsIII"],
       "gold": 42000, "knowledge": 14,
@@ -651,7 +651,7 @@
       ]
     },
     "OldGrowthI": {
-      "name": "Old Growth I", "glyph": "🌳", "kind": "bonus",
+      "name": "Old Growth I", "icon": "Heartwood", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 37, "col": 0,
       "requires": ["MinersI"],
       "gold": 42000, "knowledge": 14, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
@@ -660,7 +660,7 @@
       ]
     },
     "BunkhouseI": {
-      "name": "Bunkhouse I", "glyph": "🛏️", "kind": "bonus",
+      "name": "Bunkhouse I", "icon": "bed", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 37, "col": 1,
       "requires": ["MinersI"],
       "gold": 42000, "knowledge": 14, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
@@ -669,7 +669,7 @@
       ]
     },
     "FrontierWorksI": {
-      "name": "Frontier Works I", "glyph": "🏕️", "kind": "bonus",
+      "name": "Frontier Works I", "icon": "hex", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 37, "col": 2,
       "requires": ["MinersI"],
       "gold": 42000, "knowledge": 20, "goods": {"Starmetal":5,"Heartwood":5,"Moonglass":5},
@@ -678,42 +678,42 @@
       ]
     },
     "Dominion": {
-      "name": "Dominion", "glyph": "👑", "kind": "unlock",
+      "name": "Dominion", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 7, "row": 38, "col": 1,
       "requires": ["OldGrowthI", "BunkhouseI"],
       "gold": 65000, "knowledge": 9, "goods": {"Planks":4,"CutStone":4,"Iron":2,"Starmetal":5,"Heartwood":5,"Moonglass":5},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":8}}]
     },
     "Sewers": {
-      "name": "Sewers", "glyph": "🕳️", "kind": "unlock",
+      "name": "Sewers", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 39, "col": 0,
       "requires": ["Dominion"],
       "gold": 90000, "knowledge": 9, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1},
       "unlocks": [{"districtLevel":{"id":"Housing","level":8}}]
     },
     "Hydraulics": {
-      "name": "Hydraulics", "glyph": "⛲", "kind": "unlock",
+      "name": "Hydraulics", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 39, "col": 1,
       "requires": ["Dominion"],
       "gold": 90000, "knowledge": 9, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1},
       "unlocks": [{"districtLevel":{"id":"Farm","level":8}}, {"districtLevel":{"id":"Sawmill","level":8}}, {"districtLevel":{"id":"Quarry","level":8}}, {"districtLevel":{"id":"Docks","level":8}}]
     },
     "Citadels": {
-      "name": "Citadels", "glyph": "🗼", "kind": "unlock",
+      "name": "Citadels", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 39, "col": 2,
       "requires": ["Dominion"],
       "gold": 90000, "knowledge": 9, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":8}}, {"districtLevel":{"id":"SpearHall","level":8}}, {"districtLevel":{"id":"ShootingGrounds","level":8}}, {"districtLevel":{"id":"Stables","level":8}}]
     },
     "Paving": {
-      "name": "Paving", "glyph": "🟫", "kind": "unlock",
+      "name": "Paving", "icon": "Plaza", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 40, "col": 0,
       "requires": ["Sewers", "Hydraulics"],
       "gold": 90000, "knowledge": 9,
       "unlocks": [{"district":"Plaza"}]
     },
     "StonecuttingII": {
-      "name": "Stonecutting II", "glyph": "⛏️", "kind": "bonus",
+      "name": "Stonecutting II", "icon": "Stone", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 40, "col": 1,
       "requires": ["Sewers", "Hydraulics", "Citadels"],
       "gold": 90000, "knowledge": 9,
@@ -722,7 +722,7 @@
       ]
     },
     "ColoursI": {
-      "name": "Colours I", "glyph": "🚩", "kind": "bonus",
+      "name": "Colours I", "icon": "army", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 40, "col": 2,
       "requires": ["Hydraulics", "Citadels"],
       "gold": 90000, "knowledge": 9,
@@ -731,7 +731,7 @@
       ]
     },
     "SurveyingI": {
-      "name": "Surveying I", "glyph": "📐", "kind": "bonus",
+      "name": "Surveying I", "icon": "tile", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 41, "col": 1,
       "requires": ["Paving", "StonecuttingII", "ColoursI"],
       "gold": 90000, "knowledge": 9,
@@ -740,7 +740,7 @@
       ]
     },
     "TradeRoutesV": {
-      "name": "Trade Routes V", "glyph": "💰", "kind": "bonus",
+      "name": "Trade Routes V", "icon": "boostRent", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 42, "col": 0,
       "requires": ["SurveyingI"],
       "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
@@ -749,14 +749,14 @@
       ]
     },
     "AttunementIV": {
-      "name": "Attunement IV", "glyph": "💫", "kind": "unlock",
+      "name": "Attunement IV", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 42, "col": 1,
       "requires": ["SurveyingI"],
       "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":6}}, {"districtLevel":{"id":"Sanctum","level":7}}, {"districtLevel":{"id":"Sanctum","level":8}}, {"districtLevel":{"id":"Sanctum","level":9}}, {"districtLevel":{"id":"Sanctum","level":10}}]
     },
     "ShieldWallII": {
-      "name": "Shield Wall II", "glyph": "🛡️", "kind": "bonus",
+      "name": "Shield Wall II", "icon": "def", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 42, "col": 2,
       "requires": ["SurveyingI"],
       "gold": 90000, "knowledge": 14,
@@ -765,7 +765,7 @@
       ]
     },
     "GuildHallsII": {
-      "name": "Guild Halls II", "glyph": "⚙️", "kind": "bonus",
+      "name": "Guild Halls II", "icon": "anvil", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 43, "col": 0,
       "requires": ["TradeRoutesV", "AttunementIV"],
       "gold": 90000, "knowledge": 9, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
@@ -774,7 +774,7 @@
       ]
     },
     "SwiftScoutsI": {
-      "name": "Swift Scouts I", "glyph": "🏃", "kind": "bonus",
+      "name": "Swift Scouts I", "icon": "boot", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 43, "col": 2,
       "requires": ["AttunementIV"],
       "gold": 90000, "knowledge": 14, "goods": {"Starmetal":10,"Heartwood":10,"Moonglass":10},
@@ -783,35 +783,35 @@
       ]
     },
     "Sovereignty": {
-      "name": "Sovereignty", "glyph": "🦁", "kind": "unlock",
+      "name": "Sovereignty", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 8, "row": 44, "col": 1,
       "requires": ["GuildHallsII"],
       "gold": 135000, "knowledge": 6, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1,"Starmetal":10,"Heartwood":10,"Moonglass":10},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":9}}]
     },
     "GrandAvenues": {
-      "name": "Grand Avenues", "glyph": "🛣️", "kind": "unlock",
+      "name": "Grand Avenues", "icon": "Housing", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 45, "col": 0,
       "requires": ["Sovereignty"],
       "gold": 190000, "knowledge": 14, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
       "unlocks": [{"districtLevel":{"id":"Housing","level":9}}, {"districtLevel":{"id":"Housing","level":10}}]
     },
     "Mechanics": {
-      "name": "Mechanics", "glyph": "⚙️", "kind": "unlock",
+      "name": "Mechanics", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 45, "col": 1,
       "requires": ["Sovereignty"],
       "gold": 190000, "knowledge": 14, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
       "unlocks": [{"districtLevel":{"id":"Farm","level":9}}, {"districtLevel":{"id":"Sawmill","level":9}}, {"districtLevel":{"id":"Quarry","level":9}}, {"districtLevel":{"id":"Docks","level":9}}, {"districtLevel":{"id":"Farm","level":10}}, {"districtLevel":{"id":"Sawmill","level":10}}, {"districtLevel":{"id":"Quarry","level":10}}, {"districtLevel":{"id":"Docks","level":10}}]
     },
     "Warlords": {
-      "name": "Warlords", "glyph": "⚔️", "kind": "unlock",
+      "name": "Warlords", "icon": "Barracks", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 45, "col": 2,
       "requires": ["Sovereignty"],
       "gold": 190000, "knowledge": 14, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":9}}, {"districtLevel":{"id":"SpearHall","level":9}}, {"districtLevel":{"id":"ShootingGrounds","level":9}}, {"districtLevel":{"id":"Stables","level":9}}, {"districtLevel":{"id":"Barracks","level":10}}, {"districtLevel":{"id":"SpearHall","level":10}}, {"districtLevel":{"id":"ShootingGrounds","level":10}}, {"districtLevel":{"id":"Stables","level":10}}]
     },
     "IronPicksI": {
-      "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
+      "name": "Iron Picks I", "icon": "Iron", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 46, "col": 1,
       "requires": ["GrandAvenues", "Mechanics", "Warlords"],
       "gold": 190000, "knowledge": 14,
@@ -820,14 +820,14 @@
       ]
     },
     "SacredGrounds": {
-      "name": "Sacred Grounds", "glyph": "⛩️", "kind": "unlock",
+      "name": "Sacred Grounds", "icon": "Shrine", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 47, "col": 0,
       "requires": ["IronPicksI"],
       "gold": 190000, "knowledge": 14,
       "unlocks": [{"districtLevel":{"id":"Shrine","level":2}}]
     },
     "FishersI": {
-      "name": "Fishers I", "glyph": "🎣", "kind": "bonus",
+      "name": "Fishers I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 47, "col": 1,
       "requires": ["IronPicksI"],
       "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
@@ -836,7 +836,7 @@
       ]
     },
     "WarhornsII": {
-      "name": "Warhorns II", "glyph": "📯", "kind": "bonus",
+      "name": "Warhorns II", "icon": "atk", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 47, "col": 2,
       "requires": ["IronPicksI"],
       "gold": 190000, "knowledge": 14,
@@ -845,7 +845,7 @@
       ]
     },
     "FlowerbedsI": {
-      "name": "Flowerbeds I", "glyph": "🌷", "kind": "bonus",
+      "name": "Flowerbeds I", "icon": "harmony", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 48, "col": 0,
       "requires": ["SacredGrounds", "FishersI", "WarhornsII"],
       "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
@@ -854,7 +854,7 @@
       ]
     },
     "SupplyDepotsI": {
-      "name": "Supply Depots I", "glyph": "📦", "kind": "bonus",
+      "name": "Supply Depots I", "icon": "chest", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 48, "col": 2,
       "requires": ["FishersI", "WarhornsII"],
       "gold": 190000, "knowledge": 20,
@@ -863,7 +863,7 @@
       ]
     },
     "StrongroomI": {
-      "name": "Strongroom I", "glyph": "🔐", "kind": "bonus",
+      "name": "Strongroom I", "icon": "vault", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 49, "col": 0,
       "requires": ["FlowerbedsI"],
       "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
@@ -873,7 +873,7 @@
       ]
     },
     "GranariesII": {
-      "name": "Granaries II", "glyph": "📦", "kind": "bonus",
+      "name": "Granaries II", "icon": "chestFood", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 49, "col": 1,
       "requires": ["FlowerbedsI"],
       "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
@@ -882,7 +882,7 @@
       ]
     },
     "ForcedMarchI": {
-      "name": "Forced March I", "glyph": "🥾", "kind": "bonus",
+      "name": "Forced March I", "icon": "boot", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 49, "col": 2,
       "requires": ["FlowerbedsI"],
       "gold": 190000, "knowledge": 20, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
@@ -891,21 +891,21 @@
       ]
     },
     "GoldenAge": {
-      "name": "Golden Age", "glyph": "🌟", "kind": "unlock",
+      "name": "Golden Age", "icon": "Townhall", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 50, "col": 1,
       "requires": ["StrongroomI", "GranariesII"],
       "gold": 285000, "knowledge": 9, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2,"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "unlocks": [{"districtLevel":{"id":"Townhall","level":10}}]
     },
     "CommonRoom": {
-      "name": "Common Room", "glyph": "🍲", "kind": "unlock",
+      "name": "Common Room", "icon": "Tavern", "kind": "unlock",
       "tome": "Sagas", "era": 1, "row": 0, "col": 1,
       "requires": [],
       "gold": 600, "knowledge": 3,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":2}}]
     },
     "TalesI": {
-      "name": "Tales I", "glyph": "📖", "kind": "bonus",
+      "name": "Tales I", "icon": "HeroXp", "kind": "bonus",
       "tome": "Sagas", "era": 1, "row": 1, "col": 0,
       "requires": ["CommonRoom"],
       "gold": 400, "knowledge": 3,
@@ -914,7 +914,7 @@
       ]
     },
     "WarmWelcomeI": {
-      "name": "Warm Welcome I", "glyph": "🕯️", "kind": "bonus",
+      "name": "Warm Welcome I", "icon": "Stardust", "kind": "bonus",
       "tome": "Sagas", "era": 1, "row": 1, "col": 2,
       "requires": ["CommonRoom"],
       "gold": 400, "knowledge": 3,
@@ -923,35 +923,35 @@
       ]
     },
     "GuestRooms": {
-      "name": "Guest Rooms", "glyph": "🛏️", "kind": "unlock",
+      "name": "Guest Rooms", "icon": "Tavern", "kind": "unlock",
       "tome": "Sagas", "era": 1, "row": 2, "col": 1,
       "requires": ["TalesI", "WarmWelcomeI"],
       "gold": 1500, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":3}}]
     },
     "GreatHall": {
-      "name": "Great Hall", "glyph": "🏛️", "kind": "unlock",
+      "name": "Great Hall", "icon": "Tavern", "kind": "unlock",
       "tome": "Sagas", "era": 2, "row": 3, "col": 1,
       "requires": ["GuestRooms"],
       "gold": 4000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":4}}]
     },
     "MinstrelsGallery": {
-      "name": "Minstrels’ Gallery", "glyph": "🎻", "kind": "unlock",
+      "name": "Minstrels’ Gallery", "icon": "Tavern", "kind": "unlock",
       "tome": "Sagas", "era": 2, "row": 4, "col": 1,
       "requires": ["GreatHall"],
       "gold": 8000, "knowledge": 7,
       "unlocks": [{"districtLevel":{"id":"Tavern","level":5}}]
     },
     "Cartography": {
-      "name": "Cartography", "glyph": "🗺️", "kind": "mechanic",
+      "name": "Cartography", "icon": "dowserMap", "kind": "mechanic",
       "description": "The first explorer — send it out to reveal the world map.",
       "tome": "Atlas", "era": 1, "row": 0, "col": 1,
       "requires": [],
       "gold": 2000, "knowledge": 4
     },
     "FarsightI": {
-      "name": "Farsight I", "glyph": "🔭", "kind": "bonus",
+      "name": "Farsight I", "icon": "spyglass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 0,
       "requires": ["Cartography"],
       "gold": 800, "knowledge": 4,
@@ -960,7 +960,7 @@
       ]
     },
     "ScoutsI": {
-      "name": "Scouts I", "glyph": "🧭", "kind": "bonus",
+      "name": "Scouts I", "icon": "compass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 2,
       "requires": ["Cartography"],
       "gold": 2500, "knowledge": 4,
@@ -969,7 +969,7 @@
       ]
     },
     "FarsightII": {
-      "name": "Farsight II", "glyph": "🔭", "kind": "bonus",
+      "name": "Farsight II", "icon": "spyglass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 0,
       "requires": ["FarsightI"],
       "gold": 1500, "knowledge": 4, "goods": {"Heartwood":2},
@@ -978,7 +978,7 @@
       ]
     },
     "ScoutsII": {
-      "name": "Scouts II", "glyph": "🧭", "kind": "bonus",
+      "name": "Scouts II", "icon": "compass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 2,
       "requires": ["ScoutsI"],
       "gold": 4000, "knowledge": 5, "goods": {"Starmetal":2},
@@ -987,7 +987,7 @@
       ]
     },
     "Pathfinding": {
-      "name": "Pathfinding", "glyph": "🥾", "kind": "bonus",
+      "name": "Pathfinding", "icon": "compass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 3, "col": 1,
       "requires": ["ScoutsII"],
       "gold": 8000, "knowledge": 7, "goods": {"Moonglass":2},
@@ -996,7 +996,7 @@
       ]
     },
     "Muster": {
-      "name": "Muster", "glyph": "⛺", "kind": "unlock",
+      "name": "Muster", "icon": "WarCamp", "kind": "unlock",
       "tome": "Atlas", "era": 1, "row": 4, "col": 1,
       "requires": ["Pathfinding"],
       "gold": 9000, "knowledge": 7,

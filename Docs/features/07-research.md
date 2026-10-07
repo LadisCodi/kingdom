@@ -19,7 +19,7 @@
   district level, a unit, a terrain, a mechanic, or one numeric step.
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
   `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name
-  and glyph, its KIND, what it unlocks or what it moves, its Gold and
+  and icon, its KIND, what it unlocks or what it moves, its Gold and
   Knowledge, its slot on its tome page and what it requires.
 - **What a technology SAYS is generated from what it does**
   (`src/sim/techProse.ts`) — from its `unlocks`, or from one sentence per
@@ -266,8 +266,8 @@ A `bonus` names its effects, and each is four fields:
   at once for every site already claimed or cleared, so researching it late
   never costs what researching it early would have paid.
 - **A new kingdom starts with no Knowledge.** The opening chain pays for its
-  own cards: eighteen quests pay Knowledge, enough to carry the chain's own
-  research with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
+  own cards: the quest before each research quest pays exactly that card,
+  enough to carry the chain's own research with no drip and no more ([`12-quests.md`](12-quests.md) §2.1). After the
   opening the drip, the lumps and the purchases are the funding.
 
 | Source | Pays | Key |
@@ -278,7 +278,7 @@ A `bonus` names its effects, and each is four fields:
 | every **dungeon room** and **Portal floor** (world map) | at least 1, rising with depth and room ([`19-world-map.md`](19-world-map.md) §8.1, §10) | `worldDungeon.knowledge` (0.25) · `worldPortal` |
 | a held **world-map landmark** | 4 a day into a store of 8, collected with a tap | `worldBuild.landmark` |
 | `knowledgeYield` modifier | × on every lump | the Necromancer's boon (×1.25, [`10-heroes.md`](10-heroes.md) §2.6) |
-| the **quest chain** | 41 across eighteen quests | `quests` › `rewardKnowledge` |
+| the **quest chain** | 21 across thirteen quests | `quests` › `rewardKnowledge` |
 | **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
 | **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` · `knowledge.gemsPerPoint` |
 
@@ -469,7 +469,7 @@ the Sanctum and its levels.
 | First-clear lump | 3 | `delve.firstClearKnowledge` |
 | Chain Knowledge | 41 total | `quests` › `rewardKnowledge` |
 | What opens a found book | §2 | `sim/research.ts` `TOME_OPENS` |
-| **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **A whole technology** — name, icon, kind, unlocks or effects, Gold, Knowledge, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many chapters the tree has, and what each asks for | 9 chapters; 0 · 20 · 100 · 160 · 220 · 280 · 340 · 400 · 460 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | What finishing a chapter pays | a card pack per chapter | `tech-tree.json` `eraRewards` |
