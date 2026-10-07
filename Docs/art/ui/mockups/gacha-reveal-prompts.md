@@ -101,3 +101,12 @@ from shipped pieces — `panel-paper.png` + `deco-seal.png` (back),
 `rb-page.png` (reward), `hero-card-*.png` + `hero-card-frame.png` (whole
 hero, as in the roster), `offer-seal.png` (NEW). The round-3 sheets stay in
 `Docs/art/ui/chests/` as a record and ship nowhere.
+
+## Round 5 — the back's ink drawing (refs: m99-refs/ref-card-back-paper, m46)
+
+The wax seal on the back became an ink drawing, more ornate the rarer the
+card. One 4×1 sheet: "a DRAWING IN INK on the paper … a LADDER OF RARITY":
+plain rule + diamond, compass rose, knotwork rosette with blue ink, Celtic
+interlace + crowned sun with red ink and gold leaf. True alpha first try;
+cut by quarter + alpha bbox → `card-ink-0…3.png` 400×600, laid on
+`panel-paper.png`.

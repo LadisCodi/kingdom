@@ -147,7 +147,9 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
-/* The back: an aged sheet, a fine double rule, the red wax seal. */
+/* The back: an aged sheet with an ink drawing on it (card-ink-*.png), a
+   medieval border and emblem that grow more ornate the rarer the card —
+   plain, common, rare, legendary. */
 .gr-card-back {
   transform: rotateY(180deg);
   background:
@@ -155,26 +157,17 @@
     url('../../assets/panel-paper.png') center / 100% 100% no-repeat;
   filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.5));
 }
-.gr-card-back::before {
-  content: '';
-  position: absolute;
-  inset: 9% 10%;
-  border: max(1px, calc(var(--cw) * 0.008)) solid rgba(92, 58, 30, 0.45);
-  outline: max(1px, calc(var(--cw) * 0.004)) solid rgba(92, 58, 30, 0.3);
-  outline-offset: calc(var(--cw) * 0.025);
-  border-radius: calc(var(--cw) * 0.02);
-}
 .gr-card-back::after {
   content: '';
   position: absolute;
-  left: 30%;
-  right: 30%;
-  top: 50%;
-  aspect-ratio: 1;
-  translate: 0 -50%;
-  background: url('../../assets/deco-seal.png') center / contain no-repeat;
-  filter: drop-shadow(0 calc(var(--cw) * 0.01) calc(var(--cw) * 0.015) rgba(60, 20, 10, 0.45));
+  inset: 7% 8%;
+  background: var(--ink-art) center / 100% 100% no-repeat;
+  opacity: 0.9;
 }
+.gr-card.ink-0 { --ink-art: url('../../assets/chest/card-ink-0.png'); }
+.gr-card.ink-1 { --ink-art: url('../../assets/chest/card-ink-1.png'); }
+.gr-card.ink-2 { --ink-art: url('../../assets/chest/card-ink-2.png'); }
+.gr-card.ink-3 { --ink-art: url('../../assets/chest/card-ink-3.png'); }
 /* A NEW hero (or a keystone) is in there: the back glows in its rarity and
    trembles before the flip. */
 .gr-card.is-charged .gr-card-inner { animation: gr-tremble 900ms ease-in-out infinite; }
@@ -261,6 +254,11 @@
   object-fit: contain;
   object-position: center bottom;
 }
+/* A hero not yet found, as on the heroes menu (heroPicker.css .is-missing):
+   the figure a dark silhouette; a recruit's turns to colour as the seal
+   lands. */
+.gr-card-img { transition: filter 700ms ease-out; }
+.gr-card.is-missing .gr-card-img { filter: brightness(0) opacity(0.5); }
 .gr-card.is-relic .gr-card-img { inset: 0 9%; width: 82%; object-position: center; }
 .gr-card-img.is-glyph { display: grid; place-items: center; font-size: calc(var(--cw) * 0.4); }
 
