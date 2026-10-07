@@ -9,9 +9,9 @@
 // shown (ui/heroCard.ts).
 //
 // THE CARD is a centred window (mockup hero-detail-A): the name on the
-// plank, the hero on its rarity's stage, then a section each for the
-// ascension, the stats, the passive and the level — the upgrade popup's
-// section heads, parchment tiles, price line and button. A hero not found
+// plank, the hero on its rarity's stage with the ascension laid over its
+// foot, then a section each for the stats, the skill and the level — the
+// upgrade popup's section heads, parchment tiles, price line and button. A hero not found
 // yet gets the same window with its fragments where the level was.
 //
 // Two views, one overlay — the nav tab stays put and `game.openHeroId`
@@ -25,7 +25,7 @@
 // a second made the grid blink, because a fresh `<img>` decodes before its
 // first paint.
 
-import { HERO_LADDER, HERO_ORDER, HEROES } from '../sim/data/definitions';
+import { HERO_LADDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, nextSkillRankLevel, rosterView,
@@ -41,7 +41,7 @@ import type { Game } from '../game';
 import { el, formatExact, formatNumber } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
-  btn, iconEl, knob, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
+  btn, iconEl, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
 } from './kit';
 import type { IconName } from './kit';
 import { ascensionStars } from './ascensionStars';
@@ -107,11 +107,6 @@ const RARITY_LABEL: Record<HeroRarity, string> = {
 /** Step to the hero before or after this one, wrapping. Comparing two of them
  *  is most of what this screen is for, and a trip back through the grid to do
  *  it is three taps where this is one. */
-function step(id: HeroId, by: 1 | -1): HeroId {
-  const i = HERO_ORDER.indexOf(id);
-  return HERO_ORDER[(i + by + HERO_ORDER.length) % HERO_ORDER.length]!;
-}
-
 /** A hero's illustration. The art is always CONTAINED in its box and never
  *  cropped. */
 function heroArt(def: HeroDef): HTMLElement {
@@ -120,24 +115,15 @@ function heroArt(def: HeroDef): HTMLElement {
 }
 
 /** The hero on its rarity's stage: the rarity's ribbon top-left, the type's
- *  banner top-right, an arrow each side to step the roster. */
-function stage(game: Game, def: HeroDef, id: HeroId, owned: boolean): HTMLElement {
-  const arrow = (by: 1 | -1) => {
-    const k = knob(by === 1 ? '›' : '‹', () => {
-      game.openHeroId = step(id, by);
-      game.notify();
-    }, { label: by === 1 ? 'Next hero' : 'Previous hero' });
-    k.classList.add(by === 1 ? 'hd-next' : 'hd-prev');
-    return k;
-  };
+ *  badge top-right, and the ascension laid over the foot of the vault. */
+function stage(def: HeroDef, owned: boolean, over: HTMLElement | null): HTMLElement {
   return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${owned ? '' : ' is-missing'}` },
     heroArt(def),
     el('span', { class: 'hd-frame', 'aria-hidden': 'true' }),
     el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]),
     el('span', { class: `hd-type is-${def.unitType}` },
       iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType),
-    arrow(-1),
-    arrow(1),
+    ...(over ? [over] : []),
   );
 }
 
@@ -306,12 +292,11 @@ function detail(game: Game, id: HeroId): HTMLElement {
   const boon = game.heroBoonText(id);
 
   return el('div', { class: 'hd' },
-    el('div', { class: 'hd-subtitle' }, def.title),
-    stage(game, def, id, owned),
+    // The hero's title (`def.title`) is kept in the data but not shown.
     // AN UNOWNED HERO GETS THE SAME CARD. What the player is deciding is
     // whether to chase this one, and that is a question about its type, its
     // numbers and what it does.
-    ...(owned ? [sectionHead('Ascension'), ascension(game, id, view)] : []),
+    stage(def, owned, owned ? ascension(game, id, view) : null),
     sectionHead('Stats'),
     el('div', { class: 'hd-stats' },
       statTile('atk', 'Attack', s.atk),
