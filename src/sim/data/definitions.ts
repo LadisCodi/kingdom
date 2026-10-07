@@ -1988,8 +1988,8 @@ export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
 
 export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
 
-/** A lair's first-clear Knowledge. */
-export const DELVE = balance.delve;
+/** A lair's first-clear Knowledge, and how hard its first fight is. */
+export const DELVE = balance.delve as { firstClearKnowledge: number; firstFightPower: number };
 export const PARTY = balance.party;
 
 /**
@@ -2002,8 +2002,11 @@ export const PARTY = balance.party;
  */
 export interface GarrisonDef {
   tier: number;
+  /** Fights a lair of this tier takes to clear (18-garrisons-and-raids.md
+   *  §5): the last at the lair's power, the ones before ramping up to it. */
+  fights: number;
   takeSeconds: number;
-  /** Hero XP a lair of this tier teaches when its prize is claimed. */
+  /** Hero XP a lair of this tier teaches, split evenly across its fights. */
   heroXp: number;
   /** Items a lair of this tier puts in the Bag when its prize is claimed. */
   rewardItems: Partial<Record<ItemId, number>>;
@@ -2497,4 +2500,5 @@ export const GAME_VERSION: string = pkg.version;
 // new kingdom (`PROTOTYPE_FRESH_START`).
 // v108: a Shrine has one level; a relic carries its own window — a Shrine
 // above level 1 comes back to it, its upgrade under way dropped (a migrator).
-export const SAVE_VERSION = 108;
+// v109: a lair is a path of fights — `Won` on a lair, additive.
+export const SAVE_VERSION = 109;

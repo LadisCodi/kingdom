@@ -1211,6 +1211,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           ArmedAtUtc: iso(g!.armedAt),
           NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
           Hoard: g!.hoard,
+          ...(g!.won ? { Won: g!.won } : {}),
           Defeated: g!.defeated,
           Cleared: g!.cleared,
           ...(g!.spoils ? { Spoils: { Lore: g!.spoils.lore, Seasoned: g!.spoils.seasoned } } : {}),
@@ -1748,6 +1749,9 @@ export function deserialize(
         armedAt: g.ArmedAtUtc ? ms(g.ArmedAtUtc) : 0,
         nextRaidAt: msOrNull(g.NextRaidAtUtc),
         hoard: { ...(g.Hoard ?? {}) },
+        // Additive (v109): fights won on its path. A lair beaten before the
+        // path existed has no count, and needs none — it is `defeated`.
+        ...(typeof g.Won === 'number' && g.Won > 0 ? { won: g.Won } : {}),
         // Absent before the claim existed: a lair was cleared the instant it
         // was beaten, so a cleared one was also defeated.
         defeated: g.Defeated === true || g.Cleared === true,

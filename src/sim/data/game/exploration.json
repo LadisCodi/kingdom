@@ -42,7 +42,8 @@
     "windowEndHour": 23
   },
   "delve": {
-    "firstClearKnowledge": 3
+    "firstClearKnowledge": 3,
+    "firstFightPower": 0.5
   },
   "treasure": {
     "everyReveals": 5,

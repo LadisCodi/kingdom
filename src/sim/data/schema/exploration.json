@@ -84,7 +84,18 @@
         "windowEndHour": { "type": "int", "min": 1, "max": 24, "doc": "The local hour the raid window closes." }
       }
     },
-    "delve": { "type": "object", "fields": { "firstClearKnowledge": { "type": "int" } } },
+    "delve": {
+      "type": "object",
+      "fields": {
+        "firstClearKnowledge": { "type": "int" },
+        "firstFightPower": {
+          "type": "float",
+          "min": 0.05,
+          "max": 1,
+          "doc": "A lair's first fight, as a share of its power; the fights after it ramp evenly up to the full power at the last."
+        }
+      }
+    },
     "treasure": {
       "type": "object",
       "doc": "What the people who fled left on the ground (Docs/features/01-map-and-fog.md §6.2).",

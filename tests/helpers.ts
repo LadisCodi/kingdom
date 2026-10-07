@@ -6,6 +6,7 @@ import {
 } from '../src/sim/research';
 import type { MapData } from '../src/sim/grid';
 import { tapCell } from '../src/sim/harvest';
+import { lairFights } from '../src/sim/lairs';
 import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
@@ -130,6 +131,17 @@ export const reveal = (state: GameState, cells: Coord[]): void => {
  */
 export const clearLair = (state: GameState, lairId: LairId): void => {
   state.lairs[lairId] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: true, cleared: true };
+};
+
+/**
+ * Walk a found lair's path up to its LAST fight, as if every fight before it
+ * had been won (Docs/features/18-garrisons-and-raids.md §5). A test about
+ * beating a lair — the claim, the hoard, the lump — says so here in one line;
+ * tests/lairs.test.ts walks the path for real.
+ */
+export const toLastFight = (state: GameState, lairId: LairId): void => {
+  const lair = state.lairs[lairId];
+  if (lair !== undefined) lair.won = lairFights(lairId) - 1;
 };
 
 /**

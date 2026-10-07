@@ -13,7 +13,7 @@ import { SKILLS, maxSkillRank, rankValue, skillSentence, slotSkill } from '../sr
 import { serialize, deserialize } from '../src/sim/save';
 import { attackLair, claimLair } from '../src/sim/expeditions';
 import { addToWallet, getWallet, type HeroId, type UnitId } from '../src/sim/state';
-import { addAllTrainers, freshGame, fund, map, reveal, T0 } from './helpers';
+import { addAllTrainers, freshGame, fund, map, reveal, T0, toLastFight } from './helpers';
 import { LAIRS } from '../src/sim/data/definitions';
 
 const body = (over: Partial<FighterSpec> = {}): FighterSpec => ({
@@ -147,6 +147,7 @@ describe('the spoils', () => {
       fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500 });
       reveal(state, [LAIRS.Orcs.location]);
       state.lairs.Orcs = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
+      toLastFight(state, 'Orcs');
       for (let i = 0; i < 60; i++) state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
       state.heroes.owned.push(...heroes);
       expect(attackLair(state, map, 'Orcs', heroes, [{ unitId: 'Warrior', count: 60 }]).result).toBe('Cleared');

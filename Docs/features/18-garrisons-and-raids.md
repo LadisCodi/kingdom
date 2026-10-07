@@ -14,7 +14,8 @@
 
 ## 1. The rules, up front
 
-1. **A lair is one garrison**: one board, one clear. Nothing behind it.
+1. **A lair is a path of fights**: its tier's count, one board each, fought
+   in order. The last one beats it, and nothing stands behind it (§5).
 2. **The gate is a room on the surface.** It is generated from its `guard` the
    way a room is generated from its budget, and clearing it is a room attempt
    like any other — the player attacks, the enemy never does.
@@ -150,9 +151,24 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - The fight resolves on entry, the player attacking
   ([`11-expeditions.md`](11-expeditions.md) §5). A power shortfall warns,
   never blocks. Retry is unlimited and identical to a first attempt.
-  - **Win:** the gate is cleared, its counter stops, its hoard is paid, and
-    `Depth 1 · Room 1` becomes the frontier.
-  - **Lose:** the Mana is spent and the gate stands.
+  - **Win, short of the last fight:** the path moves one step on and pays
+    its share of Hero XP. The lair still stands, holds its ground and
+    **keeps raiding**.
+  - **Win, the last fight:** the garrison is beaten, its counter stops, and
+    its card offers **Claim**.
+  - **Lose:** the Mana is spent and the path stays where it was.
+- **The path** (`garrisons` › `fights`, by tier):
+
+  | Tier | 1 | 2 | 3 | 4 | 5 |
+  |---|---|---|---|---|---|
+  | Fights | 3 | 4 | 5 | 6 | 7 |
+
+  - **The last fight is the lair's own garrison**, at its `guard.power`.
+  - The fights before it ramp evenly up to it from **half its power**
+    (`delve.firstFightPower`). The path makes a lair longer, never harder to
+    finish.
+  - Each fight's garrison is rolled for that fight, the lair's creature in
+    the lead.
 - **An attempt costs Mana**, win or lose: `combat.fightMana` (20), as every
   attack does ([`08-magic.md`](08-magic.md) §1).
 - **The attempt costs soldiers, win or lose**, by the rule every fight
@@ -162,10 +178,14 @@ take = floor( min(base, stored × raid.takeFractionMax) )
     when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
   - **The screen says the price before it is paid** — the expected losses sit
     under the button, beside the Mana.
-- **What it pays:** the hoard, in full, into the wallet immediately; Hero XP by the
-  ruin's tier (`garrisons.heroXp`: 500 · 1,500 · 4,000 · 10,000 · 25,000); event points ([`13-events.md`](13-events.md) §2.2); the
-  `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
-  reward, no loot table — the ruin behind it is the reward.
+- **What it pays:**
+  - **Hero XP by tier** (`garrisons.heroXp`: 500 · 1,500 · 4,000 · 10,000 ·
+    25,000), split evenly across the path: every fight short of the last pays
+    its share when it falls, and the last share comes with the claim.
+  - **The claim** pays the rest: the hoard in full, the first-clear Knowledge
+    lump, the tier's Bag items and relic fragments, and the lair's ground.
+  - The `ClearLairs` quest goal ([`12-quests.md`](12-quests.md) §1.1) counts
+    a claimed lair.
 - No technology gates the gate.
 
 ## 6. The doorway to combat
@@ -173,8 +193,10 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 - The first fight is **the Orcs: on the surface, the enemy in
   view, the outcome guaranteed by authoring.** It teaches the room sheet, the
   type chart and the board before Depth 1 adds the power ladder.
-- **Twenty orcs is a company's job, not a hero's.** The chain musters
-  thirty soldiers one beat before it
+- **Twenty orcs is a company's job, not a hero's.** The Orcs are three
+  fights, and the company of thirty walks the whole path, its losses carried
+  from one fight to the next. The chain musters those thirty soldiers one beat
+  before it
   ([`12-quests.md`](12-quests.md) §2), so the fight is won by the army the
   onboarding just built and the hero that leads it — which is what makes the
   military block mean something.
@@ -191,11 +213,19 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   *Raid coming* bubble while a gate is open — the nearest raid and its
   countdown, with a count when more are open — and a *Raided* news after each
   raid; several raids in one absence are one. Go goes to the lair.
-- **The ruin's card** ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.3) leads with
-  the gate while it stands: the creature and its type, the countdown, trips
-  left, and the hoard if any — *they hold 320 Gold and 90 Food; cleared, it
-  comes back*. One tap into the room sheet, and **no way past it** — the
-  depths behind are not offered at all.
+- **The lair's card**, top to bottom:
+  - the painting of the creature, with its flavour line;
+  - the countdown to the next raid — or, once beaten, *Claim what they left
+    behind*;
+  - **Progress**: the path, one delve stone a fight joined by a dotted trail.
+    A fight won carries a green wax seal, the next is lit, the ones ahead are
+    dim, and the last is the boss's horned stone. Under it, *Fight 2 of 3*;
+  - the reward the claim pays — the hoard, the last share of Hero XP and the
+    Knowledge;
+  - **Attack**, which opens the attack screen on the next fight — or
+    **Claim**.
+- **The playback** of a fight names it — *Orcs · Fight 2 of 3* — and a fight
+  short of the last shows its Hero XP as spoils.
 - **The map marker** carries the countdown badge while a gate is open.
 - **The room sheet, on a gate**: threat always visible, power comparison,
   its Mana, party, **Clear the gate**.
@@ -210,6 +240,8 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 | take fraction max, of what the stores hold | 0.5 | `raid.takeFractionMax` (`exploration`) |
 | raids a day, and the window they land in | 3 · 9–23 h | `raid.perDay`, `windowStartHour`, `windowEndHour` (`exploration`) |
 | what an attempt costs | 20 Mana, as every attack | `combat.fightMana` |
+| fights a lair takes, by tier | 3 · 4 · 5 · 6 · 7 | `garrisons` › `fights` |
+| how hard its first fight is | half the lair's power | `delve.firstFightPower` (`exploration`) |
 
 ## 9. Deliberately not in this design
 
