@@ -544,6 +544,7 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (seen.has(String(s.id))) push(entry, ['id'], `duplicate scene id "${s.id}"`);
       seen.add(String(s.id));
       check(entry, ['triggerTarget'], s.trigger, s.triggerTarget);
+      if (s.doneWhen !== '' && s.doneWhen !== undefined) check(entry, ['doneTarget'], s.doneWhen, s.doneTarget);
       const lines = list(s.lines);
       if (lines.length === 0) push(entry, ['lines'], 'a scene says at least one line');
       lines.forEach((l, j) => {
