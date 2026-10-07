@@ -34,6 +34,7 @@
 import { ARTIFACTS, HEROES } from '../sim/data/definitions';
 import { fragmentArt } from './relicSheet';
 import { playSfx, type SfxName } from '../audio/sfx';
+import { duckFeast, setFeast } from '../audio/music';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { FragmentProgress, Game, GachaPrize, GachaReveal } from '../game';
 import type { CurrencyId, HeroId } from '../sim/state';
@@ -416,6 +417,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         el('div', { class: 'gr-heroline-title' }, def.title),
         el('div', { class: `gr-heroline-rarity ${RARITY_CLASS[def.rarity]}` }, def.rarity));
       heroLine.classList.add('is-on');
+      duckFeast(legend ? 6500 : 5200);
       playSfx(legend ? 'heroLegend' : 'heroNew');
       playSfx('heroPop');
       later(260, () => playSfx(legend ? 'heroFanfareLegend' : 'heroFanfare'));
@@ -583,11 +585,13 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       if (showing !== null) {
         teardown();
         showing = null;
+        setFeast(false);
       }
       return;
     }
     if (reveal === showing) return; // mid-sequence; leave it alone
     showing = reveal;
+    setFeast(true);
     build(reveal);
   };
 
