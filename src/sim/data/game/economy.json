@@ -22,7 +22,7 @@
   "city": {
     "initialCurrencies": { "Gold": 100, "Food": 0 },
     "initialPopulation": 0,
-    "populationCostFirst": [5, 20, 45, 100, 250, 500, 1000],
+    "populationCostFirst": [5, 10, 20, 40, 70, 110, 160, 230, 320, 440, 600, 800, 1000],
     "populationCostGrowth": 1.1,
     "lateUpgradeFromLevel": 6
   },
