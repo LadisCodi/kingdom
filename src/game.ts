@@ -119,7 +119,7 @@ import { ascensionFragmentCost, isMaxAscension } from './sim/heroLadder';
 import { addHeroXp, boonText, heroEntry, heroUnlockCost, ownsHeroId, pullPrice } from './sim/heroes';
 import {
   boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
-  offerWindow, offersOn, refreshOffers, skuValuePercent,
+  offerComesBack, offerWindow, offersOn, refreshOffers, skuValuePercent,
 } from './sim/offers';
 import type { PayerProfile, PortalPrize, StoreSkuId } from './sim/state';
 import {
@@ -2184,7 +2184,7 @@ export class Game {
     return {
       closesAt: w?.closes ?? null,
       left: s.limit > 0 ? Math.max(0, s.limit - (w?.bought ?? 0)) : null,
-      once: s.limit === 1 && (s.opensOn === 'always' || s.opensOn === 'door' || s.opensOn === 'after'),
+      once: s.limit === 1 && !offerComesBack(sku),
       valuePercent: skuValuePercent(this.state, sku),
       chain: chain.length > 1 ? { at: chain.indexOf(sku) + 1, of: chain.length } : null,
       gifts: [

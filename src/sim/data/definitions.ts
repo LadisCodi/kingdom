@@ -2243,7 +2243,9 @@ export const AD = balance.ads;
 /** Where a SKU is sold (Docs/features/14-monetization.md §2). */
 export type StoreShelf = 'gems' | 'bag' | 'offer' | 'daily' | 'survey';
 /** What opens an offer's window (sim/offers.ts). */
-export type OfferTrigger = 'always' | 'door' | 'after' | 'townhall' | 'manaLow' | 'buildersBusy';
+export type OfferTrigger =
+  | 'always' | 'door' | 'after' | 'townhall'
+  | 'manaLow' | 'manaOut' | 'buildersBusy' | 'explorersBusy' | 'heroesBenched';
 
 /** A real-money SKU of the SIMULATED store (Docs/features/14-monetization.md
  *  §2), whole in `data/game/store.json`. Nothing here ever charges: the price
@@ -2308,7 +2310,7 @@ export const OFFER_ORDER = onShelf('offer');
 export const DAILY_POOL = onShelf('daily');
 
 /** How many daily offers a day shows. */
-export const OFFERS = balance.offers as { dailyCount: number };
+export const OFFERS = balance.offers as { dailyCount: number; spacingHours: number };
 
 /** Monthly simulated budgets by payer profile, in dollars
  *  (Docs/features/14-monetization.md §3). */

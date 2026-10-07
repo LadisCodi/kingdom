@@ -4,7 +4,8 @@
 // An OFFER is a `store` product on the `offer` shelf. It has a WINDOW — when
 // it opened, when it closes, how many it has sold — and something that opens
 // it: a door, the purchase of the step before it in a chain, a Townhall
-// level, a Mana pool run low, a build refused for want of a builder. A
+// level, a Mana pool run dry, a build refused for want of a builder, every
+// explorer out, more heroes than seats. A
 // window that closes is read, never scheduled: an offer produces nothing, so
 // it is no boundary of `advance()` (invariant 1) — `offerOn` compares the
 // clock it is handed with the window's absolute instants.
@@ -13,6 +14,13 @@
 // offer is an opportunity shown to a player, not economy. Nothing in the sim
 // reads it, and buying one is always a live action. A trigger met only in the
 // middle of a replayed absence — the pool low at 3 a.m. — opens nothing.
+//
+// THEY ARE SPACED (Docs/features/14-monetization.md §2.4). An offer never
+// opens below its `townhall` level, whatever its trigger. One that opens on
+// its own — on the store, a door, a chain, a Townhall level — waits while
+// another window opened less than `offers.spacingHours` ago, and opens alone,
+// in shelf order. One that answers a need the player just felt (Mana out,
+// builders busy, explorers out, a hero benched) does not wait, but counts.
 //
 // The DAILY offers are drawn, not opened: `dailyCount` products of the
 // `daily` shelf a day, by `rand(seed, 'daily', day, sku)` — keyed on the day
@@ -37,14 +45,24 @@ import { addHeroXp, heroSlotGemCost, heroSlots } from './heroes';
 import { grantItem } from './bag';
 import { knowledgeGemPrice } from './knowledge';
 import { rand } from './rng';
+import { mana } from './mana';
+import { watchedRefillsLeft } from './manaRefill';
 import { gemsToFinish } from './rush';
-import { explorerGemCost } from './world/explorers';
+import { explorerGemCost, explorerSlots, freeExplorers } from './world/explorers';
 import { addToWallet, townhall, type GameState, type HeroId, type ItemId, type OfferWindow, type StoreSkuId } from './state';
 
 const HOUR_MS = 3_600_000;
 
+/** Triggers that answer a need the player just felt: they open at once,
+ *  without waiting their turn. */
+const NEEDS = new Set<StoreSkuDef['opensOn']>(['manaLow', 'manaOut', 'buildersBusy', 'explorersBusy', 'heroesBenched']);
+
 /** Triggers that come back once their window has closed and cooled down. */
-const REPEATS = new Set<StoreSkuDef['opensOn']>(['townhall', 'manaLow', 'buildersBusy']);
+const REPEATS = new Set<StoreSkuDef['opensOn']>(['townhall', ...NEEDS]);
+
+/** Does this offer come back after its window closes? */
+export const offerComesBack = (sku: StoreSkuId): boolean =>
+  REPEATS.has(STORE[sku].opensOn) && STORE[sku].hours > 0;
 
 // ------------------------------------------------------------- the ceilings
 
@@ -84,6 +102,7 @@ export const offersOn = (state: GameState, now: number): StoreSkuId[] =>
  *  for one that comes back, once the last window has closed and cooled. */
 function mayOpen(state: GameState, sku: StoreSkuId, now: number): boolean {
   if (!isDoorOpen(state, 'store')) return false;
+  if (townhall(state).level < STORE[sku].townhall) return false;
   if (!slotsFit(state, sku)) return false;
   const w = offerWindow(state, sku);
   if (w === null) return true;
@@ -98,24 +117,50 @@ function open(state: GameState, sku: StoreSkuId, now: number): void {
   track(state, 'offer_opened', { sku, trigger: opensOn });
 }
 
+/** When the last purchase of this product was made, or null. */
+const lastBought = (state: GameState, sku: StoreSkuId): number | null => {
+  const purchases = state.player.payer?.purchases ?? [];
+  for (let i = purchases.length - 1; i >= 0; i--) if (purchases[i].sku === sku) return purchases[i].at;
+  return null;
+};
+
+/** Has another offer's window opened too recently for one more to open on
+ *  its own? */
+const tooSoon = (state: GameState, now: number): boolean => {
+  const gap = OFFERS.spacingHours * HOUR_MS;
+  return Object.values(state.player.offers.windows).some((w) => w !== undefined && now < w.opened + gap);
+};
+
 /**
  * The latch, from the live tick. Opens every offer whose trigger is met and
- * whose window may open; buildersBusy is opened by the refusal itself
- * (`offerTrigger`), and an `after` by the purchase before it.
+ * whose window may open — a need at once, the rest one at a time and spaced.
+ * buildersBusy is opened by the refusal itself (`offerTrigger`). An `after`
+ * opens the day after the step before it was bought, UTC.
  */
 export function refreshOffers(state: GameState, now: number): void {
   const level = townhall(state).level;
   const raised = level > state.player.offers.townhall;
+  let held = false;
   for (const sku of OFFER_ORDER) {
     const s = STORE[sku];
+    const boughtAt = s.after === null ? null : lastBought(state, s.after);
     const met = s.opensOn === 'always'
       || (s.opensOn === 'door' && s.door !== null && isDoorOpen(state, s.door))
-      || (s.opensOn === 'after' && s.after !== null && (offerWindow(state, s.after)?.bought ?? 0) > 0)
+      || (s.opensOn === 'after' && boughtAt !== null && now >= (dayIndex(boughtAt) + 1) * DAY_MS)
       || (s.opensOn === 'townhall' && raised && level >= s.townhall)
-      || (s.opensOn === 'manaLow' && adOfferEligible(state));
-    if (met && mayOpen(state, sku, now)) open(state, sku, now);
+      || (s.opensOn === 'manaLow' && adOfferEligible(state))
+      || (s.opensOn === 'manaOut' && mana(state) < 1 && watchedRefillsLeft(state, now) === 0)
+      || (s.opensOn === 'explorersBusy' && explorerSlots(state) > 0 && freeExplorers(state) === 0)
+      || (s.opensOn === 'heroesBenched' && state.heroes.owned.length > heroSlots(state));
+    if (!met || !mayOpen(state, sku, now)) continue;
+    if (!NEEDS.has(s.opensOn) && tooSoon(state, now)) {
+      // A Townhall level met while waiting its turn is kept for the next.
+      if (s.opensOn === 'townhall') held = true;
+      continue;
+    }
+    open(state, sku, now);
   }
-  state.player.offers.townhall = level;
+  if (!held) state.player.offers.townhall = level;
 }
 
 /** A moment the live game reports rather than the tick sees: a build refused
@@ -131,14 +176,11 @@ export function offerTrigger(state: GameState, trigger: 'buildersBusy', now: num
   return opened;
 }
 
-/** A purchase of an offer: counted in its window, and the next step of its
- *  chain opened at once. */
-export function recordOfferPurchase(state: GameState, sku: StoreSkuId, now: number): void {
+/** A purchase of an offer, counted in its window. The next step of its chain
+ *  opens the next day (`refreshOffers`). */
+export function recordOfferPurchase(state: GameState, sku: StoreSkuId): void {
   const w = offerWindow(state, sku);
   if (w !== null) w.bought += 1;
-  for (const next of OFFER_ORDER) {
-    if (STORE[next].opensOn === 'after' && STORE[next].after === sku && mayOpen(state, next, now)) open(state, next, now);
-  }
 }
 
 // --------------------------------------------------------------- next day
