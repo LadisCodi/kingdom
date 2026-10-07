@@ -156,6 +156,65 @@ const HOLD_GAP = 500;
 /** A blow that takes this share of a slot's whole health counts as heavy. */
 const HEAVY = 0.08;
 
+/** The armies marching on before the first blow: the replay holds this long
+ *  (real ms) while the rows slide in and the swords on the bar clash. */
+const INTRO_MS = 800;
+/** The last blow, in slow motion: from this far (ms of the fight) before the
+ *  end, the replay runs at `SLOW_FACTOR` for `SLOW_MS` of real time. */
+const SLOW_LEAD = 300;
+const SLOW_FACTOR = 0.3;
+const SLOW_MS = 1000;
+/** The plaque comes down this long (real ms) after the last blow — after
+ *  the flash, not on top of it. */
+const PLAQUE_DELAY_MS = 600;
+/** A loss worth this share of a side's opening power shakes the bar. */
+const BAR_SHAKE = 0.04;
+
+/**
+ * Cracks across a ring that has gone down, as an SVG: three or four grooves
+ * from the rim inward, each with a lit lower edge, so the crack is CUT into
+ * the material rather than drawn on it. The shape is the slot's own — a
+ * hash of `seed`, the same every time that slot falls.
+ */
+function crackSvg(seed: number): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  let x = (Math.imul(seed + 1, 2654435761) >>> 0) || 1;
+  const next = (): number => {
+    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+    return x / 0x1_0000_0000;
+  };
+  const lines: string[] = [];
+  const n = 3 + (next() < 0.5 ? 1 : 0);
+  const base = next() * Math.PI * 2;
+  for (let i = 0; i < n; i += 1) {
+    let a = base + (i * Math.PI * 2) / n + (next() - 0.5) * 0.6;
+    let r = 50;
+    const pts: string[] = [`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`];
+    const stop = 8 + next() * 14;
+    for (let k = 0; k < 3; k += 1) {
+      r -= (50 - stop) / 3;
+      a += (next() - 0.5) * 0.7;
+      pts.push(`${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`);
+    }
+    lines.push(`M${pts.join(' L')}`);
+  }
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '-50 -50 100 100');
+  svg.setAttribute('class', 'bs-crack');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  for (const cls of ['is-edge', 'is-groove']) {
+    for (const d of lines) {
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('pathLength', '100');
+      path.setAttribute('class', cls);
+      svg.append(path);
+    }
+  }
+  return svg;
+}
+
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export function mountBattleScreen(game: Game, root: HTMLElement): void {
@@ -194,13 +253,36 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const yours = el('span', { class: 'bs-bar-theirs' }, formatExact(power.theirs));
     const fill = el('div', { class: 'bs-bar-fill' });
     const bar = el('div', { class: 'bs-bar' }, fill, mine, yours);
+    const opening = { ...power };
+    /** What the two numbers SHOW, rolling down to what they are. */
+    const shown = { ...power };
     const paintBar = (): void => {
       const total = Math.max(1, power.ours + power.theirs);
       fill.style.width = `${Math.round((power.ours / total) * 100)}%`;
-      mine.textContent = formatExact(power.ours);
-      yours.textContent = formatExact(power.theirs);
+    };
+    const rollBar = (ms: number): void => {
+      for (const side of ['ours', 'theirs'] as Side[]) {
+        const gap = power[side] - shown[side];
+        shown[side] = Math.abs(gap) < 1 ? power[side] : shown[side] + gap * Math.min(1, ms / 160);
+      }
+      mine.textContent = formatExact(Math.round(shown.ours));
+      yours.textContent = formatExact(Math.round(shown.theirs));
     };
     paintBar();
+    let barShookAt = -Infinity;
+    /** A big loss jolts the bar and pops the number that fell. */
+    const shakeBar = (side: Side, lost: number): void => {
+      const now = game.now();
+      if (lost < opening[side] * BAR_SHAKE || now - barShookAt < 250) return;
+      barShookAt = now;
+      bar.animate([
+        { translate: '0 0' }, { translate: `${-3 * unit}px 0` }, { translate: `${3 * unit}px ${unit}px` },
+        { translate: `${-2 * unit}px 0` }, { translate: '0 0' },
+      ], { duration: 220 });
+      (side === 'ours' ? mine : yours).animate([
+        { scale: '1' }, { scale: '1.25', color: '#fff6dc', offset: 0.3 }, { scale: '1' },
+      ], { duration: 300 });
+    };
 
     // THE CLOCK'S TWO KNOBS: twice the speed (kept for the next fight), and
     // straight to the end. A fight lasts tens of seconds, a dungeon has many.
@@ -227,6 +309,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     // out on its death does not grey its last number with it.
     const fx = createFxLayer();
     const floats = el('div', { class: 'bs-floats' });
+    /** The white of the last blow. */
+    const flash = el('div', { class: 'bs-flash' });
     const screen = el('div', { class: 'bs' },
       bar,
       el('div', { class: 'bs-where' },
@@ -236,6 +320,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       el('div', { class: 'bs-board' }, ...theirs.rows, el('div', { class: 'bs-gap' }), ...ours.rows),
       fx.canvas,
       floats,
+      flash,
       plaque,
       exit,
     );
@@ -245,9 +330,17 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const measure = (): void => {
       const box = screen.getBoundingClientRect();
       if (box.width === 0) return;
+      // From the LAYOUT, not the screen rect: a slot mid-lunge or a row
+      // mid-entrance must not move where everything aims at it.
       for (const v of all) {
-        const r = v.root.getBoundingClientRect();
-        v.at = { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top };
+        let x = v.root.offsetWidth / 2;
+        let y = v.root.offsetHeight / 2;
+        for (let node: HTMLElement | null = v.root; node !== null && node !== screen;
+          node = node.offsetParent as HTMLElement | null) {
+          x += node.offsetLeft;
+          y += node.offsetTop;
+        }
+        v.at = { x, y };
       }
       unit = (all[0]?.root.offsetWidth ?? 66) / 66;
       fx.resize(box.width, box.height, unit);
@@ -454,9 +547,11 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (event.kind === 'troops_lost') {
         const view = viewOf(event.at);
         if (view === undefined) return;
-        power[event.at.side] -= (view.troops - event.alive) * view.power;
+        const lost = (view.troops - event.alive) * view.power;
+        power[event.at.side] -= lost;
         view.troops = event.alive;
         setLife(view, event.hpPool);
+        if (!quiet && motion) shakeBar(event.at.side, lost);
         if (view.count.textContent !== '') {
           view.count.textContent = `x${formatExact(event.alive)}`;
           if (!quiet && motion) {
@@ -473,14 +568,26 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (event.kind === 'slot_wiped') {
         const view = viewOf(event.at);
         if (view === undefined) return;
+        // The ring cracks, goes grey and takes the skull, stamped. A
+        // hero's gold ring breaks and the portrait slumps in it.
         view.root.classList.add('is-dead');
+        view.root.append(crackSvg(event.at.id + (event.at.side === 'ours' ? 0 : 100)));
         view.count.textContent = '';
         setLife(view, 0);
         if (quiet) return;
+        const hero = view.kind === 'hero';
         if (motion) {
-          fx.sparks(view.at, -Math.PI / 2, t, 10);
+          view.root.animate([
+            { translate: '0 0' }, { translate: `${-4 * unit}px ${unit}px` }, { translate: `${4 * unit}px ${-unit}px` },
+            { translate: `${-3 * unit}px 0` }, { translate: `${2 * unit}px 0` }, { translate: '0 0' },
+          ], { duration: 260, composite: 'add' });
+          fx.chips(view.at, t, hero ? 14 : 9, hero ? 'gold' : 'wood');
           fx.dust(view.at, t);
+          fx.shock(view.at, t + 140, hero ? 44 : 34);
           hold(t, HOLD_WIPE_MS);
+          if (event.tick === log.ticks && finalBlow) {
+            flash.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: 450, easing: 'ease-out' });
+          }
         }
         playSfx('death', { group: 'battle', limit: 2 });
       }
@@ -494,6 +601,13 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     let lastT = 0;
     let fxT = 0;
     let lastReal = game.now();
+    /** The fight ended on a blow, not on the clock: it gets the slow motion
+     *  and the flash. */
+    const finalBlow = log.events[log.events.length - 1]?.kind === 'end'
+      && (log.events[log.events.length - 1] as Extract<BattleEvent, { kind: 'end' }>).reason === 'wiped';
+    const endMs = log.ticks * COMBAT.tickMs;
+    let slowed = false;
+    let resultAt: number | null = null;
 
     /** Walk the playback to now: the swings that start, the blows that
      *  land, the phase. Safe to call from anywhere, any number of times. */
@@ -517,6 +631,10 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
           return false;
         });
       }
+      if (motion && finalBlow && !slowed && !quiet && t >= endMs - SLOW_LEAD) {
+        slowed = true;
+        game.slowBattle(SLOW_FACTOR, SLOW_MS);
+      }
       const tick = Math.floor(t / COMBAT.tickMs);
       while (next < log.events.length) {
         const event = log.events[next]!;
@@ -531,18 +649,40 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       // freezes them — and runs on past its end so the last sparks land.
       const phase = game.battle?.phase;
       fxT = phase === 'playing' ? t : fxT + (now - lastReal) * pace();
+      rollBar(now - lastReal);
       lastReal = now;
 
       game.advanceBattle(now);
       const after = game.battle?.phase;
       if (after === undefined) return fxT;
-      if (after !== 'playing') knobs.classList.add('is-hidden');
-      if (after !== 'playing' && plaque.classList.contains('is-hidden')) {
+      if (after !== 'playing') {
+        knobs.classList.add('is-hidden');
+        resultAt ??= now;
+      }
+      if (resultAt !== null && now - resultAt >= PLAQUE_DELAY_MS && plaque.classList.contains('is-hidden')) {
+        const won = log.winner === 'ours';
         plaque.classList.remove('is-hidden');
-        plaque.classList.add(log.winner === 'ours' ? 'is-won' : 'is-lost');
-        plaque.textContent = log.winner === 'ours' ? 'Victory' : 'Defeat';
+        plaque.classList.add(won ? 'is-won' : 'is-lost');
+        // The word sits over the cracks: carved on, after the wood split.
+        plaque.replaceChildren(el('span', { class: 'bs-plaque-word' }, won ? 'Victory' : 'Defeat'));
+        // A defeat lands cracked, and the field goes grey under it.
+        if (!won) {
+          plaque.append(crackSvg(log.ticks));
+          screen.classList.add('is-lost');
+        }
+        if (motion) {
+          const mid = { x: screen.clientWidth / 2, y: screen.clientHeight / 2 };
+          fx.shock(mid, fxT + 180, 70, won ? '#ffd36a' : 'rgba(60, 36, 18, 0.8)');
+          if (won) {
+            fx.sparks(mid, -Math.PI / 2, fxT + 180, 14);
+            fx.chips(mid, fxT + 220, 16, 'gold');
+            fx.sparks(mid, -Math.PI / 2, fxT + 420, 10);
+          } else {
+            fx.chips(mid, fxT + 180, 8, 'wood');
+          }
+        }
         // The bar tells the truth at the end: a wiped side is worth nothing.
-        power[log.winner === 'ours' ? 'theirs' : 'ours'] = 0;
+        power[won ? 'theirs' : 'ours'] = 0;
         paintBar();
       }
       if (after === 'done') stop();
@@ -551,6 +691,22 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
 
     root.replaceChildren(screen);
     measure();
+    // THE ARMIES MARCH ON: the replay holds while each side's rows slide in
+    // from its own edge, front rank first, and the swords on the bar clash.
+    if (motion) {
+      game.holdBattle(INTRO_MS);
+      const march = (rows: HTMLElement[], from: number): void => {
+        rows.forEach((row, i) => {
+          row.animate([
+            { translate: `0 ${from * 60 * unit}px`, opacity: 0 },
+            { translate: '0 0', opacity: 1 },
+          ], { duration: 420, delay: i * 90, easing: 'cubic-bezier(0.2, 1.3, 0.4, 1)', fill: 'backwards' });
+        });
+      };
+      march([...theirs.rows].reverse(), -1); // their front is nearest the gap
+      march(ours.rows, 1);
+      bar.classList.add('is-clash');
+    }
     const resizer = new ResizeObserver(measure);
     resizer.observe(screen);
     // Frames draw the effects; the interval keeps the fight walking where

@@ -101,6 +101,27 @@ describe('a lair attack opens the playback', () => {
     // The end still stands at the end.
     expect(game.battleMs(at + 10 * 60_000)).toBe(game.battle!.log.ticks * COMBAT.tickMs);
   });
+
+  it('runs a slow stretch slower, then at speed again — with nothing to switch it back', () => {
+    const { game, tick } = atTheDoor();
+    game.openLair(ORCS);
+    game.doAttackLair();
+    const at = game.battle!.startedAt;
+    tick(500);
+    game.slowBattle(0.25, 400);
+    expect(game.battleMs(at + 700)).toBe(550);
+    expect(game.battleMs(at + 900)).toBe(600);
+    // Past the stretch the clock runs at full speed from where it got to.
+    expect(game.battleMs(at + 1000)).toBe(700);
+    // A hold inside a slow stretch freezes it, and what is left of the
+    // stretch runs slow after it (still at +500 here: 500 ms of fight).
+    game.slowBattle(0.5, 400);
+    game.holdBattle(100);
+    expect(game.battleMs(at + 600)).toBe(500);
+    expect(game.battleMs(at + 700)).toBe(550);
+    expect(game.battleMs(at + 900)).toBe(650);
+    expect(game.battleMs(at + 1000)).toBe(750);
+  });
 });
 
 describe('the lair opens the same screen', () => {

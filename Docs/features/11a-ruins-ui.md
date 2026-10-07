@@ -133,13 +133,15 @@ an interrupted replay costs nothing.
 |---|---|
 | Data | The log, and nothing else: the two boards from its `start`, then every `attack`, `troops_lost` and `slot_wiped` in order |
 | Elements | **The power bar** at the top — two totals and one split fill, falling as squads come apart (§12). **Six rows of slots**: their heroes · their back · their front · *a gap* · our front · our back · our heroes. The back rank draws smaller, because the row is what decides who gets hit. **Each slot's ring is its health** — leaf for ours, clay for theirs — emptying round the dial; what a blow just took stays pale for a beat |
+| Opening | The replay holds **0.8 s** while each side's rows slide in from its own edge, front rank first, and the crossed swords on the bar clash |
 | Swing | The attacker moves first, timed so the blow lands **on the tick the log wrote**. Melee lunges at its target (Cavalry further, raising dust); a shooter draws back and looses — an arrow per troop line (up to three), a bolt for a hero — and it lands on the tick |
 | Hit | The target flashes, flinches away from the blow and a hit sound plays. A blade's mark crosses it — a slash, a straight thrust for Lancers — with sparks; an arrow throws sparks only. The weight of all of it scales with the share of the slot's health the blow took |
 | Numbers | Each blow's damage rises off the target. **Blows on one slot within ¼ s add up into one number that grows**; never more than six in the air. Advantage on the type chart = larger, amber; disadvantage = smaller, dull; a heal = leaf `+N`; what a shield soaked = sky `(N)` |
 | Weight | A heavy blow with the advantage (≥ 8% of the slot) and a squad going down **hold the replay** for a beat (70 · 110 ms), never two within half a second of the fight |
-| Death | The portrait desaturates, a skull is painted over it, sparks and dust burst off it, a death sound plays. The troop count pops red on every loss |
-| Reduced motion | No swings, flinches, effects or holds; the ring and the numbers stay |
-| Ending | **Two seconds** after the last blow, a Victory or Defeat plaque over the middle of the board |
+| Death | The slot shakes, its ring **cracks** — grooves run in from the rim — and bursts into chips (wood; gold for a hero), the portrait desaturates and a skull is **stamped** on it with a thud; a hero's portrait slumps in its broken ring. A death sound plays. The troop count pops red on every loss |
+| Power bar | Its two numbers **roll down** to what is left; a loss worth ≥ 4% of a side's opening power jolts the bar and pops that side's number |
+| Reduced motion | No opening, swings, flinches, effects, holds, slow motion or flash; the plaque and the skull appear without moving. The ring, the numbers and the cracks stay |
+| Ending | A fight won by a wipe plays its **last 0.3 s at 0.3×** and ends on a white flash. **0.6 s** later the plaque lands over the middle of the board: *Victory* drops in and bounces in a burst of gold; *Defeat* lands heavy and askew, cracked, and the field goes grey under it |
 | Rewards | On a victory with spoils, the **gacha reveal** deals them over the board — the one screen that already knows how to hand things over one at a time (§8.3 of [`10-heroes.md`](10-heroes.md)) |
 | Leaving | Then, and only then, a button at the bottom. It returns to the room sheet, which is already showing the NEXT room |
 | Rules | Two controls under the bar: **×2** (kept for the next fight) and **Skip** (straight to the result). At ×1 one tick is 100 ms, so the replay is as long as the fight was |

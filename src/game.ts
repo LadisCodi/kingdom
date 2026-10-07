@@ -540,14 +540,23 @@ export interface BattlePlayback {
   clockAt: number;
   clockMs: number;
   speed: number;
+  /** A stretch of wall clock the replay runs `factor` times slower through:
+   *  the last blow's slow motion (`slowBattle`). */
+  slow?: { from: number; until: number; factor: number };
   phase: 'playing' | 'result' | 'rewards' | 'done';
 }
 
 /** The fight's own milliseconds a playback has reached at `now`. */
 // Never earlier than `clockMs`: a held clock (`holdBattle`) has its
 // `clockAt` in the future, and the replay stands still until it arrives.
-const playbackMs = (b: BattlePlayback, now: number): number =>
-  b.clockMs + Math.max(0, now - b.clockAt) * b.speed;
+// A slow stretch takes back what it slowed, so the clock stays a pure
+// function of `now` and nothing has to run when the stretch ends.
+const playbackMs = (b: BattlePlayback, now: number): number => {
+  const run = Math.max(0, now - b.clockAt);
+  const slowed = b.slow === undefined ? 0
+    : Math.max(0, Math.min(now, b.slow.until) - Math.max(b.slow.from, b.clockAt)) * (1 - b.slow.factor);
+  return b.clockMs + (run - slowed) * b.speed;
+};
 
 /** How long the plaque waits after the last blow. */
 export const BATTLE_RESULT_DELAY_MS = 2000;
@@ -4589,6 +4598,7 @@ export class Game {
     const now = this.now();
     b.clockMs = b.log.ticks * COMBAT.tickMs;
     b.clockAt = now;
+    b.slow = undefined;
     this.advanceBattle(now);
   }
 
@@ -4615,6 +4625,17 @@ export class Game {
     const now = this.now();
     b.clockMs = playbackMs(b, now);
     b.clockAt = now + ms;
+  }
+
+  /** Run the replay `factor` times slower for the next `ms` of real time:
+   *  the last blow, in slow motion. Screen-only, like the hold. */
+  slowBattle(factor: number, ms: number): void {
+    const b = this.battle;
+    if (b === null || b.phase !== 'playing') return;
+    const now = this.now();
+    b.clockMs = playbackMs(b, now);
+    b.clockAt = Math.max(now, b.clockAt);
+    b.slow = { from: b.clockAt, until: b.clockAt + ms, factor };
   }
 
   /**
