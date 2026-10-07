@@ -98,7 +98,7 @@ function dock(game: Game, index: number, army: ArmyView | undefined, open: boole
     el('div', { class: 'dv-calls' },
       btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
       btn({
-        label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
+        label: 'Descend', kind: 'blue', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
         disabledReason: !open ? 'The Portal is shut' : frontier > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
         onClick: () => void game.doDescendPortal(army.id),
       })));
