@@ -25,8 +25,12 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { targetingFor } from '../sim/battle';
 import type { BattleEvent, BattleLog, BoardSlot, Side, SlotRef } from '../sim/battle';
 import type { UnitId } from '../sim/state';
-import type { Game } from '../game';
+import type { BattleBackdrop, Game } from '../game';
 import { createFxLayer, type Pt } from './battleFx';
+import fieldGround from './assets/battle-ground-field.jpg?url';
+import dungeonGround from './assets/battle-ground-dungeon.jpg?url';
+import bossGround from './assets/battle-ground-boss.jpg?url';
+import portalGround from './assets/battle-ground-portal.jpg?url';
 import { el, formatExact, formatShort } from './format';
 import { btn, iconEl } from './kit';
 
@@ -268,6 +272,13 @@ const hitSound = (from: { kind: BoardSlot['kind']; type: UnitId }): BattleSfx =>
 const SKILL_HIT: Partial<Record<SkillId, BattleSfx>> = { Cleave: 'cleave', Crush: 'crush' };
 const RALLY_SOUND: Partial<Record<SkillId, BattleSfx>> = { WarCry: 'warCry', Bulwark: 'bulwark', Vigour: 'vigour' };
 
+/** The ground each kind of fight is drawn on, seen from above: quiet in the
+ *  middle where the armies stand, its props at the edges
+ *  (Docs/art/battle/). Fetched when a fight of that kind first opens. */
+const GROUND: Record<BattleBackdrop, string> = {
+  field: fieldGround, dungeon: dungeonGround, boss: bossGround, portal: portalGround,
+};
+
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export function mountBattleScreen(game: Game, root: HTMLElement): void {
@@ -366,7 +377,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const flash = el('div', { class: 'bs-flash' });
     const gap = el('div', { class: 'bs-gap' });
     const board = el('div', { class: 'bs-board' }, ...theirs.rows, gap, ...ours.rows);
-    const screen = el('div', { class: 'bs' },
+    const screen = el('div', { class: `bs is-${playback.backdrop}` },
       bar,
       el('div', { class: 'bs-where' },
         el('b', {}, playback.title),
@@ -1003,6 +1014,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       return fxT;
     };
 
+    screen.style.setProperty('--bs-ground', `url("${GROUND[playback.backdrop]}")`);
     root.replaceChildren(screen);
     measure();
     setBattleMusic(true);

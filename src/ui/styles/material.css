@@ -583,8 +583,11 @@
 .bs-where,
 .bs-count { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 .bs-plaque { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
+/* The fight's own ground (battleScreen.ts `GROUND`, Docs/art/battle/) lies
+   over the cloth, which shows only until it has loaded. */
 .bs {
   background:
+    var(--bs-ground, none) center / cover no-repeat,
     radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.1), transparent 70%),
     linear-gradient(rgba(58, 34, 18, 0.82), rgba(46, 26, 14, 0.9)),
     url('../assets/tex-cloth.jpg') center / calc(var(--px) * 256) calc(var(--px) * 256);

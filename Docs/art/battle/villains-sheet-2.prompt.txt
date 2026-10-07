@@ -1,0 +1,17 @@
+CREATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — hero sheets already made for this game. Match that style exactly: it is LOCKED; do not drift.
+
+=== STYLE ===
+Flat 2D cartoon illustration for a cozy medieval-fantasy mobile strategy game, NOT 3D, NOT Pixar, NOT a render, NOT anime. Bold, clean dark-brown outlines on every shape, uniform in weight. Flat colour with simple cel shading: one shadow tone and one small highlight per material, no gradients, no textures, no ambient occlusion. Big simple readable shapes, friendly slightly chunky proportions — large head, big hands and boots. Small simple eyes, expressive faces. Warm saturated palette, steel grey for metal, gold accents. Lit from the top left. Draw as if shown 200 px tall: nothing thinner than the outline.
+
+=== WHAT THESE ARE ===
+VILLAINS: the bosses that wait at the bottom of the dungeons, the heroes' enemies. Imposing and clearly villainous — scowls, sneers, a sinister grin, a darker palette than the heroes, a touch of glowing eyes or eerie light — but drawn in exactly the same friendly cartoon hand as the heroes: more storybook villain than horror. No gore: macabre stops at bones, skulls and coloured smoke. No mounts, no pets, no extra characters.
+
+=== COMPOSITION ===
+One landscape image, 3:2, two villains side by side, each in its own half of the canvas, the same height (about 80% of the canvas height), full body, standing, facing the viewer with a touch of 3/4. Both hands and both feet visible; every weapon entirely inside its half. Nothing crosses into the other half: keep a clear 60 px empty band between the figures. Each villain is a different being — vary body type, height and silhouette as described.
+
+=== THE TWO VILLAINS ===
+1. THE LEDGER KEEPER — the master of the Counting House, a cavalry duellist who dazes his foes. A tall, very thin man with a long pale face, a thin moustache and a cold smile, slicked black hair, a gold monocle over one eye with a small hypnotic spiral glinting in it. A black high-collared accountant's frock coat with gold buttons over a dark steel breastplate, black riding breeches, tall black riding boots with silver spurs. Under one arm a huge black ledger bound with a gold chain and padlock; in the other hand a slim rapier whose guard is shaped like a quill pen. A few gold coins on his belt.
+
+2. THE STAR SEER — the astrologer queen of the Star Observatory, a caster who calls falling stars down on her enemies. A tall slender woman, pale lavender-grey skin, long straight silver hair, cold star-white glowing eyes and a small glowing gem on her brow, a haughty half-smile. Deep indigo and violet robes embroidered with gold constellations, a high brass armillary crown of thin rings around her head. In one hand a tall brass staff topped with an astrolabe; the other hand raised high, a single small falling star with a short sparkling trail streaking down above her palm — that star is what she throws.
+
+Do not draw grid lines, cell borders, labels, captions, names, text, shadows, ground, pedestal or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
