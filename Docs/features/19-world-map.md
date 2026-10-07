@@ -680,7 +680,7 @@ A hex holds **none or one**. A feature decides the district built there
   heroes (up to 3) with their HP. **Withdraw** and **Attack** (the frontier,
   at once, priced in Mana, §4). On its way: the same board, a bar to its
   arrival with the time left, **Finish** (Speed up when the Bag holds a
-  General speed-up; Gems otherwise), and Withdraw.
+  General speed-up; Gems otherwise); it is withdrawn only once it is there.
   None there: **Send**. To bring more troops, withdraw and send another
   army.
 - **After a fight**, once it has played: the spoils over the descent — what
