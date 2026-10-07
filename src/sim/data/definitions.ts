@@ -2487,4 +2487,6 @@ export const GAME_VERSION: string = pkg.version;
 // on `kingdom.heroes` (a migrator).
 // v106: every ascension point raises the level cap, and the level runs to
 // 310 — a hero's level is rescaled to the new ladder (a migrator).
-export const SAVE_VERSION = 106;
+// v107: no change to the save — the 1.0.1 fresh start: every tester begins a
+// new kingdom (`PROTOTYPE_FRESH_START`).
+export const SAVE_VERSION = 107;
