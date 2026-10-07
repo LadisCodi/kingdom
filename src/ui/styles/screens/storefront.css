@@ -484,7 +484,7 @@
 .sth-calls > .k-btn { flex: 1 1 0; }
 /* Both slabs on one line: each plate as tall as the taller, its slab at the
  * foot whatever sits over it — a word or a price. */
-.sth-calls > .k-btn.k-btn.has-cost:not(.k-knob) { justify-content: space-between; }
+.sth-calls > .k-btn.k-btn.k-btn.has-cost:not(.k-knob) { justify-content: space-between; } /* over the kit's :hover too */
 
 /* In a narrow card the kit's price slab fits the card, not its own floor. */
 .stx-card > .k-btn.k-btn:not(.k-knob):not(.has-cost),
