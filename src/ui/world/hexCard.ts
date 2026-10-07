@@ -13,7 +13,7 @@
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
-import { ARTIFACTS, WORLD_BUILD } from '../../sim/data/definitions';
+import { ARTIFACTS, WORLD_BUILD, WORLD_PORTAL } from '../../sim/data/definitions';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { hexTravelMs, homeboundMs, outboundMs } from '../../sim/world/travel';
@@ -25,7 +25,9 @@ import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import type { CurrencyId, GoodId, LairId } from '../../sim/state';
-import { claimGold, districtOf, districtRate, upgradeLevel } from '../../worldServer/core';
+import { claimGold, districtOf, districtRate, floorPower, upgradeLevel } from '../../worldServer/core';
+import { portalThumb } from '../../render/world/boardRenderer';
+import { rankRibbon } from '../friends/friendsSheet';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
@@ -270,6 +272,83 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
       sectionHead('Camp'), campHead, enemy,
       ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), tiles(loot)]),
       answers));
+}
+
+// ------------------------------------------------------------ the Portal
+
+/**
+ * THE DARK PORTAL (m88): when it shuts or opens, the player's floor, the
+ * clears left today and the next floor's power, the ranking as the friends
+ * list's rows, and Descend — sending an army, or, with one camped there, the
+ * next floor for its Mana.
+ */
+export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
+  const index = bh.index;
+  const source = game.worldSource();
+  const p = source.portal();
+  const now = game.now();
+  const ribbon = p === null ? null : el('div', { class: 'wd-ribbon is-portal' }, iconEl('hourglass', { size: 'sm' }),
+    p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
+      : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
+  const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
+    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalThumb(84)),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+  const head = el('div', { class: 'dc-head' }, art,
+    el('div', { class: 'dc-what-col' },
+      distanceLine(game, index),
+      el('div', { class: 'dc-what' }, 'Nobody holds it, and nobody ever will.')));
+  const floor = p?.floor ?? 0;
+  const next = Math.min(WORLD_PORTAL.floors, floor + 1);
+  const stats = tiles([
+    { icon: 'dungeon', label: 'Your floor', value: `${formatExact(floor)}/${formatExact(WORLD_PORTAL.floors)}` },
+    { icon: 'tick', label: 'Clears today', value: `${formatExact(p?.attemptsLeft ?? 0)}/${formatExact(WORLD_PORTAL.attemptsPerDay)}` },
+    { icon: 'power', label: 'Next floor', value: formatShort(floorPower(next)) },
+  ]);
+  // The ranking: the friends list's rows, the player's own lit.
+  const me = game.worldSeat();
+  const seats = source.seats();
+  const ranked = (p?.ranking ?? []).map((r, i) => ({ ...r, rank: i + 1 }));
+  const shown = ranked.slice(0, 5);
+  const mine = ranked.find((r) => r.seat === me);
+  if (mine !== undefined && !shown.includes(mine)) shown.push(mine);
+  const rows = shown.map((r) => {
+    const s = seats[r.seat];
+    const name = s === undefined ? 'A kingdom' : s.owner.you ? 'You' : s.owner.name;
+    return el('div', { class: `fr-row wd-rank${r.seat === me ? ' is-you' : ''}` },
+      rankRibbon(r.rank),
+      crestEl(s?.owner.name ?? '?', s?.owner.crest ?? null),
+      el('div', { class: 'fr-who' }, el('div', { class: 'fr-name' }, name)),
+      el('div', { class: 'fr-trail wd-rank-floor' }, `Floor ${formatExact(r.floor)}`));
+  });
+  // Descend: an army sent down, or the next floor for the one camped there.
+  const acts = hexActions(source, me, bh, { revealed: true });
+  const descend = acts.find((a) => a.kind === 'descend');
+  const send = acts.find((a) => a.kind === 'army');
+  const recall = acts.find((a) => a.kind === 'recall');
+  const foot: HTMLElement[] = [];
+  if (descend?.kind === 'descend') {
+    foot.push(btn({
+      label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
+      disabledReason: p === null || !p.open ? 'The Portal is shut' : p.attemptsLeft === 0 ? 'No clears left today'
+        : floor >= WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+      onClick: () => void game.doDescendPortal(descend.army),
+    }));
+  } else if (send?.kind === 'army') {
+    foot.push(btn({ label: 'Descend', kind: 'destructive', onClick: () => game.openArmy(index, 'portal') }));
+  } else if (recall === undefined) {
+    foot.push(btn({ label: 'Descend', kind: 'destructive', disabledReason: 'The Portal is shut', onClick: () => undefined }));
+  }
+  if (recall?.kind === 'recall') {
+    foot.push(btn({ label: 'Recall', kind: 'secondary', onClick: () => void game.doRecallArmy(recall.army) }));
+  }
+  const shut = p === null || !p.open ? [blockedLine(p === null ? 'The Portal is shut' : `It opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)] : [];
+  return sheet({ title: 'The Dark Portal', onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      ...(ribbon === null ? [] : [ribbon]),
+      head, stats,
+      ...(rows.length === 0 ? [] : [sectionHead('Ranking'), el('div', { class: 'wd-ranks' }, ...rows)]),
+      ...shut,
+      el('div', { class: 'wd-foot' }, ...foot)));
 }
 
 // ------------------------------------------------------------ free ground
