@@ -98,11 +98,13 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 
 ### 3.4 A camp (m86b, approved with changes)
 
-- **THE HEX**: the bare ground, the distance; tiles Terrain, Feature, March.
-- **CAMP**: the camp's art with its difficulty seal, its creature and one
-  line; the ENEMY ribbon with its power only — the player's own army is
-  read on the deployment screen, after Attack.
-- **BEATEN, IT PAYS**: reward tiles.
+- The card fits one screen, no scroll.
+- **The ground strip**: one line — Terrain, Feature, March — as mark and
+  value. A tap opens what the ground does to each troop type.
+- **ENEMY**: the difficulty seal on its plank, its power and its squads —
+  the player's own army is read on the deployment screen, after Attack.
+- No art, no distance, no creature name: the board shows them.
+- **BEATEN, IT PAYS**: reward chips.
 - One row, two answers to the same camp: **Negotiate** (its price on the
   plate above it, the shipped cost style) and **Attack** (no price).
 - No raid ribbon: the board's arrow says which district it raids.
