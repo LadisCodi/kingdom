@@ -111,6 +111,8 @@ describe('a camp guards its hex', () => {
     expect(claimRefusal(b, 1, camp, r.arrivesAt)).not.toBe(null);
     const loot = drainEffects(b, seat).find((e) => e.kind === 'loot');
     expect(loot).toMatchObject({ gold: Math.round(power * WORLD_CAMPS.goldPerPower) });
+    // Wood, Food and Stone in hours of the city's production, priced at home.
+    expect(loot).toMatchObject({ hours: (power / 1000) * WORLD_CAMPS.productionHoursPer1000Power });
     expect(loot?.kind === 'loot' && loot.precious?.amount).toBeGreaterThan(0);
     expect(snapshotOf(b, seat, r.arrivesAt).beaten).toContain(camp);
     expect(snapshotOf(b, 1, r.arrivesAt).beaten ?? []).not.toContain(camp);
@@ -152,7 +154,6 @@ describe('a camp guards its hex', () => {
     if (!r.ok) throw new Error(r.why);
     b.seats[rival]!.nextMoveAt = r.finishesAt;
     resolveTo(b, T0 + 30 * 24 * HOUR);
-    expect(Object.keys(b.botCamps?.[rival] ?? {})).toContain(String(turn(camp)));
     expect(b.beaten?.[rival] ?? []).toContain(turn(camp));
     expect(WORLD_BOTS.maxHexes).toBeGreaterThan(0);
   });

@@ -33,7 +33,7 @@ import { boardOf } from '../sim/world/source';
 import { WORLD_DISTRICTS, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
   ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
-  SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
+  RaidPlan, SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
 } from './types';
 
 const HOUR = 3_600_000;
@@ -169,7 +169,7 @@ export function claimRefusal(b: ServerBoard, seat: number, index: number, t: num
   if (bh.role === 'portal' || bh.features.includes('Dungeon')) return 'NeverHeld';
   if (SEAT_INDICES.includes(index) || b.hexes[index] !== undefined) return 'Taken';
   if (!touches(b, seat, index, t)) return 'NotAdjacent';
-  return guarded(b, seat, index) ? 'Guarded' : null;
+  return guarded(b, seat, index, t) ? 'Guarded' : null;
 }
 
 // ------------------------------------------------------------- camps
@@ -177,20 +177,30 @@ export function claimRefusal(b: ServerBoard, seat: number, index: number, t: num
 /** The monster camp on a hex as the board was made (19 §5.4), or null. */
 export const campAt = (b: ServerBoard, index: number) => boardData(b).hexes[index]?.camp ?? null;
 
-/** Has `seat` beaten the camp on `index`? Each player beats a camp for
- *  themselves. */
-export const hasBeaten = (b: ServerBoard, seat: number, index: number): boolean =>
-  b.beaten?.[seat]?.includes(index) ?? false;
+/** Has `seat` beaten the camp on `index`, and has it not stood again yet?
+ *  Each player beats a camp for themselves, and it comes back to them
+ *  `returnHours` later. */
+export const hasBeaten = (b: ServerBoard, seat: number, index: number, t: number): boolean =>
+  (b.beaten?.[seat]?.includes(index) ?? false) && t < (b.campsBack?.[seat]?.[index] ?? Infinity);
 
 /** Does a camp still stand between `seat` and claiming `index`? Once anyone
  *  holds the hex, its camp no longer matters. */
-const guarded = (b: ServerBoard, seat: number, index: number): boolean =>
-  b.hexes[index] === undefined && campAt(b, index) !== null && !hasBeaten(b, seat, index);
+const guarded = (b: ServerBoard, seat: number, index: number, t: number): boolean =>
+  b.hexes[index] === undefined && campAt(b, index) !== null && !hasBeaten(b, seat, index, t);
 
-function beat(b: ServerBoard, seat: number, index: number): void {
+/** `seat` beat or paid off the camp on `index` at `t`: it stands again for
+ *  them later, and a raid it had announced on them is off. */
+function beat(b: ServerBoard, seat: number, index: number, t: number): void {
   const list = ((b.beaten ??= {})[seat] ??= []);
   if (!list.includes(index)) list.push(index);
+  ((b.campsBack ??= {})[seat] ??= {})[index] = t + Math.round(WORLD_CAMPS.returnHours * HOUR);
+  const raid = b.raids?.[seat];
+  if (raid !== undefined && raid.camp === index) restRaid(b, seat, raid, t);
 }
+
+/** The camps `seat` has beaten that have not stood again by `t`. */
+const beatenNow = (b: ServerBoard, seat: number, t: number): number[] =>
+  (b.beaten?.[seat] ?? []).filter((i) => hasBeaten(b, seat, i, t));
 
 /** The camp's army: its creature's lair is its formation's type, as a lair's
  *  garrison is (18 §2), rolled under the hex. */
@@ -210,18 +220,12 @@ export function tribute(b: ServerBoard, seat: number, index: number, t: number):
   resolveTo(b, t);
   if (!isBoardIndex(index)) return { ok: false, why: 'NoSuchHex' };
   if (b.hexes[index] !== undefined) return { ok: false, why: 'Taken' };
-  if (!guarded(b, seat, index)) return { ok: false, why: 'NothingThere' };
-  beat(b, seat, index);
+  if (!guarded(b, seat, index, t)) return { ok: false, why: 'NothingThere' };
+  beat(b, seat, index, t);
   return { ok: true, finishesAt: t, snapshot: snapshotOf(b, seat, t) };
 }
 
 // ------------------------------------------------------------ camp raids
-
-const RAID_MS = (): number => WORLD_CAMPS.raidHours * HOUR;
-
-/** The next raid after `t`: raids land on the same UTC hours on every
- *  board, every `raidHours` (19 §5.5). */
-export const nextRaidAt = (t: number): number => (Math.floor(t / RAID_MS()) + 1) * RAID_MS();
 
 /** Whether `seat` can see the camp on `index` — standing, or lurking and
  *  reported seen by its client. */
@@ -230,10 +234,10 @@ const campSeen = (b: ServerBoard, seat: number, index: number): boolean => {
   return camp !== null && (!camp.lurking || (b.seenCamps?.[seat] ?? []).includes(index));
 };
 
-/** The camps that will raid `seat`'s district on `index`: beside it,
- *  unbeaten by `seat`, on ground nobody holds, and seen. */
-export function raidersOf(b: ServerBoard, seat: number, index: number): number[] {
-  return boardNeighbors(index).filter((c) => guarded(b, seat, c) && campSeen(b, seat, c));
+/** The camps that could raid `seat`'s district on `index`: beside it,
+ *  standing for `seat`, on ground nobody holds, and seen. */
+export function raidersOf(b: ServerBoard, seat: number, index: number, t: number): number[] {
+  return boardNeighbors(index).filter((c) => guarded(b, seat, c, t) && campSeen(b, seat, c));
 }
 
 /** The client says which lurking camps the player has now seen. */
@@ -262,46 +266,119 @@ export function repair(b: ServerBoard, seat: number, index: number, t: number): 
   return { ok: true, finishesAt: h.repairAt, snapshot: snapshotOf(b, seat, t) };
 }
 
-/** Every player's districts beside a camp they have seen are raided at `t`:
- *  a garrisoned Fortress fights the raiders; otherwise, or if it falls, the
- *  district burns and the raiders carry off `raidShare` of its stores. The
- *  stand-in rivals are never raided. */
-function raidAll(b: ServerBoard, t: number): void {
-  const keys = Object.keys(b.hexes).map(Number).sort((x, y) => x - y);
-  for (const index of keys) {
-    const h = b.hexes[index];
-    if (h.owner === null || b.seats[h.owner]?.bot !== false) continue;
-    if (!isHeld(h, t) || h.burnt) continue;
-    const seat = h.owner;
-    for (const c of raidersOf(b, seat, index)) {
-      if (h.burnt) break;
-      const camp = campAt(b, c)!;
-      const who = `the camp of ${CAMP_CREATURE[camp.creature]}`;
-      const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
-      const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
-      if (g !== undefined) {
-        const log = resolveBattle(campBoard(b, c), g.board);
-        const theirs = boardAfter(log, g.board, 'theirs');
-        g.board = theirs.board;
-        addFallen(g.fallen, theirs.fallen);
-        const lost = theirs.fallen.reduce((n, f) => n + f.count, 0);
-        if (log.winner === 'theirs') {
-          report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true);
-          continue;
-        }
-        h.garrison = null;
-        report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false);
-        sendHome(b, g, t);
-      }
-      const keep = 1 - WORLD_CAMPS.raidShare;
-      const taken = Math.floor(h.stored * WORLD_CAMPS.raidShare);
-      h.stored *= keep;
-      if ((h.precious ?? 0) > 0) h.precious = (h.precious ?? 0) * keep;
-      h.burnt = true;
-      const currency = districtRate(boardData(b).hexes[index]).currency;
-      report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false);
-    }
+/** A player's raid plan (19 §5.5). */
+export const raidOf = (b: ServerBoard, seat: number): RaidPlan | null => b.raids?.[seat] ?? null;
+
+/** The wait after raid step `n` before a camp chooses again: between
+ *  `raidGapMinHours` and `raidGapMaxHours`, rolled for that step. */
+const raidGap = (b: ServerBoard, seat: number, n: number): number => {
+  const { raidGapMinHours: lo, raidGapMaxHours: hi } = WORLD_CAMPS;
+  return Math.round((lo + (Math.max(lo, hi) - lo) * rand(b.seed, 'raidGap', seat, n)) * HOUR);
+};
+
+/** Between raids: the next camp chooses a raid-gap after `t`. */
+function restRaid(b: ServerBoard, seat: number, raid: RaidPlan, t: number): void {
+  raid.n += 1;
+  raid.camp = null;
+  raid.target = null;
+  raid.at = t + raidGap(b, seat, raid.n);
+}
+
+/** A camp beaten before camps came back stands again `returnHours` from
+ *  where the board stands. */
+function dateOldBeats(b: ServerBoard): void {
+  for (const [seat, list] of Object.entries(b.beaten ?? {})) {
+    const back = ((b.campsBack ??= {})[Number(seat)] ??= {});
+    for (const i of list) back[i] ??= b.resolvedTo + Math.round(WORLD_CAMPS.returnHours * HOUR);
   }
+}
+
+/** A player just seated rests a raid-gap before the first camp chooses. */
+function startRaids(b: ServerBoard, seat: number, t: number): void {
+  (b.raids ??= {})[seat] = { n: 0, at: t + raidGap(b, seat, 0), camp: null, target: null };
+}
+
+/** Every player's seat has a raid plan; one seated before raids were
+ *  planned starts resting from where the board stands. */
+function planRaids(b: ServerBoard): void {
+  b.seats.forEach((s, seat) => {
+    if (s === null || s.bot || b.raids?.[seat] !== undefined) return;
+    startRaids(b, seat, b.resolvedTo);
+  });
+}
+
+/** `seat`'s districts a camp could raid now, with the camps that could:
+ *  held, standing, unburnt, in board order. */
+function raidChoices(b: ServerBoard, seat: number, t: number): Array<{ camp: number; target: number }> {
+  const out: Array<{ camp: number; target: number }> = [];
+  for (const index of Object.keys(b.hexes).map(Number).sort((x, y) => x - y)) {
+    const h = b.hexes[index];
+    if (h.owner !== seat || !isHeld(h, t) || h.burnt) continue;
+    for (const camp of raidersOf(b, seat, index, t)) out.push({ camp, target: index });
+  }
+  return out;
+}
+
+/** Is the raid announced on `seat` still on — its camp standing and seen,
+ *  its district theirs, held and unburnt? */
+function raidStands(b: ServerBoard, seat: number, raid: RaidPlan, t: number): boolean {
+  if (raid.camp === null || raid.target === null) return false;
+  const h = b.hexes[raid.target];
+  return h !== undefined && h.owner === seat && isHeld(h, t) && !h.burnt
+    && guarded(b, seat, raid.camp, t) && campSeen(b, seat, raid.camp);
+}
+
+/** A raid step due at `t`: a camp chooses one of the player's districts and
+ *  announces its raid — or, with none in reach, waits another gap; or the
+ *  raid announced lands, and the next is a gap away. */
+function stepRaid(b: ServerBoard, seat: number, raid: RaidPlan, t: number): void {
+  if (raid.camp === null) {
+    const choices = raidChoices(b, seat, t);
+    if (choices.length === 0) {
+      restRaid(b, seat, raid, t);
+      return;
+    }
+    const pick = choices[Math.floor(rand(b.seed, 'raid', seat, raid.n) * choices.length)];
+    raid.n += 1;
+    raid.camp = pick.camp;
+    raid.target = pick.target;
+    raid.at = t + Math.round(WORLD_CAMPS.raidWarnHours * HOUR);
+    return;
+  }
+  if (raidStands(b, seat, raid, t)) raidDistrict(b, seat, raid.target!, raid.camp, t);
+  restRaid(b, seat, raid, t);
+}
+
+/** The camp on `c` raids `seat`'s district on `index`: a garrisoned Fortress
+ *  fights the raiders; otherwise, or if it falls, the district burns and
+ *  the raiders carry off `raidShare` of its stores. */
+function raidDistrict(b: ServerBoard, seat: number, index: number, c: number, t: number): void {
+  const h = b.hexes[index];
+  const camp = campAt(b, c)!;
+  const who = `the camp of ${CAMP_CREATURE[camp.creature]}`;
+  const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
+  const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
+  if (g !== undefined) {
+    const log = resolveBattle(campBoard(b, c), g.board);
+    const theirs = boardAfter(log, g.board, 'theirs');
+    g.board = theirs.board;
+    addFallen(g.fallen, theirs.fallen);
+    const lost = theirs.fallen.reduce((n, f) => n + f.count, 0);
+    if (log.winner === 'theirs') {
+      report(b, seat, t, `Your Fortress garrison drove off ${who} at your ${name}${lost > 0 ? ` — ${lost} soldiers lost` : ''}`, true);
+      return;
+    }
+    h.garrison = null;
+    report(b, seat, t, `Your Fortress garrison fell to ${who} at your ${name}`, false);
+    sendHome(b, g, t);
+  }
+  const keep = 1 - WORLD_CAMPS.raidShare;
+  const taken = Math.floor(h.stored * WORLD_CAMPS.raidShare);
+  h.stored *= keep;
+  if ((h.precious ?? 0) > 0) h.precious = (h.precious ?? 0) * keep;
+  h.burnt = true;
+  const currency = districtRate(boardData(b).hexes[index]).currency;
+  report(b, seat, t, `${capitalise(who)} raided your ${name} — it burns${taken > 0 && currency !== null ? `, ${taken} ${currency} taken` : ''}`, false);
 }
 
 const capitalise = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -495,8 +572,8 @@ function nextEvent(b: ServerBoard, after: number): number {
   for (const a of b.armies) consider(a.at);
   for (const d of dungeonsOf(b)) consider(d.returnsAt);
   for (const h of Object.values(b.hexes)) consider(h.repairAt ?? null);
-  // A raid lands only if some player has a district a camp can reach.
-  if (b.seats.some((s) => s?.bot === false)) consider(nextRaidAt(after));
+  // Each player's raid: a camp choosing, or its raid landing (19 §5.5).
+  for (const r of Object.values(b.raids ?? {})) consider(r.at);
   // The Portal's close pays the ranking and sends its divers home.
   const k = portalEvent(after);
   consider(portalClosesAt(k) > after ? portalClosesAt(k) : portalClosesAt(k + 1));
@@ -516,7 +593,7 @@ function applyDue(b: ServerBoard, t: number): void {
   recomputeChains(b, t);
   closePortal(b, t);
   finishRepairs(b, t);
-  if (t % RAID_MS() === 0) raidAll(b, t);
+  for (const [seat, r] of Object.entries(b.raids ?? {})) if (r.at <= t) stepRaid(b, Number(seat), r, t);
   for (const d of dungeonsOf(b)) if (d.returnsAt !== null && d.returnsAt <= t) returnDungeon(b, d, t);
   // Armies reaching where they were going, in the order they get there.
   const due = b.armies.filter((a) => a.at !== null && a.at <= t)
@@ -538,6 +615,8 @@ function applyDue(b: ServerBoard, t: number): void {
 export function resolveTo(b: ServerBoard, t: number): void {
   if (b.offers !== undefined) closeExchange(b, b.resolvedTo);
   if (t <= b.resolvedTo) return;
+  planRaids(b);
+  dateOldBeats(b);
   for (let guard = 0; guard < 10_000; guard++) {
     const next = nextEvent(b, b.resolvedTo);
     if (next > t) break;
@@ -759,7 +838,7 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     // A camp is fought on arrival, as an attack is; won, it is beaten for
     // this seat and pays its loot (19 §5.4).
     const camp = campAt(b, a.target);
-    if (camp !== null && guarded(b, a.owner, a.target)) {
+    if (camp !== null && guarded(b, a.owner, a.target, t)) {
       const fighters = a.board.slots;
       const log = resolveBattle(a.board, campBoard(b, a.target));
       const after = boardAfter(log, a.board, 'ours');
@@ -767,12 +846,13 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
       addFallen(a.fallen, after.fallen);
       const name = CAMP_CREATURE[camp.creature];
       if (log.winner === 'ours') {
-        beat(b, a.owner, a.target);
+        beat(b, a.owner, a.target, t);
         const sp = spoilsOf(fighters);
         owe(b, a.owner, {
           kind: 'loot', at: t, knowledge: 0, stardust: 0,
           gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
           heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
+          hours: (camp.power / 1000) * WORLD_CAMPS.productionHoursPer1000Power,
           precious: {
             id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
             amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
@@ -861,7 +941,7 @@ export function sendRefusal(b: ServerBoard, seat: number, purpose: ArmyPurpose, 
   }
   if (purpose === 'claim') return h !== undefined && h.owner === null ? null : 'NothingThere';
   if (purpose === 'clear') {
-    if (!guarded(b, seat, index)) return 'NothingThere';
+    if (!guarded(b, seat, index, t)) return 'NothingThere';
     return b.armies.some((a) => a.owner === seat && a.target === index && a.purpose === 'clear' && a.phase !== 'home')
       ? 'Busy' : null;
   }
@@ -1305,7 +1385,11 @@ function botMove(b: ServerBoard, seat: number, t: number): void {
     for (const i of frontier) {
       if (claimRefusal(b, seat, i, t) !== 'Guarded') continue;
       pending[i] ??= t + Math.round((campAt(b, i)!.power / 1000) * WORLD_CAMPS.botHoursPer1000Power * HOUR);
-      if (pending[i] <= t) beat(b, seat, i);
+      if (pending[i] <= t) {
+        beat(b, seat, i, t);
+        // Should it stand again before the rival claims, it waits again.
+        delete pending[i];
+      }
     }
     const open = frontier.filter((i) => claimRefusal(b, seat, i, t) === null);
     if (open.length > 0) {
@@ -1356,6 +1440,7 @@ export function join(
     const seat = b.seats.findIndex((s) => s === null);
     if (seat >= 0) {
       b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };
+      startRaids(b, seat, t);
       return { board: b, seat };
     }
   }
@@ -1364,6 +1449,7 @@ export function join(
       const seat = rivalSeatFor(b);
       if (seat >= 0) {
         takeOver(b, seat, player, t);
+        startRaids(b, seat, t);
         return { board: b, seat };
       }
     }
@@ -1389,6 +1475,7 @@ export function join(
     delves: {},
     portal: freshPortal(t),
   };
+  startRaids(b, seat, t);
   w.boards.push(b);
   return { board: b, seat };
 }
@@ -1447,7 +1534,7 @@ function takeOver(b: ServerBoard, seat: number, player: { id: string; name: stri
     h.precious = 0;
     h.work = null;
   }
-  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
+  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.campsBack, b.raids, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
     if (perSeat !== undefined) delete perSeat[seat];
   }
   b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };
@@ -1498,7 +1585,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     hexes,
     armies,
     delves: { ...(b.delves[seat] ?? {}) },
-    beaten: [...(b.beaten?.[seat] ?? [])],
+    beaten: beatenNow(b, seat, t),
     seenCamps: [...(b.seenCamps?.[seat] ?? [])],
     dungeons: standingDungeons(b),
     // Every standing dungeon: its name, and the race — how far each player
@@ -1516,8 +1603,9 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
 }
 
 function threatView(b: ServerBoard, seat: number, index: number, t: number): HexView['threat'] {
-  const camps = raidersOf(b, seat, index);
-  return camps.length === 0 ? null : { camps, nextRaidAt: nextRaidAt(t) };
+  const raid = raidOf(b, seat);
+  return raid !== null && raid.target === index && raidStands(b, seat, raid, t)
+    ? { camps: [raid.camp!], nextRaidAt: raid.at } : null;
 }
 
 function garrisonView(b: ServerBoard, h: ServerHex): HexView['garrison'] {

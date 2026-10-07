@@ -13,7 +13,8 @@
     "explorerGemCostBase": 2500,
     "explorerGemCostGrowth": 2,
     "rivals": ["Lady Maren", "Sir Aldric", "Queen Iselde", "Lord Corvin", "The Thane of Brack"],
-    "armySlots": 1
+    "armySlots": 1,
+    "fightManaHours": 1
   },
   "worldGen": {
     "innerRing": [
@@ -315,7 +316,7 @@
     "portal": 1
   },
   "worldCamps": {
-    "share": 0.34,
+    "share": 0.65,
     "lurkingShare": 0.4,
     "powerByRing": [2400, 1500, 1000, 650, 300, 400],
     "powerJitter": 0.15,
@@ -327,10 +328,14 @@
     },
     "goldPerPower": 1,
     "heroXpPerPower": 0.1,
+    "productionHoursPer1000Power": 1,
     "tributePremium": 1.5,
     "tributeLossShare": 0.35,
     "botHoursPer1000Power": 6,
-    "raidHours": 8,
+    "returnHours": 12,
+    "raidWarnHours": 1,
+    "raidGapMinHours": 1,
+    "raidGapMaxHours": 3,
     "raidShare": 0.4,
     "repairCostShare": 0.1,
     "repairTimeShare": 0.1

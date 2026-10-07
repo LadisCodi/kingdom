@@ -5,6 +5,7 @@
 import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
 import { CAMP_CREATURE } from '../../sim/world/camps';
+import { sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { UnitId } from '../../sim/state';
@@ -45,7 +46,8 @@ export function renderArmySheet(game: Game): HTMLElement {
     },
     attack: preview.attack,
     enough: preview.attack >= preview.power,
-    supplies: {},
+    // A fight is paid in Mana (19 §4).
+    supplies: sendFights(game.armyPurpose) ? { Mana: game.fightMana() } : {},
     fallen: 0,
     actionLabel: VERB[game.armyPurpose],
     onFight: () => void game.doSendArmy(),

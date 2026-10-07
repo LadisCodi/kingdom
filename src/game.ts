@@ -85,8 +85,9 @@ import {
   ascendHero, buySkillRank, pull, pullMany, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, msToNextMana,
+  canPayMana, mana, manaCap, manaNetRegen, manaProduction, msToNextMana, payMana,
 } from './sim/mana';
+import { campPay, fightMana, sendFights } from './sim/world/fights';
 import {
   buyKnowledge, knowledgeCap, knowledgeGemPrice, knowledgeGoldPrice, knowledgeHeld,
   knowledgePerHour, msPerPoint, msToFullKnowledge, msToNextKnowledge, type KnowledgeTill,
@@ -5486,6 +5487,10 @@ export class Game {
         addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
         addHeroXp(this.state, e.heroXp);
         if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
+        // A camp's Wood, Food and Stone, in hours of the city's own
+        // production, priced now (19 §5.4).
+        const made = campPay(this.state, e.hours ?? 0);
+        for (const [c, n] of Object.entries(made) as Array<[CurrencyId, number]>) addToWallet(this.state.city.wallet, c, n);
         // A world relic's door, then its fragments: a boss's one, a Portal
         // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
         const won = e.from ?? (e.pack ? 'portal' : 'room');
@@ -5499,7 +5504,7 @@ export class Game {
           addGood(this.state.city.goods, e.precious.id, e.precious.amount);
           this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
         }
-        this.reward({ Gold: e.gold, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+        this.reward({ Gold: e.gold, ...made, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
       } else if (e.kind === 'goods') {
         // Precious material from the Exchange: an offer taken, or one back.
         addGood(this.state.city.goods, e.lot.id, e.lot.amount);
@@ -5723,7 +5728,19 @@ export class Game {
     if (this.partyHeroes.length === 0) return 'An army needs a hero to lead it';
     if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return 'A hero in it cannot march';
     if (this.armyPurpose !== 'claim' && !this.expeditionParty.some((s) => s.count > 0)) return 'An army needs soldiers';
+    if (sendFights(this.armyPurpose)) return this.fightManaBlock();
     return null;
+  }
+
+  /** What a fight on the board costs in Mana now (08 §1). */
+  fightMana(): number {
+    return fightMana(this.state);
+  }
+
+  /** Why the city cannot pay for a fight on the board, or null. */
+  fightManaBlock(): string | null {
+    const cost = fightMana(this.state);
+    return canPayMana(this.state, cost) ? null : `Not enough Mana — a fight costs ${formatExact(cost)}`;
   }
 
   /** Set the army out. Its troops leave the roster and its heroes are busy
@@ -5735,6 +5752,8 @@ export class Game {
     const heroes = [...this.partyHeroes];
     const board = partyBoard(partyOf(this.state, slots, heroes, this.now()));
     const route = this.armyRoute(target)!;
+    // A fight is paid once the server has said yes (19 §4).
+    const cost = sendFights(this.armyPurpose) ? fightMana(this.state) : 0;
     const r = await this.worldServer.sendArmy({
       purpose: this.armyPurpose, target, heroes, board, path: route.path, speed: armyMarchSpeed(this.state),
     });
@@ -5743,6 +5762,7 @@ export class Game {
       this.notify();
       return;
     }
+    payMana(this.state, cost);
     departArmy(this.state, {
       id: r.army, heroes, troops: slots.map((s) => ({ unitId: s.unitId, count: s.count })),
       target, purpose: this.armyPurpose,
@@ -5756,12 +5776,15 @@ export class Game {
   /** Fight the next room of the dungeon an army camps at, and watch it. */
   async doDelveRoom(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
+    if (this.refuseFight()) return;
+    const cost = fightMana(this.state);
     const r = await this.worldServer.delveRoom(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
       return;
     }
+    payMana(this.state, cost);
     // What the room paid, for the spoils the delve screen shows after the
     // fight (19 §8.2) — the newest loot owed, read before the snapshot's
     // effects are spent.
@@ -5780,15 +5803,27 @@ export class Game {
     this.notify();
   }
 
+  /** Short of the Mana a fight costs: say so, and fight nothing. */
+  private refuseFight(): boolean {
+    const block = this.fightManaBlock();
+    if (block === null) return false;
+    this.toast(block);
+    this.notify();
+    return true;
+  }
+
   /** Go down the Portal's next floor, and watch the fight. */
   async doDescendPortal(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
+    if (this.refuseFight()) return;
+    const cost = fightMana(this.state);
     const r = await this.worldServer.descendPortal(armyId);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();
       return;
     }
+    payMana(this.state, cost);
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [] });
     this.notify();
@@ -5850,7 +5885,7 @@ export class Game {
       this.notify();
       return;
     }
-    const r = await this.worldServer.tribute(index);
+    const r = await this.worldServer.tribute(index, this.actingSeat ?? undefined);
     if (!r.ok) {
       this.toast(this.worldRefusal(r.why));
       this.notify();

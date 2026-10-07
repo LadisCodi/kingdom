@@ -104,6 +104,9 @@ export type WorldEffect = { seq?: number } & (
     from?: 'room' | 'boss' | 'portal';
     /** A camp's lump of precious material (19 §5.4). */
     precious?: { id: PreciousId; amount: number };
+    /** Hours of the city's own Wood, Food and Stone production a camp pays,
+     *  priced by the client when the army is home (19 §5.4). */
+    hours?: number;
   }
 );
 
@@ -179,6 +182,12 @@ export interface ServerBoard {
   /** The monster camps each seat has beaten, by hex index (19 §5.4): a camp
    *  is beaten by each player for themselves. */
   beaten?: Record<number, number[]>;
+  /** When each camp a seat has beaten stands again for it, by hex index
+   *  (19 §5.4). A beaten camp without one was beaten before camps came back. */
+  campsBack?: Record<number, Record<number, number>>;
+  /** The one raid each player faces at a time (19 §5.5). Only a player's
+   *  seat has one; the stand-in rivals are never raided. */
+  raids?: Record<number, RaidPlan>;
   /** When each stand-in rival will have beaten a camp it means to claim. */
   botCamps?: Record<number, Record<number, number>>;
   /** The lurking camps each seat has seen, as its client reported them:
@@ -187,6 +196,16 @@ export interface ServerBoard {
   /** Offers the closed Exchange still holds; handed back to their makers
    *  the next time the board is resolved (core.ts `closeExchange`). */
   offers?: Offer[];
+}
+
+/** A player's raid (19 §5.5). With no camp, `at` is when the next camp
+ *  chooses a district; with one, it is when its raid on `target` lands.
+ *  `n` counts the steps, so each roll is its own event. */
+export interface RaidPlan {
+  n: number;
+  at: number;
+  camp: number | null;
+  target: number | null;
 }
 
 /** An amount of one precious material. */

@@ -216,6 +216,13 @@
   them.
 - A march is a **timer**: an army sent before a twelve-hour absence has
   arrived on return ([`02-map-scopes.md`](02-map-scopes.md) §4).
+- **A fight costs Mana** ([`08-magic.md`](08-magic.md) §1):
+  `fightManaHours` (1) hours of the city's Mana regen, at least 1.
+  - Paid for an army sent to a camp (§5.4) or a rival (§6), for each dungeon
+    room (§8.2) and for each Portal floor (§10.3).
+  - Claiming nobody's ground, garrisoning and the march to a dungeon or the
+    Portal cost none.
+  - Paid when the server accepts the order; a lost fight is not refunded.
 
 ### 4.1 March time
 
@@ -320,14 +327,15 @@ accident.**
   ([`18`](18-garrisons-and-raids.md) §2).
 - **Rolled with the board**, in the wedge (§9): every seat faces the same
   camps at the same distances.
-  - About a third (`share`) of the hexes on rings 2–6, never beside a city,
-    never on a Dungeon, Sanctuary or Landmark.
+  - About two thirds (`share`, 0.65) of the hexes on rings 2–6, never
+    beside a city, never on a Dungeon, Sanctuary or Landmark.
   - **Every inner-ring hex has one**, the strongest: the inner ring's bonus
     is earned.
   - Power by ring (`powerByRing`), ± `powerJitter`; which creatures by role.
 - **Each player beats a camp for themselves.** Beating it opens the hex to
   that player only. Once anyone holds the hex its camp no longer matters.
-  A camp never comes back.
+- **A beaten camp comes back** to the player who beat or paid it
+  `returnHours` (12) later, whole, unless somebody holds its hex by then.
 - **Seen or lurking.** A standing camp shows on a Sensed hex as a silhouette;
   a lurking one (`lurkingShare`) shows only once the hex is Revealed. On
   explored ground a pill over the camp shows its **power** — the units the
@@ -336,9 +344,13 @@ accident.**
   Fair · Hard · Deadly (red). The camp's sheet names the difficulty.
 - **Fighting it**: an army sent to *clear* it — the party screen, march and
   slot of an attack (§4) — fights on arrival.
-  - Won: the camp is beaten for that player, and pays Gold
-    (`goldPerPower`), Hero XP (`heroXpPerPower`) and a lump of precious
-    material (§7.4) by its power when the army is home.
+  - Won: the camp is beaten for that player, and pays when the army is
+    home, by its power:
+    - Gold (`goldPerPower`) and Hero XP (`heroXpPerPower`);
+    - Wood, Food and Stone: `productionHoursPer1000Power` (1) hours of the
+      city's own production per 1,000 power;
+    - a lump of precious material (§7.4).
+  - The camp's sheet shows what it pays before the army is sent.
   - Lost: the army walks home with its survivors; the camp stands, whole.
 - **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
   It is the training cost of the soldiers a winning army would lose
@@ -350,9 +362,17 @@ accident.**
 
 ### 5.5 Camp raids
 
-- **A camp raids the player's districts beside it** every `raidHours` (8),
-  on the same UTC hours on every board — while the player has not beaten it
-  and nobody holds its hex.
+- **One raid at a time per player.** Every camp could raid; only one does.
+  - **A camp chooses**: one of the camps beside one of the player's districts
+    (held, not burnt), standing for that player and seen, rolled per player.
+  - **It announces the raid** `raidWarnHours` (1) before it lands: its arc,
+    its time, the district.
+  - **The raid lands**, unless by then the player has beaten or paid off the
+    camp, or the district is no longer theirs or already burnt.
+  - **The next camp chooses** `raidGapMinHours`–`raidGapMaxHours` (1–3)
+    after the raid lands or is called off. With no camp in reach, it tries
+    again a gap later.
+  - Raids run in real time, online or not.
 - **Only a camp the player has seen raids**: a standing one always; a
   lurking one once the player's client has told the server it was revealed.
 - **A garrisoned Fortress fights the raiders** — the camp's army against the
@@ -372,7 +392,7 @@ accident.**
   arrowhead, its dashes running from the camp to the district; the camp
   carries the time left on a red pill with crossed
   swords. The district's sheet says who raids it and when; the camp's sheet
-  says which districts it raids.
+  says which district it raids and that beating it first calls it off.
 - The stand-in rivals are never raided.
 
 ## 6. Attacking
@@ -625,7 +645,7 @@ A hex holds **none or one**. A feature decides the district built there
     pays.
 - **The army**, docked at the foot: its heroes with their HP, its squads
   with their counts and the soldiers lost so far, its power; **Fight** (the
-  frontier) and **Recall**. On its way: when it arrives, and Recall. None
+  frontier, priced in Mana, §4) and **Recall**. On its way: when it arrives, and Recall. None
   there: **Send**.
 - **After a fight**, once it has played: the spoils over the descent — what
   the room paid and the soldiers it cost — with **Fight next** (or **Fight
@@ -710,6 +730,7 @@ The fixed appointment is worth more than the surprise.
 - Floors are taken **one at a time, no skipping**.
 - **Three attempts a day**, restored at a fixed hour. **An attempt is spent only
   on clearing a floor — failing costs nothing.**
+- **Every floor fought costs Mana** (§4), won or lost.
 - Descending costs casualties, and **an army in the Portal is not on the board**:
   it defends nothing while it is down there.
 - Ranked by **deepest floor reached**, ties broken by **who got there first**.
@@ -763,8 +784,11 @@ The outer scope feeds the inner one.
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
-| **Camp power by ring** and **share** (a third) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
-| **Raid interval and share** (8 h, 40%) | how hard a neighbouring camp presses | border camps are ignored, or the board feels like a chore |
+| **Fight Mana** (1 h of regen) | how many fights a day | the board is fought too much, or not at all |
+| **Camp power by ring** and **share** (0.65) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
+| **Camp return** (12 h) | how much there is to fight once the ground is cleared | the board empties, or a cleared border never rests |
+| **Raid warning, gap and share** (1 h, 1–3 h, 40%) | how hard the camps press | border camps are ignored, or the board feels like a chore |
+| **Camp loot** (Gold and Hero XP per power, 1 h of production per 1,000) | whether a camp is worth a fight | camps are skipped, or farmed |
 | **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
