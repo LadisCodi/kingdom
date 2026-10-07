@@ -7,6 +7,19 @@
 import boatSplashUrl from './sounds/boat_splash.ogg?url';
 import buildPlacedUrl from './sounds/build_placed.mp3?url';
 import chainFinishedUrl from './sounds/chain_finished.wav?url';
+import chestDrawUrl from './sounds/chest_draw.ogg?url';
+import chestFlip1 from './sounds/chest_flip_01.ogg?url';
+import chestFlip2 from './sounds/chest_flip_02.ogg?url';
+import chestHeroUrl from './sounds/chest_hero.ogg?url';
+import chestLandUrl from './sounds/chest_land.ogg?url';
+import chestLegendUrl from './sounds/chest_legend.ogg?url';
+import chestOpenUrl from './sounds/chest_open.ogg?url';
+import chestRiserUrl from './sounds/chest_riser.ogg?url';
+import chestSettleUrl from './sounds/chest_settle.ogg?url';
+import chestSparkleUrl from './sounds/chest_sparkle.ogg?url';
+import chestSummaryUrl from './sounds/chest_summary.ogg?url';
+import chestUnlockUrl from './sounds/chest_unlock.ogg?url';
+import chestWhooshUrl from './sounds/chest_whoosh.ogg?url';
 import clickUrl from './sounds/button_click.mp3?url';
 import coinSaleUrl from './sounds/coin_sale.ogg?url';
 import constructionUrl from './sounds/construction_complete.mp3?url';
@@ -76,7 +89,14 @@ export type SfxName =
   // Subtle, light and dark — a soft knock on the box's wood.
   | 'textTick'
   // A door or a book opening, full-screen (ui/unlockSplash.ts).
-  | 'unlock';
+  | 'unlock'
+  // The chest a random reward is opened from (ui/gachaScreen.ts), in the
+  // order they sound: it lands, the key turns, the lid flies, a card is
+  // drawn, flipped and flown to its place; a new hero's riser, its fanfare
+  // (a Legendary's own), and the summary's chime.
+  | 'chestLand' | 'chestUnlock' | 'chestOpen' | 'cardDraw' | 'cardFlip'
+  | 'cardWhoosh' | 'cardSettle' | 'cardSparkle' | 'heroRiser' | 'heroNew'
+  | 'heroLegend' | 'chestSummary';
 
 interface SoundSpec {
   /** One or more takes — a random one plays each time (organic repeats). */
@@ -141,6 +161,24 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   // The unlock splash: Fairy Magical 05, a five-second stinger. Mastered
   // about 10 dB hotter than `discovery`, so it plays well under it.
   unlock: { urls: one(unlockUrl), volume: 0.3, jitter: 0 },
+  // The chest. Every file is loudness-normalised to -16 LUFS, so these
+  // volumes are the mix: the foley under the stingers, the fanfares on top.
+  // Impact Deep Thud Bounce · Door Lock Turn · Chest Open · Card Draw ·
+  // Card Flip (two takes) · a whoosh cut to 0.7 s · Card Set Down · Collect
+  // Item Sparkle Pop · Epic Risers cut to 2.2 s · Big Item Get 1 and 2 ·
+  // Harpsichord Chime Positive.
+  chestLand: { urls: one(chestLandUrl), volume: 0.55, jitter: 0.03 },
+  chestUnlock: { urls: one(chestUnlockUrl), volume: 0.5, jitter: 0.02 },
+  chestOpen: { urls: one(chestOpenUrl), volume: 0.6, jitter: 0.02 },
+  cardDraw: { urls: one(chestDrawUrl), volume: 0.4, jitter: 0.06 },
+  cardFlip: { urls: [chestFlip1, chestFlip2], volume: 0.55, jitter: 0.05 },
+  cardWhoosh: { urls: one(chestWhooshUrl), volume: 0.22, jitter: 0.08 },
+  cardSettle: { urls: one(chestSettleUrl), volume: 0.45, jitter: 0.06 },
+  cardSparkle: { urls: one(chestSparkleUrl), volume: 0.35, jitter: 0.04 },
+  heroRiser: { urls: one(chestRiserUrl), volume: 0.45, jitter: 0 },
+  heroNew: { urls: one(chestHeroUrl), volume: 0.6, jitter: 0 },
+  heroLegend: { urls: one(chestLegendUrl), volume: 0.65, jitter: 0 },
+  chestSummary: { urls: one(chestSummaryUrl), volume: 0.5, jitter: 0 },
 };
 
 let ctx: AudioContext | null = null;

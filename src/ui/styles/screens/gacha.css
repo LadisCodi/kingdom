@@ -1,303 +1,464 @@
-/* The gacha reveal: a plaque, a grid that deals itself, and the hero
- * interstitial that interrupts it.
+/* THE CHEST REVEAL (ui/gachaScreen.ts, mockups m99a–m99d).
  *
- * The whole surface is dark rather than parchment. Every other screen in the
- * game is a sheet drawn OVER the kingdom, and the kingdom stays readable
- * behind it on purpose; this one is the opposite — for a few seconds nothing
- * else is happening, and the tiles have to be the brightest thing on screen. */
+ * A stage of its own — the treasure hall, torches and a red carpet — rather
+ * than a sheet over the kingdom: for a few seconds nothing else is
+ * happening. The chest stands on the carpet, the card being looked at fills
+ * the middle, and the cards already seen sit in their final places, dimmed,
+ * until the last one lands and they all light up as the summary.
+ *
+ * A card is ONE element in its grid slot from the start; being "in the
+ * middle, big" is a transform the script puts on it, and flying home is
+ * letting the transform go. So the summary never reflows. */
 
 .gr-screen {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background:
+    radial-gradient(120% 70% at 50% 42%, transparent 40%, rgba(12, 6, 2, 0.55) 100%),
+    linear-gradient(rgba(12, 6, 2, 0.35), transparent 40%),
+    url('../../assets/chest/stage.jpg') center bottom / cover no-repeat,
+    #24140b;
+  animation: gr-in 300ms ease-out both;
+}
+@keyframes gr-in { from { opacity: 0; } }
+
+.gr-fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* ---------------------------------------------------------------- the chest */
+
+.gr-chest {
+  --chest-w: calc(var(--px) * 230);
+  position: absolute;
+  z-index: 2;
+  left: calc(50% - var(--chest-w) / 2);
+  bottom: calc(var(--px) * 64 + env(safe-area-inset-bottom, 0px));
+  width: var(--chest-w);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.gr-chest.is-common { --closed: url('../../assets/chest/chest-common-closed.png'); --open: url('../../assets/chest/chest-common-open.png'); --key: url('../../assets/art-key-silver.png'); }
+.gr-chest.is-golden { --closed: url('../../assets/chest/chest-golden-closed.png'); --open: url('../../assets/chest/chest-golden-open.png'); --key: url('../../assets/art-key-gold.png'); }
+.gr-chest.is-relic { --closed: url('../../assets/chest/chest-relic-closed.png'); --open: url('../../assets/chest/chest-relic-open.png'); }
+.gr-chest.is-spoils { --closed: url('../../assets/chest/chest-spoils-closed.png'); --open: url('../../assets/chest/chest-spoils-open.png'); }
+
+.gr-chest-art {
+  position: absolute;
+  inset: 0;
+  background: var(--closed) center / contain no-repeat;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(0 calc(var(--px) * 8) calc(var(--px) * 8) rgba(0, 0, 0, 0.45));
+}
+.gr-chest.is-open .gr-chest-art { background-image: var(--open); }
+/* The light out of an open chest: a bloom behind it, breathing. */
+.gr-chest::before {
+  content: '';
+  position: absolute;
+  inset: -30% -10% 20%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 120, 0.7), rgba(242, 178, 51, 0.2) 55%, transparent);
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+.gr-chest.is-open::before { opacity: 1; animation: gr-breathe 2.4s ease-in-out infinite; }
+
+/* The key turns in the lock of a call's chest; the other two have none. */
+.gr-key {
+  position: absolute;
+  left: 56%;
+  top: 44%;
+  width: 34%;
+  aspect-ratio: 1;
+  background: var(--key) center / contain no-repeat;
+  opacity: 0;
+  transform-origin: 18% 82%;
+}
+.gr-chest.is-relic .gr-key,
+.gr-chest.is-spoils .gr-key,
+.gr-chest.is-open .gr-key { display: none; }
+
+/* What is left inside, on a wooden tag. */
+.gr-left {
+  position: absolute;
+  right: 0;
+  bottom: 8%;
+  min-width: calc(var(--px) * 44);
+  padding: calc(var(--px) * 2) calc(var(--px) * 10);
+  border: calc(var(--px) * 3) solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: url('../../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200), var(--wood);
+  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--wood-light), 0 var(--lip) 0 rgba(0, 0, 0, 0.5);
+  color: var(--ink-inverse);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 2) 0 var(--wood-dark);
+  transition: opacity 300ms;
+}
+.gr-left.is-empty { opacity: 0.45; }
+
+/* ---------------------------------------------------------------- the board */
+
+.gr-board {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cw));
+  justify-content: center;
+  gap: calc(var(--px) * 10);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- a card */
+
+.gr-card {
+  position: relative;
+  z-index: 1;
+  width: var(--cw);
+  aspect-ratio: 2 / 3;
+  perspective: calc(var(--cw) * 6);
+  transform-origin: 50% 50%;
+  transition: filter 300ms ease-out;
+}
+.gr-card.is-hidden { visibility: hidden; }
+.gr-card.is-centre { z-index: 5; }
+/* Home, but not the point any more: the one in the middle is. */
+.gr-card.is-dim { filter: brightness(0.6) saturate(0.85); }
+.gr-card.is-lit { animation: gr-lit 500ms ease-out both; }
+@keyframes gr-lit {
+  40% { transform: scale(1.08); filter: brightness(1.35); }
+}
+
+.gr-card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.gr-card.is-down .gr-card-inner { transform: rotateY(180deg); }
+
+.gr-card-back,
+.gr-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: calc(var(--cw) * 0.07);
+}
+.gr-card-back {
+  transform: rotateY(180deg);
+  background: url('../../assets/chest/card-back.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.5));
+}
+
+/* A NEW hero (or a keystone) is in there: the back glows in its rarity and
+   trembles before the flip. */
+.gr-card.is-charged .gr-card-inner { animation: gr-tremble 900ms ease-in-out infinite; }
+.gr-card.is-charged .gr-card-back {
+  filter: drop-shadow(0 0 calc(var(--cw) * 0.08) var(--glow)) drop-shadow(0 0 calc(var(--cw) * 0.18) var(--glow));
+  animation: gr-charge 900ms ease-in-out infinite;
+}
+.gr-card.glow-common { --glow: #7fc3e6; }
+.gr-card.glow-rare { --glow: #a98be6; }
+.gr-card.glow-legendary { --glow: #f2b233; }
+@keyframes gr-tremble {
+  0%, 100% { transform: rotateY(180deg) rotate(0deg); }
+  20% { transform: rotateY(180deg) rotate(-2.5deg); }
+  40% { transform: rotateY(180deg) rotate(2.5deg); }
+  60% { transform: rotateY(180deg) rotate(-1.5deg); }
+  80% { transform: rotateY(180deg) rotate(1deg); }
+}
+@keyframes gr-charge { 50% { filter: drop-shadow(0 0 calc(var(--cw) * 0.12) var(--glow)) drop-shadow(0 0 calc(var(--cw) * 0.3) var(--glow)); } }
+
+/* The face: parchment in a gilt frame, the art over a wash of its rarity. */
+.gr-card-face {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 14);
-  padding: calc(var(--px) * 24) calc(var(--px) * 16);
+  padding: calc(var(--cw) * 0.06) calc(var(--cw) * 0.05) calc(var(--cw) * 0.05);
+  border: calc(var(--cw) * 0.035) solid var(--gold);
+  box-shadow:
+    inset 0 0 0 calc(var(--cw) * 0.018) var(--gold-dark),
+    0 0 0 calc(var(--cw) * 0.018) #3b1d0c,
+    0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.05) rgba(0, 0, 0, 0.5);
   background:
-    radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
-    rgba(24, 15, 8, 0.93);
-  cursor: pointer;
-  overflow-y: auto;
-}
-
-/* The banner ribbon. Display face at --text-title, which is the only size it
-   is crisp at (tests/fonts.test.ts). */
-.gr-plaque {
-  padding: calc(var(--px) * 8) calc(var(--px) * 32);
-  border-radius: var(--radius);
-  /* A wooden plaque with a gold rim (M15), not a gold bar. */
-  background: var(--wood);
-  border: calc(var(--px) * 3) solid var(--gold);
-  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
-  color: var(--parchment);
-  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
-  font-family: var(--font-display); font-weight: var(--font-display-weight);
-  font-size: var(--text-title);
-  text-align: center;
-}
-
-/* ---------------------------------------------------------------- the grid */
-
-.gr-grid {
-  display: grid;
-  grid-template-columns: repeat(3, calc(var(--px) * 76));
-  gap: calc(var(--px) * 10);
-  justify-content: center;
-}
-/* A ten-call condenses into more tiles than three across can hold without
-   scrolling, so past six it goes four across and smaller. */
-.gr-grid.is-dense { grid-template-columns: repeat(4, calc(var(--px) * 68)); gap: calc(var(--px) * 8); }
-
-.gr-tile {
-  position: relative;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  /* Parchment tiles dealt onto the veil (M15); the rarity is a ring inside
-     the wood, like the roster's. */
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--tile, transparent), 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
-  background: var(--parchment-shade);
+    radial-gradient(90% 55% at 50% 34%, var(--wash, rgba(255, 255, 255, 0.35)), transparent 75%),
+    url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384),
+    var(--parchment);
   overflow: hidden;
 }
-.gr-tile.is-common { --tile: var(--rarity-common); }
-.gr-tile.is-rare { --tile: var(--rarity-rare); }
-.gr-tile.is-legendary { --tile: var(--rarity-legendary); }
-.gr-tile.is-currency { --tile: transparent; }
-.gr-tile.is-common { --tile: transparent; }
-
-/* A hero is not a bigger stack of the tile beside it. The light frame and the
-   glow are the whole difference, and they have to read at a glance. */
-.gr-tile.is-hero {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 14) rgba(242, 178, 51, 0.75);
+.gr-card.is-common { --wash: rgba(95, 143, 168, 0.55); }
+.gr-card.is-rare { --wash: rgba(138, 107, 196, 0.55); }
+.gr-card.is-legendary { --wash: rgba(242, 178, 51, 0.7); }
+.gr-card.is-keystone .gr-card-face { border-color: #ffd36b; box-shadow: inset 0 0 0 calc(var(--cw) * 0.018) var(--gold-dark), 0 0 0 calc(var(--cw) * 0.018) #3b1d0c, 0 0 calc(var(--cw) * 0.14) rgba(242, 178, 51, 0.8); }
+/* A new hero's whole face is its rarity, the way the roster colours a card. */
+.gr-card.is-hero .gr-card-face {
+  background:
+    repeating-conic-gradient(from 0deg at 50% 40%, rgba(255, 255, 255, 0.14) 0 8deg, transparent 8deg 20deg),
+    radial-gradient(80% 60% at 50% 40%, rgba(255, 255, 255, 0.35), transparent 75%),
+    var(--rarity, var(--rarity-common));
 }
+.gr-card.is-hero.is-rare { --rarity: var(--rarity-rare); }
+.gr-card.is-hero.is-legendary { --rarity: var(--rarity-legendary); }
 
-.gr-art {
+.gr-card-art {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+.gr-card-art > .icon { --icon-size: calc(var(--cw) * 0.66); }
+.gr-card-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: center bottom;
-  image-rendering: pixelated;
+  filter: drop-shadow(0 calc(var(--cw) * 0.02) 0 rgba(59, 29, 12, 0.35));
 }
-.gr-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 32); }
+.gr-card.is-relic .gr-card-img { inset: 0 9%; width: 82%; object-position: center; }
+.gr-card-img.is-glyph { display: grid; place-items: center; font-size: calc(var(--cw) * 0.4); }
 
-/* Bottom-right, the way every collection game counts a stack. */
-.gr-count {
-  position: absolute;
-  right: calc(var(--px) * 3);
-  bottom: calc(var(--px) * 2);
-  padding: 0 calc(var(--px) * 4);
-  border-radius: calc(var(--px) * 5);
-  background: rgba(24, 15, 8, 0.78);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
-  line-height: 1.5;
-}
-/* The mark that says FRAGMENTS rather than the hero — without it a stack of
-   four and a hero read as the same prize with a different number on it. */
-.gr-mark {
-  position: absolute;
-  left: calc(var(--px) * 3);
-  top: calc(var(--px) * 3);
-  display: grid;
-  place-items: center;
-  padding: 1px;
-  border-radius: calc(var(--px) * 4);
-  background: rgba(24, 15, 8, 0.7);
-}
-/* A RELIC FRAGMENT: its own piece of the relic, smooth art, the relic's name
-   under it; the keystone in the hero's gold frame — what the pack is for. */
-.gr-tile.is-relic {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: calc(var(--px) * 6) calc(var(--px) * 3) calc(var(--px) * 3);
-}
-.gr-tile.is-relic .gr-art { flex: 1; min-height: 0; width: 80%; image-rendering: auto; object-position: center; }
-.gr-tile.is-relic .gr-tag { position: static; align-self: stretch; font-size: calc(var(--px) * 11); text-align: center; line-height: 1.15; white-space: normal; overflow: visible; text-overflow: clip; }
-.gr-tile.is-relic .gr-count { top: calc(var(--px) * 3); bottom: auto; }
-.gr-tile.is-relic.is-keystone {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 14) rgba(242, 178, 51, 0.75);
-}
-/* ---- a card and a pack (Docs/features/09-relics.md §11.5) --------------
- * The reveal deals cards now as well as calls. A card carries three things a
- * hero tile never did — its rarity ABOVE it, its name on a ribbon, and
- * whether it is new — so it is a column rather than a centred picture. */
-.gr-tile.is-card,
-.gr-tile.is-pack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1px;
-  padding-top: calc(var(--px) * 11);
-}
-.gr-tile.is-card .gr-art,
-.gr-tile.is-pack .gr-art {
-  flex: 1;
-  min-height: 0;
-  width: 86%;
-  image-rendering: auto;
-  object-position: center;
-}
-/* Rarity is the card's ground, as it is on the album page. */
-.gr-tile.is-card.r1 { --wash: rgba(79, 163, 199, 0.22); }
-.gr-tile.is-card.r2 { --wash: rgba(111, 191, 74, 0.22); }
-.gr-tile.is-card.r3 { --wash: rgba(95, 143, 168, 0.3); }
-.gr-tile.is-card.r4 { --wash: rgba(138, 107, 196, 0.28); }
-.gr-tile.is-card.r5 { --wash: rgba(217, 154, 43, 0.34); }
-.gr-tile.is-card {
-  background: linear-gradient(var(--wash, transparent), var(--wash, transparent)), var(--parchment-shade);
-}
-.gr-tile.is-card.is-gold {
-  border-color: var(--gold-dark);
-  box-shadow: inset 0 0 0 calc(var(--px) * 2) var(--gold), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 calc(var(--px) * 12) rgba(242, 178, 51, 0.7);
-}
-.gr-stars {
-  position: absolute;
-  top: 1px;
-  display: flex;
-  gap: 1px;
-}
-/* The name on a ribbon along the bottom, the album page's idiom. */
-.gr-name {
-  width: 100%;
-  padding: 1px calc(var(--px) * 2);
-  background: var(--leaf-dark);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 11);
+.gr-card-name {
+  max-width: 100%;
+  color: var(--ink);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.12));
   font-weight: var(--weight-strong);
+  line-height: 1.1;
+  text-align: center;
+  /* Two lines before an ellipsis: "Staff of Renewal" is a name, not a
+     prefix. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.gr-card-count {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--cw) * 0.03);
+  color: var(--ink);
+  font-size: max(calc(var(--px) * 13), calc(var(--cw) * 0.2));
+  font-weight: var(--weight-title);
+  line-height: 1.05;
+}
+.gr-card-count > .icon { --icon-size: calc(var(--cw) * 0.2); }
+/* A hero's name sits on a ribbon across the foot of its card. */
+.gr-card.is-hero .gr-card-name {
+  align-self: stretch;
+  margin: 0 calc(var(--cw) * -0.05) calc(var(--cw) * -0.05);
+  padding: calc(var(--cw) * 0.03) calc(var(--cw) * 0.04);
+  background: #b8322a;
+  border-top: calc(var(--cw) * 0.018) solid #3b1d0c;
+  color: var(--ink-inverse);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.105));
+  text-shadow: 0 calc(var(--cw) * 0.012) 0 #3b1d0c;
+}
+.gr-card-new {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--cw) * 0.1);
+  left: calc(var(--cw) * -0.14);
+  padding: calc(var(--cw) * 0.012) calc(var(--cw) * 0.18);
+  transform: rotate(-35deg);
+  background: #d4553e;
+  border-block: calc(var(--cw) * 0.015) solid #3b1d0c;
+  color: var(--ink-inverse);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.11));
+  font-weight: var(--weight-title);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------- a new hero's moment */
+
+.gr-rays {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 40%;
+  width: 190%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, var(--ray) 0deg 9deg, transparent 10.5deg 20deg);
+  -webkit-mask: radial-gradient(closest-side, #000 12%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 12%, transparent 100%);
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+  animation: gr-spin 40s linear infinite;
+  --ray: rgba(191, 227, 245, 0.45);
+}
+.gr-rays.is-rare { --ray: rgba(217, 196, 255, 0.5); }
+.gr-rays.is-legendary { --ray: rgba(255, 214, 120, 0.6); }
+.gr-rays.is-on { opacity: 1; }
+@keyframes gr-spin { to { rotate: 360deg; } }
+
+/* The kicker: a carved plaque over the card. */
+.gr-kicker,
+.gr-plaque {
+  padding: calc(var(--px) * 6) calc(var(--px) * 26);
+  border: calc(var(--px) * 3) solid var(--gold);
+  border-radius: var(--radius);
+  background: url('../../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200), var(--wood);
+  box-shadow: 0 0 0 calc(var(--px) * 2) var(--wood-dark), 0 var(--lip) 0 var(--wood-dark), 0 calc(var(--px) * 6) calc(var(--px) * 14) rgba(0, 0, 0, 0.5);
+  color: var(--ink-inverse);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
+  font-size: var(--text-title);
   line-height: 1.15;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 2) 0 var(--wood-dark);
 }
-/* NEW is the thing the player is looking for as the pack deals, so it gets the
-   loud corner. IT SITS OPPOSITE THE COUNT, not on top of it: the two say
-   different things — *you had none of these* and *the pack gave you two* — and
-   a pack can hand over both at once. They shared a corner while the tile could
-   only ever draw one of them. */
-.gr-new {
+.gr-kicker {
   position: absolute;
-  left: calc(var(--px) * 2);
-  bottom: calc(var(--px) * 18);
-  padding: 0 calc(var(--px) * 4);
-  border-radius: calc(var(--px) * 5);
-  border: calc(var(--px) * 2) solid var(--gold-dark);
-  background: var(--gold);
-  color: var(--ink);
-  font-size: calc(var(--px) * 11);
-  font-weight: var(--weight-strong);
+  z-index: 7;
+  left: 50%;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 40);
+  translate: -50% 0;
+  opacity: 0;
+  transform: translateY(calc(var(--px) * -16)) scale(0.9);
+  transition: opacity 250ms ease-out, transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
 }
-.gr-tile.is-card .gr-count { bottom: calc(var(--px) * 18); }
+.gr-kicker.is-on { opacity: 1; transform: none; }
 
-.gr-tag {
+.gr-heroline {
   position: absolute;
+  z-index: 7;
   left: 0;
   right: 0;
-  bottom: 0;
-  padding: 1px calc(var(--px) * 3);
-  background: rgba(24, 15, 8, 0.75);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 12);
-  font-weight: var(--weight-small);
-  line-height: 1.4;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* --------------------------------------------------------- the deal itself */
-
-/* Hidden means NOT LAID OUT DIFFERENTLY: the grid is its final size from the
-   first frame, so tiles land in place instead of the whole block reflowing
-   under the player's eye with every reveal. */
-.gr-tile.is-hidden { visibility: hidden; }
-.gr-tile { animation: gr-pop var(--motion-snap) steps(2); }
-@keyframes gr-pop {
-  from { transform: scale(0.6); }
-  to { transform: scale(1); }
-}
-/* A hidden tile must not burn its animation before it is shown. */
-.gr-tile.is-hidden { animation: none; }
-
-/* The caption is a parchment slab under the grid (M15). */
-.gr-calls {
-  padding: calc(var(--px) * 6) calc(var(--px) * 28);
-  border-radius: var(--radius-sm);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  background: var(--parchment);
-  color: var(--ink);
-  font-size: var(--text-body);
-  font-weight: var(--weight-strong);
-}
-
-/* The way out, and it appears only when there is nothing left to deal. */
-.gr-prompt {
-  color: var(--ink-inverse);
-  font-size: var(--text-helper);
-  font-weight: var(--weight-small);
-  text-align: center;
-  animation: gr-breathe 1.8s ease-in-out infinite;
-}
-.gr-prompt.is-hidden { visibility: hidden; animation: none; }
-@keyframes gr-breathe { 50% { opacity: 0.45; } }
-
-/* --------------------------------------------------------- the interstitial */
-
-.gr-curtain-slot:empty { display: none; }
-.gr-curtain-slot { position: absolute; inset: 0; }
-
-.gr-curtain {
-  position: absolute;
-  inset: 0;
+  top: 61%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 8);
-  padding: calc(var(--px) * 24) calc(var(--px) * 16);
-  text-align: center;
-  color: var(--ink-inverse);
-  background:
-    radial-gradient(70% 45% at 50% 42%, var(--tile, var(--rarity-common)), transparent 72%),
-    rgba(18, 11, 6, 0.97);
-  animation: gr-curtain-in var(--motion-sheet) ease-out;
+  gap: calc(var(--px) * 6);
+  opacity: 0;
+  transition: opacity 300ms ease-out 150ms;
+  pointer-events: none;
 }
-.gr-curtain.is-common { --tile: var(--rarity-common); }
-.gr-curtain.is-rare { --tile: var(--rarity-rare); }
-.gr-curtain.is-legendary { --tile: var(--rarity-legendary); }
-@keyframes gr-curtain-in { from { opacity: 0; } to { opacity: 1; } }
-
-.gr-curtain-kicker { color: var(--gold); font-size: var(--text-helper); font-weight: var(--weight-small); letter-spacing: 0.08em; }
-.gr-curtain-art {
-  width: 60%;
-  max-width: calc(var(--px) * 260);
-  height: calc(var(--px) * 260);
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 calc(var(--px) * 18) rgba(255, 240, 200, 0.45));
+.gr-heroline.is-on { opacity: 1; }
+.gr-heroline-title {
+  color: var(--parchment);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  text-shadow: 0 1px calc(var(--px) * 3) rgba(0, 0, 0, 0.8);
 }
-.gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: calc(var(--px) * 96); }
-.gr-curtain-name { font-family: var(--font-body); font-weight: var(--weight-strong); font-size: calc(var(--px) * 28); line-height: 1.1; }
-.gr-curtain-title { color: var(--parchment-shade); font-size: var(--text-body); }
-.gr-curtain-kicker { font-weight: var(--weight-strong); }
-.gr-curtain-rarity {
+.gr-heroline-rarity {
   padding: calc(var(--px) * 2) calc(var(--px) * 14);
-  border-radius: var(--radius-sm);
   border: calc(var(--px) * 2) solid var(--wood-dark);
-  background: var(--parchment);
+  border-radius: var(--radius-sm);
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384), var(--parchment);
   color: var(--ink);
-  font-weight: var(--weight-strong);
   font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
   letter-spacing: 0.06em;
 }
-.gr-curtain .gr-prompt { margin-top: calc(var(--px) * 8); }
+.gr-heroline-rarity.is-rare { box-shadow: 0 0 0 calc(var(--px) * 2) var(--rarity-rare); }
+.gr-heroline-rarity.is-legendary { box-shadow: 0 0 0 calc(var(--px) * 2) var(--rarity-legendary); }
+
+/* ------------------------------------------------------------ words, way out */
+
+.gr-prompt {
+  position: absolute;
+  z-index: 7;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--px) * 26 + env(safe-area-inset-bottom, 0px));
+  color: var(--ink-inverse);
+  font-size: var(--text-body);
+  font-weight: var(--weight-strong);
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  pointer-events: none;
+}
+.gr-prompt.is-on { animation: gr-breathe 1.8s ease-in-out 300ms infinite both; }
+@keyframes gr-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* The plaque and the button exist from the start (the script measures them
+   to centre the summary) but are only seen at the end. */
+.gr-title {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 44);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  visibility: hidden;
+  pointer-events: none;
+}
+.gr-calls {
+  padding: calc(var(--px) * 3) calc(var(--px) * 18);
+  border-radius: var(--radius-sm);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384), var(--parchment);
+  color: var(--ink);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+}
+.gr-foot {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--px) * 56 + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  visibility: hidden;
+}
+.gr-foot .k-btn { min-width: calc(var(--px) * 220); }
+.gr-screen.is-done .gr-title,
+.gr-screen.is-done .gr-foot { visibility: visible; animation: gr-drop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.gr-screen.is-done .gr-foot { animation-delay: 250ms; }
+@keyframes gr-drop { from { opacity: 0; transform: translateY(calc(var(--px) * -18)); } }
+
+/* Skip: everything that is not a new hero, at once. */
+.gr-skip {
+  position: absolute;
+  z-index: 8;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 10);
+  right: calc(var(--px) * 12);
+  min-height: 44px;
+  padding: 0 calc(var(--px) * 14);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: 999px;
+  background: rgba(46, 26, 14, 0.75);
+  color: var(--parchment);
+  font: inherit;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 250ms;
+}
+.gr-skip.is-on { opacity: 1; visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-screen, .gr-rays, .gr-chest.is-open::before, .gr-card.is-lit,
+  .gr-card.is-charged .gr-card-inner, .gr-card.is-charged .gr-card-back,
+  .gr-prompt.is-on, .gr-screen.is-done .gr-title, .gr-screen.is-done .gr-foot { animation: none; }
+  .gr-prompt.is-on { opacity: 1; }
+}

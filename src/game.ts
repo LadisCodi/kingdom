@@ -436,8 +436,14 @@ export type GachaPrize =
  * §2.5). Hence the optional half — a banner and a call count are what a PULL
  * has to say about itself, and a fight says something else.
  */
+/** What a reveal is opened FROM (ui/gachaScreen.ts): the silver-bound chest
+ *  of the common call, the gold one of the golden call, the relic chest of a
+ *  fragment pack, the war chest of a fight's spoils. */
+export type RevealChest = 'common' | 'golden' | 'relic' | 'spoils';
+
 export interface GachaReveal {
   banner?: BannerId;
+  chest: RevealChest;
   /** How many calls this was — the screen says "×10" rather than counting
    *  prizes, which condense and would undercount. */
   calls?: number;
@@ -1912,7 +1918,7 @@ export class Game {
       }
       // The keystones last, as heroes come last on a call: what the pack is for.
       prizes.sort((a, b) => Number(a.kind === 'relicFragment' && a.slot === 5) - Number(b.kind === 'relicFragment' && b.slot === 5));
-      this.gachaReveal = { prizes, caption: 'Relic fragments' };
+      this.gachaReveal = { prizes, caption: 'Relic fragments', chest: 'relic' };
     } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
@@ -3336,7 +3342,7 @@ export class Game {
   private openReveal(banner: BannerId, pulls: readonly PullResult[]): void {
     const prizes = gachaPrizes(pulls);
     if (prizes.length === 0) return;
-    this.gachaReveal = { banner, calls: pulls.length, prizes };
+    this.gachaReveal = { banner, calls: pulls.length, prizes, chest: banner === 'advanced' ? 'golden' : 'common' };
   }
 
   /**
@@ -4572,7 +4578,7 @@ export class Game {
         // place in the game that already knows how to hand things over one
         // at a time.
         b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
-        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils', chest: 'spoils' };
         moved = true;
         continue;
       }
