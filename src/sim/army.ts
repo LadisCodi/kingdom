@@ -485,8 +485,12 @@ export function trainingProgress(state: GameState, buildingId: string, now: numb
  * `advanceQueue` uses, and what makes a long absence resolve a whole line in
  * one call in true chronological order.
  */
-export function advanceTraining(state: GameState, toTime: number): TrainableId[] {
-  const delivered: TrainableId[] = [];
+/** One finished trainee, where it came from and when. A heal hands out its
+ *  whole batch as that many of these. */
+export interface Delivered { trainee: TrainableId; buildingId: string; at: number }
+
+export function advanceTraining(state: GameState, toTime: number): Delivered[] {
+  const delivered: Delivered[] = [];
   for (;;) {
     // Stamp the head of every line that has not started. Every BUILT building
     // that trains anything runs a line, which is what put the Townhall's
@@ -508,7 +512,9 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     state.city.trainingQueue.splice(state.city.trainingQueue.indexOf(earliest), 1);
 
     deliver(state, earliest.trainee, at, itemCount(earliest));
-    for (let i = 0; i < itemCount(earliest); i++) delivered.push(earliest.trainee);
+    for (let i = 0; i < itemCount(earliest); i++) {
+      delivered.push({ trainee: earliest.trainee, buildingId: earliest.buildingId, at });
+    }
     // The next in THAT line starts when the slot freed, not at `toTime`.
     const next = lineFor(state, earliest.buildingId)[0];
     if (next && next.startedAt === null) startTrainee(state, next, at);

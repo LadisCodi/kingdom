@@ -11,7 +11,7 @@ import {
   placementBlock, requiredPopulation, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
-import { advanceTraining, nextTrainingCompletion } from './army';
+import { advanceTraining, lineFor, nextTrainingCompletion, type Delivered } from './army';
 import { dropFragments } from './relics';
 import { lairHolding } from './lairZone';
 import { closeRelicWindows, nextRelicWindowEnd } from './hosts';
@@ -658,6 +658,10 @@ export interface AdvanceResult {
   knowledgeEarned: number;
   /** Units that finished training in this window. */
   trainedUnits: UnitId[];
+  /** Military buildings whose training line ran dry in this window: the
+   *  last soldier out, and when. What the 'trained' news is about — a hall
+   *  standing idle, not every soldier it hands over. */
+  linesDone: LineDone[];
   /** Goods a workshop crew finished in this window. */
   goodsMade: GoodMade[];
   /** Windows that opened or closed — including ones that did BOTH while the
@@ -671,10 +675,13 @@ export interface AdvanceResult {
   worldBuildsDone: WorldBuild[];
 }
 
+/** A military building's training line that ran dry (`AdvanceResult.linesDone`). */
+export interface LineDone { buildingId: string; unit: UnitId; at: number }
+
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], relicsAsleep: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
+  trainedUnits: [], linesDone: [], scheduleEvents: [], goodsMade: [], raids: [],
   explorersHome: [],
   worldBuildsDone: [],
 });
@@ -702,9 +709,21 @@ function applyDueAt(
     out.relicsAsleep.push(...closeRelicWindows(state, t));
     // One line, two kinds of trainee: villagers land on the population, units
     // in the army, and the caller is told about each separately.
-    for (const trainee of advanceTraining(state, t)) {
-      if (trainee === 'Villager') out.trainedPopulation += 1;
-      else out.trainedUnits.push(trainee);
+    const last = new Map<string, Delivered>();
+    for (const d of advanceTraining(state, t)) {
+      if (d.trainee === 'Villager') out.trainedPopulation += 1;
+      else {
+        out.trainedUnits.push(d.trainee);
+        last.set(d.buildingId, d);
+      }
+    }
+    // A line that delivered and has nothing left has gone idle — at the
+    // moment its last soldier came out, which a one-call replay and a
+    // stepped one agree on.
+    for (const [buildingId, d] of last) {
+      if (lineFor(state, buildingId).length === 0) {
+        out.linesDone.push({ buildingId, unit: d.trainee as UnitId, at: d.at });
+      }
     }
     // NOTHING FOR THE LAIRS. A room resolves the instant the player enters
     // it (Docs/features/11-expeditions.md §5), so no party is ever in flight

@@ -31,7 +31,7 @@
 | Group | Made when | Picture | Go | Second button |
 |---|---|---|---|---|
 | Built | a construction or an upgrade completes | the building at its level | the building, card open | — |
-| Trained | a training queue hands out units | the unit | the building that trained them | — |
+| Trained | a military building's training queue **runs dry** — its last soldier is out and it stands idle; one news per hall, never one per soldier | the building at its level | that building | — |
 | Goods | a workshop finishes goods | the good, with how many | the workshop | — |
 | Raided | a lair raids the city: what it took | the creature | the lair | — |
 | Sighted | a landmark, lair or abandoned building is sighted, unless a scene introduces it | the site | the site | — |
