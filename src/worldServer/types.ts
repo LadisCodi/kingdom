@@ -122,8 +122,6 @@ export interface PortalState {
   event: number;
   /** How deep each seat has gone this opening, and when it got there. */
   floors: Record<number, { floor: number; at: number }>;
-  /** Floors each seat cleared on a UTC day — only a clear spends one. */
-  attempts: Record<number, { day: number; used: number }>;
   /** Who reached each milestone floor first this opening. */
   milestones: Record<number, number>;
   /** The last opening whose close has been paid out. */
@@ -322,9 +320,8 @@ export interface PortalView {
   /** When it next opens, or when it closes if it is open. */
   opensAt: number;
   closesAt: number;
-  /** The player's deepest floor this opening, and clears left today. */
+  /** The player's deepest floor this opening. */
   floor: number;
-  attemptsLeft: number;
   /** Every seat that has gone down, deepest first, earliest first. */
   ranking: Array<{ seat: number; floor: number }>;
 }
@@ -370,7 +367,7 @@ export interface DungeonView {
 export type Refusal =
   | 'NoSuchHex' | 'NotAdjacent' | 'Taken' | 'NeverHeld' | 'NotYours' | 'NotStanding'
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
-  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoAttempts' | 'NoRoute'
+  | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
 
   /** A world relic's host (relic-restoration.md §5.2). */

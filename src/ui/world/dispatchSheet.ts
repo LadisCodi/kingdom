@@ -128,8 +128,8 @@ function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   return lines;
 }
 
-/** The Portal: shut with its countdown, or open with the player's floor,
- *  the clears left today and the ranking. */
+/** The Portal: shut with its countdown, or open with the player's floor
+ *  and the ranking. */
 function portalLines(game: Game, bh: BoardHex): HTMLElement[] {
   if (bh.role !== 'portal') return [];
   const p = game.worldSource().portal();
@@ -138,7 +138,7 @@ function portalLines(game: Game, bh: BoardHex): HTMLElement[] {
   if (!p.open) return [el('p', { class: 'wd-line' }, `Shut · opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)];
   const lines = [
     el('p', { class: 'wd-line' }, `Open · closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`),
-    el('p', { class: 'wd-line' }, `Your floor ${formatCount(p.floor)} of ${formatCount(WORLD_PORTAL.floors)} · ${formatCount(p.attemptsLeft)} ${p.attemptsLeft === 1 ? 'clear' : 'clears'} left today`),
+    el('p', { class: 'wd-line' }, `Your floor ${formatCount(p.floor)} of ${formatCount(WORLD_PORTAL.floors)}`),
   ];
   p.ranking.slice(0, 6).forEach((r, i) => {
     lines.push(el('p', { class: 'wd-where' }, `${formatCount(i + 1)}. ${seatName(game, r.seat).replace(/'s$/, '')} — floor ${formatCount(r.floor)}`));
@@ -217,7 +217,7 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
           info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power${
             floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''}`,
           disabledReason: p === null || !p.open ? 'The Portal is shut'
-            : p.attemptsLeft === 0 ? 'No clears left today' : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+            : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
           onClick: () => void game.doDescendPortal(a.army),
         });
       }

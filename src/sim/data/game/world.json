@@ -339,7 +339,6 @@
     "openWeekday": 5,
     "openDays": 3,
     "floors": 40,
-    "attemptsPerDay": 3,
     "powerStart": 400,
     "powerGrowth": 1.1,
     "rewardBase": 1.5,

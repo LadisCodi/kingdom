@@ -697,20 +697,3 @@
   margin-bottom: calc(var(--px) * -6);
   background: url('../../assets/rank-gold.png') center / contain no-repeat;
 }
-/* Clears today, as wax pips down the right edge. */
-.pt-pips {
-  flex: none;
-  align-self: flex-start;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 4);
-  padding: calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 8);
-  background: var(--parchment-shade);
-  color: var(--ink);
-}
-.pt-pips-label { font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; width: calc(var(--px) * 40); line-height: 1.1; }
-.pt-pips-row { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
-.pt-pip { width: calc(var(--px) * 22); height: calc(var(--px) * 22); background: url('../../assets/seal-plain.png') center / contain no-repeat; filter: grayscale(0.6) brightness(0.85); }
-.pt-pip.is-lit { background-image: url('../../assets/seal-available.png'); filter: none; }

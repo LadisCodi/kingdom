@@ -123,7 +123,7 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 
 - Vignette: the Portal's art; a countdown ribbon (*Opens in 1d 16h* /
   *Closes in 5h*).
-- Tiles: *Your floor 4/30*, *Clears today* as three pips, *Next floor
+- Tiles: *Your floor 4/30*, *Your place*, *Next floor
   power 1,240*.
 - **Ranking**: the friends list's rows — rank ribbon (gold, silver, bronze,
   wood), shield, name, floor; the player's own row lit.
@@ -173,12 +173,12 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   - a ribbon: when it closes;
   - the ranking as the race rope: each kingdom's shield at its deepest
     floor, a crown over the leader;
-  - Clears today as pips on the right edge;
   - the floors going down: cleared, the frontier with its power and pay,
     the floors ahead that carry a pack or a milestone, the rest in mist;
   - the same army dock, with **Descend** (Mana) and **Recall**.
-- Everything it shows exists today (floors, attempts, packs, milestones,
-  the ranking): it is a screen, not a new rule.
+- Everything it shows exists today (floors, packs, milestones,
+  the ranking): it is a screen, not a new rule. There is no daily cap:
+  each floor is paid in Mana.
 - The Portal card's one button, **Descend**, opens it; the descent has
   **Send** (no army down), **Withdraw** and **Descend** (Mana on its plate).
 

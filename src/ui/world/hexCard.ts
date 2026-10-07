@@ -280,10 +280,9 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
 // ------------------------------------------------------------ the Portal
 
 /**
- * THE DARK PORTAL (m88): when it shuts or opens, the player's floor, the
- * clears left today and the next floor's power, the ranking as the friends
- * list's rows, and Descend — sending an army, or, with one camped there, the
- * next floor for its Mana.
+ * THE DARK PORTAL (m88): when it shuts or opens, the player's floor, their
+ * place and the next floor's power, the ranking as the friends list's rows,
+ * and Descend, which opens the descent (portalScreen.ts).
  */
 export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
   const index = bh.index;
@@ -302,9 +301,11 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
       el('div', { class: 'dc-what' }, 'Nobody holds it, and nobody ever will.')));
   const floor = p?.floor ?? 0;
   const next = Math.min(WORLD_PORTAL.floors, floor + 1);
+  // Where the player stands in the world's ranking: 0 before a first floor.
+  const place = (p?.ranking ?? []).findIndex((r) => r.seat === game.worldSeat()) + 1;
   const stats = tiles([
     { icon: 'dungeon', label: 'Your floor', value: `${formatExact(floor)}/${formatExact(WORLD_PORTAL.floors)}` },
-    { icon: 'tick', label: 'Clears today', value: `${formatExact(p?.attemptsLeft ?? 0)}/${formatExact(WORLD_PORTAL.attemptsPerDay)}` },
+    { icon: 'star', label: 'Your place', value: place === 0 ? '—' : `#${formatExact(place)}` },
     { icon: 'power', label: 'Next floor', value: formatShort(floorPower(next)) },
   ]);
   // The ranking: the friends list's rows, the player's own lit.

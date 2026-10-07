@@ -1221,7 +1221,7 @@ export const portalClosesAt = (k: number): number => portalOpensAt(k) + WORLD_PO
 export const portalOpen = (t: number): boolean => t >= portalOpensAt(portalEvent(t)) && t < portalClosesAt(portalEvent(t));
 
 export const freshPortal = (t: number): ServerBoard['portal'] => ({
-  event: portalEvent(t), floors: {}, attempts: {}, milestones: {}, closed: portalEvent(t) - 1,
+  event: portalEvent(t), floors: {}, milestones: {}, closed: portalEvent(t) - 1,
 });
 
 /** The Portal's state for the opening `t` is in; a stale one is wiped. */
@@ -1276,9 +1276,6 @@ export function floorReward(
   };
 }
 
-const attemptsUsed = (p: ServerBoard['portal'], seat: number, t: number): number =>
-  p.attempts[seat]?.day === dayOf(t) ? p.attempts[seat].used : 0;
-
 /** Go down the next floor with the army in the Portal. Floors are taken one
  *  at a time; a clear spends an attempt, a failure spends nothing. */
 export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: number): DelveResult {
@@ -1287,7 +1284,6 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
   if (a === undefined || a.owner !== seat || a.phase !== 'camp' || a.purpose !== 'portal') return { ok: false, why: 'NoArmy' };
   if (!portalOpen(t)) return { ok: false, why: 'Shut' };
   const p = portalOf(b, t);
-  if (attemptsUsed(p, seat, t) >= WORLD_PORTAL.attemptsPerDay) return { ok: false, why: 'NoAttempts' };
   const floor = (p.floors[seat]?.floor ?? 0) + 1;
   if (floor > WORLD_PORTAL.floors) return { ok: false, why: 'NothingThere' };
   const plan = generateEnemy({ seed: b.seed, parts: ['portal', p.event, floor], budget: floorPower(floor), affinity: 'Any' });
@@ -1299,7 +1295,6 @@ export function descendPortal(b: ServerBoard, seat: number, armyId: string, t: n
   const won = log.winner === 'ours';
   if (won) {
     p.floors[seat] = { floor, at: t };
-    p.attempts[seat] = { day: dayOf(t), used: attemptsUsed(p, seat, t) + 1 };
     let gems = 0;
     if (floor % WORLD_PORTAL.milestoneEvery === 0 && p.milestones[floor] === undefined) {
       p.milestones[floor] = seat;
@@ -1326,7 +1321,6 @@ function portalView(b: ServerBoard, seat: number, t: number): PortalView {
     opensAt: open ? portalOpensAt(k) : portalOpensAt(t >= portalClosesAt(k) ? k + 1 : k),
     closesAt: open ? portalClosesAt(k) : portalClosesAt(t >= portalClosesAt(k) ? k + 1 : k),
     floor: p?.floors[seat]?.floor ?? 0,
-    attemptsLeft: Math.max(0, WORLD_PORTAL.attemptsPerDay - (p === null ? 0 : attemptsUsed(p, seat, t))),
     ranking: p === null ? [] : rankingOf(p),
   };
 }
@@ -1561,7 +1555,7 @@ function takeOver(b: ServerBoard, seat: number, player: { id: string; name: stri
     h.precious = 0;
     h.work = null;
   }
-  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.campsBack, b.raids, b.botCamps, b.seenCamps, b.portal.floors, b.portal.attempts]) {
+  for (const perSeat of [b.effects, b.effectSeq, b.ops, b.delves, b.beaten, b.campsBack, b.raids, b.botCamps, b.seenCamps, b.portal.floors]) {
     if (perSeat !== undefined) delete perSeat[seat];
   }
   b.seats[seat] = { playerId: player.id, name: player.name, bot: false, nextMoveAt: null, moves: 0 };

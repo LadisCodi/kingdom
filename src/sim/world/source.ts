@@ -78,7 +78,6 @@ export interface PortalControl {
   opensAt: number;
   closesAt: number;
   floor: number;
-  attemptsLeft: number;
   ranking: ReadonlyArray<{ seat: number; floor: number }>;
 }
 

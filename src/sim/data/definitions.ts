@@ -2140,7 +2140,6 @@ export interface WorldPortalDef {
   openWeekday: number;
   openDays: number;
   floors: number;
-  attemptsPerDay: number;
   powerStart: number;
   powerGrowth: number;
   rewardBase: number;
