@@ -172,6 +172,8 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'canRepair': return repairRefusal(state, game.map, c.target) === null;
     // The world board is the screen in front of the player.
     case 'worldOpen': return game.scene === 'world';
+    // The player has been out to the world: its first trip names the kingdom.
+    case 'worldVisited': return state.kingdom.profile.nickname !== null;
     // The relic picker's slot holds it (or any relic, when '').
     case 'relicPicked': {
       const slot = game.relicPick?.slot ?? null;

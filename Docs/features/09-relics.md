@@ -55,12 +55,18 @@
 Every effect is a number that grows without a ceiling — a speed or a yield,
 never a discount, because a discount dies at 100%.
 
+**A city relic has one main number**, and its window and its reach
+(§2.1):
+
+| Relic | Its idea | Effect inside the aura | Moves |
+|---|---|---|---|
+| **Staff of Renewal** | **Fervour** | buildings **train +X% faster** — soldiers at the halls, villagers at the Townhall | `trainingSpeed`, read when a trainee's clock starts |
+| **Sickle of Plenty** | **Abundance** | **every swing and every tap takes +X%** — trees, crops, every mountain | `harvestUnitsPerStrike` |
+| **The Winged Hammer** | **Morale** | crews **swing and walk +X% faster** — one number | `workerStrikeSpeed` and `workerSpeed` |
+| **The Tribute Crown** | **Generosity** | houses **pay +X% tax** | `taxRate` |
+
 | Relic | Effect | Moves |
 |---|---|---|
-| **Staff of Renewal** | in-place recovery **+X% faster** — Forest, Crops, Stone and the two mountains | `recoverySpeed`, which `effectiveRecoveryMs` **divides** by |
-| **Sickle of Plenty** | **natural resources +X%** (what a node holds) and **extraction speed +X%** (what a swing takes) | `harvestStock` and `harvestUnitsPerStrike`, both multipliers |
-| **The Winged Hammer** | crews **swing and walk +X% faster** | `workerStrikeSpeed` and `workerSpeed` |
-| **The Tribute Crown** | tax rate **+X%** | `taxRate` |
 | **The Stargazer's Orb** | Stardust from rooms **+X%** | `stardustYield` |
 | **The Wisp Lantern** | a room's **Gold and Stone +X%** | `roomHaul` |
 | **Warhorn of the Host** | the army the halls field **+X%** | `armyCap` |
@@ -75,10 +81,12 @@ never a discount, because a discount dies at 100%.
   one number would be unreadable.
 - **A relic whose system does not exist yet says so on its card**, in muted
   ink with the reason, and its level accrues normally against the day it lands.
-- **A relic may move more than one number with one value.** The Sickle's two and
-  the Hammer's two are one idea each: half of either saturates or reads as
-  nothing — a bigger swing empties a node it cannot exceed, and a crew that
-  swung faster and walked at the old pace would be half a relic.
+- **The Hammer moves two numbers with one value**: a crew that swung faster
+  and walked at the old pace would be half a relic.
+- **The Staff prices a wait when it starts**: a trainee whose clock starts
+  while the window is open, at a building inside the aura, keeps the faster
+  time; one already running is not repriced, and the window closing changes
+  nothing that has started.
 
 ### 2.1 Activation — the city relics
 
@@ -192,9 +200,6 @@ Chapel holds it.
   city relic it is the number steps of its cycle (§2.1). `passivePerLevel`
   is sized to be **felt on a headline number** — of the order of +10% a step
   on the Crown — not to be safe.
-- The Staff and the Sickle split the two harvest clocks between them: what grows
-  back in place and what reappears elsewhere are different numbers, and one
-  relic moves each.
 - The effect is a **modifier at the base stage**, resolved where the number is
   owned. A relic level is not a technology and never expires.
 

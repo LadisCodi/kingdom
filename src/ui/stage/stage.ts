@@ -15,7 +15,7 @@
 // portrait that is rebuilt re-enters, and a box that is rebuilt re-types.
 
 import {
-  DISTRICTS, HELP, ITEMS, QUESTS, SCENES, SPEAKERS, type SceneDef, type SceneLine,
+  DISTRICTS, HELP, ITEMS, QUESTS, SPEAKERS, type SceneDef, type SceneLine,
 } from '../../sim/data/definitions';
 import { tally } from '../../sim/events';
 import { playSfx, playVoice } from '../../audio/sfx';
@@ -29,7 +29,7 @@ import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
 import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { firstMorningOn } from '../../sim/doors';
+import { inPlace, pickScene, sceneKey, settleScene } from './director';
 import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 
 /** A scene on the stage, and where it has got to. */
@@ -54,7 +54,6 @@ interface Playing {
   acting: boolean;
 }
 
-const sceneKey = (id: string): string => `scene:${id}`;
 
 /** A typing tick every this many letters: at 40 a second, about thirteen a
  *  second — a patter, not a buzz. */
@@ -105,7 +104,7 @@ const PROGRESS: ReadonlySet<string> = new Set([
   'questReached', 'questComplete', 'questClaimed', 'questProgress', 'techDone', 'techFilled',
   'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
   'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
-  'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair',
+  'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair', 'worldVisited',
 ]);
 
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
@@ -229,6 +228,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
 
   // ------------------------------------------------------------ lines
   const line = (): SceneLine | null => (playing === null ? null : playing.scene.lines[playing.index] ?? null);
+
+  /** The playing scene's player has gone elsewhere — out to the world from a
+   *  scene about the city. It pauses, out of sight and holding nothing,
+   *  until they come back. */
+  const away = (): boolean => playing !== null && !inPlace(game, playing.scene);
 
   const lineHolds = (l: SceneLine): boolean => l.until !== 'tap' && conditionHolds(game, {
     kind: l.until, target: l.untilTarget, amount: l.untilAmount, tapsAtStart: playing!.tapsAtStart,
@@ -504,12 +508,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   /** A line that waits for a tap takes one ANYWHERE on the screen, as a
    *  visual novel does — and keeps it: the tap moves the dialogue on and
    *  reaches nothing behind it. Panning the map stays free. */
-  const waitsForTap = (): boolean => playing !== null && (line()?.until === 'tap' || !playing.acting);
+  const waitsForTap = (): boolean => playing !== null && !away() && (line()?.until === 'tap' || !playing.acting);
 
   // ------------------------------------------------------------ the lock
   const lockNow = (): SceneLine['lock'] => {
     const l = line();
-    if (playing === null || l === null || playing.lockReleased) return 'none';
+    if (playing === null || l === null || playing.lockReleased || away()) return 'none';
     return l.lock;
   };
 
@@ -573,35 +577,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  before an unlock splash waiting to be shown — the splash names the
    *  thing, the scene then talks about it; over a sheet only when the scene
    *  says so. */
-  const canStart = (scene: SceneDef): boolean => {
-    // Nothing plays over the profile sheet — which is owed only once the
-    // First Morning is over, so the morning itself plays with no profile.
-    if (game.payerDue()) return false;
-    if (game.battle !== null || game.gachaReveal !== null || game.adWatch() !== null) return false;
-    if (game.unlockQueue.length > 0) return false;
-    if (!scene.anywhere && game.hasOpenSheet()) return false;
-    // The First Morning runs beat to beat; every introduction after it waits
-    // for a breath, so the fog giving up three things at once is three
-    // moments, not a queue.
-    if (scene.skippable && performance.now() < gapUntil) return false;
-    return true;
-  };
-
   const due = (): SceneDef | null => {
-    if (game.state.tutorial.veteran) return null;
-    // The First Morning runs beat to beat: what stands in view past the fog —
-    // the Watchtower on the northern hills, from the first screen — waits
-    // for it to end rather than interrupting it.
-    const morning = firstMorningOn(game.state);
-    for (const scene of SCENES) {
-      if (game.state.tutorial.seen[sceneKey(scene.id)]) continue;
-      if (morning && scene.trigger === 'sighted') continue;
-      if (!conditionHolds(game, {
-        kind: scene.trigger, target: scene.triggerTarget, amount: scene.triggerAmount, tapsAtStart: 0,
-      })) continue;
-      return canStart(scene) ? scene : null; // one at a time, in authored order
-    }
-    return null;
+    const pick = pickScene(game, performance.now() < gapUntil);
+    for (const scene of pick.settled) settleScene(game, scene);
+    if (pick.settled.length > 0) game.notify();
+    return pick.scene;
   };
 
   // ------------------------------------------------------------ idle help
@@ -764,7 +744,12 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     } else if (game.state.tutorial.seen[sceneKey(playing.scene.id)]) {
       // Marked played from outside — a dev skip: it leaves the screen.
       end();
+    } else if (away()) {
+      // Paused: out of sight until the player is back where it belongs.
+      root.classList.add('is-away');
+      glow(null);
     } else {
+      root.classList.remove('is-away');
       const l = line();
       if (l !== null) {
         // Type the line — written below, after the layout has been read.

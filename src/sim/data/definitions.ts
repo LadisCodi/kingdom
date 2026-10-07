@@ -564,7 +564,7 @@ export type SceneCondition =
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
-  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen'
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen' | 'worldVisited'
   | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
@@ -602,6 +602,15 @@ export interface SceneDef {
   /** May start over a sheet the player opened. */
   anywhere: boolean;
   skippable: boolean;
+  /** Where the player has to be for it to start — and where it plays: a
+   *  scene that has started pauses while the player is elsewhere
+   *  (Docs/features/23-tutorials.md §1). */
+  where: 'province' | 'world' | 'any';
+  /** What makes it needless: holding when it is due, it is marked played
+   *  without playing, and its lines' gifts are handed over. '' = never. */
+  doneWhen: Exclude<SceneCondition, 'tap'> | '';
+  doneTarget: string;
+  doneAmount: number;
   lines: SceneLine[];
 }
 
@@ -1356,9 +1365,9 @@ const activation = (id: ArtifactId): ArtifactDef['activation'] =>
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
     id: 'DowsingRod', name: 'Staff of Renewal', glyph: '🪄', sprite: 'artifact_staff_of_renewal',
-    passiveText: 'Forests, crops and stone recover faster',
+    passiveText: 'Your buildings train soldiers and villagers faster',
     passive: {
-      stats: [{ stat: 'recoverySpeed', scope: null, op: 'mul' }],
+      stats: [{ stat: 'trainingSpeed', scope: null, op: 'mul' }],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     active: null,
@@ -1367,12 +1376,9 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   },
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Sickle of Plenty', glyph: '🌾', sprite: 'artifact_sickle_of_plenty',
-    passiveText: 'Richer ground, and more out of every swing',
+    passiveText: 'More out of every swing and every tap',
     passive: {
-      stats: [
-        { stat: 'harvestStock', scope: null, op: 'mul' },
-        { stat: 'harvestUnitsPerStrike', scope: null, op: 'mul' },
-      ],
+      stats: [{ stat: 'harvestUnitsPerStrike', scope: null, op: 'mul' }],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
     active: null,

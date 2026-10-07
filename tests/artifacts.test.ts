@@ -11,8 +11,8 @@ import {
   artifactLevel, cityRelicSteps, grantArtifactLevel, nextCityRelicAxis, ownedArtifacts, ownsArtifact,
   passiveValueAtLevel, syncArtifactModifiers,
 } from '../src/sim/artifacts';
-import { armyCap } from '../src/sim/army';
-import { effectiveRecoveryMs, effectiveStock } from '../src/sim/harvest';
+import { armyCap, trainSecondsAt } from '../src/sim/army';
+import { effectiveStock } from '../src/sim/harvest';
 import {
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs,
 } from '../src/sim/upgrades';
@@ -131,10 +131,15 @@ describe('a relic is a permanent passive with no ceiling', () => {
     }
   });
 
-  // The Staff's number is a SPEED and `effectiveRecoveryMs` divides by it, so it
-  // approaches an instant recovery without ever arriving at one.
+  // The Staff's number is a SPEED the training time is divided by, so it
+  // approaches an instant recruit without ever arriving at one — and it is
+  // read at the building that trains, inside the Shrine's aura.
   it('shortens a wait without ever reaching zero', () => {
-    let last = effectiveRecoveryMs(state, HARVEST.Forest, AT);
+    addBuilt(state, 'Barracks', { x: 1, y: 3 });
+    const hall = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    const wait = () => trainSecondsAt(state, hall.uniqueId, 'Warrior');
+    const bare = wait();
+    let last = bare;
     grantArtifactLevel(state, 'DowsingRod');
     host(state, 'DowsingRod');
     // Every effect step of the Staff's cycle shortens it; the other steps
@@ -142,17 +147,22 @@ describe('a relic is a permanent passive with no ceiling', () => {
     for (let i = 0; i < 40; i++) {
       const level = artifactLevel(state, 'DowsingRod');
       const effect = i === 0 || nextCityRelicAxis('DowsingRod', level - 1) === 'effect';
-      const now = effectiveRecoveryMs(state, HARVEST.Forest, AT);
-      if (effect) expect(now).toBeLessThan(last);
+      const now = wait();
+      if (effect) expect(now).toBeLessThanOrEqual(last);
       else expect(now).toBe(last);
       expect(now).toBeGreaterThan(0);
       last = now;
       grantArtifactLevel(state, 'DowsingRod');
     }
+    expect(last).toBeLessThan(bare / 2);
+    // Asleep, it does nothing: the hall trains at its own pace again.
+    delete state.artifacts.casts.DowsingRod;
+    expect(wait()).toBe(bare);
   });
 
   // ONE NUMBER, TWO CALL SITES. The Sickle's percent has to reach the thumb
-  // and the crew, or half the relic is a sentence on a card.
+  // and the crew, or half the relic is a sentence on a card — and it is the
+  // swing, not the ground: a node holds what it held.
   it('the Sickle pays the thumb and the crew from one number', () => {
     const shed = { location: AT, definitionId: 'Sawmill', level: 1 } as District;
     const tap = effectiveUnitsPerStrike(state, HARVEST.Forest, AT);
@@ -164,10 +174,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
     expect(x).toBeGreaterThan(1);
     expect(effectiveUnitsPerStrike(state, HARVEST.Forest, AT)).toBeCloseTo(tap * x);
     expect(effectiveWorkerStrike(state, HARVEST.Forest, shed)).toBeCloseTo(crew * x);
-    // The depot is rounded once, on the unrounded figure: within a unit of it.
-    const richer = effectiveStock(state, map, AT, HARVEST.Forest);
-    expect(richer).toBeGreaterThan(held);
-    expect(Math.abs(richer - held * x)).toBeLessThanOrEqual(1);
+    expect(effectiveStock(state, map, AT, HARVEST.Forest)).toBe(held);
   });
 
   // And the Hammer's one number has to reach both halves of a round trip.
