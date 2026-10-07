@@ -525,6 +525,8 @@ export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
  * events left, `result` for the two seconds the plaque needs, `rewards` while
  * the prize sequence deals, `done` when only the way out is left.
  */
+export type BattleBackdrop = 'field' | 'dungeon' | 'boss' | 'portal';
+
 export interface BattlePlayback {
   log: BattleLog;
   title: string;
@@ -533,6 +535,9 @@ export interface BattlePlayback {
   /** What the ENEMY's troops look like, by type: a lair fields creatures,
    *  not the player's own soldiers. Absent, both sides wear the unit busts. */
   enemyFaces?: Partial<Record<UnitId, string>>;
+  /** The ground it is fought on (battleScreen.ts): the field outside a lair,
+   *  a dungeon room, a depth's boss hall, the Portal's depths. */
+  backdrop: BattleBackdrop;
   /** Wall clock at the first tick. */
   startedAt: number;
   /** THE PLAYBACK'S CLOCK, which a speed change rebases: the fight's own
@@ -4070,6 +4075,7 @@ export class Game {
       subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
       prizes: [],
       enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'field',
     });
     this.notify();
   }
@@ -4560,6 +4566,7 @@ export class Game {
     about: {
       title: string; subtitle: string; prizes: GachaPrize[];
       enemyFaces?: Partial<Record<UnitId, string>>;
+      backdrop: BattleBackdrop;
     },
   ): void {
     this.battle = {
@@ -4568,6 +4575,7 @@ export class Game {
       subtitle: about.subtitle,
       prizes: about.prizes,
       enemyFaces: about.enemyFaces,
+      backdrop: about.backdrop,
       startedAt: this.now(),
       clockAt: this.now(),
       clockMs: 0,
@@ -5977,6 +5985,7 @@ export class Game {
       title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
       subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
       prizes: [],
+      backdrop: r.boss ? 'boss' : 'dungeon',
     });
     this.notify();
   }
@@ -6003,7 +6012,7 @@ export class Game {
     }
     payMana(this.state, cost);
     this.applyWorldSnapshot(r.snapshot);
-    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [] });
+    this.openBattle(r.log, { title: `The Dark Portal · floor ${formatCount(r.room)}`, subtitle: 'The depths below', prizes: [], backdrop: 'portal' });
     this.notify();
   }
 

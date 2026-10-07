@@ -133,6 +133,7 @@ an interrupted replay costs nothing.
 |---|---|
 | Data | The log, and nothing else: the two boards from its `start`, then every `attack`, `troops_lost` and `slot_wiped` in order |
 | Elements | **The power bar** at the top — two totals and one split fill, falling as squads come apart (§12). **Six rows of slots**: their heroes · their back · their front · *a gap* · our front · our back · our heroes. The back rank draws smaller, because the row is what decides who gets hit. **Each slot's ring is its health** — leaf for ours, clay for theirs — emptying round the dial; what a blow just took stays pale for a beat |
+| Ground | The board stands on the ground of its kind of fight, seen from above and quiet in the middle: the **field** outside a lair, a **dungeon** room, a depth's **boss** hall, the **Portal**'s depths ([`../art/battle/README.md`](../art/battle/README.md)) |
 | Opening | The replay holds **0.8 s** while each side's rows slide in from its own edge, front rank first, and the crossed swords on the bar clash |
 | Swing | The attacker moves first, timed so the blow lands **on the tick the log wrote**. Melee lunges at its target (Cavalry further, raising dust); a shooter draws back and looses — an arrow per troop line (up to three), a bolt for a hero — and it lands on the tick |
 | Hit | The target flashes, flinches away from the blow and a hit sound plays. A blade's mark crosses it — a slash, a straight thrust for Lancers — with sparks; an arrow throws sparks only. The weight of all of it scales with the share of the slot's health the blow took |
