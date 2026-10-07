@@ -2466,4 +2466,4 @@ export const GAME_VERSION: string = pkg.version;
 // (`ExplorersBought` on the world), additive.
 // v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
 // on `kingdom.heroes` (a migrator).
-export const SAVE_VERSION = 104;
+export const SAVE_VERSION = 105;

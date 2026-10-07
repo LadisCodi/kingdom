@@ -7,7 +7,7 @@
 // second button. Nothing here changes the game but those buttons.
 
 import { siteBanner, type Game } from '../../game';
-import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE, UNITS } from '../../sim/data/definitions';
+import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE, UNITS, WORLD_PORTAL } from '../../sim/data/definitions';
 import type { BannerId } from '../../sim/data/definitions';
 import { lairCreature } from '../../sim/lairs';
 import { NEWS_GROUPS, type News, type NewsGroup } from '../../sim/notices';
@@ -114,6 +114,9 @@ const spriteArt = (sprite: string, fallback: IconName): Art => ({
   key: `sprite:${sprite}`,
   make: () => spriteImg(sprite, 'nt-img') ?? iconEl(fallback, { size: 'lg' }),
 });
+
+/** The Dark Portal as the board draws it: shut, or open. */
+const portalArt = (open: boolean): Art => spriteArt(open ? 'whex_portal_open' : 'whex_portal', 'dungeon');
 
 // ---------------------------------------------------------- the news
 
@@ -247,6 +250,26 @@ function newsLine(game: Game, n: News): NewsLine | null {
         go: n.hex === undefined ? null : () => game.goToHex(n.hex!),
         view: 'world',
       };
+    case 'portal':
+      return n.open
+        ? {
+          art: portalArt(true),
+          name: 'The Dark Portal is open',
+          line: `For ${formatExact(WORLD_PORTAL.openDays)} days`,
+          title: 'The Dark Portal is open',
+          body: `For ${formatExact(WORLD_PORTAL.openDays)} days. Send an army down and clear its floors — the deepest divers win Gems when it closes.`,
+          go: () => game.goToHex(game.nearestPortal()),
+          view: 'world',
+        }
+        : {
+          art: portalArt(false),
+          name: 'The Dark Portal closed',
+          line: `Placed ${formatExact(n.place)} of ${formatExact(n.of)}`,
+          title: 'The Dark Portal closed',
+          body: `You placed ${formatExact(n.place)} of ${formatExact(n.of)}, at floor ${formatExact(n.floor)}. It opens again in ${formatExact(7 - WORLD_PORTAL.openDays)} days.`,
+          go: () => game.goToHex(game.nearestPortal()),
+          view: 'world',
+        };
     case 'event':
       return {
         art: icon('daily'),
@@ -281,6 +304,7 @@ const GROUP_TITLE: Record<NewsGroup, (n: number) => string> = {
   worldBuild: (n) => `${formatExact(n)} builds on the world map`,
   armyHome: (n) => `${formatExact(n)} armies home`,
   world: () => 'From the world',
+  portal: () => 'The Dark Portal',
   event: () => 'Events',
   chainDone: () => 'The chain is done',
 };
@@ -381,6 +405,20 @@ function states(game: Game): Notice[] {
       picture: icon('chest'),
       go: null,
       action: next.ready ? { label: 'Claim', run: () => game.openOfferSplash(next.sku) } : null,
+    });
+  }
+
+  // PORTAL PRIZE: a closed opening's ranking Gems, waiting to be claimed.
+  const prizes = game.portalPrizes();
+  if (prizes.length > 0) {
+    const lead = prizes[0];
+    out.push({
+      ...base, id: 'state:portalPrize', art: portalArt(false), count: prizes.length > 1 ? prizes.length : 0, glow: true, view: null,
+      title: 'Portal reward',
+      body: `The Dark Portal closed. You placed ${formatExact(lead.place)} of ${formatExact(lead.of)}, at floor ${formatExact(lead.floor)}: ${formatExact(lead.gems)} Gems.`,
+      picture: icon('Gems'),
+      go: null,
+      action: { label: 'Claim', run: () => game.claimPortalPrize(lead.event) },
     });
   }
 

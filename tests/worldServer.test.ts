@@ -521,7 +521,8 @@ describe('the Dark Portal', () => {
     // The close: the ranking pays, and the diver walks home.
     resolveTo(b, portalClosesAt(portalEvent(opens)));
     const owed = drainEffects(b, seat);
-    expect(owed.some((e) => e.kind === 'loot' && (e.gems ?? 0) > 0)).toBe(true);
+    const closed = owed.find((e) => e.kind === 'portalClosed');
+    expect(closed?.kind === 'portalClosed' && [closed.place, closed.gems]).toEqual([1, WORLD_PORTAL.rankGems[0]]);
     expect(b.armies[0]?.phase ?? 'home').toBe('home');
   });
 });

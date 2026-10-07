@@ -754,7 +754,8 @@ the centre is for.
 - Never controllable, never buildable, by anyone.
 - **Always revealed, for everyone, with no fog.**
 - Armies march through it; it carries no connection and is nobody's hex.
-- Between events it shows the portal dark, and a counter to the next opening.
+- Between events it shows the portal dark, and a counter to the next opening;
+  open, its vortex lit (`whex_portal`, `whex_portal_open`).
 
 ### 10.2 Cadence
 
@@ -790,7 +791,9 @@ finishing instantly.
   Descend button says when the next floor pays one.
 - **By milestone** — an exclusive reward for the first player to a given depth,
   reset every event.
-- **By final rank** — Top 1 / Top 2–3 / Top 4–6.
+- **By final rank** — Top 1 / Top 2–3 / Top 4–6, in Gems (`worldPortal.rankGems`),
+  claimed from the notices once the opening closes
+  ([`26-notices.md`](26-notices.md) §2.2).
 
 ## 11. What the world pays the province
 

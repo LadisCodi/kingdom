@@ -544,6 +544,7 @@
 }
 /* The Portal's portrait is the board's own drawing, on a canvas. */
 .wd-portal-art > canvas { width: 100%; height: 100%; display: block; }
+.wd-portal-art > img { width: 100%; height: 100%; display: block; object-fit: contain; }
 /* The ranking: the friends list's rows, the player's own lit gold. */
 .wd-ranks { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
 .wd-rank.is-you { background: color-mix(in srgb, var(--gold) 30%, var(--parchment-shade)); }

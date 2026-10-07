@@ -452,6 +452,21 @@ export interface WorldState {
   /** The last world-server effect applied (WorldEffect.seq): those at or
    *  below it are not applied again when the server sends them again. */
   effectSeq: number;
+  /** When the last Portal opening the player was told of opened (epoch ms;
+   *  0 = none): its news is filed once (26-notices.md §2.1). */
+  portalAnnounced: number;
+  /** Portal ranking Gems won and not yet claimed, one per opening
+   *  (19 §10.4, 26-notices.md §2.2). */
+  portalPrizes: PortalPrize[];
+}
+
+/** A closed Portal opening's place for the player, and what it pays. */
+export interface PortalPrize {
+  event: number;
+  place: number;
+  of: number;
+  floor: number;
+  gems: number;
 }
 
 export interface WorldArmyOut {

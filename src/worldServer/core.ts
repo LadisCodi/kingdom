@@ -1245,11 +1245,11 @@ function closePortal(b: ServerBoard, t: number): void {
   const justClosed = t >= portalClosesAt(k) ? k : k - 1;
   if (b.portal.closed >= justClosed) return;
   if (b.portal.event === justClosed) {
-    rankingOf(b.portal).forEach((r, place) => {
-      const gems = WORLD_PORTAL.rankGems[place] ?? 0;
-      if (gems > 0) owe(b, r.seat, { kind: 'loot', at: t, gold: 0, knowledge: 0, heroXp: 0, stardust: 0, gems });
-      report(b, r.seat, t, `The Portal closed — you placed ${place + 1} of ${rankingOf(b.portal).length}, at floor ${r.floor}`, place < 3, PORTAL_INDICES[0]);
-    });
+    const ranking = rankingOf(b.portal);
+    ranking.forEach((r, place) => owe(b, r.seat, {
+      kind: 'portalClosed', at: t, event: justClosed, place: place + 1, of: ranking.length, floor: r.floor,
+      gems: WORLD_PORTAL.rankGems[place] ?? 0,
+    }));
   }
   b.portal.closed = justClosed;
   for (const a of b.armies) if (a.purpose === 'portal' && a.phase === 'camp') turnHome(a, t, 0);

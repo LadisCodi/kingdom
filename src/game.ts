@@ -121,7 +121,7 @@ import {
   boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
   offerWindow, offersOn, refreshOffers, skuValuePercent,
 } from './sim/offers';
-import type { PayerProfile, StoreSkuId } from './sim/state';
+import type { PayerProfile, PortalPrize, StoreSkuId } from './sim/state';
 import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
@@ -151,7 +151,7 @@ import { gemsToFinish } from './sim/rush';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
-import { hexAt, hexIndex } from './sim/world/hex';
+import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { Analytics, AnalyticsContext } from './analytics/analytics';
@@ -5560,6 +5560,18 @@ export class Game {
           this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
         }
         this.reward({ Gold: e.gold, ...made, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+      } else if (e.kind === 'portalClosed') {
+        // A Portal opening closed with the player in its ranking: a place
+        // that pays waits to be claimed, any other is news (26 §2).
+        if (e.gems > 0) {
+          if (!this.state.world.portalPrizes.some((p) => p.event === e.event)) {
+            this.state.world.portalPrizes.push({ event: e.event, place: e.place, of: e.of, floor: e.floor, gems: e.gems });
+          }
+        } else {
+          postNews(this.state, {
+            group: 'portal', key: `portal:closed:${e.event}`, at: e.at, open: false, place: e.place, of: e.of, floor: e.floor,
+          });
+        }
       } else if (e.kind === 'goods') {
         // Precious material from the Exchange: an offer taken, or one back.
         addGood(this.state.city.goods, e.lot.id, e.lot.amount);
@@ -5573,6 +5585,16 @@ export class Game {
     }
     if (fresh.length > 0) {
       this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
+      this.persist?.();
+    }
+    // The Portal opening: every player on the board is told, once an
+    // opening (19 §10.3).
+    if (snap.portal.open && snap.portal.opensAt > this.state.world.portalAnnounced) {
+      this.state.world.portalAnnounced = snap.portal.opensAt;
+      postNews(this.state, {
+        group: 'portal', key: `portal:open:${snap.portal.opensAt}`, at: snap.portal.opensAt, open: true,
+        closesAt: snap.portal.closesAt,
+      });
       this.persist?.();
     }
     if (this.actingSeat === null) this.worldServer?.acknowledge(this.state.world.effectSeq);
@@ -6053,6 +6075,30 @@ export class Game {
     this.track('notice_opened', { id, count: Math.max(news.length, heroes.length, 1) });
     playSfx('click');
     this.setOverlay('notice');
+  }
+
+  /** The Portal ranking Gems won and not yet claimed, oldest first. */
+  portalPrizes(): readonly PortalPrize[] {
+    return this.state.world.portalPrizes;
+  }
+
+  /** CLAIM a Portal opening's ranking Gems (19 §10.4). */
+  claimPortalPrize(event: number): void {
+    const prize = this.state.world.portalPrizes.find((p) => p.event === event);
+    if (prize === undefined) return;
+    this.state.world.portalPrizes = this.state.world.portalPrizes.filter((p) => p !== prize);
+    addToWallet(this.state.player.wallet, 'Gems', prize.gems);
+    this.track('portal_prize_claimed', { place: prize.place, gems: prize.gems });
+    this.reward({ Gems: prize.gems });
+    this.persist?.();
+    this.notify();
+  }
+
+  /** The Portal nearest the player's city: where a Portal notice's Go
+   *  leads (19 §10 — every board has its own). */
+  nearestPortal(): number {
+    const home = hexAt(homeIndex(this.state));
+    return [...PORTAL_INDICES].sort((a, b) => hexDistance(hexAt(a), home) - hexDistance(hexAt(b), home))[0];
   }
 
   /** Heroes a fight exhausted who are whole again (sim/heroHealth.ts). */
