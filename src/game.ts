@@ -853,6 +853,9 @@ export class Game {
     // An explorer home is a news (sim/notices.ts); the target's promise, if
     // it kept one, is paid here (19 §3.2).
     for (const home of result.explorersHome) this.payExplorer(home);
+    if (result.explorersHome.length > 0) playSfx('explorerHome');
+    // A garrison come down on the city: a far horn, whatever it took.
+    if (result.raids.length > 0) playSfx('raidAlarm');
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -879,7 +882,7 @@ export class Game {
     }
     // A construction or an upgrade finished, a raid landed: each is a news
     // the sim filed (sim/notices.ts), and its bubble is the announcement.
-    if (result.completedItems.length > 0) playSfx('constructionComplete');
+    if (result.completedItems.length > 0 || result.worldBuildsDone.length > 0) playSfx('constructionComplete');
     this.notify();
   }
 
@@ -1485,7 +1488,7 @@ export class Game {
       this.notify();
       return;
     }
-    playSfx('research');
+    playSfx('spellCast');
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
@@ -1507,7 +1510,7 @@ export class Game {
       this.notify();
       return;
     }
-    playSfx('research');
+    playSfx('relicWake');
     this.asleepNotices = this.asleepNotices.filter((r) => r !== id);
     const host = hostOf(this.state, id);
     if (host !== null) {
@@ -2952,9 +2955,9 @@ export class Game {
       if (speedupRefusal(this.state, job, id, n, this.now()) !== null) return;
       if (await this.speedAway(job, ITEMS[id].seconds * n)) {
         spendSpeedups(this.state, job, id, n);
-        playSfx('click');
+        playSfx('speedup');
       }
-    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('click');
+    } else if (useSpeedup(this.state, this.map, job, id, n, this.now()) === 'Used') playSfx('speedup');
     this.afterSpeedup();
   }
 
@@ -2967,8 +2970,9 @@ export class Game {
       const seconds = plan.reduce((s, p) => s + ITEMS[p.id].seconds * p.n, 0);
       if (seconds > 0 && await this.speedAway(job, seconds)) {
         for (const p of plan) spendSpeedups(this.state, job, p.id, p.n);
+        playSfx('speedup');
       }
-    } else useAuto(this.state, this.map, job, this.now());
+    } else if (useAuto(this.state, this.map, job, this.now()) === 'Used') playSfx('speedup');
     this.afterSpeedup();
   }
 
@@ -5670,6 +5674,7 @@ export class Game {
         });
       }
     }
+    if (fresh.some((e) => e.kind === 'armyHome')) playSfx('armyHome');
     if (fresh.length > 0) {
       this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
       this.persist?.();
@@ -5860,7 +5865,7 @@ export class Game {
     this.state.city.wallet.Gold = getWallet(this.state.city.wallet, 'Gold') - gold;
     for (const [g, n] of Object.entries(goods)) addGood(this.state.city.goods, g as GoodId, -(n as number));
     this.state.world.builds.push({ index, what, level, finishesAt: r.finishesAt });
-    playSfx('click');
+    playSfx('buildPlaced');
     // Started from a free builder's row: the sheet was only in the way.
     if (this.openOverlay === 'builder') this.openOverlay = null;
     this.applyWorldSnapshot(r.snapshot);
@@ -5962,6 +5967,7 @@ export class Game {
     });
     this.armyTarget = null;
     this.dismiss();
+    playSfx('armyMarch');
     this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
     this.applyWorldSnapshot(r.snapshot);
   }
@@ -6040,6 +6046,7 @@ export class Game {
       this.notify();
       return;
     }
+    playSfx('armyRecall');
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6108,7 +6115,7 @@ export class Game {
       return;
     }
     pay(this.state.city.wallet, cost);
-    playSfx('click');
+    playSfx('tribute');
     this.toast(`The camp of ${CAMP_CREATURE[camp.creature]} takes the tribute and leaves`);
     this.applyWorldSnapshot(r.snapshot);
   }
@@ -6364,7 +6371,7 @@ export class Game {
     if (target === null) return;
     const result = dispatchExplorer(this.state, target, this.now());
     if (result.kind === 'Sent') {
-      playSfx('click');
+      playSfx('explorerDepart');
       this.dismiss();
       return;
     }

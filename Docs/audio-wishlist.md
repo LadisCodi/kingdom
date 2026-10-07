@@ -137,3 +137,25 @@ top each time they take over, the harp resumes where it was.
 | `music-battle` | A fight plays back, until its plaque lands | *Battlefront Ode*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
 | `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Preparing for the Assault*, whole, 2.5 s fade at the tail — same collection |
 | `music-harp-peaceful-loop` | Everything else | Harp Peaceful (loop) |
+
+## The chest's cards, the world board, magic
+
+Cut like the battle's (a hit levelled by mean, a stinger to −16 LUFS), one
+file each in `src/audio/sounds/`.
+
+| Name | Plays when | Source |
+|---|---|---|
+| `cardImpact` | Any card but a whole hero turns face up | Drum Hit 01 |
+| `cardRevealCommon` · `cardRevealRare` · `cardRevealLegend` | On top of it, by the card's rarity (a skip keeps only the hit for a common) | RPG Fanfares · Item Pickup 1 · Item Get 1 Short · Item Get 2 |
+| `barFill` | A fragments bar fills | Count Prize Long |
+| `explorerDepart` · `explorerHome` | An explorer sets out · comes home | Harpsichord Level Start · Level Complete |
+| `armyMarch` · `armyRecall` · `armyHome` | An army marches · is called back · comes home | Battle Intro 1 Short Drums Only · Horn 01 · Brass Positive Long |
+| `tribute` | A camp is paid off | Coins in Sack Dropped on Wood |
+| `raidAlarm` | A lair's garrison came down on the city | Battle Viking Horn Call Far |
+| `speedup` | A speed-up takes time off a wait | Time Warp Reverse Spell Cast |
+| `spellCast` · `relicWake` | A world relic's spell · a city relic woken | Casting Magic · Activate Glyph Forcefield |
+
+A world build started or finished sounds as a city one does (`buildPlaced`,
+`constructionComplete`). A news whose event already sounded — a build, an
+explorer or army home, a raid — arrives in the notices column without the
+`pop`.

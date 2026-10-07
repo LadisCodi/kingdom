@@ -4,8 +4,16 @@
 // volume and an optional pitch jitter so rapid repeats don't sound
 // machine-gun identical.
 
+import armyHomeUrl from './sounds/army_home.ogg?url';
+import armyMarchUrl from './sounds/army_march.ogg?url';
+import armyRecallUrl from './sounds/army_recall.ogg?url';
+import barFillUrl from './sounds/bar_fill.ogg?url';
 import boatSplashUrl from './sounds/boat_splash.ogg?url';
 import buildPlacedUrl from './sounds/build_placed.mp3?url';
+import cardImpactUrl from './sounds/card_impact.ogg?url';
+import cardRevealCommonUrl from './sounds/card_reveal_common.ogg?url';
+import cardRevealLegendUrl from './sounds/card_reveal_legend.ogg?url';
+import cardRevealRareUrl from './sounds/card_reveal_rare.ogg?url';
 import chainFinishedUrl from './sounds/chain_finished.wav?url';
 import chestApplauseUrl from './sounds/chest_applause.ogg?url';
 import chestDrawUrl from './sounds/chest_draw.ogg?url';
@@ -30,6 +38,8 @@ import coinSaleUrl from './sounds/coin_sale.ogg?url';
 import constructionUrl from './sounds/construction_complete.mp3?url';
 import discoveryUrl from './sounds/discovery.wav?url';
 import errorUrl from './sounds/error_denied.ogg?url';
+import explorerDepartUrl from './sounds/explorer_depart.ogg?url';
+import explorerHomeUrl from './sounds/explorer_home.ogg?url';
 import gemUrl from './sounds/gem_spend.wav?url';
 import popUrl from './sounds/pop-06.wav?url';
 import tooltipUrl from './sounds/tooltip_pop.wav?url';
@@ -39,6 +49,8 @@ import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
 import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
+import raidAlarmUrl from './sounds/raid_alarm.ogg?url';
+import relicWakeUrl from './sounds/relic_wake.ogg?url';
 import rewardBurstUrl from './sounds/reward_burst.wav?url';
 import rewardCoin1 from './sounds/reward_coin_01.mp3?url';
 import rewardCoin2 from './sounds/reward_coin_02.mp3?url';
@@ -49,7 +61,10 @@ import rewardPop2 from './sounds/reward_pop_02.wav?url';
 import rewardPop3 from './sounds/reward_pop_03.wav?url';
 import scrollCloseUrl from './sounds/scroll_close.ogg?url';
 import scrollOpenUrl from './sounds/scroll_open.ogg?url';
+import speedupUrl from './sounds/speedup.ogg?url';
+import spellCastUrl from './sounds/spell_cast.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
+import tributeUrl from './sounds/tribute.ogg?url';
 import unitUrl from './sounds/unit_trained.mp3?url';
 import upgradeUrl from './sounds/upgrade_bought.wav?url';
 import villagerUrl from './sounds/villager_trained.mp3?url';
@@ -105,6 +120,16 @@ export type SfxName =
   // celebrated: a short drum roll before the flip, the confetti cannons'
   // pop, a full fanfare (a Legendary's own) and, for a Legendary, applause.
   | 'heroRiserShort' | 'heroPop' | 'heroFanfare' | 'heroFanfareLegend' | 'heroApplause'
+  // Any card turning face up lands with a drum hit and its rarity's
+  // stinger; a fragments bar counts up as it fills.
+  | 'cardImpact' | 'cardRevealCommon' | 'cardRevealRare' | 'cardRevealLegend' | 'barFill'
+  // The world board: an explorer sets out and comes home; an army marches,
+  // is called back, comes home; a camp is paid off.
+  | 'explorerDepart' | 'explorerHome' | 'armyMarch' | 'armyRecall' | 'armyHome' | 'tribute'
+  // A lair's garrison came down on the city — a far horn, not an alarm.
+  | 'raidAlarm'
+  // A speed-up taking time off a wait; a spell cast; a relic woken.
+  | 'speedup' | 'spellCast' | 'relicWake'
   | BattleSfx;
 
 /**
@@ -270,6 +295,28 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   heroFanfare: { urls: one(chestFanfareUrl), volume: 0.6, jitter: 0 },
   heroFanfareLegend: { urls: one(chestFanfareLegendUrl), volume: 0.65, jitter: 0 },
   heroApplause: { urls: one(chestApplauseUrl), volume: 0.3, jitter: 0 },
+  // Cut from the collection like the battle's: a hit levelled by mean, a
+  // stinger to -16 LUFS. Drum Hit 01 · RPG Fanfares Item Pickup 1, Item Get
+  // 1 Short, Item Get 2 · Count Prize Long.
+  cardImpact: { urls: one(cardImpactUrl), volume: 0.4, jitter: 0.04 },
+  cardRevealCommon: { urls: one(cardRevealCommonUrl), volume: 0.4, jitter: 0.02 },
+  cardRevealRare: { urls: one(cardRevealRareUrl), volume: 0.5, jitter: 0 },
+  cardRevealLegend: { urls: one(cardRevealLegendUrl), volume: 0.6, jitter: 0 },
+  barFill: { urls: one(barFillUrl), volume: 0.3, jitter: 0 },
+  // Harpsichord Level Start and Level Complete · Battle Intro 1 Short Drums
+  // Only · Horn 01 · Brass Positive Long · Coins in Sack Dropped on Wood.
+  explorerDepart: { urls: one(explorerDepartUrl), volume: 0.4, jitter: 0 },
+  explorerHome: { urls: one(explorerHomeUrl), volume: 0.4, jitter: 0 },
+  armyMarch: { urls: one(armyMarchUrl), volume: 0.45, jitter: 0 },
+  armyRecall: { urls: one(armyRecallUrl), volume: 0.35, jitter: 0.03 },
+  armyHome: { urls: one(armyHomeUrl), volume: 0.4, jitter: 0 },
+  tribute: { urls: one(tributeUrl), volume: 0.5, jitter: 0.05 },
+  // Battle Viking Horn Call Far.
+  raidAlarm: { urls: one(raidAlarmUrl), volume: 0.4, jitter: 0 },
+  // Time Warp Reverse Spell Cast · Casting Magic · Activate Glyph Forcefield.
+  speedup: { urls: one(speedupUrl), volume: 0.4, jitter: 0.04 },
+  spellCast: { urls: one(spellCastUrl), volume: 0.45, jitter: 0.02 },
+  relicWake: { urls: one(relicWakeUrl), volume: 0.45, jitter: 0 },
 };
 
 let ctx: AudioContext | null = null;
