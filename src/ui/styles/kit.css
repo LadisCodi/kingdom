@@ -628,6 +628,69 @@
   .k-zzz > span:nth-child(2) { transform: translate(50%, -60%) scale(0.8); }
   .k-zzz > span:nth-child(3) { transform: translate(110%, -130%); }
 }
+/* AWAY (kit/stats.ts `marchMarks`, `delveMarks`, `guardMarks`): what a
+   hero out with an army is doing, at the Zs' corner, the same size. */
+.k-mark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: calc(var(--mark-size, calc(var(--px) * 22)) * 1.4);
+  height: calc(var(--mark-size, calc(var(--px) * 22)) * 1.4);
+  pointer-events: none;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 1) rgba(30, 16, 6, 0.8));
+}
+.k-mark > .icon { --icon-size: var(--mark-size, calc(var(--px) * 22)); position: relative; grid-area: 1 / 1; }
+/* Marching: the boot steps, heel to toe, and kicks up two puffs of dust. */
+.k-march > .icon { animation: k-step 0.8s ease-in-out infinite; transform-origin: 30% 90%; }
+@keyframes k-step {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(8%, -18%) rotate(-14deg); }
+  50% { transform: translate(14%, 0) rotate(0deg); }
+  75% { transform: translate(6%, -6%) rotate(6deg); }
+}
+.k-dust {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: start;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236, 214, 170, 0.95), rgba(236, 214, 170, 0) 70%);
+  opacity: 0;
+  animation: k-dust 0.8s ease-out infinite;
+}
+.k-dust:nth-child(2) { animation-delay: 0.4s; }
+@keyframes k-dust {
+  0% { opacity: 0.9; transform: translate(40%, 0) scale(0.4); }
+  100% { opacity: 0; transform: translate(-60%, -40%) scale(1.3); }
+}
+/* In a dungeon: a torch's warm light flickers behind its mouth. */
+.k-torch {
+  grid-area: 1 / 1;
+  width: 150%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 120, 1), rgba(255, 140, 40, 0.6) 40%, rgba(255, 120, 30, 0) 72%);
+  animation: k-torch 1.3s steps(1, end) infinite, k-torch-sway 2.6s ease-in-out infinite;
+}
+@keyframes k-torch {
+  0% { opacity: 0.9; } 18% { opacity: 0.55; } 30% { opacity: 1; } 52% { opacity: 0.7; } 70% { opacity: 0.95; } 86% { opacity: 0.6; }
+}
+@keyframes k-torch-sway {
+  0%, 100% { transform: scale(0.9); } 50% { transform: scale(1.08); }
+}
+/* On guard: the shield stands firm, a gleam running across it. */
+.k-guard > .icon { animation: k-guard 2.4s ease-in-out infinite; }
+@keyframes k-guard {
+  0%, 70%, 100% { filter: brightness(1); transform: scale(1); }
+  80% { filter: brightness(1.6) drop-shadow(0 0 calc(var(--px) * 4) rgba(255, 240, 190, 0.9)); transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-march > .icon, .k-dust, .k-torch, .k-guard > .icon { animation: none; }
+  .k-dust { opacity: 0; }
+}
 /* How long the rest has left, in the dark pill a count wears. */
 .k-rest-left {
   display: inline-block;

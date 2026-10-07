@@ -385,6 +385,14 @@ export type HeroPickSort = 'level' | 'rarity';
  * slots it wants and what to do with the answer, and the picker hands the
  * screen back when it closes.
  */
+/** What a hero is doing now (`Game.heroStateOf`), as its card marks it. */
+export type HeroState =
+  | { kind: 'ready' }
+  | { kind: 'resting'; restMs: number }
+  | { kind: 'marching'; at: number | null }
+  | { kind: 'delving' }
+  | { kind: 'guarding' };
+
 export interface HeroPick {
   title: string;
   /** One per slot asked for, in slot order; null = free. */
@@ -4524,6 +4532,22 @@ export class Game {
     return heroLevel(this.state, heroId);
   }
 
+  /** What a hero is doing: free, resting from a fight, or away with an army
+   *  — marching (out or home, `at` when that leg ends), camped in a dungeon
+   *  or the Portal, or standing guard in a Fortress. */
+  heroStateOf(heroId: HeroId): HeroState {
+    const army = this.state.world.armies.find((a) => a.heroes.includes(heroId));
+    if (army !== undefined) {
+      const view = this.worldView?.armies.find((a) => a.id === army.id);
+      const phase = view?.phase ?? this.worldSource().armies().find((a) => a.id === army.id)?.phase ?? 'out';
+      if (phase === 'camp') return { kind: 'delving' };
+      if (phase === 'garrison') return { kind: 'guarding' };
+      return { kind: 'marching', at: view?.at ?? null };
+    }
+    const health = this.heroHealthOf(heroId);
+    return health.exhausted ? { kind: 'resting', restMs: health.restMs } : { kind: 'ready' };
+  }
+
   /** What a hero adds to an army's power (sim/combat.ts `heroPower`). */
   heroPowerOf(heroId: HeroId): number {
     return heroPower(HEROES[heroId], heroLevel(this.state, heroId), this.state.heroes.ascension[heroId] ?? 0);
@@ -5886,9 +5910,13 @@ export class Game {
   /** Where the army being composed is going, and to do what. */
   armyTarget: number | null = null;
   armyPurpose: ArmyPurpose = 'attack';
+  /** The menu the army screen was opened from: a sent army goes back to it,
+   *  to be watched on its way. */
+  private armyReturnTo: OverlayName | null = null;
 
   /** Compose an army for a hex, on the attack screen. */
   openArmy(target: number, purpose: ArmyPurpose): void {
+    this.armyReturnTo = this.openOverlay === 'army' ? this.armyReturnTo : this.openOverlay;
     this.armyTarget = target;
     this.armyPurpose = purpose;
     this.selectedHex = target;
@@ -5976,7 +6004,12 @@ export class Game {
       target, purpose: this.armyPurpose,
     });
     this.armyTarget = null;
-    this.dismiss();
+    // Back to the menu it was sent from — the camp, the dungeon, the Portal —
+    // which now shows the army on its way. None: the board.
+    const back = this.armyReturnTo;
+    this.armyReturnTo = null;
+    if (back === null) this.dismiss();
+    else { this.selectedHex = target; this.setOverlay(back); }
     playSfx('armyMarch');
     this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
     this.applyWorldSnapshot(r.snapshot);

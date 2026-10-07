@@ -8,7 +8,10 @@
 //   its level and its ascension stars at the foot;
 //   its HP, on the small bar hung over the bottom edge — none when unhurt;
 //   in a picker for a fight, its power in the level's place;
-//   and, exhausted, the Zs and how long the rest has left.
+//   and, when it cannot be chosen, what it is doing — exhausted, the Zs
+//   and how long the rest has left; away with an army, marching (a
+//   stepping boot, the time to the end of the leg), in a dungeon (a
+//   flickering torch) or on guard in a Fortress (a gleaming shield).
 // No name: the face is the name.
 //
 // A hero NOT FOUND yet is the same card on warm stone: the figure a dark
@@ -19,11 +22,11 @@ import { HERO_ORDER, HEROES } from '../sim/data/definitions';
 import { heroUnlockCost, skillRank } from '../sim/heroes';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId, UnitId } from '../sim/state';
-import type { Game, HeroPickSort } from '../game';
+import type { Game, HeroPickSort, HeroState } from '../game';
 import { el, formatExact } from './format';
 import { ascensionStars } from './ascensionStars';
 import { heroFragmentIcon } from './heroFragment';
-import { ctaBadge, hpBar, iconEl, progress, restLeft, restMarks, unitTypeIcon } from './kit';
+import { ctaBadge, delveMarks, guardMarks, hpBar, iconEl, marchMarks, progress, restLeft, restMarks, unitTypeIcon } from './kit';
 
 export interface HeroCardOpts {
   /** It is in a slot — the green check at the top right. */
@@ -42,12 +45,13 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
   if (!game.state.heroes.owned.includes(heroId)) return missingCard(game, heroId, opts);
   const def = HEROES[heroId];
   const health = game.heroHealthOf(heroId);
+  const doing = game.heroStateOf(heroId);
   const url = spriteUrl(def.sprite);
   const stars = ascensionStars(game.state.heroes.ascension[heroId] ?? 0, 'hc-stars');
   const rank = skillRank(game.state, heroId);
   const card = el(opts.onClick ? 'button' : 'span', {
     class: `hc is-${def.rarity.toLowerCase()}${opts.small ? ' is-small' : ''}`
-      + `${opts.picked ? ' is-picked' : ''}${health.exhausted ? ' is-resting' : ''}`,
+      + `${opts.picked ? ' is-picked' : ''}${doing.kind === 'resting' ? ' is-resting' : ''}`,
     ...(opts.onClick ? { type: 'button' } : {}),
     'aria-label': opts.label ?? `${def.name}, level ${game.heroLevelOf(heroId)}`,
   },
@@ -55,8 +59,8 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
   el('span', { class: 'hc-frame', 'aria-hidden': 'true' }),
   el('span', { class: `hc-type is-${def.unitType}` },
     iconEl(unitTypeIcon(def.unitType), { size: 'sm', label: def.unitType })),
-  ...(health.exhausted
-    ? [restMarks(), el('span', { class: 'hc-foot' }, restLeft(health.restMs))]
+  ...(doing.kind !== 'ready'
+    ? awayMarks(game, doing)
     : [el('span', { class: 'hc-foot' },
       stars, opts.power
         ? el('span', { class: 'hc-level hc-power', 'aria-label': `Power ${formatExact(game.heroPowerOf(heroId))}` },
@@ -73,6 +77,20 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/** What a hero who cannot be chosen is doing: its animated mark at the top
+ *  right, and in the level's place how long it lasts or where it is. */
+function awayMarks(game: Game, doing: Exclude<HeroState, { kind: 'ready' }>): HTMLElement[] {
+  const pill = (text: string): HTMLElement => el('span', { class: 'hc-foot' }, el('span', { class: 'k-rest-left' }, text));
+  switch (doing.kind) {
+    case 'resting': return [restMarks(), el('span', { class: 'hc-foot' }, restLeft(doing.restMs))];
+    case 'marching': return [marchMarks(), doing.at === null
+      ? pill('Marching')
+      : el('span', { class: 'hc-foot' }, restLeft(Math.max(0, doing.at - game.now())))];
+    case 'delving': return [delveMarks(), pill('Dungeon')];
+    case 'guarding': return [guardMarks(), pill('On guard')];
+  }
+}
 
 /** A hero not found yet: stone, a silhouette, its fragments. */
 function missingCard(game: Game, heroId: HeroId, opts: HeroCardOpts): HTMLElement {
