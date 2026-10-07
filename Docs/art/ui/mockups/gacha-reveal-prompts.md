@@ -92,3 +92,12 @@ lined up with the lock), and a fragments bar that recruits.
 - Ribbons: three rows — an empty red name ribbon with swallow tails, a "NEW"
   pennant on a gold pole, an empty wooden count plate. True alpha; cut by row
   bands → `card-ribbon.png`, `card-new.png`, `card-plate.png`.
+
+## Round 4 — back to the UI's own materials
+
+The user found the round-3 cards "bulky, too Hearthstone" and asked for the
+refined look of the research book's papers. No new art: the cards are drawn
+from shipped pieces — `panel-paper.png` + `deco-seal.png` (back),
+`rb-page.png` (reward), `hero-card-*.png` + `hero-card-frame.png` (whole
+hero, as in the roster), `offer-seal.png` (NEW). The round-3 sheets stay in
+`Docs/art/ui/chests/` as a record and ship nowhere.
