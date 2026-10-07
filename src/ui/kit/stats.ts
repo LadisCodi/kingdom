@@ -7,7 +7,7 @@
 // it is the function it hands you.
 
 import type { CurrencyId, Wallet } from '../../sim/state';
-import { el, formatExact } from '../format';
+import { el, formatCount, formatExact } from '../format';
 import { currencyIcon, iconEl, type IconName } from './icon';
 
 /** icon + amount, e.g. one term of a cost. `short` turns it clay. */
@@ -51,7 +51,9 @@ export function isShort(cost: Wallet, have?: (c: CurrencyId) => number): boolean
  * a pill inside a slab reads as a control inside a control. Just icon and
  * number, inheriting the button's ink — except a term the player cannot pay,
  * which turns clay. That red IS the reason the button is disabled, which is
- * why an unaffordable action needs no separate reason line.
+ * why an unaffordable action needs no separate reason line. A number rolls
+ * up at ten thousand as the plank's coins do (*9,999*, then *10k*), so a
+ * price never outgrows its button.
  *
  * Returns null for a free action, so a button with nothing to charge stays a
  * single line rather than growing an empty second one.
@@ -65,7 +67,7 @@ export function costTerms(
     ...(Object.entries(cost ?? {}) as Array<[CurrencyId, number]>)
       .filter(([, n]) => n > 0)
       .map(([c, n]) => ({
-        icon: c, amount: formatExact(n), short: have !== undefined && have(c) < n,
+        icon: c, amount: formatCount(n), short: have !== undefined && have(c) < n,
       })),
     ...(extra ?? []),
   ];
