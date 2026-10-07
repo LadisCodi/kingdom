@@ -172,7 +172,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
   /** Live countdowns: the element and the instant it counts to. */
   let clocks: Array<[HTMLElement, number]> = [];
 
-  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting', browse: OfferWidget[]): void => {
+  const build = (sku: StoreSkuId, mode: 'buy' | 'claim' | 'waiting', browse: OfferWidget[], auto: boolean): void => {
     const s = STORE[sku];
     const tiles = game.offerTiles(sku);
     const sale = game.offerSale(sku);
@@ -254,7 +254,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     root.replaceChildren(screen);
     const title = screen.querySelector<SVGSVGElement>('.ofs-ribbon-title');
     if (title !== null) fitRibbonTitle(title);
-    if (mode !== 'waiting') playSfx('unlock');
+    if (auto) playSfx('offerSplash');
   };
 
   const refresh = (): void => {
@@ -264,7 +264,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     if (key !== showing) {
       showing = key;
       if (on === null) root.replaceChildren();
-      else build(on.sku, on.mode, browse);
+      else build(on.sku, on.mode, browse, on.auto);
     }
     for (const [node, at] of clocks) {
       const text = formatCountdown(Math.max(0, Math.ceil((at - game.now()) / 1000)));

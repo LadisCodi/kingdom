@@ -2080,10 +2080,10 @@ export class Game {
     if (this.unlockOnScreen() !== null) return null;
     const now = this.now();
     const ready = nextDayReady(this.state, now).find((sku) => !this.splashesClosed.has(`claim:${sku}`));
-    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false };
+    if (ready !== undefined) return { sku: ready, mode: 'claim', browse: false, auto: true };
     const sku = OFFER_ORDER.find((id) => STORE[id].splash && offerOn(this.state, id, now)
       && offerWindow(this.state, id)!.opened < this.sessionStartedAt && !this.splashesClosed.has(`buy:${id}`));
-    return sku === undefined ? null : { sku, mode: 'buy', browse: false };
+    return sku === undefined ? null : { sku, mode: 'buy', browse: false, auto: true };
   }
 
   /** The offer splash again, from the store or the offers widget: the same
@@ -2096,7 +2096,7 @@ export class Game {
     const ready = nextDayReady(this.state, this.now()).includes(sku);
     this.splashesClosed.delete(`${ready ? 'claim' : 'buy'}:${sku}`);
     this.offerSplashForced = {
-      sku, browse,
+      sku, browse, auto: false,
       mode: ready ? 'claim' : nextDayWaiting(this.state, this.now()).some((d) => d.sku === sku) ? 'waiting' : 'buy',
     };
     this.setOverlay(null);
@@ -6817,6 +6817,9 @@ export interface OfferSplashView {
   sku: StoreSkuId;
   mode: 'buy' | 'claim' | 'waiting';
   browse: boolean;
+  /** Opened by the game at the start of a session, not by the player: only
+   *  this one sounds. */
+  auto: boolean;
 }
 
 /** The store's tabs (ui/storeSheet.ts). */

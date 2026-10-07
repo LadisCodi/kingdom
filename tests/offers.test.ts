@@ -242,7 +242,7 @@ describe('the offer splash', () => {
 
       vi.setSystemTime(T0 + HOUR);
       const next = freshPresenter(state);
-      expect(next.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'buy', browse: false });
+      expect(next.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'buy', browse: false, auto: true });
       next.closeOfferSplash();
       expect(next.offerSplashOnScreen()).toBeNull();
 
@@ -324,12 +324,12 @@ describe('the grouped offers widget', () => {
       vi.setSystemTime(dailyResetsAt(T0));
       expect(game.offerWidgets()[0]).toMatchObject({ sku: 'FirstPurchase', state: 'ready' });
       game.openOfferSplash(game.offerWidgets()[1]!.sku, true);
-      expect(game.offerSplashOnScreen()?.browse).toBe(true);
+      expect(game.offerSplashOnScreen()).toMatchObject({ browse: true, auto: false });
       game.closeOfferSplash();
       // The unlock splash the Tavern raised goes first.
       while (game.unlockOnScreen() !== null) game.dismissUnlock();
       // The session's own splash (the claim) carries no row.
-      expect(game.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'claim', browse: false });
+      expect(game.offerSplashOnScreen()).toMatchObject({ sku: 'FirstPurchase', mode: 'claim', browse: false, auto: true });
     } finally {
       vi.useRealTimers();
     }

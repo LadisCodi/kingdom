@@ -95,6 +95,9 @@ export type SfxName =
   | 'textTick'
   // A door or a book opening, full-screen (ui/unlockSplash.ts).
   | 'unlock'
+  // An offer splash that opens by itself, at the start of a session
+  // (ui/offerSplash.ts) — never one the player opened.
+  | 'offerSplash'
   // The chest a random reward is opened from (ui/gachaScreen.ts), in the
   // order they sound: it lands, the key turns, the lid flies, a card is
   // drawn, flipped and flown to its place; a new hero's riser, its fanfare
@@ -170,6 +173,9 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   // The unlock splash: Fairy Magical 05, a five-second stinger. Mastered
   // about 10 dB hotter than `discovery`, so it plays well under it.
   unlock: { urls: one(unlockUrl), volume: 0.3, jitter: 0 },
+  // The offer splash: the chest's Collect Item Sparkle Pop, a step lower and
+  // softer — a glint, not a fanfare, for something that greets every session.
+  offerSplash: { urls: one(chestSparkleUrl), volume: 0.25, jitter: 0, rate: 0.85 },
   // The chest. Every file is loudness-normalised to -16 LUFS, so these
   // volumes are the mix: the foley under the stingers, the fanfares on top.
   // Impact Deep Thud Bounce · Door Lock Turn · Chest Open · Card Draw ·
