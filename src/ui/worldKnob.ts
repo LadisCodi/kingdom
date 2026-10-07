@@ -1,6 +1,6 @@
 // The door to the world (Docs/features/22-progression.md §3, §5): a round
-// wooden knob with the compass carved into it, bottom right, just above the
-// nav. It appears, padlocked, the moment the Watchtower is sighted — the
+// brass-rimmed knob with the compass gilded into its wood, bottom right, just
+// above the nav (Docs/art/ui/knob/). It appears, padlocked, the moment the Watchtower is sighted — the
 // promise arrives with the place that keeps it — and claiming the Watchtower
 // breaks the lock. Out on the world board it wears the castle and takes the
 // player home.
@@ -17,8 +17,8 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
   const lock = el('span', { class: 'world-knob-lock', 'aria-hidden': 'true' }, iconEl('padlock', { size: 'sm' }));
   const knob = el('button', {
     class: 'k-knob world-knob', type: 'button', 'aria-label': 'The world', 'data-coach': 'world',
-  }, el('span', { class: 'world-knob-out' }, iconEl('compass', { size: 'md' })),
-  el('span', { class: 'world-knob-home' }, iconEl('Townhall', { size: 'md' })), lock);
+  }, el('span', { class: 'world-knob-face world-knob-out', 'aria-hidden': 'true' }),
+  el('span', { class: 'world-knob-face world-knob-home', 'aria-hidden': 'true' }), lock);
   knob.addEventListener('click', () => {
     if (game.scene === 'world') {
       game.leaveWorld();
