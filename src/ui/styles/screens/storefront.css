@@ -389,7 +389,6 @@
  * free calls, its two buttons and its pity. */
 .sth-banner {
   position: relative;
-  min-height: calc(var(--px) * 150);
   border-style: solid;
   border-width: calc(var(--px) * 18);
   border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 18) / 0 stretch;
@@ -438,18 +437,9 @@
 }
 .sth-banner.has-hero .sth-banner-ribbon { left: auto; right: calc(var(--px) * 4); }
 .sth-banner.is-advanced .sth-banner-ribbon {
-  border-image-source: url('../../assets/plank-gold.png');
+  border-image-source: url('../../assets/plank-gold-full.png');
   color: #5a3a12;
   text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 240, 200, 0.6);
-}
-.sth-banner-key {
-  position: absolute;
-  z-index: 2;
-  right: calc(var(--px) * -6);
-  top: calc(var(--px) * -22);
-  width: calc(var(--px) * 64);
-  height: calc(var(--px) * 64);
-  transform: rotate(-18deg);
 }
 .sth-banner-hero {
   position: absolute;

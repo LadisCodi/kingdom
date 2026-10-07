@@ -165,9 +165,9 @@ function banner(game: Game, id: BannerId): HTMLElement {
   const stands = def.showsHero ? featuredHero(id, game.storeVisits) : null;
   const hero = stands === null ? null : spriteUrl(HEROES[stands].sprite);
   return el('section', { class: `sth-banner is-${id}${hero === null ? '' : ' has-hero'}` },
-    hero === null
-      ? el('span', { class: `store-art sth-banner-key is-${def.key}`, role: 'img', 'aria-label': def.key })
-      : spriteImgAt(hero, 'sth-banner-hero'),
+    // The common call shows nothing but its calls: smaller than the golden
+    // call, which reads as the better one.
+    ...(hero === null ? [] : [spriteImgAt(hero, 'sth-banner-hero')]),
     el('div', { class: 'sth-banner-body' },
       el('div', { class: 'sth-banner-ribbon' }, el('span', {}, def.name)),
       freeLine(game, id),
