@@ -77,6 +77,7 @@ export type ModifierStat =
   // queue (Docs/proposals/relic-effects.md §4.2).
   | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
   | 'harvestStock'    // units a cell holds before it is spent
+  | 'trainingSpeed'   // how fast a building trains — soldiers and villagers alike
   // TODO(OQ-113): NOTHING READS `roomHaul`. It moved a ROOM's Gold and Stone,
   // and the rooms were retired with the depths; it stays defined so the
   // Wisp Lantern that names it still loads. The Lantern needs a new

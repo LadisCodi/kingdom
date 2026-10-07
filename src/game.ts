@@ -1643,8 +1643,8 @@ export class Game {
   /**
    * WHAT AN AWAKE AURA PAYS THE BUILDINGS IN IT (M84), one badge a roof — on
    * what the relic actually moves: the Crown's houses with residents, the
-   * Hammer's buildings with a crew. The Staff and the Sickle move the GROUND,
-   * which the tint already says.
+   * Hammer's buildings with a crew, the Staff's buildings that train. The
+   * Sickle moves the GROUND, which the tint already says.
    */
   private auraBadges(): MarkerLayer['auraBadges'] {
     const out: MarkerLayer['auraBadges'] = [];
@@ -1655,7 +1655,9 @@ export class Game {
         ? (d: District) => residentsOf(this.state, d) > 0
         : relic === 'ForemansSigil'
           ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
-          : null;
+          : relic === 'DowsingRod'
+            ? (d: District) => DISTRICTS[d.definitionId].trains.length > 0
+            : null;
       if (reaches === null) continue;
       const text = `+${relicPercent(passiveValue(this.state, relic))}`;
       const aura = auraOf(this.state, host, relic);
@@ -6928,8 +6930,8 @@ function relicShortEffect(id: ArtifactId, value: number): string {
 }
 
 const RELIC_SHORT: Record<ArtifactId, string> = {
-  DowsingRod: 'recovery',
-  VerdantSeal: 'resources',
+  DowsingRod: 'training',
+  VerdantSeal: 'per swing',
   ForemansSigil: 'crew speed',
   GildedLedger: 'tax',
   WanderersCompass: 'Stardust',
@@ -6940,8 +6942,8 @@ const RELIC_SHORT: Record<ArtifactId, string> = {
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
-  DowsingRod: 'Forests, crops and stone recover',
-  VerdantSeal: 'Natural resources and extraction speed',
+  DowsingRod: 'Your buildings train',
+  VerdantSeal: 'Every swing and tap takes',
   ForemansSigil: 'Your crews swing and walk',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',
