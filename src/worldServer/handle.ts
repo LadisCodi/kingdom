@@ -17,7 +17,7 @@ import type { ArtifactId, HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
   claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, join, owedTo, recall, repair, reportSeen, resolveTo,
-  sendArmy, setBoost, setCrest, snapshotOf, tribute, unhostRelic, upgrade,
+  sendArmy, setBoost, setCrest, setTownhall, snapshotOf, tribute, unhostRelic, upgrade,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
 import type {
@@ -58,6 +58,8 @@ export interface WorldCommands {
   setBoost: { cmd: { boost: SeatBoost }; reply: null };
   /** The crest the player chose, or null for their nickname's. */
   setCrest: { cmd: { crest: string | null }; reply: null };
+  /** The player's Townhall level, for the ranking (19 §12). */
+  setTownhall: { cmd: { level: number }; reply: null };
   /** Host a world relic, at its level, in the Chapel on a hex — or send its
    *  new level after a level-up (relic-restoration.md §5.2). */
   hostRelic: { cmd: { index: number; relic: ArtifactId; level: number }; reply: CommandResult };
@@ -159,6 +161,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'descendPortal': return descendPortal(b, seat, cmd.armyId, t);
     case 'setBoost': setBoost(b, seat, cmd.boost, t); return null;
     case 'setCrest': setCrest(b, seat, cmd.crest); return null;
+    case 'setTownhall': setTownhall(b, seat, cmd.level); return null;
     case 'hostRelic': return hostRelic(b, seat, cmd.index, cmd.relic, cmd.level, t);
     case 'unhostRelic': return unhostRelic(b, seat, cmd.relic, t);
     case 'join': case 'snapshot': throw new Error(`${cmd.kind} is not a command`);
@@ -167,7 +170,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
 
 /** A player not seated anywhere. */
 function refusedFor(kind: WorldCommandKind): unknown {
-  if (kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest') return null;
+  if (kind === 'snapshot' || kind === 'setBoost' || kind === 'setCrest' || kind === 'setTownhall') return null;
   return { ok: false, why: 'NoBoard' };
 }
 

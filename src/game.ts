@@ -138,6 +138,7 @@ import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
+import { worldRanking, type RankedSeat } from './sim/world/ranking';
 import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type QuestDef } from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
@@ -233,6 +234,8 @@ export type OverlayName =
   // The friends list, from the header, and a friend's profile over it
   // (Docs/features/15-social.md §2.1).
   | 'friends' | 'friendProfile'
+  // The world ranking, from its widget on the board (19-world-map.md §12).
+  | 'ranking'
   // The shield editor, from the pencil on the player's own card (§2.2).
   | 'crestEditor'
   // Asking a kingdom by its name or code, from the requests list (§2.1).
@@ -5331,6 +5334,12 @@ export class Game {
   /** The friends list (friendsClient.ts): its server is set by main. */
   friends: FriendsClient = new FriendsClient(this, null);
 
+  /** The world ranking (19 §12): the kingdoms of the player's world by the
+   *  hexes each holds, as the server last told it; null off a board. */
+  worldRanking(): RankedSeat[] | null {
+    return this.worldView === null ? null : worldRanking(this.worldView);
+  }
+
   /** The name the world board knows the player by, once they sit on one. */
   worldNickname(): string | null {
     return this.worldView?.seats.find((s) => s.you)?.name ?? null;
@@ -5451,6 +5460,8 @@ export class Game {
   /** The crest last sent to the world board, so a board that has not
    *  caught up yet is not told twice. `undefined`: nothing sent. */
   private crestSentToWorld: string | null | undefined = undefined;
+  /** The Townhall level last sent to the world board, likewise. */
+  private townhallSentToWorld: number | undefined = undefined;
 
   /** The crest the player's kingdom wears (sim/crest.ts). */
   myCrest(): Crest {
@@ -5540,6 +5551,13 @@ export class Game {
     if (you !== undefined && (you.crest ?? null) !== profile.crest && this.crestSentToWorld !== profile.crest) {
       this.crestSentToWorld = profile.crest;
       void this.worldServer?.setCrest(profile.crest);
+    }
+    // And its Townhall, which the ranking shows: told again whenever the
+    // board's number is behind the city's.
+    const level = townhall(this.state).level;
+    if (you !== undefined && (you.townhall ?? null) !== level && this.townhallSentToWorld !== level) {
+      this.townhallSentToWorld = level;
+      void this.worldServer?.setTownhall(level);
     }
     const mine = this.state.world.board;
     if (snap.board.id !== mine.id || snap.board.seed !== mine.seed || snap.board.seat !== mine.seat) {

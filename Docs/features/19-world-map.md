@@ -14,7 +14,7 @@
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
 > `worldCamps`; Dungeons
-> and the delve screen (§8.1–§8.2) and the Dark Portal (§10), which opens on Fridays (UTC) for three
+> and the delve screen (§8.1–§8.2), the ranking (§12) and the Dark Portal (§10), which opens on Fridays (UTC) for three
 > days, its numbers in `worldPortal`. Stand-in rivals in every free seat claim, build, beat
 > camps, man a Fortress and now and then
 > attack on their own.
@@ -781,7 +781,31 @@ The outer scope feeds the inner one.
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
 
-## 12. The dials, in the order to reach for them
+## 12. The ranking
+
+Every kingdom in the world, ordered by the hexes it holds. It pays nothing;
+it is there to compare.
+
+- **Hexes** = the city + every hex whose district stands under it. A hex still
+  being claimed does not count yet.
+- **Order**: most hexes first. Kingdoms with as many hexes share a place
+  (1, 2, 2, 4).
+- **Who**: every seat of the world, players and stand-in rivals alike; a free
+  city is not ranked.
+- **The widget** (mockup m100): on the world board, top left, under the
+  explorers chip — "Ranking", the player's place and their hexes. A tap opens
+  the list. Hidden behind any sheet.
+- **The list** (mockup m101): one row a kingdom — its place on a ribbon (gold,
+  silver, bronze, then wood), its crest, its name, its Townhall, a mark if it
+  is a friend, its hexes. It scrolls.
+  - The player's own row is gilded, and pinned again at the foot with how
+    far the next place up is ("2 hexes behind #10"), or "First in this world".
+  - A tap on a row closes the list and glides to that kingdom's city.
+- **The Townhall** is told to the world server by each player's client, so a
+  kingdom shows one once its player has been on the board. The stand-in rivals
+  have none.
+
+## 13. The dials, in the order to reach for them
 
 | Dial | Moves | Reach for it when |
 |---|---|---|
@@ -808,7 +832,7 @@ The outer scope feeds the inner one.
 | **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
 | **Reveal radius** (1, upgrading to 2) | how fast the board opens | exploring becomes the bottleneck |
 
-## 13. Deliberately not in this design
+## 14. Deliberately not in this design
 
 - **Attacking a city.** A city hex is never attackable, by anyone, ever.
 - **Cascading conquest** — no hex falls because a neighbour did.
@@ -825,6 +849,7 @@ The outer scope feeds the inner one.
 - **Reusing `grid.ts`** for the lattice.
 - **A rule that forbids continuous conflict.** The price in troops is the only
   brake.
+- **Rewards for a place in the ranking**, or a ranking by anything but hexes.
 
 **Open questions:** OQ-3 (season length — the shard is six players on 127 hexes,
 the season is not set), OQ-122 in

@@ -33,14 +33,19 @@
 #app.in-world #edge,
 #app.in-world #panel { display: none; }
 
+/* The board's left column, in the flow under the header where the
+ * province's Survey widget sits, above the offer widgets: the explorers
+ * chip, and the ranking's widget under it. */
+#worldleft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: flex-start;
+}
+#app:not(.in-world) #worldleft { display: none; }
+
 /* THE EXPLORERS CHIP — the builders' parchment plaque, top left under the
  * header: a compass and how many are free of how many. */
-#worldchip {
-  position: absolute;
-  left: 0;
-  top: var(--hud-h);
-  z-index: 3;
-}
 #worldchip[hidden] { display: none; }
 .world-chip-label { font-weight: var(--weight-strong); }
 

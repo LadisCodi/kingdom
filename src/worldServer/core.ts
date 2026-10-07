@@ -137,6 +137,14 @@ export function setCrest(b: ServerBoard, seat: number, crest: string | null): vo
   else s.crest = crest!;
 }
 
+/** A seat's Townhall level, for the ranking to show (19 §12). Nothing on
+ *  the board turns on it. */
+export function setTownhall(b: ServerBoard, seat: number, level: number): void {
+  const s = b.seats[seat];
+  if (s === null || s === undefined || !Number.isInteger(level) || level < 1) return;
+  s.townhall = level;
+}
+
 /**
  * Take a seat's multipliers on its districts' output and stores. A rate
  * changes only at an event, so every store is settled to `t` first: what was
@@ -1593,6 +1601,7 @@ export function snapshotOf(b: ServerBoard, seat: number, t: number): WorldSnapsh
     at: t,
     seats: b.seats.map((s, i) => ({
       seat: i, name: s?.name ?? 'A free city', you: i === seat, bot: s?.bot ?? false, crest: s?.crest ?? null,
+      townhall: s?.townhall ?? null, ...(s === null || s === undefined ? { free: true } : {}),
     })),
     hexes,
     armies,

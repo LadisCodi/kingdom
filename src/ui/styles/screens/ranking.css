@@ -1,0 +1,86 @@
+/* THE WORLD RANKING (Docs/features/19-world-map.md §12, mockups m100, m101):
+ * its widget on the board, the Survey widget's card with a laurel medallion;
+ * its sheet, the friends list's rows with each kingdom's hexes at the right. */
+
+/* ----------------------------------------------------------- the widget */
+
+/* Under the Knowledge tab, never beside it, as the Survey's widget; under
+   the explorers chip, it is already clear of it. */
+#worldrank { padding: calc(var(--px) * 30) calc(var(--px) * 12) 0 calc(var(--px) * 22); }
+#worldchip:not([hidden]) + #worldrank { padding-top: calc(var(--px) * 8); }
+#worldrank[hidden] { display: none; }
+.svw.rkw { min-width: calc(var(--px) * 150); }
+.rkw-medal {
+  position: absolute;
+  left: calc(var(--px) * -10);
+  top: 50%;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  transform: translateY(-50%);
+  background: url('../../assets/ranking-medal.png') center / contain no-repeat;
+}
+.rkw-line {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 6);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+/* The place on a small gold plate, like a ribbon's face. */
+.rkw-place {
+  padding: 0 calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 4);
+  border: calc(var(--px) * 1) solid var(--gold-dark);
+  background: linear-gradient(#ffe08a, #f2b233);
+  color: #5a3a12;
+  font-weight: var(--weight-title);
+}
+.rkw-hexes { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
+
+/* ------------------------------------------------------------ the sheet */
+
+/* The whole screen: the heading and the pinned row keep their height, the
+   list between them fills the rest and is the only thing that scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .rk-top,
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .rk-mine { flex: none; }
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .rk-list { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: clip; }
+.rk-top { display: flex; flex-direction: column; gap: calc(var(--px) * 6); padding: calc(var(--px) * 2) 0 calc(var(--px) * 6); }
+.rk-list { padding: 0 calc(var(--px) * 2) calc(var(--px) * 4); }
+.rk-mine { padding-top: calc(var(--px) * 8); }
+.rk-where {
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--px) * 15);
+  font-weight: var(--weight-strong);
+  color: var(--ink-muted);
+}
+/* KINGDOM and HEXES over their columns, in small brown capitals. */
+.rk-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 calc(var(--px) * 12) 0 calc(var(--px) * 10);
+  font-size: calc(var(--px) * 11);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.rk-name { display: flex; align-items: center; gap: calc(var(--px) * 4); }
+.rk-friend { display: inline-flex; flex: none; }
+.rk-hexes {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  font-size: calc(var(--px) * 20);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+}
+/* The player's own: the friends list's gilded card. */
+.fr-row.rk-row.is-you {
+  border-color: var(--gold-dark);
+  background: linear-gradient(#fbe7a8, #f2d27f);
+  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.45), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.25);
+}
+.rk-gap { font-style: normal; }
