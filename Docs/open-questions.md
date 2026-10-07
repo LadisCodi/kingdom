@@ -213,6 +213,7 @@ New with the fantasies in [`overview.md`](overview.md) (2026-10-02).
 |---|---|---|---|---|
 | **OQ-120** | **How often, and how much, does the fog pay in treasure?** One every five cells revealed, at 120 s of production, is a guess. Too rare and the fog goes back to confirming what the player saw; too often and a chest is noise, and the fog's price curve is paid back faster than it was tuned for. | the fog's pace | [`01-map-and-fog.md`](features/01-map-and-fog.md) §6.2 | instrument treasures picked up per session in the 30-day harness |
 | **OQ-121** | **Does the Survey's ladder match the pace of the fog, and what may it pay?** Its levels sit at 20 → 1,470 cells revealed, dense early and spread where the fog is dear, but how many cells a kingdom reveals a week is the harness's to say — if a level is weeks apart by month two, the ladder has stopped being a reason to explore. Its free column adds Gems and gold keys to the faucet ([`14-monetization.md`](features/14-monetization.md) §1.1), and $9.99 once for the whole province sits beside the season products' $4.99 and $9.99 every season. | the Survey's rewards table | [`25-the-survey.md`](features/25-the-survey.md) §3 | read cells revealed per day off the 30-day harness before pricing a single rung |
+| **OQ-133** | **Does an unread news ever expire?** The inbox keeps the newest 30 and drops the oldest; a week-old *Built* bubble may be noise, but a raid report is not. | the inbox | [`26-notices.md`](features/26-notices.md) §7 | watch how many bubbles a tester leaves unopened after a few days |
 
 
 

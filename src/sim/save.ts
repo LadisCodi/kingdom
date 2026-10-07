@@ -24,6 +24,7 @@ import { syncHeroBoons } from './heroes';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
+import { readSavedNews } from './notices';
 import { parseCrest } from './crest';
 import { isStoreFull } from './storage';
 import { freshWorld } from './world/explorers';
@@ -1110,6 +1111,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         ReturnTaps: state.signals.returnTaps.map((r) => ({ AtUtc: iso(r.at), Kind: r.kind })),
         PlayMs: state.signals.playMs,
       },
+      // The news inbox (Docs/features/26-notices.md §7), each as the sim
+      // wrote it; `at` stays epoch ms, as it is only ever compared.
+      'kingdom.notices': state.notices.map((n) => ({ ...n })),
       'kingdom.research': {
         Completed: state.research.completed,
         Poured: state.research.poured,
@@ -1557,6 +1561,13 @@ export function deserialize(
     // Additive (v88).
     playMs: Number.isFinite(signalsDto?.PlayMs) && signalsDto!.PlayMs! >= 0 ? signalsDto!.PlayMs! : 0,
   };
+
+  // Additive (v104): a kingdom from before the notices has no news. A
+  // news of a group this build does not know is dropped.
+  const noticesDto = modules['kingdom.notices'];
+  state.notices = Array.isArray(noticesDto)
+    ? noticesDto.flatMap((n) => { const news = readSavedNews(n); return news === null ? [] : [news]; })
+    : [];
 
   // Additive (v89). An item the build no longer knows is dropped, and a
   // count that is not a positive whole number is no item.

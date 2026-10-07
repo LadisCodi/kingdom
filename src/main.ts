@@ -30,8 +30,6 @@ import { deserialize, isPrototypeStale, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
 import { mountRewardFly } from './ui/rewardFly';
-import { mountAdOfferPill } from './ui/adOfferPill';
-import { mountRelicAsleepPill } from './ui/relicAsleepPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountBattleScreen } from './ui/battleScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
@@ -84,7 +82,9 @@ import { mountStage } from './ui/stage/stage';
 import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
-import { mountNextDayPill, mountOfferSplash } from './ui/offerSplash';
+import { mountOfferSplash } from './ui/offerSplash';
+import { mountNoticeColumn } from './ui/notices/column';
+import { renderNoticeCard } from './ui/notices/card';
 import { mountOfferWidgets } from './ui/offerWidget';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
 import { activeQuest, claimQuest } from './sim/quests';
@@ -98,7 +98,6 @@ import { choosePayerProfile, PAYER_PROFILES } from './sim/store';
 import type { PayerProfile } from './sim/state';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountBanner } from './ui/banner';
 import { dismissBootScreen, revealWhenReady } from './ui/bootScreen';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { mirrorMountFlags } from './ui/mountFlags';
@@ -265,14 +264,11 @@ async function boot(): Promise<void> {
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountSurveyPill(game, document.getElementById('survey')!);
-  mountBanner(game, document.getElementById('notice')!);
+  mountNoticeColumn(game, document.getElementById('notices')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);
-  mountAdOfferPill(game, document.getElementById('adoffer')!);
-  mountNextDayPill(game, document.getElementById('nextday')!);
   mountOfferWidgets(game, document.getElementById('offerwidgets')!);
-  mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
   mountRankingWidget(game, document.getElementById('worldrank')!);
@@ -342,6 +338,7 @@ async function boot(): Promise<void> {
     friends: renderFriendsSheet,
     friendProfile: renderFriendProfile,
     ranking: renderRankingSheet,
+    notice: renderNoticeCard,
     crestEditor: renderCrestEditor,
     friendSearch: renderFriendSearch,
     wishNeed: renderWishNeed,

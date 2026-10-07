@@ -206,8 +206,9 @@
   session.
 - The splash's button is the **price**: it goes straight to the confirmation
   (§3.2), which returns to the map.
-- Bought, the splash shows tomorrow's part **locked**; a **pill** on the
-  right edge counts down to it, then glows **Claim**. At the start of a
+- Bought, the splash shows tomorrow's part **locked**; the *Tomorrow's part*
+  notice ([`26-notices.md`](26-notices.md) §2.2) counts down to it, then glows
+  and offers **Claim**. At the start of a
   session with a part ready, the splash opens on it, and its button claims.
 - Any product may carry a next-day part (`nextDay*`); a hero's fragments
   need the product's `hero`.
@@ -219,8 +220,7 @@
   if its window closes), *Tomorrow in …*, then **Claim!** with a red dot.
 - A tap opens the lead's splash with **every offer in a row along its top**,
   to step from one to the next. A splash opened by the session has no row.
-- A `widget` offer's next-day part is shown there, not on the right-edge
-  pill.
+- A `widget` offer's next-day part is shown there, not as a notice.
 
 ## 3. The simulated budget
 

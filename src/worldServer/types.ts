@@ -91,7 +91,9 @@ export type WorldEffect = { seq?: number } & (
     fallen: Array<{ unitId: UnitId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
-  | { kind: 'report'; at: number; text: string; good: boolean }
+  /** A line for the notices; `hex` is where it happened, when it has a
+   *  place (Docs/features/26-notices.md §2.1). */
+  | { kind: 'report'; at: number; text: string; good: boolean; hex?: number }
   /** Precious material the server hands back: an offer the closed
    *  Exchange still held. */
   | { kind: 'goods'; at: number; lot: Lot; text: string }

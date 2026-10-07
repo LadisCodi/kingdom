@@ -4,6 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import type { SimTrack } from './analytics';
+import type { News } from './notices';
 import { DISTRICTS } from './data/definitions';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 // Imported for its KEYS, which are the technology ids (see TechId below).
@@ -778,8 +779,10 @@ export interface GameState {
    * of its seed (sim/world/board.ts).
    */
   world: WorldState;
-  /** Discoveries made since the UI last drained them. Transient — a banner
-   *  missed at quit simply doesn't replay. */
+  /** The news inbox (Docs/features/26-notices.md §7, sim/notices.ts):
+   *  newest first, capped, kept until each bubble is opened. */
+  notices: News[];
+  /** Discoveries made since the UI last drained them. Transient. */
   pendingDiscoveries: string[];
   /** Analytics events made since the game last drained them (sim/analytics.ts).
    *  Transient, never saved. */

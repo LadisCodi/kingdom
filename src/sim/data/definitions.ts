@@ -382,6 +382,8 @@ export const RUSH = balance.rush;
 
 // The Bag's own settings (Docs/plans/relics-and-bag.md).
 export const BAG = balance.bag;
+/** The notices column and the news inbox (Docs/features/26-notices.md). */
+export const NOTICES = balance.notices;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
 export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
@@ -2464,4 +2466,4 @@ export const GAME_VERSION: string = pkg.version;
 // (`ExplorersBought` on the world), additive.
 // v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
 // on `kingdom.heroes` (a migrator).
-export const SAVE_VERSION = 103;
+export const SAVE_VERSION = 104;

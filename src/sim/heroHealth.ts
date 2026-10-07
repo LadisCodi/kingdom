@@ -57,3 +57,16 @@ export function setHeroHp(state: GameState, id: HeroId, hp: number, t: number): 
   if (missing <= 0) delete state.heroes.hurt[id];
   else state.heroes.hurt[id] = { missing, at: t, ...(hp <= 0 ? { exhausted: true } : {}) };
 }
+
+/** RESTED: heroes a fight exhausted whose bar is whole again, and who have
+ *  not fought since — the *Hero rested* notice (Docs/features/26-notices.md
+ *  §2.2). The mark is the exhausted stamp itself, which the next fight
+ *  rewrites. */
+export const restedHeroes = (state: GameState, t: number): HeroId[] =>
+  (Object.keys(state.heroes.hurt) as HeroId[])
+    .filter((id) => state.heroes.hurt[id]?.exhausted === true && heroHpShare(state, id, t) >= 1);
+
+/** The rested notice read: a whole bar needs no stamp. */
+export function forgetRested(state: GameState, t: number): void {
+  for (const id of restedHeroes(state, t)) delete state.heroes.hurt[id];
+}

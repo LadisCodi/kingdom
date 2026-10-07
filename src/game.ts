@@ -9,7 +9,8 @@ import {
   type BagTab,
 } from './sim/bag';
 import { DOOR_HINT, firstMorningOn, freshlyOpenDoors, isDoorOpen, markDoorSeen, showsCollect, type DoorId } from './sim/doors';
-import { heroCanFight, heroHp, heroMaxHp, heroRestEndsAt } from './sim/heroHealth';
+import { forgetRested, heroCanFight, heroHp, heroMaxHp, heroRestEndsAt, restedHeroes } from './sim/heroHealth';
+import { newsOf, postNews, readNews, type News, type NewsGroup } from './sim/notices';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
   buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
@@ -241,7 +242,9 @@ export type OverlayName =
   // Asking a kingdom by its name or code, from the requests list (§2.1).
   | 'friendSearch'
   // The wish board (§2.4): a wish made in two steps, and a fill's window.
-  | 'wishNeed' | 'wishGive' | 'wishFilled';
+  | 'wishNeed' | 'wishGive' | 'wishFilled'
+  // A notice's card, from its bubble (Docs/features/26-notices.md §5).
+  | 'notice';
 
 /** Fragments that landed, as one line: "A piece of the Staff of Renewal". */
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
@@ -641,7 +644,6 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
-  private bannerQueue: Banner[] = [];
   private questWasComplete = false;
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
@@ -717,15 +719,13 @@ export class Game {
     // The store's offers, on the same latch and for the same reason: a
     // trigger met by a tap opens its window on that tap (sim/offers.ts).
     refreshOffers(this.state, this.now());
-    // Move fresh sim discoveries into the banner queue BEFORE listeners run,
-    // so the banner component sees them on this very render. A RESOURCE is
-    // never announced: its coin lands on the plank under the player's own
-    // tap. A SITE is, unless a scene introduces it — the advisor says it.
+    // A fresh SITE is a news (Docs/features/26-notices.md §2.1), unless a
+    // scene introduces it — the advisor says it. A RESOURCE is never one:
+    // its coin lands on the plank under the player's own tap.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
-      if (kind !== 'site' || this.sceneIntroduces(id)) continue;
-      const banner = siteBanner(id);
-      if (banner) this.queueBanner(banner);
+      if (kind !== 'site' || this.sceneIntroduces(id) || siteBanner(id) === null) continue;
+      postNews(this.state, { group: 'sighted', key: `sighted:${id}`, at: this.now(), site: id });
     }
     // A DOOR THAT HAS JUST OPENED is remembered at once, so it never shuts
     // again, and announced to whoever draws padlocks and plays scenes.
@@ -757,14 +757,6 @@ export class Game {
     for (const fn of this.changeListeners) fn();
   }
 
-  queueBanner(banner: Banner): void {
-    this.bannerQueue.push(banner);
-  }
-
-  /** The next queued banner, if any (consumed by the banner component). */
-  takeBanner(): Banner | null {
-    return this.bannerQueue.shift() ?? null;
-  }
   shake(currencies: CurrencyId[]): void {
     playSfx('error'); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
@@ -827,16 +819,13 @@ export class Game {
     }
     this.friends.tick();
     this.maybeAskName();
-    for (const done of result.worldBuildsDone) {
-      this.toast(worldBuildDone(done.what, done.level));
-    }
     // A relic whose window closed — here or while away — asks to be woken.
     for (const r of result.relicsAsleep) {
       if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
-    // An explorer home says what it found; the board already shows where.
-    // The target's promise, if it kept one, is paid and named (19 §3.2).
-    for (const home of result.explorersHome) this.explorerHomeToast(home);
+    // An explorer home is a news (sim/notices.ts); the target's promise, if
+    // it kept one, is paid here (19 §3.2).
+    for (const home of result.explorersHome) this.payExplorer(home);
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
     // whole reason the trip is worth watching: the hit is where the work
     // happened and the number is where it arrived.
@@ -861,35 +850,9 @@ export class Game {
       if (out) this.boatsOut.add(w.id);
       else this.boatsOut.delete(w.id);
     }
-    for (const item of result.completedItems) {
-      const district = districtById(this.state, item.districtUniqueId);
-      if (!district) continue;
-      const def = DISTRICTS[district.definitionId];
-      this.queueBanner(item.kind === 'build'
-        ? {
-          title: 'Construction complete!', icon: def.glyph, name: def.name,
-          desc: def.description, sprite: `${def.sprite}_l1`, tone: 'leaf',
-          sfx: 'constructionComplete'
-        }
-        : {
-          title: 'Upgrade complete!', icon: def.glyph, name: def.name,
-          desc: `Now level ${district.level}`, tone: 'leaf',
-          sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
-        });
-    }
-    // A raid landing while the player is HERE gets a line: a store that
-    // quietly empties under their eyes is the one thing this feature must
-    // never do silently. What an absence cost is on each lair's card, as the
-    // hoard it carries (Docs/proposals/lairs.md §6), so a catch-up that
-    // resolves a night of raids says so ONCE rather than in a stack of toasts.
-    const raided = result.raids.filter((r) => Object.keys(r.took).length > 0);
-    if (raided.length === 1) {
-      const raid = raided[0];
-      const took = Object.entries(raid.took).map(([c, n]) => `${formatExact(n)} ${c}`).join(', ');
-      this.toast(`${lairCreature(raid.lairId)} raided the city — ${took}`);
-    } else if (raided.length > 1) {
-      this.toast(`${raided.length} raids on the city while you were away`);
-    }
+    // A construction or an upgrade finished, a raid landed: each is a news
+    // the sim filed (sim/notices.ts), and its bubble is the announcement.
+    if (result.completedItems.length > 0) playSfx('constructionComplete');
     this.notify();
   }
 
@@ -3921,15 +3884,7 @@ export class Game {
       if (quest.rewardGems > 0) haul.Gems = (haul.Gems ?? 0) + quest.rewardGems;
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
-      if (finished) {
-        this.queueBanner({
-          title: 'The chain is done',
-          icon: '👑',
-          name: 'Your kingdom stands on its own',
-          desc: 'No more guidance — build whatever you like from here.',
-          sfx: 'chainFinished',
-        });
-      }
+      if (finished) postNews(this.state, { group: 'chainDone', key: 'chainDone', at: this.now() });
     }
     this.notify();
     if (haul !== null) this.reward(haul);
@@ -4006,6 +3961,7 @@ export class Game {
   /** Fly to a lair and open its card — what the quest chain does when it
    *  points at one. */
   showLair(lairId: LairId): void {
+    if (this.scene === 'world') this.leaveWorld();
     this.setOverlay(null);
     this.inspectedSite = LAIRS[lairId].location;
     this.inspectedDistrictId = null;
@@ -5571,7 +5527,13 @@ export class Game {
     // applied are new.
     const fresh = snap.effects.filter((e) => (e.seq ?? 0) > this.state.world.effectSeq);
     for (const e of fresh) {
-      if (e.kind === 'armyHome') receiveArmy(this.state, e);
+      if (e.kind === 'armyHome') {
+        receiveArmy(this.state, e);
+        const count = (list: Array<{ count: number }>): number => list.reduce((n, x) => n + x.count, 0);
+        postNews(this.state, {
+          group: 'armyHome', key: `armyHome:${e.armyId}`, at: e.at, troops: count(e.troops), fallen: count(e.fallen),
+        });
+      }
       else if (e.kind === 'loot') {
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
         // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
@@ -5601,8 +5563,13 @@ export class Game {
       } else if (e.kind === 'goods') {
         // Precious material from the Exchange: an offer taken, or one back.
         addGood(this.state.city.goods, e.lot.id, e.lot.amount);
-        this.toast(e.text);
-      } else this.toast(e.text);
+        postNews(this.state, { group: 'world', key: `world:${e.seq ?? e.at}`, at: e.at, text: e.text, good: true });
+      } else {
+        postNews(this.state, {
+          group: 'world', key: `world:${e.seq ?? e.at}`, at: e.at, text: e.text, good: e.good,
+          ...(e.hex === undefined ? {} : { hex: e.hex }),
+        });
+      }
     }
     if (fresh.length > 0) {
       this.state.world.effectSeq = Math.max(...fresh.map((e) => e.seq ?? 0));
@@ -5941,6 +5908,11 @@ export class Game {
     this.toast(home.revealed > 0
       ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
       : `Your explorer is home — nothing new out there${found}`);
+    this.payExplorer(home);
+  }
+
+  /** What an explorer's promise paid, flown into the header. */
+  private payExplorer(home: ExplorerHome): void {
     if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
   }
 
@@ -6045,10 +6017,84 @@ export class Game {
   private goOutToWorld(): void {
     this.dismiss();
     this.scene = 'world';
-    // Out onto the board at the player's own city, up close.
-    this.worldCamera?.focusHex(hexAt(homeIndex(this.state)));
+    // Out onto the board at the player's own city, up close — or at the hex
+    // a notice's Go asked for, with its card open.
+    const arrival = this.worldArrival;
+    this.worldArrival = null;
+    this.worldCamera?.focusHex(hexAt(arrival ?? homeIndex(this.state)));
+    if (arrival !== null) {
+      this.selectedHex = arrival;
+      this.openOverlay = 'world';
+    }
     void this.refreshWorld();
     this.notify();
+  }
+
+  /** The hex the next trip out lands on, instead of home. */
+  private worldArrival: number | null = null;
+
+  // ------------------------------------------------------------- notices
+
+  /** The card open over the notices, as it was when its bubble was tapped
+   *  (Docs/features/26-notices.md §5): a news is read the moment it opens,
+   *  so its card keeps what it said. */
+  noticeCard: { id: string; news: News[]; heroes: HeroId[] } | null = null;
+
+  /** Open a bubble's card. A news group is read as it opens; so is the
+   *  rested heroes' mark. */
+  openNotice(id: string): void {
+    const t = this.now();
+    const group = id.startsWith('news:') ? id.slice('news:'.length) as NewsGroup : null;
+    const news = group === null ? [] : newsOf(this.state, group);
+    const heroes = id === 'state:heroRested' ? restedHeroes(this.state, t) : [];
+    this.noticeCard = { id, news, heroes };
+    if (group !== null) readNews(this.state, group);
+    if (heroes.length > 0) forgetRested(this.state, t);
+    this.track('notice_opened', { id, count: Math.max(news.length, heroes.length, 1) });
+    playSfx('click');
+    this.setOverlay('notice');
+  }
+
+  /** Heroes a fight exhausted who are whole again (sim/heroHealth.ts). */
+  restedHeroes(): HeroId[] {
+    return restedHeroes(this.state, this.now());
+  }
+
+  /** GO: glide to a building in the province and open its card — home from
+   *  the board first if out on it. */
+  focusDistrict(uniqueId: string): void {
+    const d = districtById(this.state, uniqueId);
+    if (d === undefined) return;
+    if (this.scene === 'world') this.leaveWorld();
+    this.setOverlay(null);
+    this.inspectedSite = null;
+    this.inspectedDistrictId = d.uniqueId;
+    this.camera.centerOnCell(d.location, DISTRICTS[d.definitionId].size, CAMERA_GLIDE_MS);
+    this.notify();
+  }
+
+  /** GO: glide to a site in the province — a landmark, a lair, a ruin. */
+  focusSite(cell: Coord): void {
+    if (this.scene === 'world') this.leaveWorld();
+    this.setOverlay(null);
+    this.inspectedDistrictId = null;
+    this.inspectedSite = cell;
+    this.camera.centerOnCell(cell, undefined, CAMERA_GLIDE_MS);
+    this.notify();
+  }
+
+  /** GO: a hex of the world board with its card open — out onto the board
+   *  first if at home. */
+  goToHex(index: number): void {
+    if (this.scene !== 'world') {
+      this.worldArrival = index;
+      this.enterWorld();
+      return;
+    }
+    this.dismiss();
+    this.worldCamera?.focusHex(hexAt(index));
+    this.selectedHex = index;
+    this.setOverlay('world');
   }
 
   /** Back to the province. */
@@ -6445,7 +6491,7 @@ const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
  * Returns null for an id no longer in the workbook, so a save that remembers
  * a site somebody has since deleted degrades to silence rather than a crash.
  */
-function siteBanner(id: string): Banner | null {
+export function siteBanner(id: string): Banner | null {
   const landmark = LANDMARKS.find((l) => l.id === id);
   if (landmark) {
     const art = LANDMARK_ART[landmark.kind];
