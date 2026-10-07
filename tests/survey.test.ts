@@ -36,6 +36,17 @@ describe('the Survey', () => {
     }
   });
 
+  it('never pays relic fragments on the paid column; its Hero XP lands as Hero XP', () => {
+    for (let l = 1; l <= surveyLength(); l++) expect(paidSurveyCell(l).fragments, `paid ${l}`).toBe(0);
+    const level = SURVEY.paidHeroXp.findIndex((n) => n > 0) + 1;
+    const state = firstGame();
+    revealTo(state, SURVEY.cells[level - 1]);
+    expect(buySurvey(state, T0)).toBe('Purchased');
+    const before = getWallet(state.kingdom.wallet, 'HeroXp');
+    expect(claimSurveyCell(state, level, 'paid')).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBeGreaterThanOrEqual(before + SURVEY.paidHeroXp[level - 1]);
+  });
+
   it('reads its level off the cells revealed, and only that', () => {
     const state = firstGame();
     expect(surveyLevel(state)).toBe(0);

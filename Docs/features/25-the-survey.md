@@ -45,7 +45,7 @@
 | Column | Pays |
 |---|---|
 | Free | a purse of Gold (3 → 20 minutes up the ladder) and, on about one level in three, one more: a relic fragment, a gold key, Knowledge, a silver key or a Bag item |
-| Paid | Gems, rising, and one more: a gold key every third level, Stardust, relic fragments or a choice chest |
+| Paid | Gems, rising, and one more: a gold key every third level, silver keys, Hero XP, Stardust or a choice chest. **Never relic fragments**: those come only from the free column, and from exploring and fighting |
 | **Level 36** | the grand prize: 500 Gems and a gold key free; 10,000 Gems and five gold keys paid |
 
 ## 4. Claiming
@@ -57,7 +57,8 @@
 - **A level reached is a moment on the map**: the reveal that crosses it
   sends a small seal from the cell to the Survey's pill *(not built)*; the
   pill glows while a cell waits.
-- Fragments are rolled onto the relics as they land ([`09-relics.md`](09-relics.md)).
+- The free column's fragments are rolled onto the relics as they land ([`09-relics.md`](09-relics.md)).
+- Hero XP lands with the bonuses every Hero XP gets (the Tavern, the tree).
 
 ## 5. The door
 
