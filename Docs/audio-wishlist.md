@@ -110,17 +110,17 @@ mis-designed as alarms, and both should be soft.
 
 | Name | Plays when | Source |
 |---|---|---|
-| `battleStart` | The armies march on | RPG Fanfares · Start Battle |
-| `swordHit` · `lanceHit` · `cavalryHit` | A Warrior's (or melee hero's) · Lancer's · Cavalry's blow lands | Blade Sword Hit · Sword Pierce Through Flesh (Fast Light) · Armor Weapon Impact |
-| `cavalryCharge` | A cavalry line sets off | Horseback Ride, first gallop |
-| `arrowLoose` · `arrowHit` | An archer looses · an arrow (or a bolt) lands | Arrow Release Shot · Arrow Impact Armor |
+| `battleStart` | The armies march on | Battle Viking Horn Call |
+| `swordHit` · `lanceHit` · `cavalryHit` | A Warrior's (or melee hero's) · Lancer's · Cavalry's blow lands | Sword Hits Type 2 · Spear Pierce Through Flesh (Heavy Edgy) · Body Hit Punch Kick Fight |
+| `cavalryCharge` | A cavalry line sets off | Horse Snort |
+| `arrowLoose` · `arrowHit` | An archer looses · an arrow (or a bolt) lands | Bow Crossbow Arrow Shoot Type 1 · Wood Hit |
 | `boltCast` | A ranged hero looses, a care skill is cast | Light Wand Whoosh |
-| `squadDown` · `skullStamp` · `heroDown` | A ring cracks · its skull lands · a hero falls | Swing Hit Wood Shield Break · Harsh Thud · Light Metal Armor Fall |
-| `skillCharge` · `ribbon` | A skill charges · its ribbon unrolls | Casting Charge Whoosh Buildup · Anime Whoosh Cloth |
-| `volley` · `cleave` · `crush` · `ambush` · `sharpshot` | That skill | Volley · Big Sword Hit · Rock Impact Heavy Slam · Anime Swoosh Sudden Movement · Rapid Shot Critical |
-| `heal` · `shieldUp` · `shieldSoak` · `shieldBreak` · `daze` | A heal lands · a shield goes up, soaks, shatters · a daze | Heal · Shield · Metallic Bubble · Glass Small · Sleep Silence |
-| `warCry` · `bulwark` · `vigour` | A rally is named | Battle Viking Horn Call · Shield Buff V1 · Invigoration |
-| `finalBlow` | The last blow's slow motion | Anime AIR Whoosh Big Pitch Falling |
+| `squadDown` · `skullStamp` · `heroDown` | A ring cracks · its skull lands · a hero falls | Swing Hit Wood Shield Break · Pixel Thud · Body Fall |
+| `skillCharge` · `ribbon` | A skill charges · its ribbon unrolls | Pixel Skill Ready · Cloth Movement Fast |
+| `volley` · `cleave` · `crush` · `ambush` · `sharpshot` | That skill | Mass Loose · Big Sword Hit · Rock Impact Heavy Slam · Pixel Phase Swish · Rapid Shot Critical |
+| `heal` · `shieldUp` · `shieldSoak` · `shieldBreak` · `daze` | A heal lands · a shield goes up, soaks, shatters · a daze | Pixel Simple Heal · Pixel Bubble Deflect · Metallic Bubble · Glass Small · Charm |
+| `warCry` · `bulwark` · `vigour` | A rally is named | Bravery · Shield Buff V1 · Heavenly Positive Buff |
+| `finalBlow` | The last blow's slow motion | Alien Strike (cinematic) |
 | `victory` · `defeat` | The plaque lands | RPG Fanfares · Victory 1 · Defeat 1 Short |
 
 ## Music
@@ -132,6 +132,6 @@ top each time they take over, the harp resumes where it was.
 | Track | Plays while | Source |
 |---|---|---|
 | `music-tavern-loop` (feast) | A chest is being opened | Tavern (loop), sound collection |
-| `music-battle` | A fight plays back, until its plaque lands | *The Hour of Battle*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
-| `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Battle Drums*, whole, 2.5 s fade at the tail — same collection |
+| `music-battle` | A fight plays back, until its plaque lands | *Battlefront Ode*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
+| `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Preparing for the Assault*, whole, 2.5 s fade at the tail — same collection |
 | `music-harp-peaceful-loop` | Everything else | Harp Peaceful (loop) |

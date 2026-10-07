@@ -123,32 +123,32 @@ export type BattleSfx =
   | 'warCry' | 'bulwark' | 'vigour' | 'finalBlow' | 'victory' | 'defeat';
 
 const BATTLE_MIX: Record<BattleSfx, { volume: number; jitter: number }> = {
-  // Start Battle 01 (RPG Fanfares), under the armies marching on.
+  // Battle Viking Horn Call, under the armies marching on.
   battleStart: { volume: 0.5, jitter: 0 },
-  // Blade Sword Hit · Sword Pierce Through Flesh (Fast Light) · Armor
-  // Weapon Impact: a blow by Warrior, Lancer, Cavalry.
+  // Sword Hits Type 2 · Spear Pierce Through Flesh (Heavy Edgy) · Body Hit
+  // Punch Kick Fight: a blow by Warrior, Lancer, Cavalry.
   swordHit: { volume: 0.26, jitter: 0.08 },
   lanceHit: { volume: 0.26, jitter: 0.08 },
   cavalryHit: { volume: 0.3, jitter: 0.08 },
-  // Horseback Ride, its first gallop, as a cavalry line sets off.
+  // Horse Snort, as a cavalry line sets off.
   cavalryCharge: { volume: 0.25, jitter: 0.06 },
-  // Arrow Release Shot and Arrow Impact Armor; a hero's bolt is Light Wand
-  // Whoosh.
+  // Bow Crossbow Arrow Shoot Type 1 and Wood Hit; a hero's bolt is Light
+  // Wand Whoosh.
   arrowLoose: { volume: 0.16, jitter: 0.08 },
   arrowHit: { volume: 0.2, jitter: 0.08 },
   boltCast: { volume: 0.28, jitter: 0.06 },
   // A ring cracking (Swing Hit Wood Shield Break), the skull stamped on it
-  // (Harsh Thud) and, for a hero, armour falling (Light Metal Armor Fall).
+  // (Pixel Thud) and, for a hero, a body falling (Body Fall).
   squadDown: { volume: 0.42, jitter: 0.06 },
   skullStamp: { volume: 0.38, jitter: 0.04 },
   heroDown: { volume: 0.45, jitter: 0.04 },
-  // A skill charging (Casting Charge Whoosh Buildup) and its ribbon
-  // unrolling (Anime Whoosh Cloth).
+  // A skill charging (Pixel Skill Ready) and its ribbon unrolling (Cloth
+  // Movement Fast).
   skillCharge: { volume: 0.35, jitter: 0.05 },
   ribbon: { volume: 0.3, jitter: 0.06 },
-  // Each skill's own: Volley 01 · Big Sword Hit · Rock Impact Heavy Slam ·
-  // Anime Swoosh Sudden Movement · Rapid Shot Critical · Heal · Shield ·
-  // Metallic Bubble · Glass Small · Sleep Silence.
+  // Each skill's own: Mass Loose · Big Sword Hit · Rock Impact Heavy Slam ·
+  // Pixel Phase Swish · Rapid Shot Critical · Pixel Simple Heal · Pixel
+  // Bubble Deflect · Metallic Bubble · Glass Small · Charm.
   volley: { volume: 0.42, jitter: 0.03 },
   cleave: { volume: 0.45, jitter: 0.04 },
   crush: { volume: 0.55, jitter: 0.03 },
@@ -159,12 +159,12 @@ const BATTLE_MIX: Record<BattleSfx, { volume: number; jitter: number }> = {
   shieldSoak: { volume: 0.26, jitter: 0.08 },
   shieldBreak: { volume: 0.42, jitter: 0.05 },
   daze: { volume: 0.4, jitter: 0.04 },
-  // The rallies: Battle Viking Horn Call · Shield Buff V1 · Invigoration.
+  // The rallies: Bravery · Shield Buff V1 · Heavenly Positive Buff.
   warCry: { volume: 0.42, jitter: 0 },
   bulwark: { volume: 0.42, jitter: 0 },
   vigour: { volume: 0.42, jitter: 0 },
-  // The last blow in slow motion (Anime AIR Whoosh Big Pitch Falling), and
-  // the plaque: Victory 1 · Defeat 1 Short (RPG Fanfares).
+  // The last blow in slow motion (Alien Strike, a cinematic hit), and the
+  // plaque: Victory 1 · Defeat 1 Short (RPG Fanfares).
   finalBlow: { volume: 0.5, jitter: 0 },
   victory: { volume: 0.55, jitter: 0 },
   defeat: { volume: 0.55, jitter: 0 },
