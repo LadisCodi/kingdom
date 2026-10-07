@@ -407,14 +407,7 @@
 .sth-banner.has-hero .sth-calls { grid-column: 1 / -1; }
 .sth-banner.has-hero .sth-free { min-height: calc(var(--px) * 40); }
 .sth-banner.has-hero { margin-top: calc(var(--px) * 34); }
-/* The hero rises out of the frame and stands behind the Free call: its
- * plate is see-through there, so only the slab is in front of him. */
-.sth-banner.has-hero .sth-calls > .k-btn.has-cost:first-child { background: transparent; border-color: transparent; }
-.sth-banner.has-hero .sth-calls > .k-btn.has-cost:first-child > .k-btn-note {
-  color: var(--ink);
-  text-shadow: 0 0 calc(var(--px) * 3) #fff6e0, 0 0 calc(var(--px) * 6) #fff6e0;
-}
-
+/* The hero rises out of the frame and stands behind the Free call's plate. */
 /* A call's name on a plank, as the army boards' — blue for the common call,
  * gold for the golden — nailed over the frame's top edge, half above it, the
  * same height on both. */
