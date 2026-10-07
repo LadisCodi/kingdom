@@ -186,3 +186,12 @@ board's arrows), no level; BUILDINGS as slots.
   m84b, m47, the cost buttons, the hex art.
 
 All three right first try.
+
+## M86c — a camp (revision)
+
+Same chat as M86/M86b, with m86b and the cost buttons attached. Asked for:
+no raid ribbon; CAMP shows the enemy only — the ENEMY ribbon with its power
+and the camp's portraits, no YOUR BEST; BEATEN, IT PAYS kept; no PAY OFF
+section; at the foot one row of two cost-style buttons, **Negotiate** (its
+price on the plate) and **Attack** (an empty plate). Result:
+`m86c-world-camp.png`, right first try.

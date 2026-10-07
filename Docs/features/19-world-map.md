@@ -169,6 +169,8 @@
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 - **One trip per hex.** No explorer is sent to a hex one already out will
   reveal — its target, or a hex within its reveal.
+- **While a hex in the mist is open, the header's plaque counts the free
+  explorers** (*2/3*), as it counts free builders while building.
 - **A hex an explorer is out to shows the trip** in place of Explore: what
   it is doing (on the way, exploring, coming home), one bar for the whole
   trip, and **Finish**: Gems for the time left until it is home, at

@@ -16,7 +16,11 @@ import type { BoardHex } from '../../sim/world/board';
 import { ARTIFACTS, WORLD_BUILD } from '../../sim/data/definitions';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
 import { hexAt, hexDistance } from '../../sim/world/hex';
-import { hexTravelMs } from '../../sim/world/travel';
+import { hexTravelMs, homeboundMs, outboundMs } from '../../sim/world/travel';
+import {
+  exploreGold, exploreWorkMs, explorerRoute, explorerSlots, freeExplorers, returnsAt, type FogState,
+} from '../../sim/world/explorers';
+import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
@@ -25,7 +29,7 @@ import { claimGold, districtOf, districtRate, upgradeLevel } from '../../worldSe
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
-import { el, formatCount, formatDuration, formatExact, formatShort } from '../format';
+import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
 import { action, btn, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
 import { crestEl } from '../friends/kingdomBits';
 import { emptyRelicSlot } from '../relicPicker';
@@ -121,6 +125,11 @@ function yieldTiles(game: Game, bh: BoardHex, h: HexControl | null): Tile[] {
   return out;
 }
 
+/** Why the section's button cannot be pressed: the padlock and a sentence,
+ *  across the card under the head it belongs to. */
+const blockedLine = (reason: string): HTMLElement =>
+  el('p', { class: 'k-reason is-blocked wd-blocked' }, iconEl('padlock', { size: 'sm' }), reason);
+
 /** The player's shield, at the left of the title plank. */
 function withShield(game: Game, root: HTMLElement): HTMLElement {
   const me = game.worldSource().seats()[game.worldSeat()];
@@ -129,6 +138,79 @@ function withShield(game: Game, root: HTMLElement): HTMLElement {
     head.prepend(el('span', { class: 'wd-shield', 'aria-hidden': 'true' }, crestEl(me.owner.name, me.owner.crest ?? null, 'md')));
   }
   return root;
+}
+
+// ------------------------------------------------------------ fog
+
+/**
+ * GROUND IN THE MIST (m85b): THE HEX — the mist, the distance, one sentence,
+ * no tiles, for nothing is known of it yet — then EXPLORE, with its Explore
+ * and the journey, and, on a Sensed hex, what exploring it pays. How many
+ * explorers are free is the header's, as builders are while building.
+ * `trip` is the explorer already on its way there, in place of the button.
+ */
+export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string, trip: HTMLElement | null): HTMLElement {
+  const state = game.state;
+  const now = game.now();
+  const index = bh.index;
+  const mist = el('div', { class: `dc-portrait k-section wd-portrait wd-mist${fog === 'Sensed' ? ' is-sensed' : ''}` },
+    el('div', { class: 'dc-portrait-mask' },
+      ...(fog === 'Sensed' && spriteUrl(groundSprite(bh)) !== null ? [spriteImgAt(spriteUrl(groundSprite(bh))!, 'dc-portrait-art wd-mist-ground')] : []),
+      ...(spriteUrl('fog_cloud') !== null ? [spriteImgAt(spriteUrl('fog_cloud')!, 'wd-mist-cloud')] : [])),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+  const hex = el('div', { class: 'dc-head' }, mist,
+    el('div', { class: 'dc-what-col' },
+      distanceLine(game, index),
+      el('div', { class: 'dc-what' }, fog === 'Sensed'
+        ? 'Shapes in the mist. Send an explorer to see it.'
+        : 'Nobody has been this way.')));
+
+  const slots = explorerSlots(state);
+  const free = freeExplorers(state);
+  const route = explorerRoute(state, index, now);
+  const work = exploreWorkMs(state, index) / 1000;
+  const there = route === null ? 0 : (outboundMs(route.stepMs) + homeboundMs(route.stepMs)) / 1000 + work;
+  let reason: string | undefined;
+  if (slots === 0) reason = 'Research Cartography in the Atlas';
+  else if (route === null) reason = 'No way there through explored ground';
+  else if (free === 0) {
+    const back = Math.min(...state.world.explorers.map(returnsAt));
+    reason = `Every explorer is out — one is back in ${formatCountdown(Math.max(0, back - now) / 1000)}`;
+  }
+  const explore = trip !== null ? null : btn({
+    label: 'Explore', kind: 'primary', cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => game.walletValue(c),
+    disabledReason: reason,
+    onClick: () => game.doSendExplorer(),
+  });
+  const exploreHead = el('div', { class: 'dc-head' },
+    portrait(null, 'compass'),
+    el('div', { class: 'dc-what-col' },
+      el('p', { class: 'wd-name' }, 'Send an explorer'),
+      el('div', { class: 'dc-what' }, 'There and back, then the hex is revealed.')),
+    ...(explore === null ? [] : [el('div', { class: 'dc-upgrade' }, explore)]));
+  const blocked = reason === undefined || trip !== null ? [] : [blockedLine(reason)];
+  const journey = route === null ? [] : [tiles([
+    { icon: 'compass', label: 'There and back', value: formatDuration(Math.round(there)) },
+    { icon: 'hourglass', label: 'To explore', value: formatDuration(Math.round(work)) },
+  ])];
+
+  // What the explorer brings home, priced as of now (19 §3.2).
+  const pays: HTMLElement[] = [];
+  if (fog === 'Sensed' && bh.scout !== null) {
+    const pay = scoutPay(state, bh.scout, bh.role, index);
+    const rewards: Tile[] = pay.pack !== null
+      ? [{ icon: 'pack', label: `${pay.pack} pack`, value: '+1' }]
+      : [...Object.entries(pay.wallet), ...Object.entries(pay.goods)].map(([c, n]) => ({
+        icon: c as IconName, label: c === 'HeroXp' ? 'Hero XP' : c, value: `+${formatShort(n as number)}`,
+      }));
+    if (rewards.length > 0) pays.push(sectionHead('Exploring it pays'), tiles(rewards));
+  }
+
+  return sheet({ title, onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      sectionHead('The hex'), hex,
+      sectionHead('Explore'), exploreHead, ...blocked, ...journey, ...(trip === null ? [] : [trip]),
+      ...pays));
 }
 
 // ------------------------------------------------------------ free ground
@@ -155,13 +237,12 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
     portrait(DISTRICT_SPRITE[district], 'build'),
     el('div', { class: 'dc-what-col' },
       el('p', { class: 'wd-name' }, def.name),
-      el('div', { class: 'dc-what' }, districtLine(bh, district)),
-      ...(reason === undefined ? [] : [el('p', { class: 'k-reason is-blocked' }, iconEl('padlock', { size: 'sm' }), reason)])),
+      el('div', { class: 'dc-what' }, districtLine(bh, district))),
     el('div', { class: 'dc-upgrade' }, build));
   return sheet({ title, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       sectionHead('The hex'), hex, tiles(groundTiles(bh)),
-      sectionHead('District'), districtHead,
+      sectionHead('District'), districtHead, ...(reason === undefined ? [] : [blockedLine(reason)]),
       tiles([...yieldTiles(game, bh, null),
         { icon: 'hourglass', label: 'Build', value: formatDuration(WORLD_BUILD.claim.buildSeconds) }])));
 }
