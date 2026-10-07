@@ -13,7 +13,9 @@
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
-import { ARTIFACTS, WORLD_BUILD, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ARTIFACTS, DISTRICTS, WORLD_BUILD, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
+import { buildingPortrait } from '../districtCard';
+import { townhallTag } from '../friends/kingdomBits';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { hexTravelMs, homeboundMs, outboundMs } from '../../sim/world/travel';
@@ -349,6 +351,64 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
       ...(rows.length === 0 ? [] : [sectionHead('Ranking'), el('div', { class: 'wd-ranks' }, ...rows)]),
       ...shut,
       el('div', { class: 'wd-foot' }, ...foot)));
+}
+
+// ------------------------------------------------------------ a city
+
+/**
+ * A CITY (m89): the player's own — its shield, its deposits and the way to
+ * trade for the rest — or a rival's: its shield, its Townhall when it is a
+ * friend, its ground and its Portal floor, and Profile or Add friend. A
+ * city is never attacked, and its card says so.
+ */
+export function renderCity(game: Game, bh: BoardHex): HTMLElement {
+  const index = bh.index;
+  const source = game.worldSource();
+  const seat = bh.seat!;
+  const s = source.seats()[seat];
+  const name = s?.owner.name ?? 'A kingdom';
+  const mine = s?.owner.you === true;
+  const friendView = mine ? undefined : game.friends.snap?.friends.find((f) => f.nickname === name);
+  const ground = source.board().hexes.filter((h) => source.hexOf(h.index)?.owner === seat).length;
+  const floor = source.portal()?.ranking.find((r) => r.seat === seat)?.floor ?? 0;
+  const level = mine ? (game.state.city.districts.find((d) => d.definitionId === 'Townhall')?.level ?? 1) : friendView?.townhall ?? 4;
+  const head = el('div', { class: 'dc-head' },
+    buildingPortrait(DISTRICTS.Townhall, level),
+    el('div', { class: 'dc-what-col' },
+      ...(friendView !== undefined ? [townhallTag(friendView.townhall)] : []),
+      ...(mine ? [] : [distanceLine(game, index)]),
+      el('div', { class: 'dc-what' }, mine ? 'Your province, seen from the world.' : 'Another kingdom. A city can never be attacked.')));
+  const facts: Tile[] = [
+    { icon: 'tile', label: 'Ground', value: `${formatExact(ground)} ${ground === 1 ? 'hex' : 'hexes'}` },
+    { icon: 'dungeon', label: 'Portal floor', value: formatExact(floor) },
+  ];
+  const parts: HTMLElement[] = [head, tiles(facts)];
+  const foot: HTMLElement[] = [];
+  if (mine) {
+    // What the kingdom's ground is rich in: its deal of deposits, 3/2/1
+    // (Docs/plans/precious-deposits.md §1.2).
+    const deal = source.board().deposits[seat];
+    if (deal !== undefined) {
+      parts.push(sectionHead('Deposits'), tiles((['strong', 'middle', 'weak'] as const).map((rank) => ({
+        icon: deal[rank] as IconName, label: deal[rank], value: `×${formatExact(WORLD_GEN.deposits[rank].length)}`,
+      }))));
+      foot.push(btn({ label: 'Trade', kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
+    }
+  } else if (friendView !== undefined) {
+    foot.push(btn({ label: 'Profile', kind: 'secondary', onClick: () => game.friends.openProfile(friendView.code) }));
+  } else if (s !== undefined && !s.owner.you && game.friends.named()) {
+    const asked = game.friends.snap?.outgoing.some((r) => r.nickname === name) === true;
+    foot.push(btn({
+      label: 'Add friend', kind: 'primary',
+      disabledReason: asked ? 'Request sent' : game.friends.busy.has(name) ? 'Sending' : undefined,
+      onClick: () => void game.friends.request(name).then(() => game.toast(`A request is on its way to ${name}`)),
+    }));
+  }
+  const root = sheet({ title: name, onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' }, ...parts, ...(foot.length === 0 ? [] : [el('div', { class: 'wd-foot' }, ...foot)])));
+  // The kingdom's shield, at the left of the plank.
+  root.querySelector('.k-head')?.prepend(el('span', { class: 'wd-shield', 'aria-hidden': 'true' }, crestEl(name, s?.owner.crest ?? null, 'md')));
+  return root;
 }
 
 // ------------------------------------------------------------ free ground
