@@ -444,9 +444,9 @@ Each of these is data, not code:
 - Then one section each, under a section head; the stage keeps its height
   and the sections scroll:
   - **Stats** — Attack, Damage, Defence and Health, a tile each, in one row.
-  - **Skill** — its name, its rank pips and what it does at its rank; under
-    it the next rank, with its price and **Upgrade**, or a padlock saying what
-    is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
+  - **Skill** — one widget: its name, its rank pips and what it does at its
+    rank; at its foot the next rank's price and **Upgrade** (what the next
+    rank does is not shown), or a padlock saying what is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
     that can be bought now lights the card's orb.
   - **Kingdom boon** — on the six that have one.
   - On the roster, a skill past rank 1 shows as a brass numeral on the card.
