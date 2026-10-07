@@ -1023,7 +1023,14 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         power[won ? 'theirs' : 'ours'] = 0;
         paintBar();
       }
-      if (after === 'done') stop();
+      // The way out, once the verdict is up and nothing is left to hand over
+      // (a fight's spoils deal over it first). Not before the plaque: a
+      // skipped fight reaches `done` in one step, and stopping then would
+      // leave neither the verdict nor the way out on screen.
+      if (after === 'done' && !plaque.classList.contains('is-hidden')) {
+        exit.classList.remove('is-hidden');
+        stop();
+      }
       return fxT;
     };
 
