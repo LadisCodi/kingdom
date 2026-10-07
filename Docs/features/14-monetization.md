@@ -94,7 +94,9 @@
 - One screen, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
 - Its own backdrop: a magic merchant's shop, soft and out of focus, under a
-  warm dark wash. A title plank, its close, and a strip of wooden tabs:
+  warm dark wash. No title: a strip of wooden tabs with the close beside it,
+  fixed at the top, over the open tab's page, which scrolls. The page runs
+  the full width of the iPhone X:
 
 | Tab | Content | Paid with |
 |---|---|---|
