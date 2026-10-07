@@ -152,8 +152,9 @@ export function snapshotWorld(snap: {
     owner: s.you ? { you: true, name: s.name, crest: s.crest ?? null } : { you: false, name: s.name, rival: rival++, crest: s.crest ?? null, friend: s.friend === true },
   }));
   const hexes = new Map(snap.hexes.map((h) => [h.index, h]));
+  let board: Board | null = null;
   return {
-    board: () => (snap.dungeons === undefined ? boardOf(snap.board) : withDungeons(boardOf(snap.board), snap.dungeons)),
+    board: () => (board ??= snap.dungeons === undefined ? boardOf(snap.board) : withDungeons(boardOf(snap.board), snap.dungeons)),
     seats: () => seats,
     controlOf: (index) => {
       const city = seats.find((s) => s.index === index);

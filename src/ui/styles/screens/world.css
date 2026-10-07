@@ -10,9 +10,9 @@
   touch-action: none;
 }
 #app.in-world #world { display: block; }
-/* The board's ground and the cloud bank, under #world
- * (render/world/boardRenderer.ts worldLayers). What shows where the clouds
- * thin is the sky far below them. */
+/* The sky, the board's ground, the cloud bank and what stands on the board,
+ * under #world (render/world/boardRenderer.ts worldLayers). What shows
+ * where the clouds thin is the sky far below them. */
 .world-layer {
   position: absolute;
   inset: 0;
@@ -21,7 +21,10 @@
   display: none;
   pointer-events: none;
 }
-.world-ground { background: linear-gradient(#c3cdd6, #a9b6c1); }
+.world-sky { background: linear-gradient(#c3cdd6, #a9b6c1); }
+/* The ground and what stands on it are bigger than the frame and slide
+ * under it (keepLayers). */
+.world-slide { inset: 0 auto auto 0; transform-origin: 0 0; will-change: transform; }
 #app.in-world .world-layer { display: block; }
 #app.in-world #map, #app.in-world .map-layer { visibility: hidden; }
 #app.in-world #quest,

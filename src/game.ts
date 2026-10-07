@@ -5321,8 +5321,18 @@ export class Game {
   /** Where the board comes from: the server's snapshot once there is one,
    *  the locally generated board before (sim/world/source.ts). */
   worldSource(): WorldSource {
-    return this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(this.state.world.board, this.state.city.name);
+    // Read every frame of the board: made again only when what it is made
+    // from changes — a new snapshot, or the save's board and name.
+    const ref = this.state.world.board;
+    const key = this.worldView ?? `${ref.id}|${ref.seed}|${ref.seat}|${this.state.city.name}`;
+    if (this.sourceMemo === null || this.sourceMemo.key !== key) {
+      this.sourceMemo = {
+        key, source: this.worldView !== null ? snapshotWorld(this.worldView) : localWorld(ref, this.state.city.name),
+      };
+    }
+    return this.sourceMemo.source;
   }
+  private sourceMemo: { key: unknown; source: WorldSource } | null = null;
 
   /** The seat world commands are made for. */
   worldSeat(): number {
