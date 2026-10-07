@@ -242,7 +242,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | | Raise | Cost |
 |---|---|---|
 | **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.0055^level)` — 101 for level 2, 545 for level 310, **81,280** for the whole ladder |
+| **Level** | +1, up to the ascension's cap | Hero XP: `round(20 × 1.0165^level)` — 20 for level 2, 3,140 for level 310, **192,333** for the whole ladder |
 | **Ascension** | +1 point of the current star: **every stat +2%** and the cap **+10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
@@ -283,9 +283,19 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
   today is levelled with the XP the Commons earned.
-- **The XP curve flattens because the ladder is long**: the growth carries
-  the length and the TOTAL is what is held steady. Whether that survives a
-  playtest is **OQ-79**.
+- **Easy early, hard late.** The first ten levels cost ~200 Hero XP, a full
+  first star (level 70) ~2,600, five stars ~192,000. A tier-1 lair carries a
+  hero past its first ten levels; the late levels ask for dungeons cleared to
+  the bottom. Whether that survives a playtest is **OQ-79**.
+
+  | Source | Hero XP |
+  |---|---|
+  | A lair, once (`garrisons.heroXp`) | 500 · 1,500 · 4,000 · 10,000 · 25,000 by tier |
+  | A camp (`worldCamps.heroXpPerPower`) | 0.1 a point of power — 30–240 |
+  | A dungeon room (`worldDungeon.heroXp`) | ~2,980 for all 24 rooms |
+  | **Closing a dungeon** (`worldDungeon.closeHeroXpMultiplier`) | its last boss ×20 — **12,200** |
+  | The Portal, all 40 floors | ~11,700 |
+  | Scouting a hex | 100 · 150 · 250 by ring |
 - **Fragments are per hero**, a counter beside the hero, as today.
 - The Stardust toll totals **744** to max one hero. The toll is **Stardust's
   only sink**; whether the trickle is oversized is **OQ-78**.
@@ -300,7 +310,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
 
 | Currency | Source |
 |---|---|
-| **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor · a call's loot |
+| **Hero XP** | every lair cleared · every camp · every world-map dungeon room and Portal floor · **a dungeon closed** (the big lump) · a call's loot |
 | **Fragments** | a call's loot · a duplicate · boss chests, from a per-boss pool (not built, OQ-80) |
 | **Stardust** | every dungeon room and Portal floor · a call's loot · the quest chain and the Survey |
 

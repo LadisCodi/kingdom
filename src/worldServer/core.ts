@@ -1077,7 +1077,7 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
   owe(b, closer, {
     kind: 'loot', at: t, from: 'boss',
     gold: Math.round(last.gold * k), knowledge: Math.round(last.knowledge * k),
-    heroXp: Math.round(last.heroXp * k), stardust: Math.round(last.stardust * k),
+    heroXp: roundPrice(last.heroXp * WORLD_DUNGEON.closeHeroXpMultiplier), stardust: Math.round(last.stardust * k),
     precious: { id: lumpMaterial(boardData(b), closer, 'close', dungeonKey(b, index)), amount: Math.round(last.precious * k) },
   });
   report(b, closer, t, 'You cleared the dungeon to the bottom — it is closed', true, index);

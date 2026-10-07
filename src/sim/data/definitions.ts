@@ -1994,6 +1994,8 @@ export interface GarrisonDef {
   tier: number;
   takeSeconds: number;
   supplies: Wallet;
+  /** Hero XP a lair of this tier teaches when its prize is claimed. */
+  heroXp: number;
   /** Items a lair of this tier puts in the Bag when its prize is claimed. */
   rewardItems: Partial<Record<ItemId, number>>;
 }
@@ -2135,6 +2137,8 @@ export interface WorldDungeonDef {
   bossRewardMultiplier: number;
   /** Closing a dungeon pays its last boss again, this many times over. */
   closeRewardMultiplier: number;
+  /** …and its last boss's Hero XP this many times over: the big prize. */
+  closeHeroXpMultiplier: number;
   /** A closed dungeon comes back after a roll between these many hours. */
   returnHoursMin: number;
   returnHoursMax: number;
