@@ -335,7 +335,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     'data-coach': `tech:${id}`,
   },
   el('span', { class: 'tech-card-name' }, def.name),
-  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, def.glyph),
+  el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, iconEl(def.icon as IconName, { size: 'lg' })),
   el('span', { class: 'tech-card-bar' },
     bar.root,
     ...(status === 'done' ? [iconEl('tick', { size: 'sm' })]
@@ -372,7 +372,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
 
   // ---- 1. what it is
   page.append(el('div', { class: 'rb-about' },
-    el('span', { class: 'rb-emblem', 'aria-hidden': 'true' }, def.glyph),
+    el('span', { class: 'rb-emblem', 'aria-hidden': 'true' }, iconEl(def.icon as IconName, { size: 'lg' })),
     el('p', { class: 'rb-says' }, techLine(id))));
   if (def.planned) {
     page.append(el('div', { class: 'res-planned' },

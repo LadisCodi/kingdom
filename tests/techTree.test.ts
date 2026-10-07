@@ -82,7 +82,7 @@ describe('the shipped tech tree', () => {
       const entry = doc.technologies[id];
       const def = TECHNOLOGIES[id];
       expect(def.name).toBe(entry.name);
-      expect(def.glyph).toBe(entry.glyph);
+      expect(def.icon).toBe(entry.icon);
       expect(def.description).toBe(entry.description ?? '');
       expect(def.kind).toBe(entry.kind);
       expect(def.requires).toEqual(entry.requires);
@@ -320,9 +320,9 @@ describe('what the rules refuse', () => {
     const d = clone();
     d.technologies.Saws.name = '';
     expect(messages(d).some((m) => m.includes('has no name'))).toBe(true);
-    const glyph = clone();
-    glyph.technologies.Saws.glyph = '';
-    expect(messages(glyph).some((m) => m.includes('has no glyph'))).toBe(true);
+    const icon = clone();
+    icon.technologies.Saws.icon = '';
+    expect(messages(icon).some((m) => m.includes('has no icon'))).toBe(true);
   });
 
   // PROSE, in both directions. What a card says is generated from what the

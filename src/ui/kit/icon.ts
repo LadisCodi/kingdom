@@ -89,7 +89,11 @@ export type UiIconName =
   // the boosts, the flask, the tome, the Dowser's map and a relic's shard.
   | 'bag' | 'SilverKey' | 'GoldKey' | 'chestGold' | 'chestFood' | 'chestWood' | 'chestStone' | 'choiceChest'
   | 'speedup' | 'anvil' | 'boot' | 'boostRent' | 'boostHarvest' | 'boostMana'
-  | 'manaFlask' | 'knowledgeTome' | 'dowserMap' | 'shard';
+  | 'manaFlask' | 'knowledgeTome' | 'dowserMap' | 'shard'
+  // THE TECHNOLOGIES (sheet UI-T1, Docs/art/ui/tech/prompt.md): what a
+  // regrowth, an irrigation, a sail and a farsight look like — the four a
+  // tech card needed that nothing else in the atlas could stand for.
+  | 'sapling' | 'wateringCan' | 'boat' | 'spyglass';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -144,6 +148,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   bag: '🎒', chestGold: '🪙', chestFood: '🍎', chestWood: '🪵', chestStone: '🪨', choiceChest: '🎁',
   speedup: '⏳', anvil: '⚒️', boot: '🥾', boostRent: '💰', boostHarvest: '🌾', boostMana: '🔮',
   manaFlask: '🧪', knowledgeTome: '📘', dowserMap: '🗺️', shard: '💠',
+  // the technologies
+  sapling: '🌱', wateringCan: '🚿', boat: '⛵', spyglass: '🔭',
 };
 
 export interface IconOpts {

@@ -426,6 +426,23 @@
     null
    ],
    "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-t1-tech.png",
+   "grid": {
+    "rows": 2,
+    "cols": 3
+   },
+   "fill": 0.9,
+   "names": [
+    "Tavern",
+    "WarCamp",
+    "sapling",
+    "wateringCan",
+    "boat",
+    "spyglass"
+   ],
+   "evenGrid": true
   }
  ],
  "worldSheets": [
