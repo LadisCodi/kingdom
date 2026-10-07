@@ -90,8 +90,8 @@ and the army cap; hero slots one free, the rest Gems
     the building: they are already trained.
   - Cancelling an order puts them back in their beds and the coin back in the
     purse.
-- **What else an ATTEMPT costs is the caller's rule.** A lair charges
-  supplies on the way in ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
+- **What else an ATTEMPT costs is the caller's rule.** Every attack charges
+  its Mana on the way in ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
   the player has banked is ever taken.
 
 ## 5. Unit stats — Tier 1

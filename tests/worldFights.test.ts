@@ -1,17 +1,16 @@
 // What a fight on the world board costs and what a camp pays, on the
 // client's side (Docs/features/19-world-map.md §4, §5.4; 08-magic.md §1).
 import { describe, expect, it } from 'vitest';
-import { WORLD, WORLD_CAMPS } from '../src/sim/data/definitions';
-import { manaNetRegen } from '../src/sim/mana';
+import { COMBAT, WORLD_CAMPS } from '../src/sim/data/definitions';
 import { cityMakesPerSecond } from '../src/sim/production';
 import { roundPrice } from '../src/sim/roundPrice';
 import { campLoot, campPay, fightMana, sendFights } from '../src/sim/world/fights';
 import { freshGame } from './helpers';
 
 describe('a fight on the board', () => {
-  it('costs its hours of the city’s Mana regen', () => {
+  it('costs a flat Mana, whatever the city makes', () => {
     const state = freshGame();
-    expect(fightMana(state)).toBe(Math.max(1, roundPrice(manaNetRegen(state) * WORLD.fightManaHours)));
+    expect(fightMana(state)).toBe(COMBAT.fightMana);
     expect(fightMana(state)).toBeGreaterThan(0);
   });
 

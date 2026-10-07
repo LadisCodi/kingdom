@@ -6948,7 +6948,7 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
-  NotEnoughSupplies: 'Not enough supplies to march',
+  NotEnoughSupplies: 'Not enough Mana to attack',
   HeroDown: 'A hero in the party is exhausted — they rest until their HP is full',
 };
 

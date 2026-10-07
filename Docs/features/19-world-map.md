@@ -218,10 +218,11 @@
   them.
 - A march is a **timer**: an army sent before a twelve-hour absence has
   arrived on return ([`02-map-scopes.md`](02-map-scopes.md) §4).
-- **A fight costs Mana** ([`08-magic.md`](08-magic.md) §1):
-  `fightManaHours` (1) hours of the city's Mana regen, at least 1.
-  - Paid for an army sent to a camp (§5.4) or a rival (§6), for each dungeon
-    room (§8.2) and for each Portal floor (§10.3).
+- **An attack costs Mana** ([`08-magic.md`](08-magic.md) §1): a flat
+  `combat.fightMana` (20).
+  - Paid for each camp fight (§5.4), each army sent against a rival (§6),
+    each dungeon room (§8.2) and each Portal floor (§10.3).
+  - Moving, claiming, garrisoning and withdrawing cost nothing.
   - Claiming nobody's ground, garrisoning and the march to a dungeon or the
     Portal cost none.
   - Paid when the server accepts the order; a lost fight is not refunded.

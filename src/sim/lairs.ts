@@ -390,10 +390,6 @@ export const clearedLairCount = (state: GameState): number =>
 
 // ----------------------------------------------------------- the read-out
 
-/** What clearing this lair costs in supplies: a flat price per lair tier,
- *  paid on entry and never refunded, win or lose. */
-export const lairSupplies = (lairId: LairId): Wallet =>
-  ({ ...garrisonForTier(LAIRS[lairId].tier).supplies });
 
 /** The creature the threat reads as. Derived, never a second authored list:
  *  a lair says what TYPE holds it and the fiction follows. */

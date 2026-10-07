@@ -17,11 +17,11 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import {
-  PARTY, RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
+  COMBAT, PARTY, RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
   advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairFormation,
-  lairAwaitsClaim, lairIsCleared, lairPower, lairSupplies, lairView, nextRaidBoundary, openLairs,
+  lairAwaitsClaim, lairIsCleared, lairPower, lairView, nextRaidBoundary, openLairs,
   raidTake, raidTimeAfter, setUtcOffset,
 } from '../src/sim/lairs';
 import { lairHolding, lairIsFound, lairZoneCells } from '../src/sim/lairZone';
@@ -441,11 +441,10 @@ describe('clearing the lair', () => {
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
-    // The fight costs the supplies and pays nothing; the claim pays the hoard.
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(before - (lairSupplies(ORCS).Gold ?? 0));
+    // The fight costs Mana and pays nothing; the claim pays the hoard.
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(before);
     expect(claimLair(state, ORCS).hoard).toEqual(hoard);
-    expect(getWallet(state.city.wallet, 'Gold'))
-      .toBe(before + hoard.Gold! - (lairSupplies(ORCS).Gold ?? 0));
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(before + hoard.Gold!);
   });
 
   it('costs what the fight cost — nothing when it is a rout', () => {
@@ -495,18 +494,19 @@ describe('clearing the lair', () => {
     expect(attackLair(state, map, ORCS, ['Warden'], company, T0).result).toBe('HeroDown');
   });
 
-  it('costs the supplies and the fallen when it fails, and nothing else', () => {
+  it('costs its Mana and the fallen when it fails, and nothing else', () => {
     const state = readyToFight(31);
     reveal(state, [LAIRS.Drake.location]);
     advance(state, map, T0);
-    const supplies = lairSupplies('Drake');
     fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
     const gold = getWallet(state.city.wallet, 'Gold');
+    const mana = getWallet(state.city.wallet, 'Mana');
     // A token soldier, so the hero takes the blows once it falls.
     const report = attackLair(state, map, 'Drake', ['Warden'], [{ unitId: 'Warrior', count: 1 }]);
     expect(report.result).toBe('Repelled');
     expect(report.attack).toBeLessThan(report.power);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold);
+    expect(getWallet(state.city.wallet, 'Mana')).toBe(mana - COMBAT.fightMana);
     expect(lairIsCleared(state, 'Drake')).toBe(false);
     // The hero fell: it is exhausted, and rests until its HP is whole again.
     expect(attackLair(state, map, 'Drake', ['Warden'], company).result).toBe('HeroDown');

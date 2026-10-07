@@ -43,7 +43,12 @@
         "genVillainThreshold": { "type": "int" },
         "genVillainShare": { "type": "float" },
         "genVillainSlots": { "type": "int" },
-        "heroPowerPerDmg": { "type": "float" }
+        "heroPowerPerDmg": { "type": "float" },
+        "fightMana": {
+          "type": "int",
+          "min": 0,
+          "doc": "What one attack costs in Mana — a lair, a camp, a rival, a dungeon room, a Portal floor (Docs/features/08-magic.md §1). Moving, claiming and garrisoning are free."
+        }
       }
     },
     "party": {
