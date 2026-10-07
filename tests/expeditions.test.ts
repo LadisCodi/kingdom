@@ -14,12 +14,11 @@ import { buildBoard, resolveBattle } from '../src/sim/battle';
 import { grantArtifactLevel } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import {
-  ARMY, DELVE, DISTRICTS, KNOWLEDGE, LANDMARKS, LAIRS, LAIR_ORDER, UNITS,
+  ARMY, COMBAT, DELVE, DISTRICTS, KNOWLEDGE, LANDMARKS, LAIRS, LAIR_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import {
   attackLair, claimLair, lairBlock, lairSupplyCost, previewLair,
 } from '../src/sim/expeditions';
-import { lairSupplies } from '../src/sim/lairs';
 import { claimLandmark } from '../src/sim/landmarks';
 import { firstClearLump, knowledgePerHour, landmarkClaimLump } from '../src/sim/knowledge';
 import {
@@ -219,16 +218,16 @@ describe('training takes time now', () => {
 // What a lair attack costs (Docs/proposals/lairs.md §5): the tier's
 // `garrisons` supplies, discounted by the best Quartermaster in the party and
 // and never below 1 of anything it asks for. The tree discounts nothing.
-describe('the supplies a lair asks for', () => {
+describe('what a lair attack costs', () => {
   const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 
   // No hero discounts a trip: the bonus rule (every bonus climbs) took the
   // Quartermaster's discount with the traits (10-heroes.md §2.5).
-  it('are the tier\'s supplies, whoever leads', () => {
+  it('is the Mana every attack spends, whatever the lair and whoever leads', () => {
     const state = readyToDelve();
     for (const id of LAIR_ORDER) {
-      expect(lairSupplyCost(state, id, ['Warden'])).toEqual(lairSupplies(id));
-      expect(lairSupplyCost(state, id, ['Quartermaster', 'Scout'])).toEqual(lairSupplies(id));
+      expect(lairSupplyCost(state, id, ['Warden'])).toEqual({ Mana: COMBAT.fightMana });
+      expect(lairSupplyCost(state, id, ['Quartermaster', 'Scout'])).toEqual({ Mana: COMBAT.fightMana });
     }
   });
 
@@ -239,16 +238,17 @@ describe('the supplies a lair asks for', () => {
     const cost = lairSupplyCost(state, ORCS, [...heroes]);
     expect(previewLair(state, ORCS, [...heroes], company).supplies).toEqual(cost);
     const gold = getWallet(state.city.wallet, 'Gold');
+    const mana = getWallet(state.city.wallet, 'Mana');
     const report = attackLair(state, map, ORCS, [...heroes], company);
     expect(report.result).toBe('Cleared');
     expect(report.supplies).toEqual(cost);
-    expect(getWallet(state.city.wallet, 'Gold'))
-      .toBe(gold - cost.Gold! + (report.hoard.Gold ?? 0));
+    expect(getWallet(state.city.wallet, 'Mana')).toBe(mana - cost.Mana!);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold + (report.hoard.Gold ?? 0));
   });
 
-  it('refuses an attempt the city cannot provision', () => {
+  it('refuses an attempt the city has not the Mana for', () => {
     const state = readyToDelve();
-    state.city.wallet.Gold = 0;
+    state.city.wallet.Mana = COMBAT.fightMana - 1;
     expect(lairBlock(state, map, ORCS, ['Warden'], company)).toBe('NotEnoughSupplies');
   });
 });

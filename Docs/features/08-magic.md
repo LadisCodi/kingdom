@@ -13,10 +13,10 @@
   - In the province a tap on the ground is a small spell that hurries
     production. A tap on a building is free: it collects the building's store
     ([`03-economy.md`](03-economy.md) §3.2).
-  - On the world map Mana is the energy a fight spends: an army sent to a
-    camp or a rival, a dungeon room, a Portal floor, each `fightManaHours`
-    (1) hours of regen ([`19-world-map.md`](19-world-map.md) §4). A held
-    Sanctuary raises the cap (§8).
+  - Mana is the energy an attack spends, on both maps: a lair, a camp, a
+    rival, a dungeon room, a Portal floor, a flat `combat.fightMana` (20)
+    each ([`19-world-map.md`](19-world-map.md) §4). Moving, claiming and
+    garrisoning are free. A held Sanctuary raises the cap (§8).
 - Mana is capped, and Mana over the cap is lost. (Knowledge is capped too,
   but only its drip stops — [`07-research.md`](07-research.md) §3.)
 - Mana is city-scoped.
@@ -62,7 +62,8 @@ cap     = (100 + Sanctum level + 10 per claimed landmark + 10 per held Sanctuary
 | Every tap on the ground — a tree, a bush, a rock, a shoal | **1 Mana** |
 | A tap on a building | **nothing** — it collects its store |
 | Casting a **relic's active** ([`09-relics.md`](09-relics.md) §2.1) | its authored Mana cost |
-| Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item — the only sink that is not a tap or a cast |
+| An **attack** — a lair, a camp, a rival, a dungeon room, a Portal floor | **20 Mana** (`combat.fightMana`) |
+| Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item |
 | Paying fog | **nothing** — a reveal costs Gold |
 
 ## 4. The Sanctum

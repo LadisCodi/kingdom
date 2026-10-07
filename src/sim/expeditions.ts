@@ -22,7 +22,8 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { lairBoard, lairIsCleared, lairSupplies, markLairCleared, markLairDefeated } from './lairs';
+import { lairBoard, lairIsCleared, markLairCleared, markLairDefeated } from './lairs';
+import { fightMana } from './world/fights';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -47,21 +48,15 @@ export const troopSlots = (): number => PARTY.troopSlots;
 // ---------------------------------------------------------------- supplies
 
 /**
- * What ONE lair attack costs: the tier's `garrisons` supplies, paid on entry
- * and never refunded, win or lose — so an attempt is a decision with a price
- * rather than a free retry, and the price is small enough that the decision
- * is about troops. The Quartermaster and the Rations line discount it.
+ * What ONE lair attack costs: the Mana every attack spends
+ * (`combat.fightMana`, 08 §1), paid on entry and never refunded, win or lose
+ * — so an attempt is a decision with a price rather than a free retry.
  */
 export function lairSupplyCost(
-  state: GameState, lairId: LairId, _heroIds: readonly HeroId[],
+  state: GameState, _lairId: LairId, _heroIds: readonly HeroId[],
 ): Wallet {
-  const base = lairSupplies(lairId);
-  const mult = Math.max(0, resolve(state, 'supplyCost', 1));
-  const out: Wallet = {};
-  for (const [c, n] of Object.entries(base)) {
-    out[c as keyof Wallet] = Math.max(1, roundPrice(n * mult));
-  }
-  return out;
+  const mana = fightMana(state);
+  return mana > 0 ? { Mana: mana } : {};
 }
 
 /**

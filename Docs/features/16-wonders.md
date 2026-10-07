@@ -21,8 +21,6 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 | Buildings and their levels | on a curve | `maxCountPerTownhallLevel`, and `maxLevel` on every district |
 | | **≈ 2,524,000,000 Gold** | nothing after it |
 
-- Lair supplies (25 → 1,000 Gold an attack) are paid only until the five
-  lairs are cleared: a drip, not a sink for a surplus.
 - A Wonder is the upgrade ladder with `maxLevel` removed, standing on the map.
 
 ## 2. What a Wonder is
