@@ -476,14 +476,16 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   3. a tap flips it;
   4. the next tap sends it to its own place on the stage — smaller and
      dimmed — while the next card rises.
-- **The cards are painted**: the back's gold frame round parchment for a
-  reward, round its rarity's cloth for a whole hero; a hero's name on a red
-  ribbon, a NEW flag on its corner, an amount on a wooden plate.
+- **The cards are papers**, in the research book's materials: the back an
+  aged sheet with a fine double rule and a red wax seal; a reward a torn page
+  with the name in ink under a thin rule; a whole hero the roster's own card
+  (its rarity's face in the thin gilt frame), its name on a parchment slip and
+  NEW in red wax on its corner.
 - **Fragments show where they leave the hero**: a bar under the card fills
   from what was held to what is held now — toward recruiting (gold) or the
   next ascension point (blue).
 - **A bar that reaches the recruiting price recruits the hero**: it flares,
-  the NEW flag slams onto the card, and the hero is celebrated as a whole one.
+  the NEW wax seal is pressed onto the card, and the hero is celebrated as a whole one.
 - **The places are the summary.** When the last card lands the chest sinks
   away, every card lights up, a *Rewards* plaque and **Collect** appear. No
   separate receipt is drawn.

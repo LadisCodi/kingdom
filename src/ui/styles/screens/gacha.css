@@ -137,20 +137,44 @@
 }
 .gr-card.is-down .gr-card-inner { transform: rotateY(180deg); }
 
+/* THE CARDS ARE PAPERS, the way the research book's are (research.css):
+ * the back a sealed letter, a reward a torn page in ink, a whole hero the
+ * roster's own card. Thin rules and real materials, nothing chunky. */
 .gr-card-back,
 .gr-card-face {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: calc(var(--cw) * 0.07);
 }
+/* The back: an aged sheet, a fine double rule, the red wax seal. */
 .gr-card-back {
   transform: rotateY(180deg);
-  background: url('../../assets/chest/card-back.png') center / 100% 100% no-repeat;
+  background:
+    radial-gradient(90% 70% at 50% 45%, transparent 40%, rgba(120, 72, 30, 0.28)),
+    url('../../assets/panel-paper.png') center / 100% 100% no-repeat;
   filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.5));
 }
-
+.gr-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 9% 10%;
+  border: max(1px, calc(var(--cw) * 0.008)) solid rgba(92, 58, 30, 0.45);
+  outline: max(1px, calc(var(--cw) * 0.004)) solid rgba(92, 58, 30, 0.3);
+  outline-offset: calc(var(--cw) * 0.025);
+  border-radius: calc(var(--cw) * 0.02);
+}
+.gr-card-back::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: 50%;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  background: url('../../assets/deco-seal.png') center / contain no-repeat;
+  filter: drop-shadow(0 calc(var(--cw) * 0.01) calc(var(--cw) * 0.015) rgba(60, 20, 10, 0.45));
+}
 /* A NEW hero (or a keystone) is in there: the back glows in its rarity and
    trembles before the flip. */
 .gr-card.is-charged .gr-card-inner { animation: gr-tremble 900ms ease-in-out infinite; }
@@ -170,33 +194,54 @@
 }
 @keyframes gr-charge { 50% { filter: drop-shadow(0 0 calc(var(--cw) * 0.12) var(--glow)) drop-shadow(0 0 calc(var(--cw) * 0.3) var(--glow)); } }
 
-/* The face: the painted card front (ChatGPT, Docs/art/ui/chests/) — the
-   back's gold frame round parchment, or round a new hero's rarity cloth. The
-   frame is part of the picture, so the content is inset past it. */
+/* A reward: a torn page in ink (the research book's rb-page.png). */
 .gr-card-face {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--cw) * 0.13) calc(var(--cw) * 0.12) calc(var(--cw) * 0.12);
-  background: url('../../assets/chest/card-front-reward.png') center / 100% 100% no-repeat;
-  filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.5));
+  gap: calc(var(--cw) * 0.02);
+  padding: calc(var(--cw) * 0.12) calc(var(--cw) * 0.1) calc(var(--cw) * 0.1);
+  background: url('../../assets/rb-page.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.45));
 }
-/* Fragments keep the parchment, washed in their hero's rarity. */
+/* Fragments: the page washed faintly in their hero's rarity. */
 .gr-card-art::before {
   content: '';
   position: absolute;
-  inset: 0 -6%;
+  inset: 0 -4%;
   background: radial-gradient(closest-side, var(--wash, transparent), transparent);
 }
-.gr-card.is-common { --wash: rgba(95, 143, 168, 0.45); }
-.gr-card.is-rare { --wash: rgba(138, 107, 196, 0.45); }
-.gr-card.is-legendary { --wash: rgba(242, 178, 51, 0.55); }
-.gr-card.is-keystone { filter: drop-shadow(0 0 calc(var(--cw) * 0.1) rgba(242, 178, 51, 0.85)); }
-/* A whole hero stands on the cloth of their rarity, under the rays. */
-.gr-card.is-hero .gr-card-face { padding-bottom: calc(var(--cw) * 0.2); }
-.gr-card.is-hero.is-common .gr-card-face { background-image: url('../../assets/chest/card-front-common.png'); }
-.gr-card.is-hero.is-rare .gr-card-face { background-image: url('../../assets/chest/card-front-rare.png'); }
-.gr-card.is-hero.is-legendary .gr-card-face { background-image: url('../../assets/chest/card-front-legendary.png'); }
+.gr-card.is-common { --wash: rgba(95, 143, 168, 0.32); }
+.gr-card.is-rare { --wash: rgba(138, 107, 196, 0.32); }
+.gr-card.is-legendary { --wash: rgba(242, 178, 51, 0.4); }
+.gr-card.is-keystone { filter: drop-shadow(0 0 calc(var(--cw) * 0.08) rgba(242, 178, 51, 0.8)); }
+
+/* A whole hero: the roster's card (heroPicker.css .hc) — the rarity's
+   painted face just inside the thin gilt frame, the figure over it. */
+.gr-card.is-hero .gr-card-face { padding: calc(var(--cw) * 0.1) calc(var(--cw) * 0.08) calc(var(--cw) * 0.1); background: none; }
+.gr-card.is-hero .gr-card-face::before,
+.gr-card.is-hero .gr-card-face::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+.gr-card.is-hero .gr-card-face::before {
+  inset: calc(var(--cw) * 0.05);
+  border-radius: calc(var(--cw) * 0.06);
+  background: var(--hc-bg) var(--hc-face) center / 100% 100% no-repeat;
+}
+.gr-card.is-hero .gr-card-face::after {
+  inset: 0;
+  z-index: 2;
+  border-style: solid;
+  border-color: transparent;
+  border-width: calc(var(--cw) * 0.104);
+  border-image: url('../../assets/hero-card-frame.png') 50 / calc(var(--cw) * 0.104) stretch;
+}
+.gr-card.is-hero.is-common { --hc-bg: var(--rarity-common); --hc-face: url('../../assets/hero-card-common.png'); }
+.gr-card.is-hero.is-rare { --hc-bg: var(--rarity-rare); --hc-face: url('../../assets/hero-card-rare.png'); }
+.gr-card.is-hero.is-legendary { --hc-bg: var(--rarity-legendary); --hc-face: url('../../assets/hero-card-legendary.png'); }
+.gr-card.is-hero .gr-card-art { z-index: 1; }
 .gr-card.is-hero .gr-card-art::before { display: none; }
 
 .gr-card-art {
@@ -207,7 +252,7 @@
   display: grid;
   place-items: center;
 }
-.gr-card-art > .icon { --icon-size: calc(var(--cw) * 0.66); }
+.gr-card-art > .icon { --icon-size: calc(var(--cw) * 0.56); }
 .gr-card-img {
   position: absolute;
   inset: 0;
@@ -215,20 +260,20 @@
   height: 100%;
   object-fit: contain;
   object-position: center bottom;
-  filter: drop-shadow(0 calc(var(--cw) * 0.02) 0 rgba(59, 29, 12, 0.35));
 }
 .gr-card.is-relic .gr-card-img { inset: 0 9%; width: 82%; object-position: center; }
 .gr-card-img.is-glyph { display: grid; place-items: center; font-size: calc(var(--cw) * 0.4); }
 
+/* The name, in ink under a fine rule, the way the book heads a page. */
 .gr-card-name {
-  max-width: 100%;
+  align-self: stretch;
+  padding-top: calc(var(--cw) * 0.035);
+  border-top: max(1px, calc(var(--cw) * 0.008)) solid rgba(92, 58, 30, 0.35);
   color: var(--ink);
-  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.12));
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.11));
   font-weight: var(--weight-strong);
   line-height: 1.1;
   text-align: center;
-  /* Two lines before an ellipsis: "Staff of Renewal" is a name, not a
-     prefix. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -240,45 +285,52 @@
   align-items: center;
   gap: calc(var(--cw) * 0.03);
   color: var(--ink);
-  font-size: max(calc(var(--px) * 13), calc(var(--cw) * 0.2));
+  font-size: max(calc(var(--px) * 13), calc(var(--cw) * 0.17));
   font-weight: var(--weight-title);
   line-height: 1.05;
 }
-.gr-card-count > .icon { --icon-size: calc(var(--cw) * 0.2); }
-/* A hero's name sits on the red cloth ribbon across the foot of the card,
-   its tails past the frame. */
+.gr-card-count > .icon { --icon-size: calc(var(--cw) * 0.17); }
+/* A hero's name on a parchment slip across the foot of the frame. */
 .gr-card.is-hero .gr-card-name {
   position: absolute;
-  left: -9%;
-  right: -9%;
-  bottom: 5%;
-  height: calc(var(--cw) * 0.29);
+  z-index: 3;
+  left: 12%;
+  right: 12%;
+  bottom: 6%;
+  padding: calc(var(--cw) * 0.02) calc(var(--cw) * 0.04);
+  border: max(1px, calc(var(--cw) * 0.01)) solid rgba(92, 58, 30, 0.55);
+  border-radius: calc(var(--cw) * 0.025);
+  background: url('../../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384), var(--parchment);
+  box-shadow: 0 calc(var(--cw) * 0.012) calc(var(--cw) * 0.02) rgba(0, 0, 0, 0.35);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.1));
+  white-space: nowrap;
+  -webkit-line-clamp: 1;
+}
+
+/* NEW, in red wax pressed on the card's corner. */
+.gr-card-new,
+.gr-stamp {
+  position: absolute;
+  z-index: 4;
   display: grid;
   place-items: center;
-  padding: 0 18% calc(var(--cw) * 0.055);
-  background: url('../../assets/chest/card-ribbon.png') center / 100% 100% no-repeat;
-  color: var(--ink-inverse);
-  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.11));
-  white-space: nowrap;
-  text-shadow: 0 calc(var(--cw) * 0.012) 0 #5a1208, 0 0 calc(var(--cw) * 0.02) #5a1208;
+  aspect-ratio: 1;
+  background: url('../../assets/offer-seal.png') center / contain no-repeat;
+  color: #fff3dc;
+  font-weight: var(--weight-title);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 calc(var(--cw) * 0.008) 0 rgba(90, 14, 8, 0.8);
+  filter: drop-shadow(0 calc(var(--cw) * 0.015) calc(var(--cw) * 0.02) rgba(60, 10, 4, 0.5));
+  pointer-events: none;
 }
-/* The NEW flag, planted on the top-left corner. */
 .gr-card-new {
-  position: absolute;
-  z-index: 1;
-  top: -5%;
-  left: -12%;
-  width: calc(var(--cw) * 0.6);
-  aspect-ratio: 360 / 216;
-  background: url('../../assets/chest/card-new.png') center / contain no-repeat;
-  filter: drop-shadow(0 calc(var(--cw) * 0.015) calc(var(--cw) * 0.02) rgba(0, 0, 0, 0.45));
-}
-/* An amount on a small wooden plate. */
-.gr-card-count {
-  padding: calc(var(--cw) * 0.025) calc(var(--cw) * 0.13) calc(var(--cw) * 0.03);
-  background: url('../../assets/chest/card-plate.png') center / 100% 100% no-repeat;
-  color: var(--ink-inverse);
-  text-shadow: 0 calc(var(--cw) * 0.012) 0 #2a1306;
+  top: -4%;
+  right: -7%;
+  width: calc(var(--cw) * 0.34);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.085));
+  transform: rotate(12deg);
 }
 
 /* A fragments card's bar rides UNDER the card, outside the flip: it scales
@@ -298,21 +350,16 @@
 .gr-card:not(.is-down) .gr-card-bar { opacity: 1; }
 .gr-card.is-full .gr-card-bar { filter: drop-shadow(0 0 calc(var(--cw) * 0.05) #ffd36b) drop-shadow(0 0 calc(var(--cw) * 0.1) rgba(242, 178, 51, 0.8)); }
 
-/* The NEW flag a recruit's card takes when the bar fills, slapped on
-   across the middle of the card. */
+/* The seal a recruit's card takes when the bar fills: the same wax, larger,
+   pressed across the middle of the card. */
 .gr-stamp {
-  position: absolute;
-  z-index: 2;
   left: 50%;
-  top: 30%;
-  width: calc(var(--cw) * 0.86);
-  margin-left: calc(var(--cw) * -0.43);
-  aspect-ratio: 360 / 216;
-  background: url('../../assets/chest/card-new.png') center / contain no-repeat;
-  filter: drop-shadow(0 calc(var(--cw) * 0.03) calc(var(--cw) * 0.04) rgba(0, 0, 0, 0.55));
-  transform: rotate(-14deg);
+  top: 40%;
+  width: calc(var(--cw) * 0.46);
+  margin-left: calc(var(--cw) * -0.23);
+  font-size: max(calc(var(--px) * 13), calc(var(--cw) * 0.12));
+  transform: rotate(-12deg);
   opacity: 0;
-  pointer-events: none;
 }
 .gr-card.is-stamped .gr-stamp { opacity: 1; }
 

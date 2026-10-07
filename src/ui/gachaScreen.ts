@@ -24,7 +24,7 @@
 // back glows and trembles over a drum roll, and the flip darkens the room,
 // flashes, shakes, raises rays, fires confetti and fireworks and plays a full
 // fanfare. Fragments carry a bar under their card; one that reaches the
-// recruiting price (Game.openReveal recruits the hero) slams the NEW flag on
+// recruiting price (Game.openReveal recruits the hero) presses the NEW wax seal on
 // and is celebrated the same way. Skip deals everything else at once and
 // still stops at every new hero.
 //
@@ -86,7 +86,7 @@ function rarityOf(p: GachaPrize): keyof typeof RARITY_LIGHT | null {
 
 /** One prize as a card: a back and a face, flipped by its inner. Fragments
  *  carry their bar UNDER the card (outside the flip), and a recruit the
- *  NEW stamp that drops onto it when the bar fills. */
+ *  NEW wax seal pressed onto it when the bar fills. */
 function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLElement {
   const count = (n: number, mark?: Node): HTMLElement =>
     el('div', { class: 'gr-card-count' }, ...(mark ? [mark] : []), `×${formatExact(n)}`);
@@ -113,7 +113,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
       cls = `is-hero ${RARITY_CLASS[def.rarity]}`;
       face = [
         el('div', { class: 'gr-card-art' }, portrait(prize.heroId, 'gr-card-img')),
-        el('div', { class: 'gr-card-new', role: 'img', 'aria-label': 'New' }),
+        el('div', { class: 'gr-card-new' }, 'New'),
         el('div', { class: 'gr-card-name' }, def.name.replace(/^The /, '')),
       ];
     } else {
@@ -135,7 +135,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
     bar.set(p.from / p.goal, barText(p, p.from));
     bars.set(card, bar);
     card.append(el('div', { class: 'gr-card-bar' }, bar.root));
-    if (p.recruited) card.append(el('div', { class: 'gr-stamp', role: 'img', 'aria-label': 'New' }));
+    if (p.recruited) card.append(el('div', { class: 'gr-stamp' }, 'New'));
   }
   return card;
 }
@@ -381,9 +381,9 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       layer?.burst(bx, by, { kind: 'spark', count: 24, colors: GOLD, speed: 260, size: 9, life: 800, radius: b.width / 3 });
       const stamp = card.querySelector('.gr-stamp')!;
       await play(stamp, [
-        { transform: 'scale(3.2) rotate(-28deg)', opacity: 0 },
-        { transform: 'scale(0.92) rotate(-14deg)', opacity: 1, offset: 0.7 },
-        { transform: 'scale(1) rotate(-14deg)', opacity: 1 },
+        { transform: 'scale(3.2) rotate(-30deg)', opacity: 0 },
+        { transform: 'scale(0.9) rotate(-12deg)', opacity: 1, offset: 0.7 },
+        { transform: 'scale(1) rotate(-12deg)', opacity: 1 },
       ], 380, 'cubic-bezier(.6,0,.9,.5)');
       card.classList.add('is-stamped');
       playSfx('chestLand');
