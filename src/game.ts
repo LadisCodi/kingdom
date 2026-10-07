@@ -437,8 +437,9 @@ export interface Banner {
 export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number; progress?: FragmentProgress }
-  // A card pack, which a room pays and a call never does.
   | { kind: 'currency'; currency: CurrencyId; amount: number }
+  // Into the Bag: a call's speed-up or chest.
+  | { kind: 'item'; item: ItemId; amount: number }
   // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
   | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
 
@@ -482,29 +483,35 @@ export interface GachaReveal {
  * Collapse a batch into prizes.
  *
  * Two rules do all the work. **Same thing, one widget with a count**: ten
- * calls that each paid 50 Stardust are one 500, and four fragments of the
+ * calls that each paid 25 Stardust are one 250, and four fragments of the
  * same hero are one stack of four — otherwise a ten-call is a wall of
  * identical tiles nobody reads. And **heroes last**, because they are what
  * the player called for: the sequence should arrive at them rather than open
- * with them and then spend nine tiles winding down.
+ * with them and then spend nine tiles winding down. Before them: the
+ * currencies, then the Bag's items, then the fragments.
  */
 export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
   const heroes: GachaPrize[] = [];
   const fragments = new Map<HeroId, number>();
-  let stardust = 0;
+  const currencies = new Map<CurrencyId, number>();
+  const items = new Map<ItemId, number>();
+  const addFragments = (id: HeroId, n: number): void => {
+    fragments.set(id, (fragments.get(id) ?? 0) + n);
+  };
   for (const p of pulls) {
     // A duplicate is not a hero prize — it already paid its fragments, and
     // showing it as a hero would promise a roster entry that is already there.
     if (p.heroId !== null && !p.duplicate) heroes.push({ kind: 'hero', heroId: p.heroId });
-    if (p.fragmentsOf !== null && p.fragments > 0) {
-      fragments.set(p.fragmentsOf, (fragments.get(p.fragmentsOf) ?? 0) + p.fragments);
+    if (p.fragmentsOf !== null && p.fragments > 0) addFragments(p.fragmentsOf, p.fragments);
+    for (const l of p.loot) {
+      if (l.kind === 'fragments') addFragments(l.heroId, l.amount);
+      else if (l.kind === 'currency') currencies.set(l.currency, (currencies.get(l.currency) ?? 0) + l.amount);
+      else items.set(l.item, (items.get(l.item) ?? 0) + l.amount);
     }
-    stardust += p.stardust;
   }
   return [
-    ...(stardust > 0
-      ? [{ kind: 'currency', currency: 'Stardust', amount: stardust } as GachaPrize]
-      : []),
+    ...[...currencies].map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount })),
+    ...[...items].map(([item, amount]): GachaPrize => ({ kind: 'item', item, amount })),
     ...[...fragments].map(([heroId, amount]): GachaPrize => ({
       kind: 'fragments', heroId, amount,
     })),
@@ -3299,7 +3306,7 @@ export class Game {
         const pulls: PullResult[] = heroes.map((h) => ({
           result: 'Pulled', heroId: h, rarity: HEROES[h].rarity, duplicate: heldBefore.has(h),
           fragments: (this.state.heroes.fragments[h] ?? 0) - (fragmentsBefore[h] ?? 0), fragmentsOf: h,
-          stardust: 0, guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
+          loot: [], guaranteed: true, guaranteedLegendary: HEROES[h].rarity === 'Legendary',
         }));
         if (pulls.length > 0) this.openReveal('advanced', pulls);
       }
