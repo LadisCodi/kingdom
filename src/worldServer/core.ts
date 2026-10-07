@@ -733,6 +733,27 @@ export function hurry(b: ServerBoard, seat: number, index: number, seconds: numb
   return { ok: true, finishesAt: ends - ms, snapshot: snapshotOf(b, seat, t) };
 }
 
+/** A speed-up from the Bag, or Gems, on an army on the road: `seconds` off
+ *  its march out or home. Its whole route moves with it — its departure and
+ *  its arrival together — so where it stands on the board stays true; the
+ *  whole of what is left, and it arrives now. Paid for by the client. */
+export function hurryArmy(b: ServerBoard, seat: number, armyId: string, seconds: number, t: number): CommandResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat) return { ok: false, why: 'NoArmy' };
+  if ((a.phase !== 'out' && a.phase !== 'home') || a.at === null || !(seconds > 0)) return { ok: false, why: 'Busy' };
+  const ms = Math.min(seconds * 1000, Math.max(0, a.at - t));
+  a.at -= ms;
+  if (a.phase === 'out') a.departedAt -= ms;
+  const finishesAt = a.at;
+  // Hurried all the way: it gets there now, as `applyDue` would land it.
+  if (a.at <= t) {
+    if (a.phase === 'home') sendHome(b, a, t);
+    else arrive(b, a, t);
+  }
+  return { ok: true, finishesAt, snapshot: snapshotOf(b, seat, t) };
+}
+
 /** Empty a district's store into its owner's purse: whole units only, the
  *  fraction left to carry. */
 export function collect(b: ServerBoard, seat: number, index: number, t: number): CollectResult {

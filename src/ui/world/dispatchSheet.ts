@@ -377,7 +377,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
  * inside it, the whole wait under it, and the Gems button that finishes it
  * (sim/rush.ts prices it).
  */
-function waitRow(
+export function waitRow(
   game: Game, what: string, startedAt: number, endsAt: number, gems: number, onFinish: () => void, job: SpeedJob,
 ): HTMLElement {
   const now = game.now();

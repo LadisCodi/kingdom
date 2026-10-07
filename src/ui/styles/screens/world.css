@@ -706,3 +706,6 @@
 .pt-shaft::-webkit-scrollbar,
 .wd-race::-webkit-scrollbar,
 .k-sheet-body:has(> .dv-body)::-webkit-scrollbar { display: none; }
+/* An army on the road, in the dock: its wait's words on the dock's wood. */
+.dv-dock .tr-batch-what,
+.dv-dock .tr-batch-total { color: var(--ink-inverse); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }

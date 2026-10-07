@@ -45,6 +45,9 @@ export interface WorldServerApi {
   /** Take `seconds` off a builder's work on a hex — a speed-up, paid for by
    *  the client from its Bag. */
   hurry(index: number, seconds: number): Promise<CommandResult>;
+  /** Take `seconds` off an army's march — a speed-up or Gems, paid for by
+   *  the client. */
+  hurryArmy(armyId: string, seconds: number): Promise<CommandResult>;
   /** Host a world relic in the Chapel on a hex, at its level — sent again
    *  when it levels up. */
   hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult>;
@@ -204,6 +207,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async hurry(index: number, seconds: number): Promise<CommandResult> {
     return this.ask({ kind: 'hurry', index, seconds });
+  }
+
+  async hurryArmy(armyId: string, seconds: number): Promise<CommandResult> {
+    return this.ask({ kind: 'hurryArmy', armyId, seconds });
   }
 
   async hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> {

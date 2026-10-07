@@ -47,7 +47,7 @@ export type Served =
 /** Every command the server takes. A record, not a list, so a command added
  *  to `WorldCommands` and missing here is a type error, not a 400 online. */
 const KIND_TABLE: Record<WorldCommandKind, true> = {
-  join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true,
+  join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true, hurryArmy: true,
   collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, descendPortal: true, setBoost: true,
   setCrest: true, setTownhall: true, hostRelic: true, unhostRelic: true,
 };

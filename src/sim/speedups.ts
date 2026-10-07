@@ -31,7 +31,10 @@ export type SpeedJob =
   | { kind: 'training'; buildingId: string }
   | { kind: 'workshop'; districtId: string }
   | { kind: 'explorer'; tripId: string }
-  | { kind: 'hex'; index: number };
+  | { kind: 'hex'; index: number }
+  // An army on the road: the server's, so the job carries when it arrives,
+  // kept true by the client from each snapshot.
+  | { kind: 'army'; armyId: string; at: number };
 
 /** The typed speed-up that fits this job; null where only General does — an
  *  explorer's march, whose own March speed-ups are not made yet. */
@@ -40,7 +43,7 @@ export const jobKind = (job: SpeedJob): Exclude<SpeedupKind, 'General'> | null =
     case 'queue': case 'hex': return 'Construction';
     case 'training': return 'Training';
     case 'workshop': return 'Workshop';
-    case 'explorer': return null;
+    case 'explorer': case 'army': return null;
   }
 };
 
@@ -66,6 +69,7 @@ export function jobRemainingSeconds(state: GameState, job: SpeedJob, now: number
     const trip = state.world.explorers.find((t) => t.id === job.tripId);
     return trip === undefined ? null : Math.max(0, (returnsAt(trip) - now) / 1000);
   }
+  if (job.kind === 'army') return job.at <= now ? null : (job.at - now) / 1000;
   if (job.kind === 'hex') {
     // The client's mirror of the server's timer (`state.world.builds`).
     const build = state.world.builds.find((b) => b.index === job.index);
@@ -124,7 +128,7 @@ export function useSpeedup(
 ): SpeedupResult {
   const refused = speedupRefusal(state, job, id, n, now);
   if (refused !== null) return refused;
-  if (job.kind === 'hex') return 'OnTheServer';
+  if (job.kind === 'hex' || job.kind === 'army') return 'OnTheServer';
   cut(state, map, job, ITEMS[id].seconds * n, now);
   spendSpeedups(state, job, id, n);
   return 'Used';
@@ -195,7 +199,7 @@ export function autoPlan(state: GameState, job: SpeedJob, now: number): AutoPlan
 export function useAuto(state: GameState, map: MapData, job: SpeedJob, now: number): SpeedupResult {
   const plan = autoPlan(state, job, now);
   if (plan.length === 0) return jobRemainingSeconds(state, job, now) === null ? 'NothingRunning' : 'NotHeld';
-  if (job.kind === 'hex') return 'OnTheServer';
+  if (job.kind === 'hex' || job.kind === 'army') return 'OnTheServer';
   for (const p of plan) {
     if (jobRemainingSeconds(state, job, now) === null) break;
     useSpeedup(state, map, job, p.id, p.n, now);
