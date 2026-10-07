@@ -12,11 +12,11 @@
 //   feast  › a chest being opened (ui/gachaScreen.ts) — Tavern (loop), from
 //            the sound collection. It outranks a fight: a won fight's spoils
 //            are dealt to it.
-//   battle › a fight playing back (ui/battleScreen.ts) — The Hour of Battle
+//   battle › a fight playing back (ui/battleScreen.ts) — Battlefront Ode
 //            (Owl Theory, Ultimate RPG Music Collection), its first 75 s.
 //   muster › a party being mustered on the deploy sheet (a lair's, an
-//            army's; main.ts) — Battle Drums (same collection): war drums
-//            while the player picks who goes.
+//            army's; main.ts) — Preparing for the Assault (same
+//            collection): war drums while the player picks who goes.
 //   town   › the harp.
 //
 // All four are levelled to the harp's loudness. The three moments start from
