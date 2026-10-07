@@ -685,6 +685,10 @@ function drawArmy(
   if (!garrisoned && a.at !== null) {
     drawPill(ctx, camera, x, y - size * (aspect ?? 1) - 8, formatCountdown(Math.max(0, a.at - now) / 1000));
   }
+  // The player's own army carries its power under it, wherever it stands —
+  // camped at a dungeon, in a Fortress, on the road — so a card need not
+  // say that it is there (Docs/proposals/world-menus.md §3.8).
+  if (trail) drawCampPower(ctx, camera, x, y + size * 0.42, formatCount(Math.round(a.power)), '#1f4fa0');
 }
 
 // ------------------------------------------------------------------ a hex

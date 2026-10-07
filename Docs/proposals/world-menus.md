@@ -137,21 +137,46 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   pill); *"A city can never be attacked"* as the line under it; if a friend,
   the *Profile* button the friends list opens.
 
-### 3.8 A dungeon (sheet)
+### 3.8 A dungeon's card (m90, built with feedback)
 
-- Vignette: the dungeon's art; tiles *Depth 1/3*, *Room 1/8*, *Kingdoms
-  racing 3*; the race rope in small. Main button: **Delve** (opens 3.9).
+- No THE HEX: a dungeon's ground does nothing to it.
+- **DUNGEON**: the entrance's art, who holds it and its size, the distance,
+  **Delve**; tiles Depth and Room — how far the player has gone.
+- The player's army there is not on the card: the board shows it, with its
+  power on a label under it (every army of the player's carries one).
+- **THE RACE**: who closes it and what that pays, then every kingdom in it
+  as the world ranking's rows — place, shield, name, Townhall, rooms
+  cleared — in a list that scrolls in what is left of the card, opened on
+  the player's own row.
 
-### 3.9 The delve
+### 3.9 The delve (m91)
 
-- No new mockup: m65 and m66 are the target. Close the gaps:
-  - depths as the right-hand tab column (lit, padlocked) in place of the
-    three buttons;
-  - the race as banners on the rope, with each kingdom's shield;
-  - the dock as the wooden bar of m65: hero faces with HP, troops ×n, Power,
-    Fight (red) and Recall.
+- m65 and m66 are the target; m91 is how it reads with the shipped pieces:
+  - under the title, *Depth 2 · Room 5 of 8 · held by Orcs*;
+  - the race rope, banners with shields;
+  - depths as a tab column on the right edge (ticked, lit, padlocked);
+  - the stair: cleared rooms dim and ticked, the frontier lit with its
+    creature, its power against the army's and its pay, the rooms ahead
+    hazed, the boss at the foot with his open chest;
+  - the army docked at the foot: heroes with HP, squads with counts and
+    losses, Power, **Fight** (Mana on its plate) and **Recall**;
+  - after a fight, the spoils over the stair (m66).
 
-### 3.10 Unchanged
+### 3.10 The Portal's descent (m92)
+
+- The Portal card's Descend opens a descent built like the delve, so the
+  Portal is a place played on the map, not a ranking in a sheet:
+  - a ribbon: when it closes;
+  - the ranking as the race rope: each kingdom's shield at its deepest
+    floor, a crown over the leader;
+  - Clears today as pips on the right edge;
+  - the floors going down: cleared, the frontier with its power and pay,
+    the floors ahead that carry a pack or a milestone, the rest in mist;
+  - the same army dock, with **Descend** (Mana) and **Recall**.
+- Everything it shows exists today (floors, attempts, packs, milestones,
+  the ranking): it is a screen, not a new rule.
+
+### 3.11 Unchanged
 
 - The name sheet, the explorers chip and the minimap already use the kit.
 

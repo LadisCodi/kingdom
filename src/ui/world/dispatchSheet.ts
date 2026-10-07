@@ -30,7 +30,9 @@ import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions'
 import { scoutPay } from '../../sim/world/scouting';
 import { campLoot } from '../../sim/world/fights';
 import { districtOf } from '../../worldServer/core';
-import { renderCamp, renderCity, renderFog, renderFreeGround, renderOwnDistrict, renderPortal } from './hexCard';
+import {
+  renderCamp, renderCity, renderDungeon, renderFog, renderFreeGround, renderOwnDistrict, renderPortal,
+} from './hexCard';
 import { FEATURE_NAME, FOG_NAME, ROLE_NAME, TERRAIN_NAME, hexTitle, seatName } from './hexNames';
 
 export { hexTitle, seatName };
@@ -271,6 +273,8 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   // ground the player has seen, and the player's own district.
   // A city — the player's, or a rival's once it is revealed (§3.7).
   if (game.actingSeat === null && bh.seat !== null && (index === home || fog === 'Revealed')) return renderCity(game, bh);
+  // A dungeon (§3.8): its ground does nothing to it.
+  if (game.actingSeat === null && bh.features.includes('Dungeon') && fog === 'Revealed') return renderDungeon(game, bh);
   // The Dark Portal (§3.6).
   if (game.actingSeat === null && bh.role === 'portal') return renderPortal(game, bh);
   // Ground in the mist (§3.1): exploring it is all there is to do.

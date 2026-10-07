@@ -684,6 +684,11 @@ A hex holds **none or one**. A feature decides the district built there
   again** after a defeat) and **Back**.
 - **On the map**, a dungeon's hex carries a ring filled as far as the player
   has gone, *13/24*, and a red badge while their army is camped there.
+- **Every army of the player's carries its power** on a label under it, on
+  the road, camped or in a Fortress.
+- **The dungeon's card** has Delve, how deep the player has gone, and the
+  race: every kingdom in it as the world ranking's rows, furthest first,
+  opened on the player's own.
 
 ## 9. Generation
 
