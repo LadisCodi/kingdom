@@ -380,7 +380,8 @@
 .dv-count { font-weight: var(--weight-strong); font-size: calc(var(--px) * 12); }
 .dv-lost { color: #ffb4a4; font-weight: var(--weight-strong); font-size: calc(var(--px) * 11); }
 .dv-power { margin-left: auto; font-weight: var(--weight-title); }
-.dv-calls { display: flex; gap: calc(var(--px) * 8); justify-content: flex-end; }
+.dv-calls { display: flex; gap: calc(var(--px) * 8); justify-content: space-between; align-items: flex-end; }
+.dv-calls.is-one { justify-content: center; }
 
 .has-spoils { position: relative; }
 .dv-spoils {
@@ -557,3 +558,74 @@
 .wd-race { flex: 0 1 auto; min-height: calc(var(--px) * 140); overflow-y: auto; overflow-x: clip; padding: 0 calc(var(--px) * 2); }
 .wd-race-line { margin: 0; }
 .wd-race-at { font-size: calc(var(--px) * 17); }
+
+/* THE DELVE, m91b: the band under the title, the stair with the depths down
+ * its right edge, every kingdom's shield on its room, the army docked. */
+.dv-band {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 5) calc(var(--px) * 10);
+  border-radius: calc(var(--px) * 6);
+  background: var(--parchment-shade);
+  color: var(--ink);
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(0, 0, 0, 0.35);
+}
+.dv-band .dv-where { color: var(--ink); }
+.dv-band .dv-race-line { color: var(--ink-muted); }
+.dv-stage { position: relative; display: flex; gap: calc(var(--px) * 6); }
+.dv-stage > .dv-descent { flex: 1; min-width: 0; }
+.dv-depths { flex: none; display: flex; flex-direction: column; gap: calc(var(--px) * 8); padding-top: calc(var(--px) * 6); }
+.dv-depth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  width: calc(var(--px) * 44);
+  padding: calc(var(--px) * 6) 0;
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: calc(var(--px) * 8);
+  background: linear-gradient(180deg, var(--wood-light), var(--wood));
+  color: var(--ink-inverse);
+  font: inherit;
+  font-size: calc(var(--px) * 18);
+  cursor: pointer;
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(0, 0, 0, 0.4);
+}
+.dv-depth.is-on { background: linear-gradient(180deg, #ffe08a, var(--gold)); color: #5a3a12; border-color: var(--gold-dark); }
+.dv-depth.is-locked { filter: saturate(0.4) brightness(0.8); cursor: default; }
+.dv-depth-count { display: flex; align-items: center; gap: calc(var(--px) * 1); font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
+.dv-depth-count .icon { --icon-size: calc(var(--px) * 14); }
+/* A room's disc, with the kingdoms that stand on it planted above. */
+.dv-node { position: relative; display: flex; flex-direction: column; align-items: center; }
+.dv-flags { display: flex; margin-bottom: calc(var(--px) * -6); z-index: 1; }
+.dv-flags > .dv-flag + .dv-flag { margin-left: calc(var(--px) * -10); }
+.dv-flag { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(0, 0, 0, 0.5)); }
+.dv-flag-name {
+  margin-top: calc(var(--px) * -2);
+  padding: 0 calc(var(--px) * 5);
+  border-radius: calc(var(--px) * 3);
+  background: var(--parchment-shade);
+  color: var(--ink);
+  font-size: var(--text-helper);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+}
+.dv-flag.is-you { scale: 1.2; z-index: 2; filter: drop-shadow(0 0 calc(var(--px) * 8) rgba(120, 170, 255, 0.85)); }
+.dv-flag.is-you .dv-flag-name { background: #2f63c4; color: #fff6e0; }
+.dv-boss-name {
+  padding: calc(var(--px) * 2) calc(var(--px) * 12);
+  border-radius: calc(var(--px) * 4);
+  background: linear-gradient(#c8392b, #8f2117);
+  color: #fff6e0;
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 14);
+}
+.dv-dock { --slot-size: calc(var(--px) * 46); }
+.dv-dock .bt-army { margin: 0; }
+.dv-room.is-frontier .dv-plaque { min-width: calc(var(--px) * 180); }
+.dv-plaque .dv-pay { flex-direction: row; flex-wrap: wrap; }
+.dv-disc.is-boss .k-portrait { --portrait-size: 100%; width: 100%; height: 100%; }
+/* A squad's losses so far, under its count; a hero's wounds under its card. */
+.bt-lost { position: absolute; bottom: calc(var(--px) * -16); left: 50%; translate: -50% 0; color: var(--clay); font-weight: var(--weight-title); font-size: calc(var(--px) * 11); }
+.bt-field-hero { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); }
