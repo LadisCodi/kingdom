@@ -5745,6 +5745,7 @@ export class Game {
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',
+      Marching: 'Your army is on the road — hurry it instead',
       NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
