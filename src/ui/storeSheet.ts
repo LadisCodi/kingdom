@@ -91,11 +91,13 @@ const ribbon = (text: string, extra?: HTMLElement): HTMLElement =>
 /** What stands on an offer's banner: its cut-out, its hero, or its icon. */
 function offerFigure(id: StoreSkuId): HTMLElement {
   const s = STORE[id];
-  const url = (s.art !== '' ? spriteUrl(s.art) : null)
-    ?? (s.hero !== null ? spriteUrl(HEROES[s.hero].sprite) : null)
-    ?? spriteUrl(s.sprite);
+  const art = s.art !== '' ? spriteUrl(s.art) : null;
+  const hero = art === null && s.hero !== null ? spriteUrl(HEROES[s.hero].sprite) : null;
+  const url = art ?? hero ?? spriteUrl(s.sprite);
   return url === null ? el('span', { class: 'stx-offer-figure is-empty' }, iconEl(kindIcon(id), { size: 'lg' }))
-    : spriteImgAt(url, 'stx-offer-figure');
+    // A hero stands taller and narrower than a cut-out: it is drawn larger,
+    // rising out of the frame, so it reads as large as one.
+    : spriteImgAt(url, `stx-offer-figure${hero !== null ? ' is-hero' : ''}`);
 }
 
 function offerBanner(game: Game, card: OfferCard): HTMLElement {
