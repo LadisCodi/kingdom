@@ -162,10 +162,6 @@ function freeLine(game: Game, banner: BannerId): HTMLElement {
 
 function banner(game: Game, id: BannerId): HTMLElement {
   const def = BANNERS[id];
-  const legend = pullsToLegendary(game.state, id);
-  const pity = legend !== null
-    ? `A Legendary within ${formatExact(legend)} calls`
-    : `A hero within ${formatExact(pullsToGuarantee(game.state, id))} calls`;
   const stands = def.showsHero ? featuredHero(id, game.storeVisits) : null;
   const hero = stands === null ? null : spriteUrl(HEROES[stands].sprite);
   return el('section', { class: `sth-banner is-${id}${hero === null ? '' : ' has-hero'}` },
@@ -175,8 +171,8 @@ function banner(game: Game, id: BannerId): HTMLElement {
     el('div', { class: 'sth-banner-body' },
       el('div', { class: 'sth-banner-ribbon' }, el('span', {}, def.name)),
       freeLine(game, id),
-      el('div', { class: 'sth-calls' }, callSlot(game, id), tenCall(game, id)),
-      el('span', { class: 'sth-pity' }, pity)));
+      // How soon a hero or a Legendary comes is under Odds.
+      el('div', { class: 'sth-calls' }, callSlot(game, id), tenCall(game, id))));
 }
 
 export function heroesTab(game: Game): HTMLElement {
