@@ -161,7 +161,7 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   - **The screen says the price before it is paid** — the expected losses sit
     under the button, beside the supplies.
 - **What it pays:** the hoard, in full, into the wallet immediately; Hero XP by the
-  ruin's tier; event points ([`13-events.md`](13-events.md) §2.2); the
+  ruin's tier (`garrisons.heroXp`: 500 · 1,500 · 4,000 · 10,000 · 25,000); event points ([`13-events.md`](13-events.md) §2.2); the
   `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
   reward, no loot table — the ruin behind it is the reward.
 - No technology gates the gate.

@@ -343,6 +343,11 @@
           "min": 0,
           "doc": "Closing a dungeon pays its last boss again, this many times over, to whoever closed it."
         },
+        "closeHeroXpMultiplier": {
+          "type": "float",
+          "min": 0,
+          "doc": "Closing a dungeon pays its last boss's Hero XP this many times over — the big Hero XP prize, for clearing it to the bottom."
+        },
         "returnHoursMin": {
           "type": "float",
           "min": 0,

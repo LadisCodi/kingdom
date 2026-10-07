@@ -629,7 +629,9 @@ A hex holds **none or one**. A feature decides the district built there
 - **Each player delves for themselves**: their own progress, room by room.
 - **But closing it is a race.** The first player to beat a dungeon's last boss
   closes it for everyone:
-  - they are paid that boss again, `closeRewardMultiplier` (2) times over;
+  - they are paid that boss again, `closeRewardMultiplier` (2) times over,
+    and its Hero XP `closeHeroXpMultiplier` (20) times over — the big Hero XP
+    prize ([`10-heroes.md`](10-heroes.md) §4.2);
   - every army camped there walks home, and everyone's progress in it is gone;
   - the others are told who closed it.
 - **A closed dungeon comes back** after a roll between `returnHoursMin` and
