@@ -459,29 +459,40 @@ Each of these is data, not code:
 
 ### 8.3 The reveal
 
-What a call paid, and the only screen in the game that covers everything but
-the rewarded video.
+What a call paid, opened from a chest — the only screen in the game that
+covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 
-- **A grid of prize widgets that deals itself**, one every tenth of a second.
-  A call is the one moment the player paid for a surprise; a finished grid
-  handed over at once is a receipt.
-- **The prompt to leave appears only when the last tile has landed.** A screen
-  saying *tap to finish* while it is still dealing is asking to be skipped.
-- **A ten-call condenses.** Same thing, one widget with a count: ten calls
+- **A stage of its own**: a treasure hall at night, torches, a red carpet.
+  The kingdom is not seen behind it.
+- **The chest says where the rewards come from**: silver-bound for the common
+  call, gold for the golden call, violet for a relic fragment pack, a rope-tied
+  war chest for spoils. Every reveal of RANDOM rewards uses it.
+- **The sequence**, one tap per beat:
+  1. the chest drops onto the carpet with a count of the cards inside —
+     *Tap to open*;
+  2. a call's key turns, the lid flies, the first card rises face down —
+     *Tap to reveal*;
+  3. the card flips;
+  4. the next tap sends it to its own place on the stage — smaller and
+     dimmed — while the next card rises.
+- **The places are the summary.** When the last card lands the chest sinks
+  away, every card lights up, a *Rewards* plaque and **Collect** appear. No
+  separate receipt is drawn.
+- **A ten-call condenses.** Same thing, one card with a count: ten calls
   paying 50 Stardust each are one 500, and four fragments of one hero are one
-  stack of four. Otherwise a ten is a wall of identical tiles nobody reads.
-- **Heroes come last**, so the sequence arrives at what the player called for
-  rather than opening with it.
-- **A hero interrupts.** When the next tile would be a hero, the sequence
-  stops and the hero takes the whole screen — portrait, name, rarity — because
-  a roster entry arriving is a different size of event from four fragments and
-  must not be a tile a thumb is already moving past. Tap to carry on.
-- **One tap, three meanings**, in this order: put a hero curtain away and
-  carry on; deal the rest at once, never skipping a curtain; leave. Skipping
-  to the end is what a thumb tries first, and a screen that ignores it feels
-  stuck.
+  stack of four.
+- **Heroes come last**, so the sequence arrives at what the player called for.
+- **A new hero is an event.** Its card back glows in its rarity and trembles
+  before the flip (a Legendary's with a rising drum roll); the flip raises
+  rays, confetti, a plaque — *A new hero answers* / *A legend answers* — and
+  the hero's title and rarity. A relic's keystone glows the same way.
+- **A tap during an animation finishes it.** **Skip** deals every other card
+  at once and still stops at each new hero.
 - A duplicate is **not** drawn as a hero. It already paid its fragments, and a
-  hero tile would promise a roster entry that is already there.
+  hero card would promise a roster entry that is already there.
+- Every beat has its sound (land, key, lid, draw, flip, whoosh, settle,
+  sparkle, riser, fanfare, summary chime) and its particles (dust, sparks,
+  confetti, embers). Reduced motion keeps the beats and drops the motion.
 - **The banners sit on the store**, padlocked until a Tavern stands. Moving
   them into the Tavern — **tapping it is how one is called**
   ([`14-monetization.md`](14-monetization.md) §2.1) — is designed, not built.

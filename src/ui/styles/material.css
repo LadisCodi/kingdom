@@ -578,23 +578,16 @@
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
 
-/* ---- the reveal and the battlefield (M15, M16) ---- */
-.gr-tile,
+/* ---- the battlefield (M16); the reveal draws its own (screens/gacha.css) ---- */
 .bs-slot,
 .bs-where,
 .bs-count { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-.gr-plaque,
 .bs-plaque { background: url('../assets/tex-wood.jpg') center / calc(var(--px) * 200) calc(var(--px) * 200); }
 .bs {
   background:
     radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.1), transparent 70%),
     linear-gradient(rgba(58, 34, 18, 0.82), rgba(46, 26, 14, 0.9)),
     url('../assets/tex-cloth.jpg') center / calc(var(--px) * 256) calc(var(--px) * 256);
-}
-.gr-screen {
-  background:
-    radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
-    rgba(24, 15, 8, 0.9);
 }
 
 /* ---- the relic's card (M17) ---- */
@@ -616,17 +609,6 @@
     linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
     url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384);
 }
-.gr-calls,
-.gr-curtain-rarity { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
-/* The curtain is dark cloth lit by gold rays (M15). */
-.gr-curtain {
-  background:
-    radial-gradient(70% 45% at 50% 42%, var(--tile, var(--rarity-common)), transparent 72%),
-    repeating-conic-gradient(from 0deg at 50% 40%, rgba(242, 178, 51, 0.09) 0 6deg, transparent 6deg 14deg),
-    linear-gradient(rgba(18, 11, 6, 0.86), rgba(18, 11, 6, 0.86)),
-    url('../assets/tex-cloth.jpg') center / calc(var(--px) * 256) calc(var(--px) * 256);
-}
-
 /* ---- the Townhall card's blocks (M2) ---- */
 .dc-up-tile,
 .bld-cost .k-chip,
