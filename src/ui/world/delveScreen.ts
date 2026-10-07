@@ -102,7 +102,7 @@ function roomNode(
 }
 
 /** The army's own board as the deployment draws it, read only. */
-function armyBoard(game: Game, army: ArmyView): HTMLElement {
+export function armyBoard(game: Game, army: ArmyView): HTMLElement {
   const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
   const slots = army.slots ?? [];
   return fieldArmyPanel(game, {

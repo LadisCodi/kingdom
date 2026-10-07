@@ -110,6 +110,7 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 - No raid ribbon: the board's arrow says which district it raids.
 - An army on its way: the delve's dock in place of the pay and the two
   answers — its board, its bar, **Finish**. No Recall.
+- An army there, waiting: its board, **Withdraw** and **Attack** (in Mana).
 
 ### 3.5 The deployment (m87b, in review)
 

@@ -7,6 +7,12 @@ import type { BoardHex } from '../../sim/world/board';
 import type { FogState } from '../../sim/world/explorers';
 import { WORLD_BUILD } from '../../sim/data/definitions';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
+import type { LairId } from '../../sim/state';
+
+/** What a camp is called, on its card's plank and over its fight. */
+export const CAMP_TITLE: Record<LairId, string> = {
+  Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
+};
 
 export const TERRAIN_NAME: Record<WorldTerrain, string> = {
   Grassland: 'Grassland', Plains: 'Plains', Desert: 'Desert',

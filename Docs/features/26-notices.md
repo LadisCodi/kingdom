@@ -60,6 +60,7 @@
 | Tomorrow's part | a bought pack's next-day part is waiting — countdown, then ready | the chest | — | **Claim** when ready: the offer's splash |
 | Portal reward | a closed Portal opening placed the player where it pays Gems ([`19-world-map.md`](19-world-map.md) §10.4) — the place, the floor, the Gems | the Portal, shut; it glows | — | **Claim**: the Gems |
 | Free call | a free gacha pull is waiting | the key | the store's Heroes | — |
+| Army ready | an army of the player's waits at a camp for the word to attack ([`19-world-map.md`](19-world-map.md) §5.4) | the camp; it glows | the camp's sheet | — |
 | Hero rested | a hero who came back exhausted is whole again | the hero's bust | the heroes sheet | — |
 
 - **Hero rested** goes when that hero next fights, or when its card is opened.

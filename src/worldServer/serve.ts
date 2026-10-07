@@ -48,7 +48,7 @@ export type Served =
  *  to `WorldCommands` and missing here is a type error, not a 400 online. */
 const KIND_TABLE: Record<WorldCommandKind, true> = {
   join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true, hurryArmy: true,
-  collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, descendPortal: true, setBoost: true,
+  collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, fightCamp: true, descendPortal: true, setBoost: true,
   setCrest: true, setTownhall: true, hostRelic: true, unhostRelic: true,
 };
 const KINDS: ReadonlySet<string> = new Set(Object.keys(KIND_TABLE));

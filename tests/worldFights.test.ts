@@ -15,10 +15,9 @@ describe('a fight on the board', () => {
     expect(fightMana(state)).toBeGreaterThan(0);
   });
 
-  it('is paid on sending only for a camp or a rival; rooms and floors pay their own', () => {
-    expect(sendFights('clear')).toBe(true);
+  it('is paid on sending only for a rival; camps, rooms and floors pay their own', () => {
     expect(sendFights('attack')).toBe(true);
-    for (const p of ['claim', 'garrison', 'delve', 'portal']) expect(sendFights(p)).toBe(false);
+    for (const p of ['claim', 'garrison', 'delve', 'portal', 'clear']) expect(sendFights(p)).toBe(false);
   });
 });
 

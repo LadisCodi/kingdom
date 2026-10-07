@@ -16,12 +16,12 @@ import type { Board } from '../sim/battle';
 import type { ArtifactId, HeroId } from '../sim/state';
 import type { WorldUpgrade } from '../sim/world/types';
 import {
-  claim, collect, delveRoom, descendPortal, finish, hostRelic, hurry, hurryArmy, join, owedTo, recall, repair, reportSeen, resolveTo,
+  claim, collect, delveRoom, fightCamp, descendPortal, finish, hostRelic, hurry, hurryArmy, join, owedTo, recall, repair, reportSeen, resolveTo,
   sendArmy, setBoost, setCrest, setTownhall, snapshotOf, tribute, unhostRelic, upgrade,
 } from './core';
 import { nicknameProblem, normalNickname } from './nickname';
 import type {
-  ArmyPurpose, CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard,
+  ArmyPurpose, CollectResult, CampFightResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerBoard,
   ServerWorld, WorldSnapshot,
 } from './types';
 
@@ -56,6 +56,7 @@ export interface WorldCommands {
   sendArmy: { cmd: { req: SendArmyRequest }; reply: SendResult };
   recall: { cmd: { armyId: string }; reply: CommandResult };
   delveRoom: { cmd: { armyId: string }; reply: DelveResult };
+  fightCamp: { cmd: { armyId: string }; reply: CampFightResult };
   descendPortal: { cmd: { armyId: string }; reply: DelveResult };
   setBoost: { cmd: { boost: SeatBoost }; reply: null };
   /** The crest the player chose, or null for their nickname's. */
@@ -161,6 +162,7 @@ function run(b: ServerBoard, seat: number, cmd: WorldCommand, t: number): unknow
     case 'sendArmy': return sendArmy(b, seat, cmd.req, t);
     case 'recall': return recall(b, seat, cmd.armyId, t);
     case 'delveRoom': return delveRoom(b, seat, cmd.armyId, t);
+    case 'fightCamp': return fightCamp(b, seat, cmd.armyId, t);
     case 'descendPortal': return descendPortal(b, seat, cmd.armyId, t);
     case 'setBoost': setBoost(b, seat, cmd.boost, t); return null;
     case 'setCrest': setCrest(b, seat, cmd.crest); return null;

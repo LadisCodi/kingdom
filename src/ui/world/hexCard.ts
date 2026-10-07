@@ -26,7 +26,7 @@ import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
+import type { CurrencyId, GoodId, UnitId } from '../../sim/state';
 import { claimGold, districtOf, districtRate, floorPower, nextRoom, upgradeLevel } from '../../worldServer/core';
 import { portalPortrait } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
@@ -38,12 +38,12 @@ import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
 import { chapelRoom, hexActions, hexWork } from './worldActions';
-import { marchingDock } from './delveScreen';
+import { armyBoard, marchingDock } from './delveScreen';
 import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
 import { enemyPanel } from '../battleSheet';
 import { creatureFace } from '../lairSheet';
-import { FEATURE_NAME, TERRAIN_NAME } from './hexNames';
+import { CAMP_TITLE, FEATURE_NAME, TERRAIN_NAME } from './hexNames';
 
 /** A feature's mark on its tile: what it is worked for. */
 const FEATURE_ICON: Partial<Record<WorldFeature, IconName>> = {
@@ -223,10 +223,6 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
 
 // ------------------------------------------------------------ a camp
 
-/** What a camp is called, on its card's plank. */
-export const CAMP_TITLE: Record<LairId, string> = {
-  Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
-};
 
 /** The ground in one line — terrain, feature, the march across it — and,
  *  on a tap, what it does to each troop type in a fight (19 §4.2). */
@@ -246,7 +242,8 @@ function groundStrip(bh: BoardHex): HTMLElement {
  * line, the enemy — its difficulty a wax seal on its plank — what beating
  * it pays, and one row with its two answers: Negotiate, priced, and Attack,
  * which opens the deployment. With the player's army on its way, the
- * dungeon's dock instead: its board, its bar and Finish. How far it is and what it looks like are the
+ * dungeon's dock instead: its board, its bar and Finish; once it is there,
+ * its board, Withdraw and Attack — the fight is the player's to call. How far it is and what it looks like are the
  * board's; a raid it will make is the board's arrow.
  */
 export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
@@ -261,12 +258,22 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   const loot = (Object.entries(campLoot(game.state, camp.power)) as Array<[CurrencyId, number]>)
     .filter(([, n]) => n > 0)
     .map(([c, n]) => el('span', { class: 'k-chip' }, currencyIcon(c, { size: 'sm' }), `+${formatShort(n)}`));
-  // An army of the player's already marching on it: its board, its bar and
-  // Finish, as at a dungeon. A march is not called back halfway, only hurried.
+  // An army of the player's on its way: its board, its bar and Finish, as at
+  // a dungeon. A march is not called back halfway, only hurried.
   const marching = game.worldView?.armies.find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
   const reach = hexActions(source, game.worldSeat(), bh, { revealed: true });
   const tribute = reach.find((a) => a.kind === 'tribute');
-  const answers = marching !== undefined
+  const answers = marching?.phase === 'camp'
+    // There and waiting: its board, then Withdraw and the Attack that fights.
+    ? el('div', { class: 'dv-dock' },
+      armyBoard(game, marching),
+      el('div', { class: 'dv-calls' },
+        btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(marching.id) }),
+        btn({
+          label: 'Attack', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
+          onClick: () => void game.doFightCamp(marching.id),
+        })))
+    : marching !== undefined
     ? marchingDock(game, marching, 'On the way')
     : el('div', { class: 'wd-choices' },
       btn({
