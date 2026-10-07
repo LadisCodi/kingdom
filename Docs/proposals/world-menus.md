@@ -107,17 +107,17 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   plate above it, the shipped cost style) and **Attack** (no price).
 - No raid ribbon: the board's arrow says which district it raids.
 
-### 3.5 The army sheet (m87)
+### 3.5 The deployment (m87b, in review)
 
-- Keep the lair attack screen; fix what the world adds:
-  - title = the target (*"Orc camp"*), never the route;
-  - under the title a parchment strip: the target's vignette,
-    *2 hexes · 4m march*, and the purpose (*Attack / Claim / Garrison /
-    Delve / Descend*);
-  - the ENEMY board shows the camp's creatures (their busts and counts),
-    not an empty board; for a dungeon room, the room's guard; for a
-    garrison or a claim, the board is replaced by the destination.
-- The Mana price inside the main button.
+- It is the lair's deployment screen, as it ships: ENEMY / YOUR ARMY,
+  TROOPS, the price row, Quick deploy and Attack.
+- A world camp's ENEMY board shows the camp's squads (done with §3.4).
+- **Added**, between TROOPS and the price row, two widgets side by side:
+  - **LOOT** — what beating it pays;
+  - **TERRAIN** — the hex's ground and its modifiers on the fight.
+- **Terrain modifiers are a new combat rule**, to be designed: e.g.
+  Plains, cavalry attack up; Forest, archers' attack down. Today there are
+  none, so the widget shows the ground alone until they exist.
 
 ### 3.6 The Portal (m88)
 

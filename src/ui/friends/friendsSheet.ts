@@ -206,7 +206,7 @@ function kingdomRow(
 }
 
 /** Gold, silver and bronze for the podium; a plain ribbon past it. */
-function rankRibbon(rank: number | null): HTMLElement {
+export function rankRibbon(rank: number | null): HTMLElement {
   const tone = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'plain';
   return el('span', { class: `fr-rank is-${tone}`, ...(rank === null ? { 'aria-hidden': 'true' } : { 'aria-label': `Place ${formatExact(rank)}` }) },
     rank === null ? '' : formatExact(rank));

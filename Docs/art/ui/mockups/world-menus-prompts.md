@@ -195,3 +195,13 @@ and the camp's portraits, no YOUR BEST; BEATEN, IT PAYS kept; no PAY OFF
 section; at the foot one row of two cost-style buttons, **Negotiate** (its
 price on the plate) and **Attack** (an empty plate). Result:
 `m86c-world-camp.png`, right first try.
+
+## M87b — the deployment, with loot and terrain
+
+New message in the M87 chat, with the shipped lair deployment
+(`m83-refs/ref-lair-deploy.png`) and m87 attached: reproduce the shipped
+screen faithfully for a world camp, and add only two widgets between the
+TROOPS row and the price row — LOOT (the camp's pay as chips) and TERRAIN
+(a hex vignette, its name and its modifier lines). Result:
+`m87b-world-deploy.png`, first try; the backdrop came back as the
+province's, which the game does not show.
