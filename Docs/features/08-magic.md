@@ -13,8 +13,10 @@
   - In the province a tap on the ground is a small spell that hurries
     production. A tap on a building is free: it collects the building's store
     ([`03-economy.md`](03-economy.md) §3.2).
-  - On the world map Mana costs nothing; a held Sanctuary raises the cap
-    ([`19-world-map.md`](19-world-map.md) §8).
+  - On the world map Mana is the energy a fight spends: an army sent to a
+    camp or a rival, a dungeon room, a Portal floor, each `fightManaHours`
+    (1) hours of regen ([`19-world-map.md`](19-world-map.md) §4). A held
+    Sanctuary raises the cap (§8).
 - Mana is capped, and Mana over the cap is lost. (Knowledge is capped too,
   but only its drip stops — [`07-research.md`](07-research.md) §3.)
 - Mana is city-scoped.

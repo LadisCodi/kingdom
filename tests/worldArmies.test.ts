@@ -11,6 +11,8 @@ import { homeIndex } from '../src/sim/world/explorers';
 import { homeboundMs, outboundMs } from '../src/sim/world/travel';
 import { boardNeighbors, hexAt, hexDistance } from '../src/sim/world/hex';
 import { deserialize, serialize } from '../src/sim/save';
+import { mana } from '../src/sim/mana';
+import { fightMana } from '../src/sim/world/fights';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
 import { hexActions } from '../src/ui/world/worldActions';
 import { HexCamera } from '../src/render/world/hexCamera';
@@ -35,7 +37,7 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
   game.onToast((m) => toasts.push(m));
   await game.connectWorld();
   await game.doJoinWorld('Mel');
-  fund(game.state, { Gold: 100_000 });
+  fund(game.state, { Gold: 100_000, Wood: 100_000, Food: 100_000, Stone: 100_000 });
   for (let i = 0; i < 40; i++) game.state.army.push({ uniqueId: `w${i}`, definitionId: 'Warrior' });
   const me = game.state.world.board.seat;
   const rival = (me + 1) % 6;
@@ -45,9 +47,13 @@ async function frontier(): Promise<{ game: Game; clock: { t: number }; target: n
   for (let step = 0; step < 4 && target < 0; step++) {
     const source = game.worldSource();
     const board = source.board();
-    const options = board.hexes.filter((h) => hexActions(source, rival, h, SEEN).some((a) => a.kind === 'claim'));
+    // A camp in the way is paid off, then claimed.
+    const ours = (i: number) => i === SEAT_INDICES[rival] || source.hexOf(i)?.owner === rival;
+    const options = board.hexes.filter((h) => boardNeighbors(h.index).some(ours)
+      && hexActions(source, rival, h, SEEN).some((a) => a.kind === 'claim' || a.kind === 'tribute'));
     const beside = options.find((h) => boardNeighbors(SEAT_INDICES[me]).includes(h.index));
     const next = beside ?? options.sort((a, b) => dist(a.index, SEAT_INDICES[me]) - dist(b.index, SEAT_INDICES[me]))[0];
+    if (hexActions(source, rival, next, SEEN).some((a) => a.kind === 'tribute')) await game.doTributeCamp(next.index);
     await game.doClaimHex(next.index, 0);
     clock.t += CLAIM_MS;
     await game.refreshWorld();
@@ -95,6 +101,23 @@ describe('an army on the board', () => {
     expect(game.state.world.armies).toEqual([]);
     expect(heroAway(game.state, hero)).toBe(false);
     expect(game.state.army.length).toBe(before);
+  });
+
+  it('costs Mana to send to a fight, paid once the server says yes', async () => {
+    const { game, target } = await frontier();
+    const cost = fightMana(game.state);
+    expect(cost).toBeGreaterThan(0);
+    game.state.city.wallet.Mana = cost - 1;
+    game.openArmy(target, 'attack');
+    expect(game.armyBlockText()).toMatch(/Not enough Mana/);
+    await game.doSendArmy();
+    expect(game.state.world.armies).toEqual([]);
+    expect(mana(game.state)).toBe(cost - 1);
+    game.state.city.wallet.Mana = cost + 5;
+    expect(game.armyBlockText()).toBeNull();
+    await game.doSendArmy();
+    expect(game.state.world.armies).toHaveLength(1);
+    expect(mana(game.state)).toBe(5);
   });
 
   it('keeps an army out through a reload', async () => {

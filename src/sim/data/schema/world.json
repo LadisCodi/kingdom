@@ -69,6 +69,11 @@
           "type": "int",
           "min": 1,
           "doc": "Armies a player can have out from the moment the world opens; the War Camp adds one per level."
+        },
+        "fightManaHours": {
+          "type": "float",
+          "min": 0,
+          "doc": "What a fight on the world board costs in Mana — an army sent to a camp or a rival, a dungeon room, a Portal floor — in hours of the city’s Mana regen (Docs/features/08-magic.md §1)."
         }
       }
     },
@@ -487,6 +492,11 @@
         },
         "goldPerPower": { "type": "float", "min": 0, "doc": "Gold a beaten camp pays, per point of its power." },
         "heroXpPerPower": { "type": "float", "min": 0, "doc": "Hero XP a beaten camp pays, per point of its power." },
+        "productionHoursPer1000Power": {
+          "type": "float",
+          "min": 0,
+          "doc": "Hours of the city’s own Wood, Food and Stone production a beaten camp pays, per 1,000 of its power."
+        },
         "tributePremium": {
           "type": "float",
           "min": 1,
@@ -503,10 +513,25 @@
           "min": 0,
           "doc": "Hours a stand-in rival takes to beat a camp, per 1,000 of its power."
         },
-        "raidHours": {
+        "returnHours": {
           "type": "float",
-          "min": 1,
-          "doc": "How often a camp raids the player’s districts beside it, in hours of UTC — every raid lands at the same hours on every board (19 §5.5)."
+          "min": 0,
+          "doc": "Hours after a player beats or pays off a camp until it stands again for them, on a hex nobody holds."
+        },
+        "raidWarnHours": {
+          "type": "float",
+          "min": 0,
+          "doc": "How long a raid is announced before it lands: the camp chosen, its arc and its time on the map (19 §5.5)."
+        },
+        "raidGapMinHours": {
+          "type": "float",
+          "min": 0,
+          "doc": "The shortest wait after a raid before the next camp chooses one of the player’s districts."
+        },
+        "raidGapMaxHours": {
+          "type": "float",
+          "min": 0,
+          "doc": "The longest wait after a raid before the next camp chooses one of the player’s districts."
         },
         "raidShare": {
           "type": "float",

@@ -13,7 +13,7 @@ import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } f
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
   floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
-  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, upgrade,
+  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -32,6 +32,8 @@ function quietBoard(): { b: ServerBoard; seat: number } {
   const w = emptyWorld();
   const { board, seat } = join(w, { id: 'me', name: 'Me', prefer: { id: 'test', seed: 0x5eed, seat: 0 } }, T0);
   for (const s of board.seats) if (s?.bot) s.nextMoveAt = null;
+  // No camp raids: these tests are about something else (tests/worldRaids).
+  for (const r of Object.values(board.raids ?? {})) r.at = Infinity;
   return { b: board, seat };
 }
 
@@ -254,6 +256,8 @@ describe('armies', () => {
     const line = hexLine(hexAt(home(rival)), hexAt(home(seat))).map(hexIndex);
     let t = T0;
     for (const i of line.slice(1, -1)) {
+      // A camp on the road is paid off first.
+      if (claimRefusal(b, rival, i, t) === 'Guarded') tribute(b, rival, i, t);
       if (b.hexes[i] === undefined && claimRefusal(b, rival, i, t) === null) {
         claim(b, rival, i, t);
         t += CLAIM_MS;

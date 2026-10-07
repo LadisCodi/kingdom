@@ -2021,6 +2021,9 @@ export interface WorldDef {
   explorerGemCostGrowth: number;
   /** Armies out at once before the War Camp adds any. */
   armySlots: number;
+  /** A fight on the board — an army sent to a camp or a rival, a dungeon
+   *  room, a Portal floor — in hours of the city's Mana regen (08 §1). */
+  fightManaHours: number;
   /** Who holds the five other cities until the board comes from the server. */
   rivals: readonly string[];
 }
@@ -2157,11 +2160,20 @@ export interface WorldCampsDef {
   creatures: Record<'inner' | 'corridor' | 'home' | 'outer', readonly LairId[]>;
   goldPerPower: number;
   heroXpPerPower: number;
+  /** Hours of the city's Wood, Food and Stone a beaten camp pays, per 1,000
+   *  of its power. */
+  productionHoursPer1000Power: number;
   tributePremium: number;
   tributeLossShare: number;
   botHoursPer1000Power: number;
-  /** Camp raids (19 §5.5): how often, how much, and what a repair costs. */
-  raidHours: number;
+  /** Hours until a beaten camp stands again for the player who beat it. */
+  returnHours: number;
+  /** Camp raids (19 §5.5): one at a time, announced `raidWarnHours` ahead,
+   *  `raidGapMinHours`–`raidGapMaxHours` apart; how much one takes, and what
+   *  a repair costs. */
+  raidWarnHours: number;
+  raidGapMinHours: number;
+  raidGapMaxHours: number;
   raidShare: number;
   repairCostShare: number;
   repairTimeShare: number;

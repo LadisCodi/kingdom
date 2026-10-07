@@ -16,18 +16,19 @@ import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { homeboundMs, outboundMs } from '../../sim/world/travel';
 import { depositMaterial, type WorldFeature, type WorldTerrain } from '../../sim/world/types';
-import { ARTIFACTS, WORLD_BUILD, WORLD_CAMPS, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ARTIFACTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
 import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/core';
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration, formatExact } from '../format';
-import { action, btn, progress, sheet, stat } from '../kit';
+import { action, btn, chip, progress, sheet, stat } from '../kit';
 import { timerButton } from '../speedupSheet';
 import type { SpeedJob } from '../../sim/speedups';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
 import { scoutPay } from '../../sim/world/scouting';
+import { campLoot } from '../../sim/world/fights';
 import { gemsToFinish } from '../../sim/rush';
 
 const TERRAIN_NAME: Record<WorldTerrain, string> = {
@@ -142,14 +143,20 @@ function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   const lines = [el('p', { class: 'wd-line' },
     `A camp of ${CAMP_CREATURE[bh.camp.creature]} · Power ${formatCount(bh.camp.power)} · `,
     el('b', { style: `color: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty))];
+  // What beating it pays, so the fight is worth weighing (19 §5.4).
+  lines.push(el('p', { class: 'wd-line' }, 'Beaten, it pays ',
+    ...(Object.entries(campLoot(game.state, bh.camp.power)) as Array<[CurrencyId, number]>)
+      .filter(([, n]) => n > 0).map(([c, n]) => chip(c, n))));
   // Which of the player's districts it will raid (19 §5.5).
   const source = game.worldSource();
   const raided = source.board().hexes
     .map((h) => source.hexOf(h.index))
     .filter((h): h is NonNullable<typeof h> => h !== null && h.threat != null && h.threat.camps.includes(bh.index) && !h.burnt);
-  if (raided.length > 0) {
+  // One raid at a time, so it is never more than one district.
+  const target = raided[0];
+  if (target !== undefined) {
     lines.push(el('p', { class: 'wd-line is-cut' },
-      `It raids ${raided.length === 1 ? `your ${WORLD_BUILD.districts[raided[0].district].name}` : `${formatCount(raided.length)} of your districts`} every ${formatCount(WORLD_CAMPS.raidHours)} hours`));
+      `It raids your ${WORLD_BUILD.districts[target.district].name} in ${formatCountdown(Math.max(0, target.threat!.nextRaidAt - game.now()) / 1000)} — beat it first and the raid is off`));
   }
   return lines;
 }
@@ -239,7 +246,7 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         const p = game.worldSource().portal();
         const floor = (p?.floor ?? 0) + 1;
         return action({
-          label: 'Descend', kind: 'destructive',
+          label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have,
           info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power${
             floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''}`,
           disabledReason: p === null || !p.open ? 'The Portal is shut'
@@ -251,7 +258,7 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         const cleared = game.worldSource().delved(bh.index);
         const room = nextRoom(cleared);
         return action({
-          label: 'Attack', kind: 'destructive',
+          label: 'Attack', kind: 'destructive', cost: { Mana: game.fightMana() }, have,
           info: room === null ? 'Cleared to the bottom'
             : `${room.boss ? 'The boss' : `Room ${formatCount(room.room)}`} · ${formatCount(roomPower(room.depth, room.room))} power`,
           disabledReason: room === null ? 'Cleared to the bottom' : undefined,

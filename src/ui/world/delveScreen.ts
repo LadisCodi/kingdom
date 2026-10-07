@@ -133,7 +133,7 @@ function dock(game: Game, index: number, army: ArmyView | undefined, cleared: nu
     el('div', { class: 'dv-army' }, ...slots, el('span', { class: 'dv-power' }, `Power ${formatCount(army.power)}`)),
     el('div', { class: 'dv-calls' },
       action({
-        label: 'Fight', kind: 'destructive',
+        label: 'Fight', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
         disabledReason: next === null ? 'Cleared to the bottom' : undefined,
         onClick: () => void game.doDelveRoom(army.id),
       }),
@@ -154,7 +154,11 @@ function spoils(game: Game, army: ArmyView | undefined, cleared: number): HTMLEl
         : el('p', { class: 'wd-line' }, 'The room still stands. Reinforce the army, or try again.'),
       el('p', { class: 'wd-line' }, lost),
       el('div', { class: 'dv-calls' },
-        canFight ? action({ label: s.won ? 'Fight next' : 'Fight again', kind: 'primary', onClick: () => { game.delveSpoils = null; void game.doDelveRoom(army!.id); } }) : '',
+        canFight ? action({
+          label: s.won ? 'Fight next' : 'Fight again', kind: 'primary',
+          cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
+          onClick: () => { game.delveSpoils = null; void game.doDelveRoom(army!.id); },
+        }) : '',
         action({ label: 'Back', kind: 'secondary', onClick: () => game.dismissSpoils() }))));
 }
 
