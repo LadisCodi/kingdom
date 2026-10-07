@@ -185,8 +185,8 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 106; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
-**Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 100) — the boot
+`SAVE_VERSION` is 107; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+**Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 107) — the boot
 discards any older save and starts a fresh kingdom. To restart every tester
 again, bump `SAVE_VERSION` and raise it to match. **It must go before
 production**, where a kingdom is never discarded and every change migrates.

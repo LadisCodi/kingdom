@@ -116,7 +116,7 @@ export const MIN_MIGRATABLE_VERSION = 16;
  * Checked by the boot (`main.ts`), not by `migrate()`, so the migrator chain
  * stays tested end to end.
  */
-export const PROTOTYPE_FRESH_START = 100;
+export const PROTOTYPE_FRESH_START = 107;
 
 /** True when the boot should discard this save (`PROTOTYPE_FRESH_START`). */
 export const isPrototypeStale = (save: SaveFile): boolean =>
