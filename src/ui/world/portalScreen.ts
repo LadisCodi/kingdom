@@ -15,7 +15,7 @@ import type { CurrencyId, HeroId } from '../../sim/state';
 import { floorPower, floorReward } from '../../worldServer/core';
 import type { ArmyView } from '../../worldServer/types';
 import { el, formatCount, formatCountdown, formatExact } from '../format';
-import { btn, chip, iconEl, sheet } from '../kit';
+import { btn, chip, iconEl, powerTag, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
 import { marchingDock } from './delveScreen';
 import { crestEl } from '../friends/kingdomBits';
@@ -60,7 +60,7 @@ function floorNode(
     ...(shields.length === 0 ? [] : [el('span', { class: 'dv-flags' }, ...shields)]), disc)];
   if (state === 'is-frontier') {
     parts.push(el('div', { class: 'dv-plaque' },
-      el('p', { class: 'dv-plaque-title' }, `Floor ${formatCount(floor)} · Power ${formatCount(floorPower(floor))}`),
+      el('p', { class: 'dv-plaque-title' }, `Floor ${formatCount(floor)} · `, powerTag(floorPower(floor))),
       floorPay(floor)));
   } else if (state === 'is-ahead') {
     // A floor ahead says only what is worth going down for.
@@ -70,7 +70,7 @@ function floorNode(
       marks.push(el('span', { class: 'k-chip pt-milestone' }, 'First here', iconEl('Gems', { size: 'sm' }), formatCount(WORLD_PORTAL.milestoneGems)));
     }
     parts.push(el('div', { class: 'dv-tag' },
-      el('span', { class: 'dv-tag-power' }, `Power ${formatCount(floorPower(floor))}`),
+      el('span', { class: 'dv-tag-power' }, powerTag(floorPower(floor))),
       ...(marks.length === 0 ? [] : [el('span', { class: 'pt-marks' }, ...marks)])));
   }
   return el('div', { class: `dv-room ${state}${side}`, 'data-floor': String(floor) }, ...parts);

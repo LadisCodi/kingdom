@@ -246,6 +246,9 @@ Every material has four states (`src/ui/assets/btn-<material>[-state].png`,
 
 ### 3.4 Type & numbers
 
+- **A power is always the crossed swords and the figure** — as the army
+  boards show it (`powerTag`, ui/kit/stats.ts) — never the word "Power".
+
 *Revised 2026-09-11. The pixel faces (BoldPixels for titles, m6x11plus for
 everything else) forced 24px body copy and coarse size rungs that no phone
 layout could fit; both are gone, and so is the PT Sans + Germania One pair

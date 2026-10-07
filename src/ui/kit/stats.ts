@@ -102,6 +102,13 @@ export function costChips(cost: Wallet, have?: (c: CurrencyId) => number): HTMLE
   );
 }
 
+/** A POWER, wherever one is written: the crossed swords and the figure, as
+ *  the army boards show it — never the word "Power". */
+export function powerTag(n: number): HTMLElement {
+  return el('span', { class: 'k-power', 'aria-label': `Power ${formatExact(Math.round(n))}` },
+    iconEl('power', { size: 'sm' }), el('b', {}, formatExact(Math.round(n))));
+}
+
 /** icon + value + unit — "1.5 per minute", "radius 3". */
 export function stat(icon: IconName, value: string, unit?: string): HTMLElement {
   const parts: Array<Node | string> = [

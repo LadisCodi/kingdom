@@ -23,7 +23,7 @@ import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import { el, formatCount, formatCountdown, formatDuration, formatExact } from '../format';
-import { action, btn, chip, progress, sheet, stat } from '../kit';
+import { action, btn, chip, powerTag, progress, sheet, stat } from '../kit';
 import { timerButton } from '../speedupSheet';
 import type { SpeedJob } from '../../sim/speedups';
 import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
@@ -108,7 +108,7 @@ function campLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   if (!campShown(game.worldSource(), bh, fog) || bh.camp === null) return [];
   const difficulty = campDifficulty(bh.camp.power, strongestParty(game.state));
   const lines = [el('p', { class: 'wd-line' },
-    `A camp of ${CAMP_CREATURE[bh.camp.creature]} · Power ${formatCount(bh.camp.power)} · `,
+    `A camp of ${CAMP_CREATURE[bh.camp.creature]} · `, powerTag(bh.camp.power), ' · ',
     el('b', { style: `color: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty))];
   // What beating it pays, so the fight is worth weighing (19 §5.4).
   lines.push(el('p', { class: 'wd-line' }, 'Beaten, it pays ',
@@ -214,8 +214,8 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         const floor = (p?.floor ?? 0) + 1;
         return action({
           label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have,
-          info: `Floor ${formatCount(floor)} · ${formatCount(floorPower(floor))} power${
-            floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''}`,
+          info: el('span', {}, `Floor ${formatCount(floor)} · `, powerTag(floorPower(floor)),
+            floorReward(floor).precious > 0 ? ` · pays ${formatCount(floorReward(floor).precious)} precious material` : ''),
           disabledReason: p === null || !p.open ? 'The Portal is shut'
             : floor > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
           onClick: () => void game.doDescendPortal(a.army),
@@ -227,7 +227,7 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
         return action({
           label: 'Attack', kind: 'destructive', cost: { Mana: game.fightMana() }, have,
           info: room === null ? 'Cleared to the bottom'
-            : `${room.boss ? 'The boss' : `Room ${formatCount(room.room)}`} · ${formatCount(roomPower(room.depth, room.room))} power`,
+            : el('span', {}, `${room.boss ? 'The boss' : `Room ${formatCount(room.room)}`} · `, powerTag(roomPower(room.depth, room.room))),
           disabledReason: room === null ? 'Cleared to the bottom' : undefined,
           onClick: () => void game.doDelveRoom(a.army),
         });
