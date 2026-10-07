@@ -278,12 +278,26 @@ let ctx: AudioContext | null = null;
 const buffers = new Map<string, AudioBuffer>();
 const decoding = new Set<string>();
 const downloads = new Map<string, Promise<ArrayBuffer>>();
-for (const spec of Object.values(SOUNDS)) {
+const fetchTakes = (spec: SoundSpec): void => {
   for (const url of spec.urls) {
     if (!downloads.has(url)) {
       downloads.set(url, fetch(url).then((r) => r.arrayBuffer()).catch(() => new ArrayBuffer(0)));
     }
   }
+};
+// Everything but the battle's comes down at boot. The battle's — 47 takes, a
+// player who never fights this session should not pay for them — come down
+// when a fight is in sight (`warmBattleSfx`).
+for (const [name, spec] of Object.entries(SOUNDS)) {
+  if (!(name in BATTLE_MIX)) fetchTakes(spec);
+}
+
+/** Fetch (and, once there is a context, decode) the battle's sounds. Called
+ *  when a deploy sheet opens, so they are ready by the first blow — and by
+ *  the playback itself, for any fight that comes without one. Idempotent. */
+export function warmBattleSfx(): void {
+  for (const name of Object.keys(BATTLE_MIX) as BattleSfx[]) fetchTakes(SOUNDS[name]);
+  if (ctx !== null) warmAll();
 }
 
 /** Decode every downloaded take as soon as a context exists, so multi-take

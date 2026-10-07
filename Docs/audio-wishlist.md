@@ -105,7 +105,9 @@ mis-designed as alarms, and both should be soft.
 
 `src/audio/sounds/battle_<name>[_NN].ogg`, cut from the sound collection
 (silence trimmed, a tail fade, mono, a hit levelled by mean, a stinger to
-−16 LUFS); `_NN` takes alternate at random. The mix is `BATTLE_MIX` in
+−16 LUFS); `_NN` takes alternate at random. They are not fetched at boot:
+`warmBattleSfx()` brings them down when a deploy sheet opens, or when a
+fight's playback does. The mix is `BATTLE_MIX` in
 `sfx.ts`; `tests/battleSounds.test.ts` holds every name to a file.
 
 | Name | Plays when | Source |

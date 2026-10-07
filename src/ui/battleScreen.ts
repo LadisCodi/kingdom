@@ -20,7 +20,8 @@
 import { COMBAT, HEROES, UNITS, VILLAINS, type SkillId } from '../sim/data/definitions';
 import { SKILLS, type SkillKind } from '../sim/skills';
 import { setBattleMusic } from '../audio/music';
-import { playSfx, type BattleSfx } from '../audio/sfx';
+import { playSfx, warmBattleSfx, type BattleSfx } from '../audio/sfx';
+import { haptic } from './haptics';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { targetingFor } from '../sim/battle';
 import type { BattleEvent, BattleLog, BoardSlot, Side, SlotRef } from '../sim/battle';
@@ -279,6 +280,9 @@ const GROUND: Record<BattleBackdrop, string> = {
   field: fieldGround, dungeon: dungeonGround, boss: bossGround, portal: portalGround,
 };
 
+/** The speed knob's turns. */
+const SPEEDS = [1, 2, 4];
+
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export function mountBattleScreen(game: Game, root: HTMLElement): void {
@@ -348,16 +352,18 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       ], { duration: 300 });
     };
 
-    // THE CLOCK'S TWO KNOBS: twice the speed (kept for the next fight), and
-    // straight to the end. A fight lasts tens of seconds, a dungeon has many.
-    const speed = el('button', { class: 'bs-knob', type: 'button', 'aria-label': 'Play faster' });
+    // THE CLOCK'S TWO KNOBS: the speed — ×1, ×2, ×4 in turn, kept for the
+    // next fight — and straight to the end. A fight lasts tens of seconds, a
+    // dungeon has many. The knob says the speed it is playing at.
+    const speed = el('button', { class: 'bs-knob', type: 'button', 'aria-label': 'Playback speed' });
     const paintSpeed = (): void => {
-      const fast = (game.battle?.speed ?? 1) > 1;
-      speed.textContent = fast ? '×1' : '×2';
-      speed.setAttribute('aria-pressed', fast ? 'true' : 'false');
+      const now = game.battle?.speed ?? 1;
+      speed.textContent = `×${formatExact(now)}`;
+      speed.setAttribute('aria-pressed', now > 1 ? 'true' : 'false');
     };
     speed.addEventListener('click', () => {
-      game.setBattleSpeed((game.battle?.speed ?? 1) > 1 ? 1 : 2);
+      const now = game.battle?.speed ?? 1;
+      game.setBattleSpeed(SPEEDS[(SPEEDS.indexOf(now) + 1) % SPEEDS.length] ?? 1);
       paintSpeed();
     });
     paintSpeed();
@@ -377,11 +383,12 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const flash = el('div', { class: 'bs-flash' });
     const gap = el('div', { class: 'bs-gap' });
     const board = el('div', { class: 'bs-board' }, ...theirs.rows, gap, ...ours.rows);
+    const where = el('div', { class: 'bs-where' },
+      el('b', {}, playback.title),
+      el('span', {}, playback.subtitle));
     const screen = el('div', { class: `bs is-${playback.backdrop}` },
       bar,
-      el('div', { class: 'bs-where' },
-        el('b', {}, playback.title),
-        el('span', {}, playback.subtitle)),
+      where,
       knobs,
       board,
       fx.canvas,
@@ -538,6 +545,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (t - lastHold < HOLD_GAP) return;
       lastHold = t;
       game.holdBattle(ms);
+      // What freezes the screen also lands in the hand.
+      haptic(ms >= HOLD_WIPE_MS ? 25 : 12);
     };
 
     /** The blow landing: the target flinches away from it, the blade's
@@ -848,7 +857,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (event.kind === 'troops_lost') {
         const view = viewOf(event.at);
         if (view === undefined) return;
-        const lost = (view.troops - event.alive) * view.power;
+        const lostTroops = view.troops - event.alive;
+        const lost = lostTroops * view.power;
         power[event.at.side] -= lost;
         view.troops = event.alive;
         setLife(view, event.hpPool);
@@ -856,6 +866,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         if (view.count.textContent !== '') {
           view.count.textContent = `x${formatExact(event.alive)}`;
           if (!quiet && motion) {
+            // A helmet or two rolls off the ring for the men who fell.
+            fx.helmets(view.at, t, Math.min(3, Math.ceil(lostTroops / 4)));
             view.count.animate([
               { scale: '1' },
               { scale: '1.4', color: '#d4553e', offset: 0.3 },
@@ -990,6 +1002,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         // The fight's tune gives way to the verdict's.
         setBattleMusic(false);
         playSfx(won ? 'victory' : 'defeat');
+        haptic(won ? [30, 60, 30] : 90);
         // A defeat lands cracked, and the field goes grey under it.
         if (!won) {
           plaque.append(crackSvg(log.ticks));
@@ -1018,6 +1031,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     root.replaceChildren(screen);
     measure();
     setBattleMusic(true);
+    warmBattleSfx();
     playSfx('battleStart');
     // THE ARMIES MARCH ON: the replay holds while each side's rows slide in
     // from its own edge, front rank first, and the swords on the bar clash.
@@ -1034,6 +1048,14 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       march([...theirs.rows].reverse(), -1); // their front is nearest the gap
       march(ours.rows, 1);
       bar.classList.add('is-clash');
+      // The place's plaque swings down on its rope as they arrive, and the
+      // knobs come after it.
+      where.animate([
+        { translate: `0 ${-40 * unit}px`, rotate: '-6deg', opacity: 0 },
+        { translate: '0 0', rotate: '2deg', opacity: 1, offset: 0.7 },
+        { translate: '0 0', rotate: '0deg', opacity: 1 },
+      ], { duration: 520, delay: 120, easing: 'cubic-bezier(0.3, 1.4, 0.5, 1)', fill: 'backwards' });
+      knobs.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 500, fill: 'backwards' });
     }
     const resizer = new ResizeObserver(measure);
     resizer.observe(screen);

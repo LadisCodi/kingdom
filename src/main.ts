@@ -9,6 +9,7 @@ import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { setMusterMusic, startMusic } from './audio/music';
+import { warmBattleSfx } from './audio/sfx';
 import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
@@ -525,7 +526,12 @@ async function boot(): Promise<void> {
   syncScene();
   // War drums while a party is mustered on a deploy sheet — a lair's or an
   // army's (src/audio/music.ts). A fight played from it outranks them.
-  const syncMuster = () => setMusterMusic(game.openOverlay === 'lair' || game.openOverlay === 'army');
+  // The battle's sounds come down then too, so they are ready by the first blow.
+  const syncMuster = () => {
+    const mustering = game.openOverlay === 'lair' || game.openOverlay === 'army';
+    setMusterMusic(mustering);
+    if (mustering) warmBattleSfx();
+  };
   game.onChange(syncMuster);
   syncMuster();
 
