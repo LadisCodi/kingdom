@@ -695,6 +695,22 @@ describe('v102 turns a hero\'s tier into stars', () => {
     save.SaveVersion = 101;
     const back = deserialize(save, map, T0)!;
     expect(back.heroes.ascension).toEqual({ Bard: 12, Warden: 0 });
-    expect(back.heroes.levels.Bard).toBe(23);
+    // …and v106 then rescales the level to the 310 ladder, held to the cap.
+    expect(back.heroes.levels.Bard).toBe(130);
+  });
+});
+
+describe('v106 rescales a hero\'s level to the 310 ladder', () => {
+  it('keeps its share of the climb, held to its ascension\'s new cap', () => {
+    const state = freshGame();
+    state.heroes.owned.push('Bard', 'Warden', 'Scout');
+    const save = serialize(state, T0);
+    const heroes = (save.Modules as any)['kingdom.heroes'];
+    heroes.Levels = { Bard: 1, Warden: 10, Scout: 50 };
+    heroes.Ascension = { Bard: 0, Warden: 6, Scout: 30 };
+    save.SaveVersion = 105;
+    const back = deserialize(save, map, T0)!;
+    // 1 stays 1; 10 → 1 + 9·309/49 = 58 (cap 70); 50 → 310 (cap 310).
+    expect(back.heroes.levels).toEqual({ Bard: 1, Warden: 58, Scout: 310 });
   });
 });

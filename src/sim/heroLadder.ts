@@ -5,8 +5,8 @@
 // numbers: the ascension is the ceiling and the XP is the climb.
 //
 // AN ASCENSION IS ONE POINT OF A STAR. A hero has `ascensionStars` stars of
-// `ascensionStepsPerStar` points each, filled one point at a time; a FULL
-// star is what raises the level cap. Every point of a star costs the same,
+// `ascensionStepsPerStar` points each, filled one point at a time; every
+// point raises the level cap, and a FULL star raises it a little more. Every point of a star costs the same,
 // and each star costs `growth` times the one before.
 //
 // IT USED TO BE SHARED WITH THE RELICS and is not any more. A relic is
@@ -44,11 +44,15 @@ export const xpLevelCost = (level: number): number =>
 export const ascensionFragmentCost = (ascension: number): number =>
   roundPrice(HERO_LADDER.fragmentsPerStepBase * HERO_LADDER.fragmentsPerStepGrowth ** fullStars(ascension));
 
-/** The highest level an ascension allows: each FULL star adds
- *  `heroLevelsPerStar`, and every star full is `heroMaxLevel`. */
-export const heroLevelCap = (ascension: number): number =>
-  HERO_LADDER.heroMaxLevel
-  - (HERO_LADDER.ascensionStars - fullStars(ascension)) * HERO_LADDER.heroLevelsPerStar;
+/** The highest level an ascension allows: every point adds
+ *  `heroLevelsPerAscension`, each FULL star `heroLevelsPerStar` more, and
+ *  every star full is `heroMaxLevel`. */
+export const heroLevelCap = (ascension: number): number => {
+  const a = Math.min(ascension, maxAscension());
+  return HERO_LADDER.heroMaxLevel
+    - (maxAscension() - a) * HERO_LADDER.heroLevelsPerAscension
+    - (HERO_LADDER.ascensionStars - fullStars(a)) * HERO_LADDER.heroLevelsPerStar;
+};
 
 /**
  * A hero's body — Attack, Defense and HP — at a level and an ascension. The

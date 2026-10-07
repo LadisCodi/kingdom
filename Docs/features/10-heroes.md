@@ -22,7 +22,7 @@
   equip into limited slots. A relic is an **album**: its own nine cards a
   season, completed once, and a permanent level with no cap and no slot.
 - A hero's ascension is **five stars of six points** — thirty ascensions —
-  and each **full star** is worth **eight levels**, up to **level 50**. A
+  and **every point** is worth **ten levels**, up to **level 310**. A
   relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
   **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
@@ -78,7 +78,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Attack and Defence are ratings, read against the other side's by the
   Heroes III rule ([`combat.md`](combat.md) §7); Damage is what its blow takes off.
 - `atk`, `dmg`, `def` and `hp` grow per level (`atkPerLevel`, `dmgPerLevel`,
-  `defPerLevel`, `hpPerLevel`); `cooldown` does not move.
+  `defPerLevel`, `hpPerLevel`), small steps over a 310-level ladder;
+  `cooldown` does not move.
 - It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
   again when the fight ends.
 
@@ -129,15 +130,15 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Five ranks.** Rank 1 comes with the hero.
 - **A rank UNLOCKS at a level and is then BOUGHT** with Stardust and the
   skill family's precious material. It is never raised on its own.
-- The unlock levels are the first past a star's level cap, so each rank asks
-  for an ascension too:
+- The unlock levels are the first past a full star's level cap, so each rank
+  asks for an ascension too:
 
   | Rank | Unlocks at level | Stars | Stardust | Material |
   |---|---|---|---|---|
-  | 2 | 11 | 1 | 100 | 2 |
-  | 3 | 19 | 2 | 200 | 4 |
-  | 4 | 27 | 3 | 400 | 8 |
-  | 5 | 35 | 4 | 800 | 12 |
+  | 2 | 71 | 1 | 100 | 2 |
+  | 3 | 131 | 2 | 200 | 4 |
+  | 4 | 191 | 3 | 400 | 8 |
+  | 5 | 251 | 4 | 800 | 12 |
 
 - **Each rank adds 25% of the rank-1 value**: rank 5 is twice rank 1. What
   grows is the X; never how often it fires.
@@ -241,8 +242,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | | Raise | Cost |
 |---|---|---|
 | **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
-| **Ascension** | +1 point of the current star: **every stat +2%**; a **full star** also lifts the cap **+8 levels** | that hero's Fragments **and** a Stardust toll |
+| **Level** | +1, up to the ascension's cap | Hero XP: `round(100 × 1.0055^level)` — 101 for level 2, 545 for level 310, **81,280** for the whole ladder |
+| **Ascension** | +1 point of the current star: **every stat +2%** and the cap **+10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -265,18 +266,18 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Every point lifts Attack, Damage, Defence and HP by 2%** of what the level gives —
   +60% with every star full. The card, the board, the power estimate and the
   HP bar all read the one formula.
-- **Only a full star moves the level cap**: 10 with no star, +8 a star, 50 at
-  five.
+- **Every point moves the level cap +10**: 10 with no point, 70 a star, 310
+  at thirty.
 - **Every point of a star costs the same**, and each star costs twice the one
   before.
 
 | Star | Fragments a point | Stardust a point | Cap once full |
 |---|---|---|---|
-| 1 | 1 | 4 | 18 |
-| 2 | 2 | 8 | 26 |
-| 3 | 4 | 16 | 34 |
-| 4 | 8 | 32 | 42 |
-| 5 | 16 | 64 | **50** (max) |
+| 1 | 1 | 4 | 70 |
+| 2 | 2 | 8 | 130 |
+| 3 | 4 | 16 | 190 |
+| 4 | 8 | 32 | 250 |
+| 5 | 16 | 64 | **310** (max) |
 | **All 30** | **186** | **744** | |
 
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
@@ -583,7 +584,7 @@ how many slots it wants (1…n) and what to do with the answer.
 | What a level costs in XP | §4 | `heroLadder.xpLevelCostBase`, `heroLadder.xpLevelCostGrowth` |
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
 | What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
-| How long a hero's ladder is | 8 a star, 50 in all | `heroLadder.heroLevelsPerStar`, `heroLadder.heroMaxLevel` |
+| How long a hero's ladder is | 10 a point, 310 in all | `heroLadder.heroLevelsPerAscension`, `heroLadder.heroLevelsPerStar` (extra on a full star, 0), `heroLadder.heroMaxLevel` |
 | What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |

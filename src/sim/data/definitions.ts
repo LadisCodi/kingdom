@@ -2465,4 +2465,6 @@ export const GAME_VERSION: string = pkg.version;
 // (`ExplorersBought` on the world), additive.
 // v102: a hero's ascension is points of a star — `Tiers` becomes `Ascension`
 // on `kingdom.heroes` (a migrator).
-export const SAVE_VERSION = 105;
+// v106: every ascension point raises the level cap, and the level runs to
+// 310 — a hero's level is rescaled to the new ladder (a migrator).
+export const SAVE_VERSION = 106;
