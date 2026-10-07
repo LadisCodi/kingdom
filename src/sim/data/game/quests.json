@@ -888,7 +888,7 @@
     "name": "Fellowship",
     "goalType": "OwnHeroes",
     "goalTarget": null,
-    "goalAmount": 3,
+    "goalAmount": 2,
     "goalLevel": null,
     "reward": { "Gold": 250 },
     "rewardGems": 0,
