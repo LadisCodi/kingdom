@@ -7,7 +7,10 @@
       "doc": "The item one call costs: one key per banner (Docs/features/10-heroes.md §5)."
     },
     "keyGemCost": { "type": "int" },
-    "heroChance": { "type": "float" },
+    "heroChance": {
+      "type": "float",
+      "doc": "The chance a call brings a whole hero, before soft pity ramps it (Docs/features/10-heroes.md §6.3)."
+    },
     "softPityAt": { "type": "int" },
     "hardPityAt": { "type": "int" },
     "legendaryPityAt": { "type": "int" },
@@ -15,14 +18,45 @@
       "type": "object",
       "fields": { "Common": { "type": "int" }, "Rare": { "type": "int" }, "Legendary": { "type": "int" } }
     },
-    "duplicateFragments": { "type": "int" },
-    "fragmentsPerMiss": { "type": "int" },
-    "pullStardust": { "type": "int" },
+    "duplicateFragments": { "type": "int", "doc": "Fragments a hero already held turns into: the price of a recruit." },
     "freePerDay": { "type": "int" },
     "freeCooldownSeconds": { "type": "int" },
     "showsHero": {
       "type": "bool",
       "doc": "The store's Heroes tab stands a hero on this banner: one of the rarest rarity it can call, a different one each time the store is opened, every one before any repeats. Off: the banner shows its key."
+    },
+    "lootDrawsMin": {
+      "type": "int",
+      "min": 0,
+      "doc": "The fewest prizes a call draws from `loot`, hero or not (Docs/features/10-heroes.md §6.4)."
+    },
+    "lootDrawsMax": {
+      "type": "int",
+      "min": 0,
+      "doc": "The most prizes a call draws from `loot`. Each count from min to max is as likely."
+    },
+    "loot": {
+      "type": "list",
+      "doc": "What a call draws its prizes from, by weight — every call, hero or not.",
+      "of": {
+        "type": "object",
+        "fields": {
+          "reward": {
+            "type": "text",
+            "options": ["Fragments", "Stardust", "HeroXp", "Item"],
+            "doc": "Fragments: of one hero of `rarity` this banner calls. Stardust, HeroXp: into the wallet. Item: `item` into the Bag."
+          },
+          "rarity": {
+            "type": "text",
+            "options": ["Common", "Rare", "Legendary"],
+            "emptyOk": true,
+            "doc": "Fragments: whose. Empty for anything else."
+          },
+          "item": { "type": "text", "ref": "item", "emptyOk": true, "doc": "Item: which. Empty for anything else." },
+          "amount": { "type": "int", "min": 1, "doc": "How many." },
+          "weight": { "type": "float", "min": 0, "doc": "Its share of the draws, against the rest of the list." }
+        }
+      }
     }
   }
 }

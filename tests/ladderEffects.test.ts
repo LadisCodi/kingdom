@@ -161,7 +161,7 @@ function probe(state: GameState): Record<string, number> {
   put('healSeconds.Warrior10', healSecondsAt(state, infirmary.uniqueId, 'Warrior', 10));
   for (const [c, n] of Object.entries(treasureReward(state, { n: 5, coin: 'Wood' }))) put(`treasure.${c}`, n as number);
   put('woundedCap', woundedCap(state));
-  put('callStardust', callStardust(state, 'basic'));
+  put('callStardust', callStardust(state, 100));
 
   // The fog. Only the Gold: the taps are five at every ring and nothing in
   // the tree can buy one back.

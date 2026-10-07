@@ -250,7 +250,7 @@ Every rung that throttles the whale takes album 4 off the free player.
 - **The answer is not a price, it is a BATCH.** The problem is 107 screens, not
   107 chests, and the game already made this argument once: the ten-call exists
   because *"buying in bulk buys TIME, not a better price"*
-  ([`10-heroes.md`](../features/10-heroes.md) §6.4). A ten-chest button fixes
+  ([`10-heroes.md`](../features/10-heroes.md) §6.5). A ten-chest button fixes
   the whole of §5.2 without moving a single number.
 
 ## 6. What this decides for the rest of the collection

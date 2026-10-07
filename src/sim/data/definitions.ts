@@ -1943,11 +1943,24 @@ export interface BannerDef {
   /** The store stands a hero of its rarest rarity on this banner, a new one
    *  each visit; false → its key. */
   showsHero: boolean;
-  fragmentsPerMiss: number;
-  pullStardust: number;
+  /** How many prizes a call draws from `loot`, each count as likely. */
+  lootDrawsMin: number;
+  lootDrawsMax: number;
+  loot: BannerLoot[];
   /** Free pulls a day for a rewarded ad, and how long between them. */
   freePerDay: number;
   freeCooldownSeconds: number;
+}
+
+/** One line of a banner's loot table (Docs/features/10-heroes.md §6.4). */
+export interface BannerLoot {
+  reward: 'Fragments' | 'Stardust' | 'HeroXp' | 'Item';
+  /** Fragments: of a hero of this rarity. '' otherwise. */
+  rarity: HeroRarity | '';
+  /** Item: which. '' otherwise. */
+  item: ItemId | '';
+  amount: number;
+  weight: number;
 }
 
 const bannerContent: Record<BannerId, { name: string }> = {

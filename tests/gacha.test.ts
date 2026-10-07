@@ -4,7 +4,7 @@
 // Node, no DOM. `gachaPrizes` is a pure function on `PullResult[]` precisely
 // so the shape the reveal screen draws is testable without one — the screen
 // then only owns the timing.
-import { grantItem } from '../src/sim/bag';
+import { grantItem, itemCount } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
@@ -17,7 +17,7 @@ import {
 import { heroMaxHp } from '../src/sim/heroHealth';
 import { partyPower } from '../src/sim/combat';
 import type { PullResult } from '../src/sim/heroes';
-import { HERO_LADDER, HEROES } from '../src/sim/data/definitions';
+import { BANNERS, HERO_LADDER, HEROES } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
 import { freshGame, freshPresenter } from './helpers';
 
@@ -29,7 +29,7 @@ const result = (over: Partial<PullResult> = {}): PullResult => ({
   duplicate: false,
   fragments: 0,
   fragmentsOf: null,
-  stardust: 0,
+  loot: [],
   guaranteed: false,
   guaranteedLegendary: false,
   ...over,
@@ -87,16 +87,26 @@ describe('fragments are the second door to a hero', () => {
 
 describe('a batch condenses into prizes', () => {
   it('sums one currency into one widget', () => {
-    const prizes = gachaPrizes([
-      result({ stardust: 50 }), result({ stardust: 50 }), result({ stardust: 50 }),
-    ]);
+    const dust = (amount: number) => result({ loot: [{ kind: 'currency', currency: 'Stardust', amount }] });
+    const prizes = gachaPrizes([dust(50), dust(50), dust(50)]);
     expect(prizes).toEqual([{ kind: 'currency', currency: 'Stardust', amount: 150 }]);
+  });
+
+  it('stacks items and loot fragments with the rest', () => {
+    const prizes = gachaPrizes([
+      result({ loot: [{ kind: 'item', item: 'FoodChest10m', amount: 1 }, { kind: 'fragments', heroId: 'Bard', amount: 1 }] }),
+      result({ loot: [{ kind: 'item', item: 'FoodChest10m', amount: 1 }], fragments: 10, fragmentsOf: 'Bard' }),
+    ]);
+    expect(prizes).toEqual([
+      { kind: 'item', item: 'FoodChest10m', amount: 2 },
+      { kind: 'fragments', heroId: 'Bard', amount: 11 },
+    ]);
   });
 
   it('stacks fragments per hero rather than per call', () => {
     const prizes = gachaPrizes([
-      result({ fragments: 3, fragmentsOf: 'Bard' }),
-      result({ fragments: 3, fragmentsOf: 'Bard' }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
       result({ fragments: 6, fragmentsOf: 'Wizard' }),
     ]);
     const frags = prizes.filter((p): p is Extract<GachaPrize, { kind: 'fragments' }> =>
@@ -109,9 +119,9 @@ describe('a batch condenses into prizes', () => {
 
   it('puts heroes last, so the sequence arrives at them', () => {
     const prizes = gachaPrizes([
-      result({ stardust: 50 }),
-      result({ heroId: 'Wizard', rarity: 'Rare', stardust: 50 }),
-      result({ fragments: 3, fragmentsOf: 'Bard', stardust: 50 }),
+      result({ loot: [{ kind: 'currency', currency: 'Stardust', amount: 50 }] }),
+      result({ heroId: 'Wizard', rarity: 'Rare' }),
+      result({ loot: [{ kind: 'fragments', heroId: 'Bard', amount: 3 }] }),
     ]);
     expect(prizes[prizes.length - 1]).toEqual({ kind: 'hero', heroId: 'Wizard' });
   });
@@ -155,9 +165,9 @@ describe('the presenter hands a call to the reveal screen', () => {
     game.doPullMany('basic', 10);
 
     expect(game.gachaReveal!.calls).toBe(10);
-    // Ten calls never draw ten Stardust tiles.
-    const currencies = game.gachaReveal!.prizes.filter((p) => p.kind === 'currency');
-    expect(currencies).toHaveLength(1);
+    // Ten calls never draw ten Stardust tiles: one widget a currency.
+    const currencies = game.gachaReveal!.prizes.flatMap((p) => p.kind === 'currency' ? [p.currency] : []);
+    expect(new Set(currencies).size).toBe(currencies.length);
   });
 
   it('opens nothing when the purse cannot pay', () => {
@@ -326,5 +336,36 @@ describe('an ascension point lifts every stat', () => {
     expect(heroStats(state, 'Bard').dmg).toBeGreaterThan(before.stats.dmg);
     expect(heroMaxHp(state, 'Bard')).toBeGreaterThan(before.hp);
     expect(power(maxAscension())).toBeGreaterThan(power(0));
+  });
+});
+
+describe('a call draws its loot (Docs/features/10-heroes.md §6.4)', () => {
+  it('pays only what its table names, into the purse and the Bag', () => {
+    const state = freshGame();
+    grantItem(state, 'GoldKey', 200);
+    const table = BANNERS.advanced.loot;
+    const items = new Set(table.flatMap((e) => (e.reward === 'Item' ? [e.item] : [])));
+    for (let i = 0; i < 200; i++) {
+      for (const l of pull(state, 'advanced').loot) {
+        if (l.kind === 'fragments') expect(BANNERS.advanced.weights[HEROES[l.heroId].rarity]).toBeGreaterThan(0);
+        if (l.kind === 'item') {
+          expect(items.has(l.item)).toBe(true);
+          expect(itemCount(state, l.item)).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  // The Kingshot shape: about one fragment a call, and most of what a call
+  // draws is for the town and the levels rather than a hero.
+  it('draws about one fragment a call', () => {
+    const state = freshGame();
+    grantItem(state, 'SilverKey', 1000);
+    let fragments = 0;
+    for (let i = 0; i < 1000; i++) {
+      for (const l of pull(state, 'basic').loot) if (l.kind === 'fragments') fragments += l.amount;
+    }
+    expect(fragments / 1000).toBeGreaterThan(0.9);
+    expect(fragments / 1000).toBeLessThan(1.4);
   });
 });

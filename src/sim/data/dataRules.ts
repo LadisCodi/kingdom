@@ -739,6 +739,15 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (!(num(b.heroChance) > 0 && num(b.heroChance) <= 1)) push(id, ['heroChance'], 'is a fraction, above 0 and at most 1');
       if (num(b.softPityAt) >= num(b.hardPityAt)) push(id, ['softPityAt'], `soft pity (${b.softPityAt}) must come before hard pity (${b.hardPityAt})`);
       if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
+      if (num(b.lootDrawsMin) > num(b.lootDrawsMax)) push(id, ['lootDrawsMin'], `at most lootDrawsMax (${b.lootDrawsMax})`);
+      const loot = list(b.loot) as Array<Record<string, unknown>>;
+      if (num(b.lootDrawsMax) > 0 && !loot.some((e) => num(e.weight) > 0)) push(id, ['loot'], 'a call that draws prizes needs one with a weight');
+      loot.forEach((e, i) => {
+        const fragments = e.reward === 'Fragments';
+        if (fragments && !(num(w[String(e.rarity)]) > 0)) push(id, ['loot', i, 'rarity'], 'fragments of a rarity this banner calls');
+        if (!fragments && e.rarity !== '') push(id, ['loot', i, 'rarity'], 'only fragments name a rarity');
+        if ((e.reward === 'Item') !== (e.item !== '')) push(id, ['loot', i, 'item'], e.reward === 'Item' ? 'an item prize names its item' : 'only an item prize names an item');
+      });
     }
   },
   artifacts: (doc, push) => {
