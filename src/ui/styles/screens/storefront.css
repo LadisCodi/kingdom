@@ -404,8 +404,7 @@
 .sth-banner.has-hero .sth-banner-body { display: grid; grid-template-columns: 38% 1fr; column-gap: calc(var(--px) * 6); row-gap: calc(var(--px) * 5); }
 .sth-banner.has-hero .sth-banner-ribbon,
 .sth-banner.has-hero .sth-free { grid-column: 2; }
-.sth-banner.has-hero .sth-calls,
-.sth-banner.has-hero .sth-pity { grid-column: 1 / -1; }
+.sth-banner.has-hero .sth-calls { grid-column: 1 / -1; }
 .sth-banner.has-hero .sth-free { min-height: calc(var(--px) * 40); }
 .sth-banner.has-hero { margin-top: calc(var(--px) * 34); }
 /* The hero rises out of the frame and stands behind the Free call: its
@@ -473,9 +472,11 @@
   filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 210, 110, 0.55));
 }
 .sth-free { color: var(--ink); font-size: calc(var(--px) * 13); font-weight: var(--weight-strong); }
-.sth-calls { display: flex; gap: calc(var(--px) * 6); }
+.sth-calls { display: flex; align-items: stretch; gap: calc(var(--px) * 6); }
 .sth-calls > .k-btn { flex: 1 1 0; }
-.sth-pity { color: var(--ink-muted); font-size: calc(var(--px) * 11); }
+/* Both slabs on one line: each plate as tall as the taller, its slab at the
+ * foot whatever sits over it — a word or a price. */
+.sth-calls > .k-btn.k-btn.has-cost:not(.k-knob) { justify-content: space-between; }
 
 /* In a narrow card the kit's price slab fits the card, not its own floor. */
 .stx-card > .k-btn.k-btn:not(.k-knob):not(.has-cost),
