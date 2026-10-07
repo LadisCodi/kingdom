@@ -958,15 +958,19 @@
  * one was and no two nudge in step. The host must be positioned; a host
  * moves it with top/right, never resizes it: one size everywhere. */
 .k-cta {
-  --cta-size: calc(var(--rpx) * 50);
+  --cta-size: calc(var(--rpx) * 58);
   position: absolute;
   top: calc(var(--cta-size) * -0.3);
   right: calc(var(--cta-size) * -0.3);
   z-index: 2;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: var(--cta-size);
   height: var(--cta-size);
+  /* The disc sits right of and above its canvas's middle (x 18–118,
+     y 11–110 of 128): the number is centred on the disc, not the canvas. */
+  padding: 0 0 calc(var(--cta-size) * 0.054) calc(var(--cta-size) * 0.062);
   background: url('../assets/badge-cta.png') center / contain no-repeat;
   filter: drop-shadow(0 calc(var(--cta-size) * 0.06) 0 rgba(40, 22, 10, 0.45));
   pointer-events: none;
