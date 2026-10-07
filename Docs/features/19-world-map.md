@@ -662,23 +662,25 @@ A hex holds **none or one**. A feature decides the district built there
 
 - **The dungeon's sheet has one button, Delve**, which opens the delve: a
   full-height menu.
-- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8* and
-  who holds it.
-- **The race**: a rope with a banner per player who has cleared a room, at
-  how far they have gone, the player's own blue; and who closes it and is
-  paid for it.
-- **Depth tabs**: one per depth; a depth not yet reached is locked.
-- **The descent**: the depth's rooms down a stair in the rock, one node each:
+- **The title**: the dungeon's name; under it *Depth 2 · Room 5 of 8*, who
+  holds it, and who closes it and is paid for it.
+- **Depth tabs** down the right edge: one per depth, ticked once cleared,
+  locked until reached, each counting the kingdoms in it.
+- **The descent**: the depth's rooms down a stair in the rock, one node each,
+  with **every kingdom's shield on the room it has reached** — the
+  player's own larger, *You*:
   - cleared — dimmed, ticked;
-  - **the frontier** — lit, the creature's portrait, its power against the
-    army's, and what it pays, its precious lump included;
-  - ahead — hazed, its power only;
-  - **the boss** at the foot — larger, named, his chest open with what he
-    pays.
-- **The army**, docked at the foot: its heroes with their HP, its squads
-  with their counts and the soldiers lost so far, its power; **Fight** (the
-  frontier, priced in Mana, §4) and **Recall**. On its way: when it arrives, and Recall. None
-  there: **Send**.
+  - **the frontier** — lit, its power and what it pays, its precious lump
+    included;
+  - ahead — its power only;
+  - **the boss** at the foot — his face, his name, his chest open with what
+    he pays. No other room shows its enemy.
+- **The army**, docked at the foot, as the deployment draws it: its power,
+  its squads (up to 6) with their counts and the soldiers lost so far, its
+  heroes (up to 3) with their HP. **Withdraw** and **Attack** (the frontier,
+  at once, priced in Mana, §4). On its way: when it arrives, and Withdraw.
+  None there: **Send**. To bring more troops, withdraw and send another
+  army.
 - **After a fight**, once it has played: the spoils over the descent — what
   the room paid and the soldiers it cost — with **Fight next** (or **Fight
   again** after a defeat) and **Back**.

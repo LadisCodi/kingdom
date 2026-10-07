@@ -284,3 +284,13 @@ All three in three tabs, first try (`m90-world-dungeon.png`,
 the dock's troops wear the enemy's faces (a goblin, a dragon): the army is
 the player's own soldiers. In m92 the Mana sits inside Descend rather than
 on its plate.
+
+### M91b — the delve, simpler (revision)
+
+Same chat as M91, with m91 and the shipped deployment attached (for the
+player's own troops). Asked for: no race rope — each kingdom's shield on
+the room it has reached, the player's own larger with *You*; depth tabs
+counting the kingdoms in each; no enemies on the rooms, only the boss
+still to beat; the dock as the player's army alone, with Attack (Mana on
+its plate), Resupply and Recall. Result: `m91b-world-delve.png`, first try;
+a stray "3" sits on the player's shield.

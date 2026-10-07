@@ -149,18 +149,22 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   cleared — in a list that scrolls in what is left of the card, opened on
   the player's own row.
 
-### 3.9 The delve (m91)
+### 3.9 The delve (m91b, built)
 
-- m65 and m66 are the target; m91 is how it reads with the shipped pieces:
-  - under the title, *Depth 2 · Room 5 of 8 · held by Orcs*;
-  - the race rope, banners with shields;
-  - depths as a tab column on the right edge (ticked, lit, padlocked);
-  - the stair: cleared rooms dim and ticked, the frontier lit with its
-    creature, its power against the army's and its pay, the rooms ahead
-    hazed, the boss at the foot with his open chest;
-  - the army docked at the foot: heroes with HP, squads with counts and
-    losses, Power, **Fight** (Mana on its plate) and **Recall**;
-  - after a fight, the spoils over the stair (m66).
+- Under the title, *Depth 2 · Room 5 of 8 · held by Orcs* and who closes
+  it; no race rope.
+- **The race is on the stair**: every kingdom's shield on the room it has
+  reached, the player's own larger with *You*; the depth tabs down the right
+  edge count the kingdoms in each.
+- **No room shows its enemy**: cleared rooms ticked, the frontier's power
+  and pay, the rooms ahead with their power, and only the boss still to beat
+  with his face and his chest.
+- **The dock is the player's army** as the deployment draws it — YOUR ARMY,
+  its power, troops above (up to 6) with their losses, heroes below (up to 3)
+  with their wounds — read only, then **Withdraw** and **Attack** (Mana on
+  its plate), which fights the frontier at once.
+- No Resupply: to send more, withdraw the army and send a new one — with
+  other heroes, which rotates them.
 
 ### 3.10 The Portal's descent (m92)
 
