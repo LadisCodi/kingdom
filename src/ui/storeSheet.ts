@@ -1,7 +1,8 @@
 // THE STORE (Docs/features/14-monetization.md §2.1), after the mockups
 // Docs/art/ui/mockups/m95–m98: a screen of its own — a magic merchant's shop
 // behind it, soft and out of focus, so the wares are what the eye finds —
-// with its title plank, its close and a strip of wooden tabs:
+// with a strip of wooden tabs and its close along the top, fixed, over the
+// open tab's page, which scrolls:
 //
 //   * Offers (while there is one): a banner each, its figure, its name, a
 //     summary of what it gives and its price — a tap opens its splash — and,
@@ -227,8 +228,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
         : gemsTab(game);
   const close = closeKnob(() => game.dismiss(), 'Close the store');
   const body = el('div', { class: 'stx' },
-    el('header', { class: 'stx-head' }, el('h1', { class: 'stx-title' }, 'Store'), close),
-    tabStrip(game, tabs, open),
+    el('header', { class: 'stx-head' }, tabStrip(game, tabs, open), close),
     el('div', { class: 'stx-page', 'data-keep-scroll': `store-${open}` }, page));
   tickCountdowns(game);
   const screen = sheet({ title: 'Store', onClose: () => game.dismiss(), tall: true, bare: true }, body);

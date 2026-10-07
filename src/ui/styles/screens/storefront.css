@@ -1,9 +1,10 @@
 /* THE STORE (ui/storeSheet.ts, ui/storeHeroes.ts), after the mockups m95–m98:
  * a screen of its own over a magic merchant's shop, soft and dim so the
- * wares are what the eye finds; a title plank and its close, a strip of
- * wooden tabs, and the open tab's page — nailed wood frames, red cloth
- * ribbons, parchment tiles, wax seals and gold gem buttons, the kit the offer
- * splash is made of. The column keeps the iPhone X's width at most. */
+ * wares are what the eye finds; a strip of wooden tabs with the close beside
+ * it, fixed, and under it the open tab's page, the one thing that scrolls —
+ * nailed wood frames, red cloth ribbons, parchment tiles, wax seals and gold
+ * gem buttons, the kit the offer splash is made of. The column runs the
+ * iPhone X's full width, edge to edge, and keeps that width on anything wider. */
 
 /* The shop behind: the art, a warm dark wash over it so the panels read. */
 #overlay:has(.k-sheet.is-store) {
@@ -13,53 +14,35 @@
   justify-content: flex-start;
   padding: var(--hud-h) 0 0;
 }
-.k-sheet.is-store {
+/* (`:not` to outweigh material.css, which sizes every drawer.) */
+.k-sheet.is-store:not(.is-centred) {
+  --win-w: calc(var(--rpx) * 1125);
   height: 100%;
   max-height: 100%;
-  width: 100%;
-  max-width: calc(var(--px) * 402);
   margin: 0 auto;
 }
-.k-sheet.is-store > .k-panel { background: none; border: 0; box-shadow: none; }
+.k-sheet.is-store > .k-panel { padding: 0; background: none; border: 0; box-shadow: none; }
 .k-sheet.is-store > .k-panel > .k-frame { display: none; }
-.k-sheet.is-store > .k-panel > .k-sheet-body { padding: 0; scrollbar-width: none; }
-.k-sheet.is-store > .k-panel > .k-sheet-body::-webkit-scrollbar { display: none; }
+.k-sheet.is-store > .k-panel > .k-sheet-body { padding: 0; overflow-y: hidden; }
 
 .stx {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding: calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--nav-h, 0px) + var(--px) * 16);
+  height: 100%;
+  min-height: 0;
 }
 
-/* ----------------------------------------------------- the head and tabs */
+/* ------------------------------------------------- the tabs and the close */
 
 .stx-head {
-  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin: 0 calc(var(--px) * 40) calc(var(--px) * 8);
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 8) calc(var(--px) * 4) 0 calc(var(--px) * 6);
 }
-.stx-title {
-  margin: 0;
-  min-width: calc(var(--px) * 200);
-  height: calc(var(--px) * 46);
-  display: grid;
-  place-items: center;
-  padding: 0 calc(var(--px) * 30);
-  border-style: solid;
-  border-width: 0 calc(var(--px) * 30);
-  border-image: url('../../assets/offer-plaque.png') 0 60 fill / 0 calc(var(--px) * 30) / 0 stretch;
-  color: #fbe6c8;
-  font-family: var(--font-ornate);
-  font-weight: var(--weight-ornate);
-  font-size: calc(var(--px) * 28);
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(40, 16, 4, 0.85);
-}
-.stx-head > .k-close { position: absolute; right: calc(var(--px) * -40); top: 50%; left: auto; transform: translateY(-50%); }
+.stx-head > .k-close { position: relative; top: auto; right: auto; flex: none; }
 
-.stx-tabs { display: flex; gap: calc(var(--px) * 5); margin-bottom: calc(var(--px) * 10); }
+.stx-tabs { flex: 1; min-width: 0; display: flex; gap: calc(var(--px) * 4); }
 .stx-tab {
   position: relative;
   flex: 1 1 0;
@@ -99,7 +82,18 @@
   border: calc(var(--px) * 2) solid #fff2dc;
 }
 
-.stx-page { flex: 1; }
+/* The page scrolls under the fixed strip. Its top keeps room for what stands
+ * proud of the first frame — an offer's figure and its seal. */
+.stx-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: calc(var(--px) * 24) calc(var(--px) * 4) calc(var(--nav-h, 0px) + var(--px) * 16);
+}
+.stx-page::-webkit-scrollbar { display: none; }
 .stx-list { display: flex; flex-direction: column; gap: calc(var(--px) * 12); }
 .stx-locked {
   display: flex;
@@ -208,8 +202,8 @@
 .stx-offer-foot > .stx-timer { margin-right: auto; }
 .stx-seal {
   position: absolute;
-  top: calc(var(--px) * -26);
-  right: calc(var(--px) * -20);
+  top: calc(var(--px) * -32);
+  right: calc(var(--px) * -4);
   display: grid;
   place-items: center;
   width: calc(var(--px) * 64);
@@ -304,7 +298,7 @@
 /* ------------------------------------------------------------ the heroes */
 
 .sth { display: flex; flex-direction: column; gap: calc(var(--px) * 14); }
-.sth-top { position: relative; height: calc(var(--px) * 280); }
+.sth-top { position: relative; height: calc(var(--px) * 280); margin: 0 calc(var(--px) * 8); }
 
 /* The carousel: one hero at a time, drifting right to left and fading in
  * and out, standing on the left of the top band. */
