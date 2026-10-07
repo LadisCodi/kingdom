@@ -294,3 +294,19 @@ counting the kingdoms in each; no enemies on the rooms, only the boss
 still to beat; the dock as the player's army alone, with Attack (Mana on
 its plate), Resupply and Recall. Result: `m91b-world-delve.png`, first try;
 a stray "3" sits on the player's shield.
+
+## The menus' new art (2026-10-07)
+
+One sheet in a new chat, anchored on `m90-refs/ref-whex-style.jpg` (six
+shipped hex sprites): two tiles in the hex art's style — the explorer with a
+spyglass on a grass hex, and the Dark Portal (nine rune stones round a
+violet void) — two columns, a 60 px empty band between, ending with the
+true-alpha wording. True alpha first try (corner `srgba(0,0,0,0)`). Kept as
+`Docs/art/originals/world-menus/world-vignettes-sheet.png`; cut by half,
+trimmed and fitted bottom-centred on 400×400 → `src/render/assets/whex_explorer.png`
+and `whex_portal.png`.
+
+Recoloured locally (only the hue band named moves, so gold trims stay gold):
+`ribbon-purple.png` from `ribbon-blue.png` (190–250° +50°),
+`portal-node-lit.png` from `delve-node-lit.png` (10–65° −110°),
+`portal-node.png` and `portal-rock.png` tinted violet.

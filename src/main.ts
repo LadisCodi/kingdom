@@ -57,6 +57,7 @@ import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderLairSheet } from './ui/lairSheet';
 import { renderDispatchSheet } from './ui/world/dispatchSheet';
 import { renderWorldBuilding, renderWorldSlot } from './ui/world/hexCard';
+import { renderPortalScreen } from './ui/world/portalScreen';
 import { renderArmySheet } from './ui/world/armySheet';
 import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
@@ -330,6 +331,7 @@ async function boot(): Promise<void> {
     knowledge: renderKnowledgeSheet,
     world: renderDispatchSheet,
     worldSlot: renderWorldSlot,
+    portal: renderPortalScreen,
     worldBuilding: renderWorldBuilding,
     army: renderArmySheet,
     delve: renderDelveScreen,

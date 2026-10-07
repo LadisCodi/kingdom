@@ -780,6 +780,20 @@ days instead of settling it on the first night. In production it is also the
 natural Gem sale — extra attempts, which is a better thing to sell than
 finishing instantly.
 
+### 10.3a The descent
+
+- **The Portal's card has one button, Descend**, which opens the descent: a
+  full-height menu built as the delve (§8.2).
+- A ribbon with when it closes; *Your floor 12 of 40*.
+- **The shaft**: the forty floors going down, cleared ticked, the frontier
+  with its power and pay, the floors ahead with their power and what is
+  worth going down for (a pack, a milestone). It opens on the frontier.
+- **The ranking is on the floors**: every kingdom's shield on its deepest
+  floor, the player's own *You*, the leader under the gold rank ribbon.
+- **Clears today** as pips on the right edge.
+- **The army**, docked as the delve's: Withdraw and **Descend** (the next
+  floor, in Mana). None down there: Send.
+
 ### 10.4 What it pays
 
 - **By depth** — an immediate reward for clearing each floor: **Knowledge,

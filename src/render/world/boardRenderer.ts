@@ -1218,22 +1218,6 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
   }
 }
 
-/** The Portal as the board draws it, alone on a small canvas: its card's
- *  portrait (Docs/proposals/world-menus.md §3.6). */
-export function portalThumb(px: number): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-  canvas.width = canvas.height = Math.round(px * dpr);
-  const ctx = canvas.getContext('2d');
-  if (ctx !== null) {
-    ctx.scale(dpr, dpr);
-    const r = px * 0.62;
-    drawPortalGround(ctx, px / 2, px / 2, r);
-    drawPortal(ctx, px / 2, px * 0.56, r);
-  }
-  return canvas;
-}
-
 // ------------------------------------------------------------ held ground
 
 /** The Fortress's keep at the hex's rear corner, by its level — faint while

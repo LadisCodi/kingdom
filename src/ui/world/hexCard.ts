@@ -28,7 +28,6 @@ import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
 import { claimGold, districtOf, districtRate, floorPower, nextRoom, upgradeLevel } from '../../worldServer/core';
-import { portalThumb } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
@@ -38,7 +37,7 @@ import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
 import { chapelRoom, hexActions, hexWork } from './worldActions';
-import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
+import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
 import { enemyPanel } from '../battleSheet';
 import { creatureFace } from '../lairSheet';
@@ -190,7 +189,7 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
     onClick: () => game.doSendExplorer(),
   });
   const exploreHead = el('div', { class: 'dc-head' },
-    portrait(null, 'compass'),
+    portrait('whex_explorer', 'compass'),
     el('div', { class: 'dc-what-col' },
       el('p', { class: 'wd-name' }, 'Send an explorer'),
       el('div', { class: 'dc-what' }, 'There and back, then the hex is revealed.')),
@@ -244,7 +243,9 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
     portrait(groundSprite(bh), 'tile'),
     el('div', { class: 'dc-what-col' }, distanceLine(game, index)));
   const art = portrait(`whex_camp_${camp.creature.toLowerCase()}`, 'skull');
-  art.append(el('span', { class: 'wd-seal', style: `--seal: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty));
+  // A wax seal in the board's colour for it: green easy, gold fair, red hard.
+  const wax = difficulty === 'Fair' ? 'is-fair' : difficulty === 'Hard' || difficulty === 'Deadly' ? 'is-hard' : 'is-easy';
+  art.append(el('span', { class: `wd-seal ${wax}` }, difficulty));
   const campHead = el('div', { class: 'dc-head' }, art,
     el('div', { class: 'dc-what-col' },
       el('p', { class: 'wd-name' }, creature.charAt(0).toUpperCase() + creature.slice(1)),
@@ -291,9 +292,7 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
   const ribbon = p === null ? null : el('div', { class: 'wd-ribbon is-portal' }, iconEl('hourglass', { size: 'sm' }),
     p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
       : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
-  const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
-    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalThumb(84)),
-    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+  const art = portrait('whex_portal', 'dungeon');
   const head = el('div', { class: 'dc-head' }, art,
     el('div', { class: 'dc-what-col' },
       distanceLine(game, index),
@@ -321,27 +320,8 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
       el('div', { class: 'fr-who' }, el('div', { class: 'fr-name' }, name)),
       el('div', { class: 'fr-trail wd-rank-floor' }, `Floor ${formatExact(r.floor)}`));
   });
-  // Descend: an army sent down, or the next floor for the one camped there.
-  const acts = hexActions(source, me, bh, { revealed: true });
-  const descend = acts.find((a) => a.kind === 'descend');
-  const send = acts.find((a) => a.kind === 'army');
-  const recall = acts.find((a) => a.kind === 'recall');
-  const foot: HTMLElement[] = [];
-  if (descend?.kind === 'descend') {
-    foot.push(btn({
-      label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
-      disabledReason: p === null || !p.open ? 'The Portal is shut' : p.attemptsLeft === 0 ? 'No clears left today'
-        : floor >= WORLD_PORTAL.floors ? 'At the bottom' : undefined,
-      onClick: () => void game.doDescendPortal(descend.army),
-    }));
-  } else if (send?.kind === 'army') {
-    foot.push(btn({ label: 'Descend', kind: 'destructive', onClick: () => game.openArmy(index, 'portal') }));
-  } else if (recall === undefined) {
-    foot.push(btn({ label: 'Descend', kind: 'destructive', disabledReason: 'The Portal is shut', onClick: () => undefined }));
-  }
-  if (recall?.kind === 'recall') {
-    foot.push(btn({ label: 'Recall', kind: 'secondary', onClick: () => void game.doRecallArmy(recall.army) }));
-  }
+  // Descend: the descent, where the army is sent and the floors fought.
+  const foot = [btn({ label: 'Descend', kind: 'destructive', onClick: () => game.openPortalDescent(index) })];
   const shut = p === null || !p.open ? [blockedLine(p === null ? 'The Portal is shut' : `It opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)] : [];
   return sheet({ title: 'The Dark Portal', onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },

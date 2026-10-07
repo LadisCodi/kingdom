@@ -489,19 +489,24 @@
 .wd-portrait > .wd-seal {
   position: absolute;
   z-index: 2;
-  top: calc(var(--px) * -8);
-  left: calc(var(--px) * -8);
-  padding: calc(var(--px) * 3) calc(var(--px) * 7);
-  border-radius: 999px;
-  background: var(--seal);
-  border: calc(var(--px) * 2) solid color-mix(in srgb, var(--seal) 60%, #2e1c0e);
-  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(40, 22, 10, 0.4);
+  top: calc(var(--px) * -12);
+  left: calc(var(--px) * -12);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 50);
+  height: calc(var(--px) * 50);
+  background: url('../../assets/offer-seal.png') center / contain no-repeat;
   color: #fff6e0;
   font-size: var(--text-helper);
   font-weight: var(--weight-title);
-  white-space: nowrap;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 10, 4, 0.8);
   rotate: -12deg;
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.4));
 }
+.wd-portrait > .wd-seal.is-easy { background-image: url('../../assets/seal-done.png'); }
+.wd-portrait > .wd-seal.is-fair { background-image: url('../../assets/seal-available.png'); color: #5a3a12; text-shadow: none; }
 /* Two answers to one camp, side by side: Negotiate's price on its plate,
  * Attack's slab level with Negotiate's. */
 .wd-choices { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: calc(var(--px) * 8); align-items: end; }
@@ -518,19 +523,20 @@
   align-items: center;
   justify-content: center;
   gap: calc(var(--px) * 6);
-  margin: 0 calc(var(--px) * -4);
-  padding: calc(var(--px) * 5) calc(var(--px) * 12);
-  border-radius: calc(var(--px) * 4);
-  background: linear-gradient(#8a55c8, #5e3194);
-  border: calc(var(--px) * 2) solid #3a1e5c;
-  box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.2), 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(40, 22, 10, 0.35);
+  height: calc(var(--px) * 34);
+  margin: 0 calc(var(--px) * -6);
+  padding: calc(var(--px) * 2) 0 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 36);
+  border-image: url('../../assets/ribbon-purple.png') 0 100 fill / 0 calc(var(--px) * 36) stretch;
   color: #fff6e0;
   font-weight: var(--weight-title);
   font-size: var(--text-desc);
-  text-shadow: 0 calc(var(--px) * 1) 0 rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 10, 40, 0.9);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(25, 12, 4, 0.45));
 }
-/* The Portal's portrait is the board's own drawing, on a canvas. */
-.wd-portal-art > canvas { width: 100%; height: 100%; display: block; }
 /* The ranking: the friends list's rows, the player's own lit gold. */
 .wd-ranks { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
 .wd-rank.is-you { background: color-mix(in srgb, var(--gold) 30%, var(--parchment-shade)); }
@@ -581,18 +587,19 @@
   flex-direction: column;
   align-items: center;
   gap: calc(var(--px) * 2);
-  width: calc(var(--px) * 44);
-  padding: calc(var(--px) * 6) 0;
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  border-radius: calc(var(--px) * 8);
-  background: linear-gradient(180deg, var(--wood-light), var(--wood));
-  color: var(--ink-inverse);
+  width: calc(var(--px) * 46);
+  padding: calc(var(--px) * 6) 0 calc(var(--px) * 8);
+  background: none;
+  border: 0;
+  border-image: url('../../assets/nav-tab.png') 30 30 50 fill / calc(var(--px) * 10) calc(var(--px) * 10) calc(var(--px) * 16) stretch;
+  color: var(--parchment);
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
   font: inherit;
   font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
   cursor: pointer;
-  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(0, 0, 0, 0.4);
 }
-.dv-depth.is-on { background: linear-gradient(180deg, #ffe08a, var(--gold)); color: #5a3a12; border-color: var(--gold-dark); }
+.dv-depth.is-on { border-image-source: url('../../assets/nav-tab-down.png'); filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 200, 80, 0.8)); }
 .dv-depth.is-locked { filter: saturate(0.4) brightness(0.8); cursor: default; }
 .dv-depth-count { display: flex; align-items: center; gap: calc(var(--px) * 1); font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
 .dv-depth-count .icon { --icon-size: calc(var(--px) * 14); }
@@ -602,25 +609,37 @@
 .dv-flags > .dv-flag + .dv-flag { margin-left: calc(var(--px) * -10); }
 .dv-flag { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(0, 0, 0, 0.5)); }
 .dv-flag-name {
-  margin-top: calc(var(--px) * -2);
-  padding: 0 calc(var(--px) * 5);
-  border-radius: calc(var(--px) * 3);
-  background: var(--parchment-shade);
-  color: var(--ink);
+  margin-top: calc(var(--px) * -4);
+  height: calc(var(--px) * 20);
+  padding: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 14);
+  border-image: url('../../assets/ribbon-brown.png') 0 100 fill / 0 calc(var(--px) * 14) stretch;
+  color: #fff6e0;
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
+  line-height: calc(var(--px) * 18);
   white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(30, 14, 4, 0.8);
 }
 .dv-flag.is-you { scale: 1.2; z-index: 2; filter: drop-shadow(0 0 calc(var(--px) * 8) rgba(120, 170, 255, 0.85)); }
-.dv-flag.is-you .dv-flag-name { background: #2f63c4; color: #fff6e0; }
+.dv-flag.is-you .dv-flag-name { border-image-source: url('../../assets/ribbon-blue.png'); }
 .dv-boss-name {
-  padding: calc(var(--px) * 2) calc(var(--px) * 12);
-  border-radius: calc(var(--px) * 4);
-  background: linear-gradient(#c8392b, #8f2117);
+  height: calc(var(--px) * 30);
+  padding: calc(var(--px) * 2) 0 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--px) * 30);
+  border-image: url('../../assets/ribbon-red.png') 0 100 fill / 0 calc(var(--px) * 30) stretch;
   color: #fff6e0;
   font-weight: var(--weight-title);
   font-size: calc(var(--px) * 14);
+  line-height: calc(var(--px) * 26);
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 10, 4, 0.9);
 }
+.dv-chest-art { flex: none; width: calc(var(--px) * 64); height: calc(var(--px) * 56); background: url('../../assets/chest/chest-golden-open.png') center / contain no-repeat; }
 .dv-dock { --slot-size: calc(var(--px) * 46); }
 .dv-dock .bt-army { margin: 0; }
 .dv-room.is-frontier .dv-plaque { min-width: calc(var(--px) * 180); }
@@ -629,3 +648,46 @@
 /* A squad's losses so far, under its count; a hero's wounds under its card. */
 .bt-lost { position: absolute; bottom: calc(var(--px) * -16); left: 50%; translate: -50% 0; color: var(--clay); font-weight: var(--weight-title); font-size: calc(var(--px) * 11); }
 .bt-field-hero { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 2); }
+
+/* THE PORTAL'S DESCENT (m92): the delve's pieces in violet stone, the shaft
+ * scrolling between the band and the dock. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .dv-body.is-portal { height: 100%; min-height: 0; }
+.dv-body.is-portal {
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(150, 80, 255, 0.22), transparent 65%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(10, 0, 30, 0.5) 100%),
+    url('../../assets/portal-rock.png') 0 0 / calc(var(--px) * 320) calc(var(--px) * 320),
+    #221832;
+}
+.dv-body.is-portal > .dv-stage { flex: 1 1 0; min-height: 0; }
+.pt-shaft { overflow-y: auto; overflow-x: clip; padding-bottom: calc(var(--px) * 8); }
+.dv-body.is-portal .dv-disc:not(.is-boss) { background-image: url('../../assets/portal-node.png'); }
+.dv-body.is-portal .dv-room.is-frontier .dv-disc:not(.is-boss) { background-image: url('../../assets/portal-node-lit.png'); filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(170, 90, 255, 0.8)); }
+.dv-body.is-portal .dv-tag { color: #e4d4ff; }
+.pt-marks { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 2); }
+.pt-milestone { gap: calc(var(--px) * 3); }
+/* The leader: the friends list's gold rank ribbon over its shield. */
+.dv-flag.is-leader::before {
+  content: '';
+  width: calc(var(--px) * 18);
+  height: calc(var(--px) * 24);
+  margin-bottom: calc(var(--px) * -6);
+  background: url('../../assets/rank-gold.png') center / contain no-repeat;
+}
+/* Clears today, as wax pips down the right edge. */
+.pt-pips {
+  flex: none;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 6);
+  border-radius: calc(var(--px) * 8);
+  background: var(--parchment-shade);
+  color: var(--ink);
+}
+.pt-pips-label { font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; width: calc(var(--px) * 40); line-height: 1.1; }
+.pt-pips-row { display: flex; flex-direction: column; gap: calc(var(--px) * 4); }
+.pt-pip { width: calc(var(--px) * 22); height: calc(var(--px) * 22); background: url('../../assets/seal-plain.png') center / contain no-repeat; filter: grayscale(0.6) brightness(0.85); }
+.pt-pip.is-lit { background-image: url('../../assets/seal-available.png'); filter: none; }
