@@ -6419,6 +6419,12 @@ export class Game {
    * and for the same reason. A coin on the plank is a coin you spend from
    * anywhere; neither of those is one.
    */
+  /** The calls whose keys the plank shows in place of the coins — while the
+   *  store's Heroes tab is open — or null. */
+  hudKeys(): BannerId[] | null {
+    return this.openOverlay === 'store' && this.storeTabs().open === 'heroes' ? [...BANNER_ORDER] : null;
+  }
+
   visibleCurrencies(): CurrencyId[] {
     // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
     //
@@ -6433,6 +6439,9 @@ export class Game {
     // buy nothing here. Same move the plaque under it already makes
     // (`hudSlot`): show the reading the player can act on, not all of them.
     if (this.openOverlay === 'heroes') return ['HeroXp', 'Stardust'];
+    // The store's calls spend keys, which `hudKeys` puts on the plank: the
+    // city's coins buy nothing there.
+    if (this.hudKeys() !== null) return [];
     // The tree spends Gold AND the clock, so unlike the roster this one keeps
     // a city coin: a technology's price has two halves and a plank showing
     // one of them is worse than a plank showing neither. Food and timber buy

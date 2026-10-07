@@ -312,13 +312,14 @@
 .sth-top { position: relative; flex: 1 1 0; min-height: calc(var(--px) * 170); max-height: calc(var(--px) * 280); margin: 0 calc(var(--px) * 8); }
 
 /* The carousel: one hero at a time, drifting right to left and fading in
- * and out, standing on the left of the top band. */
+ * and out, standing large on the left of the top band and down behind the
+ * common call's frame, which hides his feet. */
 .sth-carousel {
   position: absolute;
-  left: calc(var(--px) * -6);
-  bottom: calc(var(--px) * -10);
-  width: 62%;
-  height: 112%;
+  left: calc(var(--px) * -10);
+  bottom: calc(var(--px) * -130);
+  width: 66%;
+  height: calc(100% + var(--px) * 140);
   pointer-events: none;
 }
 .sth-carousel::before {
@@ -349,32 +350,9 @@
   @keyframes sth-fade { 0%, 100% { opacity: 0; } 16%, 84% { opacity: 1; } }
 }
 
-.sth-keys { position: absolute; top: 0; right: 0; display: flex; gap: calc(var(--px) * 6); }
-.sth-key {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--px) * 4);
-  padding: calc(var(--px) * 2) calc(var(--px) * 3) calc(var(--px) * 2) calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 14);
-  background: rgba(40, 20, 6, 0.75);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
-  color: #fbe6c8;
-  font-weight: var(--weight-title);
-}
-.sth-key-plus {
-  display: grid;
-  place-items: center;
-  width: calc(var(--px) * 22);
-  height: calc(var(--px) * 22);
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #7fd65a, var(--leaf-dark) 75%);
-  cursor: pointer;
-}
 .sth-title {
   position: absolute;
-  top: calc(var(--px) * 46);
+  top: calc(var(--px) * 8);
   right: 0;
   max-width: 50%;
   margin: 0;
@@ -407,9 +385,8 @@
 .sth-odds > .k-tip { left: auto; right: 0; width: calc(var(--px) * 240); max-width: none; text-shadow: none; text-align: left; color: var(--ink); font-weight: var(--weight-body); }
 .sth-odds > .k-tip::after { left: auto; right: calc(var(--px) * 16); }
 
-/* A call: a framed banner, its name on a cloth ribbon — steel blue for the
- * common call, red for the golden — its key or its hero, its free calls,
- * its two buttons and its pity. */
+/* A call: a framed banner, its name on a plank, its key or its hero, its
+ * free calls, its two buttons and its pity. */
 .sth-banner {
   position: relative;
   min-height: calc(var(--px) * 150);
@@ -417,6 +394,9 @@
   border-width: calc(var(--px) * 18);
   border-image: url('../../assets/offer-frame.png') 80 fill / calc(var(--px) * 18) / 0 stretch;
 }
+/* The golden call is the better call, and its frame says so: the gold plate
+ * with brass nails in place of the wood. */
+.sth-banner.is-advanced { border-image-source: url('../../assets/plate-gold.png'); border-image-slice: 64 fill; }
 .sth-banner-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: calc(var(--px) * 5); }
 /* With a hero: the hero stands on the left of the top half, rising out of
  * the frame, beside the name and the free calls; the calls and the pity
@@ -426,26 +406,49 @@
 .sth-banner.has-hero .sth-free { grid-column: 2; }
 .sth-banner.has-hero .sth-calls,
 .sth-banner.has-hero .sth-pity { grid-column: 1 / -1; }
-.sth-banner.has-hero .sth-banner-ribbon { justify-self: start; }
 .sth-banner.has-hero .sth-free { min-height: calc(var(--px) * 40); }
 .sth-banner.has-hero { margin-top: calc(var(--px) * 34); }
+/* The hero rises out of the frame and stands behind the Free call: its
+ * plate is see-through there, so only the slab is in front of him. */
+.sth-banner.has-hero .sth-calls > .k-btn.has-cost:first-child { background: transparent; border-color: transparent; }
+.sth-banner.has-hero .sth-calls > .k-btn.has-cost:first-child > .k-btn-note {
+  color: var(--ink);
+  text-shadow: 0 0 calc(var(--px) * 3) #fff6e0, 0 0 calc(var(--px) * 6) #fff6e0;
+}
 
+/* A call's name on a plank, as the army boards' — blue for the common call,
+ * gold for the golden — nailed over the frame's top edge, half above it, the
+ * same height on both. */
+.sth-banner { --rb-h: calc(var(--px) * 40); --frame: calc(var(--px) * 18); }
+.sth-banner-body { padding-top: calc(var(--rb-h) / 2 + var(--px) * 2); }
 .sth-banner-ribbon {
-  align-self: flex-start;
-  padding: calc(var(--px) * 4) calc(var(--px) * 16);
-  background: linear-gradient(#4a7fb5, #2c5583);
-  border-top: calc(var(--px) * 2) solid #c9d6e2;
-  border-bottom: calc(var(--px) * 2) solid #c9d6e2;
+  --rb-cap: calc(var(--rb-h) * 115 / 169);
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--frame) * -1 - var(--rb-h) / 2);
+  left: calc(var(--px) * 4);
+  display: flex;
+  align-items: center;
+  height: var(--rb-h);
+  box-sizing: border-box;
+  padding: 0 0 calc(var(--px) * 2);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--rb-cap);
+  border-image: url('../../assets/plank-blue.png') 0 115 fill / 0 var(--rb-cap) stretch;
   color: #fff6e0;
   font-family: var(--font-ornate);
   font-weight: var(--weight-ornate);
   font-size: calc(var(--px) * 20);
+  white-space: nowrap;
   text-shadow: 0 calc(var(--px) * 2) 0 rgba(10, 20, 40, 0.7);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(60, 30, 10, 0.35));
 }
+.sth-banner.has-hero .sth-banner-ribbon { left: auto; right: calc(var(--px) * 4); }
 .sth-banner.is-advanced .sth-banner-ribbon {
-  background: linear-gradient(#c43a2c, #8e2219);
-  border-color: #e7b347;
-  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.8);
+  border-image-source: url('../../assets/plank-gold.png');
+  color: #5a3a12;
+  text-shadow: 0 calc(var(--px) * 1) 0 rgba(255, 240, 200, 0.6);
 }
 .sth-banner-key {
   position: absolute;
@@ -458,13 +461,15 @@
 }
 .sth-banner-hero {
   position: absolute;
-  z-index: 1;
-  left: calc(var(--px) * -14);
-  bottom: calc(100% - var(--px) * 86);
-  width: 40%;
-  height: calc(var(--px) * 150);
+  z-index: 0;
+  left: calc(var(--px) * -12);
+  top: calc(var(--px) * -64);
+  bottom: calc(var(--px) * 14);
+  width: 44%;
+  height: auto;
   object-fit: contain;
   object-position: 50% 100%;
+  pointer-events: none;
   filter: drop-shadow(0 0 calc(var(--px) * 10) rgba(255, 210, 110, 0.55));
 }
 .sth-free { color: var(--ink); font-size: calc(var(--px) * 13); font-weight: var(--weight-strong); }
