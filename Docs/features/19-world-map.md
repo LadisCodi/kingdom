@@ -755,7 +755,9 @@ the centre is for.
 - **Always revealed, for everyone, with no fog.**
 - Armies march through it; it carries no connection and is nobody's hex.
 - Between events it shows the portal dark, and a counter to the next opening;
-  open, its vortex lit (`whex_portal`, `whex_portal_open`).
+  open, its vortex lit (`whex_portal`, `whex_portal_open`), turning, with a
+  breathing glow, a column of light, motes circling the rim and sparks rising
+  out of the pit — still under reduced motion.
 
 ### 10.2 Cadence
 

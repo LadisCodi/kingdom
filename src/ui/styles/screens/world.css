@@ -553,6 +553,13 @@
 /* The Portal's portrait is the board's own drawing, on a canvas. */
 .wd-portal-art > canvas { width: 100%; height: 100%; display: block; }
 .wd-portal-art > img { width: 100%; height: 100%; display: block; object-fit: contain; }
+/* Open, the Portal breathes violet light. */
+.wd-portal-art.is-open > img { animation: wd-portal-breathe 1.3s ease-in-out infinite alternate; }
+@keyframes wd-portal-breathe {
+  from { filter: drop-shadow(0 0 calc(var(--px) * 2) rgb(190 90 255 / 0.4)) brightness(1); }
+  to { filter: drop-shadow(0 0 calc(var(--px) * 9) rgb(220 130 255 / 0.9)) brightness(1.12); }
+}
+@media (prefers-reduced-motion: reduce) { .wd-portal-art.is-open > img { animation: none; } }
 /* The ranking: the friends list's rows, the player's own lit gold. */
 .wd-ranks { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
 .wd-rank.is-you { background: color-mix(in srgb, var(--gold) 30%, var(--parchment-shade)); }
