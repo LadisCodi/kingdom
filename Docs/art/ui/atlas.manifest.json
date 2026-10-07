@@ -310,8 +310,8 @@
     "boostRent",
     "boostHarvest",
     "boostMana",
-    "manaFlask",
-    "knowledgeTome",
+    "flask",
+    "tome",
     "dowserMap",
     "shard"
    ],

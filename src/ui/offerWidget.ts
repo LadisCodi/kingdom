@@ -22,7 +22,7 @@ export function kindIcon(sku: StoreSkuId): IconName {
   const s = STORE[sku];
   if (s.explorers > 0) return 'compass';
   if (s.heroSlots > 0) return 'helmet';
-  if (s.opensOn === 'manaLow') return 'manaFlask';
+  if (s.opensOn === 'manaLow') return 'flask';
   if (s.opensOn === 'buildersBusy' || s.opensOn === 'townhall') return 'speedup';
   return 'chest';
 }

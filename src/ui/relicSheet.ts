@@ -209,7 +209,7 @@ export function activation(game: Game, id: ArtifactId): HTMLElement | null {
       ...(a.flask === null ? [] : [btn({
         label: 'Use',
         kind: 'blue',
-        icon: 'manaFlask',
+        icon: 'flask',
         note: `Mana flask ×${formatExact(a.flask.count)}`,
         onClick: () => game.doUseFlaskFor(id),
       })]),
@@ -235,7 +235,7 @@ export function activationOverlay(game: Game, id: ArtifactId): HTMLElement | nul
     ...(a.affordable || a.flask === null ? [] : [btn({
       label: 'Use',
       kind: 'blue',
-      icon: 'manaFlask',
+      icon: 'flask',
       note: `Flask ×${formatExact(a.flask.count)}`,
       onClick: () => game.doUseFlaskFor(id),
     })]));
