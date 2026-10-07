@@ -27,8 +27,13 @@
         "xpLevelCostGrowth": { "type": "float" },
         "heroLevelsPerStar": {
           "type": "int",
-          "min": 1,
-          "doc": "Levels each full star adds to the level cap. With no star the cap is heroMaxLevel minus this times ascensionStars."
+          "min": 0,
+          "doc": "Levels a full star adds to the level cap on top of its points' heroLevelsPerAscension."
+        },
+        "heroLevelsPerAscension": {
+          "type": "int",
+          "min": 0,
+          "doc": "Levels every ascension point adds to the level cap. With no ascension the cap is heroMaxLevel minus every point's and every star's levels; every star full is heroMaxLevel."
         },
         "heroMaxLevel": { "type": "int" },
         "statsPerAscension": {

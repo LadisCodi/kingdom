@@ -270,36 +270,37 @@ describe('a level costs Hero XP', () => {
   });
 });
 
-// A full star is worth eight levels and a point of one is worth none: the
-// cap climbs 10, 18, 26, 34, 42, 50 (Docs/features/10-heroes.md §4).
-describe('a full star raises the level cap', () => {
-  it('caps at ten with no star, eight more a star, and fifty at the top', () => {
+// Every point is worth ten levels, as in Kingshot: the cap climbs 10, 20,
+// 30… and every star full is 310 (Docs/features/10-heroes.md §4).
+describe('every ascension point raises the level cap', () => {
+  it('caps at ten with none, ten more a point, and 310 at the top', () => {
     const per = HERO_LADDER.ascensionStepsPerStar;
     expect(heroLevelCap(0)).toBe(10);
-    expect(heroLevelCap(per - 1)).toBe(10);
-    expect(heroLevelCap(per)).toBe(18);
+    expect(heroLevelCap(1)).toBe(20);
+    expect(heroLevelCap(per)).toBe(10 + 10 * per);
     expect(fullStars(per * 2 + 3)).toBe(2);
-    expect(heroLevelCap(maxAscension())).toBe(50);
+    expect(heroLevelCap(maxAscension())).toBe(310);
   });
 
-  it('holds the level at the cap until the star is finished', () => {
+  it('holds the level at the cap until the next point', () => {
     const state = freshGame();
     grantHero(state, 'Bard');
     addToWallet(state.kingdom.wallet, 'HeroXp', 1_000_000);
     state.heroes.levels.Bard = 10;
-    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar - 1;
+    state.heroes.ascension.Bard = 0;
     expect(levelUpHero(state, 'Bard')).toBe('AscensionCapped');
-    state.heroes.ascension.Bard = HERO_LADDER.ascensionStepsPerStar;
+    state.heroes.ascension.Bard = 1;
     expect(levelUpHero(state, 'Bard')).toBe('Levelled');
   });
 
-  it('keeps the XP curve payable over fifty levels', () => {
-    // 1.6 a level is fine over ten and absurd over fifty: level 50 alone
-    // would cost 4e11. The curve flattens as the ladder stretches.
+  it('keeps the XP curve payable over the whole ladder', () => {
+    // Over 310 levels the curve has to be nearly flat: 1.09 a level would
+    // make level 309 cost 4e11. The whole ladder costs about what fifty
+    // levels did.
     let total = 0;
-    for (let l = 1; l < 50; l += 1) total += xpLevelCost(l);
+    for (let l = 1; l < HERO_LADDER.heroMaxLevel; l += 1) total += xpLevelCost(l);
     expect(xpLevelCost(1)).toBeLessThan(200);
-    expect(xpLevelCost(49)).toBeLessThan(10_000);
+    expect(xpLevelCost(HERO_LADDER.heroMaxLevel - 1)).toBeLessThan(10_000);
     expect(total).toBeLessThan(200_000);
   });
 });

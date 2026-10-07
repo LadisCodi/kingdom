@@ -879,8 +879,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
     if (new Set(ranks).size !== 1) push(null, ['heroLadder', 'skillRankLevels'], 'a skill rank has a level, a Stardust price and a material price: the three lists are one length');
     // The cap with no star is what is left once every star has added its
     // levels, and a hero must start able to reach at least level 1.
-    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars) < 1) {
-      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars add more levels than heroMaxLevel holds');
+    if (num(l.heroMaxLevel) - num(l.heroLevelsPerStar) * num(l.ascensionStars)
+      - num(l.heroLevelsPerAscension) * num(l.ascensionStars) * num(l.ascensionStepsPerStar) < 1) {
+      push(null, ['heroLadder', 'heroLevelsPerStar'], 'the stars and their points add more levels than heroMaxLevel holds');
     }
   },
 };

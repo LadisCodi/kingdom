@@ -887,6 +887,21 @@ const MIGRATIONS: readonly Migration[] = [
       delete heroes.Tiers;
     },
   },
+  {
+    // v106: EVERY ASCENSION POINT RAISES THE LEVEL CAP by ten, and the level
+    // runs to 310, not 50. A hero keeps where it was on its climb: level L of
+    // the old 49 steps becomes the same share of the new 309, held to the
+    // new cap of its ascension (10 + 10 a point, frozen here as history).
+    to: 106,
+    migrate: (modules) => {
+      const heroes = modules['kingdom.heroes'] as { Levels?: Record<string, number>; Ascension?: Record<string, number> } | undefined;
+      if (heroes?.Levels === undefined) return;
+      for (const [id, level] of Object.entries(heroes.Levels)) {
+        const cap = Math.min(310, 10 + 10 * (heroes.Ascension?.[id] ?? 0));
+        heroes.Levels[id] = Math.max(1, Math.min(cap, 1 + Math.round(((level ?? 1) - 1) * 309 / 49)));
+      }
+    },
+  },
 ];
 
 /** Where `WarDrums` entered the chain in v73, frozen as history. */
