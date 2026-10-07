@@ -253,30 +253,116 @@
 .bs-slot.is-hero .bs-crack .is-edge { stroke: var(--gold); }
 @keyframes bs-crack { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
 
-/* A SKILL FIRING: its name rises off the fighter and fades. */
-.bs-pop {
+/* A SKILL (battleScreen.ts `charge`, `cast`).
+
+   THE AURA: a glow round the ring in the skill's tint — the caster charging,
+   a rally landing on every slot of its side. Light, so it is the one thing
+   here with no material: it is what the materials are lit by. */
+.bs-aura {
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 calc(var(--px) * 16) calc(var(--px) * 6) var(--glow, #ffd36a),
+    inset 0 0 calc(var(--px) * 10) calc(var(--px) * 2) var(--glow, #ffd36a);
+}
+
+/* THE RIBBON: a strip of dyed cloth across the line between the armies,
+   swallow-tailed, woven, stitched along both edges, naming the skill. It
+   unrolls from the middle and drifts off toward the side that cast it. */
+.bs-ribbon {
   position: absolute;
   left: 50%;
-  top: calc(var(--px) * -6);
-  translate: -50% 0;
-  z-index: 2;
-  padding: 0 calc(var(--px) * 6);
-  border-radius: calc(var(--px) * 6);
-  background: var(--parchment);
-  border: calc(var(--px) * 2) solid var(--wood-dark);
+  z-index: 3;
+  translate: -50% -50%;
+  padding: calc(var(--px) * 6) calc(var(--px) * 30);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 calc(var(--px) * 2), transparent calc(var(--px) * 2) calc(var(--px) * 4)),
+    linear-gradient(rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.22)),
+    var(--cloth, #a8452a);
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--px) * 14) 50%, 100% 100%, 0 100%, calc(var(--px) * 14) 50%);
+  filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.55));
+  pointer-events: none;
+  white-space: nowrap;
+  animation: bs-ribbon 1300ms ease-out both;
+}
+.bs-ribbon::before {
+  /* The stitching. */
+  content: '';
+  position: absolute;
+  inset: calc(var(--px) * 3) calc(var(--px) * 10);
+  border-block: calc(var(--px) * 1.5) dashed rgba(255, 241, 201, 0.55);
+}
+.bs-ribbon span {
+  position: relative;
   font-family: var(--font-body);
   font-weight: var(--weight-title);
-  font-size: calc(var(--px) * 11);
-  color: var(--ink);
-  white-space: nowrap;
+  font-size: calc(var(--px) * 18);
+  color: var(--parchment);
+  -webkit-text-stroke: calc(var(--px) * 3) rgba(60, 36, 18, 0.8);
+  paint-order: stroke fill;
+}
+@keyframes bs-ribbon {
+  0% { scale: 0 1; opacity: 1; transform: none; }
+  16% { scale: 1.08 1; }
+  24% { scale: 1 1; }
+  78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(var(--drift)); }
+}
+.bs-ribbon.is-ours { --drift: calc(var(--px) * 14); }
+.bs-ribbon.is-theirs { --drift: calc(var(--px) * -14); }
+
+/* A SHIELD: a bubble of glass light round the slot, until it has soaked all
+   it can; it wobbles when struck and shatters when spent. */
+.bs-bubble {
+  position: absolute;
+  inset: calc(var(--px) * -9);
+  z-index: 2;
+  border-radius: 50%;
   pointer-events: none;
-  animation: bs-pop 900ms ease-out forwards;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.7) 0 7%, transparent 16%),
+    radial-gradient(circle, transparent 58%, rgba(143, 200, 255, 0.35) 70%, rgba(191, 227, 255, 0.9) 77%, transparent 80%);
+  animation: bs-bubble 280ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
 }
-@keyframes bs-pop {
-  from { opacity: 0; transform: translateY(calc(var(--px) * 6)); }
-  15% { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(calc(var(--px) * -14)); }
+@keyframes bs-bubble { from { scale: 0.4; opacity: 0; } }
+
+/* A DAZE: three stars circling over the slot for as long as it lasts. The
+   ring is squashed flat, so it reads as round the head, not round the face. */
+.bs-stars {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * -2);
+  width: 0;
+  height: 0;
+  z-index: 3;
+  scale: 1 0.5;
+  pointer-events: none;
+  filter: drop-shadow(0 0 calc(var(--px) * 1) #3c2412) drop-shadow(0 0 calc(var(--px) * 1) #3c2412);
 }
+.bs-stars i {
+  position: absolute;
+  width: calc(var(--px) * 17);
+  height: calc(var(--px) * 17);
+  margin: calc(var(--px) * -8.5);
+  background: #ffd36a;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  transform: translateX(calc(var(--px) * 30));
+  animation: bs-orbit 900ms linear infinite;
+}
+.bs-stars i:nth-child(2) { animation-delay: -300ms; }
+.bs-stars i:nth-child(3) { animation-delay: -600ms; }
+@keyframes bs-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-ribbon { animation-name: bs-float-calm; }
+  .bs-bubble,
+  .bs-stars i { animation: none; }
+  .bs-stars i:nth-child(2) { rotate: 120deg; }
+  .bs-stars i:nth-child(3) { rotate: 240deg; }
+}
+
 /* THE LAYERS OVER THE BOARD: the effects canvas (src/ui/battleFx.ts) and
    the numbers. Neither takes a tap. */
 .bs-fx,
@@ -336,8 +422,7 @@
   @keyframes bs-float-calm { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 }
 
-/* A shield soaking for it: a ring of steady blue. A daze: the slot dims. */
-.bs-slot.is-shielded { box-shadow: 0 0 0 calc(var(--px) * 3) #6fb6ff, 0 0 calc(var(--px) * 10) #6fb6ff; }
+/* A daze also dims the slot. */
 .bs-slot.is-dazed .bs-portrait { filter: saturate(0.4) brightness(0.8); }
 
 /* ------------------------------------------------------- how it turned out */

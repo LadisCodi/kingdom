@@ -12,7 +12,7 @@
 
 export interface Pt { x: number; y: number }
 
-interface Shot { kind: 'arrow' | 'bolt'; from: Pt; to: Pt; start: number; end: number; bend: number }
+interface Shot { kind: 'arrow' | 'bolt'; from: Pt; to: Pt; start: number; end: number; bend: number; color: string }
 interface Blade { kind: 'slash' | 'thrust'; at: Pt; angle: number; start: number; end: number; size: number }
 
 type Effect =
@@ -26,7 +26,9 @@ type Effect =
     kind: 'chip'; at: Pt; vx: number; vy: number; spin: number; start: number; end: number;
     size: number; color: string;
   }
-  | { kind: 'shock'; at: Pt; start: number; end: number; size: number; color: string };
+  | { kind: 'shock'; at: Pt; start: number; end: number; size: number; color: string }
+  | { kind: 'beam'; from: Pt; to: Pt; start: number; end: number; color: string }
+  | { kind: 'mote'; at: Pt; vx: number; vy: number; start: number; end: number; size: number; color: string };
 
 /** Leather, iron and feather — an arrow is drawn in what it is made of. */
 const SHAFT = '#7a4d26';
@@ -35,7 +37,11 @@ const HEAD = '#5d6470';
 const FLETCH = '#f4e4c1';
 const SPARKS = ['#fff6dc', '#ffd36a', '#ffb13b'];
 /** What a broken ring is made of: the board's wood, or a hero's gold. */
-const CHIPS = { wood: ['#a8743f', '#7a4d26', '#c99a5b'], gold: ['#ffd36a', '#e8a93a', '#fff1c9'] } as const;
+const CHIPS = {
+  wood: ['#a8743f', '#7a4d26', '#c99a5b'],
+  gold: ['#ffd36a', '#e8a93a', '#fff1c9'],
+  sky: ['#bfe3ff', '#8fc8ff', '#eef8ff'],
+} as const;
 const BOLT = '#fff3c4';
 const BOLT_GLOW = '#ffc94a';
 
@@ -44,8 +50,13 @@ export interface FxLayer {
   /** Match the canvas to its box. `unit` is one design pixel (`--px`) in CSS
    *  pixels, which every effect is sized in. */
   resize(width: number, height: number, unit: number): void;
-  /** Something flying from `from`, landing on `to` at `end`. */
-  shoot(kind: 'arrow' | 'bolt', from: Pt, to: Pt, start: number, end: number, bend: number): void;
+  /** Something flying from `from`, landing on `to` at `end`. A bolt glows
+   *  in `color` (a skill's tint); an arrow is always wood and iron. */
+  shoot(kind: 'arrow' | 'bolt', from: Pt, to: Pt, start: number, end: number, bend: number, color?: string): void;
+  /** A straight line of light from `from` to `to`, there and gone. */
+  beam(from: Pt, to: Pt, t: number, color: string): void;
+  /** `n` soft lights rising off `at`: a heal, a rally. */
+  motes(at: Pt, t: number, n: number, color: string): void;
   /** A blade's mark on a slot at `t`, along `angle` (the blow's direction). */
   strike(kind: 'slash' | 'thrust', at: Pt, angle: number, t: number, size: number): void;
   /** `n` sparks thrown along `angle`, fanned. */
@@ -122,12 +133,12 @@ export function createFxLayer(): FxLayer {
       const q = Math.max(0, p - i * 0.06);
       const { x, y } = along(e, q);
       ctx.globalAlpha = i === 0 ? 1 : 0.5 - i * 0.12;
-      ctx.fillStyle = i === 0 ? BOLT : BOLT_GLOW;
+      ctx.fillStyle = i === 0 ? BOLT : e.color;
       ctx.beginPath(); ctx.arc(x, y, (i === 0 ? 5.5 : 4.5 - i) * u, 0, Math.PI * 2); ctx.fill();
     }
     const { x, y } = along(e, p);
     ctx.globalAlpha = 0.35;
-    ctx.fillStyle = BOLT_GLOW;
+    ctx.fillStyle = e.color;
     ctx.beginPath(); ctx.arc(x, y, 10 * u, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   };
@@ -188,8 +199,20 @@ export function createFxLayer(): FxLayer {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
     },
-    shoot(kind, from, to, start, end, bend) {
-      effects.push({ kind, from, to, start, end, bend: bend * u });
+    shoot(kind, from, to, start, end, bend, color = BOLT_GLOW) {
+      effects.push({ kind, from, to, start, end, bend: bend * u, color });
+    },
+    beam(from, to, t, color) {
+      effects.push({ kind: 'beam', from, to, start: t, end: t + 240, color });
+    },
+    motes(at, t, n, color) {
+      for (let i = 0; i < n; i += 1) {
+        effects.push({
+          kind: 'mote', at: { x: at.x + (Math.random() - 0.5) * 40 * u, y: at.y + (Math.random() - 0.2) * 24 * u },
+          vx: (Math.random() - 0.5) * 0.01 * u, vy: -(0.03 + Math.random() * 0.03) * u,
+          start: t + Math.random() * 160, end: t + 600 + Math.random() * 300, size: (2.5 + Math.random() * 2) * u, color,
+        });
+      }
     },
     strike(kind, at, angle, t, size) {
       effects.push({ kind, at, angle, start: t, end: t + (kind === 'slash' ? 200 : 170), size });
@@ -299,6 +322,33 @@ export function createFxLayer(): FxLayer {
             ctx.beginPath();
             ctx.arc(e.at.x, e.at.y, e.size * (0.6 + ease(p) * 0.9), 0, Math.PI * 2);
             ctx.stroke();
+            ctx.globalAlpha = 1;
+            break;
+          }
+          case 'beam': {
+            // Drawn at once, then thinning out from its tail.
+            const from = { x: e.from.x + (e.to.x - e.from.x) * ease(p), y: e.from.y + (e.to.y - e.from.y) * ease(p) };
+            ctx.lineCap = 'round';
+            ctx.globalAlpha = 1 - p;
+            ctx.strokeStyle = e.color;
+            ctx.lineWidth = 9 * u * (1 - p);
+            ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(e.to.x, e.to.y); ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3 * u * (1 - p);
+            ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(e.to.x, e.to.y); ctx.stroke();
+            ctx.globalAlpha = 1;
+            break;
+          }
+          case 'mote': {
+            const age = t - e.start;
+            const x = e.at.x + e.vx * age + Math.sin(age / 90) * 2 * u;
+            const y = e.at.y + e.vy * age;
+            ctx.globalAlpha = Math.min(1, 4 * p) * (1 - p) * 0.5;
+            ctx.fillStyle = e.color;
+            ctx.beginPath(); ctx.arc(x, y, e.size * 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = Math.min(1, 4 * p) * (1 - p);
+            ctx.fillStyle = '#fffbe8';
+            ctx.beginPath(); ctx.arc(x, y, e.size * 0.8, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1;
             break;
           }
