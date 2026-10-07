@@ -219,8 +219,9 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 ## Lairs and dungeons
 
-- A **lair** is a monster camp in the province: one garrison, one fight, with
-  a clock on it — clear it or it raids the city. Cleared, it is gone
+- A **lair** is a monster camp in the province: a path of fights — three to
+  seven — with a clock on it: clear it or it raids the city. Its last fight
+  beats it, and cleared, it is gone
   ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
 - A **dungeon** stands on the world board: numbered depths of rooms, a boss
   at the end of every depth. An army camps at it and takes the rooms one at a

@@ -108,6 +108,59 @@
   font-weight: var(--weight-title);
   text-transform: uppercase;
 }
+/* THE PATH: one delve stone a fight, joined by a dotted trail. Won carries
+   the green wax seal; the next is lit; the ones ahead are dim; the last is
+   the boss's horned stone. */
+.lc-progress.k-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 8) calc(var(--px) * 10);
+}
+.lc-path {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+/* A stone is as big as the path lets it be: 60px on a short path, smaller
+   on a long one, so seven fights still fit the card (`--fights`). */
+.lc-stone {
+  position: relative;
+  flex: none;
+  width: min(calc(var(--px) * 60), calc(100% / var(--fights, 3) * 0.72));
+  aspect-ratio: 256 / 229;
+  background: url('../../assets/delve-node.png') center / contain no-repeat;
+}
+.lc-stone.is-boss {
+  width: min(calc(var(--px) * 76), calc(100% / var(--fights, 3) * 0.95));
+  aspect-ratio: 1;
+  background-image: url('../../assets/delve-node-boss.png');
+}
+.lc-stone.is-next:not(.is-boss) { background-image: url('../../assets/delve-node-lit.png'); }
+.lc-stone.is-next { filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 178, 60, 0.8)); }
+.lc-stone.is-ahead { filter: brightness(0.8) saturate(0.6); }
+.lc-stone.is-won::after {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  background: url('../../assets/seal-done.png') center / contain no-repeat;
+}
+.lc-stone.is-boss.is-won::after { inset: 18% 24% 30%; }
+.lc-trail {
+  flex: 1 1 0;
+  min-width: calc(var(--px) * 6);
+  height: calc(var(--px) * 5);
+  margin: 0 calc(var(--px) * 2);
+  background: radial-gradient(circle, var(--wood-dark) 45%, transparent 50%) left center / calc(var(--px) * 9) 100% repeat-x;
+  opacity: 0.45;
+}
+.lc-trail.is-walked { opacity: 1; }
+.lc-path-label {
+  color: var(--ink);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-title);
+}
 /* Attack sits on the paper itself, centred — no box around it. */
 .lc-go {
   display: flex;

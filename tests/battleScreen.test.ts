@@ -13,8 +13,7 @@ import { armyCap } from '../src/sim/army';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import { attackLair } from '../src/sim/expeditions';
 import {
-  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0,
-} from './helpers';
+  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0, toLastFight } from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -203,6 +202,7 @@ describe('what the screen adds up to', () => {
     game.partyHeroes = ['Warden', 'Adventurer'];
     // Twenty orcs hold the orc lair, so the heroes bring the company with them.
     game.expeditionParty = [{ unitId: 'Warrior', count: 30 }];
+    toLastFight(game.state, ORCS);
     game.doAttackLair();
     expect(game.lairFor(ORCS)!.defeated).toBe(true);
   });

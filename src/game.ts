@@ -77,7 +77,7 @@ import {
   type LairBlock, type LairPreview,
 } from './sim/expeditions';
 import {
-  RAIDABLE, cityRatePerSecond, lairCreature, lairIsCleared,
+  RAIDABLE, cityRatePerSecond, lairCreature, lairFightIndex, lairFights, lairIsCleared,
   lairView, openLairs, setUtcOffset, type LairView, type RaidableId,
 } from './sim/lairs';
 import {
@@ -4071,12 +4071,15 @@ export class Game {
   doAttackLair(): void {
     if (this.lairId === null) return;
     const lairId = this.lairId;
+    // Which fight of the path this is, for the playback's line — read before
+    // the fight moves the path on.
+    const fight = lairFightIndex(this.state, lairId) + 1;
     const report = attackLair(
       this.state, this.map, lairId, this.partyHeroes, this.expeditionParty, this.now());
-    if (report.result === 'Cleared') {
-      // Beaten, not yet paid: when the playback closes the player is back on
-      // the lair's card, where Claim has taken Attack's place
-      // (Docs/proposals/lairs.md §5).
+    if (report.result === 'Cleared' || report.result === 'Won') {
+      // A fight on the path, or the last of it: when the playback closes the
+      // player is back on the lair's card — its path a step on, or Claim in
+      // Attack's place (Docs/features/18-garrisons-and-raids.md §5).
       this.setOverlay(null);
       this.lairId = null;
       this.inspectedSite = LAIRS[lairId].location;
@@ -4093,12 +4096,12 @@ export class Game {
       return;
     }
     this.reconcileParty();
-    // No prizes on the field: a won fight pays nothing until the reward is
-    // claimed from the lair's card.
+    // A fight short of the last pays its share of Hero XP on the field; the
+    // last pays nothing until the reward is claimed from the lair's card.
     this.openBattle(report.log!, {
       title: LAIRS[lairId].name,
-      subtitle: lairView(this.state, lairId)?.creature ?? 'A warband',
-      prizes: [],
+      subtitle: `${lairView(this.state, lairId)?.creature ?? 'A warband'} · Fight ${formatExact(fight)} of ${formatExact(lairFights(lairId))}`,
+      prizes: report.heroXp > 0 ? [{ kind: 'currency', currency: 'HeroXp', amount: report.heroXp }] : [],
       enemyFaces: UNIT_CREATURE_AVATAR,
       backdrop: 'field',
     });

@@ -1,6 +1,6 @@
 // Lairs: the party and the fight (Docs/proposals/lairs.md §1, §5).
 //
-// A lair is one garrison, one fight, cleared once. Nothing here is ever in
+// A lair is a path of fights, cleared once its last falls. Nothing here is ever in
 // flight, so `advance()` has no boundary in this module at all.
 //
 // What is left is the PARTY — what it costs to send and what it is worth —
@@ -22,7 +22,7 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { lairBoard, lairIsCleared, markLairCleared, markLairDefeated } from './lairs';
+import { lairBoard, lairFights, lairIsCleared, markLairCleared, markLairFightWon } from './lairs';
 import { fightMana } from './world/fights';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
@@ -258,7 +258,9 @@ export function lairBlock(
 }
 
 export interface LairReport {
-  result: 'Cleared' | 'Repelled' | LairBlock;
+  /** `Won`: a fight on the path fell and the lair still stands. `Cleared`:
+   *  the last one fell, and the lair waits for its claim. */
+  result: 'Cleared' | 'Won' | 'Repelled' | LairBlock;
   /** The party's power estimate, and what it was up against. Neither decided
    *  anything — `log` did (Docs/features/combat.md §12). */
   attack: number;
@@ -271,6 +273,10 @@ export interface LairReport {
   /** The first-clear Knowledge lump this win paid — 0 on a repulse, and on
    *  any clear after the first (there is none today: a cleared lair refuses). */
   knowledge: number;
+  /** The Hero XP a fight short of the last paid on the spot — its share of
+   *  the lair's (`lairFightXp`). 0 on the last fight: its share rides on the
+   *  claim. */
+  heroXp: number;
   supplies: Wallet;
   /** Who did not come back. A garrison fights: it costs soldiers whether it
    *  falls or not (§5). */
@@ -305,7 +311,7 @@ export function attackLair(
   const block = lairBlock(state, map, lairId, heroIds, slots, t);
   if (block !== null) {
     return {
-      result: block, attack: 0, power, log: null, hoard: {}, knowledge: 0, supplies,
+      result: block, attack: 0, power, log: null, hoard: {}, knowledge: 0, heroXp: 0, supplies,
       losses: [], wounded: [], heroes: [],
     };
   }
@@ -324,13 +330,22 @@ export function attackLair(
     state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
     return {
-      result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, supplies, losses, wounded, heroes,
+      result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, heroXp: 0, supplies, losses, wounded, heroes,
     };
   }
-  markLairDefeated(state, lairId);
-  // THE SPOILS (sim/skills.ts): Plunder swells the hoard now, Lore and
-  // Seasoned ride on the claim.
   const spoils = spoilsOf(ours.slots);
+  // A FIGHT SHORT OF THE LAST: the path moves on and the lair still stands,
+  // and still raids. It pays its share of the lair's Hero XP now — Seasoned
+  // riding on it — so no fight on the path is fought for nothing.
+  if (!markLairFightWon(state, lairId)) {
+    const heroXp = roundPrice(lairFightXp(lairId) * (1 + spoils.seasoned));
+    addHeroXp(state, heroXp);
+    return {
+      result: 'Won', attack, power, log, hoard: {}, knowledge: 0, heroXp, supplies, losses, wounded, heroes,
+    };
+  }
+  // THE LAST FIGHT: the garrison is beaten. THE SPOILS (sim/skills.ts):
+  // Plunder swells the hoard now, Lore and Seasoned ride on the claim.
   const lair = state.lairs[lairId]!;
   if (spoils.plunder > 0) {
     for (const [c, n] of Object.entries(lair.hoard) as Array<[keyof Wallet, number]>) {
@@ -341,7 +356,7 @@ export function attackLair(
   // What the claim will pay, for the report — nothing has moved yet.
   const hoard: Wallet = { ...lair.hoard };
   const { knowledge } = lairClearReward(state, lairId);
-  return { result: 'Cleared', attack, power, log, hoard, knowledge, supplies, losses, wounded, heroes };
+  return { result: 'Cleared', attack, power, log, hoard, knowledge, heroXp: 0, supplies, losses, wounded, heroes };
 }
 
 /** What each hero on our board has left when the fight ends: what it walked
@@ -397,6 +412,12 @@ export function claimLair(state: GameState, lairId: LairId): ClaimReport {
   return { result: 'Claimed', hoard, heroXp, knowledge, items, fragments };
 }
 
+/** One fight's share of a lair's Hero XP (`garrisons.heroXp`): the tier's
+ *  whole, split evenly across its path. Every fight short of the last pays
+ *  it when it falls, and the last pays it with the claim. */
+export const lairFightXp = (lairId: LairId): number =>
+  roundPrice(garrisonForTier(LAIRS[lairId].tier).heroXp / lairFights(lairId));
+
 /**
  * What beating a lair pays on top of its hoard (Docs/proposals/lairs.md §5),
  * for the card that shows it before the fight and the fight that pays it.
@@ -413,7 +434,7 @@ export const lairClearReward = (
 ): { heroXp: number; knowledge: number } => {
   const spoils = state.lairs[lairId]?.spoils;
   return {
-    heroXp: roundPrice(garrisonForTier(LAIRS[lairId].tier).heroXp * (1 + (spoils?.seasoned ?? 0))),
+    heroXp: roundPrice(lairFightXp(lairId) * (1 + (spoils?.seasoned ?? 0))),
     knowledge: Math.round(firstClearLump(state) * (1 + (spoils?.lore ?? 0))),
   };
 };

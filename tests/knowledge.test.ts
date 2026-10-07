@@ -12,8 +12,7 @@ import {
 import { pourKnowledge } from '../src/sim/research';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, completeTech, freshGame, fund, map, reveal, T0,
-} from './helpers';
+  addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, toLastFight } from './helpers';
 
 const HOUR = 3_600_000;
 
@@ -202,6 +201,7 @@ describe('a lair teaches something, once', () => {
     fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Knowledge: 0 });
     reveal(state, [LAIRS[ORCS].location]);
     state.lairs[ORCS] = { armedAt: 0, nextRaidAt: null, hoard: {}, defeated: false, cleared: false };
+    toLastFight(state, ORCS);
     for (let i = 0; i < 60; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' as UnitId });
     }

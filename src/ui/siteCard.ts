@@ -194,6 +194,8 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       windowHead(def.name, [closeKnob(() => game.dismiss(), `Close ${def.name}`)]),
       figure,
       timer,
+      sectionHead('Progress'),
+      fightPath(lair),
       sectionHead('Reward'),
       el('div', { class: 'lc-reward' }, ...chips),
       el('div', { class: 'lc-go' }, lair.defeated
@@ -213,7 +215,8 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       }
       // Rebuilt only when what it SAYS moves — the hoard; a tick in between
       // touches the countdown's text alone.
-      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull) + String(lair.defeated);
+      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull) + String(lair.defeated)
+        + String(lair.won);
       if (now !== signature) {
         signature = now;
         releaseSprites(root);
@@ -223,6 +226,28 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       clock.textContent = formatDuration(left);
     },
   };
+}
+
+/**
+ * THE LAIR'S PATH (18-garrisons-and-raids.md §5): one stone a fight, joined
+ * by a dotted trail — the delve's stones, so a lair reads as the same kind of
+ * place. A fight won carries the green wax seal, the next one is lit, the
+ * ones ahead are dim, and the last is the boss's horned stone.
+ */
+function fightPath(lair: LairView): HTMLElement {
+  const steps: HTMLElement[] = [];
+  for (let i = 0; i < lair.fights; i++) {
+    const state = i < lair.won ? 'is-won' : i === lair.won ? 'is-next' : 'is-ahead';
+    const boss = i === lair.fights - 1 ? ' is-boss' : '';
+    if (i > 0) steps.push(el('span', { class: `lc-trail${i <= lair.won ? ' is-walked' : ''}`, 'aria-hidden': 'true' }));
+    steps.push(el('span', { class: `lc-stone ${state}${boss}`, 'aria-hidden': 'true' }));
+  }
+  const label = lair.defeated
+    ? `All ${formatExact(lair.fights)} fights won`
+    : `Fight ${formatExact(lair.won + 1)} of ${formatExact(lair.fights)}`;
+  return el('div', { class: 'lc-progress k-section', role: 'img', 'aria-label': label },
+    el('div', { class: 'lc-path', style: `--fights: ${lair.fights}` }, ...steps),
+    el('div', { class: 'lc-path-label' }, label));
 }
 
 /** One tile of the reward row: the icon, the amount, and a word under it

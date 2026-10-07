@@ -1,6 +1,7 @@
 // The lair — a garrison with a clock (Docs/proposals/lairs.md §4).
 //
-// Every lair holds one garrison, and FINDING the lair — revealing a cell of
+// Every lair holds a PATH of fights (its tier's `fights`), the last of them
+// its own garrison, and FINDING the lair — revealing a cell of
 // its zone — starts its clock. The first raid lands after the lair's warning;
 // from then on it raids `raid.perDay` times every local day, inside the
 // player's raid window, for as long as it stands. A raid takes a slice of what
@@ -34,7 +35,7 @@
 // nothing from expeditions so that the party code can ask it whether the lair
 // still stands.
 
-import { GARRISONS, RAID, LAIRS, LAIR_ORDER, garrisonForTier } from './data/definitions';
+import { DELVE, GARRISONS, RAID, LAIRS, LAIR_ORDER, garrisonForTier } from './data/definitions';
 import type { EnemySquad } from './combat';
 import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
 import { recordSiteDiscovery } from './discovery';
@@ -296,21 +297,52 @@ export function nextRaidBoundary(state: GameState, after: number): number | null
 
 // --------------------------------------------------------- the formation
 
+// ---------------------------------------------------------------- the path
+
+/** How many fights this lair takes to clear — its tier's
+ *  (Docs/features/18-garrisons-and-raids.md §5). */
+export const lairFights = (lairId: LairId): number =>
+  Math.max(1, garrisonForTier(LAIRS[lairId].tier).fights);
+
+/** Fights won on its path so far. */
+export const lairFightsWon = (state: GameState, lairId: LairId): number =>
+  Math.min(lairFights(lairId), state.lairs[lairId]?.won ?? (state.lairs[lairId]?.defeated ? lairFights(lairId) : 0));
+
+/** Which fight is next, 0-based — the last one is the lair's own garrison. */
+export const lairFightIndex = (state: GameState, lairId: LairId): number =>
+  Math.min(lairFightsWon(state, lairId), lairFights(lairId) - 1);
+
 /**
- * What is standing in the doorway.
+ * The power of fight `i` of a lair: the LAST is the lair's `guard.power`,
+ * and the ones before it ramp evenly up to it from `firstFightPower` of it.
+ * The path does not make the lair harder to finish, only longer.
+ */
+export function lairFightPower(lairId: LairId, i: number): number {
+  const n = lairFights(lairId);
+  const full = LAIRS[lairId].guard.power;
+  if (n <= 1 || i >= n - 1) return full;
+  const share = DELVE.firstFightPower + (1 - DELVE.firstFightPower) * (Math.max(0, i) / (n - 1));
+  return Math.max(1, Math.round(full * share));
+}
+
+/**
+ * What is standing in the doorway — the garrison of the NEXT fight on the
+ * lair's path, or of fight `i`.
  *
  * Derived from the lair's `guard`, never authored: `threat` says WHICH type
- * holds it and `power` says how much of it there is
- * (Docs/features/18-garrisons-and-raids.md §2). The generator is the
+ * holds it and the path says how much of it there is
+ * (Docs/features/18-garrisons-and-raids.md §2, §5). The generator is the
  * resolver's (`combat.ts`, combat.md §11) — a lair is a room, and a room's
- * enemies are made one way.
+ * enemies are made one way. The last fight rolls under the key the lair's one
+ * fight always had, so its garrison is the one a player has looked at.
  */
-export function lairBoard(state: GameState, lairId: LairId): Board {
+export function lairBoard(state: GameState, lairId: LairId, i = lairFightIndex(state, lairId)): Board {
   const guard = LAIRS[lairId].guard;
+  const last = i >= lairFights(lairId) - 1;
   const plan = generateEnemy({
     seed: state.seed,
-    parts: [ROLL_KEY[lairId], 'gate'],
-    budget: guard.power,
+    parts: last ? [ROLL_KEY[lairId], 'gate'] : [ROLL_KEY[lairId], 'gate', i],
+    budget: lairFightPower(lairId, i),
     affinity: guard.threat,
     ...(guard.mix ? { mix: guard.mix } : {}),
   });
@@ -352,8 +384,26 @@ export const lairPower = (state: GameState, lairId: LairId): number =>
 export function markLairDefeated(state: GameState, lairId: LairId): void {
   const lair = state.lairs[lairId];
   if (!lair || lair.cleared) return;
+  lair.won = lairFights(lairId);
   lair.defeated = true;
   lair.nextRaidAt = null;
+}
+
+/**
+ * One fight on the path is won. Short of the last, the lair still stands and
+ * still raids; the last one beats it (`markLairDefeated`). Returns whether
+ * this win beat it. Called by the party command that won, never on its own.
+ */
+export function markLairFightWon(state: GameState, lairId: LairId): boolean {
+  const lair = state.lairs[lairId];
+  if (!lair || lair.cleared || lair.defeated) return false;
+  const won = lairFightsWon(state, lairId) + 1;
+  if (won >= lairFights(lairId)) {
+    markLairDefeated(state, lairId);
+    return true;
+  }
+  lair.won = won;
+  return false;
 }
 
 /** Beaten, and its reward not yet claimed. */
@@ -414,6 +464,9 @@ export interface LairView {
   hoard: Wallet;
   /** True for a material the lair carries all it can of (§6's *full*). */
   hoardFull: Partial<Record<RaidableId, boolean>>;
+  /** Its path: fights won, and how many it takes. */
+  won: number;
+  fights: number;
   /** Beaten, the reward waiting to be claimed. */
   defeated: boolean;
   cleared: boolean;
@@ -426,12 +479,14 @@ export function lairView(state: GameState, lairId: LairId): LairView | null {
     lairId,
     creature: lairCreature(lairId),
     threat: LAIRS[lairId].guard.threat,
-    power: LAIRS[lairId].guard.power,
+    power: lairFightPower(lairId, lairFightIndex(state, lairId)),
     nextRaidAt: lair.nextRaidAt,
     hoard: { ...lair.hoard },
     hoardFull: Object.fromEntries(RAIDABLE
       .filter((c) => (lair.hoard[c] ?? 0) > 0 && (lair.hoard[c] ?? 0) >= hoardCap(state, lairId, c))
       .map((c) => [c, true])),
+    won: lairFightsWon(state, lairId),
+    fights: lairFights(lairId),
     defeated: lair.defeated,
     cleared: lair.cleared,
   };

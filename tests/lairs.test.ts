@@ -20,8 +20,8 @@ import {
   COMBAT, PARTY, RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
-  advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairFormation,
-  lairAwaitsClaim, lairIsCleared, lairPower, lairView, nextRaidBoundary, openLairs,
+  advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairBoard, lairFightPower,
+  lairFights, lairFormation, lairAwaitsClaim, lairIsCleared, lairPower, lairView, nextRaidBoundary, openLairs,
   raidTake, raidTimeAfter, setUtcOffset,
 } from '../src/sim/lairs';
 import { lairHolding, lairIsFound, lairZoneCells } from '../src/sim/lairZone';
@@ -30,13 +30,17 @@ import { harvestBlock } from '../src/sim/harvest';
 import { placementBlock } from '../src/sim/districts';
 import { workableCells } from '../src/sim/workers';
 import { formationPower } from '../src/sim/combat';
-import { attackLair, claimLair, lairBlock, partyBoard, partyOf, previewLair } from '../src/sim/expeditions';
+import { boardPower } from '../src/sim/battle';
+import { availableRoster } from '../src/sim/army';
+import {
+  attackLair, claimLair, lairBlock, lairClearReward, lairFightXp, partyBoard, partyOf, previewLair,
+} from '../src/sim/expeditions';
 import { grantHero } from '../src/sim/heroes';
 import { heroCanFight, heroHp, heroMaxHp, setHeroHp } from '../src/sim/heroHealth';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, getWallet, type GameState, type LairId } from '../src/sim/state';
 import {
-  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, stored, T0,
+  addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, stored, T0, toLastFight,
 } from './helpers';
 
 const ORCS = 'Orcs' as const;
@@ -378,12 +382,19 @@ describe('clearing the lair', () => {
 
   // The chain sends the player at the Orcs long before the Tavern, so the
   // first fight is the company alone.
+  // THE WHOLE PATH, fight by fight: the company's losses carry from one fight
+  // to the next, and it still walks the orcs out.
   it('is beatable by the company the chain musters, at the orc lair, with no hero', () => {
     const state = readyToFight();
     const preview = previewLair(state, ORCS, [], company);
     expect(preview.enough).toBe(true);
     expect(preview.fallen).toBeGreaterThanOrEqual(0);
-    expect(attackLair(state, map, ORCS, [], company).result).toBe('Cleared');
+    for (let i = 0; i < lairFights(ORCS) - 1; i++) {
+      const left = [{ unitId: 'Warrior' as const, count: availableRoster(state).Warrior }];
+      expect(attackLair(state, map, ORCS, [], left).result, `fight ${i + 1}`).toBe('Won');
+    }
+    const left = [{ unitId: 'Warrior' as const, count: availableRoster(state).Warrior }];
+    expect(attackLair(state, map, ORCS, [], left).result).toBe('Cleared');
     // Beaten, not yet cleared: the claim is what clears it (§5).
     expect(lairAwaitsClaim(state, ORCS)).toBe(true);
     expect(lairIsCleared(state, ORCS)).toBe(false);
@@ -415,6 +426,7 @@ describe('clearing the lair', () => {
 
   it('stops the clock for good when beaten, and holds its ground until the claim', () => {
     const state = readyToFight();
+    toLastFight(state, ORCS);
     attackLair(state, map, ORCS, ['Warden'], company);
     expect(state.lairs[ORCS]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
@@ -438,6 +450,7 @@ describe('clearing the lair', () => {
     const hoard = { ...state.lairs[ORCS]!.hoard };
     expect(hoard.Gold).toBeGreaterThan(0);
     const before = getWallet(state.city.wallet, 'Gold');
+    toLastFight(state, ORCS);
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
@@ -450,6 +463,7 @@ describe('clearing the lair', () => {
   it('costs what the fight cost — nothing when it is a rout', () => {
     const state = readyToFight();
     const before = state.army.length;
+    toLastFight(state, ORCS);
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(state.army.length).toBe(before - report.losses.reduce((n, l) => n + l.count, 0));
@@ -459,6 +473,7 @@ describe('clearing the lair', () => {
     advance(beaten, map, T0);
     fund(beaten, { Gold: 20_000, Food: 5000, Stone: 2000 });
     const armed = beaten.army.length;
+    toLastFight(beaten, 'Goblins');
     const repulse = attackLair(beaten, map, 'Goblins', ['Warden'], company);
     expect(repulse.result).toBe('Repelled');
     expect(repulse.losses.reduce((n, l) => n + l.count, 0)).toBeGreaterThan(0);
@@ -518,6 +533,7 @@ describe('clearing the lair', () => {
   it('refuses a lair nobody has found, and one already cleared', () => {
     const state = readyToFight();
     expect(attackLair(state, map, 'Harpies', ['Warden'], company).result).toBe('LairNotFound');
+    toLastFight(state, ORCS);
     attackLair(state, map, ORCS, ['Warden'], company);
     expect(attackLair(state, map, ORCS, ['Warden'], company).result).toBe('AlreadyDefeated');
     claimLair(state, ORCS);
@@ -541,6 +557,7 @@ describe('a save', () => {
     for (let i = 0; i < 30; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
+    toLastFight(state, ORCS);
     attackLair(state, map, ORCS, [], [{ unitId: 'Warrior', count: 30 }]);
     // A beaten lair keeps its unclaimed reward across a save…
     const beaten = deserialize(serialize(state, T0), map, T0 + DAY)!;
@@ -582,6 +599,7 @@ describe('the route to a lair', () => {
 
   it('beats it, closes the sheet and lands back on the card — where Claim clears it', () => {
     const game = presenterAtTheLair();
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     game.doAttackLair();
     expect(game.openOverlay).toBeNull();
@@ -611,11 +629,12 @@ describe('the formation in the doorway', () => {
     }
   });
 
+  // The LAST fight is the lair's own garrison; the ones before ramp up to it.
   it('is worth what the lair was authored to be worth', () => {
     const state = freshGame();
     for (const id of LAIR_ORDER) {
       const budget = LAIRS[id].guard.power;
-      const spent = lairPower(state, id);
+      const spent = boardPower(lairBoard(state, id, lairFights(id) - 1));
       expect(spent, `${id}'s lair`).toBeLessThanOrEqual(budget);
       expect(spent, `${id}'s lair`).toBeGreaterThan(budget * 0.75);
     }
@@ -678,5 +697,67 @@ describe('the boundary budget', () => {
     }
     expect(steps).toBeLessThanOrEqual(1 + RAID.perDay * 30);
     expect(steps).toBeGreaterThanOrEqual(RAID.perDay * 29);
+  });
+});
+
+// A LAIR IS A PATH OF FIGHTS (Docs/features/18-garrisons-and-raids.md §5):
+// its tier's count, the last at the lair's power and the ones before ramping
+// up to it. Short of the last, a win moves the path on, pays its share of
+// Hero XP, and the lair still stands — and still raids.
+describe('the path of fights', () => {
+  function readyToFight(): GameState {
+    const state = watched();
+    addAllTrainers(state);
+    for (let i = 0; i < 200; i++) state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
+    return state;
+  }
+  const army = [{ unitId: 'Warrior' as const, count: 60 }];
+
+  it('is as long as its tier says, longer the deeper the lair', () => {
+    for (const id of LAIR_ORDER) expect(lairFights(id)).toBe(garrisonForTier(LAIRS[id].tier).fights);
+    expect(lairFights('Drake')).toBeGreaterThan(lairFights('Orcs'));
+  });
+
+  it('ramps up to the lair\'s own power at the last fight, never past it', () => {
+    for (const id of LAIR_ORDER) {
+      const n = lairFights(id);
+      expect(lairFightPower(id, n - 1)).toBe(LAIRS[id].guard.power);
+      for (let i = 1; i < n; i++) expect(lairFightPower(id, i)).toBeGreaterThan(lairFightPower(id, i - 1));
+      expect(lairFightPower(id, 0)).toBeLessThan(LAIRS[id].guard.power);
+    }
+  });
+
+  it('moves on a step a win, pays its share, and keeps raiding until the last', () => {
+    const state = readyToFight();
+    const xp = getWallet(state.kingdom.wallet, 'HeroXp');
+    const report = attackLair(state, map, ORCS, ['Warden'], army);
+    expect(report.result).toBe('Won');
+    expect(report.heroXp).toBe(lairFightXp(ORCS));
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(xp + report.heroXp);
+    expect(lairView(state, ORCS)).toMatchObject({ won: 1, fights: lairFights(ORCS), defeated: false });
+    expect(state.lairs[ORCS]!.nextRaidAt).not.toBeNull();
+    expect(lairAwaitsClaim(state, ORCS)).toBe(false);
+    // The next fight is the next garrison, and it is stronger.
+    expect(lairPower(state, ORCS)).toBeGreaterThan(report.power);
+  });
+
+  it('pays the tier\'s Hero XP across the path, the last share with the claim', () => {
+    const state = readyToFight();
+    let paid = 0;
+    let result = '';
+    while (result !== 'Cleared') {
+      const r = attackLair(state, map, ORCS, ['Warden'], army);
+      result = r.result;
+      paid += r.heroXp;
+    }
+    expect(paid + lairClearReward(state, ORCS).heroXp).toBe(lairFights(ORCS) * lairFightXp(ORCS));
+    expect(claimLair(state, ORCS).result).toBe('Claimed');
+  });
+
+  it('carries the path across a save', () => {
+    const state = readyToFight();
+    attackLair(state, map, ORCS, ['Warden'], army);
+    const back = deserialize(serialize(state, T0), map, T0)!;
+    expect(lairView(back, ORCS)!.won).toBe(1);
   });
 });
