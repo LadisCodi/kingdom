@@ -108,6 +108,8 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 - One row, two answers to the same camp: **Negotiate** (its price on the
   plate above it, the shipped cost style) and **Attack** (no price).
 - No raid ribbon: the board's arrow says which district it raids.
+- An army on its way: the delve's dock in place of the pay and the two
+  answers — its board, its bar, **Finish**. No Recall.
 
 ### 3.5 The deployment (m87b, in review)
 
