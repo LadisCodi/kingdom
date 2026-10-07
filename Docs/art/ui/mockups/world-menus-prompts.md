@@ -321,3 +321,10 @@ empty — two columns, the true-alpha wording. True alpha first try. Kept as
 `offer-dioramas-sheet.png`; cut by half, trimmed, fitted bottom-centred on
 the novice cut-out's 923×1024 → `src/render/assets/offer_explorer_cutout.png`
 and `offer_hero_slot_cutout.png`, the `art` of ExplorerPack and HeroSlotPack.
+
+Their icons (same chat, `ref-offer-icons.jpg`: the shipped offer icons and
+the two dioramas): each diorama reduced to its key pieces in the icons'
+chunky style, readable at 64 px. True alpha first try; kept as
+`offer-icons-sheet.png`; cut by half, trimmed, fitted on 512×512 →
+`src/render/assets/offer_explorer.png` and `offer_hero_slot.png`, the two
+offers' `sprite`, which had no file and fell back to a card and an icon.
