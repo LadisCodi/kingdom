@@ -28,6 +28,7 @@ export function renderHeroPicker(game: Game): HTMLElement {
   const grid = el('div', { class: 'hp-grid' },
     ...list.map((h) => heroCard(game, h, {
       picked: pick.slots.includes(h),
+      power: pick.fight,
       onClick: () => game.heroPickToggle(h),
     })));
 
@@ -36,6 +37,7 @@ export function renderHeroPicker(game: Game): HTMLElement {
   const slots = pick.slots.map((h, i) => (h === null
     ? emptyHeroSlot()
     : heroCard(game, h, {
+      power: pick.fight,
       onClick: () => game.heroPickClearSlot(i),
       label: `Take ${HEROES[h].name} out of the party`,
     })));

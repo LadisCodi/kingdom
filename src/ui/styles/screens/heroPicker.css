@@ -118,6 +118,11 @@ button.hc { cursor: pointer; }
   text-align: center;
   white-space: nowrap;
 }
+/* A hero's power, in a picker for a fight: the level's pill, swords first. */
+.hc-power { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--hc-w) * 0.02); }
+.hc-power > .icon { --icon-size: calc(var(--hc-w) * 0.12); flex: none; }
+/* Unhurt, no bar under the foot: the foot sits where the bar would be. */
+.hc:not(:has(> .hc-hp, > .k-hp)) > .hc-foot { bottom: calc(var(--hc-w) * 0.1); }
 /* The HP bar inside the frame, across the foot (the kit's progress bar). */
 .hc > .hc-hp {
   --bar-h: calc(var(--hc-w) * 0.1);

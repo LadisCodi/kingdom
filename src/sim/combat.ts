@@ -16,7 +16,7 @@
 // decision belongs in a management game: the player picks WHICH TROOPS, and
 // the resolver plays out what that choice was worth.
 
-import type { UnitTag } from './data/definitions';
+import type { HeroDef, UnitTag } from './data/definitions';
 import { ARMY, COMBAT, HEROES, UNITS } from './data/definitions';
 import { heroBody } from './heroLadder';
 import type { HeroId, UnitId } from './state';
@@ -157,6 +157,10 @@ export function partyStats(party: Party): PartyStats {
  * Cavalry hits for 22 and is worth 7, and a party that reads stronger here
  * can still lose to a board that answers it.
  */
+/** One hero's share of that estimate, as a card prints it. */
+export const heroPower = (def: HeroDef, level: number, ascension: number): number =>
+  Math.round(heroBody(def, level, ascension).dmg * COMBAT.heroPowerPerDmg);
+
 export function partyPower(party: Party): number {
   let power = 0;
   for (const slot of party.slots) power += UNITS[slot.unitId].power * slot.count;

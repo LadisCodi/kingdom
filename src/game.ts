@@ -71,7 +71,7 @@ import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
   type SpeedJob,
 } from './sim/speedups';
-import { partyPower, typeMultiplier } from './sim/combat';
+import { heroPower, partyPower, typeMultiplier } from './sim/combat';
 import {
   attackLair, claimLair, heroLevel, lairBlock, lairClearReward, partyBoard, partyOf, previewLair, troopSlots,
   type LairBlock, type LairPreview,
@@ -394,6 +394,8 @@ export interface HeroPick {
   onSelect: (heroes: HeroId[]) => void;
   filter: UnitId | 'All';
   sort: HeroPickSort;
+  /** Chosen for a fight: each card prints its hero's power. */
+  fight: boolean;
 }
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
@@ -4385,7 +4387,7 @@ export class Game {
    * way the screen that opened it comes back.
    */
   openHeroPicker(opts: {
-    slots: number; selected?: readonly HeroId[]; title?: string;
+    slots: number; selected?: readonly HeroId[]; title?: string; fight?: boolean;
     onSelect: (heroes: HeroId[]) => void;
   }): void {
     const slots: Array<HeroId | null> = Array.from({ length: Math.max(1, opts.slots) },
@@ -4397,6 +4399,7 @@ export class Game {
       onSelect: opts.onSelect,
       filter: 'All',
       sort: 'level',
+      fight: opts.fight === true,
     };
     playSfx('click');
     this.setOverlay('heroPicker');
@@ -4512,12 +4515,18 @@ export class Game {
     this.openHeroPicker({
       slots: this.heroSlotsOpen(),
       selected: this.partyHeroes,
+      fight: true,
       onSelect: (heroes) => { this.partyHeroes = heroes; },
     });
   }
 
   heroLevelOf(heroId: HeroId): number {
     return heroLevel(this.state, heroId);
+  }
+
+  /** What a hero adds to an army's power (sim/combat.ts `heroPower`). */
+  heroPowerOf(heroId: HeroId): number {
+    return heroPower(HEROES[heroId], heroLevel(this.state, heroId), this.state.heroes.ascension[heroId] ?? 0);
   }
 
   /** A hero's HP as it stands — the wound the last fight left, mending
