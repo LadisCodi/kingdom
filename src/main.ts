@@ -525,10 +525,13 @@ async function boot(): Promise<void> {
   game.onChange(syncScene);
   syncScene();
   // War drums while a party is mustered on a deploy sheet — a lair's or an
-  // army's (src/audio/music.ts). A fight played from it outranks them.
+  // army's (src/audio/music.ts) — and in the hero picker opened from one,
+  // which hands back to it. A fight played from it outranks them.
   // The battle's sounds come down then too, so they are ready by the first blow.
+  const isDeploy = (o: string | null) => o === 'lair' || o === 'army';
   const syncMuster = () => {
-    const mustering = game.openOverlay === 'lair' || game.openOverlay === 'army';
+    const mustering = isDeploy(game.openOverlay)
+      || (game.openOverlay === 'heroPicker' && isDeploy(game.heroPick?.returnTo ?? null));
     setMusterMusic(mustering);
     if (mustering) warmBattleSfx();
   };
