@@ -13,7 +13,7 @@
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
-import { ARTIFACTS, DISTRICTS, WORLD_BUILD, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ARTIFACTS, DISTRICTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
 import { buildingPortrait } from '../districtCard';
 import { crestEl, rankRibbon, townhallTag } from '../friends/kingdomBits';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
@@ -27,7 +27,7 @@ import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
-import { claimGold, districtOf, districtRate, floorPower, upgradeLevel } from '../../worldServer/core';
+import { claimGold, districtOf, districtRate, floorPower, nextRoom, upgradeLevel } from '../../worldServer/core';
 import { portalThumb } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
@@ -442,6 +442,92 @@ export function terrainWidget(bh: BoardHex, march: string): HTMLElement {
       el('div', { class: 'wd-widget-name' }, name),
       el('div', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }), march),
       ...(lines.length === 0 ? [el('div', { class: 'wd-edge' }, 'No effect on the fight')] : lines))));
+}
+
+// ------------------------------------------------------------ a dungeon
+
+/** The dungeon whose race list was last centred on the player's row, and
+ *  when its card was last drawn. The card is drawn every tick; a gap longer
+ *  than a few ticks means it was closed and opened again, and an opening is
+ *  centred on the player's own row once, then left where they scroll. */
+let centredRace: { index: number; drawnAt: number } | null = null;
+
+/**
+ * A DUNGEON (m90, after feedback): its ground does nothing to it, so no THE
+ * HEX. DUNGEON — its entrance, who holds it, how deep the player has gone,
+ * and Delve — then THE RACE: every kingdom in it as the world ranking's
+ * rows, furthest first, scrolling in a space of its own and opened on the
+ * player's own row. The player's army there is the board's, with its power.
+ */
+export function renderDungeon(game: Game, bh: BoardHex): HTMLElement {
+  const index = bh.index;
+  const source = game.worldSource();
+  const info = game.worldView?.dungeonInfo?.find((d) => d.index === index);
+  const per = WORLD_DUNGEON.roomsPerDepth;
+  const total = WORLD_DUNGEON.depths * per;
+  const cleared = source.delved(index);
+  const room = nextRoom(cleared);
+  const creature = info === undefined ? null : CAMP_CREATURE[info.creature];
+  const head = el('div', { class: 'dc-head' },
+    portrait('whex_mountain_dungeon', 'dungeon'),
+    el('div', { class: 'dc-what-col' },
+      el('div', { class: 'dc-what' }, `${creature === null ? '' : `Held by ${creature}. `}${
+        WORLD_DUNGEON.depths === 3 ? 'Three' : formatExact(WORLD_DUNGEON.depths)} depths of ${formatExact(per)} rooms.`),
+      distanceLine(game, index)),
+    el('div', { class: 'dc-upgrade' }, btn({ label: 'Delve', kind: 'primary', onClick: () => game.openDelve(index) })));
+  const progress = tiles(room === null
+    ? [{ icon: 'tick', label: 'Cleared', value: 'To the bottom' }]
+    : [
+      { icon: 'dungeon', label: 'Depth', value: `${formatExact(room.depth + 1)}/${formatExact(WORLD_DUNGEON.depths)}` },
+      { icon: 'skull', label: 'Room', value: `${formatExact(room.room)}/${formatExact(per)}` },
+    ]);
+
+  // THE RACE: the world ranking's rows, ranked by rooms cleared.
+  const seen = new Map((game.worldRanking() ?? []).map((r) => [r.seat, r]));
+  const me = game.worldSeat();
+  let place = 0;
+  let last = -1;
+  const race = (info?.race ?? []).map((r, i) => {
+    if (r.cleared !== last) { place = i + 1; last = r.cleared; }
+    const k = seen.get(r.seat);
+    const s = source.seats()[r.seat];
+    const name = s?.owner.name ?? k?.name ?? 'A kingdom';
+    const you = r.seat === me;
+    return el('div', { class: `fr-row rk-row${you ? ' is-you' : ''}`, ...(you ? { 'data-you': 'true' } : {}) },
+      rankRibbon(place),
+      crestEl(name, k?.crest ?? s?.owner.crest ?? null),
+      el('div', { class: 'fr-who' },
+        el('div', { class: 'fr-name rk-name' }, you ? 'You' : name,
+          ...(k?.friend ? [el('span', { class: 'rk-friend', title: 'A friend' }, iconEl('friends', { size: 'sm' }))] : [])),
+        ...(k?.townhall == null ? [] : [el('div', { class: 'fr-sub' }, townhallTag(k.townhall))])),
+      el('span', { class: 'rk-hexes wd-race-at' }, iconEl('dungeon', { size: 'md' }), `${formatExact(r.cleared)}/${formatExact(total)}`));
+  });
+  const list = el('div', { class: 'wd-race', 'data-keep-scroll': `race-${index}` }, el('div', { class: 'fr-rows' }, ...race));
+  const drawnAt = performance.now();
+  const opening = centredRace === null || centredRace.index !== index || drawnAt - centredRace.drawnAt > 1500;
+  centredRace = { index, drawnAt };
+  if (opening) {
+    // Once the list is laid out, its middle on the player's own row.
+    // The card may be drawn again before then, so the list is looked up live.
+    globalThis.requestAnimationFrame?.(() => {
+      const live = document.querySelector<HTMLElement>(`[data-keep-scroll="race-${index}"]`);
+      const mine = live?.querySelector<HTMLElement>('[data-you]') ?? null;
+      if (live == null || mine === null) return;
+      const off = mine.getBoundingClientRect().top - live.getBoundingClientRect().top + live.scrollTop;
+      live.scrollTop = off - (live.clientHeight - mine.offsetHeight) / 2;
+    });
+  }
+  const last_ = info?.bosses[WORLD_DUNGEON.depths - 1] ?? 'its last boss';
+  const surface = sheet({ title: info?.name ?? 'A dungeon', onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card wd-race-card' },
+      sectionHead('Dungeon'), head, progress,
+      sectionHead('The race'),
+      el('p', { class: 'wd-far wd-race-line' },
+        `First to beat ${last_} closes it for everyone, and is paid his chest ×${formatExact(WORLD_DUNGEON.closeRewardMultiplier)}`),
+      race.length === 0 ? el('p', { class: 'wd-far' }, 'Nobody has cleared a room yet.') : list));
+  // The card's body does not scroll; the race does, in what is left of it.
+  surface.classList.add('is-panes');
+  return surface;
 }
 
 // ------------------------------------------------------------ free ground

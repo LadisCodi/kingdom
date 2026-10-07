@@ -205,3 +205,82 @@ TROOPS row and the price row — LOOT (the camp's pay as chips) and TERRAIN
 (a hex vignette, its name and its modifier lines). Result:
 `m87b-world-deploy.png`, first try; the backdrop came back as the
 province's, which the game does not show.
+
+## M90–M92 — the dungeon and the Portal's descent
+
+References in `m90-refs/`: the delve as it ships (`ref-delve-now.jpg`),
+m65 and m66 (its target), the approved cards m83b, m86c and m88, and the
+dungeon hex art.
+
+### M90 — a dungeon's card
+
+> GENERA UNA IMAGEN NUEVA. Do not edit the attached files; they are
+> references only. Mobile game UI mockup, one portrait phone screen, every
+> word in English, no bezel. The world board above (as in the approved
+> cards), and a hex card built EXACTLY like the approved cards m83b and
+> m86c: title plank, sections with small brown capital headers between thin
+> lines, square parchment vignettes, upright stat tiles, the cost-button
+> style. Title plank "The Sunken Barrow". Section "THE HEX": vignette of the
+> bare mountain hex, "4 hexes from your city", tiles Terrain Grassland,
+> Feature Mountains, March 9m / hex. Section "DUNGEON": vignette of the
+> dungeon-entrance hex art (the attached hex art); the line "Held by Orcs.
+> Three depths of eight rooms."; at the right a green slab "Delve". Under
+> it tiles "Depth 2/3", "Room 5/8", "Your army: camped" with a small red
+> tent badge. Section "THE RACE": a rope across the card with small cloth
+> banners hanging at how far each kingdom has gone — each banner carries
+> that kingdom's small heraldic shield, the player's own blue and labelled
+> "You" — and the line "First to beat the Hollow King closes it for
+> everyone, and is paid his chest ×2".
+
+### M91 — the delve, polished
+
+> GENERA UNA IMAGEN NUEVA. Do not edit the attached files. The FIRST image
+> is the delve as the game ships it today; the m65 and m66 images are the
+> target it falls short of. Draw the delve as a full-height menu that
+> reaches m65's look while keeping the game's real pieces (the wooden
+> window, title plank, red close knob, parchment, the cost-button style).
+> Title plank "The Sunken Barrow"; a small parchment band under it "Depth 2
+> · Room 5 of 8 · held by Orcs". The race: a rope across the top with cloth
+> banners at each kingdom's room, each with its small heraldic shield, the
+> player's own blue "You"; one line under it about who closes it. On the
+> RIGHT edge, a column of three wooden depth tabs "1" (ticked), "2" (lit
+> gold), "3" (padlocked). The descent fills the middle: a stone stair down
+> dark rock with torches; rooms 1–4 cleared (dim, green ticks); room 5 the
+> frontier, lit, with the orc creature's round portrait and a parchment
+> plaque "Room 5 · Power 1,240 vs your 1,580" and reward chips (gold, hero
+> xp, stardust, knowledge, a precious ingot); rooms 6–7 hazed with their
+> power; room 8 the boss at the foot, larger, a red dragon portrait on a
+> ribbon "The Hollow King" and his open chest with chips. Docked at the
+> bottom, a wooden bar: three hero portraits with green HP bars, three troop
+> portraits with counts "×38", "×22", "×12" and a small red "−9" on one,
+> a plaque "Power 1,580"; then a red cost button "Fight" with a violet mana
+> orb "12" on its plate, and a wood slab "Recall".
+
+### M92 — the Dark Portal's descent
+
+> GENERA UNA IMAGEN NUEVA. Do not edit the attached files. The same delve
+> screen as m65 and the first image — same window, same dock, same
+> descent-by-nodes idea — for the Dark Portal, a tower of forty floors that
+> goes DOWN into a violet abyss instead of a rock stair. Title plank "The
+> Dark Portal"; a purple cloth ribbon under it with an hourglass "Closes in
+> 1d 5h". At the top, the RANKING as the race rope: banners with each
+> kingdom's shield at its deepest floor, "You" in blue at 12, a gold crown
+> over the leader at 17. On the right edge, three small round pips "Clears
+> today" (two lit). The descent: floors 10–11 cleared above (dim, ticked),
+> floor 12 cleared, floor 13 the frontier, lit, with a shadowy demon
+> portrait and a plaque "Floor 13 · Power 2,950 vs your 2,600" and reward
+> chips (knowledge, hero xp, stardust); floor 15 below it marked with a
+> small rose card pack and floor 20 further down with a golden card pack
+> and a "Milestone · first to reach: 100 gems" tag; deeper floors fading
+> into violet mist. Docked at the bottom, the same wooden army bar as the
+> delve: heroes with HP, troops with counts, "Power 2,600", a red cost
+> button "Descend" with a violet mana orb "12" on its plate, and a wood
+> slab "Recall".
+
+### Results
+
+All three in three tabs, first try (`m90-world-dungeon.png`,
+`m91-world-delve.png`, `m92-world-portal-descent.png`). In m91 and m92
+the dock's troops wear the enemy's faces (a goblin, a dragon): the army is
+the player's own soldiers. In m92 the Mana sits inside Descend rather than
+on its plate.
