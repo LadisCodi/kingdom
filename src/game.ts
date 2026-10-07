@@ -65,7 +65,7 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
-import { availableRoster, type TrainResult } from './sim/army';
+import { availableRoster, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
@@ -873,6 +873,9 @@ export class Game {
     // A haul lands in the building's store, not the purse, so it pops no
     // number: the store's bubble is what says there is something to collect.
     for (const d of result.deposits) this.collectBubbles.bump(d.cell);
+    // A hall's batch is done when its line runs dry: one sound for it, not
+    // one per soldier.
+    if (result.linesDone.length > 0) playSfx('unitTrained');
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
       this.floaters.add(townhall(this.state).location, `+${formatExact(result.trainedPopulation)}`, 'population');
@@ -4830,12 +4833,26 @@ export class Game {
     return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
 
+  /** How many one press of Train orders (the card's x1 · x10 · x100 · All).
+   *  A presenter's choice, kept for the session: every card shares it. */
+  trainAmount: TrainAmount = 1;
+
+  /** The amount selector's tap: the next amount, round. */
+  cycleTrainAmount(): void {
+    this.trainAmount = TRAIN_AMOUNTS[(TRAIN_AMOUNTS.indexOf(this.trainAmount) + 1) % TRAIN_AMOUNTS.length];
+    this.notify();
+  }
+
+  /** Train at the card's amount: one order of that many, all or none. Silent
+   *  — the button clicks; the batch sounds when it is done (`tick`). */
   doTrain(unitId: TrainableId, at?: District): TrainResult {
-    const result = trainUnit(this.state, unitId, this.now(), at);
-    if (result === 'Queued') playSfx('unitTrained');
+    const plan = trainPlan(this.state, unitId, this.trainAmount);
+    const result = trainBatch(this.state, unitId, plan.count, this.now(), at);
     if (result === 'NotEnoughResources') {
-      const cost = trainCost(this.state, unitId) as Wallet;
-      const name = unitId === 'Villager' ? 'a villager' : `a ${UNITS[unitId].name}`;
+      const cost = plan.cost as Wallet;
+      const name = unitId === 'Villager'
+        ? (plan.count === 1 ? 'a villager' : `${formatExact(plan.count)} villagers`)
+        : (plan.count === 1 ? `a ${UNITS[unitId].name}` : `${formatExact(plan.count)} ${UNITS[unitId].name}s`);
       if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
