@@ -4654,8 +4654,8 @@ export class Game {
     // behind it.
     for (;;) {
       if (b.phase === 'playing' && elapsed >= fight) {
+        // Its sound is the plaque's (battleScreen.ts), which lands a beat later.
         b.phase = 'result';
-        playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
         moved = true;
         continue;
       }

@@ -7,6 +7,7 @@
 
 import trackUrl from './music/music-harp-peaceful-loop.ogg?url';
 import feastUrl from './music/music-tavern-loop.ogg?url';
+import battleUrl from './music/music-battle.ogg?url';
 import { resumeAudio, streamedLoop, type Loop } from './context';
 
 const MUTE_KEY = 'kingdom.musicMuted';
@@ -22,6 +23,27 @@ const FEAST_VOLUME = 0.38;
 let feast: Loop | null = null;
 let feasting = false;
 let duckTimer: ReturnType<typeof setTimeout> | null = null;
+
+// THE BATTLE: while a fight plays back (ui/battleScreen.ts) the harp steps
+// aside for The Hour of Battle (Owl Theory, Ultimate RPG Music Collection),
+// its first 75 s from the top every fight, levelled to the harp. The feast
+// outranks it: a won fight's spoils are dealt to the feast's tune.
+const BATTLE_VOLUME = 0.36;
+let battle: Loop | null = null;
+let battling = false;
+
+/** The harp, at its level — unless the feast or a battle holds the floor. */
+function resumeTown(ms: number): void {
+  if (battling) {
+    battle ??= streamedLoop(battleUrl, 'bgm-battle');
+    battle.play();
+    battle.fadeTo(BATTLE_VOLUME, ms);
+    return;
+  }
+  loop ??= streamedLoop(trackUrl, 'bgm');
+  loop.play();
+  loop.fadeTo(VOLUME, ms);
+}
 
 export const musicMuted = (): boolean => {
   try {
@@ -41,6 +63,8 @@ export function setMusicMuted(muted: boolean): void {
     loop?.audio.pause();
     feast?.fadeTo(0, 0);
     feast?.audio.pause();
+    battle?.fadeTo(0, 0);
+    battle?.audio.pause();
   } else startMusic(); // called from the toggle tap — a gesture, so play() is allowed
 }
 
@@ -55,9 +79,26 @@ export function startMusic(): void {
     if (duckTimer === null) feast.fadeTo(FEAST_VOLUME, 0);
     return;
   }
-  loop ??= streamedLoop(trackUrl, 'bgm');
-  loop.play();
-  loop.fadeTo(VOLUME, 0);
+  resumeTown(0);
+}
+
+/** A fight's playback opens (`true`) or closes (`false`): the harp fades
+ *  out under the battle's tune — from its top — and back in after it. */
+export function setBattleMusic(on: boolean): void {
+  if (on === battling) return;
+  battling = on;
+  if (musicMuted()) return;
+  if (on) {
+    loop?.fadeTo(0, 400);
+    if (feasting) return;
+    battle ??= streamedLoop(battleUrl, 'bgm-battle');
+    battle.audio.currentTime = 0;
+    battle.play();
+    battle.fadeTo(BATTLE_VOLUME, 300);
+  } else {
+    battle?.fadeTo(0, 900);
+    if (!feasting) resumeTown(1500);
+  }
 }
 
 /** The chest reveal opens (`true`) or closes (`false`): the harp fades out
@@ -69,15 +110,14 @@ export function setFeast(on: boolean): void {
   if (musicMuted()) return;
   if (on) {
     loop?.fadeTo(0, 500);
+    battle?.fadeTo(0, 500);
     feast ??= streamedLoop(feastUrl, 'bgm-feast');
     feast.audio.currentTime = 0;
     feast.play();
     feast.fadeTo(FEAST_VOLUME, 600);
   } else {
     feast?.fadeTo(0, 800);
-    loop ??= streamedLoop(trackUrl, 'bgm');
-    loop.play();
-    loop.fadeTo(VOLUME, 1500);
+    resumeTown(1500);
   }
 }
 
