@@ -8,7 +8,7 @@ import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
-import { startMusic } from './audio/music';
+import { setMusterMusic, startMusic } from './audio/music';
 import { Game, type OverlayName } from './game';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
@@ -523,6 +523,11 @@ async function boot(): Promise<void> {
   const syncScene = () => appRoot.classList.toggle('in-world', game.scene === 'world');
   game.onChange(syncScene);
   syncScene();
+  // War drums while a party is mustered on a deploy sheet — a lair's or an
+  // army's (src/audio/music.ts). A fight played from it outranks them.
+  const syncMuster = () => setMusterMusic(game.openOverlay === 'lair' || game.openOverlay === 'army');
+  game.onChange(syncMuster);
+  syncMuster();
 
   // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
   // sheets: a legacy full-screen menu has no "beside" to tap. #overlay is

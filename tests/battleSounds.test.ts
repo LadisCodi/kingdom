@@ -26,7 +26,7 @@ describe('the battle sounds', () => {
     expect(orphans).toEqual([]);
   });
 
-  it('has the battle music', () => {
-    expect(readdirSync(at('music/'))).toContain('music-battle.ogg');
+  it('has the battle music and the muster drums', () => {
+    expect(readdirSync(at('music/'))).toEqual(expect.arrayContaining(['music-battle.ogg', 'music-muster.ogg']));
   });
 });
