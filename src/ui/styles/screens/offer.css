@@ -406,7 +406,7 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 /* ------------------------------------------------- the widget on the map */
 
 /* Under the Survey's widget, top left (ui/offerWidget.ts): the offer's icon
- * bobbing gently, a red dot when something waits, and a small wooden sign
+ * bobbing gently, the call to action when something waits, and a small wooden sign
  * whose words scroll by. */
 #offerwidgets {
   display: flex;
@@ -447,18 +447,6 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 @keyframes ofw-bob { 50% { transform: translateY(calc(var(--px) * -3)); } }
 .ofw:active .ofw-icon { transform: translateY(calc(var(--px) * 1)) scale(0.96); animation: none; }
 
-.ofw-dot {
-  position: absolute;
-  top: calc(var(--px) * 2);
-  right: calc(var(--px) * 6);
-  width: calc(var(--px) * 14);
-  height: calc(var(--px) * 14);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-  display: none;
-}
-.ofw.is-ready .ofw-dot { display: block; }
 .ofw.is-ready .ofw-icon { animation: ofw-bob 2.8s ease-in-out infinite, nd-glow 1.6s ease-in-out infinite; }
 
 /* The sign: the panels' wooden plaque, its words scrolling right to left. */
@@ -496,30 +484,11 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 
 /* --------------------------------------------- the grouped offers widget */
 
-/* How many offers wait behind the one widget: a red enamel badge on its
- * corner (the dot stays for "something to claim"). */
 .ofw-slot { display: contents; }
-.ofw-count {
-  position: absolute;
-  top: 0;
-  left: calc(var(--px) * 2);
-  min-width: calc(var(--px) * 20);
-  height: calc(var(--px) * 20);
-  padding: 0 calc(var(--px) * 5);
-  border-radius: calc(var(--px) * 10);
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-  color: #fff;
-  font-size: calc(var(--px) * 11);
-  font-weight: var(--weight-title);
-  line-height: calc(var(--px) * 16);
-  text-align: center;
-}
-.ofw-count[hidden] { display: none; }
 
 /* The splash opened from it: every offer in a row along the top — small
  * wooden squares, the one on screen raised in parchment, one with something
- * to claim marked with the red dot. */
+ * to claim marked with the call to action. */
 .ofs-tabs {
   position: relative;
   z-index: 3;
@@ -550,17 +519,6 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 .ofs-tab .ofw-icon { width: 100%; height: 100%; animation: none; filter: none; }
 .ofs-tab .ofw-icon.is-fallback { border-radius: calc(var(--px) * 6); }
 .ofs-tab .ofw-icon.is-fallback > .icon { --icon-size: calc(var(--px) * 30); }
-.ofs-tab.is-ready::after {
-  content: '';
-  position: absolute;
-  top: calc(var(--px) * -4);
-  right: calc(var(--px) * -4);
-  width: calc(var(--px) * 12);
-  height: calc(var(--px) * 12);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5a, #c21f12 70%);
-  border: calc(var(--px) * 2) solid #fff2dc;
-}
 /* The row takes the top: the light and its figure start lower. */
 .ofs-screen.has-tabs .ofs-hero { top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92); height: 60%; }
 

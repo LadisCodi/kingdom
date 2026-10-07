@@ -17,7 +17,7 @@ import { FRIEND_HELP, FRIENDS } from '../../sim/data/definitions';
 import { crestId } from '../../sim/crest';
 import type { KingdomView } from '../../socialServer/types';
 import { el, formatCountdown, formatExact } from '../format';
-import { btn, knob, sectionHead, sheet } from '../kit';
+import { btn, ctaBadge, knob, sectionHead, sheet } from '../kit';
 import { expiresWords, inboxPane } from './inboxPane';
 import { tradePane } from './tradePane';
 import { crestEl, rankRibbon, roundKnob, townhallTag } from './kingdomBits';
@@ -48,8 +48,8 @@ export function renderFriendsSheet(game: Game): HTMLElement {
   return surface;
 }
 
-/** List, Trade and Inbox: the Build menu's wooden plates; a red wax seal on
- *  Trade while a friend's wish can be filled, and on the Inbox for what is
+/** List, Trade and Inbox: the Build menu's wooden plates; the call to action
+ *  on Trade while a friend's wish can be filled, and on the Inbox for what is
  *  unread. */
 function tabRow(game: Game): HTMLElement {
   const f = game.friends;
@@ -59,7 +59,7 @@ function tabRow(game: Game): HTMLElement {
       class: `bld-tab fr-tab${open ? ' is-open' : ''}`, type: 'button', role: 'tab', 'aria-selected': open ? 'true' : 'false',
     },
     el('span', { class: 'bld-tab-label' }, label),
-    ...(count > 0 ? [el('span', { class: 'fr-count is-asking' }, formatExact(count))] : []));
+    ...(count > 0 ? [ctaBadge(count, `friends-tab:${id}`)] : []));
     b.addEventListener('click', () => f.setTab(id));
     return b;
   };

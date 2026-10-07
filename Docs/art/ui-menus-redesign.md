@@ -541,16 +541,18 @@ wood of its sides touches the screen's edges.
   included (§6.5).
 
 **One call to action** (`kit/cta.ts`, `.k-cta`): every "there is something
-for you here" in the game wears the same badge — a small scrying orb on its
-host's corner, a red halo pulsing slowly behind it, a glint stirring inside
-in stepped frames, and the count on it past one ("2" … "9", then "9+").
+for you here" in the game wears the same badge — a red enamel stud on its
+host's corner (`assets/badge-cta.png`) that gives a small nudge every few
+seconds, and the count on it past one ("2" … "9", then "9+").
 
 - Where: the nav tabs (Build, Research), a startable technology's seal, the
   daily and season pills, a hero tile with something to do, a claimable
   daily or season-pass cell and the pass's Claim, the vault, an affordable
-  chest, a relic page ready to close, and the quest scroll when done. It
-  replaces the glows, pulses, dots, ticks and "+" each used to have.
-- No two orbs stir in step: each takes its phase from the page clock plus an
+  chest, a relic page ready to close, the quest scroll when done, the
+  Store's, Bag's and Friends' tabs, the offers widget and its splash's tabs,
+  and a notice bubble's count. It replaces the glows, pulses, dots, seals,
+  ticks and "+" each used to have.
+- No two badges nudge in step: each takes its phase from the page clock plus an
   offset of its own, keyed on what it marks, so a screen that rebuilds each
   tick does not restart it either. It pops in only when
   it appears on a host that persists (the nav, the pills, the quest scroll).
@@ -938,8 +940,8 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 
 **The Build tab (nav).**
 
-- The call-to-action orb (§3.7) with a count: how many buildings can be
-  started right now — unlocked, under their cap and affordable. No orb at
+- The call-to-action badge (§3.7) with a count: how many buildings can be
+  started right now — unlocked, under their cap and affordable. No badge at
   zero (§6.7).
 - A quest that points at a building highlights the tab and that card.
 
@@ -950,7 +952,7 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
   at.
 - **Three tabs** — the nav's wooden tab plates. The selected one is the plate
   pressed into the wood (the nav tab's pressed state), not lit or gilded.
-  Each wears the same orb and count as the nav tab:
+  Each wears the same badge and count as the nav tab:
 
   | Tab | Buildings |
   |---|---|
