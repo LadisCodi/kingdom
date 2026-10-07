@@ -214,6 +214,44 @@
 .hd-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
 .hd-stat-value { font-size: calc(var(--px) * 20); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
 
+/* A STAT THAT ROSE (a level, an ascension): its value punches, and its gain
+   floats up off it in green and fades. */
+.hd-stat { position: relative; }
+.hd-stat-value { display: inline-block; transform-origin: left center; }
+.hd-stat.is-up .hd-stat-value { animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hd-stat-gain {
+  position: absolute;
+  left: calc(100% + var(--px) * 18);
+  bottom: 0;
+  color: var(--leaf);
+  font-size: calc(var(--px) * 18);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 calc(var(--px) * 1) 0 #1d3a10, 0 0 calc(var(--px) * 4) rgba(14, 30, 6, 0.8);
+  animation: hd-stat-gain 1.4s ease-out both;
+}
+@keyframes hd-stat-punch {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); color: var(--leaf); }
+  100% { transform: scale(1); }
+}
+@keyframes hd-stat-gain {
+  0% { opacity: 0; translate: 0 calc(var(--px) * 6); }
+  15% { opacity: 1; translate: 0 0; }
+  70% { opacity: 1; }
+  100% { opacity: 0; translate: 0 calc(var(--px) * -26); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hd-stat.is-up .hd-stat-value { animation: none; }
+  .hd-stat-gain { animation-name: hd-stat-fade; }
+}
+@keyframes hd-stat-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* The passive, and the boon under it on the six that have one. */
 .hd-passive.k-section {
   display: flex;
