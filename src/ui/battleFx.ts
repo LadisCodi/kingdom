@@ -21,7 +21,12 @@ type Effect =
   | {
     kind: 'spark' | 'dust'; at: Pt; vx: number; vy: number; start: number; end: number;
     size: number; color: string;
-  };
+  }
+  | {
+    kind: 'chip'; at: Pt; vx: number; vy: number; spin: number; start: number; end: number;
+    size: number; color: string;
+  }
+  | { kind: 'shock'; at: Pt; start: number; end: number; size: number; color: string };
 
 /** Leather, iron and feather — an arrow is drawn in what it is made of. */
 const SHAFT = '#7a4d26';
@@ -29,6 +34,8 @@ const OUTLINE = '#3c2412';
 const HEAD = '#5d6470';
 const FLETCH = '#f4e4c1';
 const SPARKS = ['#fff6dc', '#ffd36a', '#ffb13b'];
+/** What a broken ring is made of: the board's wood, or a hero's gold. */
+const CHIPS = { wood: ['#a8743f', '#7a4d26', '#c99a5b'], gold: ['#ffd36a', '#e8a93a', '#fff1c9'] } as const;
 const BOLT = '#fff3c4';
 const BOLT_GLOW = '#ffc94a';
 
@@ -45,6 +52,11 @@ export interface FxLayer {
   sparks(at: Pt, angle: number, t: number, n: number): void;
   /** A few puffs at someone's feet. */
   dust(at: Pt, t: number): void;
+  /** A ring breaking: `n` chips of `of` thrown up and out, tumbling as
+   *  they fall. */
+  chips(at: Pt, t: number, n: number, of: keyof typeof CHIPS): void;
+  /** One ring of air going out from `at`: the thud of something landing. */
+  shock(at: Pt, t: number, size: number, color?: string): void;
   /** Draw the clock's `t`, dropping whatever has finished. */
   draw(t: number): void;
   clear(): void;
@@ -203,6 +215,21 @@ export function createFxLayer(): FxLayer {
         });
       }
     },
+    chips(at, t, n, of) {
+      const palette = CHIPS[of];
+      for (let i = 0; i < n; i += 1) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6;
+        const speed = (0.08 + Math.random() * 0.12) * u;
+        effects.push({
+          kind: 'chip', at, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, spin: (Math.random() - 0.5) * 0.03,
+          start: t, end: t + 520 + Math.random() * 260, size: (3 + Math.random() * 3) * u,
+          color: palette[i % palette.length]!,
+        });
+      }
+    },
+    shock(at, t, size, color = '#fff6dc') {
+      effects.push({ kind: 'shock', at, start: t, end: t + 380, size: size * u, color });
+    },
     draw(t) {
       if (ctx === null) return;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -242,6 +269,36 @@ export function createFxLayer(): FxLayer {
             ctx.stroke();
             ctx.fill();
             ctx.restore();
+            ctx.globalAlpha = 1;
+            break;
+          }
+          case 'chip': {
+            // A splinter of the ring: tumbling, falling, gone.
+            const age = t - e.start;
+            ctx.save();
+            ctx.translate(e.at.x + e.vx * age, e.at.y + e.vy * age + 0.0005 * u * age * age);
+            ctx.rotate(e.spin * age);
+            ctx.globalAlpha = Math.min(1, 3 * (1 - p));
+            ctx.fillStyle = e.color;
+            ctx.strokeStyle = OUTLINE;
+            ctx.lineWidth = 1.2 * u;
+            ctx.beginPath();
+            ctx.moveTo(-e.size, -e.size * 0.35); ctx.lineTo(e.size, -e.size * 0.15);
+            ctx.lineTo(e.size * 0.7, e.size * 0.35); ctx.lineTo(-e.size * 0.8, e.size * 0.25);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            ctx.globalAlpha = 1;
+            break;
+          }
+          case 'shock': {
+            ctx.globalAlpha = 0.8 * (1 - p);
+            ctx.strokeStyle = e.color;
+            ctx.lineWidth = 4 * u * (1 - p);
+            ctx.beginPath();
+            ctx.arc(e.at.x, e.at.y, e.size * (0.6 + ease(p) * 0.9), 0, Math.PI * 2);
+            ctx.stroke();
             ctx.globalAlpha = 1;
             break;
           }
