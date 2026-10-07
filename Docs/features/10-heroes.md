@@ -439,7 +439,8 @@ Each of these is data, not code:
   paper at its foot.
 - **Stats** on the stage, a column down its left edge beside the hero:
   Attack, Damage, Defence and Health, each its icon beside its label over
-  its value, in white with no background.
+  its value, in white with no background. A stat that rose — a level, an
+  ascension — punches, and its gain floats up beside it in green.
 - **Ascension**, on the stage with no background of its own (owned heroes
   only): the five stars in its top-left corner, and **Ascend** with its
   Stardust toll and fragment count over it at its foot, right. Every star

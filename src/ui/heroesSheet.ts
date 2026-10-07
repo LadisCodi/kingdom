@@ -114,21 +114,35 @@ function heroArt(def: HeroDef): HTMLElement {
   return url ? spriteImgAt(url, 'hd-art') : el('div', { class: 'hd-art is-glyph' }, def.glyph);
 }
 
+type StatKey = 'atk' | 'dmg' | 'def' | 'hp';
+
+/** The stats each hero's card last drew. A rebuild that finds a stat higher
+ *  than this — a level, an ascension — plays the rise on it. */
+const lastStats = new Map<HeroId, Record<StatKey, number>>();
+
 /** The four stats, a column down the stage's left edge beside the hero:
- *  bare, white on the vault — the icon beside its label over its value. */
+ *  bare, white on the vault — the icon beside its label over its value. A
+ *  stat that rose since the card last drew punches, and its gain floats up
+ *  off it in green. */
 function stats(game: Game, id: HeroId): HTMLElement {
   const s = heroStats(game.state, id);
-  const stat = (icon: 'atk' | 'dmg' | 'def' | 'hp', label: string, value: number) =>
-    el('div', { class: 'hd-stat' },
-      iconEl(icon),
+  const now: Record<StatKey, number> = { atk: s.atk, dmg: s.dmg, def: s.def, hp: s.hp };
+  const before = lastStats.get(id);
+  lastStats.set(id, now);
+  const stat = (key: StatKey, label: string) => {
+    const gain = before ? now[key] - before[key] : 0;
+    return el('div', { class: `hd-stat${gain > 0 ? ' is-up' : ''}` },
+      iconEl(key),
       el('div', { class: 'hd-stat-text' },
         el('span', { class: 'hd-stat-label' }, label),
-        el('b', { class: 'hd-stat-value' }, formatExact(value))));
+        el('b', { class: 'hd-stat-value' }, formatExact(now[key]))),
+      ...(gain > 0 ? [el('span', { class: 'hd-stat-gain', 'aria-hidden': 'true' }, `+${formatExact(gain)}`)] : []));
+  };
   return el('div', { class: 'hd-stats' },
-    stat('atk', 'Attack', s.atk),
-    stat('dmg', 'Damage', s.dmg),
-    stat('def', 'Defence', s.def),
-    stat('hp', 'Health', s.hp));
+    stat('atk', 'Attack'),
+    stat('dmg', 'Damage'),
+    stat('def', 'Defence'),
+    stat('hp', 'Health'));
 }
 
 /** The hero on its rarity's stage: an owned hero's ascension stars in its
