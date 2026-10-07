@@ -458,7 +458,7 @@ Each of these is data, not code:
   - On the roster, a skill past rank 1 shows as a brass numeral on the card.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
     Hero XP price over it. At the ascension's ceiling the button is gone and
-    the tray says *Ascend them to go further*; at the last level, *At the
+    the tray shows *Ascend to* over the stars to reach — the next star full; at the last level, *At the
     ceiling*.
 - **An unowned hero gets the same card**, stats and passive and all, without
   Ascension, on a stone stage with a silhouette. **Fragments** takes the
