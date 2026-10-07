@@ -33,7 +33,7 @@ import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
 import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
-import { action, btn, chip, costChips, iconEl, powerTag, sectionHead, sheet, type IconName } from '../kit';
+import { action, btn, chip, costChips, currencyIcon, iconEl, powerTag, sectionHead, sheet, withTooltip, type IconName } from '../kit';
 import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
@@ -227,34 +227,38 @@ export const CAMP_TITLE: Record<LairId, string> = {
   Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
 };
 
+/** The ground in one line — terrain, feature, the march across it — and,
+ *  on a tap, what it does to each troop type in a fight (19 §4.2). */
+function groundStrip(bh: BoardHex): HTMLElement {
+  const feature = bh.features[0];
+  const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
+  const edges = groundEdges(bh).map((e) =>
+    `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`);
+  const strip = el('button', { class: 'wd-ground k-section', type: 'button' },
+    ...groundTiles(bh).map((t) => el('span', { class: 'wd-ground-fact', 'aria-label': `${t.label} ${t.value}` },
+      iconEl(t.icon, { size: 'md' }), el('span', { class: 'wd-ground-value', 'aria-hidden': 'true' }, t.value))));
+  return withTooltip(strip, edges.length === 0 ? 'No effect on the fight' : edges.join(' · '), name);
+}
+
 /**
- * A MONSTER CAMP (m86c): THE HEX, then CAMP — its art with how hard it
- * looks against the player's strongest army, and the enemy alone — what
- * beating it pays, and one row with its two answers: Negotiate, priced, and
- * Attack, which opens the deployment. A raid it will make is the board's
- * arrow, not a line here.
+ * A MONSTER CAMP (m86c, compacted to fit one screen): the ground in one
+ * line, the enemy — its difficulty a wax seal on its plank — what beating
+ * it pays, and one row with its two answers: Negotiate, priced, and Attack,
+ * which opens the deployment. How far it is and what it looks like are the
+ * board's; a raid it will make is the board's arrow.
  */
 export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   const camp = bh.camp!;
   const index = bh.index;
   const source = game.worldSource();
   const difficulty = campDifficulty(camp.power, strongestParty(game.state));
-  const creature = CAMP_CREATURE[camp.creature];
-  const hex = el('div', { class: 'dc-head' },
-    portrait(groundSprite(bh), 'tile'),
-    el('div', { class: 'dc-what-col' }, distanceLine(game, index)));
-  const art = portrait(`whex_camp_${camp.creature.toLowerCase()}`, 'skull');
+  const enemy = enemyPanel(campSquads(source.board().seed, index, camp), camp.power, creatureFace);
   // A wax seal in the board's colour for it: green easy, gold fair, red hard.
   const wax = difficulty === 'Fair' ? 'is-fair' : difficulty === 'Hard' || difficulty === 'Deadly' ? 'is-hard' : 'is-easy';
-  art.append(el('span', { class: `wd-seal ${wax}` }, difficulty));
-  const campHead = el('div', { class: 'dc-head' }, art,
-    el('div', { class: 'dc-what-col' },
-      el('p', { class: 'wd-name' }, creature.charAt(0).toUpperCase() + creature.slice(1)),
-      el('div', { class: 'dc-what' }, 'Beat them, and take their loot.')));
-  const enemy = enemyPanel(campSquads(source.board().seed, index, camp), camp.power, creatureFace);
+  enemy.querySelector('.k-headpanel-head')?.prepend(el('span', { class: `wd-seal ${wax}` }, difficulty));
   const loot = (Object.entries(campLoot(game.state, camp.power)) as Array<[CurrencyId, number]>)
     .filter(([, n]) => n > 0)
-    .map(([c, n]): Tile => ({ icon: c as IconName, label: c === 'HeroXp' ? 'Hero XP' : c, value: `+${formatShort(n)}` }));
+    .map(([c, n]) => el('span', { class: 'k-chip' }, currencyIcon(c, { size: 'sm' }), `+${formatShort(n)}`));
   // An army of the player's already marching on it: its way home instead.
   const marching = source.armies().find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
   const reach = hexActions(source, game.worldSeat(), bh, { revealed: true });
@@ -271,9 +275,8 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
       btn({ label: 'Attack', kind: 'destructive', onClick: () => game.openArmy(index, 'clear') }));
   return sheet({ title: CAMP_TITLE[camp.creature], onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
-      sectionHead('The hex'), hex, tiles(groundTiles(bh)),
-      sectionHead('Camp'), campHead, enemy,
-      ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), tiles(loot)]),
+      groundStrip(bh), enemy,
+      ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), el('div', { class: 'wd-loot' }, ...loot)]),
       answers));
 }
 

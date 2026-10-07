@@ -497,20 +497,19 @@
 }
 .wd-mist.is-sensed .wd-mist-cloud { opacity: 0.8; }
 
-/* A camp's difficulty: a wax seal pinned to its portrait's corner, in the
- * colour the board writes it in. */
-.wd-portrait > .wd-seal {
-  position: absolute;
-  z-index: 2;
-  top: calc(var(--px) * -12);
-  left: calc(var(--px) * -12);
+/* A camp's difficulty: a wax seal pressed onto the enemy's plank, ahead of
+ * its name, in the colour the board writes it in. */
+.wd-seal {
+  flex: none;
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 50);
-  height: calc(var(--px) * 50);
+  width: calc(var(--px) * 46);
+  height: calc(var(--px) * 46);
+  margin-block: calc(var(--px) * -8);
+  margin-inline-end: calc(var(--px) * -4);
   background: url('../../assets/offer-seal.png') center / contain no-repeat;
   color: #fff6e0;
-  font-size: var(--text-helper);
+  font-size: calc(var(--px) * 11);
   font-weight: var(--weight-title);
   line-height: 1;
   text-align: center;
@@ -518,8 +517,34 @@
   rotate: -12deg;
   filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(40, 22, 10, 0.4));
 }
-.wd-portrait > .wd-seal.is-easy { background-image: url('../../assets/seal-done.png'); }
-.wd-portrait > .wd-seal.is-fair { background-image: url('../../assets/seal-available.png'); color: #5a3a12; text-shadow: none; }
+.wd-seal.is-easy { background-image: url('../../assets/seal-done.png'); }
+.wd-seal.is-fair { background-image: url('../../assets/seal-available.png'); color: #5a3a12; text-shadow: none; }
+.k-headpanel-head:has(> .wd-seal) > .k-headpanel-title { flex: 1; }
+/* The ground a camp stands on, in one line: each fact its mark and its
+ * value. A tap opens what the ground does to each troop type. */
+.wd-ground.k-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: calc(var(--px) * 6);
+  width: 100%;
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.wd-ground-fact { display: flex; align-items: center; gap: calc(var(--px) * 4); min-width: 0; }
+.wd-ground-fact > .icon { flex: none; }
+.wd-ground-value {
+  font-size: var(--text-desc);
+  font-weight: var(--weight-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wd-ground > .k-tip { max-width: calc(var(--px) * 260); }
+/* What beating a camp pays, as chips. */
+.wd-loot { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--px) * 8); }
 /* Two answers to one camp, side by side: Negotiate's price on its plate,
  * Attack's slab level with Negotiate's. */
 .wd-choices { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: calc(var(--px) * 8); align-items: end; }
