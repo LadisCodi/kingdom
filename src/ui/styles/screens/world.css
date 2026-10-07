@@ -709,3 +709,14 @@
 /* An army on the road, in the dock: its wait's words on the dock's wood. */
 .dv-dock .tr-batch-what,
 .dv-dock .tr-batch-total { color: var(--ink-inverse); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+
+/* The Portal's ribbon rides over the top edge of the shaft's stone, a little
+ * proud of it, so everything under it sits higher (as the window's title
+ * plank stands proud of its frame). */
+.dv-body.is-portal > .wd-ribbon {
+  position: relative;
+  z-index: 2;
+  margin-top: calc(var(--px) * -20);
+  margin-bottom: calc(var(--px) * -4);
+}
+.k-sheet.is-panes > .k-panel > .k-sheet-body:has(> .dv-body.is-portal) { padding-top: calc(var(--px) * 14); overflow: visible; }
