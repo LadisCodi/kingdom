@@ -12,7 +12,7 @@
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
 - **67 quests**, paying 16,215 Gold, 210 Stone, 180 Food, 130 Mana,
-  750 Gems, 140 Stardust, **41 Knowledge across eighteen of them** (§2.1) and
+  750 Gems, 140 Stardust, **21 Knowledge across thirteen of them** (§2.1) and
   **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
@@ -121,12 +121,11 @@
   who spends on the border before raising a roof has no rent coming and no
   way back.
 - **The chain funds the research it asks for, through the opening only.**
-  Quest 1 pays Forestry's 2 outright, and **eighteen quests pay Knowledge**,
-  placed so that every card the chain demands up to `Attuned` — quest 34,
-  Consecration — is affordable **with no drip at all**, prerequisites included.
-  **The quest just before each of those research quests pays its card's
-  Knowledge by itself**, so a player who spent what was banked on cards of
-  their own is never stuck.
+  In the opening **only the quest just before a research quest pays
+  Knowledge, and exactly that card's Knowledge**, prerequisites included —
+  Quest 1 pays Forestry's 2. Every card the chain demands up to `Attuned` —
+  quest 34, Consecration — is affordable **with no drip at all**, and nothing
+  piles up: what a player banks beyond the next card comes from the drip.
 - **Past `Attuned` the chain stops paying and the clock takes over**
   ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
   asserted for the opening and **only** the opening (`tests/quests.test.ts`);
