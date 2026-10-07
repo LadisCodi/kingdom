@@ -47,7 +47,7 @@
 .hd-stage {
   --stage-w: 100cqw;
   position: relative;
-  height: calc(var(--stage-w) * 1.08);
+  height: calc(var(--stage-w) * 0.9);
 }
 .hd-stage::before {
   content: '';
@@ -68,25 +68,28 @@
 .hd-art {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--stage-w) * 0.2);
+  bottom: calc(var(--stage-w) * 0.04);
   translate: -50% 0;
-  height: 78%;
+  height: 94%;
   width: auto;
-  max-width: 76%;
+  max-width: 80%;
   object-fit: contain;
   object-position: center bottom;
-  -webkit-mask: linear-gradient(to top, transparent 0, #000 12%);
-  mask: linear-gradient(to top, transparent 0, #000 12%);
+  -webkit-mask: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 0.25) 14%, #000 34%);
+  mask: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 0.25) 14%, #000 34%);
 }
-/* With nothing laid over it (a hero not found yet) the hero stands lower. */
-.hd-stage:not(:has(> .hd-ascend)) > .hd-art { bottom: calc(var(--stage-w) * 0.08); height: 88%; }
+/* With nothing laid over it (a hero not found yet) the hero is not faded. */
+.hd-stage:not(:has(> .hd-ascend)) > .hd-art {
+  -webkit-mask: linear-gradient(to top, transparent 0, #000 10%);
+  mask: linear-gradient(to top, transparent 0, #000 10%);
+}
 .hd-art.is-glyph { display: grid; place-items: center; width: 50%; font-size: calc(var(--stage-w) * 0.2); }
 
 /* The rarity, as a cloth ribbon (hero-rarity-*.png) in the stage's
    top-left corner; the word is the game's, set on the cloth. */
 .hd-rarity {
   position: absolute;
-  top: calc(var(--px) * 22);
+  top: calc(var(--px) * 2);
   left: 0;
   z-index: 1;
   display: grid;
@@ -107,10 +110,10 @@
 .hd-rarity.is-legendary { --ribbon: url('../../assets/hero-rarity-legendary.png'); }
 
 /* What it fights as: the card's type banner, the word under the symbol,
-   hanging in the stage's top-right corner. */
+   hanging from the plank in the stage's top-right corner. */
 .hd-type {
   position: absolute;
-  top: calc(var(--px) * 16);
+  top: 0;
   right: calc(var(--px) * 8);
   z-index: 1;
   display: flex;
