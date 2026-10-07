@@ -47,5 +47,9 @@
   },
   "bag": {
     "chestFloorPerHour": 60
+  },
+  "notices": {
+    "shown": 4,
+    "kept": 30
   }
 }

@@ -1,6 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
+import { newsMark, postBoundaryNews } from './notices';
 import { track } from './analytics';
 import { ABANDONED, BANNERS, DISTRICTS, KINGDOM_DEF, SHRINE_RULES, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
@@ -690,6 +691,7 @@ function applyDueAt(
   // site covers a Housing completing, Communities landing and a taxRate
   // modifier expiring, instead of only the training completion that used to
   // remember to do it.
+  const mark = newsMark(out);
   repriceTaxAnchorAround(state, t, () => {
     for (const item of advanceQueue(state.city.queue, t, builders)) {
       completeQueueItem(state, map, item, Math.min(completesAt(item), t));
@@ -732,6 +734,9 @@ function applyDueAt(
     stampRentRush(state, t);
     applyRentRush(state, t);
   });
+  // What this boundary did that the player may not have seen
+  // (Docs/features/26-notices.md §2.1).
+  postBoundaryNews(state, t, out, mark);
 }
 
 /** The continuous sims, run only BETWEEN boundaries. */

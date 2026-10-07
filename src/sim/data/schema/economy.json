@@ -75,6 +75,21 @@
           "doc": "What a chest pays at least, per hour of its size, for a coin the city makes little or none of yet."
         }
       }
+    },
+    "notices": {
+      "type": "object",
+      "fields": {
+        "shown": {
+          "type": "int",
+          "min": 2,
+          "doc": "How many bubbles the notices column shows; with more notices than this, the last is +N (Docs/features/26-notices.md §3)."
+        },
+        "kept": {
+          "type": "int",
+          "min": 1,
+          "doc": "How many unread news the save keeps; past it, the oldest is dropped (26-notices.md §7)."
+        }
+      }
     }
   }
 }

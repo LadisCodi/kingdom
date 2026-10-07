@@ -185,7 +185,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 103; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 104; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 100) — the boot
 discards any older save and starts a fresh kingdom. To restart every tester
 again, bump `SAVE_VERSION` and raise it to match. **It must go before
@@ -243,10 +243,12 @@ than the build is rejected rather than downgraded.
   pays a city relic's activation in its Shrine and a world relic's spell;
   artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
-- **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
-  `adOfferPill.ts`. They hide behind any sheet.
-- **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
-  column — the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
+- **Pills and notices, not modals**, for anything waiting for the player:
+  `questPill.ts`, and the notices column (`ui/notices/`,
+  `Docs/features/26-notices.md`) for news and standing states. They hide
+  behind any sheet; a notice opens its card only when tapped.
+- **Z-order is load-bearing.** The stack, bottom to top: map · the notices
+  column (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · **the battle playback (90)** · the stage (95) · the offer splash (96) · the unlock splash (97) · the gacha reveal (100) · the rewarded
   video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
   the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing

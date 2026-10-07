@@ -30,7 +30,6 @@
 #app.in-world #quest,
 #app.in-world #daily,
 #app.in-world #survey,
-#app.in-world #edge,
 #app.in-world #panel { display: none; }
 
 /* The board's left column, in the flow under the header where the

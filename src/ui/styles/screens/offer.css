@@ -403,11 +403,6 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   font-weight: var(--weight-strong);
 }
 
-/* The next-day pill: the ad tab's slab, with a countdown or "Claim". */
-.nd-tab-label { font-size: calc(var(--px) * 12); white-space: nowrap; }
-.nd-tab.is-ready { animation: nd-glow 1.6s ease-in-out infinite; }
-@keyframes nd-glow { 50% { filter: drop-shadow(0 0 calc(var(--px) * 6) rgba(255, 205, 96, 0.9)); } }
-
 /* ------------------------------------------------- the widget on the map */
 
 /* Under the Survey's widget, top left (ui/offerWidget.ts): the offer's icon
