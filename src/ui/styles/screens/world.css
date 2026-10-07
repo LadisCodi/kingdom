@@ -697,3 +697,12 @@
   margin-bottom: calc(var(--px) * -6);
   background: url('../../assets/rank-gold.png') center / contain no-repeat;
 }
+
+/* The delve's and the Portal's scrollers, and a dungeon's race list, scroll
+ * without a bar: the stair is the scroller (as the Build row and the book). */
+.pt-shaft,
+.wd-race,
+.k-sheet-body:has(> .dv-body) { scrollbar-width: none; }
+.pt-shaft::-webkit-scrollbar,
+.wd-race::-webkit-scrollbar,
+.k-sheet-body:has(> .dv-body)::-webkit-scrollbar { display: none; }
