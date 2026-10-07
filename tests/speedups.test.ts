@@ -247,6 +247,19 @@ describe('the Speed-up picker', () => {
     game.closeSpeedup();
     expect(game.openOverlay).toBe('bag');
   });
+
+  it('goes back to a hex sheet with its hex still chosen', () => {
+    const { state, job } = raising(3600);
+    const game = freshPresenter(state);
+    game.now = () => T0;
+    game.selectedHex = 7;
+    game.setOverlay('world');
+    game.openSpeedup(job);
+    expect(game.selectedHex).toBe(7);
+    game.closeSpeedup();
+    expect(game.openOverlay).toBe('world');
+    expect(game.selectedHex).toBe(7);
+  });
 });
 
 describe('a speed-up on the world', () => {

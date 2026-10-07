@@ -4768,7 +4768,9 @@ export class Game {
     if (name !== 'shortfall') this.shortfallAsk = null;
     // Building happens on the province: the Build menu takes the player home.
     if (name === 'build' && this.scene === 'world') this.scene = 'province';
-    if (name !== 'world' && name !== 'army') this.selectedHex = null;
+    // The picker and the shortfall go back to the sheet they came from, so the
+    // hex that sheet is about stays chosen under them.
+    if (name !== 'world' && name !== 'army' && name !== 'speedup' && name !== 'shortfall') this.selectedHex = null;
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
