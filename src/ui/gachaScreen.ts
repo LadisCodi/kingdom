@@ -117,7 +117,10 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
         el('div', { class: 'gr-card-name' }, def.name.replace(/^The /, '')),
       ];
     } else {
-      cls = `is-fragments ${RARITY_CLASS[def.rarity]}`;
+      // Not on the roster yet: a silhouette, as on the heroes menu — until a
+      // call recruits them and the seal brings them into colour.
+      const missing = prize.progress?.toward === 'recruit' ? ' is-missing' : '';
+      cls = `is-fragments ${RARITY_CLASS[def.rarity]}${missing}`;
       face = [
         el('div', { class: 'gr-card-art' }, portrait(prize.heroId, 'gr-card-img')),
         el('div', { class: 'gr-card-name' }, def.name.replace(/^The /, '')),
@@ -125,7 +128,11 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
       ];
     }
   }
-  const card = el('div', { class: `gr-card ${cls} is-down is-hidden` },
+  // The back says how rare the card is before it turns: the rarer, the more
+  // ornate its ink (gacha.css `.ink-n`).
+  const rarity = rarityOf(prize);
+  const ink = rarity === null ? 0 : { Common: 1, Rare: 2, Legendary: 3 }[rarity];
+  const card = el('div', { class: `gr-card ${cls} ink-${ink} is-down is-hidden` },
     el('div', { class: 'gr-card-inner' },
       el('div', { class: 'gr-card-back' }),
       el('div', { class: 'gr-card-face' }, ...face)));
@@ -386,6 +393,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         { transform: 'scale(1) rotate(-12deg)', opacity: 1 },
       ], 380, 'cubic-bezier(.6,0,.9,.5)');
       card.classList.add('is-stamped');
+      card.classList.remove('is-missing');
       playSfx('chestLand');
       await play(card, [
         { transform: currentAt }, { transform: `${currentAt} translateY(1.5%) scale(0.97)` }, { transform: currentAt },

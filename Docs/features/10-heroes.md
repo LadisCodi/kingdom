@@ -477,10 +477,15 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   4. the next tap sends it to its own place on the stage — smaller and
      dimmed — while the next card rises.
 - **The cards are papers**, in the research book's materials: the back an
-  aged sheet with a fine double rule and a red wax seal; a reward a torn page
+  aged sheet with a medieval ink drawing that says how rare the card is before
+  it turns — a plain rule (no rarity), a compass rose (Common), knotwork and
+  blue leaves (Rare), an illuminated border with a crowned sun in red and gold
+  (Legendary); a reward a torn page
   with the name in ink under a thin rule; a whole hero the roster's own card
   (its rarity's face in the thin gilt frame), its name on a parchment slip and
   NEW in red wax on its corner.
+- **A hero not yet recruited is a silhouette** on their fragments card, as
+  on the heroes menu; a recruit's turns to colour as the seal lands.
 - **Fragments show where they leave the hero**: a bar under the card fills
   from what was held to what is held now — toward recruiting (gold) or the
   next ascension point (blue).
