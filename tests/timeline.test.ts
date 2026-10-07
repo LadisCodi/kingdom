@@ -14,7 +14,7 @@ import { itemCount } from '../src/sim/bag';
 import { describe, expect, it } from 'vitest';
 import { advance, buyKeys } from '../src/sim/commands';
 import {
-  BANNERS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
+  BANNERS, EVENTS, HERO_ORDER, HEROES,
 } from '../src/sim/data/definitions';
 import {
   claimFreePull, freePullAvailable, freePullsLeft, heroChanceAt, legendaryPityCount,
@@ -213,20 +213,17 @@ describe('the gacha', () => {
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
   });
 
-  // CLAIM: the gacha is one of the two places Knowledge comes from, and it
-  // pays on EVERY pull — hero, duplicate or miss. Fragments only ever point
-  // at one hero; Knowledge levels whoever the player already has, which is
-  // what stops a pull from being dead even when the roster is full.
-  it('every pull pays Knowledge into the kingdom purse', () => {
+  // CLAIM: every pull draws its banner's loot — hero, duplicate or miss —
+  // so no call is dead even when the roster is full.
+  it('every pull draws its loot, between the two counts of its banner', () => {
     const state = rich();
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
     // Past hard pity, so the run covers a miss AND a hero rather than one
     // long unlucky streak.
     const seen = new Set<string>();
     for (let i = 1; i <= BANNERS.basic.hardPityAt + 10; i++) {
       const result = pull(state);
-      expect(result.stardust).toBe(BANNERS.basic.pullStardust);
-      expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(i * BANNERS.basic.pullStardust);
+      expect(result.loot.length).toBeGreaterThanOrEqual(BANNERS.basic.lootDrawsMin);
+      expect(result.loot.length).toBeLessThanOrEqual(BANNERS.basic.lootDrawsMax);
       seen.add(result.heroId === null ? 'miss' : result.duplicate ? 'dupe' : 'hero');
     }
     // …and it really did pay across more than one kind of outcome.
@@ -243,15 +240,12 @@ describe('the gacha', () => {
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(banked);
   });
 
-  it('has no dead pulls — a miss still pays Fragments toward someone', () => {
+  it('has no dead pulls — a miss still pays its loot', () => {
     const state = rich();
     for (let i = 0; i < 30; i++) {
       const result = pull(state);
       expect(result.result).toBe('Pulled');
-      if (result.heroId === null) {
-        expect(result.fragments).toBeGreaterThan(0);
-        expect(result.fragmentsOf).not.toBeNull();
-      }
+      if (result.heroId === null) expect(result.loot.length).toBeGreaterThan(0);
     }
   });
 
@@ -438,13 +432,12 @@ describe('the gacha', () => {
     expect(claimFreePull(state, 'basic', ready).result).toBe('Pulled');
   });
 
-  it('costs no key, and still pays Stardust and fragments', () => {
+  it('costs no key, and still draws its loot', () => {
     const state = freshGame();
-    const dust = getWallet(state.kingdom.wallet, 'Stardust');
     const claimed = claimFreePull(state, 'basic', T0);
     expect(claimed.result).toBe('Pulled');
     expect(itemCount(state, 'SilverKey')).toBe(0); // nothing to take
-    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(dust + BANNERS.basic.pullStardust);
+    if (claimed.result === 'Pulled') expect(claimed.pull.loot.length).toBeGreaterThan(0);
   });
 
   it('stops at the daily cap, and opens again on the next UTC day', () => {

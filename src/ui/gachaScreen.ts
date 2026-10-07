@@ -31,8 +31,10 @@
 // Presentation only: the sim paid everything before this mounted, so a reveal
 // cut short (a reload, a closed tab) loses nothing but the show.
 
-import { ARTIFACTS, HEROES } from '../sim/data/definitions';
+import { ARTIFACTS, HEROES, ITEMS } from '../sim/data/definitions';
 import { fragmentArt } from './relicSheet';
+import { itemIcon } from './itemArt';
+import { itemName } from './itemText';
 import { playSfx, type SfxName } from '../audio/sfx';
 import { duckFeast, setFeast } from '../audio/music';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
@@ -98,6 +100,13 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
     face = [
       el('div', { class: 'gr-card-art' }, iconEl(prize.currency, { size: 'lg' })),
       el('div', { class: 'gr-card-name' }, currencyName(prize.currency)),
+      count(prize.amount),
+    ];
+  } else if (prize.kind === 'item') {
+    cls = 'is-currency is-item';
+    face = [
+      el('div', { class: 'gr-card-art' }, iconEl(itemIcon(prize.item), { size: 'lg' })),
+      el('div', { class: 'gr-card-name' }, itemName(ITEMS[prize.item])),
       count(prize.amount),
     ];
   } else if (prize.kind === 'relicFragment') {

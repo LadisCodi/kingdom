@@ -300,9 +300,9 @@ Every faucet is a fight or a banner. Room and floor amounts are
 
 | Currency | Source |
 |---|---|
-| **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor |
-| **Fragments** | a duplicate or a miss on a call · boss chests, from a per-boss pool (not built, OQ-80) |
-| **Stardust** | every dungeon room and Portal floor · **every call, hero or not** · the quest chain and the Survey |
+| **Hero XP** | every lair cleared · every world-map dungeon room and Portal floor · a call's loot |
+| **Fragments** | a call's loot · a duplicate · boss chests, from a per-boss pool (not built, OQ-80) |
+| **Stardust** | every dungeon room and Portal floor · a call's loot · the quest chain and the Survey |
 
 - The chain is **army → hero → lairs and dungeon rooms → XP and Stardust →
   levels.** A player who never fights makes no progress on the
@@ -321,15 +321,14 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|---|
 | Key | Silver | Gold |
 | A key costs | **500 Gems** | **1,500 Gems** |
-| Base hero chance | **6%** | **12%** |
+| Base hero chance | **5%** | **5%** |
 | Soft pity from | pull 40 | pull 30 |
 | A hero guaranteed at | pull **60** | pull **50** |
 | A Legendary guaranteed at | — | pull **40** |
-| Rarity weights | 80 Common / 20 Rare | 75 Rare / 25 Legendary |
+| Rarity weights | 55 Common / 45 Rare | 75 Rare / 25 Legendary |
 | Pool | ~26 heroes | ~18 heroes |
-| A duplicate pays | 20 Fragments | 40 Fragments |
-| A miss pays | 3 Fragments | 6 Fragments |
-| Every call pays | 50 Stardust | 150 Stardust |
+| A duplicate pays | 10 Fragments | 10 Fragments |
+| Every call draws | 2–3 prizes (§6.4) | 2–3 richer prizes (§6.4) |
 | Free calls a day | **5**, one every 5 minutes | **1** |
 
 - **A banner's rarity weights are its pool.** A weight of zero excludes a
@@ -337,6 +336,8 @@ Every faucet is a fight or a banner. Room and floor amounts are
   Legendary is golden-call only, and Rare is in both.
 - **The golden call is the only door to a Legendary**, and its ordinary pull is
   already stronger — a Rare floor against a Common one.
+- **Both calls bring a hero equally often.** The golden one brings a better
+  one, and its loot is worth more.
 - **The first call on the common banner is free.** The button reads
   **"Call — free"**, not a price of zero; a ten-call over it charges nine.
 
@@ -371,15 +372,36 @@ Every faucet is a fight or a banner. Room and floor amounts are
   hard one, and resets on any hero.
 - **A Legendary pity** runs only on the golden banner, increments on **every**
   call, and resets only on a Legendary.
-- **No dead pulls.** A duplicate converts to Fragments. A miss pays Fragments
-  and Stardust.
+- **No dead pulls.** Every call draws its loot (§6.4). A duplicate converts
+  to Fragments.
 - **Rolls are a deterministic hash of `(seed, namespace, bannerId,
   pullNumber)`**, not a stream — one draw for hit/miss, one for rarity, one for
   the hero within it.
 - **The pool prefers a hero the player does not own**, so breadth comes before
   a duplicate.
 
-### 6.4 The ten-call
+### 6.4 The loot
+
+- **Every call draws 2 or 3 prizes** from its banner's loot table, hero or
+  not; each count is as likely and each prize is a weighted draw. A hero, when
+  the roll hits, comes on top.
+- **Most of a call is for the town and the levels.** About half the prizes
+  are fragments — about one a call — and the rest is Stardust, Hero XP,
+  speed-ups and resource chests.
+- **A fragment is of any hero of its rarity the banner calls**, owned or not:
+  toward a recruit, or toward the next star.
+- The golden table holds the same kinds, each worth more: Legendary
+  fragments, more Stardust and Hero XP, 1 h speed-ups and chests.
+
+| Prize (% of the draws) | The common call | The golden call |
+|---|---|---|
+| 1 Fragment | 25 Common · 20 Rare | 15 Legendary · 30 Rare |
+| Stardust | 10 × 10 · 9 × 25 · 2 × 100 | 3 × 10 · 8 × 25 · 10 × 100 |
+| Hero XP | 10 × 50 · 10 × 200 | 10 × 200 · 10 × 500 |
+| A speed-up — construction, training, workshop | 4, of 5 min | 4, of 1 h |
+| A resource chest — Food, Wood, Stone, Gold | 8, of 10 min | 8, of 1 h |
+
+### 6.5 The ten-call
 
 - **×10 is ten calls at ten keys**, no discount: the value of a batch is the
   pity it walks, not a price break.
@@ -501,10 +523,10 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - **The places are the summary.** When the last card lands the chest sinks
   away, every card lights up, a *Rewards* plaque and **Collect** appear. No
   separate receipt is drawn.
-- **A ten-call condenses.** Same thing, one card with a count: ten calls
-  paying 50 Stardust each are one 500, and four fragments of one hero are one
-  stack of four.
-- **Heroes come last**, so the sequence arrives at what the player called for.
+- **A ten-call condenses.** Same thing, one card with a count: three draws
+  of 25 Stardust are one 75, two Food chests one card of two, and four
+  fragments of one hero one stack of four.
+- **The order:** currencies, then items, then fragments. **Heroes come last**, so the sequence arrives at what the player called for.
 - **A whole new hero is the rarest thing in a chest, and is celebrated.**
   Before the flip its card back glows and trembles in its rarity over a drum
   roll (a Legendary's longer). The flip darkens the room, flashes, shakes the
@@ -592,8 +614,8 @@ how many slots it wants (1…n) and what to do with the answer.
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
-| What a miss and a duplicate pay | §6.1 | `banners.fragmentsPerMiss`, `duplicateFragments` |
-| What a call pays in Stardust | §6.1 | `banners.pullStardust` |
+| What a duplicate pays | §6.1 | `banners.duplicateFragments` |
+| What a call draws | §6.4 | `banners.loot`, `lootDrawsMin`, `lootDrawsMax` |
 | The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design
