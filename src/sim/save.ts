@@ -1232,6 +1232,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
         // The last world-server effect applied: saved with what it changed.
         EffectSeq: state.world.effectSeq,
+        // The Portal: the last opening announced, and ranking Gems unclaimed.
+        PortalAnnounced: state.world.portalAnnounced,
+        PortalPrizes: state.world.portalPrizes.map((p) => ({ Event: p.event, Place: p.place, Of: p.of, Floor: p.floor, Gems: p.gems })),
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1865,6 +1868,8 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Chapels?: unknown;
     Armies?: Array<Record<string, unknown>>;
     EffectSeq?: unknown;
+    PortalAnnounced?: unknown;
+    PortalPrizes?: Array<Record<string, unknown>>;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   // A trip's time to leave each hex of its path. (A trip from before v78
@@ -1923,5 +1928,9 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),
     effectSeq: Number.isInteger(d.EffectSeq) && (d.EffectSeq as number) >= 0 ? d.EffectSeq as number : 0,
+    portalAnnounced: typeof d.PortalAnnounced === 'number' && d.PortalAnnounced >= 0 ? d.PortalAnnounced : 0,
+    portalPrizes: (Array.isArray(d.PortalPrizes) ? d.PortalPrizes : [])
+      .filter((p) => [p.Event, p.Place, p.Of, p.Floor, p.Gems].every(Number.isInteger) && (p.Gems as number) > 0)
+      .map((p) => ({ event: p.Event as number, place: p.Place as number, of: p.Of as number, floor: p.Floor as number, gems: p.Gems as number })),
   };
 }

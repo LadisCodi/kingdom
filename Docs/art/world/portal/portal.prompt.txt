@@ -1,0 +1,21 @@
+WORLD HEX SPRITES — THE DARK PORTAL for the game "Kingdom" (Docs/features/19-world-map.md §10). Follow this file exactly.
+
+GENERATE NEW IMAGES. Do not edit or export the attached file: it is ONLY a style reference.
+- ref-whex.png = hex sprites that ALREADY SHIP on the world board (forest, game, homestead, logging camp, fortress, mountain). THE STYLE IS LOCKED ON THEM: same render, same saturation, same outline softness, same light from above, same camera, same scale of rocks, trees and people. Your sprites stand on the same board, at its centre, next to these: match them.
+
+WHAT A SPRITE IS
+- The CONTENT of one hex of the world board: the Dark Portal, which stands on the centre hex of every board. The game draws a dark violet-grey ground tile under it. NO hex outline, NO drop shadow, NO background. Only the portal on full transparency.
+- Camera: from a little south of overhead, objects seen from a high three-quarter angle, standing upright — exactly the camera of ref-whex.png.
+- Footprint: a hex tile seen at this tilt has a top face like an elongated hexagon, about 1.4 times wider than tall. The portal fills it; the stones may rise above it.
+- Draw as if shown about 130 px wide on a phone: big readable shapes, no tiny details.
+
+THE PORTAL
+- A round sunken plaza of cracked dark slate flagstones, ringed by NINE tall dark standing stones (grey-violet stone, jagged tops, a few faintly carved runes), like a sinister stone circle.
+- In the middle of the plaza, a round pit that is the portal itself.
+- Ominous but readable in a cartoon game: no gore, no skulls.
+
+THE SHEET: one landscape image, 1536x1024, TWO sprites side by side (left half, right half). Nothing may cross the vertical midline: keep a clear 60 px band of transparency along it. The SAME portal, the same stones in the same places, drawn twice:
+LEFT: SHUT — the pit is a still, black-violet void with a dull glaze, the runes on the stones dark, no light, no particles. Asleep.
+RIGHT: OPEN — the pit is a swirling violet-magenta vortex spiralling down, bright at its heart, lighting the inner faces of the stones; the runes glow violet; a few violet sparks and wisps rising out of the pit. Awake and inviting.
+
+End of the request: Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG. Do not re-render to fix a prop count.

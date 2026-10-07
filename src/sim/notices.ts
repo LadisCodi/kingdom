@@ -17,7 +17,7 @@ import type { GameState, GoodId, LairId, UnitId, Wallet, WorldBuildWhat } from '
 /** What a news is about; one bubble per group. */
 export type NewsGroup =
   | 'raided' | 'built' | 'trained' | 'goods' | 'sighted' | 'explorer'
-  | 'worldBuild' | 'armyHome' | 'world' | 'event' | 'chainDone';
+  | 'worldBuild' | 'armyHome' | 'world' | 'portal' | 'event' | 'chainDone';
 
 interface NewsBase { key: string; at: number }
 
@@ -34,13 +34,17 @@ export type News = NewsBase & (
   | { group: 'armyHome'; troops: number; fallen: number }
   /** A world server report; `hex` is where it happened, when it has a place. */
   | { group: 'world'; text: string; good: boolean; hex?: number }
+  /** The Dark Portal opened; or closed with the player ranked where it
+   *  pays nothing (a place that pays is a prize to claim instead). */
+  | { group: 'portal'; open: true; closesAt: number }
+  | { group: 'portal'; open: false; place: number; of: number; floor: number }
   | { group: 'event'; entry: string; title: string; detail: string }
   | { group: 'chainDone' }
 );
 
 /** Every group, in the order the column shows news of equal age. */
 export const NEWS_GROUPS: readonly NewsGroup[] = [
-  'raided', 'built', 'trained', 'goods', 'sighted', 'explorer', 'worldBuild', 'armyHome', 'world', 'event', 'chainDone',
+  'raided', 'built', 'trained', 'goods', 'sighted', 'explorer', 'worldBuild', 'armyHome', 'world', 'portal', 'event', 'chainDone',
 ];
 
 /** File a news, newest first. The same event twice is one; past the cap the

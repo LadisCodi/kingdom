@@ -48,6 +48,8 @@ export function freshWorld(seed: number): WorldState {
     chapels: [],
     armies: [],
     effectSeq: 0,
+    portalAnnounced: 0,
+    portalPrizes: [],
   };
 }
 

@@ -38,7 +38,8 @@
 | Explorer home | an explorer comes home: hexes revealed | the compass | the hex it went to, on the board | — |
 | World build | a world building finishes | the building | its hex | — |
 | Army home | an army comes home: how many came back, how many fell | the army | the home hex | — |
-| World report | a world report effect: ground won or lost, a garrison held or fell, a camp raided a hex, a relic lost, a dungeon or Portal closed, an exchange returned | the hex's art; good or bad tone | its hex | — |
+| World report | a world report effect: ground won or lost, a garrison held or fell, a camp raided a hex, a relic lost, a dungeon closed, an exchange returned | the hex's art; good or bad tone | its hex | — |
+| Portal | the Dark Portal opens; or it closes with the player ranked where it pays nothing — the place, of how many, the floor | the Portal, open or shut | the Portal nearest the city | — |
 | Event | an event window opens ([`13-events.md`](13-events.md)) | the calendar | — | — |
 | Chain done | the last quest is claimed | the crown | — | — |
 
@@ -46,6 +47,8 @@
   has no Go.
 - A **raid** carries the lair and what it took. Several raids in one absence
   are one bubble.
+- **The Portal opening** is news once an opening, on whichever view the
+  player is on when the board is next read.
 
 ### 2.2 States
 
@@ -55,6 +58,7 @@
 | Mana refill | the rewarded-video offer is open ([`08-magic.md`](08-magic.md) §6) | the Mana flask | — | **Watch** |
 | Relic asleep | a city relic's window has closed ([`09-relics.md`](09-relics.md) §2.1) | the relic | the relic's sheet, where it is woken | — |
 | Tomorrow's part | a bought pack's next-day part is waiting — countdown, then ready | the chest | — | **Claim** when ready: the offer's splash |
+| Portal reward | a closed Portal opening placed the player where it pays Gems ([`19-world-map.md`](19-world-map.md) §10.4) — the place, the floor, the Gems | the Portal, shut; it glows | — | **Claim**: the Gems |
 | Free call | a free gacha pull is waiting | the key | the store's Heroes | — |
 | Hero rested | a hero who came back exhausted is whole again | the hero's bust | the heroes sheet | — |
 

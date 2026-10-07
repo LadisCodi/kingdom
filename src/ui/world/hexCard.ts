@@ -28,7 +28,7 @@ import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
 import { claimGold, districtOf, districtRate, floorPower, nextRoom, upgradeLevel } from '../../worldServer/core';
-import { portalThumb } from '../../render/world/boardRenderer';
+import { portalPortrait } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
@@ -292,7 +292,7 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
     p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
       : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
   const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
-    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalThumb(84)),
+    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalPortrait(p?.open ?? false, 84)),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
   const head = el('div', { class: 'dc-head' }, art,
     el('div', { class: 'dc-what-col' },
