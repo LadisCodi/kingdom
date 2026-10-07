@@ -49,14 +49,16 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 
 ## 3. Per menu
 
-### 3.1 Fog — Unknown and Sensed (m85)
+### 3.1 Fog — Unknown and Sensed (m85b, approved)
 
-- Vignette: the hex under cloud; a Sensed hex shows its shapes faintly.
-- Tiles: *There and back* (compass), *To explore* (hourglass), *Explorers*
-  2/3 (the explorer's face).
-- **What exploring pays**: reward tiles (coins, Stardust…), Sensed only.
-- Main button: **Explore** with its Gold inside. Blocked: padlock +
-  *"Research Cartography in the Atlas"* with a *Go* link to the book.
+- **THE HEX**: the hex under cloud, the distance, one sentence; no tiles —
+  nothing is known about the ground yet.
+- **EXPLORE**: an explorer's vignette, the cost button **Explore**; tiles
+  *There and back*, *To explore*.
+- **EXPLORING IT PAYS** (Sensed only): reward tiles.
+- Explorers free / out is not a stat of this card: it is shown up in the
+  main HUD while the card is open, as the builders are when building.
+- Blocked: padlock + *"Research Cartography in the Atlas"*.
 - An explorer already out: the training row in place of the button.
 
 ### 3.2 Free ground — Build (m83)
@@ -94,16 +96,16 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   world server.
 - Garrison: the army's portraits in a row, Recall.
 
-### 3.4 A camp (m86)
+### 3.4 A camp (m86b, approved with changes)
 
-- Vignette: the camp's art (`whex_camp_*`), the difficulty as a wax seal
-  (*Easy … Deadly*, its colour).
-- **ENEMY / YOUR ARMY** as the lair screen's two ribbons, power against
-  power — the comparison is the whole decision.
-- **Beaten, it pays**: reward tiles.
-- Ribbon: *"It raids your Farm Lands in 1h 20m — beat it first"*.
-- Main button: **Attack**. Secondary row: **Pay off** with its price inside
-  and *"The camp leaves, and pays nothing"*.
+- **THE HEX**: the bare ground, the distance; tiles Terrain, Feature, March.
+- **CAMP**: the camp's art with its difficulty seal, its creature and one
+  line; the ENEMY ribbon with its power only — the player's own army is
+  read on the deployment screen, after Attack.
+- **BEATEN, IT PAYS**: reward tiles.
+- One row, two answers to the same camp: **Negotiate** (its price on the
+  plate above it, the shipped cost style) and **Attack** (no price).
+- No raid ribbon: the board's arrow says which district it raids.
 
 ### 3.5 The army sheet (m87)
 

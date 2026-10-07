@@ -55,6 +55,8 @@ export function renderRelicPicker(game: Game): HTMLElement {
   if (pick === null) return el('div', {});
   const list = game.relicPickList();
   const chosen = list.find((v) => v.id === pick.slot) ?? null;
+  // Over a world district's Chapel it chooses among the world relics.
+  const host = pick.chapel === undefined ? 'Shrine' : 'Chapel';
   const body = el('div', { class: 'hp' },
     el('div', { class: 'hp-list', 'data-keep-scroll': 'relic-picker' },
       sectionHead('Relics'),
@@ -64,11 +66,11 @@ export function renderRelicPicker(game: Game): HTMLElement {
           onClick: () => game.relicPickToggle(v.id),
           inList: true,
         })))
-        : el('p', { class: 'hp-none' }, 'No city relic is restored yet')),
-    headPanel({ tone: 'green', title: 'Shrine', trailing: [`${chosen === null ? 0 : 1}/1`], cls: 'hp-party' },
+        : el('p', { class: 'hp-none' }, `No ${host === 'Shrine' ? 'city' : 'world'} relic is restored yet`)),
+    headPanel({ tone: 'green', title: host, trailing: [`${chosen === null ? 0 : 1}/1`], cls: 'hp-party' },
       el('div', { class: 'hp-slots' }, chosen === null
         ? emptyRelicSlot()
-        : pickCard(game, chosen, { onClick: () => game.relicPickClear(), label: `Take ${chosen.name} out of the Shrine` }))),
+        : pickCard(game, chosen, { onClick: () => game.relicPickClear(), label: `Take ${chosen.name} out of the ${host}` }))),
     el('div', { class: 'hp-go', 'data-coach': 'relic-pick-select' },
       btn({ label: 'Select', kind: 'primary', onClick: () => game.relicPickConfirm() })),
   );

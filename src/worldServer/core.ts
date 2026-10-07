@@ -30,7 +30,7 @@ import { CAMP_CREATURE } from '../sim/world/camps';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexDistance, isBoardIndex, ringOf } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
-import { WORLD_DISTRICTS, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
+import { WORLD_DISTRICTS, WORLD_UPGRADES, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
   ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
   RaidPlan, SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
@@ -428,7 +428,25 @@ export function upgradeRefusal(b: ServerBoard, seat: number, index: number, upgr
     if (hasChapel(b, index)) return 'MaxLevel';
     if (chapelsOf(b, seat) >= chapelsAllowed(b, seat)) return 'TooManyChapels';
   }
+  // A building that is not there yet takes a slot of its own (19 §7.2).
+  if (upgradeLevel(h, upgrade) === 0 && slotsUsed(b, index) >= districtSlots(b, index)) return 'NoSlot';
   return null;
+}
+
+/** How many buildings the district on `index` holds: one, two on bare
+ *  ground (19 §7.2). */
+export function districtSlots(b: ServerBoard, index: number): number {
+  const d = districtOf(boardData(b).hexes[index]);
+  return d === null ? 0 : WORLD_BUILD.districts[d].slots;
+}
+
+/** The buildings standing or going up in the district on `index` — a
+ *  Shrine district's own Chapel among them. */
+export function slotsUsed(b: ServerBoard, index: number): number {
+  const h = b.hexes[index];
+  if (h === undefined) return 0;
+  return WORLD_UPGRADES.filter((u) => (u === 'Chapel' ? hasChapel(b, index) : upgradeLevel(h, u) > 0)
+    || h.work?.upgrade === u).length;
 }
 
 /** An upgrade's level on a hex: 0 for none. */

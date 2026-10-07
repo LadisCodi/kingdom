@@ -360,7 +360,7 @@ export type Refusal =
   | 'NothingBuilding' | 'Guarded'
 
   /** A world relic's host (relic-restoration.md §5.2). */
-  | 'NoChapel' | 'TooManyChapels' | 'NotAWorldRelic'
+  | 'NoChapel' | 'TooManyChapels' | 'NoSlot' | 'NotAWorldRelic'
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */
