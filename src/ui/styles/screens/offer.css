@@ -563,3 +563,12 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 }
 /* The row takes the top: the light and its figure start lower. */
 .ofs-screen.has-tabs .ofs-hero { top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--px) * 92); height: 60%; }
+
+/* The widget turning to the next offer: its picture and its sign fade in. */
+.ofw.is-turning > .ofw-slot,
+.ofw.is-turning > .ofw-sign { animation: ofw-turn 600ms ease-out both; }
+@keyframes ofw-turn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ofw.is-turning > .ofw-slot,
+  .ofw.is-turning > .ofw-sign { animation: none; }
+}
