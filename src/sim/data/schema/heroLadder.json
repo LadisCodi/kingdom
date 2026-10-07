@@ -55,6 +55,11 @@
           "type": "float",
           "min": 0,
           "doc": "What each rank adds, as a share of the rank-1 value: 0.25 makes rank 5 twice rank 1."
+        },
+        "firstCallsNewHero": {
+          "type": "int",
+          "min": 0,
+          "doc": "The kingdom's first calls, counted across every banner, that cannot miss and hand a hero the player does not own yet."
         }
       }
     }

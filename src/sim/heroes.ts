@@ -607,12 +607,18 @@ export function pull(
   // Fragments is a tutorial that teaches the wrong lesson. Only the hit is
   // forced; which hero is still the roll's.
   const firstCall = banner === STANDARD_BANNER && n === 0;
+  // THE FIRST CALLS ACROSS EVERY BANNER ARE A NEW HERO: a quest that asks for
+  // heroes must never wait on a roll. The hit is forced and the hero is one
+  // the player does not own; which one is still the roll's.
+  const starter = Object.values(state.gacha.pullCounts).reduce((sum, c) => sum + c, 0)
+    < HERO_LADDER.firstCallsNewHero;
+  const forcedHit = firstCall || starter;
   const pity = pityCount(state, banner);
   const legPity = legendaryPityCount(state, banner);
   state.gacha.pullCounts[banner] = n + 1;
 
   const roll = rand(state.seed, 'gacha', banner, n);
-  if (!firstCall && roll >= heroChanceAt(pity, banner)) {
+  if (!forcedHit && roll >= heroChanceAt(pity, banner)) {
     // Never a dead pull: a miss still pays Fragments toward someone this
     // banner could have given you.
     state.gacha.pityCounters[banner] = pity + 1;
@@ -639,6 +645,13 @@ export function pull(
       if (alt.length > 0) { rarity = r; pool = alt; break; }
     }
   }
+  if (starter && pool.every((id) => ownsHeroId(state, id))) {
+    // This rarity is complete: a starter call moves to one that is not.
+    for (const r of bannerRarities(banner)) {
+      const alt = bannerPool(state, banner, r).filter((id) => !ownsHeroId(state, id));
+      if (alt.length > 0) { rarity = r; pool = alt; break; }
+    }
+  }
 
   state.gacha.pityCounters[banner] = 0;
   state.gacha.legendaryPity[banner] = rarity === 'Legendary' ? 0 : legPity + 1;
@@ -652,7 +665,7 @@ export function pull(
     fragments: outcome === 'Duplicate' ? b.duplicateFragments : 0,
     fragmentsOf: outcome === 'Duplicate' ? heroId : null,
     stardust,
-    guaranteed: firstCall || pity >= b.hardPityAt - 1,
+    guaranteed: forcedHit || pity >= b.hardPityAt - 1,
     guaranteedLegendary: forced && rarity === 'Legendary',
   };
 }

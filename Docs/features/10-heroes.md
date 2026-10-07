@@ -342,6 +342,9 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **The first call on the common banner is free and always a hero**: only the
   hit is forced, the hero is still the roll's
   ([`22-progression.md`](22-progression.md) §6).
+- **The first two calls, counted across both banners, are each a new hero**
+  (`heroLadder` › `firstCallsNewHero`): the hit is forced and the hero is one
+  not yet owned.
 - **The banner hangs in the Tavern.** Until a Tavern stands, the Heroes tab
   and the Store's banner are padlocked. **The kingdom starts with no hero**:
   its first is this free call, and no hero is ever granted by the story.
