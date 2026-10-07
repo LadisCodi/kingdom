@@ -240,6 +240,18 @@ export const restMarks = (): HTMLElement =>
   el('span', { class: 'k-zzz', 'aria-hidden': 'true' },
     el('span', {}, 'Z'), el('span', {}, 'Z'), el('span', {}, 'Z'));
 
+/** AWAY WITH AN ARMY — the marks beside the Zs, at the same corner and in
+ *  the same spirit: a boot stepping out with dust kicked up behind it
+ *  (marching), a torch flickering at a dungeon's mouth (camped below
+ *  ground), a shield with light running across it (on guard). */
+export const marchMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-march', 'aria-hidden': 'true' },
+    el('span', { class: 'k-dust' }), el('span', { class: 'k-dust' }), iconEl('boot', { size: 'sm' }));
+export const delveMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-delve', 'aria-hidden': 'true' }, el('span', { class: 'k-torch' }), iconEl('dungeon', { size: 'sm' }));
+export const guardMarks = (): HTMLElement =>
+  el('span', { class: 'k-mark k-guard', 'aria-hidden': 'true' }, iconEl('def', { size: 'sm' }));
+
 /** How long a rest has left, as `3h 20m` / `12m` / `<1m`, in its pill. */
 export function restLeft(ms: number): HTMLElement {
   const min = Math.ceil(ms / 60_000);

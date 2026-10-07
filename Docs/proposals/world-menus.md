@@ -116,6 +116,8 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 - It is the lair's deployment screen, as it ships: ENEMY / YOUR ARMY,
   TROOPS, the price row, Quick deploy and Attack.
 - A world camp's ENEMY board shows the camp's squads (done with §3.4).
+- Sent, it goes back to the menu it was opened from — the camp, the
+  dungeon, the Portal — which now shows the army on its way.
 - **Added**, between TROOPS and the price row, two widgets side by side:
   - **LOOT** — what beating it pays;
   - **TERRAIN** — the hex's ground and its modifiers on the fight.

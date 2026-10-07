@@ -593,7 +593,14 @@ how many slots it wants (1…n) and what to do with the answer.
   - in a picker opened for a fight, its **power** in place of the level —
     what it adds to the army's (`heroPowerPerDmg` × its damage);
   - a green check, top right, when it holds a slot;
-  - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
+  - what it is doing when it cannot be chosen, as an animated mark at the
+    top right and a pill in the level's place:
+    - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown;
+    - marching with an army, out or home: a boot stepping, dust kicked up;
+      the time left on that leg;
+    - camped in a dungeon or the Portal: a torch flickering at a dungeon's
+      mouth; *Dungeon*;
+    - garrisoning a Fortress: a shield gleaming; *On guard*.
   - No name: the illustration is enough.
 - **Top**: the filter bar — `All`, then one tab per unit type heroes fight
   as — and the sort (level ↔ rarity).

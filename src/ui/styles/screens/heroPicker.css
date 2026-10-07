@@ -154,6 +154,8 @@ button.hc { cursor: pointer; }
 /* Exhausted: asleep — darkened, the Zs rising, its rest's countdown. */
 .hc.is-resting .hc-art,
 .hc.is-resting::before { filter: brightness(0.5) saturate(0.7); }
+.hc > .k-mark { --mark-size: calc(var(--hc-w) * 0.3); top: calc(var(--hc-w) * 0.05); right: calc(var(--hc-w) * 0.03); z-index: 2; }
+.hc:has(> .k-mark) .hc-rank { display: none; }
 .hc.is-resting > .k-zzz { --zzz-size: calc(var(--hc-w) * 0.13); top: calc(var(--hc-w) * 0.06); right: calc(var(--hc-w) * 0.02); }
 /* Not found yet: warm stone in place of the rarity's face, the figure a
    dark silhouette, the fragments where the level was. */
