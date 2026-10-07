@@ -149,7 +149,7 @@ import {
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
-import { fastestRoute, type Route } from './sim/world/travel';
+import { fastestRoute, homeboundMs, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
@@ -2799,6 +2799,17 @@ export class Game {
         gems: explorerRushCost(trip, now),
       };
     }
+    if (job.kind === 'army') {
+      const a = this.worldView?.armies.find((x) => x.id === job.armyId);
+      if (a === undefined || a.at === null) return null;
+      const from = a.phase === 'home' ? a.at - homeboundMs(a.stepMs) : a.departedAt;
+      const total = a.at - from;
+      return {
+        title: `Army · ${a.phase === 'home' ? 'coming home' : 'on the way'}`, icon: 'army',
+        progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
+        gems: gemsToFinish((a.at - now) / 1000),
+      };
+    }
     if (job.kind === 'hex') {
       const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
       const work = h === null ? null : hexWork(h);
@@ -2846,6 +2857,11 @@ export class Game {
   speedupScreen(): SpeedupScreen | null {
     const job = this.speedJob;
     if (job === null) return null;
+    // An army's arrival is the server's: read it again from the last snapshot.
+    if (job.kind === 'army') {
+      const a = this.worldView?.armies.find((x) => x.id === job.armyId);
+      job.at = a !== undefined && a.at !== null && (a.phase === 'out' || a.phase === 'home') ? a.at : 0;
+    }
     const now = this.now();
     const left = jobRemainingSeconds(this.state, job, now);
     const facts = this.jobFacts(job);
@@ -2879,6 +2895,17 @@ export class Game {
       if (home !== null) this.explorerHomeToast(home);
       return true;
     }
+    if (job.kind === 'army') {
+      if (this.worldServer === null) return false;
+      const r = await this.worldServer.hurryArmy(job.armyId, seconds);
+      if (!r.ok) {
+        this.toast(this.worldRefusal(r.why));
+        return false;
+      }
+      job.at = r.finishesAt;
+      this.applyWorldSnapshot(r.snapshot);
+      return true;
+    }
     if (job.kind !== 'hex' || this.worldServer === null) return false;
     const r = await this.worldServer.hurry(job.index, seconds);
     if (!r.ok) {
@@ -2897,7 +2924,7 @@ export class Game {
   async doSpeedup(id: ItemId, n = 1): Promise<void> {
     const job = this.speedJob;
     if (job === null) return;
-    if (job.kind === 'hex' || job.kind === 'explorer') {
+    if (job.kind === 'hex' || job.kind === 'explorer' || job.kind === 'army') {
       if (speedupRefusal(this.state, job, id, n, this.now()) !== null) return;
       if (await this.speedAway(job, ITEMS[id].seconds * n)) {
         spendSpeedups(this.state, job, id, n);
@@ -2910,7 +2937,7 @@ export class Game {
   async doAutoSpeedup(): Promise<void> {
     const job = this.speedJob;
     if (job === null) return;
-    if (job.kind === 'hex' || job.kind === 'explorer') {
+    if (job.kind === 'hex' || job.kind === 'explorer' || job.kind === 'army') {
       // One move by the whole plan, then the items it took.
       const plan = autoPlan(this.state, job, this.now());
       const seconds = plan.reduce((s, p) => s + ITEMS[p.id].seconds * p.n, 0);
@@ -2931,6 +2958,7 @@ export class Game {
       if (d) this.doFinishTraining(d);
     } else if (job.kind === 'workshop') this.doRushWorkshopItem(job.districtId);
     else if (job.kind === 'explorer') this.doFinishExplorer(job.tripId);
+    else if (job.kind === 'army') void this.doFinishArmyMarch(job.armyId).then(() => this.afterSpeedup());
     else void this.doFinishHexWork(job.index).then(() => this.afterSpeedup());
     this.afterSpeedup();
   }
@@ -5707,6 +5735,29 @@ export class Game {
     this.state.world.builds = this.state.world.builds.filter((b) => b !== done);
     playSfx('gemSpend');
     if (done !== undefined) this.toast(worldBuildDone(done.what, done.level));
+    this.applyWorldSnapshot(r.snapshot);
+  }
+
+  /** Bring an army to where it is going now, with Gems for the time left. */
+  async doFinishArmyMarch(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    const a = this.worldView?.armies.find((x) => x.id === armyId);
+    if (a === undefined || a.at === null) return;
+    const left = Math.max(0, (a.at - this.now()) / 1000);
+    const gems = gemsToFinish(left);
+    if (getWallet(this.state.player.wallet, 'Gems') < gems) {
+      this.shake(['Gems']);
+      this.notify();
+      return;
+    }
+    const r = await this.worldServer.hurryArmy(armyId, left + 1);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    this.state.player.wallet.Gems = getWallet(this.state.player.wallet, 'Gems') - gems;
+    playSfx('gemSpend');
     this.applyWorldSnapshot(r.snapshot);
   }
 

@@ -17,6 +17,7 @@ import type { ArmyView } from '../../worldServer/types';
 import { el, formatCount, formatCountdown, formatExact } from '../format';
 import { btn, chip, iconEl, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
+import { marchingDock } from './delveScreen';
 import { crestEl } from '../friends/kingdomBits';
 
 /** The floor the descent was last opened on, and when it was last drawn:
@@ -83,13 +84,7 @@ function dock(game: Game, index: number, army: ArmyView | undefined, open: boole
       el('div', { class: 'dv-calls is-one' },
         btn({ label: 'Send', kind: 'primary', disabledReason: open ? undefined : 'The Portal is shut', onClick: () => game.openArmy(index, 'portal') })));
   }
-  if (army.phase !== 'camp') {
-    const left = army.at === null ? 0 : Math.max(0, army.at - game.now()) / 1000;
-    return el('div', { class: 'dv-dock' },
-      el('p', { class: 'wd-line' }, `Your army is on its way · there in ${formatCountdown(left)}`),
-      el('div', { class: 'dv-calls is-one' },
-        btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) })));
-  }
+  if (army.phase !== 'camp') return marchingDock(game, army, 'On the way down');
   const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
   const slots = army.slots ?? [];
   return el('div', { class: 'dv-dock' },

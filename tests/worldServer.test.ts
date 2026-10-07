@@ -13,7 +13,7 @@ import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } f
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
   floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
-  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade,
+  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade, hurryArmy,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
@@ -498,6 +498,25 @@ describe('the Dark Portal', () => {
     expect(loot?.kind === 'loot' && loot.precious?.amount).toBe(floorReward(WORLD_PORTAL.preciousEvery).precious);
   });
 
+  it('an army on the road, hurried, arrives sooner by the seconds paid, its route moving with it, and at once when they cover the rest', () => {
+    const { b, seat } = quietBoard();
+    const opens = portalOpensAt(portalEvent(T0) + 1);
+    const r = sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, opens);
+    if (!r.ok) throw new Error(r.why);
+    const a = b.armies.find((x) => x.id === r.army)!;
+    const left = r.arrivesAt - opens;
+    const departed = a.departedAt;
+    const h = hurryArmy(b, seat, r.army, left / 2000, opens);
+    expect(h.ok && h.finishesAt).toBe(r.arrivesAt - left / 2);
+    expect(a.departedAt).toBe(departed - left / 2);
+    expect(a.phase).toBe('out');
+    // More than is left: it is there now.
+    const done = hurryArmy(b, seat, r.army, left, opens);
+    expect(done.ok).toBe(true);
+    expect(a.phase).toBe('camp');
+    // Nothing on the road to hurry.
+    expect(hurryArmy(b, seat, r.army, 60, opens)).toEqual({ ok: false, why: 'Busy' });
+  });
   it('takes floors one at a time, as often as Mana pays for, and pays the ranking at the close', () => {
     const { b, seat } = quietBoard();
     const opens = portalOpensAt(portalEvent(T0) + 1);

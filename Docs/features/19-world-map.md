@@ -678,7 +678,9 @@ A hex holds **none or one**. A feature decides the district built there
 - **The army**, docked at the foot, as the deployment draws it: its power,
   its squads (up to 6) with their counts and the soldiers lost so far, its
   heroes (up to 3) with their HP. **Withdraw** and **Attack** (the frontier,
-  at once, priced in Mana, §4). On its way: when it arrives, and Withdraw.
+  at once, priced in Mana, §4). On its way: the same board, a bar to its
+  arrival with the time left, **Finish** (Speed up when the Bag holds a
+  General speed-up; Gems otherwise), and Withdraw.
   None there: **Send**. To bring more troops, withdraw and send another
   army.
 - **After a fight**, once it has played: the spoils over the descent — what
@@ -787,7 +789,10 @@ The fixed appointment is worth more than the surprise.
 - **The ranking is on the floors**: every kingdom's shield on its deepest
   floor, the player's own *You*, the leader under the gold rank ribbon.
 - **The army**, docked as the delve's: Withdraw and **Descend** (the next
-  floor, in Mana). None down there: Send.
+  floor, in Mana); on its way, its bar and Finish. None down there: Send.
+- **An army's march can be hurried** — out or home — by General speed-ups
+  or by Gems for the time left (`rush.secondsPerGem`); its route moves with
+  it, so it stands where it should on the board.
 
 ### 10.4 What it pays
 

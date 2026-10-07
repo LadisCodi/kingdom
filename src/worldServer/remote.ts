@@ -81,6 +81,7 @@ export class RemoteWorldServer implements WorldServerApi {
   reportSeen(indices: number[]): Promise<CommandResult> { return this.command({ kind: 'reportSeen', indices }); }
   finish(index: number, asSeat?: number): Promise<CommandResult> { return this.command({ kind: 'finish', index }, asSeat); }
   hurry(index: number, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurry', index, seconds }); }
+  hurryArmy(armyId: string, seconds: number): Promise<CommandResult> { return this.command({ kind: 'hurryArmy', armyId, seconds }); }
   hostRelic(index: number, relic: ArtifactId, level: number): Promise<CommandResult> { return this.command({ kind: 'hostRelic', index, relic, level }); }
   unhostRelic(relic: ArtifactId): Promise<CommandResult> { return this.command({ kind: 'unhostRelic', relic }); }
   collect(index: number, asSeat?: number): Promise<CollectResult> { return this.command({ kind: 'collect', index }, asSeat); }

@@ -16,9 +16,12 @@ import { lumpMaterial } from '../../sim/world/board';
 import type { CurrencyId, HeroId, PreciousId, UnitId } from '../../sim/state';
 import { nextRoom, roomPower, roomReward } from '../../worldServer/core';
 import type { ArmyView, DungeonView } from '../../worldServer/types';
-import { el, formatCount, formatCountdown } from '../format';
+import { el, formatCount } from '../format';
 import { action, btn, chip, iconEl, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
+import { waitRow } from './dispatchSheet';
+import { homeboundMs } from '../../sim/world/travel';
+import { gemsToFinish } from '../../sim/rush';
 import { crestEl } from '../friends/kingdomBits';
 import { creatureFace } from '../lairSheet';
 import { CAMP_CREATURE } from '../../sim/world/camps';
@@ -98,6 +101,33 @@ function roomNode(
   return el('div', { class: `dv-room ${state}${boss ? ' is-boss' : ''}${side}` }, ...parts);
 }
 
+/** The army's own board as the deployment draws it, read only. */
+function armyBoard(game: Game, army: ArmyView): HTMLElement {
+  const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
+  const slots = army.slots ?? [];
+  return fieldArmyPanel(game, {
+    power: army.power,
+    troops: slots.filter((s) => s.kind === 'troop' && s.unitId !== null)
+      .map((s) => ({ unitId: s.unitId!, count: s.count, lost: lost.get(s.unitId!) ?? 0 })),
+    heroes: slots.filter((s) => s.kind === 'hero' && s.fighterId !== null && s.fighterId in HEROES)
+      .map((s) => ({ heroId: s.fighterId as HeroId, hp: s.hp, hpMax: s.hpMax })),
+  });
+}
+
+/** An army on the road: its board, how far along it is with the time left,
+ *  and Finish — Speed up when the Bag holds something that fits. */
+export function marchingDock(game: Game, army: ArmyView, what: string): HTMLElement {
+  const at = army.at ?? game.now();
+  const from = army.phase === 'home' ? at - homeboundMs(army.stepMs) : army.departedAt;
+  const left = Math.max(0, (at - game.now()) / 1000);
+  return el('div', { class: 'dv-dock' },
+    armyBoard(game, army),
+    waitRow(game, army.phase === 'home' ? 'Coming home' : what, from, at, gemsToFinish(left),
+      () => void game.doFinishArmyMarch(army.id), { kind: 'army', armyId: army.id, at }),
+    el('div', { class: 'dv-calls is-one' },
+      btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) })));
+}
+
 /** The army docked at the foot (m91b): the deployment's YOUR ARMY board,
  *  read only, then Withdraw and Attack. On its way: when it arrives. None
  *  there: Send. */
@@ -108,13 +138,7 @@ function dock(game: Game, index: number, army: ArmyView | undefined, cleared: nu
       el('div', { class: 'dv-calls is-one' },
         btn({ label: 'Send', kind: 'primary', onClick: () => game.openArmy(index, 'delve') })));
   }
-  if (army.phase !== 'camp') {
-    const left = army.at === null ? 0 : Math.max(0, army.at - game.now()) / 1000;
-    return el('div', { class: 'dv-dock' },
-      el('p', { class: 'wd-line' }, `Your army is on its way · here in ${formatCountdown(left)}`),
-      el('div', { class: 'dv-calls is-one' },
-        btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) })));
-  }
+  if (army.phase !== 'camp') return marchingDock(game, army, 'On the way');
   const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
   const slots = army.slots ?? [];
   const panel = fieldArmyPanel(game, {
