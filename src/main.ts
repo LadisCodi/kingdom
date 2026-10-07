@@ -2,6 +2,7 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+import { portalEvent, portalOpen, portalOpensAt } from './worldServer/core';
 import { renderHeroPicker } from './ui/heroPicker';
 import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
 import './style.css'; // legacy chrome — shrinks as screens migrate
@@ -108,6 +109,9 @@ import { addToWallet, getWallet, type CurrencyId } from './sim/state';
 import { holdWhileScrolling, legacy, ScreenSlot } from './ui/kit/host';
 import { dragToScroll } from './ui/kit/scroll';
 
+/** How far ahead of the device the dev world's clock runs (ms). */
+const DEV_CLOCK_KEY = 'kingdom.devClockMs';
+
 /** The dev bar's resource buttons (main.ts dev bar): what each adds — a
  *  material, null, doubles what is held (at least 1,000). */
 const DEV_GRANTS: ReadonlyArray<{ icon: string; coin: CurrencyId; amount: number | null }> = [
@@ -198,7 +202,14 @@ async function boot(): Promise<void> {
   // is up (worldServer/remote.ts), else a stand-in in the browser under its
   // own key (worldServer/local.ts). `?world=local` keeps the stand-in.
   const remoteWorld = saveManager.cloudActive && new URLSearchParams(location.search).get('world') !== 'local';
-  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall) : new LocalWorldServer(browserStore());
+  // A dev clock for the stand-in: how far ahead of the device the world runs
+  // (the dev bar's Portal button), so a timed event can be played any day.
+  const devClockMs = (): number => {
+    if (!new URLSearchParams(location.search).has('dev')) return 0;
+    try { return Number(localStorage.getItem(DEV_CLOCK_KEY)) || 0; } catch { return 0; }
+  };
+  game.worldServer = remoteWorld ? new RemoteWorldServer(cloudWorldCall)
+    : new LocalWorldServer(browserStore(), () => Date.now() + devClockMs(), devClockMs);
   // The friends list follows the world: the `social` edge function beside
   // the `world` one, else a stand-in peopled with made-up kingdoms
   // (socialServer/local.ts).
@@ -941,6 +952,17 @@ async function boot(): Promise<void> {
         game.state.landmarks.claimed[tower.id] = true;
         runTick();
         game.enterWorld();
+      }),
+      // The Dark Portal, open now: the stand-in's clock moves on to its next
+      // opening (19 §10.2), and the page reloads on it. Forward only.
+      button('🌀 Portal', () => {
+        const now = game.now();
+        let k = portalEvent(now);
+        if (portalOpen(now)) { game.toast('The Portal is open'); game.notify(); return; }
+        if (portalOpensAt(k) <= now) k += 1;
+        const ahead = portalOpensAt(k) - now + 60_000;
+        try { localStorage.setItem(DEV_CLOCK_KEY, String((Number(localStorage.getItem(DEV_CLOCK_KEY)) || 0) + ahead)); } catch { return; }
+        location.reload();
       }),
       // The whole world in view, to look the board over without exploring it.
       button('🗺 reveal', () => {
