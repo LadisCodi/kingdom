@@ -1984,8 +1984,8 @@ export const PARTY = balance.party;
 
 /**
  * What a garrison is worth per lair TIER: how many seconds of the city's own
- * production a raid takes of each material, and what clearing that tier's
- * lair costs in supplies. Everything ELSE about a lair — its creature, its
+ * production a raid takes of each material, and what clearing its lair
+ * teaches and puts in the Bag. Everything ELSE about a lair — its creature, its
  * power and its two counters — is authored by coordinate in `?dev=map`,
  * because it belongs to the site rather than to the tier
  * (Docs/features/18-garrisons-and-raids.md §8).
@@ -1993,7 +1993,6 @@ export const PARTY = balance.party;
 export interface GarrisonDef {
   tier: number;
   takeSeconds: number;
-  supplies: Wallet;
   /** Hero XP a lair of this tier teaches when its prize is claimed. */
   heroXp: number;
   /** Items a lair of this tier puts in the Bag when its prize is claimed. */
@@ -2038,9 +2037,6 @@ export interface WorldDef {
   explorerGemCostGrowth: number;
   /** Armies out at once before the War Camp adds any. */
   armySlots: number;
-  /** A fight on the board — an army sent to a camp or a rival, a dungeon
-   *  room, a Portal floor — in hours of the city's Mana regen (08 §1). */
-  fightManaHours: number;
   /** Who holds the five other cities until the board comes from the server. */
   rivals: readonly string[];
 }

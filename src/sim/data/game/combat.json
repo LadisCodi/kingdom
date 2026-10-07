@@ -23,7 +23,8 @@
     "genVillainThreshold": 400,
     "genVillainShare": 0.3,
     "genVillainSlots": 3,
-    "heroPowerPerDmg": 1.67
+    "heroPowerPerDmg": 1.67,
+    "fightMana": 20
   },
   "party": {
     "troopSlots": 6,

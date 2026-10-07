@@ -71,8 +71,8 @@ guard { threat, power, warningMinutes }
   into on a clock.
 - The warning is per lair: a harder lair gets a longer one, because the
   army it needs takes longer to build.
-- A ruin's **tier** keys the `garrisons` entries that are not per site: take seconds
-  and gate supplies (§8).
+- A ruin's **tier** keys the `garrisons` entries that are not per site: take
+  seconds, Hero XP and Bag items (§8).
 
 | Lair | Tier | `threat` | `mix` | `power` | Warning |
 |---|---|---|---|---|---|
@@ -134,7 +134,7 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   of the room ladder, before `Depth 1 · Room 1`, and is entered from the
   battle screen like any room ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.5) —
   the garrison's squads in view without the Guild's scouting, their power
-  against the party's, supplies, the slots, **Clear the gate** in place of
+  against the party's, its Mana, the slots, **Clear the gate** in place of
   *Descend*.
 - **What the player sees is what they fight.** The squads are derived from
   `guard` (§2) and their sum is the number the attempt is scored against, so
@@ -152,14 +152,16 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   never blocks. Retry is unlimited and identical to a first attempt.
   - **Win:** the gate is cleared, its counter stops, its hoard is paid, and
     `Depth 1 · Room 1` becomes the frontier.
-  - **Lose:** the supplies are gone and the gate stands.
+  - **Lose:** the Mana is spent and the gate stands.
+- **An attempt costs Mana**, win or lose: `combat.fightMana` (20), as every
+  attack does ([`08-magic.md`](08-magic.md) §1).
 - **The attempt costs soldiers, win or lose**, by the rule every fight
   follows ([`combat.md`](combat.md) §4): the gate's power against the party's
   defence, most of the fallen into the infirmary and the rest gone.
   - Heroes are never among the dead: a hero can fall in a fight and is whole
     when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
   - **The screen says the price before it is paid** — the expected losses sit
-    under the button, beside the supplies.
+    under the button, beside the Mana.
 - **What it pays:** the hoard, in full, into the wallet immediately; Hero XP by the
   ruin's tier (`garrisons.heroXp`: 500 · 1,500 · 4,000 · 10,000 · 25,000); event points ([`13-events.md`](13-events.md) §2.2); the
   `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
@@ -196,7 +198,7 @@ take = floor( min(base, stored × raid.takeFractionMax) )
   depths behind are not offered at all.
 - **The map marker** carries the countdown badge while a gate is open.
 - **The room sheet, on a gate**: threat always visible, power comparison,
-  supplies, party, **Clear the gate**.
+  its Mana, party, **Clear the gate**.
 - No raid sheet, no defence screen, no army tab.
 
 ## 8. Dials, in the order to reach for them
@@ -207,7 +209,7 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 | take seconds per tier | 300 × tier | `garrisons` › `takeSeconds`, one entry per tier |
 | take fraction max, of what the stores hold | 0.5 | `raid.takeFractionMax` (`exploration`) |
 | raids a day, and the window they land in | 3 · 9–23 h | `raid.perDay`, `windowStartHour`, `windowEndHour` (`exploration`) |
-| gate supplies per tier | half the ruin's own supplies | `garrisons` › `supplies` |
+| what an attempt costs | 20 Mana, as every attack | `combat.fightMana` |
 
 ## 9. Deliberately not in this design
 

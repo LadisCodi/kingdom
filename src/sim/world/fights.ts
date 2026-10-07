@@ -1,28 +1,23 @@
 // What a fight on the world board costs and what a camp pays, on the
 // client's side (Docs/features/19-world-map.md §4, §5.4; 08-magic.md §1).
 //
-// MANA IS THE ENERGY A FIGHT SPENDS: an army sent to a camp or a rival, a
-// dungeon room, a Portal floor. Priced in hours of the city's own Mana regen
-// (`world.fightManaHours`), so a full pool buys the same number of fights at
-// every Sanctum level. The server never sees Mana: the client checks it,
+// MANA IS THE ENERGY AN ATTACK SPENDS: a lair, a camp, a rival, a dungeon
+// room, a Portal floor — a flat `combat.fightMana` each. Moving, claiming and
+// garrisoning are free. The server never sees Mana: the client checks it,
 // asks, and pays only once the server has said yes.
 //
 // A CAMP'S WOOD, FOOD AND STONE are owed by the server in hours
 // (`hours` on its loot) and priced here, in the city's own production, when
 // the army is home — the `tap.workSeconds` rule.
 
-import { WORLD, WORLD_CAMPS } from '../data/definitions';
-import { manaNetRegen } from '../mana';
+import { COMBAT, WORLD_CAMPS } from '../data/definitions';
 import { cityMakesPerSecond } from '../production';
 import { roundPrice } from '../roundPrice';
 import type { GameState, Wallet } from '../state';
 
-/** The Mana one fight on the board costs now; at least 1 while fights cost
- *  anything. */
-export function fightMana(state: GameState): number {
-  if (WORLD.fightManaHours <= 0) return 0;
-  return Math.max(1, roundPrice(manaNetRegen(state) * WORLD.fightManaHours));
-}
+/** The Mana one attack costs (`combat.fightMana`). `state` is kept so a
+ *  later discount has a place to read from. */
+export const fightMana = (_state: GameState): number => COMBAT.fightMana;
 
 /** Does sending an army for `purpose` start a fight on arrival? A camp's,
  *  a dungeon's and the Portal's fights are called by the player once the

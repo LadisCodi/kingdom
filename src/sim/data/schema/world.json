@@ -69,11 +69,6 @@
           "type": "int",
           "min": 1,
           "doc": "Armies a player can have out from the moment the world opens; the War Camp adds one per level."
-        },
-        "fightManaHours": {
-          "type": "float",
-          "min": 0,
-          "doc": "What a fight on the world board costs in Mana — an army sent to a camp or a rival, a dungeon room, a Portal floor — in hours of the city’s Mana regen (Docs/features/08-magic.md §1)."
         }
       }
     },

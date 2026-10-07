@@ -17,10 +17,10 @@
 
 | Currency | Source | Buys | Scope | On the plank? |
 |---|---|---|---|---|
-| **Gold** | housing rent, **gold mountains**, quests | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
-| **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
+| **Gold** | housing rent, **gold mountains**, quests | fog, buildings, upgrades, landmark claims | city | yes |
+| **Food** | berries, game, shoals, crops | villagers | city | yes |
 | **Wood** | forest | buildings | city | yes |
-| **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
+| **Stone** | mountains, iron mountains | buildings | city | yes |
 | **Mana** | time, capped | every tap on the ground · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, 1/h up to 10 · lumps · bought with Gold or Gems | pouring into technologies · investing in guild structures | kingdom | its own tab under the plank |
 | **Stardust** | dungeons · hero calls | the toll on a hero's ascension | kingdom | no — reads on the roster |
@@ -272,7 +272,6 @@ and research**.
 |---|---|
 | The whole map's fog | 2,522,803,392 |
 | The technology tree, 167 techs | 592,385 |
-| A lair fight's supplies, per attempt | 25 → 1,000 by tier |
 | Landmark claims | 2,000 · 10,000 (the Watchtower) · 25,000 ×5 · 100,000 ×4 |
 | Buildings and upgrades | on a count and level curve |
 | **Wonder levels** (designed, not built) | **unbounded** — [`16-wonders.md`](16-wonders.md) |
