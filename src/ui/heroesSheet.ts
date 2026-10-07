@@ -10,7 +10,7 @@
 //
 // THE CARD is a centred window (mockup hero-detail-A): the name on the
 // plank, the hero on its rarity's stage with the ascension laid over its
-// foot, then a section each for the stats, the skill and the level — the
+// foot, then a section each for the skill and the level — the
 // upgrade popup's section heads, parchment tiles, price line and button. A hero not found
 // yet gets the same window with its fragments where the level was.
 //
@@ -114,13 +114,32 @@ function heroArt(def: HeroDef): HTMLElement {
   return url ? spriteImgAt(url, 'hd-art') : el('div', { class: 'hd-art is-glyph' }, def.glyph);
 }
 
+/** The four stats, a column down the stage's left edge beside the hero:
+ *  bare, white on the vault — the icon beside its label over its value. */
+function stats(game: Game, id: HeroId): HTMLElement {
+  const s = heroStats(game.state, id);
+  const stat = (icon: 'atk' | 'dmg' | 'def' | 'hp', label: string, value: number) =>
+    el('div', { class: 'hd-stat' },
+      iconEl(icon),
+      el('div', { class: 'hd-stat-text' },
+        el('span', { class: 'hd-stat-label' }, label),
+        el('b', { class: 'hd-stat-value' }, formatExact(value))));
+  return el('div', { class: 'hd-stats' },
+    stat('atk', 'Attack', s.atk),
+    stat('dmg', 'Damage', s.dmg),
+    stat('def', 'Defence', s.def),
+    stat('hp', 'Health', s.hp));
+}
+
 /** The hero on its rarity's stage: an owned hero's ascension stars in its
- *  top-left corner, the Ascend laid over the foot of the vault. */
+ *  top-left corner, the stats down its left edge, the Ascend laid over the
+ *  foot of the vault. */
 function stage(game: Game, def: HeroDef, id: HeroId, view: RosterEntry): HTMLElement {
   const over = view.owned ? ascension(game, id, view) : null;
   return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${view.owned ? '' : ' is-missing'}` },
     heroArt(def),
     ...(view.owned ? [ascensionStars(view.entry.ascension, 'hd-stars')] : []),
+    stats(game, id),
     ...(over ? [over] : []),
   );
 }
@@ -260,15 +279,7 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
 function detail(game: Game, id: HeroId): HTMLElement {
   const def = HEROES[id];
   const view = rosterView(game.state).find((h) => h.id === id)!;
-  const s = heroStats(game.state, id);
   const owned = view.owned;
-
-  const statTile = (icon: 'atk' | 'dmg' | 'def' | 'hp', label: string, value: number) =>
-    el('div', { class: 'hd-stat k-section' },
-      iconEl(icon),
-      el('div', { class: 'hd-stat-text' },
-        el('span', { class: 'hd-stat-label' }, label),
-        el('b', { class: 'hd-stat-value' }, formatExact(value))));
 
   // THE BOON, on the six that have one (Docs/proposals/legendary-boons.md):
   // the thing no Common or Rare has, on while the hero is owned.
@@ -280,12 +291,6 @@ function detail(game: Game, id: HeroId): HTMLElement {
     // whether to chase this one, and that is a question about its type, its
     // numbers and what it does.
     stage(game, def, id, view),
-    sectionHead('Stats'),
-    el('div', { class: 'hd-stats' },
-      statTile('atk', 'Attack', s.atk),
-      statTile('dmg', 'Damage', s.dmg),
-      statTile('def', 'Defence', s.def),
-      statTile('hp', 'Health', s.hp)),
     sectionHead('Skill'),
     skill(game, id, owned),
     ...(boon !== null ? [sectionHead('Kingdom boon'),

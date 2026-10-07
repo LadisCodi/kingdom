@@ -98,13 +98,13 @@
 .hd-rarity {
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 80);
+  width: calc(var(--px) * 84);
   aspect-ratio: 384 / 160;
   padding: 0 calc(var(--px) * 14) calc(var(--px) * 3) calc(var(--px) * 16);
   box-sizing: border-box;
   background: var(--ribbon) center / 100% 100% no-repeat;
   color: var(--ink-inverse);
-  font-size: var(--text-body);
+  font-size: calc(var(--px) * 15);
   font-weight: var(--weight-title);
   --ribbon-ink: rgba(30, 14, 40, 0.75);
   text-shadow: 0 calc(var(--px) * 1) 0 var(--ribbon-ink), 0 0 calc(var(--px) * 2) var(--ribbon-ink);
@@ -189,20 +189,30 @@
   font-weight: var(--weight-strong);
 }
 
-/* The stats: four parchment tiles in one row — Attack, Damage, Defence,
-   Health — the icon over the label and the value. */
-.hd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--px) * 4); }
-.hd-stat.k-section {
+/* The stats: a column down the stage's left edge, under the stars, beside
+   the hero — no tile, white letters on a soft cast shadow so they read on
+   any vault. */
+.hd-stage > .hd-stats {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--px) * 46);
+  left: calc(var(--px) * 10);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 4) calc(var(--px) * 2);
+  gap: calc(var(--px) * 8);
+  color: var(--ink-inverse);
+  --stat-shadow: rgba(24, 10, 4, 0.75);
+  text-shadow: 0 calc(var(--px) * 1) calc(var(--px) * 2) var(--stat-shadow), 0 0 calc(var(--px) * 4) var(--stat-shadow);
 }
-.hd-stat > .icon { --icon-size: calc(var(--px) * 24); flex: none; }
-.hd-stat-text { display: flex; flex-direction: column; align-items: center; min-width: 0; line-height: 1.1; }
-.hd-stat-label { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); }
-.hd-stat-value { font-size: var(--text-title); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
+.hd-stat { display: flex; align-items: center; gap: calc(var(--px) * 6); }
+.hd-stat > .icon {
+  --icon-size: calc(var(--px) * 24);
+  flex: none;
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 2) var(--stat-shadow));
+}
+.hd-stat-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.05; }
+.hd-stat-label { font-size: calc(var(--px) * 12); font-weight: var(--weight-strong); }
+.hd-stat-value { font-size: calc(var(--px) * 20); font-weight: var(--weight-title); font-variant-numeric: tabular-nums; }
 
 /* The passive, and the boon under it on the six that have one. */
 .hd-passive.k-section {

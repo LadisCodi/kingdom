@@ -437,13 +437,15 @@ Each of these is data, not code:
 - **The stage** under the header, the card's largest piece: the hero on its
   rarity's painted vault, the full width of the window, fading into the
   paper at its foot.
+- **Stats** on the stage, a column down its left edge beside the hero:
+  Attack, Damage, Defence and Health, each its icon beside its label over
+  its value, in white with no background.
 - **Ascension**, on the stage with no background of its own (owned heroes
   only): the five stars in its top-left corner, and **Ascend** with its
   Stardust toll and fragment count over it at its foot, right. Every star
   full: no button.
 - Then one section each, under a section head; the stage keeps its height
   and the sections scroll:
-  - **Stats** — Attack, Damage, Defence and Health, a tile each, in one row.
   - **Skill** — one widget: its name, its rank pips and what it does at its
     rank; at its foot the next rank's price and **Upgrade** (what the next
     rank does is not shown), or a padlock saying what is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
