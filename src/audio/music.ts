@@ -31,8 +31,9 @@
 // resumes where it was and still ends on time.
 
 import harpUrl from './music/music-harp-peaceful-loop.ogg?url';
-import villageUrl from './music/music-town-village.ogg?url';
 import anthemUrl from './music/music-town-anthem.ogg?url';
+import legendaryUrl from './music/music-town-legendary.ogg?url';
+import folksUrl from './music/music-town-folks.ogg?url';
 import feastUrl from './music/music-tavern-loop.ogg?url';
 import battleUrl from './music/music-battle.ogg?url';
 import musterUrl from './music/music-muster.ogg?url';
@@ -67,9 +68,11 @@ interface Song {
 }
 const TOWN: Song[] = [
   { url: harpUrl, id: 'bgm', turn: 4 * 21.3, loop: null, heard: 0, last: 0 },
-  // Bluemare Village · Adventurer's Anthem.
-  { url: villageUrl, id: 'bgm-village', turn: null, loop: null, heard: 0, last: 0 },
+  // Adventurer's Anthem · Legendary Age · Friendly Folks (mastered quiet:
+  // lifted 8 dB through a limiter to meet the rest).
   { url: anthemUrl, id: 'bgm-anthem', turn: null, loop: null, heard: 0, last: 0 },
+  { url: legendaryUrl, id: 'bgm-legendary', turn: null, loop: null, heard: 0, last: 0 },
+  { url: folksUrl, id: 'bgm-folks', turn: null, loop: null, heard: 0, last: 0 },
 ];
 /** How long one song takes to hand over to the next (ms). */
 const CROSSFADE = 5000;

@@ -136,7 +136,7 @@ top each time they take over, the harp resumes where it was.
 | `music-tavern-loop` (feast) | A chest is being opened | Tavern (loop), sound collection |
 | `music-battle` | A fight plays back, until its plaque lands | *Battlefront Ode*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
 | `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Preparing for the Assault*, whole, 2.5 s fade at the tail — same collection |
-| The town playlist | Everything else: a random song first, then each in turn, the next crossfading in over the last 5 s | Harp Peaceful (loop), four rounds of it · *Bluemare Village* · *Adventurer's Anthem* — Owl Theory, Ultimate RPG Music Collection |
+| The town playlist | Everything else: a random song first, then each in turn, the next crossfading in over the last 5 s | Harp Peaceful (loop), four rounds of it · *Adventurer's Anthem* · *Legendary Age* · *Friendly Folks* — Owl Theory, Ultimate RPG Music Collection |
 
 ## The chest's cards, the world board, magic
 
