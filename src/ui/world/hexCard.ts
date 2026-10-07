@@ -325,7 +325,7 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
       el('div', { class: 'fr-trail wd-rank-floor' }, `Floor ${formatExact(r.floor)}`));
   });
   // Descend: the descent, where the army is sent and the floors fought.
-  const foot = [btn({ label: 'Descend', kind: 'destructive', onClick: () => game.openPortalDescent(index) })];
+  const foot = [btn({ label: 'Descend', kind: 'blue', onClick: () => game.openPortalDescent(index) })];
   const shut = p === null || !p.open ? [blockedLine(p === null ? 'The Portal is shut' : `It opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)] : [];
   return sheet({ title: 'The Dark Portal', onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
