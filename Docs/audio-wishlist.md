@@ -146,14 +146,14 @@ file each in `src/audio/sounds/`.
 | Name | Plays when | Source |
 |---|---|---|
 | `cardImpact` | Any card but a whole hero turns face up | Drum Hit 01 |
-| `cardRevealCommon` · `cardRevealRare` · `cardRevealLegend` | On top of it, by the card's rarity (a skip keeps only the hit for a common) | RPG Fanfares · Item Pickup 1 · Item Get 1 Short · Item Get 2 |
+| `cardRevealCommon` · `cardRevealRare` · `cardRevealLegend` | On top of it, by the card's rarity (a skip keeps only the hit for a common) | RPG Fanfares Pick Up Coin (four takes) · Item Get 1 Short · Fairy Magical 01 |
 | `barFill` | A fragments bar fills | Count Prize Long |
 | `explorerDepart` · `explorerHome` | An explorer sets out · comes home | Harpsichord Level Start · Level Complete |
-| `armyMarch` · `armyRecall` · `armyHome` | An army marches · is called back · comes home | Battle Intro 1 Short Drums Only · Horn 01 · Brass Positive Long |
+| `armyMarch` · `armyRecall` · `armyHome` | An army marches · is called back · comes home | Battle Intro 1 Short Drums Only · Horn 01 · Quest Complete Short |
 | `tribute` | A camp is paid off | Coins in Sack Dropped on Wood |
 | `raidAlarm` | A lair's garrison came down on the city | Battle Viking Horn Call Far |
-| `speedup` | A speed-up takes time off a wait | Time Warp Reverse Spell Cast |
-| `spellCast` · `relicWake` | A world relic's spell · a city relic woken | Casting Magic · Activate Glyph Forcefield |
+| `speedup` | A speed-up takes time off a wait | Clock Tick (four takes) |
+| `spellCast` · `relicWake` | A world relic's spell · a city relic woken | Casting Magic · Arcane Symbol Activate |
 
 A world build started or finished sounds as a city one does (`buildPlaced`,
 `constructionComplete`). A news whose event already sounded — a build, an
