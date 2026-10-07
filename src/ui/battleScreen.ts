@@ -17,8 +17,8 @@
 // event would restart every animation on the board and re-decode every
 // portrait (the fault `battlePicker.ts` documents).
 
-import { COMBAT, HEROES, UNITS, VILLAINS } from '../sim/data/definitions';
-import { SKILLS } from '../sim/skills';
+import { COMBAT, HEROES, UNITS, VILLAINS, type SkillId } from '../sim/data/definitions';
+import { SKILLS, type SkillKind } from '../sim/skills';
 import { playSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { targetingFor } from '../sim/battle';
@@ -75,12 +75,20 @@ interface SlotView {
   /** Its middle in the screen's own pixels, measured once it is laid out. */
   at: Pt;
   lunge: Animation | null;
+  /** A glow behind the portrait, lit in a skill's tint: the caster
+   *  charging, a rally landing. */
+  aura: HTMLElement;
+  /** What the slot's shield has left, and the bubble that shows it. */
+  shield: number;
+  bubble: HTMLElement | null;
 }
 
 function slotView(slot: BoardSlot, side: Side, faces?: Partial<Record<UnitId, string>>): SlotView {
   const count = el('span', { class: 'bs-count' }, slot.kind === 'hero' ? '' : `x${formatExact(slot.count)}`);
   const life = el('span', { class: 'bs-life' });
+  const aura = el('span', { class: 'bs-aura' });
   const root = el('div', { class: `bs-slot is-${slot.kind} is-${side}` },
+    aura,
     life,
     face(slot, faces),
     count,
@@ -90,7 +98,7 @@ function slotView(slot: BoardSlot, side: Side, faces?: Partial<Record<UnitId, st
   life.style.setProperty('--ghost', String(slot.hpPool / max));
   return {
     root, count, life, type: slot.type, kind: slot.kind, power: slot.power, troops: slot.count,
-    pool: slot.hpPool, max, at: { x: 0, y: 0 }, lunge: null,
+    pool: slot.hpPool, max, at: { x: 0, y: 0 }, lunge: null, aura, shield: 0, bubble: null,
   };
 }
 
@@ -215,6 +223,38 @@ function crackSvg(seed: number): SVGSVGElement {
   return svg;
 }
 
+/** A skill's colours: the light of its caster's aura and of what it throws,
+ *  and the dyed cloth of the ribbon that names it. By kind, except the
+ *  three rallies, which each say what they raise. */
+interface Tint { glow: string; cloth: string }
+const KIND_TINT: Record<SkillKind, Tint> = {
+  strike: { glow: '#ffb13b', cloth: '#a8452a' },
+  heal: { glow: '#8fe26c', cloth: '#4b7f36' },
+  shield: { glow: '#8fc8ff', cloth: '#3d6a96' },
+  daze: { glow: '#c9a2ff', cloth: '#64458f' },
+  rally: { glow: '#ff7a5c', cloth: '#93321f' },
+  spoils: { glow: '#ffd36a', cloth: '#8a6420' },
+};
+const RALLY_TINT: Partial<Record<SkillId, Tint>> = {
+  Bulwark: { glow: '#d6dde6', cloth: '#56606c' },
+  Vigour: { glow: '#8fe26c', cloth: '#4b7f36' },
+};
+const tintOf = (id: SkillId): Tint => RALLY_TINT[id] ?? KIND_TINT[SKILLS[id].kind];
+
+/** A skill CHARGES this long (ms of the fight) before it lands: the caster
+ *  glows and the ribbon unrolls, so the player looks before it happens. */
+const CHARGE_MS = 320;
+/** …and is CAST this long before it lands — the arrows of a Volley in the
+ *  air, an Ambush on its way across. */
+const SKILL_LUNGE = 180;
+const CAST_LEAD: Partial<Record<SkillId, number>> = {
+  Volley: 260, Cleave: SKILL_LUNGE, Crush: SKILL_LUNGE, Ambush: 240, Sharpshot: 40,
+};
+/** A bolt from a healer, a shield-bearer or a dazer to whoever it is for. */
+const CARE_FLIGHT = 260;
+/** The rallies are named after the armies have marched on (real ms apart). */
+const RALLY_GAP_MS = 520;
+
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export function mountBattleScreen(game: Game, root: HTMLElement): void {
@@ -311,13 +351,15 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const floats = el('div', { class: 'bs-floats' });
     /** The white of the last blow. */
     const flash = el('div', { class: 'bs-flash' });
+    const gap = el('div', { class: 'bs-gap' });
+    const board = el('div', { class: 'bs-board' }, ...theirs.rows, gap, ...ours.rows);
     const screen = el('div', { class: 'bs' },
       bar,
       el('div', { class: 'bs-where' },
         el('b', {}, playback.title),
         el('span', {}, playback.subtitle)),
       knobs,
-      el('div', { class: 'bs-board' }, ...theirs.rows, el('div', { class: 'bs-gap' }), ...ours.rows),
+      board,
       fx.canvas,
       floats,
       flash,
@@ -343,6 +385,9 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         v.at = { x, y };
       }
       unit = (all[0]?.root.offsetWidth ?? 66) / 66;
+      gapY = gap.offsetTop + gap.offsetHeight / 2;
+      for (let node = gap.offsetParent as HTMLElement | null; node !== null && node !== screen;
+        node = node.offsetParent as HTMLElement | null) gapY += node.offsetTop;
       fx.resize(box.width, box.height, unit);
     };
 
@@ -433,13 +478,23 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
             t - flight(from) - i * 35, t - i * 25, (e.from.id % 2 === 0 ? 1 : -1) * (14 + i * 4));
         }
       }
-      if (from.lunge?.playState === 'running') return;
       const cavalry = from.type === 'Cavalry';
       const reach = ranged(from) ? 3 * unit
         : Math.min(dist * (cavalry ? 0.4 : 0.28), (cavalry ? 32 : 20) * unit);
-      const back = (ranged(from) ? 6 : 3) * unit;
-      const total = LUNGE_LEAD + LUNGE_BACK;
-      const peak = LUNGE_LEAD / total;
+      if (lunge(from, ux, uy, reach, (ranged(from) ? 6 : 3) * unit, LUNGE_LEAD, late) && cavalry) {
+        fx.dust(from.at, t - LUNGE_LEAD);
+      }
+    };
+
+    /** Draw back along (ux, uy), go `reach` toward it — peaking `lead` ms
+     *  of the fight after it starts, on the blow — and come home. False
+     *  when the slot is still in its last one. */
+    const lunge = (
+      from: SlotView, ux: number, uy: number, reach: number, back: number, lead: number, late: number,
+    ): boolean => {
+      if (from.lunge?.playState === 'running') return false;
+      const total = lead + LUNGE_BACK;
+      const peak = lead / total;
       from.lunge = from.root.animate([
         { translate: '0 0', easing: 'ease-out' },
         { translate: `${-ux * back}px ${-uy * back}px`, offset: peak * 0.4, easing: 'ease-in' },
@@ -447,7 +502,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         { translate: '0 0' },
       ], { duration: total / pace(), composite: 'add' });
       if (late > 0) from.lunge.currentTime = late / pace();
-      if (cavalry) fx.dust(from.at, t - LUNGE_LEAD);
+      return true;
     };
 
     let lastHold = -Infinity;
@@ -459,9 +514,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
 
     /** The blow landing: the target flinches away from it, the blade's
      *  mark, the sparks. Weighed by how much of the slot it took. */
-    const impact = (e: Attack, from: SlotView, to: SlotView, t: number): void => {
-      const angle = Math.atan2(to.at.y - from.at.y, to.at.x - from.at.x);
-      const heavy = Math.min(1, (e.dealt / to.max) / (HEAVY * 2));
+    /** The target flinching away from a blow along `angle`; `heavy` 0…1. */
+    const flinch = (to: SlotView, angle: number, heavy: number): void => {
       const k = (3 + 6 * heavy) * unit;
       const ux = Math.cos(angle);
       const uy = Math.sin(angle);
@@ -471,6 +525,12 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         { translate: `${-ux * k * 0.35}px ${-uy * k * 0.35}px`, offset: 0.6 },
         { translate: '0 0' },
       ], { duration: 180 / pace(), composite: 'add' });
+    };
+
+    const impact = (e: Attack, from: SlotView, to: SlotView, t: number): void => {
+      const angle = Math.atan2(to.at.y - from.at.y, to.at.x - from.at.x);
+      const heavy = Math.min(1, (e.dealt / to.max) / (HEAVY * 2));
+      flinch(to, angle, heavy);
       if (ranged(from)) {
         fx.sparks(to.at, angle, t, 3);
       } else {
@@ -481,13 +541,187 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (e.edge === 'adv' && e.dealt >= to.max * HEAVY) hold(t, HOLD_MS);
     };
 
-    /** A word rising off a slot: a skill's name. */
-    const pop = (view: SlotView, text: string): void => {
-      const p = el('span', { class: 'bs-pop' }, text);
-      view.root.append(p);
-      window.setTimeout(() => p.remove(), 950);
+    // ------------------------------------------------------------ skills
+
+    /** Every slot a skill at `index` reaches: the events that follow it on
+     *  its tick, up to the next skill or the next ordinary blow. */
+    const targetsOf = (index: number): SlotView[] => {
+      const head = log.events[index] as Extract<BattleEvent, { kind: 'skill' }>;
+      const found: SlotView[] = [];
+      for (let i = index + 1; i < log.events.length; i += 1) {
+        const e = log.events[i]!;
+        if (!('tick' in e) || e.tick !== head.tick || e.kind === 'skill') break;
+        if (e.kind === 'attack' && e.skill !== head.skill) break;
+        const ref = e.kind === 'attack' ? e.to
+          : e.kind === 'healed' || e.kind === 'shielded' || e.kind === 'dazed' ? e.at : null;
+        const v = ref === null ? undefined : viewOf(ref);
+        if (v !== undefined && !found.includes(v)) found.push(v);
+      }
+      return found;
     };
-    /** A mark held on a slot for a while — a shield, a daze. */
+
+    /** The aura behind a slot, flaring in `tint` for `ms` of the fight. */
+    const glow = (v: SlotView, tint: Tint, ms: number): void => {
+      v.aura.style.setProperty('--glow', tint.glow);
+      v.aura.animate([
+        { opacity: 0, scale: '0.6' },
+        { opacity: 1, scale: '1.25', offset: 0.7 },
+        { opacity: 0, scale: '1.45' },
+      ], { duration: ms / pace() });
+    };
+
+    /** THE RIBBON: one strip of dyed cloth across the line between the two
+     *  armies, naming the skill. One at a time — a new one replaces it. It
+     *  comes from the caster's side. */
+    let ribbon: HTMLElement | null = null;
+    let gapY = 0;
+    const announce = (side: Side, id: SkillId): void => {
+      ribbon?.remove();
+      const node = el('div', { class: `bs-ribbon is-${side}` }, el('span', {}, SKILLS[id].name));
+      node.style.setProperty('--cloth', tintOf(id).cloth);
+      node.style.top = `${gapY}px`;
+      screen.append(node);
+      ribbon = node;
+      window.setTimeout(() => { if (node.isConnected) node.remove(); }, 1300);
+    };
+
+    /** A timed skill CHARGES: its caster glows and the ribbon names it. */
+    const charge = (e: Extract<BattleEvent, { kind: 'skill' }>): void => {
+      const from = viewOf(e.from);
+      if (from === undefined || from.root.classList.contains('is-dead')) return;
+      glow(from, tintOf(e.skill), CHARGE_MS + 220);
+      fx.motes(from.at, e.tick * COMBAT.tickMs - CHARGE_MS, 5, tintOf(e.skill).glow);
+      announce(e.from.side, e.skill);
+    };
+
+    /** …then is CAST, timed to land on its tick: what it throws is in the
+     *  air, or its caster is on the way. */
+    const cast = (e: Extract<BattleEvent, { kind: 'skill' }>, targets: SlotView[]): void => {
+      const from = viewOf(e.from);
+      if (from === undefined || targets.length === 0) return;
+      const t = e.tick * COMBAT.tickMs;
+      const tint = tintOf(e.skill);
+      const toward = (to: Pt): { ux: number; uy: number; dist: number } => {
+        const dx = to.x - from.at.x;
+        const dy = to.y - from.at.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        return { ux: dx / dist, uy: dy / dist, dist };
+      };
+      switch (e.skill) {
+        case 'Volley':
+          // Arrows fall out of the sky onto every one of them.
+          targets.forEach((to, i) => {
+            for (let k = 0; k < 2; k += 1) {
+              const off = (k === 0 ? -8 : 9) * unit;
+              fx.shoot('arrow', { x: to.at.x + off * 1.5, y: to.at.y - 150 * unit },
+                { x: to.at.x + off, y: to.at.y }, t - 220 - k * 40 - i * 10, t - k * 30, 0);
+            }
+          });
+          break;
+        case 'Cleave':
+        case 'Crush': {
+          const mid = {
+            x: targets.reduce((n, v) => n + v.at.x, 0) / targets.length,
+            y: targets.reduce((n, v) => n + v.at.y, 0) / targets.length,
+          };
+          const { ux, uy, dist } = toward(mid);
+          lunge(from, ux, uy, Math.min(dist * 0.45, 40 * unit), 6 * unit, SKILL_LUNGE, 0);
+          break;
+        }
+        case 'Ambush': {
+          // The caster crosses the board to the back rank and comes home.
+          const { ux, uy, dist } = toward(targets[0]!.at);
+          from.root.style.zIndex = '5';
+          from.lunge?.cancel();
+          if (lunge(from, ux, uy, dist * 0.8, 4 * unit, CAST_LEAD.Ambush!, 0)) {
+            from.lunge!.addEventListener('finish', () => { from.root.style.zIndex = ''; });
+          }
+          fx.dust(from.at, t - CAST_LEAD.Ambush!);
+          break;
+        }
+        case 'Sharpshot':
+          fx.beam(from.at, targets[0]!.at, t - CAST_LEAD.Sharpshot!, tint.glow);
+          break;
+        default:
+          // A heal, a shield, a daze: a bolt of its light to each of them.
+          if (e.skill === 'Wave') fx.shock(from.at, t - CARE_FLIGHT, 46, tint.glow);
+          for (const to of targets) fx.shoot('bolt', from.at, to.at, t - CARE_FLIGHT, t, 16, tint.glow);
+      }
+    };
+
+    /** A skill's strike landing — weightier than a swing, and its own. */
+    const skillImpact = (e: Attack, id: SkillId, from: SlotView, to: SlotView, t: number): void => {
+      const angle = Math.atan2(to.at.y - from.at.y, to.at.x - from.at.x);
+      flinch(to, angle, id === 'Crush' ? 1 : 0.6);
+      switch (id) {
+        case 'Volley':
+          fx.sparks(to.at, Math.PI / 2, t, 4);
+          break;
+        case 'Cleave':
+          fx.strike('slash', to.at, angle, t, 1.5);
+          fx.sparks(to.at, angle, t, 5);
+          break;
+        case 'Crush':
+          fx.strike('slash', to.at, angle, t, 1.7);
+          fx.shock(to.at, t, 50);
+          fx.sparks(to.at, angle, t, 14);
+          board.animate([
+            { translate: '0 0' }, { translate: `${-5 * unit}px ${3 * unit}px` }, { translate: `${4 * unit}px ${-3 * unit}px` },
+            { translate: `${-2 * unit}px ${unit}px` }, { translate: '0 0' },
+          ], { duration: 260 });
+          hold(t, HOLD_WIPE_MS);
+          break;
+        case 'Ambush':
+          fx.strike('slash', to.at, angle, t, 1.4);
+          fx.sparks(to.at, angle, t, 8);
+          break;
+        default:
+          fx.sparks(to.at, angle, t, 8);
+          fx.shock(to.at, t, 24, tintOf(id).glow);
+      }
+      if (e.edge === 'adv' && e.dealt >= to.max * HEAVY) hold(t, HOLD_MS);
+    };
+
+    /** A shield takes a blow: it wobbles, or — spent — shatters. */
+    const soak = (v: SlotView, absorbed: number, t: number, quiet: boolean): void => {
+      v.shield = Math.max(0, v.shield - absorbed);
+      const bubble = v.bubble;
+      if (bubble === null) return;
+      if (v.shield > 0) {
+        if (!quiet && motion) bubble.animate([{ scale: '1' }, { scale: '0.9', opacity: 0.5 }, { scale: '1' }], { duration: 200 });
+        return;
+      }
+      bubble.remove();
+      v.bubble = null;
+      if (!quiet && motion) {
+        fx.chips(v.at, t, 10, 'sky');
+        fx.shock(v.at, t, 38, KIND_TINT.shield.glow);
+      }
+    };
+
+    /** THE RALLIES, named one by one after the armies march on: the ribbon,
+     *  then every slot on that side flares in the rally's colour. */
+    const rallies: Extract<BattleEvent, { kind: 'skill' }>[] = [];
+    const rallyTimers: number[] = [];
+    const sound = (): void => {
+      rallies.forEach((e, i) => {
+        rallyTimers.push(window.setTimeout(() => {
+          if (game.battle?.phase !== 'playing') return;
+          announce(e.from.side, e.skill);
+          if (!motion) return;
+          const tint = tintOf(e.skill);
+          const caster = viewOf(e.from);
+          if (caster !== undefined) glow(caster, tint, 600);
+          for (const v of views[e.from.side].values()) {
+            if (v.root.classList.contains('is-dead')) continue;
+            glow(v, tint, 700);
+            fx.motes(v.at, game.battleMs(game.now()), 3, tint.glow);
+          }
+        }, (motion ? INTRO_MS : 0) + 120 + i * RALLY_GAP_MS));
+      });
+    };
+
+    /** A mark held on a slot for a while — a daze. */
     const mark = (view: SlotView, cls: string, ms: number): void => {
       view.root.classList.add(cls);
       window.setTimeout(() => view.root.classList.remove(cls), ms);
@@ -499,14 +733,16 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const apply = (event: BattleEvent, quiet: boolean): void => {
       const t = 'tick' in event ? event.tick * COMBAT.tickMs : 0;
       if (event.kind === 'skill') {
-        const view = viewOf(event.from);
-        if (view !== undefined && !quiet) pop(view, SKILLS[event.skill].name);
+        // A rally is named once the armies have marched on; a timed skill
+        // was already charged and cast ahead of its tick (`moments`).
+        if (event.tick === 0 && !quiet) rallies.push(event);
         return;
       }
       if (event.kind === 'healed') {
         const view = viewOf(event.at);
         if (view === undefined) return;
         if (!quiet) float(view, 'is-heal', event.amount, t);
+        if (!quiet && motion) fx.motes(view.at, t, 7, KIND_TINT.heal.glow);
         setLife(view, event.hpPool);
         if (event.alive !== view.troops && view.count.textContent !== '') {
           power[event.at.side] += (event.alive - view.troops) * view.power;
@@ -518,12 +754,27 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       }
       if (event.kind === 'shielded') {
         const view = viewOf(event.at);
-        if (view !== undefined) mark(view, 'is-shielded', 1500);
+        if (view === undefined) return;
+        view.shield = event.amount;
+        if (view.bubble === null) {
+          view.bubble = el('span', { class: 'bs-bubble' });
+          view.root.append(view.bubble);
+        }
         return;
       }
       if (event.kind === 'dazed') {
         const view = viewOf(event.at);
-        if (view !== undefined) mark(view, 'is-dazed', event.ticks * COMBAT.tickMs);
+        if (view === undefined) return;
+        // The fight's ticks, at the playback's speed, in real time.
+        const ms = (event.ticks * COMBAT.tickMs) / pace();
+        mark(view, 'is-dazed', ms);
+        if (!quiet) {
+          view.root.querySelector('.bs-stars')?.remove();
+          const stars = el('span', { class: 'bs-stars' },
+            el('i', {}), el('i', {}), el('i', {}));
+          view.root.append(stars);
+          window.setTimeout(() => stars.remove(), ms);
+        }
         return;
       }
       if (event.kind === 'attack') {
@@ -531,6 +782,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         const from = viewOf(event.from);
         if (view === undefined) return;
         setLife(view, view.pool - event.dealt);
+        if ((event.absorbed ?? 0) > 0) soak(view, event.absorbed!, t, quiet);
         if (quiet) return;
         view.root.classList.remove('is-hit');
         void view.root.offsetWidth; // restart the flash, however fast they land
@@ -540,7 +792,10 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
           float(view, event.edge === 'adv' ? 'is-adv' : event.edge === 'dis' ? 'is-dis' : '', event.dealt, t);
         }
         if ((event.absorbed ?? 0) > 0) float(view, 'is-shield', event.absorbed!, t);
-        if (motion && from !== undefined) impact(event, from, view, t);
+        if (motion && from !== undefined) {
+          if (event.skill !== undefined) skillImpact(event, event.skill, from, view, t);
+          else impact(event, from, view, t);
+        }
         playSfx('hit', { group: 'battle', limit: 2 });
         return;
       }
@@ -571,6 +826,9 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         // The ring cracks, goes grey and takes the skull, stamped. A
         // hero's gold ring breaks and the portrait slumps in it.
         view.root.classList.add('is-dead');
+        view.bubble?.remove();
+        view.bubble = null;
+        view.shield = 0;
         view.root.append(crackSvg(event.at.id + (event.at.side === 'ours' ? 0 : 100)));
         view.count.textContent = '';
         setLife(view, 0);
@@ -598,6 +856,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     let next = 1; // 0 is `start`, which built the board
     let cue = 1; // reads ahead of `next`, for the swings
     let swings: { at: number; event: Attack }[] = [];
+    let moments: { at: number; run: () => void }[] = [];
     let lastT = 0;
     let fxT = 0;
     let lastReal = game.now();
@@ -617,17 +876,31 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       const quiet = t - lastT > CATCH_UP_MS || game.battle?.phase !== 'playing';
       if (quiet) {
         swings = [];
+        moments = [];
         fx.clear();
       } else if (motion) {
         while (cue < log.events.length) {
           const event = log.events[cue]!;
           if ('tick' in event && event.tick * COMBAT.tickMs - CUE_LEAD > t) break;
-          if (event.kind === 'attack') swings.push({ at: swingAt(event), event });
+          // A skill's strike is the skill's to draw (`cast`), not a swing.
+          if (event.kind === 'attack' && event.skill === undefined) swings.push({ at: swingAt(event), event });
+          if (event.kind === 'skill' && event.tick > 0) {
+            const at = event.tick * COMBAT.tickMs;
+            const targets = targetsOf(cue);
+            const e = event;
+            moments.push({ at: at - CHARGE_MS, run: () => charge(e) });
+            moments.push({ at: at - (CAST_LEAD[e.skill] ?? CARE_FLIGHT), run: () => cast(e, targets) });
+          }
           cue += 1;
         }
         swings = swings.filter((s) => {
           if (s.at > t) return true;
           swing(s.event, t - s.at);
+          return false;
+        });
+        moments = moments.filter((m) => {
+          if (m.at > t) return true;
+          m.run();
           return false;
         });
       }
@@ -723,9 +996,11 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       cancelAnimationFrame(frame);
       resizer.disconnect();
       for (const f of [...live]) drop(f);
+      for (const id of rallyTimers) window.clearTimeout(id);
     };
     frame = requestAnimationFrame(loop);
     pump();
+    sound();
   };
 
   const refresh = (): void => {
