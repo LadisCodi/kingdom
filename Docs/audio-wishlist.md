@@ -100,3 +100,30 @@ existing SFX fallback behaviour applies.
 **Tone note.** The audit's positioning is cozy: nothing here should read as a
 threat. `delve_failed` and `mana_full` are the two cues most likely to be
 mis-designed as alarms, and both should be soft.
+
+## The battle playback
+
+`src/audio/sounds/battle_<name>[_NN].ogg`, cut from the sound collection
+(silence trimmed, a tail fade, mono, a hit levelled by mean, a stinger to
+−16 LUFS); `_NN` takes alternate at random. The mix is `BATTLE_MIX` in
+`sfx.ts`; `tests/battleSounds.test.ts` holds every name to a file.
+
+| Name | Plays when | Source |
+|---|---|---|
+| `battleStart` | The armies march on | RPG Fanfares · Start Battle |
+| `swordHit` · `lanceHit` · `cavalryHit` | A Warrior's (or melee hero's) · Lancer's · Cavalry's blow lands | Blade Sword Hit · Sword Pierce Through Flesh (Fast Light) · Armor Weapon Impact |
+| `cavalryCharge` | A cavalry line sets off | Horseback Ride, first gallop |
+| `arrowLoose` · `arrowHit` | An archer looses · an arrow (or a bolt) lands | Arrow Release Shot · Arrow Impact Armor |
+| `boltCast` | A ranged hero looses, a care skill is cast | Light Wand Whoosh |
+| `squadDown` · `skullStamp` · `heroDown` | A ring cracks · its skull lands · a hero falls | Swing Hit Wood Shield Break · Harsh Thud · Light Metal Armor Fall |
+| `skillCharge` · `ribbon` | A skill charges · its ribbon unrolls | Casting Charge Whoosh Buildup · Anime Whoosh Cloth |
+| `volley` · `cleave` · `crush` · `ambush` · `sharpshot` | That skill | Volley · Big Sword Hit · Rock Impact Heavy Slam · Anime Swoosh Sudden Movement · Rapid Shot Critical |
+| `heal` · `shieldUp` · `shieldSoak` · `shieldBreak` · `daze` | A heal lands · a shield goes up, soaks, shatters · a daze | Heal · Shield · Metallic Bubble · Glass Small · Sleep Silence |
+| `warCry` · `bulwark` · `vigour` | A rally is named | Battle Viking Horn Call · Shield Buff V1 · Invigoration |
+| `finalBlow` | The last blow's slow motion | Anime AIR Whoosh Big Pitch Falling |
+| `victory` · `defeat` | The plaque lands | RPG Fanfares · Victory 1 · Defeat 1 Short |
+
+**Music**: `music/music-battle.ogg` — *The Hour of Battle* (Owl Theory,
+Ultimate RPG Music Collection), its first 75 s, levelled to the harp. It
+plays from the top under every fight and gives way at the plaque; the
+chest's feast outranks it.

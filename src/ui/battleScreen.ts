@@ -19,7 +19,8 @@
 
 import { COMBAT, HEROES, UNITS, VILLAINS, type SkillId } from '../sim/data/definitions';
 import { SKILLS, type SkillKind } from '../sim/skills';
-import { playSfx } from '../audio/sfx';
+import { setBattleMusic } from '../audio/music';
+import { playSfx, type BattleSfx } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { targetingFor } from '../sim/battle';
 import type { BattleEvent, BattleLog, BoardSlot, Side, SlotRef } from '../sim/battle';
@@ -255,6 +256,18 @@ const CARE_FLIGHT = 260;
 /** The rallies are named after the armies have marched on (real ms apart). */
 const RALLY_GAP_MS = 520;
 
+/** What a blow sounds like, by who struck it. */
+const hitSound = (from: { kind: BoardSlot['kind']; type: UnitId }): BattleSfx => (
+  targetingFor(from.type) === 'ranged' ? 'arrowHit'
+    : from.type === 'Lancer' ? 'lanceHit'
+      : from.type === 'Cavalry' ? 'cavalryHit'
+        : 'swordHit');
+/** A skill strike with a sound of its own — one per skill, however many it
+ *  hits. The rest (Volley, Sharpshot, Ambush) sounded when they were cast
+ *  and land as ordinary blows. */
+const SKILL_HIT: Partial<Record<SkillId, BattleSfx>> = { Cleave: 'cleave', Crush: 'crush' };
+const RALLY_SOUND: Partial<Record<SkillId, BattleSfx>> = { WarCry: 'warCry', Bulwark: 'bulwark', Vigour: 'vigour' };
+
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export function mountBattleScreen(game: Game, root: HTMLElement): void {
@@ -468,6 +481,9 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       const uy = dy / dist;
       const t = e.tick * COMBAT.tickMs;
       if (ranged(from)) {
+        // The bowstring at the release, after the draw.
+        window.setTimeout(() => playSfx(from.kind === 'hero' ? 'boltCast' : 'arrowLoose',
+          { group: 'loose', limit: 2 }), Math.max(0, LUNGE_LEAD - late) / pace());
         // Up to three shafts for a full line, landing together on the blow.
         const shafts = from.kind === 'hero' ? 1 : e.hits >= 12 ? 3 : e.hits >= 5 ? 2 : 1;
         for (let i = 0; i < shafts; i += 1) {
@@ -483,6 +499,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         : Math.min(dist * (cavalry ? 0.4 : 0.28), (cavalry ? 32 : 20) * unit);
       if (lunge(from, ux, uy, reach, (ranged(from) ? 6 : 3) * unit, LUNGE_LEAD, late) && cavalry) {
         fx.dust(from.at, t - LUNGE_LEAD);
+        playSfx('cavalryCharge', { group: 'gallop', limit: 1 });
       }
     };
 
@@ -582,6 +599,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       node.style.top = `${gapY}px`;
       screen.append(node);
       ribbon = node;
+      playSfx('ribbon', { group: 'ribbon', limit: 1 });
       window.setTimeout(() => { if (node.isConnected) node.remove(); }, 1300);
     };
 
@@ -592,6 +610,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       glow(from, tintOf(e.skill), CHARGE_MS + 220);
       fx.motes(from.at, e.tick * COMBAT.tickMs - CHARGE_MS, 5, tintOf(e.skill).glow);
       announce(e.from.side, e.skill);
+      playSfx('skillCharge', { group: 'skill', limit: 2 });
     };
 
     /** …then is CAST, timed to land on its tick: what it throws is in the
@@ -609,6 +628,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       };
       switch (e.skill) {
         case 'Volley':
+          playSfx('volley');
           // Arrows fall out of the sky onto every one of them.
           targets.forEach((to, i) => {
             for (let k = 0; k < 2; k += 1) {
@@ -637,14 +657,17 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
             from.lunge!.addEventListener('finish', () => { from.root.style.zIndex = ''; });
           }
           fx.dust(from.at, t - CAST_LEAD.Ambush!);
+          playSfx('ambush');
           break;
         }
         case 'Sharpshot':
           fx.beam(from.at, targets[0]!.at, t - CAST_LEAD.Sharpshot!, tint.glow);
+          playSfx('sharpshot');
           break;
         default:
           // A heal, a shield, a daze: a bolt of its light to each of them.
           if (e.skill === 'Wave') fx.shock(from.at, t - CARE_FLIGHT, 46, tint.glow);
+          playSfx('boltCast', { group: 'loose', limit: 2 });
           for (const to of targets) fx.shoot('bolt', from.at, to.at, t - CARE_FLIGHT, t, 16, tint.glow);
       }
     };
@@ -688,11 +711,13 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       const bubble = v.bubble;
       if (bubble === null) return;
       if (v.shield > 0) {
+        if (!quiet) playSfx('shieldSoak', { group: 'soak', limit: 2 });
         if (!quiet && motion) bubble.animate([{ scale: '1' }, { scale: '0.9', opacity: 0.5 }, { scale: '1' }], { duration: 200 });
         return;
       }
       bubble.remove();
       v.bubble = null;
+      if (!quiet) playSfx('shieldBreak');
       if (!quiet && motion) {
         fx.chips(v.at, t, 10, 'sky');
         fx.shock(v.at, t, 38, KIND_TINT.shield.glow);
@@ -703,11 +728,13 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
      *  then every slot on that side flares in the rally's colour. */
     const rallies: Extract<BattleEvent, { kind: 'skill' }>[] = [];
     const rallyTimers: number[] = [];
-    const sound = (): void => {
+    const nameRallies = (): void => {
       rallies.forEach((e, i) => {
         rallyTimers.push(window.setTimeout(() => {
           if (game.battle?.phase !== 'playing') return;
           announce(e.from.side, e.skill);
+          const call = RALLY_SOUND[e.skill];
+          if (call !== undefined) playSfx(call);
           if (!motion) return;
           const tint = tintOf(e.skill);
           const caster = viewOf(e.from);
@@ -743,6 +770,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         if (view === undefined) return;
         if (!quiet) float(view, 'is-heal', event.amount, t);
         if (!quiet && motion) fx.motes(view.at, t, 7, KIND_TINT.heal.glow);
+        if (!quiet) playSfx('heal', { group: 'heal', limit: 1 });
         setLife(view, event.hpPool);
         if (event.alive !== view.troops && view.count.textContent !== '') {
           power[event.at.side] += (event.alive - view.troops) * view.power;
@@ -756,6 +784,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         const view = viewOf(event.at);
         if (view === undefined) return;
         view.shield = event.amount;
+        if (!quiet) playSfx('shieldUp', { group: 'shieldUp', limit: 1 });
         if (view.bubble === null) {
           view.bubble = el('span', { class: 'bs-bubble' });
           view.root.append(view.bubble);
@@ -769,6 +798,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         const ms = (event.ticks * COMBAT.tickMs) / pace();
         mark(view, 'is-dazed', ms);
         if (!quiet) {
+          playSfx('daze', { group: 'daze', limit: 1 });
           view.root.querySelector('.bs-stars')?.remove();
           const stars = el('span', { class: 'bs-stars' },
             el('i', {}), el('i', {}), el('i', {}));
@@ -796,7 +826,12 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
           if (event.skill !== undefined) skillImpact(event, event.skill, from, view, t);
           else impact(event, from, view, t);
         }
-        playSfx('hit', { group: 'battle', limit: 2 });
+        if (from !== undefined) {
+          const heavy = Math.min(1, (event.dealt / view.max) / (HEAVY * 2));
+          const skilled = event.skill === undefined ? undefined : SKILL_HIT[event.skill];
+          if (skilled !== undefined) playSfx(skilled, { group: 'skillHit', limit: 1 });
+          else playSfx(hitSound(from), { group: 'battle', limit: 3, gain: 0.8 + 0.4 * heavy });
+        }
         return;
       }
       if (event.kind === 'troops_lost') {
@@ -847,7 +882,9 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
             flash.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: 450, easing: 'ease-out' });
           }
         }
-        playSfx('death', { group: 'battle', limit: 2 });
+        playSfx('squadDown', { group: 'death', limit: 2 });
+        window.setTimeout(() => playSfx('skullStamp', { group: 'stamp', limit: 2 }), 140);
+        if (hero) playSfx('heroDown', { group: 'heroDown', limit: 1 });
       }
     };
 
@@ -907,6 +944,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       if (motion && finalBlow && !slowed && !quiet && t >= endMs - SLOW_LEAD) {
         slowed = true;
         game.slowBattle(SLOW_FACTOR, SLOW_MS);
+        playSfx('finalBlow');
       }
       const tick = Math.floor(t / COMBAT.tickMs);
       while (next < log.events.length) {
@@ -938,6 +976,9 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         plaque.classList.add(won ? 'is-won' : 'is-lost');
         // The word sits over the cracks: carved on, after the wood split.
         plaque.replaceChildren(el('span', { class: 'bs-plaque-word' }, won ? 'Victory' : 'Defeat'));
+        // The fight's tune gives way to the verdict's.
+        setBattleMusic(false);
+        playSfx(won ? 'victory' : 'defeat');
         // A defeat lands cracked, and the field goes grey under it.
         if (!won) {
           plaque.append(crackSvg(log.ticks));
@@ -964,6 +1005,8 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
 
     root.replaceChildren(screen);
     measure();
+    setBattleMusic(true);
+    playSfx('battleStart');
     // THE ARMIES MARCH ON: the replay holds while each side's rows slide in
     // from its own edge, front rank first, and the swords on the bar clash.
     if (motion) {
@@ -997,10 +1040,11 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       resizer.disconnect();
       for (const f of [...live]) drop(f);
       for (const id of rallyTimers) window.clearTimeout(id);
+      setBattleMusic(false);
     };
     frame = requestAnimationFrame(loop);
     pump();
-    sound();
+    nameRallies();
   };
 
   const refresh = (): void => {

@@ -86,10 +86,6 @@ export type SfxName =
   | 'rewardBurst' | 'rewardCoin' | 'rewardPop'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
   | 'tapIron' | 'tapFish'
-  // The two the battle screen needs. Re-pitched takes rather than new files,
-  // the way `tapIron` is `tapStone` an octave down: a hit is the pick-axe
-  // sharpened, a death is it slowed and dropped.
-  | 'hit' | 'death'
   // A line of dialogue typing itself (ui/stage/stage.ts): Click Tap Knock
   // Subtle, light and dark — a soft knock on the box's wood.
   | 'textTick'
@@ -108,7 +104,79 @@ export type SfxName =
   // A WHOLE hero out of the chest is the rarest thing in it, and is
   // celebrated: a short drum roll before the flip, the confetti cannons'
   // pop, a full fanfare (a Legendary's own) and, for a Legendary, applause.
-  | 'heroRiserShort' | 'heroPop' | 'heroFanfare' | 'heroFanfareLegend' | 'heroApplause';
+  | 'heroRiserShort' | 'heroPop' | 'heroFanfare' | 'heroFanfareLegend' | 'heroApplause'
+  | BattleSfx;
+
+/**
+ * THE BATTLE PLAYBACK's sounds (ui/battleScreen.ts). Each is a file — or a
+ * few takes of one, `battle_<name>_NN.ogg` — in `sounds/`, cut from the
+ * sound collection: silence trimmed, a fade at the tail, mono, levelled
+ * (a hit to the same mean level, a stinger to -16 LUFS), so the volumes
+ * below are the mix. The frequent ones sit low: a fight lands a dozen blows
+ * a second.
+ */
+export type BattleSfx =
+  | 'battleStart' | 'swordHit' | 'lanceHit' | 'cavalryCharge' | 'cavalryHit'
+  | 'arrowLoose' | 'arrowHit' | 'boltCast' | 'squadDown' | 'skullStamp' | 'heroDown'
+  | 'skillCharge' | 'ribbon' | 'volley' | 'cleave' | 'crush' | 'ambush' | 'sharpshot'
+  | 'heal' | 'shieldUp' | 'shieldSoak' | 'shieldBreak' | 'daze'
+  | 'warCry' | 'bulwark' | 'vigour' | 'finalBlow' | 'victory' | 'defeat';
+
+const BATTLE_MIX: Record<BattleSfx, { volume: number; jitter: number }> = {
+  // Start Battle 01 (RPG Fanfares), under the armies marching on.
+  battleStart: { volume: 0.5, jitter: 0 },
+  // Blade Sword Hit · Sword Pierce Through Flesh (Fast Light) · Armor
+  // Weapon Impact: a blow by Warrior, Lancer, Cavalry.
+  swordHit: { volume: 0.26, jitter: 0.08 },
+  lanceHit: { volume: 0.26, jitter: 0.08 },
+  cavalryHit: { volume: 0.3, jitter: 0.08 },
+  // Horseback Ride, its first gallop, as a cavalry line sets off.
+  cavalryCharge: { volume: 0.25, jitter: 0.06 },
+  // Arrow Release Shot and Arrow Impact Armor; a hero's bolt is Light Wand
+  // Whoosh.
+  arrowLoose: { volume: 0.16, jitter: 0.08 },
+  arrowHit: { volume: 0.2, jitter: 0.08 },
+  boltCast: { volume: 0.28, jitter: 0.06 },
+  // A ring cracking (Swing Hit Wood Shield Break), the skull stamped on it
+  // (Harsh Thud) and, for a hero, armour falling (Light Metal Armor Fall).
+  squadDown: { volume: 0.42, jitter: 0.06 },
+  skullStamp: { volume: 0.38, jitter: 0.04 },
+  heroDown: { volume: 0.45, jitter: 0.04 },
+  // A skill charging (Casting Charge Whoosh Buildup) and its ribbon
+  // unrolling (Anime Whoosh Cloth).
+  skillCharge: { volume: 0.35, jitter: 0.05 },
+  ribbon: { volume: 0.3, jitter: 0.06 },
+  // Each skill's own: Volley 01 · Big Sword Hit · Rock Impact Heavy Slam ·
+  // Anime Swoosh Sudden Movement · Rapid Shot Critical · Heal · Shield ·
+  // Metallic Bubble · Glass Small · Sleep Silence.
+  volley: { volume: 0.42, jitter: 0.03 },
+  cleave: { volume: 0.45, jitter: 0.04 },
+  crush: { volume: 0.55, jitter: 0.03 },
+  ambush: { volume: 0.4, jitter: 0.05 },
+  sharpshot: { volume: 0.42, jitter: 0.03 },
+  heal: { volume: 0.36, jitter: 0.04 },
+  shieldUp: { volume: 0.38, jitter: 0.03 },
+  shieldSoak: { volume: 0.26, jitter: 0.08 },
+  shieldBreak: { volume: 0.42, jitter: 0.05 },
+  daze: { volume: 0.4, jitter: 0.04 },
+  // The rallies: Battle Viking Horn Call · Shield Buff V1 · Invigoration.
+  warCry: { volume: 0.42, jitter: 0 },
+  bulwark: { volume: 0.42, jitter: 0 },
+  vigour: { volume: 0.42, jitter: 0 },
+  // The last blow in slow motion (Anime AIR Whoosh Big Pitch Falling), and
+  // the plaque: Victory 1 · Defeat 1 Short (RPG Fanfares).
+  finalBlow: { volume: 0.5, jitter: 0 },
+  victory: { volume: 0.55, jitter: 0 },
+  defeat: { volume: 0.55, jitter: 0 },
+};
+
+const BATTLE_FILES = import.meta.glob('./sounds/battle_*.ogg', {
+  eager: true, query: '?url', import: 'default',
+}) as Record<string, string>;
+const battleTakes = (name: BattleSfx): string[] => Object.entries(BATTLE_FILES)
+  .filter(([path]) => new RegExp(`/battle_${name}(_\\d+)?\\.ogg$`).test(path))
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([, url]) => url);
 
 interface SoundSpec {
   /** One or more takes — a random one plays each time (organic repeats). */
@@ -122,6 +190,9 @@ interface SoundSpec {
 const one = (url: string) => [url];
 
 const SOUNDS: Record<SfxName, SoundSpec> = {
+  ...Object.fromEntries((Object.keys(BATTLE_MIX) as BattleSfx[]).map((name) => [
+    name, { urls: battleTakes(name), ...BATTLE_MIX[name] },
+  ])) as Record<BattleSfx, SoundSpec>,
   pop: { urls: one(popUrl), volume: 0.5, jitter: 0.08 },
   // A tooltip opening (kit/tooltip.ts): Pop 02, short and soft, apart from
   // the generic pop so the two never read as the same event.
@@ -165,8 +236,6 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   rewardBurst: { urls: one(rewardBurstUrl), volume: 0.4, jitter: 0.03 },
   rewardCoin: { urls: [rewardCoin1, rewardCoin2, rewardCoin3, rewardCoin4], volume: 0.3, jitter: 0.04 },
   rewardPop: { urls: [rewardPop1, rewardPop2, rewardPop3], volume: 0.35, jitter: 0.04 },
-  hit: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.32, jitter: 0.12, rate: 1.35 },
-  death: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.45, jitter: 0.08, rate: 0.6 },
   // Fish taps reuse the boat splash, pitched up — a lighter plip.
   tapFish: { urls: one(boatSplashUrl), volume: 0.4, jitter: 0.08, rate: 1.2 },
   textTick: { urls: [textTick1, textTick2], volume: 0.3, jitter: 0.1 },
