@@ -25,12 +25,25 @@
    nothing points unprompted.
 5. **A scene plays once per kingdom**, and the save remembers it.
 6. **A scene waits its turn.** It never starts over the battle playback, the
-   gacha reveal, the rewarded video or a sheet the player opened — unless the
-   sheet is what the scene is about. Scenes due at once queue in authored
-   order, and an introduction waits a breath (20 s) after the last scene.
-7. **A scene is never skipped, only tapped through**: a tap anywhere moves
+   gacha reveal, the rewarded video, an unlock splash or a sheet the player
+   opened — unless the sheet is what the scene is about. Scenes due at once
+   queue in authored order, and an introduction waits a breath (6 s) after
+   the last scene.
+7. **A scene plays where it belongs** (`where`): the province, the world
+   board, or either. A scene about the city never starts on the world board;
+   one that has started pauses, out of sight and locking nothing, while the
+   player is elsewhere, and goes on when they are back.
+8. **One that cannot start here does not hold the others.** An introduction
+   waiting for the player to come back, or to close a card, lets the next
+   one due that fits go first. Only the First Morning runs strictly in order.
+9. **What the player has already done is not taught** (`doneWhen`). A scene
+   due when its `doneWhen` already holds — the ruin already repaired, the
+   technology already researched, the hero already called — is marked
+   played without playing, and what its lines hand over (a book, the Staff)
+   is still handed over.
+10. **A scene is never skipped, only tapped through**: a tap anywhere moves
    a line on ([`24-dialogue.md`](24-dialogue.md) §2).
-8. **Before pointing at the nav bar, a scene takes the player back to the
+11. **Before pointing at the nav bar, a scene takes the player back to the
    map**: with a sheet, a card or a placement open, Isolde first asks them to
    set it aside and points at its close ([`24-dialogue.md`](24-dialogue.md)
    §4).
@@ -345,7 +358,8 @@ A big opening is named full-screen before anyone talks about it.
 | How long a line that appears on its own takes no input | 0.5 s | `help.inputGraceSeconds` |
 | When idle help stops | quest `Attuned` | `help.untilQuest` |
 | The lock's failsafe | 5 s | `help.lockFailsafeSeconds` |
-| The breath between two introductions | 20 s | `help.sceneGapSeconds` |
+| The breath between two introductions | 6 s | `help.sceneGapSeconds` |
+| Where a scene plays, and what makes it needless | per scene | `scenes` › `where`, `doneWhen` · `doneTarget` · `doneAmount` |
 | Which openings have a splash, in what order, and what each says and shows | §4.6 | `?dev=data` › Unlock splashes |
 
 ## 9. Deliberately not in this design

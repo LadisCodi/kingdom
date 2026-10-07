@@ -6,6 +6,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -146,6 +150,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -260,6 +268,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -335,6 +347,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -410,6 +426,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -433,6 +453,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -534,6 +558,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": false,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -583,6 +611,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "repairing",
+    "doneTarget": "OldFarm",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -632,6 +664,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "questComplete",
+    "doneTarget": "ToWork",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -694,6 +730,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "villager",
@@ -795,6 +835,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "questComplete",
+    "doneTarget": "GrowingTown",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -871,6 +915,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "repairing",
+    "doneTarget": "OldSawmill",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -921,6 +969,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "questComplete",
+    "doneTarget": "Crewed",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -996,6 +1048,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Pickaxes",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1084,6 +1140,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "questComplete",
+    "doneTarget": "Rubble",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -1107,6 +1167,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1130,6 +1194,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1153,6 +1221,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "any",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1176,6 +1248,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "any",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1199,6 +1275,10 @@
     "triggerAmount": 100,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1235,6 +1315,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "lairDefeated",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1284,6 +1368,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Warrior",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "orcChief",
@@ -1372,6 +1460,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -1391,7 +1483,7 @@
         "side": "left",
         "text": "Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.",
         "box": "auto",
-        "point": "lair:Orcs",
+        "point": "lair:",
         "lock": "none",
         "until": "tap",
         "untilTarget": "",
@@ -1408,6 +1500,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "warden",
@@ -1431,6 +1527,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "lairCleared",
+    "doneTarget": "Orcs",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "warden",
@@ -1480,6 +1580,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1516,6 +1620,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1552,6 +1660,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "heroes",
+    "doneTarget": "",
+    "doneAmount": 1,
     "lines": [
       {
         "speaker": "cook",
@@ -1601,6 +1713,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "abandonedRevealed",
+    "doneTarget": "NorthWatch",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1624,6 +1740,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "repairing",
+    "doneTarget": "NorthWatch",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1647,6 +1767,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "repairing",
+    "doneTarget": "NorthWatch",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1683,6 +1807,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "any",
+    "doneWhen": "worldVisited",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1719,6 +1847,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "repairing",
+    "doneTarget": "ThornedShrine",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1742,6 +1874,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "relicHosted",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1818,6 +1954,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Hunting",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -1841,6 +1981,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Mining",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1864,6 +2008,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Mining",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -1887,6 +2035,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "techDone",
+    "doneTarget": "Fishing",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1910,6 +2062,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "lairDefeated",
+    "doneTarget": "Harpies",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "woodcutter",
@@ -1933,6 +2089,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "any",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "warden",
@@ -1956,6 +2116,10 @@
     "triggerAmount": 0,
     "anywhere": false,
     "skippable": true,
+    "where": "province",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",
@@ -1979,6 +2143,10 @@
     "triggerAmount": 0,
     "anywhere": true,
     "skippable": true,
+    "where": "any",
+    "doneWhen": "",
+    "doneTarget": "",
+    "doneAmount": 0,
     "lines": [
       {
         "speaker": "advisor",

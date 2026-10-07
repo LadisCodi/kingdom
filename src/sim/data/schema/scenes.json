@@ -47,7 +47,8 @@
         "relicPicked",
         "relicHosted",
         "holdsItem",
-        "itemUsed"
+        "itemUsed",
+        "worldVisited"
       ],
       "doc": "What starts the scene, the first time it holds."
     },
@@ -58,6 +59,65 @@
       "type": "bool",
       "doc": "An introduction, not a beat of the First Morning: it waits a breath after the last scene before it starts. The First Morning runs beat to beat."
     },
+    "where": {
+      "type": "text",
+      "options": ["province", "world", "any"],
+      "doc": "Where the player has to be for it to start: on the province, on the world board, or either. A scene that has started pauses while the player is somewhere else."
+    },
+    "doneWhen": {
+      "type": "text",
+      "options": [
+        "",
+        "always",
+        "featureSeen",
+        "questReached",
+        "questComplete",
+        "questClaimed",
+        "questProgress",
+        "techDone",
+        "techFilled",
+        "placing",
+        "placed",
+        "built",
+        "overlay",
+        "noOverlay",
+        "mainScreen",
+        "ui",
+        "taps",
+        "lairFound",
+        "lairDefeated",
+        "lairCleared",
+        "landmarkClaimed",
+        "landmarkSeen",
+        "bookOpen",
+        "doorOpen",
+        "manaEmpty",
+        "buildersBusy",
+        "raided",
+        "wounded",
+        "heroes",
+        "population",
+        "training",
+        "revealed",
+        "sighted",
+        "treasureRevealed",
+        "treasurePicked",
+        "abandonedRevealed",
+        "siteOpen",
+        "repairing",
+        "canRepair",
+        "worldOpen",
+        "relicPicked",
+        "relicHosted",
+        "holdsItem",
+        "itemUsed",
+        "worldVisited"
+      ],
+      "emptyOk": true,
+      "doc": "What makes the scene needless: if this already holds when the scene is due, it is marked played without playing — the player did it on their own. Its lines still hand over what they give. Empty: never."
+    },
+    "doneTarget": { "type": "text", "doc": "What doneWhen names, where it names anything." },
+    "doneAmount": { "type": "int", "min": 0 },
     "lines": {
       "type": "list",
       "of": {
@@ -130,7 +190,8 @@
               "relicPicked",
               "relicHosted",
               "holdsItem",
-              "itemUsed"
+              "itemUsed",
+              "worldVisited"
             ],
             "doc": "What moves the line on; tap is a tap on the box."
           },

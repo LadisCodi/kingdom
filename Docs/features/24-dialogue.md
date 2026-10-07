@@ -77,11 +77,17 @@
 | `gives` | a book the speaker hands the player as the line is read — only a book that opens on a gift; none does today, so no line carries it |
 | `stocks` | a building whose price the speaker makes up: the line plays only while the wallet cannot pay for one more of it, and as it is read hands over the missing currencies (never goods). Absent on every other line |
 
-- A **scene** is an ordered list of lines, a **trigger** (a condition), and
-  two flags: `skippable` — an introduction, which waits a breath after the
-  last scene, rather than a beat of the First Morning — and `anywhere` — may
-  it start over a sheet the player has open.
-- Scenes are considered **in list order**, one at a time.
+- A **scene** is an ordered list of lines, a **trigger** (a condition), and:
+  - `skippable` — an introduction, which waits a breath after the last
+    scene, rather than a beat of the First Morning;
+  - `anywhere` — may it start over a sheet the player has open;
+  - `where` — the province, the world board or either: where it starts, and
+    where it plays (it pauses elsewhere);
+  - `doneWhen` · `doneTarget` · `doneAmount` — a condition that makes it
+    needless: holding when the scene is due, it is marked played without
+    playing ([`23-tutorials.md`](23-tutorials.md) §1).
+- Scenes are considered **in list order**, one at a time; one that cannot
+  start where the player is lets the next one that can go first.
 - **A `sighted` scene waits for the First Morning to end**: what stands in
   view past the fog never interrupts the morning's beats.
 

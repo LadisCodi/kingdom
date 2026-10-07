@@ -7,6 +7,8 @@
  * learns two signs for one thing. */
 
 #stage:empty { display: none; }
+/* A scene paused while the player is elsewhere (stage.ts `away`). */
+#stage.is-away { display: none; }
 #stage {
   position: absolute;
   inset: 0;

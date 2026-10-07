@@ -564,7 +564,7 @@ export type SceneCondition =
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
-  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen'
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen' | 'worldVisited'
   | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
@@ -602,6 +602,15 @@ export interface SceneDef {
   /** May start over a sheet the player opened. */
   anywhere: boolean;
   skippable: boolean;
+  /** Where the player has to be for it to start — and where it plays: a
+   *  scene that has started pauses while the player is elsewhere
+   *  (Docs/features/23-tutorials.md §1). */
+  where: 'province' | 'world' | 'any';
+  /** What makes it needless: holding when it is due, it is marked played
+   *  without playing, and its lines' gifts are handed over. '' = never. */
+  doneWhen: Exclude<SceneCondition, 'tap'> | '';
+  doneTarget: string;
+  doneAmount: number;
   lines: SceneLine[];
 }
 
