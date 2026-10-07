@@ -67,3 +67,13 @@ Attached to both messages (`m100-refs/`):
 > crown, "You" with a Townhall 8 pill, "14" hexes at the right, and under
 > the name one small line "2 hexes behind #10". No rewards, no chests, no
 > prizes anywhere on the screen.
+
+## The pieces (`../ranking/sheet.png`)
+
+Attached: `../ranking/ref-style.jpg` (the Survey compass, five atlas icons
+and the gold rank ribbon) and `../ranking/ref-widget-mockup.png` (m100's
+widget). A 2×1 sheet, true alpha first try:
+
+- left, the Survey compass's brass medallion with a laurel wreath round a
+  grass hex → `src/ui/assets/ranking-medal.png` (256×256);
+- right, the grass hex alone → `../sheets/ui-r1-hex.png` → the atlas's `hex`.

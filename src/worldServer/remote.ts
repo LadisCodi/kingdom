@@ -97,6 +97,10 @@ export class RemoteWorldServer implements WorldServerApi {
     await this.send({ kind: 'setCrest', crest });
   }
 
+  async setTownhall(level: number): Promise<void> {
+    await this.send({ kind: 'setTownhall', level });
+  }
+
   acknowledge(seq: number): void {
     this.ack = Math.max(this.ack, seq);
   }

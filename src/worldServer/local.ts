@@ -56,6 +56,8 @@ export interface WorldServerApi {
   setBoost(boost: SeatBoost): Promise<void>;
   /** The crest the player chose, or null for their nickname's. */
   setCrest(crest: string | null): Promise<void>;
+  /** The player's Townhall level, for the ranking. */
+  setTownhall(level: number): Promise<void>;
   delveRoom(armyId: string): Promise<DelveResult>;
   descendPortal(armyId: string): Promise<DelveResult>;
   /** The last effect the client has applied AND saved: the next request
@@ -221,6 +223,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async setCrest(crest: string | null): Promise<void> {
     this.ask({ kind: 'setCrest', crest });
+  }
+
+  async setTownhall(level: number): Promise<void> {
+    this.ask({ kind: 'setTownhall', level });
   }
 
   async recall(armyId: string, asSeat?: number): Promise<CommandResult> {

@@ -210,6 +210,18 @@
    "evenGrid": true
   },
   {
+   "file": "sheets/ui-r1-hex.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "hex"
+   ],
+   "evenGrid": true
+  },
+  {
    "file": "sheets/ui-m2-nav.png",
    "grid": {
     "rows": 2,

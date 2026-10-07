@@ -130,6 +130,10 @@ export interface ServerSeat {
   /** The crest its kingdom chose (`<tincture>.<charge>`, sim/crest.ts);
    *  absent while it wears its nickname's (`setCrest`). */
   crest?: string;
+  /** Its Townhall's level, as its client last sent it (`setTownhall`);
+   *  absent until it has. Nothing on the board turns on it: the ranking
+   *  shows it. */
+  townhall?: number;
   /** A stand-in rival the server plays (local only). */
   bot: boolean;
   /** When a bot makes its next move. */
@@ -299,6 +303,10 @@ export interface SeatView {
   bot: boolean;
   /** The crest its kingdom chose; null while it wears its nickname's. */
   crest?: string | null;
+  /** Its Townhall's level; null until its client has sent one. */
+  townhall?: number | null;
+  /** Nobody sits in it: a city waiting for a player. */
+  free?: boolean;
   /** A friend of the player's (15 §2.1): their city shows through the fog. */
   friend?: boolean;
 }

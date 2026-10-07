@@ -60,6 +60,8 @@ import { renderWorldBuilding, renderWorldSlot } from './ui/world/hexCard';
 import { renderArmySheet } from './ui/world/armySheet';
 import { renderDelveScreen } from './ui/world/delveScreen';
 import { mountExplorerChip } from './ui/world/explorerChip';
+import { mountRankingWidget } from './ui/world/rankingWidget';
+import { renderRankingSheet } from './ui/world/rankingSheet';
 import { HexCamera } from './render/world/hexCamera';
 import { drawWorld } from './render/world/boardRenderer';
 import { LocalWorldServer, browserStore } from './worldServer/local';
@@ -273,6 +275,7 @@ async function boot(): Promise<void> {
   mountRelicAsleepPill(game, document.getElementById('relicasleep')!);
   mountWorldKnob(game, document.getElementById('worldknob')!);
   mountExplorerChip(game, document.getElementById('worldchip')!);
+  mountRankingWidget(game, document.getElementById('worldrank')!);
   mountMinimap(game, document.getElementById('worldmini')!);
   // The tutorial's stage: the First Morning, the introductions and the help
   // (Docs/features/23-tutorials.md). Over the nav, under the reveal.
@@ -338,6 +341,7 @@ async function boot(): Promise<void> {
     nickname: renderNicknameSheet,
     friends: renderFriendsSheet,
     friendProfile: renderFriendProfile,
+    ranking: renderRankingSheet,
     crestEditor: renderCrestEditor,
     friendSearch: renderFriendSearch,
     wishNeed: renderWishNeed,
@@ -372,6 +376,7 @@ async function boot(): Promise<void> {
     purse: () => JSON.stringify(game.state.city.wallet),
     bag: () => bagSignature(game),
     survey: () => JSON.stringify(game.surveyScreen()),
+    ranking: () => JSON.stringify(game.worldRanking()),
     upgrade: () => {
       const d = game.upgradeDistrict();
       return d === null ? 'none' : upgradeSignature(game, d);
