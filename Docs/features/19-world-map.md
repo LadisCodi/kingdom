@@ -798,6 +798,8 @@ The fixed appointment is worth more than the surprise.
 - **An army's march can be hurried** — out or home — by General speed-ups
   or by Gems for the time left (`rush.secondsPerGem`); its route moves with
   it, so it stands where it should on the board.
+- **An army on the road is never called back** — to a camp, a Fortress, a
+  dungeon or the Portal. It is recalled only from where it stands.
 
 ### 10.4 What it pays
 

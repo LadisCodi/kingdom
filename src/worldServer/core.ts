@@ -1034,18 +1034,16 @@ function launch(
   return a;
 }
 
-/** Call an army home: out of its Fortress, or turned round on the road. */
+/** Call an army home from where it stands: its Fortress, a dungeon or the
+ *  Portal. An army on the road is not called back, only hurried. */
 export function recall(b: ServerBoard, seat: number, armyId: string, t: number): CommandResult {
   resolveTo(b, t);
   const a = b.armies.find((x) => x.id === armyId);
   if (a === undefined || a.owner !== seat) return { ok: false, why: 'NoArmy' };
   if (a.phase === 'home') return { ok: false, why: 'Busy' };
-  if (a.phase === 'garrison' || a.phase === 'camp') {
-    if (b.hexes[a.target]?.garrison === a.id) b.hexes[a.target].garrison = null;
-    turnHome(a, t);
-  } else {
-    turnHome(a, t, t - a.departedAt);
-  }
+  if (a.phase === 'out') return { ok: false, why: 'Marching' };
+  if (b.hexes[a.target]?.garrison === a.id) b.hexes[a.target].garrison = null;
+  turnHome(a, t);
   return { ok: true, finishesAt: a.at!, snapshot: snapshotOf(b, seat, t) };
 }
 

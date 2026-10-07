@@ -317,7 +317,7 @@ describe('armies', () => {
     expect(drainEffects(b, rival).some((e) => e.kind === 'report' && e.good)).toBe(true);
   });
 
-  it('calls a garrison home, and turns a march round on the road', () => {
+  it('calls a garrison home, but never an army on the road', () => {
     const { b, seat } = quietBoard();
     const out = sendArmy(b, seat, { purpose: 'attack', target: PORTAL_INDEX, heroes: [], board: army(100, 'r') }, T0);
     expect(out.ok).toBe(false); // nobody holds the Portal
@@ -327,6 +327,7 @@ describe('armies', () => {
     b.hexes[next].fortress = 1;
     const g = sendArmy(b, seat, { purpose: 'garrison', target: next, heroes: [], board: army(100, 'h') }, T0 + CLAIM_MS);
     if (!g.ok) throw new Error(g.why);
+    expect(recall(b, seat, g.army, T0 + CLAIM_MS + 1)).toEqual({ ok: false, why: 'Marching' });
     resolveTo(b, g.arrivesAt);
     expect(b.hexes[next].garrison).toBe(g.army);
     const r = recall(b, seat, g.army, g.arrivesAt + 1000);

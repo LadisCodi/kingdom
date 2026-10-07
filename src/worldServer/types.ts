@@ -369,6 +369,8 @@ export type Refusal =
   | 'Busy' | 'WrongGround' | 'MaxLevel' | 'Inactive' | 'NoBoard'
   | 'NoArmy' | 'NotAFortress' | 'Garrisoned' | 'NothingThere' | 'OwnGround' | 'Shut' | 'NoRoute'
   | 'NothingBuilding' | 'Guarded'
+  /** An army on the road is not called back, only hurried. */
+  | 'Marching'
 
   /** A world relic's host (relic-restoration.md §5.2). */
   | 'NoChapel' | 'TooManyChapels' | 'NoSlot' | 'NotAWorldRelic'
