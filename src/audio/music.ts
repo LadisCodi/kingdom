@@ -17,12 +17,22 @@
 //   muster › a party being mustered on the deploy sheet (a lair's, an
 //            army's; main.ts) — Preparing for the Assault (same
 //            collection): war drums while the player picks who goes.
-//   town   › the harp.
+//   town   › a playlist (below).
 //
-// All four are levelled to the harp's loudness. The three moments start from
-// their top each time they take over; the harp picks up where it left off.
+// All are levelled to the harp's loudness (-16.6 LUFS). The three moments
+// start from their top each time they take over; the town picks up where it
+// left off.
+//
+// THE TOWN IS A PLAYLIST. A random song to start, then each in turn, the
+// next crossfading in over the last seconds of the one playing. The harp is
+// a 21 s loop, so it plays a few rounds of itself as its turn; the others are
+// whole songs (Owl Theory, Ultimate RPG Music Collection). Time a song has
+// played is counted from its own clock, so a turn the battle interrupted
+// resumes where it was and still ends on time.
 
-import townUrl from './music/music-harp-peaceful-loop.ogg?url';
+import harpUrl from './music/music-harp-peaceful-loop.ogg?url';
+import villageUrl from './music/music-town-village.ogg?url';
+import anthemUrl from './music/music-town-anthem.ogg?url';
 import feastUrl from './music/music-tavern-loop.ogg?url';
 import battleUrl from './music/music-battle.ogg?url';
 import musterUrl from './music/music-muster.ogg?url';
@@ -43,8 +53,30 @@ interface Track {
   loop: Loop | null;
 }
 
+/** One song of the town's playlist. */
+interface Song {
+  url: string;
+  id: string;
+  /** Seconds its turn lasts — rounds of a short loop; null: the file's own
+   *  length. */
+  turn: number | null;
+  loop: Loop | null;
+  /** Seconds played this turn, and where its clock last read. */
+  heard: number;
+  last: number;
+}
+const TOWN: Song[] = [
+  { url: harpUrl, id: 'bgm', turn: 4 * 21.3, loop: null, heard: 0, last: 0 },
+  // Bluemare Village · Adventurer's Anthem.
+  { url: villageUrl, id: 'bgm-village', turn: null, loop: null, heard: 0, last: 0 },
+  { url: anthemUrl, id: 'bgm-anthem', turn: null, loop: null, heard: 0, last: 0 },
+];
+/** How long one song takes to hand over to the next (ms). */
+const CROSSFADE = 5000;
+let song = Math.floor(Math.random() * TOWN.length);
+
 const TRACKS: Record<Scene, Track> = {
-  town: { url: townUrl, id: 'bgm', volume: 0.35, fadeIn: 1500, fromTop: false, loop: null },
+  town: { url: TOWN[song].url, id: TOWN[song].id, volume: 0.35, fadeIn: 1500, fromTop: false, loop: null },
   muster: { url: musterUrl, id: 'bgm-muster', volume: 0.34, fadeIn: 900, fromTop: true, loop: null },
   battle: { url: battleUrl, id: 'bgm-battle', volume: 0.36, fadeIn: 300, fromTop: true, loop: null },
   feast: { url: feastUrl, id: 'bgm-feast', volume: 0.38, fadeIn: 600, fromTop: true, loop: null },
@@ -72,7 +104,7 @@ export function setMusicMuted(muted: boolean): void {
     else localStorage.removeItem(MUTE_KEY);
   } catch { /* storage blocked — the toggle just won't persist */ }
   if (muted) {
-    for (const t of Object.values(TRACKS)) {
+    for (const t of [...Object.values(TRACKS), ...TOWN]) {
       t.loop?.fadeTo(0, 0);
       t.loop?.audio.pause();
     }
@@ -91,13 +123,49 @@ function settle(now = false): void {
       t.loop?.fadeTo(0, FADE_OUT);
       continue;
     }
-    t.loop ??= streamedLoop(t.url, t.id);
+    t.loop ??= name === 'town' ? songLoop(TOWN[song]) : streamedLoop(t.url, t.id);
     if (playing !== want && t.fromTop) t.loop.audio.currentTime = 0;
     t.loop.play();
     // A ducked feast stays ducked until its timer lets it back up.
     if (!(name === 'feast' && duckTimer !== null)) t.loop.fadeTo(t.volume, now ? 0 : t.fadeIn);
   }
   playing = want;
+}
+
+/** A town song's stream, counting its turn as it plays. Every song still
+ *  loops, so a turn that somehow overran never falls silent. */
+function songLoop(s: Song): Loop {
+  if (s.loop !== null) return s.loop;
+  const loop = streamedLoop(s.url, s.id);
+  s.loop = loop;
+  loop.audio.addEventListener('timeupdate', () => {
+    const a = loop.audio;
+    const now = a.currentTime;
+    // A loop wrapping round reads as the time to its end plus the time since.
+    const step = now >= s.last ? now - s.last : now + (a.duration - s.last);
+    s.last = now;
+    if (step > 0 && step < 2) s.heard += step; // a seek is not time heard
+    const turn = s.turn ?? a.duration;
+    if (TOWN[song] === s && scene() === 'town' && Number.isFinite(turn) && s.heard >= turn - CROSSFADE / 1000) nextSong();
+  });
+  return loop;
+}
+
+/** The playing song fades out under the next one, which starts from its top. */
+function nextSong(): void {
+  const town = TRACKS.town;
+  town.loop?.fadeTo(0, CROSSFADE);
+  song = (song + 1) % TOWN.length;
+  const s = TOWN[song];
+  const loop = songLoop(s);
+  s.heard = 0;
+  s.last = 0;
+  loop.audio.currentTime = 0;
+  town.url = s.url;
+  town.id = s.id;
+  town.loop = loop;
+  loop.play();
+  loop.fadeTo(town.volume, CROSSFADE);
 }
 
 /** Start (or resume) the music. Safe to call repeatedly — and called from
