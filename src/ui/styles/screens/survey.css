@@ -171,6 +171,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: clip;
+  scrollbar-width: none; /* it scrolls by the finger; no bar */
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 6);
@@ -178,6 +179,7 @@
   background: url('../../assets/deco-rope-v.png') center top / calc(var(--px) * 12) calc(var(--px) * 50) repeat-y;
   background-attachment: local;
 }
+.rs-ladder::-webkit-scrollbar { display: none; }
 .rs-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--rs-spine) minmax(0, 1fr);

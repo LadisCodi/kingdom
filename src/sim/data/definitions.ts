@@ -2330,7 +2330,8 @@ export const SURVEY = balance.survey as {
   freeGems: number[];
   paidGems: number[];
   paidGoldKeys: number[];
-  paidFragments: number[];
+  paidSilverKeys: number[];
+  paidHeroXp: number[];
   paidStardust: number[];
   /** An item a level puts in the Bag, or '' for none, per column. */
   freeItems: string[];

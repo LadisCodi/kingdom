@@ -69,9 +69,11 @@ export function paidSurveyCell(level: number): SurveyCell {
   const items: ItemStock = {};
   if ((SURVEY.paidGems[i] ?? 0) > 0) wallet.Gems = SURVEY.paidGems[i];
   if ((SURVEY.paidGoldKeys[i] ?? 0) > 0) items.GoldKey = SURVEY.paidGoldKeys[i];
+  if ((SURVEY.paidSilverKeys[i] ?? 0) > 0) items.SilverKey = SURVEY.paidSilverKeys[i];
+  if ((SURVEY.paidHeroXp[i] ?? 0) > 0) wallet.HeroXp = SURVEY.paidHeroXp[i];
   if ((SURVEY.paidStardust[i] ?? 0) > 0) wallet.Stardust = SURVEY.paidStardust[i];
   addItemAt(items, SURVEY.paidItems, level);
-  return { level, wallet, items, fragments: SURVEY.paidFragments[i] ?? 0 };
+  return { level, wallet, items, fragments: 0 };
 }
 
 /** Is this cell waiting to be tapped? Reached, untaken and — on the paid
