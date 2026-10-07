@@ -70,6 +70,16 @@ describe('the damage formula', () => {
     expect(first.hits).toBe(front); // frontage, not the hundred standing there
     const raw = Math.floor((front * UNITS.Warrior.dmg * step(UNITS.Warrior.atk, UNITS.Archer.def)) / 1000);
     expect(first.dealt).toBe(Math.floor((raw * 3) / 4));
+    // …and the blow says so, for the screen (§13).
+    expect(first.edge).toBe('dis');
+  });
+
+  it('marks where the type chart stood on every blow — and nothing when it is even', () => {
+    const log = resolveBattle(buildBoard([squad('Warrior', 10)], []), buildBoard([squad('Lancer', 10)], []));
+    expect(attacks(log.events).find((e) => e.from.side === 'ours')!.edge).toBe('adv');
+    expect(attacks(log.events).find((e) => e.from.side === 'theirs')!.edge).toBe('dis');
+    const even = resolveBattle(buildBoard([squad('Warrior', 10)], []), buildBoard([squad('Warrior', 10)], []));
+    expect(attacks(even.events).every((e) => e.edge === undefined)).toBe(true);
   });
 
   it('never lets defence take more than its cap off a swing', () => {

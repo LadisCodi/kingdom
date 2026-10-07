@@ -84,6 +84,23 @@ describe('a lair attack opens the playback', () => {
     expect(game.battleTick(battle.startedAt + 5 * COMBAT.tickMs)).toBe(5);
     expect(game.battleTick(battle.startedAt + 10 * 60_000)).toBe(battle.log.ticks);
   });
+
+  it('holds the replay for a heavy blow, then walks on from where it stood', () => {
+    const { game, tick } = atTheDoor();
+    game.openLair(ORCS);
+    game.doAttackLair();
+    const at = game.battle!.startedAt;
+    tick(500);
+    expect(game.battleMs(at + 500)).toBe(500);
+    game.holdBattle(80);
+    // Frozen for the hold — never earlier, never later…
+    expect(game.battleMs(at + 540)).toBe(500);
+    expect(game.battleMs(at + 580)).toBe(500);
+    // …then on at the playback's speed.
+    expect(game.battleMs(at + 680)).toBe(600);
+    // The end still stands at the end.
+    expect(game.battleMs(at + 10 * 60_000)).toBe(game.battle!.log.ticks * COMBAT.tickMs);
+  });
 });
 
 describe('the lair opens the same screen', () => {
