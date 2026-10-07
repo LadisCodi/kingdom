@@ -311,3 +311,13 @@ Recoloured locally (only the hue band named moves, so gold trims stay gold):
 `ribbon-purple.png` from `ribbon-blue.png` (190–250° +50°),
 `portal-node-lit.png` from `delve-node-lit.png` (10–65° −110°),
 `portal-node.png` and `portal-rock.png` tinted violet.
+
+## The explorer's and the war table's offers (2026-10-07)
+
+One sheet, anchored on `Docs/art/originals/world-menus/ref-offer-style.jpg`
+(the novice pack's cut-out and the explorer vignette): two DIORAMAS, not a
+character — an explorer's camp, and a war table with a third chair glowing
+empty — two columns, the true-alpha wording. True alpha first try. Kept as
+`offer-dioramas-sheet.png`; cut by half, trimmed, fitted bottom-centred on
+the novice cut-out's 923×1024 → `src/render/assets/offer_explorer_cutout.png`
+and `offer_hero_slot_cutout.png`, the `art` of ExplorerPack and HeroSlotPack.
