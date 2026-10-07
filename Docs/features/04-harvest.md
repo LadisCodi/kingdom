@@ -232,9 +232,11 @@ A rewarded ad pays a whole pool:
 - Unassigning a loaded worker loses the load.
 - The walk is the distance cost: 4.7 Wood/min from a tree next door against
   3.3 from one at radius 4. There is no per-distance penalty on the strike rate.
-- **A late building strikes harder and faster.** From level 6 a producer adds
-  **+1 unit to every delivery** and swings **10% faster** per level, to +5 and
-  ×1.5 at level 10 ([`buildings.md`](buildings.md) §4.11). Both are read off
+- **A producer's level buys speed, never reach or hands.** Its radius and its
+  crew are the level-1 building's at every level; each level swings faster —
+  ×1.25 at level 2 to ×2 at 5 and ×3 at 10 — and from level 6 every delivery
+  carries **+1 unit**, to +5 at 10 ([`buildings.md`](buildings.md) §4.3–§4.6,
+  §4.11). More ground or more hands is another building. Both are read off
   the crew's own building, and neither touches the tap: the thumb is not a
   crew.
 - A strike is a simulation boundary. The renderer receives the strike event the
@@ -267,8 +269,9 @@ Quests:
 
 ## 5. Areas of influence, claims and migration
 
-- A worker building works cells **of its type** within Chebyshev
-  `radius(level)`. Revealed cells only.
+- A worker building works cells **of its type** within its Chebyshev
+  radius — the same at every level; `Surveying` widens it by a ring. Revealed
+  cells only.
 - The area is drawn while the building is selected or placed: a white line
   with rounded corners, and a light sky-blue glow inside it that is strongest
   against the line, fades most of a tile in, and breathes slowly. It lies over the floor and under what stands on it

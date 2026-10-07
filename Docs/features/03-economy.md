@@ -234,9 +234,10 @@ absence is replayed, and each building stops when its store is full
   and the 70th about 35 min. The wait is stamped when the villager's clock starts.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first seven (`5, 20, 45, 100, 250, 500, 1000`), then `×1.1`
-  per villager beyond: about 3,500 Food for the 20th, 23,000 for the 40th and
-  405,000 for the 70th. The Townhall's levels ask for villagers
+- Cost: authored for the first thirteen
+  (`5, 10, 20, 40, 70, 110, 160, 230, 320, 440, 600, 800, 1000`), then `×1.1`
+  per villager beyond: about 1,950 Food for the 20th, 13,100 for the 40th and
+  229,000 for the 70th. The Townhall's levels ask for villagers
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - No tap hurries the queue.
 - Timers take Gems ([`04-harvest.md`](04-harvest.md) §3.2).
@@ -294,7 +295,7 @@ and research**.
 | Store capacity per level | 1 h of the building at level 1, ×1.32 a level to 12 h at level 10 (§3.2) | `buildings` › `storageCapacityPerLevel` |
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | 2 · 4 · 6 … 20 — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
-| Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,20,45,100,250,500,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
+| Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,10,20,40,70,110,160,230,320,440,600,800,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
 | Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `currencies.goldValue` |
 | Adjacency rules | §3.1 | `adjacency` — `district`, `neighbor`, `stat`, `magnitude` |

@@ -36,7 +36,8 @@
   level before can hold, so the answer is always roofs, Food and the training
   line. The card says the number and where the city stands: *Needs 12
   villagers · you have 9*.
-- Villagers are priced `5, 20, 45, 100, 250, 500, 1000` Food then **×1.1** each,
+- Villagers are priced `5, 10, 20, 40, 70, 110, 160, 230, 320, 440, 600, 800,
+  1000` Food then **×1.1** each,
   and each one trains ×1.07 slower than the one before
   ([`03-economy.md`](03-economy.md) §4).
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
