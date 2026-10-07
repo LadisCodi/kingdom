@@ -309,7 +309,8 @@
    left of Settings, with the red orb when someone asks. */
 .hud-knob.is-friends { right: calc(var(--rpx) * 148); }
 .hud-knob.is-friends[hidden] { display: none; }
-.hud-knob.is-friends > .k-cta { top: calc(var(--rpx) * -6); right: calc(var(--rpx) * -6); }
+/* On the knob's top-right rim, not over its face. */
+.hud-knob.is-friends > .k-cta { top: calc(var(--cta-size) * -0.4); right: calc(var(--cta-size) * -0.4); }
 
 /* THE SHIELD EDITOR: the crest large on a glow, then its two choices — the
    fields as blank shields, the charges each on the field picked — and Save. */
