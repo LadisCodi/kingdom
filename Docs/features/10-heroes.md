@@ -513,6 +513,9 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - Every beat has its sound (land, latch, lid, draw, flip, whoosh, settle,
   sparkle, riser, pop, fanfare, applause, summary chime) and its particles (dust, sparks,
   confetti, embers). Reduced motion keeps the beats and drops the motion.
+- **The music changes while a chest is open**: the harp fades out under a
+  lively tavern tune, which ducks under a hero's fanfare; Collect fades the
+  harp back in where it was. The music mute silences both.
 - **The banners sit on the store**, padlocked until a Tavern stands. Moving
   them into the Tavern — **tapping it is how one is called**
   ([`14-monetization.md`](14-monetization.md) §2.1) — is designed, not built.
