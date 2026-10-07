@@ -7,7 +7,7 @@
 //   what it fights as, as the unit's icon at the top left;
 //   its level and its ascension stars at the foot;
 //   its HP, on the small bar hung over the bottom edge — none when unhurt;
-//   in a picker for a fight, its power under the level;
+//   in a picker for a fight, its power in the level's place;
 //   and, exhausted, the Zs and how long the rest has left.
 // No name: the face is the name.
 //
@@ -32,7 +32,7 @@ export interface HeroCardOpts {
   small?: boolean;
   /** Something can be done with this hero right now — the green orb. */
   cta?: boolean;
-  /** Chosen for a fight: its power under the level. */
+  /** Chosen for a fight: its power in the level's place. */
   power?: boolean;
   onClick?: () => void;
   label?: string;
@@ -58,9 +58,10 @@ export function heroCard(game: Game, heroId: HeroId, opts: HeroCardOpts = {}): H
   ...(health.exhausted
     ? [restMarks(), el('span', { class: 'hc-foot' }, restLeft(health.restMs))]
     : [el('span', { class: 'hc-foot' },
-      stars, el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`),
-      ...(opts.power ? [el('span', { class: 'hc-level hc-power', 'aria-label': `Power ${formatExact(game.heroPowerOf(heroId))}` },
-        iconEl('power', { size: 'sm' }), formatExact(game.heroPowerOf(heroId)))] : []))]),
+      stars, opts.power
+        ? el('span', { class: 'hc-level hc-power', 'aria-label': `Power ${formatExact(game.heroPowerOf(heroId))}` },
+          iconEl('power', { size: 'sm' }), formatExact(game.heroPowerOf(heroId)))
+        : el('span', { class: 'hc-level' }, `Lv ${game.heroLevelOf(heroId)}`))]),
   // Unhurt, no bar: it would only say "full".
   ...(health.hp >= health.max ? [] : [hpOf(health.hp, health.max, opts.small === true)]),
   // The skill's rank, once it has one past the first (10-heroes.md §2.5).

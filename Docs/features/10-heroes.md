@@ -590,8 +590,8 @@ how many slots it wants (1…n) and what to do with the answer.
   - its HP bar inside the frame over the foot — the game's progress bar;
     on a small card, the small HP bar hung over the bottom edge; no bar
     when it is unhurt;
-  - in a picker opened for a fight, its **power** under the level — what
-    it adds to the army's (`heroPowerPerDmg` × its damage);
+  - in a picker opened for a fight, its **power** in place of the level —
+    what it adds to the army's (`heroPowerPerDmg` × its damage);
   - a green check, top right, when it holds a slot;
   - exhausted (§2.8): asleep — darkened, the Zs rising, the rest's countdown.
   - No name: the illustration is enough.
