@@ -302,6 +302,10 @@
 .hd-skill-foot > .hd-note { max-width: none; }
 .hd-skill-foot > .k-btn:not(.k-knob) { min-width: calc(var(--px) * 136); }
 
+/* At the ascension's level cap: the stars to reach to go further. */
+.hd-note.hd-cap { flex-direction: column; align-items: flex-end; gap: calc(var(--px) * 4); }
+.hd-cap-stars { --asc-size: calc(var(--px) * 22); }
+
 /* The level (or the fragments), as words over the game's green bar. */
 .hd-read { display: flex; flex-direction: column; gap: calc(var(--px) * 6); }
 .hd-read-line { color: var(--ink-muted); font-size: var(--text-body); font-weight: var(--weight-strong); }

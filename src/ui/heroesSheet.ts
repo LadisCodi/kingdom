@@ -33,7 +33,7 @@ import {
 } from '../sim/heroes';
 import { SKILLS, maxSkillRank, skillSentence } from '../sim/skills';
 import {
-  ascensionFragmentCost, heroLevelCap, maxAscension, xpLevelCost,
+  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
 } from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
@@ -220,8 +220,11 @@ function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   // do instead: a disabled button still offers a press, and the press is not
   // the answer — the Ascend above is.
   if (lv >= view.levelCap) {
+    // What to reach: the stars as they will be once the next one is full —
+    // the ascension that lifts the cap.
+    const target = (fullStars(view.entry.ascension) + 1) * HERO_LADDER.ascensionStepsPerStar;
     return tray('hd-level', read,
-      el('div', { class: 'hd-note' }, iconEl('ascension', { size: 'sm' }), 'Ascend them to go further'));
+      el('div', { class: 'hd-note hd-cap' }, 'Ascend to', ascensionStars(target, 'hd-cap-stars')));
   }
   const cost = xpLevelCost(lv);
   const short = game.walletValue('HeroXp') < cost;
