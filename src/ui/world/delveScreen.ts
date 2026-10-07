@@ -93,7 +93,7 @@ function roomNode(
   }
   if (boss && state !== 'is-cleared') {
     // The boss's chest stands open: what beating him pays.
-    parts.push(el('div', { class: 'dv-chest' }, iconEl('chest', { size: 'md' }), payChips(roomReward(depth, room), null)));
+    parts.push(el('div', { class: 'dv-chest' }, el('span', { class: 'dv-chest-art', 'aria-hidden': 'true' }), payChips(roomReward(depth, room), null)));
   }
   return el('div', { class: `dv-room ${state}${boss ? ' is-boss' : ''}${side}` }, ...parts);
 }

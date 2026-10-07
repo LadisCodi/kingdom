@@ -229,6 +229,9 @@ export type OverlayName =
   // A world dungeon's descent: its rooms, the race, the army camped there
   // (Docs/features/19-world-map.md §8.2).
   | 'delve'
+  // The Dark Portal's descent: its floors, the ranking on them, the army
+  // camped below (Docs/proposals/world-menus.md §3.10).
+  | 'portal'
   // The name the player goes out onto the world board under, asked the
   // first time out (Docs/features/19-world-map.md §1.3).
   | 'nickname'
@@ -5941,6 +5944,15 @@ export class Game {
   /** The dungeon the delve screen is about, the depth it shows (null: the
    *  player's current one), and what the last room fought there paid. */
   delveHex: number | null = null;
+  /** The Portal whose descent is open. */
+  portalHex: number | null = null;
+
+  /** The Dark Portal's descent, from its card. */
+  openPortalDescent(index: number): void {
+    this.portalHex = index;
+    playSfx('click');
+    this.setOverlay('portal');
+  }
   delveDepth: number | null = null;
   delveSpoils: {
     won: boolean; depth: number; room: number; boss: boolean; lost: number;

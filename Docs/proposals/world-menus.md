@@ -166,7 +166,7 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 - No Resupply: to send more, withdraw the army and send a new one — with
   other heroes, which rotates them.
 
-### 3.10 The Portal's descent (m92)
+### 3.10 The Portal's descent (m92, built)
 
 - The Portal card's Descend opens a descent built like the delve, so the
   Portal is a place played on the map, not a ranking in a sheet:
@@ -179,6 +179,21 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
   - the same army dock, with **Descend** (Mana) and **Recall**.
 - Everything it shows exists today (floors, attempts, packs, milestones,
   the ranking): it is a screen, not a new rule.
+- The Portal card's one button, **Descend**, opens it; the descent has
+  **Send** (no army down), **Withdraw** and **Descend** (Mana on its plate).
+
+## 3.12 The art these menus use
+
+- **New** (ChatGPT, `Docs/art/originals/world-menus/`): the explorer's
+  vignette (`whex_explorer`). The Portal's card shows the board's painted
+  Portal, shut or open (`whex_portal`, `whex_portal_open`, Docs/art/world/portal/).
+- **Recoloured** from shipped art: the purple ribbon (`ribbon-purple`, from
+  the blue), the Portal's floor nodes (`portal-node*`, from the delve's) and
+  its shaft's stone (`portal-rock`).
+- **Reused as shipped**: the ribbons (red, blue, brown) for the boss's name,
+  *You* and a kingdom's name; the wax seals for a camp's difficulty; the
+  nav tabs for the depth tabs; the golden chest for a boss's pay; the gold
+  rank ribbon over the Portal's leader.
 
 ### 3.11 Unchanged
 
