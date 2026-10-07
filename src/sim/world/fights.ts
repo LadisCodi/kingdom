@@ -24,9 +24,10 @@ export function fightMana(state: GameState): number {
   return Math.max(1, roundPrice(manaNetRegen(state) * WORLD.fightManaHours));
 }
 
-/** Does sending an army for `purpose` start a fight on arrival? A dungeon's
- *  and the Portal's fights are paid one room or floor at a time instead. */
-export const sendFights = (purpose: string): boolean => purpose === 'clear' || purpose === 'attack';
+/** Does sending an army for `purpose` start a fight on arrival? A camp's,
+ *  a dungeon's and the Portal's fights are called by the player once the
+ *  army is there, and paid one at a time instead. */
+export const sendFights = (purpose: string): boolean => purpose === 'attack';
 
 /** What beating a camp of `power` pays now, before a hero's skills: Gold
  *  and Hero XP by its power, Wood, Food and Stone in hours of the city's

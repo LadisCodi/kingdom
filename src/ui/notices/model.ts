@@ -18,6 +18,7 @@ import { LAIR_AVATAR } from '../../render/lairMap';
 import { el, formatCount, formatExact } from '../format';
 import { iconEl, type IconName } from '../kit';
 import { worldBuildDone } from '../world/worldActions';
+import { CAMP_TITLE } from '../world/hexNames';
 
 /** What a bubble or a card draws: built fresh each time it is asked for. */
 export interface Art {
@@ -431,6 +432,26 @@ function states(game: Game): Notice[] {
       body: 'A hero answers a free call today.',
       picture: icon('SilverKey'),
       go: () => game.openStore('heroes'),
+      action: null,
+    });
+  }
+
+  // ARMY READY: an army of the player's waits at a camp for the word to attack.
+  // Read off the saved snapshot, so it shows in the province too.
+  const ready = game.worldSource().armies()
+    .filter((a) => a.owner === game.worldSeat() && a.purpose === 'clear' && a.phase === 'camp');
+  if (ready.length > 0) {
+    const lead = ready[0];
+    const creature = game.worldSource().board().hexes[lead.target]?.camp?.creature;
+    const art = creature === undefined ? icon('army') : spriteArt(`whex_camp_${creature.toLowerCase()}`, 'army');
+    out.push({
+      ...base, id: 'state:armyReady', art, count: ready.length > 1 ? ready.length : 0, glow: true, view: 'world',
+      title: ready.length === 1 ? 'Your army is ready' : `${formatExact(ready.length)} armies are ready`,
+      body: creature === undefined
+        ? 'It waits at the camp. Attack when you are ready.'
+        : `It waits at the ${CAMP_TITLE[creature].toLowerCase()}. Attack when you are ready.`,
+      picture: art,
+      go: () => game.goToHex(lead.target),
       action: null,
     });
   }

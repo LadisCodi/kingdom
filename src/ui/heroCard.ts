@@ -10,8 +10,9 @@
 //   in a picker for a fight, its power in the level's place;
 //   and, when it cannot be chosen, what it is doing — exhausted, the Zs
 //   and how long the rest has left; away with an army, marching (a
-//   stepping boot, the time to the end of the leg), in a dungeon (a
-//   flickering torch) or on guard in a Fortress (a gleaming shield).
+//   stepping boot, the time to the end of the leg), camped in a dungeon, the
+//   Portal or at a camp, ready (a flickering torch) or on guard in a
+//   Fortress (a gleaming shield).
 // No name: the face is the name.
 //
 // A hero NOT FOUND yet is the same card on warm stone: the figure a dark
@@ -87,7 +88,7 @@ function awayMarks(game: Game, doing: Exclude<HeroState, { kind: 'ready' }>): HT
     case 'marching': return [marchMarks(), doing.at === null
       ? pill('Marching')
       : el('span', { class: 'hc-foot' }, restLeft(Math.max(0, doing.at - game.now())))];
-    case 'delving': return [delveMarks(), pill('Dungeon')];
+    case 'camped': return [delveMarks(), pill(doing.where === 'camp' ? 'Ready' : doing.where === 'portal' ? 'Portal' : 'Dungeon')];
     case 'guarding': return [guardMarks(), pill('On guard')];
   }
 }

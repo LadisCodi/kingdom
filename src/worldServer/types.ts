@@ -401,6 +401,17 @@ export type SendResult =
   | { ok: true; army: string; arrivesAt: number; snapshot: WorldSnapshot }
   | { ok: false; why: Refusal };
 
+/** A camp fought on its player's word: the fight, for the battle screen. */
+export type CampFightResult =
+  | {
+    ok: true; won: boolean; log: import('../sim/battle').BattleLog;
+    /** Soldiers this fight cost. */
+    lost: number;
+    creature: import('../sim/state').LairId;
+    snapshot: WorldSnapshot;
+  }
+  | { ok: false; why: Refusal };
+
 /** A dungeon room fought: the fight itself, for the battle screen, and
  *  whether it fell. */
 export type DelveResult =

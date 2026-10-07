@@ -33,7 +33,7 @@ import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/t
 import { boardOf } from '../sim/world/source';
 import { WORLD_DISTRICTS, WORLD_UPGRADES, depositMaterial, type WorldDistrict, type WorldUpgrade } from '../sim/world/types';
 import type {
-  ArmyPurpose, ArmyView, BoardRef, CollectResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
+  ArmyPurpose, ArmyView, BoardRef, CollectResult, CampFightResult, CommandResult, DelveResult, HexView, PortalView, Refusal, SeatBoost,
   RaidPlan, SendResult, ServerArmy, ServerBoard, ServerHex, ServerWorld, WorldEffect, WorldSnapshot, WorldStoreCurrency,
 } from './types';
 
@@ -881,36 +881,17 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     return;
   }
   if (a.purpose === 'clear') {
-    // A camp is fought on arrival, as an attack is; won, it is beaten for
-    // this seat and pays its loot (19 §5.4).
+    // At a camp the army waits, ready, for its player to call the attack
+    // (`fightCamp`, 19 §5.4). No camp to fight: back home.
     const camp = campAt(b, a.target);
     if (camp !== null && guarded(b, a.owner, a.target, t)) {
-      const fighters = a.board.slots;
-      const ground = boardData(b).hexes[a.target];
-      const log = resolveBattle(onGround(a.board, ground), onGround(campBoard(b, a.target), ground));
-      const after = boardAfter(log, a.board, 'ours');
-      a.board = after.board;
-      addFallen(a.fallen, after.fallen);
-      const name = CAMP_CREATURE[camp.creature];
-      if (log.winner === 'ours') {
-        beat(b, a.owner, a.target, t);
-        const sp = spoilsOf(fighters);
-        owe(b, a.owner, {
-          kind: 'loot', at: t, knowledge: 0, stardust: 0,
-          gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
-          heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
-          hours: (camp.power / 1000) * WORLD_CAMPS.productionHoursPer1000Power,
-          precious: {
-            id: lumpMaterial(boardData(b), a.owner, 'camp', a.target, a.owner),
-            amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
-          },
-        });
-        report(b, a.owner, t, `Your army beat the camp of ${name}`, true, a.target);
-      } else {
-        report(b, a.owner, t, `Your army was beaten back by the camp of ${name}`, false, a.target);
-      }
-    } else report(b, a.owner, t, 'Your army found no camp there and turned back', false, a.target);
-    turnHome(a, t);
+      a.phase = 'camp';
+      a.at = null;
+      report(b, a.owner, t, `Your army reached the camp of ${CAMP_CREATURE[camp.creature]} and is ready to attack`, true, a.target);
+    } else {
+      report(b, a.owner, t, 'Your army found no camp there and turned back', false, a.target);
+      turnHome(a, t);
+    }
     return;
   }
   if (a.purpose === 'claim') {
@@ -1222,6 +1203,50 @@ export function delveRoom(b: ServerBoard, seat: number, armyId: string, t: numbe
   // Nothing left to fight with: what is left walks home.
   else if (!a.board.slots.some((s) => s.kind === 'hero')) turnHome(a, t);
   return { ok: true, won, log, ...next, lost, snapshot: snapshotOf(b, seat, t) };
+}
+
+// ------------------------------------------------------------ camps
+
+/** Fight the camp an army waits at, on its player's word (19 §5.4): won,
+ *  the camp is beaten for that seat and pays its loot. Either way, what is
+ *  left of the army marches home. */
+export function fightCamp(b: ServerBoard, seat: number, armyId: string, t: number): CampFightResult {
+  resolveTo(b, t);
+  const a = b.armies.find((x) => x.id === armyId);
+  if (a === undefined || a.owner !== seat || a.purpose !== 'clear' || a.phase !== 'camp') return { ok: false, why: 'NoArmy' };
+  const camp = campAt(b, a.target);
+  if (camp === null || !guarded(b, seat, a.target, t)) {
+    turnHome(a, t);
+    return { ok: false, why: 'NothingThere' };
+  }
+  const fighters = a.board.slots;
+  const ground = boardData(b).hexes[a.target];
+  const log = resolveBattle(onGround(a.board, ground), onGround(campBoard(b, a.target), ground));
+  const after = boardAfter(log, a.board, 'ours');
+  a.board = after.board;
+  addFallen(a.fallen, after.fallen);
+  const lost = after.fallen.reduce((n, f) => n + f.count, 0);
+  const won = log.winner === 'ours';
+  const name = CAMP_CREATURE[camp.creature];
+  if (won) {
+    beat(b, seat, a.target, t);
+    const sp = spoilsOf(fighters);
+    owe(b, seat, {
+      kind: 'loot', at: t, knowledge: 0, stardust: 0,
+      gold: roundPrice(camp.power * WORLD_CAMPS.goldPerPower * (1 + sp.plunder)),
+      heroXp: roundPrice(camp.power * WORLD_CAMPS.heroXpPerPower * (1 + sp.seasoned)),
+      hours: (camp.power / 1000) * WORLD_CAMPS.productionHoursPer1000Power,
+      precious: {
+        id: lumpMaterial(boardData(b), seat, 'camp', a.target, seat),
+        amount: Math.max(1, Math.round(camp.power * WORLD_PRECIOUS.campPerPower)),
+      },
+    });
+    report(b, seat, t, `Your army beat the camp of ${name}`, true, a.target);
+  } else {
+    report(b, seat, t, `Your army was beaten back by the camp of ${name}`, false, a.target);
+  }
+  turnHome(a, t);
+  return { ok: true, won, log, lost, creature: camp.creature, snapshot: snapshotOf(b, seat, t) };
 }
 
 // ------------------------------------------------------------ the Portal

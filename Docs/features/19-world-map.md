@@ -364,7 +364,11 @@ accident.**
   against the strongest party they could send: Very easy (green) · Easy ·
   Fair · Hard · Deadly (red). The camp's sheet names the difficulty.
 - **Fighting it**: an army sent to *clear* it — the party screen, march and
-  slot of an attack (§4) — fights on arrival.
+  slot of an attack (§4) — **waits at the camp** when it arrives. The
+  player is told (the *Your army is ready* notice) and calls the fight
+  from the camp's sheet: **Attack**, paid in Mana like a dungeon room, and
+  watched. **Withdraw** marches it home instead. Fought, won or lost, the
+  army marches home.
   - Won: the camp is beaten for that player, and pays when the army is
     home, by its power:
     - Gold (`goldPerPower`) and Hero XP (`heroXpPerPower`);
@@ -374,7 +378,7 @@ accident.**
   - The camp's sheet shows what it pays before the army is sent.
   - On its way, the camp's sheet docks the army as a dungeon's: its board,
     its bar to arrival and **Finish**. A march to a camp is not called
-    back, only hurried.
+    back, only hurried. There: its board, **Withdraw** and **Attack**.
   - Lost: the army walks home with its survivors; the camp stands, whole.
 - **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
   It is the training cost of the soldiers a winning army would lose

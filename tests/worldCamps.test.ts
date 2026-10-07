@@ -11,7 +11,7 @@ import { boardNeighbors, hexAt, hexDistance, hexIndex, localHex, miniBoardOf, ro
 import { snapshotWorld } from '../src/sim/world/source';
 import { hexActions } from '../src/ui/world/worldActions';
 import {
-  claim, claimRefusal, drainEffects, emptyWorld, join, resolveTo, sendArmy, snapshotOf, tribute,
+  claim, claimRefusal, drainEffects, emptyWorld, fightCamp, join, resolveTo, sendArmy, snapshotOf, tribute,
 } from '../src/worldServer/core';
 import type { ServerBoard } from '../src/worldServer/types';
 
@@ -107,6 +107,13 @@ describe('a camp guards its hex', () => {
     expect(sendArmy(b, seat, { purpose: 'clear', target: camp, heroes: [], board: army(power, 'again') }, t))
       .toEqual({ ok: false, why: 'Busy' });
     resolveTo(b, r.arrivesAt);
+    // There, it waits for the word: no fight, no loot yet.
+    expect(b.armies.find((a) => a.id === r.army)?.phase).toBe('camp');
+    expect(claimRefusal(b, seat, camp, r.arrivesAt)).toBe('Guarded');
+    expect(drainEffects(b, seat).some((e) => e.kind === 'loot')).toBe(false);
+    const f = fightCamp(b, seat, r.army, r.arrivesAt);
+    expect(f.ok && f.won).toBe(true);
+    expect(b.armies.find((a) => a.id === r.army)?.phase).toBe('home');
     expect(claimRefusal(b, seat, camp, r.arrivesAt)).toBeNull();
     expect(claimRefusal(b, 1, camp, r.arrivesAt)).not.toBe(null);
     const loot = drainEffects(b, seat).find((e) => e.kind === 'loot');
@@ -125,6 +132,8 @@ describe('a camp guards its hex', () => {
     const r = sendArmy(b, seat, { purpose: 'clear', target: camp, heroes: [], board: army(Math.max(10, power / 10), 'weak') }, T0);
     if (!r.ok) throw new Error(r.why);
     resolveTo(b, r.arrivesAt);
+    const f = fightCamp(b, seat, r.army, r.arrivesAt);
+    expect(f.ok && f.won).toBe(false);
     expect(snapshotOf(b, seat, r.arrivesAt).beaten).not.toContain(camp);
     expect(drainEffects(b, seat).some((e) => e.kind === 'loot')).toBe(false);
   });

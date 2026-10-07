@@ -148,6 +148,7 @@ import {
   worldFogAt, type ExplorerHome,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
+import { CAMP_TITLE } from './ui/world/hexNames';
 import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, homeboundMs, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
@@ -390,7 +391,7 @@ export type HeroState =
   | { kind: 'ready' }
   | { kind: 'resting'; restMs: number }
   | { kind: 'marching'; at: number | null }
-  | { kind: 'delving' }
+  | { kind: 'camped'; where: 'dungeon' | 'portal' | 'camp' }
   | { kind: 'guarding' };
 
 export interface HeroPick {
@@ -4536,14 +4537,15 @@ export class Game {
   }
 
   /** What a hero is doing: free, resting from a fight, or away with an army
-   *  — marching (out or home, `at` when that leg ends), camped in a dungeon
-   *  or the Portal, or standing guard in a Fortress. */
+   *  — marching (out or home, `at` when that leg ends), camped in a dungeon,
+   *  the Portal or at a camp it is ready to attack, or standing guard in a
+   *  Fortress. */
   heroStateOf(heroId: HeroId): HeroState {
     const army = this.state.world.armies.find((a) => a.heroes.includes(heroId));
     if (army !== undefined) {
       const view = this.worldView?.armies.find((a) => a.id === army.id);
       const phase = view?.phase ?? this.worldSource().armies().find((a) => a.id === army.id)?.phase ?? 'out';
-      if (phase === 'camp') return { kind: 'delving' };
+      if (phase === 'camp') return { kind: 'camped', where: army.purpose === 'clear' ? 'camp' : army.purpose === 'portal' ? 'portal' : 'dungeon' };
       if (phase === 'garrison') return { kind: 'guarding' };
       return { kind: 'marching', at: view?.at ?? null };
     }
@@ -6033,6 +6035,29 @@ export class Game {
   }
 
   /** Fight the next room of the dungeon an army camps at, and watch it. */
+  /** Fight the camp an army waits at, and watch it (19 §5.4). */
+  async doFightCamp(armyId: string): Promise<void> {
+    if (this.worldServer === null) return;
+    if (this.refuseFight()) return;
+    const cost = fightMana(this.state);
+    const r = await this.worldServer.fightCamp(armyId);
+    if (!r.ok) {
+      this.toast(this.worldRefusal(r.why));
+      this.notify();
+      return;
+    }
+    payMana(this.state, cost);
+    this.applyWorldSnapshot(r.snapshot);
+    this.openBattle(r.log, {
+      title: CAMP_TITLE[r.creature],
+      subtitle: r.won ? 'Beaten — the loot comes home with the army' : 'Beaten back',
+      prizes: [],
+      enemyFaces: UNIT_CREATURE_AVATAR,
+      backdrop: 'field',
+    });
+    this.notify();
+  }
+
   async doDelveRoom(armyId: string): Promise<void> {
     if (this.worldServer === null) return;
     if (this.refuseFight()) return;

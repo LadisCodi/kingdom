@@ -6,7 +6,8 @@ import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
 import { CAMP_CREATURE, campSquads } from '../../sim/world/camps';
 import { creatureFace } from '../lairSheet';
-import { CAMP_TITLE, lootWidget, terrainWidget } from './hexCard';
+import { lootWidget, terrainWidget } from './hexCard';
+import { CAMP_TITLE } from './hexNames';
 import { campLoot, sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
@@ -16,7 +17,7 @@ import { renderBattleSheet, type BattleView } from '../battleSheet';
 import { unitBust } from '../unitArt';
 import { seatName } from './dispatchSheet';
 
-const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'Attack' } as const;
+const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'March' } as const;
 
 /** Whose camp stands on a hex: its creature's lair's name. */
 const campName = (game: Game, index: number): string => {

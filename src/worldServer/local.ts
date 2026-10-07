@@ -17,7 +17,7 @@ import {
 } from './handle';
 import { normalNickname } from './nickname';
 import type {
-  CollectResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerWorld,
+  CollectResult, CampFightResult, CommandResult, DelveResult, SeatBoost, SendResult, ServerWorld,
   WorldSnapshot,
 } from './types';
 
@@ -62,6 +62,7 @@ export interface WorldServerApi {
   /** The player's Townhall level, for the ranking. */
   setTownhall(level: number): Promise<void>;
   delveRoom(armyId: string): Promise<DelveResult>;
+  fightCamp(armyId: string): Promise<CampFightResult>;
   descendPortal(armyId: string): Promise<DelveResult>;
   /** The last effect the client has applied AND saved: the next request
    *  tells the server, which then stops sending it. */
@@ -247,6 +248,10 @@ export class LocalWorldServer implements WorldServerApi {
 
   async delveRoom(armyId: string): Promise<DelveResult> {
     return this.ask({ kind: 'delveRoom', armyId });
+  }
+
+  async fightCamp(armyId: string): Promise<CampFightResult> {
+    return this.ask({ kind: 'fightCamp', armyId });
   }
 
   async descendPortal(armyId: string): Promise<DelveResult> {
