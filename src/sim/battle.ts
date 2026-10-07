@@ -94,6 +94,10 @@ export type BattleEvent =
     skill?: SkillId;
     /** What a shield soaked before `dealt`. */
     absorbed?: number;
+    /** Where the type chart stood (§7): `adv` for an advantage, `dis` for a
+     *  disadvantage, absent when neutral. For the screen — it is already in
+     *  `dealt`. */
+    edge?: 'adv' | 'dis';
   }
   /** A skill fires: its name over the fighter. A rally's at tick 0. */
   | { kind: 'skill'; tick: number; from: SlotRef; skill: SkillId }
@@ -388,6 +392,7 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     events.push({
       kind: 'attack', tick, from: { side, id: from.id }, to: at, hits, dealt,
       ...(skill ? { skill } : {}), ...(absorbed > 0 ? { absorbed } : {}),
+      ...(num > den ? { edge: 'adv' as const } : num < den ? { edge: 'dis' as const } : {}),
     });
     if (after !== before) {
       events.push({ kind: 'troops_lost', tick, at, alive: after, hpPool: target.hpPool });

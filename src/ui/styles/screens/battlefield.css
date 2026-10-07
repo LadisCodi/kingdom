@@ -2,9 +2,10 @@
    §2.5). A full-bleed board: the bar at the top, six rows of slots, and
    nothing else — the fight is the content, so the frame gets out of its way.
 
-   Everything here snaps. `steps(2)` on the flash and no transition on the
-   skull: a pixel-art fight reads as a series of states, and a slot that fades
-   between them looks like a bug in the sprite rather than a hit. */
+   The STATES snap — `steps(2)` on the flash, no transition on the skull — and
+   the MOTION is on top of them: the swings and flinches are animations on
+   the slots (battleScreen.ts), what flies between slots is the effects
+   canvas (battleFx.ts), and the numbers float in a layer of their own. */
 
 .bs {
   position: absolute;
@@ -170,6 +171,28 @@
   color: var(--ink);
 }
 
+/* HEALTH: a lacquer inlay in the slot's wooden ring — leaf for ours, clay
+   for theirs — that empties round the dial as the slot is hurt. What a blow
+   just took stays pale for a beat before the groove swallows it, so a heavy
+   hit reads as a chunk, not a tick. */
+@property --life { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --ghost { syntax: '<number>'; inherits: false; initial-value: 1; }
+.bs-life {
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  border-radius: 50%;
+  pointer-events: none;
+  --fill: var(--leaf);
+  background: conic-gradient(
+    var(--fill) calc(var(--life) * 1turn),
+    #fff1c9 0deg calc(var(--ghost) * 1turn),
+    var(--wood-dark) 0deg);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - var(--px) * 4), #000 calc(100% - var(--px) * 4 + 0.5px));
+  mask: radial-gradient(closest-side, transparent calc(100% - var(--px) * 4), #000 calc(100% - var(--px) * 4 + 0.5px));
+  transition: --life 90ms linear, --ghost 420ms ease-in 240ms;
+}
+.bs-slot.is-theirs .bs-life { --fill: var(--clay); }
+
 /* HURT: a white frame for two frames. */
 @keyframes bs-hit {
   from { background: var(--parchment); border-color: var(--clay); filter: brightness(2.4); }
@@ -195,8 +218,7 @@
 .bs-slot.is-dead .bs-skull .icon { transform: scale(0.7); filter: brightness(1.8); }
 .bs-slot.is-dead .bs-portrait { opacity: 0.55; }
 
-/* A SKILL FIRING: its name rises off the fighter, a heal's number off its
-   target, and fades. */
+/* A SKILL FIRING: its name rises off the fighter and fades. */
 .bs-pop {
   position: absolute;
   left: 50%;
@@ -215,13 +237,54 @@
   pointer-events: none;
   animation: bs-pop 900ms ease-out forwards;
 }
-.bs-pop.is-heal { background: none; border: none; color: #3fae4b; font-size: calc(var(--px) * 15);
-  text-shadow: 0 calc(var(--px) * 1) 0 var(--wood-dark); }
 @keyframes bs-pop {
   from { opacity: 0; transform: translateY(calc(var(--px) * 6)); }
   15% { opacity: 1; transform: none; }
   to { opacity: 0; transform: translateY(calc(var(--px) * -14)); }
 }
+/* THE LAYERS OVER THE BOARD: the effects canvas (src/ui/battleFx.ts) and
+   the numbers. Neither takes a tap. */
+.bs-fx,
+.bs-floats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* A NUMBER OFF A BLOW: it lands big, settles and drifts up. Blows that land
+   close together on one slot grow the same number (battleScreen.ts
+   `MERGE_MS`), which restarts this. Cream for an even blow; amber and larger
+   when the type chart was on the attacker's side, smaller and duller when
+   it was against; leaf for a heal; sky in brackets for what a shield ate. */
+.bs-float {
+  position: absolute;
+  translate: -50% -50%;
+  font-family: var(--font-body);
+  font-weight: var(--weight-title);
+  font-size: calc(var(--px) * 20);
+  line-height: 1;
+  color: #fff6dc;
+  -webkit-text-stroke: calc(var(--px) * 4) var(--wood-dark);
+  paint-order: stroke fill;
+  white-space: nowrap;
+  animation: bs-float 900ms ease-out forwards;
+}
+.bs-float.is-adv { color: #ffb13b; font-size: calc(var(--px) * 27); }
+.bs-float.is-dis { color: #d9c9a8; font-size: calc(var(--px) * 15); }
+.bs-float.is-heal { color: #8fe26c; }
+.bs-float.is-shield { color: #8fc8ff; font-size: calc(var(--px) * 15); }
+@keyframes bs-float {
+  0% { opacity: 0; transform: scale(1.7); }
+  12% { opacity: 1; transform: scale(1); }
+  65% { opacity: 1; transform: translateY(calc(var(--px) * -18)); }
+  100% { opacity: 0; transform: translateY(calc(var(--px) * -30)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bs-float { animation-name: bs-float-calm; }
+  @keyframes bs-float-calm { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+}
+
 /* A shield soaking for it: a ring of steady blue. A daze: the slot dims. */
 .bs-slot.is-shielded { box-shadow: 0 0 0 calc(var(--px) * 3) #6fb6ff, 0 0 calc(var(--px) * 10) #6fb6ff; }
 .bs-slot.is-dazed .bs-portrait { filter: saturate(0.4) brightness(0.8); }
@@ -233,6 +296,7 @@
    player asked when they pressed the button. */
 .bs-plaque {
   position: absolute;
+  z-index: 4;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -252,6 +316,7 @@
 /* The way out hangs under the plaque, in the middle of the field (M16). */
 .bs-exit {
   position: absolute;
+  z-index: 4;
   top: calc(50% + 44px);
   left: 50%;
   translate: -50% 0;

@@ -544,7 +544,10 @@ export interface BattlePlayback {
 }
 
 /** The fight's own milliseconds a playback has reached at `now`. */
-const playbackMs = (b: BattlePlayback, now: number): number => b.clockMs + (now - b.clockAt) * b.speed;
+// Never earlier than `clockMs`: a held clock (`holdBattle`) has its
+// `clockAt` in the future, and the replay stands still until it arrives.
+const playbackMs = (b: BattlePlayback, now: number): number =>
+  b.clockMs + Math.max(0, now - b.clockAt) * b.speed;
 
 /** How long the plaque waits after the last blow. */
 export const BATTLE_RESULT_DELAY_MS = 2000;
@@ -4592,9 +4595,26 @@ export class Game {
   /** Which tick of the fight the screen should be drawing at `now`. Past the
    *  end it stays at the end, so a slow frame cannot skip the last blow. */
   battleTick(now: number): number {
+    return Math.floor(this.battleMs(now) / COMBAT.tickMs);
+  }
+
+  /** The same clock in milliseconds of the fight, for what moves between
+   *  two ticks — a flying arrow, a lunge. Stops at the end like the tick. */
+  battleMs(now: number): number {
     const b = this.battle;
     if (b === null) return 0;
-    return Math.min(b.log.ticks, Math.floor(playbackMs(b, now) / COMBAT.tickMs));
+    return Math.min(b.log.ticks * COMBAT.tickMs, playbackMs(b, now));
+  }
+
+  /** Freeze the replay for `ms` of real time: the weight of a heavy blow.
+   *  The screen's, not the fight's — the log does not move, only when it is
+   *  shown. */
+  holdBattle(ms: number): void {
+    const b = this.battle;
+    if (b === null || b.phase !== 'playing') return;
+    const now = this.now();
+    b.clockMs = playbackMs(b, now);
+    b.clockAt = now + ms;
   }
 
   /**

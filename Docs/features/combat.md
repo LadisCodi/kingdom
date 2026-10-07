@@ -334,7 +334,7 @@ fast-forward or restart.
 | Event | Payload |
 |---|---|
 | `start` | Both boards, slot types, tiers, rows, applied bonuses, seed |
-| `attack` | tick, source slot, target slot, `hits`, `dealt` (after a shield), and `skill` and `absorbed` when a skill struck or a shield soaked |
+| `attack` | tick, source slot, target slot, `hits`, `dealt` (after a shield), and `skill` and `absorbed` when a skill struck or a shield soaked; `edge` (`adv` · `dis`) when the type chart was not even (§7) |
 | `troops_lost` | tick, slot, new `alive`, new `hp_pool` |
 | `skill` | tick (0 for a Rally), the fighter, the skill — the screen shows its name |
 | `healed` | tick, slot, amount, new `alive`, new `hp_pool` |
