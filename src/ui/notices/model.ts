@@ -69,6 +69,9 @@ export interface Notice {
   rows: NoticeRow[];
   go: (() => void) | null;
   action: NoticeAction | null;
+  /** What a tap on the bubble does instead of opening its card: a standing
+   *  offer whose own menu already says it all (the Mana refill). */
+  tap?: () => void;
   /** The bubble's tone: a threat is red. */
   tone: 'plain' | 'threat';
 }
@@ -377,6 +380,8 @@ function states(game: Game): Notice[] {
       picture: icon('Mana'),
       go: null,
       action: { label: 'Watch', run: () => game.startAdWatch() },
+      // The Mana sheet already offers the video beside the Gem refills.
+      tap: () => game.openMana(),
     });
   }
 
@@ -490,10 +495,22 @@ export function allNotices(game: Game): Notice[] {
   return [...raid, ...news, ...rest];
 }
 
-/** What the column shows: every notice while they fit, else the first
+/** THE NEWS, newest first: what happened, waiting to be read — the
+ *  column at the bottom. */
+export const newsNotices = (game: Game): Notice[] => allNotices(game).filter((n) => n.kind === 'news');
+
+/** THE STANDING NOTICES — something true now that stays until it is not (a
+ *  raid coming, a refill offered, an army ready…): the larger column hung
+ *  under the settings knob, the raid first. Never folded under a +N. */
+export function standingNotices(game: Game): Notice[] {
+  const st = states(game);
+  return [...st.filter((n) => n.id === 'state:raid'), ...st.filter((n) => n.id !== 'state:raid')];
+}
+
+/** What the news column shows: every news while they fit, else the first
  *  `shown − 1` under a +N that opens them all. */
 export function columnNotices(game: Game, shown: number): Notice[] {
-  const all = allNotices(game);
+  const all = newsNotices(game);
   if (all.length <= shown) return all;
   const kept = all.slice(0, shown - 1);
   const more = all.length - kept.length;
@@ -515,7 +532,7 @@ export function noticeCardOf(game: Game): Notice | null {
   const card = game.noticeCard;
   if (card === null) return null;
   if (card.id === 'more') {
-    const all = allNotices(game);
+    const all = newsNotices(game);
     return all.length === 0 ? null : moreNotice(all, all.length);
   }
   if (card.id.startsWith('news:')) return newsNotice(game, card.id.slice('news:'.length) as NewsGroup, card.news);

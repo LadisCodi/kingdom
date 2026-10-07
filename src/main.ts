@@ -86,7 +86,7 @@ import { giveBook } from './sim/research';
 import { stockBuild } from './sim/districts';
 import { mountUnlockSplash } from './ui/unlockSplash';
 import { mountOfferSplash } from './ui/offerSplash';
-import { mountNoticeColumn } from './ui/notices/column';
+import { mountNoticeColumn, mountStandingColumn } from './ui/notices/column';
 import { renderNoticeCard } from './ui/notices/card';
 import { mountOfferWidgets } from './ui/offerWidget';
 import { LANDMARKS, SCENES, UNLOCKS } from './sim/data/definitions';
@@ -278,6 +278,7 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountSurveyPill(game, document.getElementById('survey')!);
   mountNoticeColumn(game, document.getElementById('notices')!);
+  mountStandingColumn(game, document.getElementById('standing')!);
   mountNavbar(game, document.getElementById('navbar')!);
   // Rewards flying into the header, over it and under the nav bar.
   mountRewardFly(game, document.getElementById('flyers')!);

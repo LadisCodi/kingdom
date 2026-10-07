@@ -22,6 +22,28 @@
 }
 #notices[hidden] { display: none; }
 
+/* THE STANDING NOTICES: what stays true until it is not (a raid coming, a
+   refill offered, an army ready) hangs from the top, under the settings
+   knob, larger than the news — read first, out of the way of the news. */
+#standing {
+  position: absolute;
+  top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--rpx) * 255);
+  /* flush with the settings knob's right edge: the bubbles are wider than
+     the knob, so centring them under it would push them off the screen */
+  right: calc(var(--rpx) * 20);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 14);
+  width: calc(var(--px) * 68);
+  pointer-events: none;
+}
+#standing[hidden] { display: none; }
+#standing .nt-bubble { width: calc(var(--px) * 68); height: calc(var(--px) * 68); }
+#standing .nt-face > .icon { --icon-size: calc(var(--px) * 40); }
+#standing .nt-badge { width: calc(var(--px) * 24); height: calc(var(--px) * 24); }
+
 .nt-bubble {
   position: relative;
   width: calc(var(--px) * 52);
@@ -63,8 +85,12 @@
 .nt-bubble.is-new { animation: nt-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1) both; }
 .nt-bubble.is-new.is-glowing { animation: nt-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1) both, nt-glow 1.8s ease-in-out 380ms infinite; }
 @keyframes nt-pop { from { transform: scale(0.2); opacity: 0; } }
+/* A news about to go on its own: it blinks, fading in and out (26 §3). */
+.nt-bubble.is-leaving { animation: nt-leaving 0.7s ease-in-out infinite; }
+@keyframes nt-leaving { 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) {
   .nt-bubble.is-new, .nt-bubble.is-glowing { animation: none; }
+  .nt-bubble.is-leaving { animation: none; opacity: 0.5; }
 }
 
 /* The other view's seal, at the bottom left: the globe or the castle. */

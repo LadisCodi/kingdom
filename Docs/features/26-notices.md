@@ -1,8 +1,8 @@
 # 26 · Notices — the bubbles in the corner
 
-> **Scope.** The one channel for **things the player may not have seen**: a
-> column of round bubbles at the bottom right, in the province and on the
-> world board, each opening a card that says what happened and takes the
+> **Scope.** The one channel for **things the player may not have seen**:
+> round bubbles in two columns — the news at the bottom right, the standing
+> states larger at the top right — in the province and on the world board, each opening a card that says what happened and takes the
 > player to it. It replaces the banner, the right-edge tabs and the toasts
 > that carried news. Refusals stay toasts.
 >
@@ -66,20 +66,25 @@
 - **Hero rested** goes when that hero next fights, or when its card is opened.
 - A state with a countdown shows it on the bubble; one that is ready glows.
 
-## 3. The column
+## 3. The columns
 
-- **Bottom right, above the world knob**, growing upward.
-- **Shown in the province and on the world board**. A notice whose subject is
-  in the other view carries a small seal: the castle or the globe.
+- **Two columns**, both shown in the province and on the world board. A
+  notice whose subject is in the other view carries a small seal: the castle
+  or the globe.
+- **The standing states** (§2.2) — true until they stop being true: **top
+  right, under the settings knob**, growing downward, **larger** than the
+  news (68 against 52). The raid first, then the rest in the order of §2.2.
+  Never folded under a +N, never gone on their own.
+- **The news**: **bottom right, above the world knob**, growing upward,
+  newest first.
+  - **At most 4 bubbles.** With more than 4, 3 show and the fourth is
+    **+N**, at the top, whose card lists every news.
+  - **A news unread goes on its own**: after **10 seconds on screen** it
+    blinks for its last 3 and is read, as opening it would. Only the time it
+    is on screen counts — not while a sheet hides it, nor while it waits
+    under the +N — and a news that gains an item starts again.
 - **Hidden** while a sheet, a card or a mode is open. The full-screen
-  layers (battle, scene, splash, gacha, ad) sit above it.
-- **At most 4 bubbles.** With more than 4 notices, 3 show and the fourth is
-  **+N**, whose card lists every notice.
-- **Order, top to bottom:**
-  1. Raid coming.
-  2. News, newest first.
-  3. The other states, in the order of §2.2.
-  4. The **+N** bubble goes at the top, and takes the place of the bubbles that do not fit.
+  layers (battle, scene, splash, gacha, ad) sit above them.
 - Z-order: the right-edge column's slot (4) — over the map, under the
   district card and the menus.
 
@@ -90,6 +95,8 @@
 - **Red wax seal** with the count on a news group of 2 or more.
 - **A small wooden plaque** under a state with a countdown, showing the time.
 - **A new bubble pops in** with a chime. Nothing opens by itself.
+- **A tap opens its card** — except the Mana refill's, which opens the Mana
+  sheet, where the video already sits beside the Gem refills.
 - **Every event leaves a bubble**, seen or not.
 
 ## 5. The card
@@ -101,7 +108,7 @@
   - **Go** and the second button, if any;
   - the close X.
 - **A group** lists its rows, each with its line and its own Go.
-- **+N** lists every notice as a row; a row opens that notice's card.
+- **+N** lists every news as a row; a row opens that news's card.
 - Opening a news's card reads its group: the bubble goes at once, and the
   card keeps what it said. Go closes the card first.
 
@@ -140,7 +147,8 @@
 
 | Dial | Value | Key |
 |---|---|---|
-| Bubbles shown before +N | 4 | `notices.shown` (`economy`) |
+| News bubbles shown before +N | 4 | `notices.shown` (`economy`) |
+| How long an unread news stays, and blinks before it goes | 10 s · 3 s | `NEWS_LIFE_MS`, `NEWS_WARN_MS` (`ui/notices/column.ts`) |
 | News kept | 30 | `notices.kept` (`economy`) |
 
 ## 10. Deliberately not in this design
