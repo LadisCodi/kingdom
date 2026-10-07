@@ -1,8 +1,8 @@
 // The offers on the map (Docs/features/14-monetization.md §2.6), grouped as
 // one widget under the Survey's widget, top left: the icon of one offer —
 // turning to the next each time its sign has scrolled its whole name by,
-// with a short fade — a red badge
-// counting them when there is more than one, and a small wooden sign whose
+// with a short fade — on a soft golden glow with a few sparkles coming and
+// going over it (the splash's light, quieter), and a small wooden sign whose
 // words scroll by: its name, the time to tomorrow's part, or "Claim!". A tap
 // opens the one on show's splash with every offer in a row along its top.
 //
@@ -15,7 +15,7 @@ import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatCount, formatCountdown } from './format';
 import { setHidden } from './domWrite';
-import { iconEl, setCta, type IconName } from './kit';
+import { iconEl, type IconName } from './kit';
 
 /** A picture of what an offer is for, while it has no icon of its own. */
 export function kindIcon(sku: StoreSkuId): IconName {
@@ -55,8 +55,15 @@ export function mountOfferWidgets(game: Game, root: HTMLElement): void {
   // seam: the track moves by exactly one copy and starts again.
   const texts = [el('span', { class: 'ofw-text' }, ''), el('span', { class: 'ofw-text', 'aria-hidden': 'true' }, '')];
   const iconSlot = el('span', { class: 'ofw-slot' });
+  // A sparkle at each spot, on its own delay, so they never light together.
+  const sparkles = [['78%', '14%', 1, 0], ['16%', '30%', 0.7, 1.3], ['70%', '68%', 0.8, 2.4]] as const;
   const node = el('button', { class: 'ofw', type: 'button', 'aria-label': 'Offers' },
+    el('span', { class: 'ofw-glow', 'aria-hidden': 'true' }),
     iconSlot,
+    ...sparkles.map(([left, top, s, delay]) => el('span', {
+      class: 'ofw-sparkle', 'aria-hidden': 'true',
+      style: `left:${left};top:${top};--s:${s};animation-delay:${delay}s`,
+    })),
     el('span', { class: 'ofw-sign' }, el('span', { class: 'ofw-track' }, ...texts)));
   node.addEventListener('click', () => { if (lead !== null) game.openOfferSplash(lead.sku, true); });
   root.replaceChildren(node);
@@ -82,9 +89,6 @@ export function mountOfferWidgets(game: Game, root: HTMLElement): void {
     }
     const text = words(game, lead);
     for (const t of texts) if (t.textContent !== text) t.textContent = text;
-    // The call to action: how many offers wait behind the widget, or one
-    // alone with something to claim.
-    setCta(node, list.length > 1 ? list.length : lead.state === 'ready' ? 1 : 0);
     node.classList.toggle('is-ready', lead.state === 'ready');
     node.setAttribute('aria-label', list.length > 1 ? `${formatCount(list.length)} offers` : lead.name);
   };

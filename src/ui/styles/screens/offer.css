@@ -429,7 +429,41 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
   font: inherit;
   cursor: pointer;
 }
+/* The light it stands in: a soft golden bloom, breathing slowly — no rays,
+ * and quieter than the splash's, so it draws the eye without nagging. */
+.ofw-glow {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--px) * 36);
+  width: calc(var(--px) * 136);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  /* Strong to past the icon's edge, so the gold shows round it, then gone. */
+  background: radial-gradient(closest-side, rgba(255, 206, 70, 0.95), rgba(252, 182, 45, 0.8) 50%, rgba(240, 156, 30, 0.35) 72%, transparent);
+  filter: blur(calc(var(--px) * 6));
+  pointer-events: none;
+  animation: ofw-breathe 3.6s ease-in-out infinite;
+}
+@keyframes ofw-breathe {
+  0%, 100% { opacity: 0.6; scale: 0.94; }
+  50% { opacity: 0.9; scale: 1.04; }
+}
+/* A sparkle over it: lights, swells and goes, then waits a long while. */
+.ofw-sparkle {
+  position: absolute;
+  z-index: 2;
+  width: calc(var(--px) * 18 * var(--s, 1));
+  aspect-ratio: 1;
+  margin: calc(var(--px) * -9 * var(--s, 1));
+  background: url('../../assets/sparkle.png') center / contain no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  animation: ofs-twinkle 3.6s ease-in-out infinite;
+}
 .ofw-icon {
+  position: relative;
+  z-index: 1;
   width: calc(var(--px) * 70);
   height: calc(var(--px) * 70);
   object-fit: contain;
@@ -479,7 +513,8 @@ button.ofs-tile { padding: 0; border: 0; font: inherit; color: inherit; cursor: 
 }
 @keyframes ofw-scroll { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) {
-  .ofw-icon, .ofw-track { animation: none; }
+  .ofw-icon, .ofw-track, .ofw-glow { animation: none; }
+  .ofw-sparkle { display: none; }
 }
 
 /* --------------------------------------------- the grouped offers widget */
