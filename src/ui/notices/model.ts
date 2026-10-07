@@ -374,7 +374,7 @@ function states(game: Game): Notice[] {
   const ad = game.adOffer();
   if (ad !== null && game.adWatch() === null) {
     out.push({
-      ...base, id: 'state:mana', art: icon('manaFlask'), glow: true, view: null,
+      ...base, id: 'state:mana', art: icon('flask'), glow: true, view: null,
       title: 'A free refill',
       body: `Watch a short video for ${formatExact(ad.reward)} Mana.`,
       picture: icon('Mana'),

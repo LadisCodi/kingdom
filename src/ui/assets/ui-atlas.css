@@ -297,10 +297,10 @@
 .icon-hourglass-locked { background-position: calc(var(--icon-size) * -12) calc(var(--icon-size) * -17); }
 .icon-hp { background-position: calc(var(--icon-size) * -13) calc(var(--icon-size) * -17); }
 .icon-hp-sm { background-position: calc(var(--icon-size) * -14) calc(var(--icon-size) * -17); }
-.icon-knowledgeTome { background-position: calc(var(--icon-size) * -15) calc(var(--icon-size) * -17); }
-.icon-knowledgeTome-locked { background-position: calc(var(--icon-size) * -0) calc(var(--icon-size) * -18); }
-.icon-manaFlask { background-position: calc(var(--icon-size) * -1) calc(var(--icon-size) * -18); }
-.icon-manaFlask-locked { background-position: calc(var(--icon-size) * -2) calc(var(--icon-size) * -18); }
+.icon-tome { background-position: calc(var(--icon-size) * -15) calc(var(--icon-size) * -17); }
+.icon-tome-locked { background-position: calc(var(--icon-size) * -0) calc(var(--icon-size) * -18); }
+.icon-flask { background-position: calc(var(--icon-size) * -1) calc(var(--icon-size) * -18); }
+.icon-flask-locked { background-position: calc(var(--icon-size) * -2) calc(var(--icon-size) * -18); }
 .icon-minus { background-position: calc(var(--icon-size) * -3) calc(var(--icon-size) * -18); }
 .icon-pack { background-position: calc(var(--icon-size) * -4) calc(var(--icon-size) * -18); }
 .icon-pack-locked { background-position: calc(var(--icon-size) * -5) calc(var(--icon-size) * -18); }
