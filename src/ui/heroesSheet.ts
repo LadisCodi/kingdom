@@ -38,7 +38,7 @@ import {
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatExact } from './format';
+import { el, formatExact, formatNumber } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
   btn, iconEl, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
@@ -250,6 +250,47 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   ));
 }
 
+/** The skill rank each hero's card last drew — the stats' `lastStats`, for
+ *  the skill. */
+const lastSkillRank = new Map<HeroId, number>();
+
+/** A number in a skill's sentence, with its unit: *187.5%*, *2.5 s*. */
+const SKILL_NUMBER = /(\d+(?:\.\d+)?)(%| s)?/g;
+
+/** What the skill does at its rank, and what it gained. Risen from `from`,
+ *  every number that grew punches in the sentence, and its gain is returned
+ *  to float up beside the pips, where it covers no words. */
+function skillSays(def: HeroDef, rank: number, from: number | null): { says: HTMLElement; gains: string[] } {
+  const now = skillSentence(def.skill, rank);
+  const says = el('div', { class: 'hd-skill-says' });
+  const gains: string[] = [];
+  if (from === null) {
+    says.append(now);
+    return { says, gains };
+  }
+  const before = [...skillSentence(def.skill, from).matchAll(SKILL_NUMBER)].map((m) => Number(m[1]));
+  let at = 0;
+  let i = 0;
+  for (const m of now.matchAll(SKILL_NUMBER)) {
+    const gain = Number(m[1]) - (before[i++] ?? Number(m[1]));
+    if (gain <= 0) continue;
+    says.append(now.slice(at, m.index), el('span', { class: 'hd-skill-num' }, m[0]));
+    gains.push(`+${formatNumber(gain, 1)}${m[2] ?? ''}`);
+    at = m.index + m[0].length;
+  }
+  says.append(now.slice(at));
+  return { says, gains };
+}
+
+/** The rank pips; a pip just filled punches. */
+function skillPips(rank: number, top: number, from: number | null): HTMLElement {
+  const row = pips(rank, top);
+  if (from !== null) {
+    [...row.children].slice(from, rank).forEach((p) => p.classList.add('is-new'));
+  }
+  return row;
+}
+
 /**
  * THE SKILL (Docs/features/10-heroes.md §2.5): one widget — its name, its
  * rank pips and what it does at its rank, and at its foot the next rank's
@@ -261,9 +302,16 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   const info = SKILLS[def.skill.id];
   const rank = owned ? skillRank(game.state, id) : 1;
   const top = maxSkillRank();
+  // Rose since the card last drew: the new pip and the numbers that grew
+  // play the rise.
+  const last = owned ? lastSkillRank.get(id) : undefined;
+  if (owned) lastSkillRank.set(id, rank);
+  const from = last !== undefined && rank > last ? last : null;
+  const { says, gains } = skillSays(def, rank, from);
   const card = (foot: HTMLElement | null) => el('div', { class: 'hd-skill k-section' },
-    el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), pips(rank, top)),
-    el('div', { class: 'hd-skill-says' }, skillSentence(def.skill, rank)),
+    el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), skillPips(rank, top, from),
+      ...gains.map((g) => el('span', { class: 'hd-skill-gain', 'aria-hidden': 'true' }, g))),
+    says,
     ...(foot ? [foot] : []));
   if (!owned || rank >= top) return card(null);
   const unlock = nextSkillRankLevel(rank)!;

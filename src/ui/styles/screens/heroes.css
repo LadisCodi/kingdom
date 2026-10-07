@@ -232,6 +232,21 @@
   text-shadow: 0 calc(var(--px) * 1) 0 #1d3a10, 0 0 calc(var(--px) * 4) rgba(14, 30, 6, 0.8);
   animation: hd-stat-gain 1.4s ease-out both;
 }
+/* The skill's rise: the pip just filled and every number in its sentence
+   that grew punch, and the gain floats up beside the pips — over the name's
+   row, where it covers no words. */
+.hd-skill-num { display: inline-block; transform-origin: center; animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.k-pip.is-new { animation: hd-stat-punch 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hd-skill-gain {
+  color: var(--leaf);
+  font-size: calc(var(--px) * 20);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 calc(var(--px) * 1) 0 #1d3a10, 0 0 calc(var(--px) * 3) rgba(14, 30, 6, 0.6);
+  animation: hd-stat-gain 1.4s ease-out both;
+}
 @keyframes hd-stat-punch {
   0% { transform: scale(1); }
   35% { transform: scale(1.45); color: var(--leaf); }
@@ -244,8 +259,8 @@
   100% { opacity: 0; translate: 0 calc(var(--px) * -26); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hd-stat.is-up .hd-stat-value { animation: none; }
-  .hd-stat-gain { animation-name: hd-stat-fade; }
+  .hd-stat.is-up .hd-stat-value, .hd-skill-num, .k-pip.is-new { animation: none; }
+  .hd-stat-gain, .hd-skill-gain { animation-name: hd-stat-fade; }
 }
 @keyframes hd-stat-fade {
   0%, 70% { opacity: 1; }
