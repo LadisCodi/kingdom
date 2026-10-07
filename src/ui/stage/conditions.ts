@@ -9,6 +9,7 @@
 import {
   ABANDONED, DISTRICTS, ITEMS, LANDMARKS, LAIRS, QUESTS, TECHNOLOGIES, type SceneCondition,
 } from '../../sim/data/definitions';
+import { repairRefusal } from '../../sim/commands';
 import { isDoorOpen, type DoorId } from '../../sim/doors';
 import { tally } from '../../sim/events';
 import { mana } from '../../sim/mana';
@@ -166,6 +167,11 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
       return open !== null && open.x === a.location.x && open.y === a.location.y;
     }
     case 'repairing': return state.abandoned.repaired[c.target] === true;
+    // Everything a ruin's repair asks is in hand — its ground revealed, its
+    // price, a builder, and the piece it was missing (the Watchtower's lens).
+    case 'canRepair': return repairRefusal(state, game.map, c.target) === null;
+    // The world board is the screen in front of the player.
+    case 'worldOpen': return game.scene === 'world';
     // The relic picker's slot holds it (or any relic, when '').
     case 'relicPicked': {
       const slot = game.relicPick?.slot ?? null;

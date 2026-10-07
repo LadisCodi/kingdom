@@ -23,9 +23,9 @@ function atTheOldHouse(): GameState {
 }
 
 describe('the abandoned buildings', () => {
-  it('opens with the House, the two plots, the Farm and the Sawmill — and the Shrine', () => {
+  it('opens with the House, the two plots, the Farm and the Sawmill — and the Shrine and the Watchtower', () => {
     expect(ABANDONED.map((a) => a.districtId).sort())
-      .toEqual(['Farm', 'FarmLands', 'FarmLands', 'Housing', 'Sawmill', 'Shrine']);
+      .toEqual(['Farm', 'FarmLands', 'FarmLands', 'Housing', 'Sawmill', 'Shrine', 'Watchtower']);
   });
 
   it('is sighted as a silhouette from the first minute, and undiscovered', () => {

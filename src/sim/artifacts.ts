@@ -10,7 +10,9 @@
 // completed, so the ladder is the player's history rather than a curve with a
 // top, and `per_level` is sized as a season's worth of growth.
 
-import { ARTIFACTS, ARTIFACT_ORDER, relicKind } from './data/definitions';
+import {
+  ARTIFACTS, ARTIFACT_ORDER, CITY_RELIC_LEVELS, relicKind, type CityRelicAxis,
+} from './data/definitions';
 import { addModifier, type Modifier } from './modifiers';
 import type { ArtifactId, GameState } from './state';
 
@@ -42,12 +44,52 @@ export function grantArtifactLevel(state: GameState, id: ArtifactId): GrantResul
   return had ? 'Levelled' : 'Granted';
 }
 
+// ------------------------------------------------------------ the city cycle
+
+/**
+ * WHAT A CITY RELIC'S LEVEL-UPS HAVE RAISED by `level` (09-relics.md §2.1):
+ * level 2 raises the cycle's first axis, level 3 its second, level 4 its
+ * third, level 5 the first again. A window step past the last authored
+ * window raises the effect instead, so no level is the last one worth having.
+ * A world relic has no cycle: every level is its effect.
+ */
+export function cityRelicSteps(id: ArtifactId, level: number): Record<CityRelicAxis, number> {
+  const steps: Record<CityRelicAxis, number> = { window: 0, radius: 0, effect: 0 };
+  if (ARTIFACTS[id].activation === null) {
+    steps.effect = Math.max(0, level - 1);
+    return steps;
+  }
+  const { cycle, windowMinutes } = CITY_RELIC_LEVELS;
+  for (let l = 2; l <= level; l++) {
+    const axis = cycle[(l - 2) % cycle.length];
+    if (axis === 'window' && steps.window >= windowMinutes.length - 1) steps.effect += 1;
+    else steps[axis] += 1;
+  }
+  return steps;
+}
+
+/** What the level-up from `level` raises on a city relic, or null on a
+ *  world relic, where every level is its effect. */
+export function nextCityRelicAxis(id: ArtifactId, level: number): CityRelicAxis | null {
+  if (ARTIFACTS[id].activation === null) return null;
+  const now = cityRelicSteps(id, level);
+  const next = cityRelicSteps(id, level + 1);
+  return (['window', 'radius', 'effect'] as const).find((a) => next[a] > now[a]) ?? null;
+}
+
+/** How long a city relic's activation lasts at `level`, in ms. */
+export const relicWindowMsAt = (id: ArtifactId, level: number): number =>
+  CITY_RELIC_LEVELS.windowMinutes[Math.min(cityRelicSteps(id, level).window, CITY_RELIC_LEVELS.windowMinutes.length - 1)]
+    * 60_000;
+
 // -------------------------------------------------------------- the passives
 
-/** The passive's value at a level — `base + per_level × (level − 1)`. */
+/** The passive's value at a level — `base + per_level × effect steps`: every
+ *  level after the first on a world relic, the cycle's effect steps on a city
+ *  relic. */
 export function passiveValueAtLevel(id: ArtifactId, level: number): number {
   const { passive } = ARTIFACTS[id];
-  const value = passive.base + passive.perLevel * (Math.max(1, level) - 1);
+  const value = passive.base + passive.perLevel * cityRelicSteps(id, Math.max(1, level)).effect;
   // A multiplier must never cross zero into a sign flip; an additive one must
   // never subtract what it is meant to add.
   return Math.max(0, value);

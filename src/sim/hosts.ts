@@ -4,8 +4,9 @@
 // activates it: Mana paid, a window opens, and for the window its effect
 // reaches every cell of the Shrine's aura — the Shrine's footprint and the
 // relic's radius round it, Chebyshev. The relic's level is the POWER (its
-// number and its reach); the Shrine's level is the DURATION. Rules this file
-// keeps:
+// number, its reach and its window), raised one at a time round a cycle
+// (`cityRelicSteps`); the Shrine has one level and adds nothing of its own.
+// Rules this file keeps:
 //
 //  1. AN AURA IS A STAGE OF ITS OWN, not a modifier: a hosted relic is a fact
 //     about the kingdom, so it resolves base → technologies → relic auras →
@@ -19,15 +20,17 @@
 //     inside `repriceTaxAnchorAround` — the close at its own boundary in
 //     `advance` (`nextRelicWindowEnd` / `closeRelicWindows`).
 //  5. THE WINDOW IS STATE, NOT A CLOCK READ. It is the relic's entry in
-//     `state.artifacts.casts`, priced by the Shrine's level when it opens and
+//     `state.artifacts.casts`, priced by the relic's level when it opens and
 //     deleted at the boundary where it ends, so the aura stage asks only
 //     whether the entry is there — `advance` has no `now` to give it.
 //  6. A WORLD RELIC IS NOT A SHRINE'S: it acts while a Chapel holds it
 //     (`syncArtifactModifiers`).
 
 import { track } from './analytics';
-import { artifactLevel, ownsArtifact, passiveValue, syncArtifactModifiers } from './artifacts';
-import { ARTIFACTS, ARTIFACT_RADIUS_STEPS, DISTRICTS, levelIndexed, relicKind } from './data/definitions';
+import {
+  artifactLevel, cityRelicSteps, ownsArtifact, passiveValue, relicWindowMsAt, syncArtifactModifiers,
+} from './artifacts';
+import { ARTIFACTS, DISTRICTS, relicKind } from './data/definitions';
 import { mana, payMana } from './mana';
 import { resolve, type ModifierArea, type ModifierStat, areaCovers } from './modifiers';
 import { repriceTaxAnchorAround } from './population';
@@ -42,10 +45,10 @@ export const hostOf = (state: GameState, relic: ArtifactId): District | null =>
   state.city.districts.find((d) => d.hosts === relic) ?? null;
 
 /** How far a city relic's aura reaches round its Shrine at `level`: its
- *  authored radius, one ring more at each of `ARTIFACT_RADIUS_STEPS`. */
+ *  authored radius, one ring more at each radius step of its cycle. */
 export function auraRadiusAt(relic: ArtifactId, level: number): number {
   const base = ARTIFACTS[relic].activation?.radius ?? 0;
-  return base + ARTIFACT_RADIUS_STEPS.filter((at) => level >= at).length;
+  return base + cityRelicSteps(relic, level).radius;
 }
 
 /** A host's aura: its footprint and the ring its relic's level reaches. */
@@ -57,9 +60,10 @@ export const auraOf = (state: GameState, host: District, relic: ArtifactId, sinc
   since,
 });
 
-/** How long an activation in this Shrine lasts, in ms — its level's window. */
-export const windowMsOf = (host: District): number =>
-  levelIndexed(DISTRICTS[host.definitionId].relicWindowMinutesPerLevel, host.level) * 60_000;
+/** How long an activation of this relic lasts now, in ms — its level's
+ *  window, wherever it is hosted. */
+export const relicWindowMs = (state: GameState, relic: ArtifactId): number =>
+  relicWindowMsAt(relic, artifactLevel(state, relic));
 
 /** Is this relic's window open? See rule 5: the entry IS the window. */
 export const isAwake = (state: GameState, relic: ArtifactId): boolean =>
@@ -186,22 +190,21 @@ export function activateBlock(state: GameState, relic: ArtifactId): ActivateBloc
 
 /**
  * ACTIVATE A HOSTED CITY RELIC at `now`: pay its Mana, and its effect reaches
- * the Shrine's aura for the Shrine's window. The window is priced by the
- * Shrine's level NOW and stored, so upgrading the Shrine mid-window does not
- * stretch it. No cooldown: it can be activated again the moment it closes.
+ * the Shrine's aura for the relic's window. The window is priced by the
+ * relic's level NOW and stored, so a level-up mid-window does not stretch it.
+ * No cooldown: it can be activated again the moment it closes.
  */
 export function activateRelic(state: GameState, relic: ArtifactId, now: number): ActivateBlock | 'Activated' {
   const block = activateBlock(state, relic);
   if (block !== null) return block;
-  const host = hostOf(state, relic)!;
   const cost = activationCost(state, relic);
-  const endsAt = now + windowMsOf(host);
+  const endsAt = now + relicWindowMs(state, relic);
   repriceTaxAnchorAround(state, now, () => {
     payMana(state, cost);
     state.artifacts.casts[relic] = { endsAt, readyAt: endsAt };
   });
   track(state, 'relic_activated', {
-    relic, level: artifactLevel(state, relic), shrine_level: host.level, mana: cost,
+    relic, level: artifactLevel(state, relic), mana: cost,
   });
   return 'Activated';
 }

@@ -32,7 +32,7 @@ export type BagTab = typeof BAG_TABS[number];
 
 const TAB_OF_KIND: Record<ItemDef['kind'], BagTab> = {
   chest: 'Resources', choice: 'Resources', speedup: 'Speed ups', boost: 'Boosts', flask: 'Other', tome: 'Other',
-  key: 'Other',
+  key: 'Other', part: 'Other',
 };
 
 /** Which tab an item is shown in: a fact of its kind. */

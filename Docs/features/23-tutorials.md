@@ -229,9 +229,10 @@ plays this before the lair's own scene. Its lines are beats.
 |---|---|---|---|---|
 | `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Isolde:** *The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
-| `towerSighted` | the Watchtower is sighted (01-map-and-fog.md §4.1) — in view from the start, so it plays as the First Morning ends | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
-| `watchtowerSeen` | the Watchtower is discovered | Isolde | *An old watchtower! From its top you could see past the mountains — to whoever else is out there. Oh, I'd love to sketch it.* | the Watchtower |
-| `world` | the Watchtower is claimed | Isolde | *Other kingdoms, Your Majesty. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob |
+| `towerSighted` | the Watchtower's ruin is sighted (01-map-and-fog.md §4.1) — in view from the start, so it plays as the First Morning ends | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
+| `watchtowerSeen` | the Watchtower's ruin is revealed | Isolde | *An old watchtower! Its great lens is gone — torn out. From its top you could see past the mountains. Oh, I'd love to sketch it.* | the Watchtower |
+| `watchtowerRepair` — **locked** | the Watchtower can be repaired (`canRepair`): its ruin revealed, the lens in the Bag, the price and a builder in hand — on the main screen | Isolde | *The lens the Orcs carried off — it belongs to the old watchtower! Let's put it back. Tap the tower.* · *Set the lens and mend the stair. One minute, and we'll see past the mountains. Repair it!* | the tower, then **Repair** — nothing else can be pressed |
+| `world` — **locked** | the world door opens — the Watchtower stands — on the main screen | Isolde | *The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.* · on the board: *Other kingdoms. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob, until the board is open (`worldOpen`) |
 
 ### 4.4 What the fog gives up
 
@@ -256,7 +257,7 @@ nothing if it already is). Its lines are beats, like the first lair's.
 | *A relic set on this altar lends the kingdom its power. Tap the altar.* | the altar | the altar | the relic picker is open |
 | *There's the Staff. Its power makes the forests, crops and stone round the shrine grow back faster. Choose it.* | the Staff's card | the card | the Staff is in the slot |
 | *Now Select, and it takes its place.* | Select | Select | a Shrine holds the Staff |
-| *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine — a grander shrine keeps it awake longer.* | Activate | none | tap |
+| *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine. It grows longer, wider and stronger.* | Activate | none | tap |
 
 - Activating is pointed at, not required: a player short of Mana is never
   held on a line they cannot finish.

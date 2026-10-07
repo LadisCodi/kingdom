@@ -40,8 +40,10 @@ export const itemIcon = (id: ItemId): IconName => {
     case 'choice': return 'choiceChest';
     case 'speedup': return 'speedup';
     case 'boost': return def.boost !== null ? BOOST_ICON[def.boost] : 'speedup';
-    case 'flask': return 'manaFlask';
-    case 'tome': return 'knowledgeTome';
+    case 'flask': return 'flask';
+    case 'tome': return 'tome';
+    // A piece a ruin needs has its own picture; without one, a shard.
+    case 'part': return 'shard';
   }
 };
 

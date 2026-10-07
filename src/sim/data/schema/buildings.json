@@ -151,13 +151,13 @@
     },
     "hostsRelic": {
       "type": "bool",
-      "doc": "Holds one city relic, whose effect acts over its aura while an activation lasts (relic-restoration.md §5.1). A host may climb levels though it supplies Harmony; it is moved, never built for Gold."
+      "doc": "Holds one city relic, whose effect acts over its aura while an activation lasts (09-relics.md §2.1). A host has one level: how long and how far the relic acts is the relic's own level. It is moved, never built for Gold."
     },
-    "relicWindowMinutesPerLevel": {
-      "type": "list",
-      "of": { "type": "int", "min": 1 },
-      "length": { "sibling": "maxLevel", "upTo": true },
-      "doc": "A host's window, by level: how many minutes an activation of the relic it holds lasts (09-relics.md §2). How far the aura reaches is the relic's level, not the host's."
+    "repairItem": {
+      "type": "text",
+      "ref": "item",
+      "emptyOk": true,
+      "doc": "An item repairing this building's ruin also asks for, and spends (01-map-and-fog.md §6.3). Empty: none."
     }
   }
 }

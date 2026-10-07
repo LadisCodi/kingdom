@@ -1,30 +1,35 @@
 [
   {
     "tier": 1,
+    "fights": 3,
     "takeSeconds": 300,
     "heroXp": 500,
-    "rewardItems": { "ConstructionSpeedup15m": 1 }
+    "rewardItems": { "ConstructionSpeedup15m": 1, "WatchtowerLens": 1 }
   },
   {
     "tier": 2,
+    "fights": 4,
     "takeSeconds": 600,
     "heroXp": 1500,
     "rewardItems": { "GeneralSpeedup1h": 1 }
   },
   {
     "tier": 3,
+    "fights": 5,
     "takeSeconds": 900,
     "heroXp": 4000,
     "rewardItems": { "GeneralSpeedup1h": 2, "HarvestBoost1h": 1 }
   },
   {
     "tier": 4,
+    "fights": 6,
     "takeSeconds": 1200,
     "heroXp": 10000,
     "rewardItems": { "GeneralSpeedup3h": 1, "ChoiceChest1h": 1 }
   },
   {
     "tier": 5,
+    "fights": 7,
     "takeSeconds": 1500,
     "heroXp": 25000,
     "rewardItems": { "GeneralSpeedup8h": 1, "ChoiceChest8h": 1 }

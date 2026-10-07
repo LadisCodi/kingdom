@@ -16,8 +16,7 @@ import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
 import type { DelveResult, WorldSnapshot } from '../src/worldServer/types';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, freshGame, freshPresenter, fund, map, reveal, T0,
-} from './helpers';
+  addAllTrainers, freshGame, freshPresenter, fund, map, reveal, T0, toLastFight } from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -48,6 +47,7 @@ const atTheDoor = (units?: Partial<Record<UnitId, number>>) => {
 describe('a lair attack opens the playback', () => {
   it('resolves everything first, and only then starts the replay', () => {
     const { game } = atTheDoor();
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
     game.doAttackLair();
@@ -68,6 +68,7 @@ describe('a lair attack opens the playback', () => {
 
   it('walks playing → result → done on the clock — the spoils are the claim\'s', () => {
     const { game, tick } = atTheDoor();
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     game.doAttackLair();
     const battle = game.battle!;
@@ -135,6 +136,7 @@ describe('the lair opens the same screen', () => {
     const game = freshPresenter(state);
     let clock = T0;
     game.now = () => clock;
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     const lump = firstClearLump(game.state);
     game.doAttackLair();

@@ -66,8 +66,8 @@
 - **Gems never complete a technology.** They buy Knowledge (§3.2), which is
   poured like any other; the Gold is always the city's
   ([`14-monetization.md`](14-monetization.md) §1).
-- There are 124 cards: **Kingdom 111 · Sagas 6 · Atlas 7**, totalling
-  **9,674,305 Gold and 607 Knowledge**. Prices per chapter are in
+- There are 123 cards: **Kingdom 110 · Sagas 6 · Atlas 7**, totalling
+  **4,732,305 Gold and 940 Knowledge**. Prices per chapter are in
   [`tech-tree.md`](tech-tree.md) §1.
 
 ### 1.1 Majors and minors
@@ -140,7 +140,7 @@ A `bonus` names its effects, and each is four fields:
 |---|---|---|---|
 | **Kingdom** | the tree | from the first minute | everything the kingdom learns, in nine chapters |
 | **Sagas** | found | a **Tavern** stands | heroes, and the Tavern that hosts them |
-| **Atlas** | found | the **Watchtower** is claimed | sight, landmarks, the world beyond |
+| **Atlas** | found | the **Watchtower** is repaired | sight, landmarks, the world beyond |
 
 - **One tree** holds the city, the army and the magic, mixed in every chapter;
   its content is [`tech-tree.md`](tech-tree.md).
@@ -236,7 +236,7 @@ A `bonus` names its effects, and each is four fields:
   level. **It costs Knowledge and Gold** like every card, so it competes with
   the chapters for the bar.
 - **The two that ship** are found in the province itself: the **Sagas** with
-  the first Tavern, the **Atlas** with the Watchtower.
+  the first Tavern, the **Atlas** with the Watchtower repaired.
 - **Later ones** are the pattern for a far lair, an event or the world map.
 - A found book **arrives open and stays open.** It cannot be lost, spent, or
   traded away.

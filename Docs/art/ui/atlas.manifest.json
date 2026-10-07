@@ -310,8 +310,8 @@
     "boostRent",
     "boostHarvest",
     "boostMana",
-    "manaFlask",
-    "knowledgeTome",
+    "flask",
+    "tome",
     "dowserMap",
     "shard"
    ],
@@ -441,6 +441,30 @@
     "wateringCan",
     "boat",
     "spyglass"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-i5-lens.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "WatchtowerLens"
+   ],
+   "evenGrid": true
+  },
+  {
+   "file": "sheets/ui-i6-watchtower.png",
+   "grid": {
+    "rows": 1,
+    "cols": 1
+   },
+   "fill": 0.86,
+   "names": [
+    "Watchtower"
    ],
    "evenGrid": true
   }

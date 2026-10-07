@@ -9,7 +9,7 @@
 // and, when it is out of reach, exactly what is missing.
 
 import {
-  DISTRICTS, FOG, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
+  DISTRICTS, FOG, ITEMS, LAIRS, LANDMARK_ART, MANA, type AbandonedDef, type LandmarkDef,
 } from '../sim/data/definitions';
 import { nextBuildCost } from '../sim/districts';
 import type { LairView, RaidableId } from '../sim/lairs';
@@ -17,7 +17,8 @@ import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
-import type { LairId } from '../sim/state';
+import type { ItemId, LairId } from '../sim/state';
+import { itemIcon } from './itemArt';
 import { el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, sectionHead, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
@@ -126,6 +127,14 @@ export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement
     el('p', { class: 'lm-note' },
       'Left to the fog when its people fled. Repair it and it is yours, '
       + 'exactly as if you had built it.'),
+    // A ruin missing a piece — the Watchtower's lens — says which, and
+    // whether the Bag holds it.
+    ...(def.repairItem === '' ? [] : [(() => {
+      const item = def.repairItem as ItemId;
+      const held = game.itemHeld(item) > 0;
+      return el('p', { class: `lm-note lm-need${held ? ' is-held' : ''}` },
+        iconEl(itemIcon(item)), `Needs ${ITEMS[item].name} — ${held ? 'in the Bag' : 'not found yet'}`);
+    })()]),
     // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
     el('div', { class: 'lc-go', 'data-coach': 'repair' }, btn({
       label: 'Repair',
@@ -194,6 +203,8 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       windowHead(def.name, [closeKnob(() => game.dismiss(), `Close ${def.name}`)]),
       figure,
       timer,
+      sectionHead('Progress'),
+      fightPath(lair),
       sectionHead('Reward'),
       el('div', { class: 'lc-reward' }, ...chips),
       el('div', { class: 'lc-go' }, lair.defeated
@@ -213,7 +224,8 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       }
       // Rebuilt only when what it SAYS moves — the hoard; a tick in between
       // touches the countdown's text alone.
-      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull) + String(lair.defeated);
+      const now = JSON.stringify(lair.hoard) + JSON.stringify(lair.hoardFull) + String(lair.defeated)
+        + String(lair.won);
       if (now !== signature) {
         signature = now;
         releaseSprites(root);
@@ -223,6 +235,28 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       clock.textContent = formatDuration(left);
     },
   };
+}
+
+/**
+ * THE LAIR'S PATH (18-garrisons-and-raids.md §5): one stone a fight, joined
+ * by a dotted trail — the delve's stones, so a lair reads as the same kind of
+ * place. A fight won carries the green wax seal, the next one is lit, the
+ * ones ahead are dim, and the last is the boss's horned stone.
+ */
+function fightPath(lair: LairView): HTMLElement {
+  const steps: HTMLElement[] = [];
+  for (let i = 0; i < lair.fights; i++) {
+    const state = i < lair.won ? 'is-won' : i === lair.won ? 'is-next' : 'is-ahead';
+    const boss = i === lair.fights - 1 ? ' is-boss' : '';
+    if (i > 0) steps.push(el('span', { class: `lc-trail${i <= lair.won ? ' is-walked' : ''}`, 'aria-hidden': 'true' }));
+    steps.push(el('span', { class: `lc-stone ${state}${boss}`, 'aria-hidden': 'true' }));
+  }
+  const label = lair.defeated
+    ? `All ${formatExact(lair.fights)} fights won`
+    : `Fight ${formatExact(lair.won + 1)} of ${formatExact(lair.fights)}`;
+  return el('div', { class: 'lc-progress k-section', role: 'img', 'aria-label': label },
+    el('div', { class: 'lc-path', style: `--fights: ${lair.fights}` }, ...steps),
+    el('div', { class: 'lc-path-label' }, label));
 }
 
 /** One tile of the reward row: the icon, the amount, and a word under it

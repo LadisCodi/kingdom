@@ -89,7 +89,7 @@ export type UiIconName =
   // the boosts, the flask, the tome, the Dowser's map and a relic's shard.
   | 'bag' | 'SilverKey' | 'GoldKey' | 'chestGold' | 'chestFood' | 'chestWood' | 'chestStone' | 'choiceChest'
   | 'speedup' | 'anvil' | 'boot' | 'boostRent' | 'boostHarvest' | 'boostMana'
-  | 'manaFlask' | 'knowledgeTome' | 'dowserMap' | 'shard'
+  | 'flask' | 'tome' | 'dowserMap' | 'shard'
   // THE TECHNOLOGIES (sheet UI-T1, Docs/art/ui/tech/prompt.md): what a
   // regrowth, an irrigation, a sail and a farsight look like — the four a
   // tech card needed that nothing else in the atlas could stand for.
@@ -119,7 +119,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
   Infirmary: '⛑️', WarCamp: '⛺',
   Carpenter: '🔨', MasonsYard: '🧱', Smelter: '🔥', RuneCarver: '🔯',
-  Garden: '🌷', Well: '🪣', Orchard: '🌳', Statue: '🗿', Plaza: '⛲', Shrine: '⛩️',
+  Garden: '🌷', Well: '🪣', Orchard: '🌳', Statue: '🗿', Plaza: '⛲', Shrine: '⛩️', Watchtower: '🗼',
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations
@@ -147,7 +147,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // the Bag
   bag: '🎒', chestGold: '🪙', chestFood: '🍎', chestWood: '🪵', chestStone: '🪨', choiceChest: '🎁',
   speedup: '⏳', anvil: '⚒️', boot: '🥾', boostRent: '💰', boostHarvest: '🌾', boostMana: '🔮',
-  manaFlask: '🧪', knowledgeTome: '📘', dowserMap: '🗺️', shard: '💠',
+  flask: '🧪', tome: '📘', dowserMap: '🗺️', shard: '💠',
   // the technologies
   sapling: '🌱', wateringCan: '🚿', boat: '⛵', spyglass: '🔭',
 };

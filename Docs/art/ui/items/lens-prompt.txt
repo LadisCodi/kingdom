@@ -1,0 +1,7 @@
+GENERATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — sixteen icons already in this game's atlas. Your icon will sit right next to them; match their style exactly: the same chunky cartoon shapes, the same dark-brown outline, the same saturated colours with one soft shade and one highlight, the same gold trims, the same front three-quarter view.
+
+A square image with ONE game icon, centred, filling about 80% of the image, with generous empty margins. Draw as if the icon is shown 64 px wide: big simple readable shapes, nothing thinner than the outline. No text or numbers.
+
+The icon: THE WATCHTOWER'S LENS — a large round magnifying LENS of clear pale-cyan glass with a bright white highlight across it, set in a thick polished BRASS RING with three small brass rivets and a short brass mounting stub at its bottom (where it was torn off its tower), shown at a slight front three-quarter angle so the ring has visible thickness. A faint golden glint shines inside the glass. It reads instantly as a precious, magical spyglass lens.
+
+Do not draw a frame, border, label, caption, shadow or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

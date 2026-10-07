@@ -25,8 +25,7 @@ import {
   getWallet, townhall, type GameState, type UnitId,
 } from '../src/sim/state';
 import {
-  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, T0, rentStored,
-} from './helpers';
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, clearLair, reveal, T0, rentStored, toLastFight } from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -239,6 +238,7 @@ describe('what a lair attack costs', () => {
     expect(previewLair(state, ORCS, [...heroes], company).supplies).toEqual(cost);
     const gold = getWallet(state.city.wallet, 'Gold');
     const mana = getWallet(state.city.wallet, 'Mana');
+    toLastFight(state, ORCS);
     const report = attackLair(state, map, ORCS, [...heroes], company);
     expect(report.result).toBe('Cleared');
     expect(report.supplies).toEqual(cost);
@@ -448,6 +448,7 @@ describe('Knowledge: a fixed drip, and lumps for the ground', () => {
     const lump = firstClearLump(state);
     expect(lump).toBe(DELVE.firstClearKnowledge);
     const held = getWallet(state.kingdom.wallet, 'Knowledge');
+    toLastFight(state, ORCS);
     const report = attackLair(state, map, ORCS, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.knowledge).toBe(lump);

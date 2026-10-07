@@ -1,11 +1,12 @@
 // A relic's host (sim/hosts.ts; Docs/features/09-relics.md §2): a restored
 // city relic acts over the aura of the Shrine that holds it, and only while
-// it is ACTIVATED — Mana paid, a window as long as the Shrine's level allows.
+// it is ACTIVATED — Mana paid, a window as long as the relic's level allows.
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { castState } from '../src/sim/casting';
 import { advance, moveDistrict } from '../src/sim/commands';
-import { ARTIFACT_RADIUS_STEPS, DISTRICTS } from '../src/sim/data/definitions';
+import { CITY_RELIC_LEVELS } from '../src/sim/data/definitions';
+import { cityRelicSteps, nextCityRelicAxis, passiveValueAtLevel, relicWindowMsAt } from '../src/sim/artifacts';
 import {
   activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, hostOf, hostRelic,
   isAwake, relicAura, unhostRelic,
@@ -18,15 +19,70 @@ import { districtAt, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const MIN = 60_000;
-const WINDOWS = DISTRICTS.Shrine.relicWindowMinutesPerLevel;
+const WINDOWS = CITY_RELIC_LEVELS.windowMinutes;
 
-/** A built Shrine at `at`, at `level`. */
-function shrine(state: GameState, id: string, at: { x: number; y: number }, level = 1): void {
+/** The first level of the Crown at which `moved` holds. */
+const firstLevel = (moved: (level: number) => boolean): number => {
+  for (let l = 2; l < 100; l++) if (moved(l)) return l;
+  throw new Error('never');
+};
+
+/** A built Shrine at `at`. */
+function shrine(state: GameState, id: string, at: { x: number; y: number }): void {
   state.city.districts.push({
-    uniqueId: id, definitionId: 'Shrine', ordinal: 9, level, assignedWorkers: 0,
+    uniqueId: id, definitionId: 'Shrine', ordinal: 9, level: 1, assignedWorkers: 0,
     location: at, state: 'Built', visualVariant: 1,
   });
 }
+
+// A CITY RELIC GROWS ROUND A CYCLE (09-relics.md §2.1): every level-up from
+// level 2 raises one of its window, its reach and its number, in turn.
+describe('a city relic levels round its cycle', () => {
+  const { cycle } = CITY_RELIC_LEVELS;
+
+  it('names each axis once', () => {
+    expect([...cycle].sort()).toEqual(['effect', 'radius', 'window']);
+  });
+
+  it('starts at the first window, its authored reach and its base number', () => {
+    expect(relicWindowMsAt('GildedLedger', 1)).toBe(WINDOWS[0]! * MIN);
+    expect(cityRelicSteps('GildedLedger', 1)).toEqual({ window: 0, radius: 0, effect: 0 });
+  });
+
+  // Every level is worth having: each raises exactly one axis, and a window
+  // step past the last authored window raises the number instead.
+  it('raises exactly one axis a level, round the cycle, for ever', () => {
+    for (let level = 1; level < 60; level++) {
+      const now = cityRelicSteps('GildedLedger', level);
+      const next = cityRelicSteps('GildedLedger', level + 1);
+      const moved = (['window', 'radius', 'effect'] as const).filter((a) => next[a] !== now[a]);
+      expect(moved, `level ${level + 1}`).toEqual([nextCityRelicAxis('GildedLedger', level)]);
+      const due = cycle[(level - 1) % cycle.length];
+      const windowFull = due === 'window' && now.window >= WINDOWS.length - 1;
+      expect(moved[0], `level ${level + 1}`).toBe(windowFull ? 'effect' : due);
+    }
+  });
+
+  it('reads each axis where the game reads it', () => {
+    const at = (axis: 'window' | 'radius' | 'effect') => firstLevel((l) => cityRelicSteps('GildedLedger', l)[axis] > 0);
+    expect(relicWindowMsAt('GildedLedger', at('window'))).toBe(WINDOWS[1]! * MIN);
+    expect(auraRadiusAt('GildedLedger', at('radius'))).toBe(auraRadiusAt('GildedLedger', 1) + 1);
+    expect(passiveValueAtLevel('GildedLedger', at('effect'))).toBeGreaterThan(passiveValueAtLevel('GildedLedger', 1));
+    // The two a level leaves alone stay where they were.
+    expect(passiveValueAtLevel('GildedLedger', at('window'))).toBe(passiveValueAtLevel('GildedLedger', 1));
+    expect(relicWindowMsAt('GildedLedger', at('radius'))).toBe(relicWindowMsAt('GildedLedger', at('window')));
+  });
+
+  it('stops the window at its last entry', () => {
+    expect(relicWindowMsAt('GildedLedger', 500)).toBe(WINDOWS[WINDOWS.length - 1]! * MIN);
+  });
+
+  // A world relic has no cycle: every level is its number.
+  it('leaves a world relic climbing its number every level', () => {
+    expect(nextCityRelicAxis('MusterHorn', 3)).toBeNull();
+    expect(passiveValueAtLevel('MusterHorn', 3)).toBeGreaterThan(passiveValueAtLevel('MusterHorn', 2));
+  });
+});
 
 describe('a city relic is hosted in a Shrine', () => {
   let state: GameState;
@@ -69,7 +125,7 @@ describe('activating a hosted relic', () => {
     state.artifacts.levels.GildedLedger = 1;
     fund(state, { Mana: 999 });
     shrine(state, 'a', { x: 0, y: 0 });
-    shrine(state, 'b', { x: 6, y: 0 }, 5);
+    shrine(state, 'b', { x: 6, y: 0 });
   });
 
   it('needs a Shrine, and the Mana', () => {
@@ -94,26 +150,27 @@ describe('activating a hosted relic', () => {
     expect(mana(state)).toBe(before - activationCost(state, 'GildedLedger'));
   });
 
-  // THE SHRINE'S LEVEL IS THE DURATION.
-  it('lasts the window of the Shrine it is in', () => {
+  // THE RELIC'S LEVEL IS THE DURATION: the Shrine adds nothing of its own.
+  it('lasts its own window, whichever Shrine holds it', () => {
     hostRelic(state, 'GildedLedger', 'a', T0);
     activateRelic(state, 'GildedLedger', T0);
     expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[0]! * MIN);
     unhostRelic(state, 'GildedLedger', T0);
+    state.artifacts.levels.GildedLedger = firstLevel((l) => relicWindowMsAt('GildedLedger', l) > WINDOWS[0]! * MIN);
     hostRelic(state, 'GildedLedger', 'b', T0);
     activateRelic(state, 'GildedLedger', T0);
-    expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[4]! * MIN);
+    expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[1]! * MIN);
   });
 
-  // Priced when it opens: a Shrine that climbs mid-window does not stretch it.
-  it('keeps the window it was priced at when its Shrine climbs', () => {
+  // Priced when it opens: a level-up mid-window does not stretch it.
+  it('keeps the window it was priced at when the relic climbs', () => {
     hostRelic(state, 'GildedLedger', 'a', T0);
     activateRelic(state, 'GildedLedger', T0);
-    state.city.districts.find((d) => d.uniqueId === 'a')!.level = 5;
+    state.artifacts.levels.GildedLedger = 20;
     expect(state.artifacts.casts.GildedLedger!.endsAt).toBe(T0 + WINDOWS[0]! * MIN);
   });
 
-  // THE RELIC'S LEVEL IS THE POWER: its number, and how far the aura reaches.
+  // THE RELIC'S LEVEL IS THE POWER too: its number, and how far the aura reaches.
   it('reaches further and hits harder as the relic climbs', () => {
     hostRelic(state, 'GildedLedger', 'a', T0);
     activateRelic(state, 'GildedLedger', T0);
@@ -121,8 +178,9 @@ describe('activating a hosted relic', () => {
     const edge = { x: r1 + 1, y: 0 };
     const weak = relicAura(state, 'taxRate', { x: 1, y: 0 }).mul;
     expect(relicAura(state, 'taxRate', edge).mul).toBe(1);
-    state.artifacts.levels.GildedLedger = ARTIFACT_RADIUS_STEPS[0]!;
-    expect(auraRadiusAt('GildedLedger', ARTIFACT_RADIUS_STEPS[0]!)).toBe(r1 + 1);
+    state.artifacts.levels.GildedLedger = firstLevel((l) =>
+      auraRadiusAt('GildedLedger', l) > r1 && passiveValueAtLevel('GildedLedger', l) > passiveValueAtLevel('GildedLedger', 1));
+    expect(auraRadiusAt('GildedLedger', state.artifacts.levels.GildedLedger)).toBe(r1 + 1);
     expect(relicAura(state, 'taxRate', edge).mul).toBeGreaterThan(1);
     expect(relicAura(state, 'taxRate', { x: 1, y: 0 }).mul).toBeGreaterThan(weak);
   });

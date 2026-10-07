@@ -508,5 +508,15 @@
     "speeds": null,
     "boost": null,
     "value": 0
+  },
+  "WatchtowerLens": {
+    "name": "The Watchtower's lens",
+    "kind": "part",
+    "coin": null,
+    "seconds": 0,
+    "tier": 4,
+    "speeds": null,
+    "boost": null,
+    "value": 0
   }
 }

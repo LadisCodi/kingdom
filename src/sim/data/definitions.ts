@@ -387,7 +387,7 @@ export const BAG = balance.bag;
 export const NOTICES = balance.notices;
 
 /** What using an item does (Docs/proposals/inventory.md §3). */
-export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key';
+export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key' | 'part';
 
 /** What a boost raises. */
 export type BoostKind = 'Rent' | 'Harvest' | 'Mana';
@@ -564,7 +564,7 @@ export type SceneCondition =
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
-  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing'
+  | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen'
   | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
@@ -786,12 +786,13 @@ export interface DistrictDef {
    *  column for both and no prefix summed anywhere. Empty = it demands
    *  nothing (Docs/features/21-harmony.md). */
   harmonyCostPerLevel: readonly number[];
-  /** Holds one city relic, whose passive and spell act over its aura
-   *  (Docs/proposals/relic-restoration.md §5.1): the Shrine. */
+  /** Holds one city relic, whose effect acts over its aura while it is
+   *  activated: the Shrine. One level — how long and how far the relic acts
+   *  is the relic's own level (Docs/features/09-relics.md §2.1). */
   hostsRelic: boolean;
-  /** A host's window, by level: the minutes one activation of the relic it
-   *  holds lasts. The aura's reach is the relic's (`auraRadiusAt`). */
-  relicWindowMinutesPerLevel: readonly number[];
+  /** An item repairing this building's ruin also asks for, and spends —
+   *  the Watchtower's lens (Docs/features/01-map-and-fog.md §6.3). '' = none. */
+  repairItem: string;
 }
 
 /**
@@ -1185,9 +1186,9 @@ export const HERO_LADDER = balance.heroLadder;
 export const ARTIFACT_COOLDOWN_SECONDS = balance.artifactCooldownSeconds;
 
 /**
- * THE LEVELS AT WHICH AN ABILITY'S RADIUS STEPS UP, one ring each and the same
- * three rungs on every relic — a city relic's aura and a world relic's spell
- * alike (Docs/features/09-relics.md §2.1, §2.2).
+ * THE LEVELS AT WHICH A WORLD RELIC'S SPELL WIDENS, one ring each and the same
+ * three rungs on every spell (Docs/features/09-relics.md §2.2). A city
+ * relic's aura grows by `CITY_RELIC_LEVELS` instead.
  *
  * The one number of an active that does NOT creep. A Chebyshev radius covers
  * `(2r+1)²` cells, so each rung roughly DOUBLES the ground — and a number that
@@ -1294,8 +1295,8 @@ export interface ArtifactDef {
    *  without one. */
   active: ArtifactActive | null;
   /** A CITY relic's activation in its Shrine: the Mana it costs, and how far
-   *  the aura reaches at level 1 — one ring more at each of
-   *  `ARTIFACT_RADIUS_STEPS`. Null on a world relic. */
+   *  the aura reaches at level 1 — one ring more at each radius step of
+   *  `CITY_RELIC_LEVELS`. Null on a world relic. */
   activation: { manaCost: number; radius: number } | null;
   /**
    * WHY THIS RELIC'S NUMBER DOES NOTHING YET, or null when it works.
@@ -1503,6 +1504,17 @@ export const relicDoor = (id: ArtifactId): string => ab(id).door;
  *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
  *  own: it holds and wakes a relic (09-relics.md §2.1). */
 export const SHRINE_RULES = balance.shrines as { premiumGems: number[] };
+
+/** What a level-up can raise on a city relic. */
+export type CityRelicAxis = 'window' | 'radius' | 'effect';
+
+/** How a CITY relic grows (`relics.json`'s `cityLevels`, 09-relics.md §2.1):
+ *  every level-up from level 2 raises one axis, round `cycle`; a window step
+ *  reads the next entry of `windowMinutes`, and one past its end raises the
+ *  effect instead. */
+export const CITY_RELIC_LEVELS = balance.cityLevels as {
+  cycle: CityRelicAxis[]; windowMinutes: number[];
+};
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
@@ -1979,8 +1991,8 @@ export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
 
 export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
 
-/** A lair's first-clear Knowledge. */
-export const DELVE = balance.delve;
+/** A lair's first-clear Knowledge, and how hard its first fight is. */
+export const DELVE = balance.delve as { firstClearKnowledge: number; firstFightPower: number };
 export const PARTY = balance.party;
 
 /**
@@ -1993,8 +2005,11 @@ export const PARTY = balance.party;
  */
 export interface GarrisonDef {
   tier: number;
+  /** Fights a lair of this tier takes to clear (18-garrisons-and-raids.md
+   *  §5): the last at the lair's power, the ones before ramping up to it. */
+  fights: number;
   takeSeconds: number;
-  /** Hero XP a lair of this tier teaches when its prize is claimed. */
+  /** Hero XP a lair of this tier teaches, split evenly across its fights. */
   heroXp: number;
   /** Items a lair of this tier puts in the Bag when its prize is claimed. */
   rewardItems: Partial<Record<ItemId, number>>;
@@ -2486,4 +2501,9 @@ export const GAME_VERSION: string = pkg.version;
 // 310 — a hero's level is rescaled to the new ladder (a migrator).
 // v107: no change to the save — the 1.0.1 fresh start: every tester begins a
 // new kingdom (`PROTOTYPE_FRESH_START`).
-export const SAVE_VERSION = 107;
+// v108: a Shrine has one level; a relic carries its own window — a Shrine
+// above level 1 comes back to it, its upgrade under way dropped (a migrator).
+// v109: a lair is a path of fights — `Won` on a lair, additive.
+// v110: the Watchtower is a ruin to repair, not a landmark to claim; a
+// claimed one stands repaired, and the chain closes up (a migrator).
+export const SAVE_VERSION = 110;

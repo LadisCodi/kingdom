@@ -2,11 +2,16 @@
   "type": "object",
   "fields": {
     "tier": { "type": "int", "min": 1 },
+    "fights": {
+      "type": "int",
+      "min": 1,
+      "doc": "Fights a lair of this tier takes to clear (18-garrisons-and-raids.md §5): the last at the lair's power, the ones before it ramping up from delve.firstFightPower."
+    },
     "takeSeconds": { "type": "int" },
     "heroXp": {
       "type": "int",
       "min": 0,
-      "doc": "Hero XP a lair of this tier teaches when its prize is claimed — once per lair."
+      "doc": "Hero XP a lair of this tier teaches, once per lair, split evenly across its fights: each fight won pays its share, the last one with the claim."
     },
     "rewardItems": {
       "type": "map",

@@ -714,3 +714,53 @@ describe('v106 rescales a hero\'s level to the 310 ladder', () => {
     expect(back.heroes.levels).toEqual({ Bard: 1, Warden: 58, Scout: 310 });
   });
 });
+
+describe('v108 brings every Shrine back to one level', () => {
+  it('drops a Shrine to level 1 and its upgrade under way, and nothing else', () => {
+    const state = freshGame();
+    state.city.districts.push({
+      uniqueId: 'shrine_a', definitionId: 'Shrine', ordinal: 1, level: 3, assignedWorkers: 0,
+      location: { x: 3, y: 3 }, state: 'Built', visualVariant: 1,
+    });
+    state.city.queue.push(
+      { uniqueId: 'q1', kind: 'upgrade', districtUniqueId: 'shrine_a', targetLevel: 4, durationSeconds: 900, startedAt: T0 },
+      { uniqueId: 'q2', kind: 'upgrade', districtUniqueId: state.city.districts[0]!.uniqueId, targetLevel: 2, durationSeconds: 60, startedAt: null },
+    );
+    const save = serialize(state, T0);
+    save.SaveVersion = 107;
+    const back = deserialize(save, map, T0)!;
+    expect(back.city.districts.find((d) => d.uniqueId === 'shrine_a')!.level).toBe(1);
+    expect(back.city.queue.map((q) => [q.uniqueId, q.kind])).toEqual([['q2', 'upgrade']]);
+  });
+});
+
+describe('v110 makes the Watchtower a ruin to repair', () => {
+  const at109 = (edit: (modules: any) => void) => {
+    const save = serialize(freshGame(), T0);
+    edit(save.Modules as any);
+    save.SaveVersion = 109;
+    return deserialize(save, map, T0)!;
+  };
+
+  it('keeps a claimed Watchtower standing, repaired', () => {
+    const back = at109((m) => { m['kingdom.landmarks'] = { Claimed: ['NorthWatch', 'FallenStones'] }; });
+    expect(back.landmarks.claimed).toEqual({ FallenStones: true });
+    expect(back.abandoned.repaired.NorthWatch).toBe(true);
+    expect(back.city.districts.some((d) => d.definitionId === 'Watchtower' && d.state === 'Built')).toBe(true);
+  });
+
+  it('hands the lens to a kingdom that beat the Orcs and never claimed the tower', () => {
+    const back = at109((m) => {
+      m['kingdom.lairs'] = { Lairs: [{ LairID: 'Orcs', ArmedAtUtc: null, NextRaidAtUtc: null, Hoard: {}, Defeated: true, Cleared: true }] };
+    });
+    expect(back.bag.held.WatchtowerLens).toBe(1);
+  });
+
+  it('closes the chain up behind the old tower quest', () => {
+    const at = (index: number) => at109((m) => { m['kingdom.quests'].Index = index; }).quests.index;
+    expect(QUESTS[at(32)].id).toBe('TheWatchtower');
+    expect(QUESTS[at(40)].id).toBe(QUESTS[40].id);
+    expect(QUESTS[at(66)].id).toBe('DeeperStill');
+    expect(QUESTS[at(67)].id).toBe('DeeperStill');
+  });
+});

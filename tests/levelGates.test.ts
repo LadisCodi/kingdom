@@ -136,8 +136,6 @@ describe('per-level housing capacity', () => {
 describe('every upgradable building has something to show for the level', () => {
   const PER_LEVEL = [
     'influenceRadiusPerLevel', 'maxWorkersPerLevel',
-    // A Shrine's window: how long an activation of its relic lasts.
-    'relicWindowMinutesPerLevel',
     'armyCapPerLevel', 'populationCapacityPerLevel',
     // The Infirmary's whole ladder: beds for the wounded
     // (Docs/features/combat.md §4).

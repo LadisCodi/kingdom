@@ -39,5 +39,5 @@ Do not draw grid lines, cell borders, labels, captions, shadows or any backgroun
 ## Names (manifest order)
 
 bag, chestGold, chestFood, chestWood, chestStone, choiceChest, speedup,
-anvil, boot, boostRent, boostHarvest, boostMana, manaFlask, knowledgeTome,
+anvil, boot, boostRent, boostHarvest, boostMana, flask, tome,
 dowserMap, shard

@@ -259,7 +259,8 @@ describe('exploring pays in ground, not in currency', () => {
     // tutorial priced in days of the city's Gold; the cut ladders left.
     // 4,922,305: chapters 5–9 at half the Gold, so their Knowledge, not a
     // second Gold wall, is what holds them.
-    expect(tree).toBe(4_922_305);
+    // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
+    expect(tree).toBe(4_732_305);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // raw materials: a full quarry buys no research, which is what keeps the
@@ -427,7 +428,7 @@ describe('a site announces itself when it comes into view', () => {
   it('fires when a paid reveal brings one into view', () => {
     const state = newGame(map, T0);
     state.city.wallet.Gold = 100_000;
-    townhall(state).level = 2; // the nearest sanctuary sits at ring 5
+    townhall(state).level = 3; // the nearest sanctuary sits at ring 7
     const target = LANDMARKS.reduce((a, b) =>
       townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
     const toward = (c: Coord) =>
@@ -437,7 +438,8 @@ describe('a site announces itself when it comes into view', () => {
     // and stop the moment something is sighted — which must happen before the
     // player ever stands on it.
     for (let i = 0; i < 30; i++) {
-      if (state.pendingDiscoveries.some((k) => k.startsWith('site:'))) break;
+      // Other sites — the Watchtower's ruin — may come into view on the way.
+      if (state.pendingDiscoveries.includes(siteDiscoveryKey(target.id))) break;
       const next = [...map.terrain.keys()].map(parseCoordKey)
         .filter((c) => fogState(state, map, c) === 'Discovered'
           && isPayable(state, map, c) && explorationGate(map, c) === null)

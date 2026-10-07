@@ -15,8 +15,7 @@ import { LAIRS, UNITS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, freshGame, freshPresenter, fund, reveal,
-} from './helpers';
+  addAllTrainers, freshGame, freshPresenter, fund, reveal, toLastFight } from './helpers';
 
 const ORCS = 'Orcs' as const;
 
@@ -71,6 +70,7 @@ describe('the route to a lair', () => {
 describe('clearing the lair', () => {
   it('resolves on the tap, closes the sheet, and the claim pays the first-clear lump', () => {
     const game = freshPresenter(ready());
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     const lump = firstClearLump(game.state);
     const knowledge = getWallet(game.state.kingdom.wallet, 'Knowledge');
@@ -142,6 +142,7 @@ describe('a relic the player owns is no part of a fight', () => {
     const state = ready();
     grantArtifactLevel(state, 'ForemansSigil');
     const game = freshPresenter(state);
+    toLastFight(game.state, ORCS);
     game.openLair(ORCS);
     game.doAttackLair();
     game.doClaimLair(ORCS);

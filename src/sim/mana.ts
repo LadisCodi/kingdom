@@ -105,6 +105,8 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
 export function manaCap(state: GameState): number {
   let cap = MANA.baseCap;
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
+  // The Watchtower, repaired, is a landmark's worth (22-progression.md §5).
+  if (state.city.districts.some((d) => d.definitionId === 'Watchtower' && d.state === 'Built')) cap += MANA.landmarkCap;
   // Each Sanctuary held and on the chain, on the world board (19 §8).
   cap += state.world.sanctuaries * WORLD_BUILD.sanctuaryManaCap;
   for (const d of state.city.districts) {

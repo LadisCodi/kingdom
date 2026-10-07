@@ -389,14 +389,14 @@ describe('the news a presenter files (Docs/features/26-notices.md)', () => {
   it('files no claim, nor the first coin of a resource', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
+    const tower = LANDMARKS[0]!;
     reveal(state, [tower.location]);
     fund(state, { Gold: 99_999 });
     game.notify();
     drain(game);
     game.doClaimLandmark(tower.location);
     expect(state.landmarks.claimed[tower.id]).toBe(true);
-    // Its wider sight may bring OTHER sites into view; those are news.
+    // Its discover ring may bring OTHER sites into view; those are news.
     expect(drain(game).filter((k) => !k.startsWith('sighted:'))).toEqual([]);
     state.pendingDiscoveries.push('resource:Wood');
     game.notify();

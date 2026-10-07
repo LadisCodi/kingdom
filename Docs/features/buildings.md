@@ -58,7 +58,8 @@
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
 | **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
 | **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
-| **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **5** | holds and wakes one city relic — no Harmony, no Mana of its own |
+| **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **1** | holds and wakes one city relic — no Harmony, no Mana of its own; how long and how far the relic acts is the relic's level ([`09`](09-relics.md) §2.1) |
+| **Watchtower** | 1×1 | its ruin, with the Watchtower's lens | 1 | **1** | sees 8 rings round it, +10 max Mana — and opens the world door and the Atlas ([`22`](22-progression.md) §5) |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall
@@ -67,8 +68,8 @@
   in the tables below, and nothing else does that for all of them at once
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - Trains **villagers** in a queue: 20 s for the first and ×1.07 for each
-  villager already in town or queued; Food cost `5, 20, 45, 100, 250, 500,
-  1000` then ×1.1 ([`03-economy.md`](03-economy.md) §4). No tap
+  villager already in town or queued; Food cost `5, 10, 20, 40, 70, 110,
+  160, 230, 320, 440, 600, 800, 1000` then ×1.1 ([`03-economy.md`](03-economy.md) §4). No tap
   hurries it. Its own levels ask for villagers
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - Is the map's origin: fog price and build time are measured from it. It seeds the fog (reveal 1, discover 2).
@@ -148,63 +149,67 @@
 
 ### 4.3 Farm
 
-- Sends its crew to every crop plot inside its area of influence.
+- Sends its crew to every crop plot inside its area of influence: **radius 1,
+  3 workers, at every level** — at most 8 plots a Farm.
 - Build 45 Gold + 30 Wood, 20 s. Level 2: 83 Gold + 55 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Workers | Radius | Gate |
-|---|---|---|---|
-| 1 | 3 | 1 | — |
-| 2 | 5 | 2 | TH2 |
-| 3 | 7 | 2 | TH3 |
-| 4 | 9 | 3 | TH3 |
-| 5 | 11 | 3 | TH4 |
+| Level | Swing | Gate |
+|---|---|---|
+| 1 | ×1 | — |
+| 2 | ×1.25 | TH2 |
+| 3 | ×1.5 | TH3 |
+| 4 | ×1.75 | TH3 |
+| 5 | ×2 | TH4 |
 
 ### 4.4 Sawmill
 
-- Sends its crew to every forest inside its area of influence.
+- Sends its crew to every forest inside its area of influence: **radius 1,
+  3 workers, at every level**.
 - Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Workers | Radius | Gate |
-|---|---|---|---|
-| 1 | 3 | 1 | — |
-| 2 | 5 | 2 | TH1 |
-| 3 | 7 | 3 | TH2 · `Timber Framing` |
-| 4 | 9 | 4 | TH3 · `Architecture` |
-| 5 | 11 | 4 | TH4 |
+| Level | Swing | Gate |
+|---|---|---|
+| 1 | ×1 | — |
+| 2 | ×1.25 | TH1 |
+| 3 | ×1.5 | TH2 · `Timber Framing` |
+| 4 | ×1.75 | TH3 · `Architecture` |
+| 5 | ×2 | TH4 |
 
 ### 4.5 Quarry
 
 - Sends its crew to every mountain inside its area of influence: bare rock
   pays Stone; an iron vein pays Stone once `Mining` is researched; a gold
   mountain pays Gold once `Mining` is researched too
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §3). **Radius 1, 3 workers, at
+  every level.**
 - Build 45 Gold + 30 Wood, 120 s. Level 2: 66 Gold + 44 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Workers | Radius | Gate |
-|---|---|---|---|
-| 1 | 3 | 1 | — |
-| 2 | 5 | 2 | TH2 · `Quarry Hoists` |
-| 3 | 7 | 3 | TH3 · `Architecture` |
-| 4 | 9 | 4 | TH3 |
-| 5 | 11 | 4 | TH4 |
+| Level | Swing | Gate |
+|---|---|---|
+| 1 | ×1 | — |
+| 2 | ×1.25 | TH2 · `Quarry Hoists` |
+| 3 | ×1.5 | TH3 · `Architecture` |
+| 4 | ×1.75 | TH3 |
+| 5 | ×2 | TH4 |
 
 ### 4.6 Docks
 
 - A pier, one half on land and one on water. Its boats work every shoal inside
   its area of influence: 2 Food per 20 s strike, respawning in 90 s.
+  **Radius 4, 3 boats, at every level.**
 - Build 38 Gold + 25 Wood, 20 s. Level 2: 59 Gold + 39 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Workers | Radius | Gate |
-|---|---|---|---|
-| 1 | 3 | 4 | — |
-| 2 | 5 | 6 | `Shipbuilding` |
-| 3 | 7 | 6 | TH3 |
-| 4 | 9 | 7 | TH3 |
-| 5 | 11 | 7 | TH4 |
+| Level | Swing | Gate |
+|---|---|---|
+| 1 | ×1 | — |
+| 2 | ×1.25 | `Shipbuilding` |
+| 3 | ×1.5 | TH3 |
+| 4 | ×1.75 | TH3 |
+| 5 | ×2 | TH4 |
 
 ### 4.7 Sanctum
 
@@ -324,7 +329,7 @@ written once. The Townhall's own ladder is §3.
 | Building | Levels 6–10 add |
 |---|---|
 | Housing | +2 residents and **+25% rent** a level, to 20 residents at +225% |
-| Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
+| Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a faster swing**, ×2.2 at 6 to ×3 at 10 |
 | the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14) |
 | the Infirmary | beds for the wounded, 30 at level 1 to 400 at ten |
 | Sanctum | the Mana curve, to 352 held and 42 an hour |
