@@ -123,12 +123,12 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
   const free = def.freePerDay > 0 ? game.freePull(banner) : null;
   let b: HTMLElement;
   if (price.amount === 0) {
-    b = btn({ label: 'Call once', note: 'Free', kind: 'primary', onClick: () => game.doPull(banner) });
+    b = btn({ label: 'Call', note: 'Free', kind: 'primary', onClick: () => game.doPull(banner) });
   } else if (free !== null && free.ready) {
-    b = btn({ label: 'Call once', note: 'Free', icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
+    b = btn({ label: 'Call', note: 'Free', icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
   } else {
     b = btn({
-      label: 'Call once', kind: 'primary',
+      label: 'Call', kind: 'primary',
       onClick: () => game.doPull(banner),
       costExtra: [keyTerm(game, price.key, price.amount)],
     });
