@@ -115,7 +115,8 @@ function armyBoard(game: Game, army: ArmyView): HTMLElement {
 }
 
 /** An army on the road: its board, how far along it is with the time left,
- *  and Finish — Speed up when the Bag holds something that fits. */
+ *  and Finish — Speed up when the Bag holds something that fits. It cannot
+ *  be withdrawn until it is there. */
 export function marchingDock(game: Game, army: ArmyView, what: string): HTMLElement {
   const at = army.at ?? game.now();
   const from = army.phase === 'home' ? at - homeboundMs(army.stepMs) : army.departedAt;
@@ -123,9 +124,7 @@ export function marchingDock(game: Game, army: ArmyView, what: string): HTMLElem
   return el('div', { class: 'dv-dock' },
     armyBoard(game, army),
     waitRow(game, army.phase === 'home' ? 'Coming home' : what, from, at, gemsToFinish(left),
-      () => void game.doFinishArmyMarch(army.id), { kind: 'army', armyId: army.id, at }),
-    el('div', { class: 'dv-calls is-one' },
-      btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) })));
+      () => void game.doFinishArmyMarch(army.id), { kind: 'army', armyId: army.id, at }));
 }
 
 /** The army docked at the foot (m91b): the deployment's YOUR ARMY board,
