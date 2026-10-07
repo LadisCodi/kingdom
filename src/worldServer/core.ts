@@ -27,6 +27,7 @@ import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEATS_PER_BOARD, SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
 import { CAMP_CREATURE, campFightBoard } from '../sim/world/camps';
+import { onGround } from '../sim/world/terrainCombat';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexDistance, isBoardIndex, ringOf } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
@@ -353,7 +354,9 @@ function raidDistrict(b: ServerBoard, seat: number, index: number, c: number, t:
   const name = WORLD_BUILD.districts[districtOf(boardData(b).hexes[index]) ?? 'Rural'].name;
   const g = h.garrison === null ? undefined : b.armies.find((a) => a.id === h.garrison);
   if (g !== undefined) {
-    const log = resolveBattle(campBoard(b, c), g.board);
+    // Fought on the raided district's ground (19 §4.2).
+    const ground = boardData(b).hexes[index];
+    const log = resolveBattle(onGround(campBoard(b, c), ground), onGround(g.board, ground));
     const theirs = boardAfter(log, g.board, 'theirs');
     g.board = theirs.board;
     addFallen(g.fallen, theirs.fallen);
@@ -852,7 +855,8 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
     const camp = campAt(b, a.target);
     if (camp !== null && guarded(b, a.owner, a.target, t)) {
       const fighters = a.board.slots;
-      const log = resolveBattle(a.board, campBoard(b, a.target));
+      const ground = boardData(b).hexes[a.target];
+      const log = resolveBattle(onGround(a.board, ground), onGround(campBoard(b, a.target), ground));
       const after = boardAfter(log, a.board, 'ours');
       a.board = after.board;
       addFallen(a.fallen, after.fallen);
@@ -895,7 +899,8 @@ function arrive(b: ServerBoard, a: ServerArmy, t: number): void {
   }
   const holder = h.owner;
   for (const g of coveringGarrisons(b, a.target, holder)) {
-    const log = resolveBattle(a.board, g.board);
+    const ground = boardData(b).hexes[a.target];
+    const log = resolveBattle(onGround(a.board, ground), onGround(g.board, ground));
     const ours = boardAfter(log, a.board, 'ours');
     const theirs = boardAfter(log, g.board, 'theirs');
     a.board = ours.board;

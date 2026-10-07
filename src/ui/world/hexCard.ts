@@ -26,7 +26,7 @@ import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import type { CurrencyId, GoodId, LairId } from '../../sim/state';
+import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
 import { claimGold, districtOf, districtRate, floorPower, upgradeLevel } from '../../worldServer/core';
 import { portalThumb } from '../../render/world/boardRenderer';
 import { rankRibbon } from '../friends/friendsSheet';
@@ -34,7 +34,8 @@ import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
 import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
-import { action, btn, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
+import { action, btn, chip, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
+import { groundEdges } from '../../sim/world/terrainCombat';
 import { crestEl } from '../friends/kingdomBits';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
@@ -224,7 +225,7 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
 // ------------------------------------------------------------ a camp
 
 /** What a camp is called, on its card's plank. */
-const CAMP_TITLE: Record<LairId, string> = {
+export const CAMP_TITLE: Record<LairId, string> = {
   Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
 };
 
@@ -409,6 +410,40 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
   // The kingdom's shield, at the left of the plank.
   root.querySelector('.k-head')?.prepend(el('span', { class: 'wd-shield', 'aria-hidden': 'true' }, crestEl(name, s?.owner.crest ?? null, 'md')));
   return root;
+}
+
+// ------------------------------------------------------------ the deployment's widgets
+
+/** What a troop type is called on a modifier's line. */
+const TYPE_WORD: Partial<Record<UnitId, string>> = { Warrior: 'Warriors', Lancer: 'Lancers', Archer: 'Archers', Cavalry: 'Cavalry' };
+const TYPE_ICON: Partial<Record<UnitId, IconName>> = { Warrior: 'typeWarrior', Lancer: 'typeLancer', Archer: 'typeArcher', Cavalry: 'typeCavalry' };
+
+/** A widget on the deployment (m87b): a parchment plate with its header. */
+const widget = (title: string, ...body: HTMLElement[]): HTMLElement =>
+  el('div', { class: 'wd-widget k-section' }, el('div', { class: 'wd-widget-title' }, title), ...body);
+
+/** LOOT: what winning the fight pays, as chips. */
+export function lootWidget(pay: Partial<Record<CurrencyId, number>>): HTMLElement | null {
+  const coins = (Object.entries(pay) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+  if (coins.length === 0) return null;
+  return widget('Loot', el('div', { class: 'wd-widget-chips' }, ...coins.map(([c, n]) => chip(c, n))));
+}
+
+/** TERRAIN: the ground the fight is on, the march there, and what the
+ *  ground does to each troop type (19 §4.2). */
+export function terrainWidget(bh: BoardHex, march: string): HTMLElement {
+  const feature = bh.features[0];
+  const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
+  const lines = groundEdges(bh).map((e) => el('div', { class: `wd-edge${e.attack < 0 ? ' is-bad' : ' is-good'}` },
+    iconEl(TYPE_ICON[e.unit] ?? 'army', { size: 'sm' }),
+    `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`));
+  const url = spriteUrl(groundSprite(bh));
+  return widget('Terrain', el('div', { class: 'wd-widget-ground' },
+    el('span', { class: 'wd-widget-art' }, url ? spriteImgAt(url, 'wd-slot-img') : iconEl('tile', { size: 'lg' })),
+    el('div', { class: 'wd-widget-what' },
+      el('div', { class: 'wd-widget-name' }, name),
+      el('div', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }), march),
+      ...(lines.length === 0 ? [el('div', { class: 'wd-edge' }, 'No effect on the fight')] : lines))));
 }
 
 // ------------------------------------------------------------ free ground

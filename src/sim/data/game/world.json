@@ -358,6 +358,12 @@
     "feature": { "Forest": 1.5, "Mountain": 3, "FertileLand": 1, "Game": 1, "Dungeon": 1, "Sanctuary": 1, "Landmark": 1 },
     "portal": 1
   },
+  "worldTerrainCombat": [
+    { "ground": "Plains", "unit": "Cavalry", "attack": 0.1 },
+    { "ground": "Desert", "unit": "Cavalry", "attack": -0.1 },
+    { "ground": "Forest", "unit": "Archer", "attack": -0.1 },
+    { "ground": "Mountain", "unit": "Lancer", "attack": 0.1 }
+  ],
   "worldCamps": {
     "share": 0.65,
     "lurkingShare": 0.4,

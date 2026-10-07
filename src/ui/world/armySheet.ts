@@ -6,7 +6,8 @@ import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
 import { CAMP_CREATURE, campSquads } from '../../sim/world/camps';
 import { creatureFace } from '../lairSheet';
-import { sendFights } from '../../sim/world/fights';
+import { CAMP_TITLE, lootWidget, terrainWidget } from './hexCard';
+import { campLoot, sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import type { UnitId } from '../../sim/state';
@@ -37,10 +38,22 @@ export function renderArmySheet(game: Game): HTMLElement {
     : game.armyPurpose === 'claim' ? 'Ground nobody holds'
       : game.armyPurpose === 'delve' ? 'A dungeon'
         : game.armyPurpose === 'portal' ? 'The Dark Portal'
-          : game.armyPurpose === 'clear' ? `A camp of ${campName(game, target)}`
+          : game.armyPurpose === 'clear' ? (camp != null ? CAMP_TITLE[camp.creature] : `A camp of ${campName(game, target)}`)
             : `${seatName(game, h?.owner ?? null)} ground`;
+  // Under the boards: what the fight pays, and the ground it is fought on
+  // with the march there (Docs/proposals/world-menus.md §3.5). A dungeon's
+  // rooms and the Portal's floors are fought below ground: no terrain.
+  const bh = source.board().hexes[target];
+  const below = game.armyPurpose === 'delve' || game.armyPurpose === 'portal';
+  const loot = game.armyPurpose === 'clear' && camp != null ? lootWidget(campLoot(game.state, camp.power)) : null;
+  const widgets = [
+    ...(loot === null ? [] : [loot]),
+    ...(below || bh === undefined ? [] : [terrainWidget(bh, `${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'} · ${march}`)]),
+  ];
   const view: BattleView = {
-    title: `${where} · ${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'}, ${march}`,
+    // The target alone: the route is the terrain widget's.
+    title: where,
+    widgets,
     enemy: {
       // A camp's army is seeded by its hex, so it is shown before the fight.
       squads: game.armyPurpose === 'clear' && camp != null ? campSquads(source.board().seed, target, camp) : [],
