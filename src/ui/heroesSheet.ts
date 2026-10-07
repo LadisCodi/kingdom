@@ -33,12 +33,12 @@ import {
 } from '../sim/heroes';
 import { SKILLS, maxSkillRank, skillSentence } from '../sim/skills';
 import {
-  ascensionFragmentCost, fullStars, heroLevelCap, maxAscension, xpLevelCost,
+  ascensionFragmentCost, heroLevelCap, maxAscension, xpLevelCost,
 } from '../sim/heroLadder';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatExact, formatNumber } from './format';
+import { el, formatExact } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import {
   btn, iconEl, pips, priceLine, progress, sectionHead, sheet, unitTypeIcon,
@@ -114,17 +114,24 @@ function heroArt(def: HeroDef): HTMLElement {
   return url ? spriteImgAt(url, 'hd-art') : el('div', { class: 'hd-art is-glyph' }, def.glyph);
 }
 
-/** The hero on its rarity's stage: the rarity's ribbon top-left, the type's
- *  badge top-right, and the ascension laid over the foot of the vault. */
-function stage(def: HeroDef, owned: boolean, over: HTMLElement | null): HTMLElement {
-  return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${owned ? '' : ' is-missing'}` },
+/** The hero on its rarity's stage: an owned hero's ascension stars in its
+ *  top-left corner, the Ascend laid over the foot of the vault. */
+function stage(game: Game, def: HeroDef, id: HeroId, view: RosterEntry): HTMLElement {
+  const over = view.owned ? ascension(game, id, view) : null;
+  return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${view.owned ? '' : ' is-missing'}` },
     heroArt(def),
-    el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]),
-    el('span', { class: `hd-type is-${def.unitType}` },
-      iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType),
+    ...(view.owned ? [ascensionStars(view.entry.ascension, 'hd-stars')] : []),
     ...(over ? [over] : []),
   );
 }
+
+/** The rarity's ribbon and the type's badge ride the window's header: the
+ *  ribbon at its left end, the badge before the close. */
+const rarityRibbon = (def: HeroDef): HTMLElement =>
+  el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]);
+const typeBadge = (def: HeroDef): HTMLElement =>
+  el('span', { class: `hd-type is-${def.unitType}` },
+    iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType);
 
 /** A section's two halves: what it reads on the left, its price and button
  *  on the right. */
@@ -144,30 +151,16 @@ function reading(label: string, have: number, of: number): HTMLElement {
     bar.root);
 }
 
-/** The stars, and under them what the next point does: every point lifts
- *  every stat, and the one that finishes a star lifts the level cap too. */
-function ascensionRead(ascension: number): HTMLElement {
-  const per = HERO_LADDER.ascensionStepsPerStar;
-  const points = ascension - fullStars(ascension) * per;
-  const stats = `Next: stats +${formatNumber(HERO_LADDER.statsPerAscension * 100, 1)}%`;
-  const line = ascension >= maxAscension()
-    ? 'Fully ascended'
-    : points === per - 1
-      ? `${stats} · level cap ${formatExact(heroLevelCap(ascension + 1))}`
-      : stats;
-  return el('div', { class: 'hd-asc' },
-    ascensionStars(ascension, 'hd-stars'),
-    el('div', { class: 'hd-asc-line' }, line));
-}
-
-function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
+/** The ascension's price and button, laid over the foot of the stage; the
+ *  stars are in the stage's top-left corner. Fully ascended: nothing. */
+function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement | null {
   const a = view.entry.ascension;
-  if (a >= maxAscension()) return tray('hd-ascend is-max', ascensionRead(a), null);
+  if (a >= maxAscension()) return null;
   const toll = ascensionStardustCost(a);
   const need = ascensionFragmentCost(a);
   const shortDust = game.walletValue('Stardust') < toll;
   const shortFrags = view.entry.fragments < need;
-  return tray('hd-ascend', ascensionRead(a), buy(
+  return el('div', { class: 'hd-ascend' }, buy(
     // Both prices over the button that spends them: the Stardust toll is a
     // wallet row, the fragments are a counter beside the hero, and one shown
     // without the other is a button whose refusal has no reason.
@@ -295,7 +288,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
     // AN UNOWNED HERO GETS THE SAME CARD. What the player is deciding is
     // whether to chase this one, and that is a question about its type, its
     // numbers and what it does.
-    stage(def, owned, owned ? ascension(game, id, view) : null),
+    stage(game, def, id, view),
     sectionHead('Stats'),
     el('div', { class: 'hd-stats' },
       statTile('atk', 'Attack', s.atk),
@@ -324,12 +317,18 @@ export function renderHeroesSheet(game: Game): HTMLElement {
     return surface;
   }
   // The card's close goes back to the roster: it is a window opened over it.
-  return sheet(
+  const card = sheet(
     {
       title: HEROES[open].name,
       onClose: () => { game.openHeroId = null; game.notify(); },
       centred: true,
+      lead: [rarityRibbon(HEROES[open])],
+      actions: [typeBadge(HEROES[open])],
     },
     detail(game, open),
   );
+  // The name shares the band with the ribbon and the badge, so a long one
+  // sets smaller (heroes.css, `--name-len`).
+  card.style.setProperty('--name-len', String(HEROES[open].name.length));
+  return card;
 }

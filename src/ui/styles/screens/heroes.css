@@ -22,6 +22,14 @@
 /* -------------------------------------------------------------- the card -- */
 
 .k-sheet.is-centred:has(.hd) { max-width: calc(var(--px) * 380); max-height: 94%; }
+/* THE HEADER carries the rarity's ribbon at its left end and the type's
+   badge before the close; the name takes what is between, and a long one
+   sets smaller to fit it (`--name-len`, its characters). */
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+.k-sheet.is-centred:has(.hd) > .k-panel > .k-head > .k-head-title {
+  font-size: min(var(--text-title), calc(var(--px) * 300 / var(--name-len, 1)));
+}
+
 /* THE STAGE RUNS EDGE TO EDGE: the body is pulled out to the paper's edge
    and up under the plank, and everything but the stage is pushed back in.
    The stage keeps its height; the sections under it scroll. */
@@ -85,16 +93,12 @@
 }
 .hd-art.is-glyph { display: grid; place-items: center; width: 50%; font-size: calc(var(--stage-w) * 0.2); }
 
-/* The rarity, as a cloth ribbon (hero-rarity-*.png) in the stage's
-   top-left corner; the word is the game's, set on the cloth. */
+/* The rarity, as a cloth ribbon (hero-rarity-*.png) at the header's left
+   end; the word is the game's, set on the cloth. */
 .hd-rarity {
-  position: absolute;
-  top: calc(var(--px) * 2);
-  left: 0;
-  z-index: 1;
   display: grid;
   place-items: center;
-  width: calc(var(--px) * 108);
+  width: calc(var(--px) * 80);
   aspect-ratio: 384 / 160;
   padding: 0 calc(var(--px) * 14) calc(var(--px) * 3) calc(var(--px) * 16);
   box-sizing: border-box;
@@ -110,18 +114,14 @@
 .hd-rarity.is-legendary { --ribbon: url('../../assets/hero-rarity-legendary.png'); }
 
 /* What it fights as: the card's type banner, the word under the symbol,
-   hanging from the plank in the stage's top-right corner. */
+   on the header before the close. */
 .hd-type {
-  position: absolute;
-  top: 0;
-  right: calc(var(--px) * 8);
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0;
-  width: calc(var(--px) * 52);
+  width: calc(var(--px) * 46);
   aspect-ratio: 146 / 161;
   padding-bottom: calc(var(--px) * 8);
   box-sizing: border-box;
@@ -141,21 +141,22 @@
   filter: brightness(0) invert(1) drop-shadow(0 calc(var(--px) * 1) 0 rgba(40, 12, 4, 0.55));
 }
 
-/* THE ASCENSION OVER THE STAGE: the section with no tray — no fill, no
-   outline — laid on the vault's fade into the paper. */
-.hd-stage > .hd-ascend.hd-tray {
+/* THE ASCENSION ON THE STAGE: the stars in its top-left corner, and the
+   price over Ascend laid bare on the vault's fade into the paper, right. */
+.hd-stage > .hd-stars {
   position: absolute;
   z-index: 1;
-  left: var(--bleed);
+  top: calc(var(--px) * 10);
+  left: calc(var(--px) * 10);
+  --asc-size: calc(var(--px) * 26);
+  filter: drop-shadow(0 calc(var(--px) * 1) calc(var(--px) * 2) rgba(255, 244, 220, 0.7));
+}
+.hd-stage > .hd-ascend {
+  position: absolute;
+  z-index: 1;
   right: var(--bleed);
   bottom: 0;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
 }
-.hd-stage > .hd-ascend .hd-stars { --asc-size: calc(var(--px) * 26); }
-.hd-stage > .hd-ascend.is-max { justify-content: center; }
 .hd-stage > .hd-ascend .hd-buy > .k-btn:not(.k-knob) { min-width: calc(var(--px) * 112); }
 
 /* A SECTION'S TRAY: what it reads on the left, its price over its button on
@@ -187,13 +188,6 @@
   font-size: var(--text-helper);
   font-weight: var(--weight-strong);
 }
-
-/* The ascension: the five stars, big — the ladder the player is chasing —
-   and what the next point does under them. */
-.hd-asc { display: flex; flex-direction: column; align-items: center; gap: calc(var(--px) * 4); }
-.hd-stars { --asc-size: calc(var(--px) * 34); }
-.hd-stage > .hd-ascend.is-max .hd-stars { --asc-size: calc(var(--px) * 34); }
-.hd-asc-line { color: var(--ink-muted); font-size: var(--text-helper); font-weight: var(--weight-strong); text-align: center; }
 
 /* The stats: four parchment tiles in one row — Attack, Damage, Defence,
    Health — the icon over the label and the value. */
