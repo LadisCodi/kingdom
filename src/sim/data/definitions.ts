@@ -2099,6 +2099,11 @@ export interface WorldTravelDef {
 
 export const WORLD_TRAVEL = balance.worldTravel as WorldTravelDef;
 
+/** What a hex's ground does to a fight on it, for both sides (19 §4.2). */
+export interface WorldTerrainCombatRule { ground: string; unit: UnitId; attack: number }
+
+export const WORLD_TERRAIN_COMBAT = balance.worldTerrainCombat as readonly WorldTerrainCombatRule[];
+
 /** A dungeon's depths and rooms, and what a room pays (19 §8.1). */
 export interface WorldDungeonDef {
   depths: number;

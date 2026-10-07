@@ -57,6 +57,9 @@ export interface BattleView {
   fallen: number;
   actionLabel: string;
   onFight: () => void;
+  /** What the fight is about beyond the two boards — a world fight's loot
+   *  and ground — side by side over the price row. */
+  widgets?: readonly HTMLElement[];
   /** Why the fight cannot start. A power SHORTFALL is never one of these: it
    *  warns and lets the player go anyway. */
   blocked: string | null;
@@ -227,6 +230,7 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     partyBoard(game, view),
     sectionHead('Troops'),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
+    ...(view.widgets === undefined || view.widgets.length === 0 ? [] : [el('div', { class: 'bt-widgets' }, ...view.widgets)]),
     actionBox(game, view),
   );
   // TALL: the two boards, the roster and the button are all read together,

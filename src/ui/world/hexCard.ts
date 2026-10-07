@@ -13,7 +13,9 @@
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
-import { ARTIFACTS, WORLD_BUILD } from '../../sim/data/definitions';
+import { ARTIFACTS, DISTRICTS, WORLD_BUILD, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
+import { buildingPortrait } from '../districtCard';
+import { crestEl, rankRibbon, townhallTag } from '../friends/kingdomBits';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { hexTravelMs, homeboundMs, outboundMs } from '../../sim/world/travel';
@@ -24,14 +26,15 @@ import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import type { CurrencyId, GoodId, LairId } from '../../sim/state';
-import { claimGold, districtOf, districtRate, upgradeLevel } from '../../worldServer/core';
+import type { CurrencyId, GoodId, LairId, UnitId } from '../../sim/state';
+import { claimGold, districtOf, districtRate, floorPower, upgradeLevel } from '../../worldServer/core';
+import { portalThumb } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
 import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
-import { action, btn, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
-import { crestEl } from '../friends/kingdomBits';
+import { action, btn, chip, costChips, iconEl, sectionHead, sheet, type IconName } from '../kit';
+import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
 import { chapelRoom, hexActions, hexWork } from './worldActions';
@@ -220,7 +223,7 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
 // ------------------------------------------------------------ a camp
 
 /** What a camp is called, on its card's plank. */
-const CAMP_TITLE: Record<LairId, string> = {
+export const CAMP_TITLE: Record<LairId, string> = {
   Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
 };
 
@@ -270,6 +273,175 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
       sectionHead('Camp'), campHead, enemy,
       ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), tiles(loot)]),
       answers));
+}
+
+// ------------------------------------------------------------ the Portal
+
+/**
+ * THE DARK PORTAL (m88): when it shuts or opens, the player's floor, the
+ * clears left today and the next floor's power, the ranking as the friends
+ * list's rows, and Descend — sending an army, or, with one camped there, the
+ * next floor for its Mana.
+ */
+export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
+  const index = bh.index;
+  const source = game.worldSource();
+  const p = source.portal();
+  const now = game.now();
+  const ribbon = p === null ? null : el('div', { class: 'wd-ribbon is-portal' }, iconEl('hourglass', { size: 'sm' }),
+    p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
+      : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
+  const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
+    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalThumb(84)),
+    ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
+  const head = el('div', { class: 'dc-head' }, art,
+    el('div', { class: 'dc-what-col' },
+      distanceLine(game, index),
+      el('div', { class: 'dc-what' }, 'Nobody holds it, and nobody ever will.')));
+  const floor = p?.floor ?? 0;
+  const next = Math.min(WORLD_PORTAL.floors, floor + 1);
+  const stats = tiles([
+    { icon: 'dungeon', label: 'Your floor', value: `${formatExact(floor)}/${formatExact(WORLD_PORTAL.floors)}` },
+    { icon: 'tick', label: 'Clears today', value: `${formatExact(p?.attemptsLeft ?? 0)}/${formatExact(WORLD_PORTAL.attemptsPerDay)}` },
+    { icon: 'power', label: 'Next floor', value: formatShort(floorPower(next)) },
+  ]);
+  // The ranking: the friends list's rows, the player's own lit.
+  const me = game.worldSeat();
+  const seats = source.seats();
+  const ranked = (p?.ranking ?? []).map((r, i) => ({ ...r, rank: i + 1 }));
+  const shown = ranked.slice(0, 5);
+  const mine = ranked.find((r) => r.seat === me);
+  if (mine !== undefined && !shown.includes(mine)) shown.push(mine);
+  const rows = shown.map((r) => {
+    const s = seats[r.seat];
+    const name = s === undefined ? 'A kingdom' : s.owner.you ? 'You' : s.owner.name;
+    return el('div', { class: `fr-row wd-rank${r.seat === me ? ' is-you' : ''}` },
+      rankRibbon(r.rank),
+      crestEl(s?.owner.name ?? '?', s?.owner.crest ?? null),
+      el('div', { class: 'fr-who' }, el('div', { class: 'fr-name' }, name)),
+      el('div', { class: 'fr-trail wd-rank-floor' }, `Floor ${formatExact(r.floor)}`));
+  });
+  // Descend: an army sent down, or the next floor for the one camped there.
+  const acts = hexActions(source, me, bh, { revealed: true });
+  const descend = acts.find((a) => a.kind === 'descend');
+  const send = acts.find((a) => a.kind === 'army');
+  const recall = acts.find((a) => a.kind === 'recall');
+  const foot: HTMLElement[] = [];
+  if (descend?.kind === 'descend') {
+    foot.push(btn({
+      label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
+      disabledReason: p === null || !p.open ? 'The Portal is shut' : p.attemptsLeft === 0 ? 'No clears left today'
+        : floor >= WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+      onClick: () => void game.doDescendPortal(descend.army),
+    }));
+  } else if (send?.kind === 'army') {
+    foot.push(btn({ label: 'Descend', kind: 'destructive', onClick: () => game.openArmy(index, 'portal') }));
+  } else if (recall === undefined) {
+    foot.push(btn({ label: 'Descend', kind: 'destructive', disabledReason: 'The Portal is shut', onClick: () => undefined }));
+  }
+  if (recall?.kind === 'recall') {
+    foot.push(btn({ label: 'Recall', kind: 'secondary', onClick: () => void game.doRecallArmy(recall.army) }));
+  }
+  const shut = p === null || !p.open ? [blockedLine(p === null ? 'The Portal is shut' : `It opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)] : [];
+  return sheet({ title: 'The Dark Portal', onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      ...(ribbon === null ? [] : [ribbon]),
+      head, stats,
+      ...(rows.length === 0 ? [] : [sectionHead('Ranking'), el('div', { class: 'wd-ranks' }, ...rows)]),
+      ...shut,
+      el('div', { class: 'wd-foot' }, ...foot)));
+}
+
+// ------------------------------------------------------------ a city
+
+/**
+ * A CITY (m89): the player's own — its shield, its deposits and the way to
+ * trade for the rest — or a rival's: its shield, its Townhall when it is a
+ * friend, its ground and its Portal floor, and Profile or Add friend. A
+ * city is never attacked, and its card says so.
+ */
+export function renderCity(game: Game, bh: BoardHex): HTMLElement {
+  const index = bh.index;
+  const source = game.worldSource();
+  const seat = bh.seat!;
+  const s = source.seats()[seat];
+  const name = s?.owner.name ?? 'A kingdom';
+  const mine = s?.owner.you === true;
+  const friendView = mine ? undefined : game.friends.snap?.friends.find((f) => f.nickname === name);
+  const ground = source.board().hexes.filter((h) => source.hexOf(h.index)?.owner === seat).length;
+  const floor = source.portal()?.ranking.find((r) => r.seat === seat)?.floor ?? 0;
+  const level = mine ? (game.state.city.districts.find((d) => d.definitionId === 'Townhall')?.level ?? 1) : friendView?.townhall ?? 4;
+  const head = el('div', { class: 'dc-head' },
+    buildingPortrait(DISTRICTS.Townhall, level),
+    el('div', { class: 'dc-what-col' },
+      ...(friendView !== undefined ? [townhallTag(friendView.townhall)] : []),
+      ...(mine ? [] : [distanceLine(game, index)]),
+      el('div', { class: 'dc-what' }, mine ? 'Your province, seen from the world.' : 'Another kingdom. A city can never be attacked.')));
+  const facts: Tile[] = [
+    { icon: 'tile', label: 'Ground', value: `${formatExact(ground)} ${ground === 1 ? 'hex' : 'hexes'}` },
+    { icon: 'dungeon', label: 'Portal floor', value: formatExact(floor) },
+  ];
+  const parts: HTMLElement[] = [head, tiles(facts)];
+  const foot: HTMLElement[] = [];
+  if (mine) {
+    // What the kingdom's ground is rich in: its deal of deposits, 3/2/1
+    // (Docs/plans/precious-deposits.md §1.2).
+    const deal = source.board().deposits[seat];
+    if (deal !== undefined) {
+      parts.push(sectionHead('Deposits'), tiles((['strong', 'middle', 'weak'] as const).map((rank) => ({
+        icon: deal[rank] as IconName, label: deal[rank], value: `×${formatExact(WORLD_GEN.deposits[rank].length)}`,
+      }))));
+      foot.push(btn({ label: 'Trade', kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
+    }
+  } else if (friendView !== undefined) {
+    foot.push(btn({ label: 'Profile', kind: 'secondary', onClick: () => game.friends.openProfile(friendView.code) }));
+  } else if (s !== undefined && !s.owner.you && game.friends.named()) {
+    const asked = game.friends.snap?.outgoing.some((r) => r.nickname === name) === true;
+    foot.push(btn({
+      label: 'Add friend', kind: 'primary',
+      disabledReason: asked ? 'Request sent' : game.friends.busy.has(name) ? 'Sending' : undefined,
+      onClick: () => void game.friends.request(name).then(() => game.toast(`A request is on its way to ${name}`)),
+    }));
+  }
+  const root = sheet({ title: name, onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' }, ...parts, ...(foot.length === 0 ? [] : [el('div', { class: 'wd-foot' }, ...foot)])));
+  // The kingdom's shield, at the left of the plank.
+  root.querySelector('.k-head')?.prepend(el('span', { class: 'wd-shield', 'aria-hidden': 'true' }, crestEl(name, s?.owner.crest ?? null, 'md')));
+  return root;
+}
+
+// ------------------------------------------------------------ the deployment's widgets
+
+/** What a troop type is called on a modifier's line. */
+const TYPE_WORD: Partial<Record<UnitId, string>> = { Warrior: 'Warriors', Lancer: 'Lancers', Archer: 'Archers', Cavalry: 'Cavalry' };
+const TYPE_ICON: Partial<Record<UnitId, IconName>> = { Warrior: 'typeWarrior', Lancer: 'typeLancer', Archer: 'typeArcher', Cavalry: 'typeCavalry' };
+
+/** A widget on the deployment (m87b): a parchment plate with its header. */
+const widget = (title: string, ...body: HTMLElement[]): HTMLElement =>
+  el('div', { class: 'wd-widget k-section' }, el('div', { class: 'wd-widget-title' }, title), ...body);
+
+/** LOOT: what winning the fight pays, as chips. */
+export function lootWidget(pay: Partial<Record<CurrencyId, number>>): HTMLElement | null {
+  const coins = (Object.entries(pay) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
+  if (coins.length === 0) return null;
+  return widget('Loot', el('div', { class: 'wd-widget-chips' }, ...coins.map(([c, n]) => chip(c, n))));
+}
+
+/** TERRAIN: the ground the fight is on, the march there, and what the
+ *  ground does to each troop type (19 §4.2). */
+export function terrainWidget(bh: BoardHex, march: string): HTMLElement {
+  const feature = bh.features[0];
+  const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
+  const lines = groundEdges(bh).map((e) => el('div', { class: `wd-edge${e.attack < 0 ? ' is-bad' : ' is-good'}` },
+    iconEl(TYPE_ICON[e.unit] ?? 'army', { size: 'sm' }),
+    `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`));
+  const url = spriteUrl(groundSprite(bh));
+  return widget('Terrain', el('div', { class: 'wd-widget-ground' },
+    el('span', { class: 'wd-widget-art' }, url ? spriteImgAt(url, 'wd-slot-img') : iconEl('tile', { size: 'lg' })),
+    el('div', { class: 'wd-widget-what' },
+      el('div', { class: 'wd-widget-name' }, name),
+      el('div', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }), march),
+      ...(lines.length === 0 ? [el('div', { class: 'wd-edge' }, 'No effect on the fight')] : lines))));
 }
 
 // ------------------------------------------------------------ free ground

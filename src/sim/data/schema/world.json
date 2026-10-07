@@ -447,6 +447,39 @@
         "portal": { "type": "float", "min": 0.1, "doc": "The Portal’s hex, which has no terrain." }
       }
     },
+    "worldTerrainCombat": {
+      "type": "list",
+      "doc": "What a hex's ground does to a fight on it, for both sides: a terrain or a feature, a troop type, and the share of its attack added (or, below 0, taken). A hex's terrain and each of its features add up.",
+      "of": {
+        "type": "object",
+        "fields": {
+          "ground": {
+            "type": "text",
+            "options": [
+              "Grassland",
+              "Plains",
+              "Desert",
+              "Forest",
+              "Mountain",
+              "FertileLand",
+              "Game",
+              "Sanctuary",
+              "Landmark",
+              "HeartwoodGrove",
+              "StarfallCrater",
+              "MoonglassSpires"
+            ],
+            "doc": "A terrain or a feature."
+          },
+          "unit": {
+            "type": "text",
+            "options": ["Warrior", "Lancer", "Archer", "Cavalry"],
+            "doc": "The troop type it moves."
+          },
+          "attack": { "type": "float", "min": -0.9, "max": 2, "doc": "Share of attack: 0.1 is +10%." }
+        }
+      }
+    },
     "worldCamps": {
       "type": "object",
       "doc": "Monster camps on the world board: an army on a hex, beaten by each player before they can claim it (Docs/features/19-world-map.md §5.4).",

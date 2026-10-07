@@ -259,6 +259,25 @@
   walked, a dashed line along the hexes still to go, ringed on the hex it is
   bound for — the target out, the city home. A rival's army shows only itself.
 
+### 4.2 The ground of a fight
+
+- **A fight on a hex is fought on its ground**: a camp cleared, a raid on a
+  district, an attack on a rival's garrisons. A dungeon's rooms and the
+  Portal's floors are below ground and take none.
+- **Each rule names a terrain or a feature, a troop type, and a share of
+  its attack** (`worldTerrainCombat`); a hex's terrain and features add up.
+- **It is the ground's, so it holds for both sides.**
+
+| Ground | Troop | Attack |
+|---|---|---|
+| Plains | Cavalry | +10% |
+| Desert | Cavalry | −10% |
+| Forest | Archers | −10% |
+| Mountain | Lancers | +10% |
+
+- **The deployment shows it**: under the roster, the fight's LOOT and its
+  TERRAIN — the ground, the march there, and each rule that applies.
+
 ## 5. Control, claiming and connection
 
 ### 5.1 Claiming
