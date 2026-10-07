@@ -99,18 +99,6 @@ function featuredHero(id: BannerId, visit: number): HeroId | null {
   return slot.hero;
 }
 
-// ------------------------------------------------------------------ the keys
-
-function keyCounter(game: Game, banner: BannerId): HTMLElement {
-  const offer = game.keyOffer(banner);
-  const plus = el('button', {
-    class: 'sth-key-plus', type: 'button',
-    'aria-label': `Buy a ${offer.key === 'GoldKey' ? 'gold' : 'silver'} key for ${formatExact(offer.cost)} Gems`,
-  }, iconEl('plus', { size: 'sm' }));
-  plus.addEventListener('click', () => game.doBuyKeys(banner));
-  return el('div', { class: 'sth-key' }, iconEl(offer.key as IconName, { size: 'sm' }), el('b', {}, formatExact(offer.held)), plus);
-}
-
 /** The odds, both calls, as the tooltip a tap on "Odds" opens. */
 function oddsText(game: Game): string {
   return BANNER_ORDER.map((banner) => {
@@ -200,7 +188,6 @@ export function heroesTab(game: Game): HTMLElement {
   return el('div', { class: 'sth' },
     el('div', { class: 'sth-top' },
       carousel(),
-      el('div', { class: 'sth-keys' }, ...BANNER_ORDER.map((b) => keyCounter(game, b))),
       el('h2', { class: 'sth-title' }, 'Call for aid'),
       odds),
     ...BANNER_ORDER.map((b) => banner(game, b)));

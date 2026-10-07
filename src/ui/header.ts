@@ -38,7 +38,8 @@ import type { CurrencyId } from '../sim/state';
 import { el, formatCount } from './format';
 import { heldOf, onHoldChange } from './hudHold';
 import { setAttr, setStyle, setText } from './domWrite';
-import { currencyIcon, iconEl, setCta } from './kit';
+import { currencyIcon, iconEl, setCta, type IconName } from './kit';
+import type { BannerId } from '../sim/data/definitions';
 
 /** What the plaque shows, per kind. */
 const SLOT_ICON = {
@@ -194,13 +195,34 @@ export function mountHeader(game: Game, root: HTMLElement): void {
 
   /** The plaque's icon is rebuilt only when what it shows changes. */
   let plaqueKind: string | null = null;
+  // THE KEYS, on the plank in place of the coins while the store's calls are
+  // open: what is held, and a + that buys one for Gems.
+  const keyValues = new Map<string, HTMLElement>();
+  const buildKeys = (banners: readonly BannerId[]) => {
+    keyValues.clear();
+    coins.append(...banners.map((b) => {
+      const offer = game.keyOffer(b);
+      const value = el('b', {}, '0');
+      keyValues.set(b, value);
+      const slot = el('button', {
+        class: 'hud-slot hud-coin hud-key', type: 'button', 'data-key': offer.key,
+        'aria-label': `${offer.key === 'GoldKey' ? 'Gold' : 'Silver'} keys — buy one for ${formatCount(offer.cost)} Gems`,
+      }, iconEl(offer.key as IconName, { size: 'sm' }), value, el('span', { class: 'hud-plus', 'aria-hidden': 'true' }));
+      slot.addEventListener('click', () => game.doBuyKeys(b));
+      return slot;
+    }));
+  };
+
   const refresh = () => {
     const list = game.visibleCurrencies();
-    const key = list.join(',');
+    const keys = game.hudKeys();
+    const key = `${list.join(',')}|${keys?.join(',') ?? ''}`;
     if (key !== shown) {
       shown = key;
       buildCoins(list);
+      if (keys !== null) buildKeys(keys);
     }
+    if (keys !== null) for (const [b, node] of keyValues) setText(node, formatCount(game.keyOffer(b as BannerId).held));
     // Rolled up past ten thousand, so a balance never outgrows its slot. The
     // purse (one tap away, on any coin) is where the exact figure lives.
     // Less whatever a reward in flight has not landed yet (hudHold.ts).
