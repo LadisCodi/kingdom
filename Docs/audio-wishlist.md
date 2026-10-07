@@ -123,7 +123,15 @@ mis-designed as alarms, and both should be soft.
 | `finalBlow` | The last blow's slow motion | Anime AIR Whoosh Big Pitch Falling |
 | `victory` · `defeat` | The plaque lands | RPG Fanfares · Victory 1 · Defeat 1 Short |
 
-**Music**: `music/music-battle.ogg` — *The Hour of Battle* (Owl Theory,
-Ultimate RPG Music Collection), its first 75 s, levelled to the harp. It
-plays from the top under every fight and gives way at the plaque; the
-chest's feast outranks it.
+## Music
+
+One track at a time; the highest that is on plays (`src/audio/music.ts`).
+All levelled to the harp (−16.6 LUFS); the three moments restart from their
+top each time they take over, the harp resumes where it was.
+
+| Track | Plays while | Source |
+|---|---|---|
+| `music-tavern-loop` (feast) | A chest is being opened | Tavern (loop), sound collection |
+| `music-battle` | A fight plays back, until its plaque lands | *The Hour of Battle*, first 75 s — Owl Theory, Ultimate RPG Music Collection |
+| `music-muster` | A deploy sheet is open (a lair's, an army's) — war drums while the party is picked | *Battle Drums*, whole, 2.5 s fade at the tail — same collection |
+| `music-harp-peaceful-loop` | Everything else | Harp Peaceful (loop) |
