@@ -13,7 +13,7 @@ import type { UnitId } from '../sim/state';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { unitBust } from './unitArt';
 
-const creatureFace = (unitId: UnitId): HTMLElement => {
+export const creatureFace = (unitId: UnitId): HTMLElement => {
   const url = spriteUrl(UNIT_CREATURE_AVATAR[unitId]);
   return url ? spriteImgAt(url, 'k-portrait-art') : unitBust(unitId, 'k-portrait-art');
 };

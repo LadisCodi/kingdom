@@ -90,6 +90,12 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
     cls: `bt-army ${cls}`,
   }, ...groups);
 
+/** The enemy's board alone — its red plank, its power and its squads — for
+ *  a screen that shows what a fight is against before it is composed (a
+ *  world camp's card). */
+export const enemyPanel = (squads: readonly EnemySquad[], power: number, portrait: (u: UnitId) => HTMLElement): HTMLElement =>
+  armyBox('Enemy', power, 'is-enemy', [slotGroup('Troops', squads.map((s) => squadCell(portrait(s.unitId), s.count)), 0, 'is-troops')]);
+
 /** A HERO OR VILLAIN SLOT is a card, 2:3 — they carry the detailed art, so
  *  they get more room and a shape of their own beside the troops' rounds. */
 const cardSlot = (cls: string, ...children: HTMLElement[]): HTMLElement =>

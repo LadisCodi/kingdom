@@ -30,7 +30,7 @@ import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions'
 import { scoutPay } from '../../sim/world/scouting';
 import { campLoot } from '../../sim/world/fights';
 import { districtOf } from '../../worldServer/core';
-import { renderFog, renderFreeGround, renderOwnDistrict } from './hexCard';
+import { renderCamp, renderFog, renderFreeGround, renderOwnDistrict } from './hexCard';
 import { FEATURE_NAME, FOG_NAME, ROLE_NAME, TERRAIN_NAME, hexTitle, seatName } from './hexNames';
 
 export { hexTitle, seatName };
@@ -278,6 +278,8 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     const held = game.worldSource().hexOf(index);
     if (held !== null && held.owner === game.worldSeat()) return renderOwnDistrict(game, bh, held, ownStatus(game, index, held));
     const unguarded = bh.camp === null || game.worldSource().campBeaten(index);
+    // A camp that stands between the player and the ground (§3.4).
+    if (held === null && !unguarded && fog === 'Revealed') return renderCamp(game, bh);
     if (held === null && fog === 'Revealed' && unguarded && districtOf(bh) !== null) {
       const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }).find((a) => a.kind === 'claim');
       return renderFreeGround(game, bh, hexTitle(game, bh, fog), claim === undefined ? 'Build beside ground you hold' : undefined);

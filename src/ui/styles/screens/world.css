@@ -65,6 +65,7 @@
 /* THE HEX CARD (Docs/proposals/world-menus.md §2): the city card's head,
  * tiles and portrait, in sections; a district's building slots. */
 .wd-card {
+  --slot-size: calc(var(--px) * 46); /* a board's rounds, as the battle sheet's */
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 8);
@@ -476,3 +477,31 @@
   translate: -50% -50%;
 }
 .wd-mist.is-sensed .wd-mist-cloud { opacity: 0.8; }
+
+/* A camp's difficulty: a wax seal pinned to its portrait's corner, in the
+ * colour the board writes it in. */
+.wd-portrait > .wd-seal {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--px) * -8);
+  left: calc(var(--px) * -8);
+  padding: calc(var(--px) * 3) calc(var(--px) * 7);
+  border-radius: 999px;
+  background: var(--seal);
+  border: calc(var(--px) * 2) solid color-mix(in srgb, var(--seal) 60%, #2e1c0e);
+  box-shadow: 0 calc(var(--px) * 2) calc(var(--px) * 3) rgba(40, 22, 10, 0.4);
+  color: #fff6e0;
+  font-size: var(--text-helper);
+  font-weight: var(--weight-title);
+  white-space: nowrap;
+  rotate: -12deg;
+}
+/* Two answers to one camp, side by side: Negotiate's price on its plate,
+ * Attack's slab level with Negotiate's. */
+.wd-choices { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: calc(var(--px) * 8); align-items: end; }
+.wd-choices > .k-btn.k-btn.k-btn:not(.k-knob) { width: 100%; min-width: 0; max-width: none; }
+.wd-choices > .k-btn:not(.has-cost) { margin-bottom: calc(var(--px) * 6); }
+.wd-choices > .k-btn.has-cost > .k-btn-label { min-width: 0; }
+/* A camp's price is three coins: set a little smaller, so it fits half a row. */
+.wd-choices .k-btn-cost { gap: calc(var(--px) * 5); font-size: var(--text-desc); }
+.wd-choices .k-cost > .icon { --icon-size: calc(var(--rpx) * 56); margin-block: calc(var(--rpx) * -8); }
