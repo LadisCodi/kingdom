@@ -21,7 +21,7 @@
 // removes the only pacing on party size.
 
 import { roundPrice } from './roundPrice';
-import { resolve } from './modifiers';
+import { resolve, resolveAt } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
   ARMY, DISTRICTS, HEROES, TRAINING, UNITS, levelIndexed,
@@ -312,9 +312,13 @@ export function trainSecondsAt(
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
   // The tree's half is a SPEED the time is divided by, so a rank never meets
   // a floor: Civics trains villagers, Warfare trains soldiers.
-  const speed = trainee === 'Villager'
+  const speed = (trainee === 'Villager'
     ? techMultiplier(state, 'villagerTrainingSpeed')
-    : techMultiplier(state, 'recruitSpeed', { unit: trainee });
+    : techMultiplier(state, 'recruitSpeed', { unit: trainee }))
+    // An awake Staff of Renewal round the building (09-relics.md §2): read
+    // here, when the clock starts, so a window closing later never reprices
+    // a wait already running.
+    * (building === undefined ? 1 : Math.max(1, resolveAt(state, 'trainingSpeed', 1, building.location)));
   const base = trainee === 'Villager'
     ? villagerTrainSeconds(villagerPlace(state, item))
     : trainSeconds(trainee);

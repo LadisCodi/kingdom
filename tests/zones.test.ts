@@ -7,7 +7,6 @@
 // leaked into `resolve()` would apply to the whole kingdom, and that is the
 // one bug this file exists to make impossible.
 
-import { activateRelic } from '../src/sim/hosts';
 import { describe, expect, it } from 'vitest';
 import { syncArtifactModifiers } from '../src/sim/artifacts';
 import {
@@ -330,22 +329,16 @@ describe('Survey buys the fog with Mana instead of Gold', () => {
  * should fill FASTER, not start fuller.
  */
 describe('a faster recovery fills the bar faster, not fuller', () => {
-  /** A kingdom that can harvest, holding the Staff at `level` — passives and
-   *  all, because a level set by hand moves no modifier. */
+  /** A kingdom that can harvest, whose ground recovers faster the higher
+   *  `level` — a `recoverySpeed` of 1 + a tenth a level, as a passive. */
   const holder = (level: number): GameState => {
     const state = canGather(freshGame());
     reveal(state, cellsWithinRadius(map, FOREST, 2));
     state.lastAdvance = T0;
-    state.artifacts.levels.DowsingRod = level;
-    // A city relic acts where a Shrine holds it: one beside the forest.
-    state.city.districts.push({
-      uniqueId: 'shrine_rod', definitionId: 'Shrine', ordinal: 9, level: 5, assignedWorkers: 0,
-      location: { x: FOREST.x + 2, y: FOREST.y + 2 }, state: 'Built', visualVariant: 1, hosts: 'DowsingRod',
+    addModifier(state, {
+      id: 'test:recovery', source: 'artifact', stat: 'recoverySpeed', scope: null, op: 'mul',
+      value: 1 + level / 10, expiresAt: null,
     });
-    syncArtifactModifiers(state);
-    fund(state, { Mana: 999 });
-    // Hosted is not enough: the Staff acts while it is awake.
-    expect(activateRelic(state, 'DowsingRod', T0)).toBe('Activated');
     return state;
   };
 

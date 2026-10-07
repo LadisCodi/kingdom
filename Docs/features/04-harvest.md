@@ -50,9 +50,8 @@ Every resource cell carries:
 - Recovery is timestamp-based: it works offline and costs exactly one boundary.
 - **The wait is priced once, at the moment the cell runs dry.** The tech tree
   can shorten it — `harvestRecovery`, aimed at a source, so "trees grow back
-  20% faster" leaves the crops alone — and so does the **Staff of Renewal** relic,
-  on every in-place clock at once ([`09-relics.md`](09-relics.md) §2).
-  Neither wakes a cell already sleeping: the stamp is a fact about the cell,
+  20% faster" leaves the crops alone. It does not wake a cell already
+  sleeping: the stamp is a fact about the cell,
   not a live query, and a bonus that repriced a stretch already elapsed would
   hand the player a windfall for finishing a research at the right moment. It
   never falls below one second.
@@ -62,8 +61,7 @@ Every resource cell carries:
   Crops. A berry bush, a herd and a shoal are consumed
   and reappear on another tile instead (`respawnSeconds`, §3), which is a
   different number the tree cannot move — so aiming a recovery bonus at one
-  is refused rather than sold. The **Sickle of Plenty** relic is what moves it
-  ([`09-relics.md`](09-relics.md) §2).
+  is refused rather than sold. Nothing moves it.
 - The chunk and the rhythm are per cell: iron is a heavy swing, crops a light
   tick, and two cells can pay the same per minute and feel different.
 
