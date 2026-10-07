@@ -176,13 +176,13 @@
     "goalTarget": "Wood",
     "goalAmount": 30,
     "goalLevel": null,
-    "reward": { "Gold": 40 },
+    "reward": { "Gold": 40, "Wood": 30 },
     "rewardGems": 0,
     "rewardStardust": 0,
     "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "GeneralSpeedup1h": 1 },
+    "rewardItems": {},
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -250,7 +250,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "FoodChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -301,7 +301,7 @@
     "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "GoldChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -335,7 +335,7 @@
     "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "TrainingSpeedup1h": 1 },
+    "rewardItems": { "FoodChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -420,7 +420,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "WoodChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -488,7 +488,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "GeneralSpeedup3h": 1 },
+    "rewardItems": { "GeneralSpeedup1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -539,7 +539,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 1,
-    "rewardItems": { "ConstructionSpeedup15m": 2 },
+    "rewardItems": { "GoldChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -590,7 +590,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "GeneralSpeedup1h": 1 },
+    "rewardItems": { "GoldChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -658,7 +658,7 @@
     "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "GoldChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -743,7 +743,7 @@
     "rewardKnowledge": 2,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "TrainingSpeedup1h": 1 },
+    "rewardItems": { "StoneChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -811,7 +811,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "FoodChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -947,7 +947,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": { "ConstructionSpeedup15m": 2 },
+    "rewardItems": { "StoneChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
@@ -1066,7 +1066,7 @@
     "rewardKnowledge": 0,
     "rewardMana": 0,
     "rewardFragments": 0,
-    "rewardItems": {},
+    "rewardItems": { "GoldChest1h": 1 },
     "autoClaim": false,
     "tutorialRentSeconds": null
   },
