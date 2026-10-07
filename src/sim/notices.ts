@@ -24,7 +24,9 @@ interface NewsBase { key: string; at: number }
 export type News = NewsBase & (
   /** A construction (`level` 1) or an upgrade completed. */
   | { group: 'built'; district: string; level: number }
-  | { group: 'trained'; unit: UnitId; count: number }
+  /** A military building's training queue ran dry: it stands idle.
+   *  `unit` is the last one it trained. */
+  | { group: 'trained'; district: string; unit: UnitId }
   | { group: 'goods'; district: string; good: GoodId; count: number }
   | { group: 'raided'; lair: LairId; took: Wallet }
   /** A landmark, lair or abandoned building sighted, by id. */
@@ -71,17 +73,20 @@ export function readSavedNews(dto: unknown): News | null {
   const n = dto as Partial<News>;
   if (typeof n.key !== 'string' || typeof n.at !== 'number') return null;
   if (!NEWS_GROUPS.includes(n.group as NewsGroup)) return null;
+  // A 'trained' news from before it meant an idle hall was one per batch of
+  // soldiers, with no hall: dropped rather than shown as something it is not.
+  if (n.group === 'trained' && typeof (n as { district?: unknown }).district !== 'string') return null;
   return n as News;
 }
 
 /** Where `advance()`'s report stood before a boundary's work: what it adds
  *  past these is that boundary's news. */
 export interface NewsMark {
-  completed: number; trained: number; goods: number; raids: number; schedule: number; explorers: number; worldBuilds: number;
+  completed: number; linesDone: number; goods: number; raids: number; schedule: number; explorers: number; worldBuilds: number;
 }
 
 export const newsMark = (out: AdvanceResult): NewsMark => ({
-  completed: out.completedItems.length, trained: out.trainedUnits.length, goods: out.goodsMade.length,
+  completed: out.completedItems.length, linesDone: out.linesDone.length, goods: out.goodsMade.length,
   raids: out.raids.length, schedule: out.scheduleEvents.length, explorers: out.explorersHome.length,
   worldBuilds: out.worldBuildsDone.length,
 });
@@ -96,9 +101,12 @@ export function postBoundaryNews(state: GameState, t: number, out: AdvanceResult
       district: item.districtUniqueId, level,
     });
   }
-  const units = new Map<UnitId, number>();
-  for (const u of out.trainedUnits.slice(from.trained)) units.set(u, (units.get(u) ?? 0) + 1);
-  for (const [unit, count] of units) postNews(state, { group: 'trained', key: `trained:${unit}:${t}`, at: t, unit, count });
+  // Not every soldier: the hall that has run out of them (§4).
+  for (const l of out.linesDone.slice(from.linesDone)) {
+    postNews(state, {
+      group: 'trained', key: `trained:${l.buildingId}:${l.at}`, at: Math.min(l.at, t), district: l.buildingId, unit: l.unit,
+    });
+  }
   const goods = new Map<string, { good: GoodId; count: number }>();
   for (const g of out.goodsMade.slice(from.goods)) {
     const was = goods.get(g.districtUniqueId);

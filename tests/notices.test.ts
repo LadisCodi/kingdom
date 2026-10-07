@@ -2,13 +2,14 @@
 // shows it (§3).
 import { describe, expect, it, vi } from 'vitest';
 import { advance, enqueueBuild } from '../src/sim/commands';
-import { NOTICES } from '../src/sim/data/definitions';
+import { NOTICES, UNITS } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { newsOf, postNews, readNews, type News } from '../src/sim/notices';
 import { deserialize, serialize } from '../src/sim/save';
 import { completesAt, townhall, type GameState } from '../src/sim/state';
 import { allNotices, columnNotices } from '../src/ui/notices/model';
-import { completeTech, freshGame, freshPresenter, fund, map, T0 } from './helpers';
+import { trainUnit } from '../src/sim/army';
+import { addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0 } from './helpers';
 
 // The column's model draws art; under node there is no image to load.
 vi.mock('../src/render/sprites', () => ({ spriteUrl: () => null, spriteImg: () => null, spriteImgAt: () => null }));
@@ -82,6 +83,50 @@ describe('the news the sim files', () => {
     const { state, doneAt } = aHouseUnderway();
     const loaded = deserialize(serialize(state, T0), map, doneAt + 60_000)!;
     expect(newsOf(loaded, 'built')).toHaveLength(1);
+  });
+});
+
+/** Three Warriors queued at one hall at T0. */
+function aQueueOfThree(): GameState {
+  const state = freshGame();
+  addAllTrainers(state);
+  if (UNITS.Warrior.requiredTech !== null) completeTech(state, UNITS.Warrior.requiredTech);
+  fund(state, { Gold: 200_000, Food: 90_000, Wood: 90_000, Stone: 40_000 });
+  state.lastAdvance = T0;
+  for (let i = 0; i < 3; i++) expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+  return state;
+}
+const HOUR = 3_600_000;
+
+describe('a training queue', () => {
+  it('files ONE news, when its hall runs dry — not one per soldier', () => {
+    const state = aQueueOfThree();
+    const hall = state.city.trainingQueue[0]!.buildingId;
+    // Step until the first soldier is out and two are still waiting.
+    let t = T0;
+    while (state.army.length === 0) { t += 1000; advance(state, map, t); }
+    expect(state.city.trainingQueue.length).toBeGreaterThan(0);
+    expect(newsOf(state, 'trained')).toEqual([]);
+    advance(state, map, T0 + HOUR);
+    const news = newsOf(state, 'trained');
+    expect(news).toHaveLength(1);
+    expect(news[0]).toMatchObject({ district: hall, unit: 'Warrior' });
+  });
+
+  it('the same in one call as in steps', () => {
+    const one = aQueueOfThree();
+    advance(one, map, T0 + HOUR);
+    const stepped = aQueueOfThree();
+    for (let t = 10_000; t <= HOUR; t += 10_000) advance(stepped, map, T0 + t);
+    expect(newsOf(stepped, 'trained')).toEqual(newsOf(one, 'trained'));
+    expect(newsOf(one, 'trained')).toHaveLength(1);
+  });
+
+  it('drops a saved per-soldier news from before', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    (save.Modules['kingdom.notices'] as unknown[]).push({ group: 'trained', key: 'trained:Warrior:1', at: T0, unit: 'Warrior', count: 3 });
+    expect(newsOf(deserialize(save, map, T0)!, 'trained')).toEqual([]);
   });
 });
 

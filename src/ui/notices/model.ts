@@ -17,7 +17,6 @@ import { spriteImg, spriteUrl } from '../../render/sprites';
 import { LAIR_AVATAR } from '../../render/lairMap';
 import { el, formatCount, formatExact } from '../format';
 import { iconEl, type IconName } from '../kit';
-import { unitBust } from '../unitArt';
 import { worldBuildDone } from '../world/worldActions';
 
 /** What a bubble or a card draws: built fresh each time it is asked for. */
@@ -153,15 +152,17 @@ function newsLine(game: Game, n: News): NewsLine | null {
       };
     }
     case 'trained': {
-      const unit = UNITS[n.unit];
-      const hall = game.state.city.districts.find((d) => d.state === 'Built' && DISTRICTS[d.definitionId].trains.includes(n.unit));
+      const d = game.state.city.districts.find((x) => x.uniqueId === n.district);
+      if (d === undefined) return null;
+      const def = DISTRICTS[d.definitionId];
+      const name = `${def.name} #${formatExact(d.ordinal)}`;
       return {
-        art: { key: `unit:${n.unit}`, make: () => unitBust(n.unit, 'nt-img') },
-        name: `${formatExact(n.count)} ${unit.name}`,
-        line: 'Ready to fight',
-        title: 'Troops ready',
-        body: `${formatExact(n.count)} ${unit.name} finished training and joined the army.`,
-        go: hall === undefined ? null : () => game.focusDistrict(hall.uniqueId),
+        art: buildingArt(d.definitionId, d.level),
+        name,
+        line: 'Queue done',
+        title: 'Training complete',
+        body: `${name} has trained its last ${UNITS[n.unit].name} and stands idle. Queue more to keep it busy.`,
+        go: () => game.focusDistrict(d.uniqueId),
         view: 'province',
       };
     }
@@ -296,7 +297,7 @@ function newsLine(game: Game, n: News): NewsLine | null {
 /** A group's card title, for two or more. */
 const GROUP_TITLE: Record<NewsGroup, (n: number) => string> = {
   built: (n) => `${formatExact(n)} buildings finished`,
-  trained: () => 'Troops ready',
+  trained: () => 'Training complete',
   goods: () => 'Goods ready',
   raided: (n) => `${formatExact(n)} raids on the city`,
   sighted: (n) => `${formatExact(n)} new places`,
