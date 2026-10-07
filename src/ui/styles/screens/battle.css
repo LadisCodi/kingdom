@@ -227,3 +227,7 @@ button.bt-card { cursor: pointer; }
   font-size: var(--text-helper);
   text-align: center;
 }
+
+/* A world fight's widgets, over the price row: its loot and its ground
+ * (Docs/proposals/world-menus.md §3.5). */
+.bt-widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--px) * 8); }
