@@ -119,7 +119,6 @@ function heroArt(def: HeroDef): HTMLElement {
 function stage(def: HeroDef, owned: boolean, over: HTMLElement | null): HTMLElement {
   return el('div', { class: `hd-stage ${RARITY_CLASS[def.rarity]}${owned ? '' : ' is-missing'}` },
     heroArt(def),
-    el('span', { class: 'hd-frame', 'aria-hidden': 'true' }),
     el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]),
     el('span', { class: `hd-type is-${def.unitType}` },
       iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType),

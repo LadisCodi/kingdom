@@ -432,11 +432,12 @@ Each of these is data, not code:
 - Opened by tapping a card; a **centred window** with the hero's **name on
   its plank** and the close that goes back to the roster.
 - **The stage** under the plank, the card's largest piece: the hero on its
-  rarity's painted vault, in the card's gilt frame, the **rarity** on a cloth
-  ribbon top-left and the **unit type** on a small banner in the top-right
-  corner. The hero's title is not shown.
-- **Ascension**, on a parchment tray laid over the foot of the stage (owned
-  heroes only): the five stars, under them what the next point does
+  rarity's painted vault, the full width of the window and anchored to its
+  top, fading into the paper at its foot; the **rarity** on a cloth ribbon
+  top-left and the **unit type** on a small banner top-right. The hero's
+  title is not shown.
+- **Ascension**, laid on the stage's fade with no background of its own
+  (owned heroes only): the five stars, under them what the next point does
   (*Next: stats +2%*, plus *· level cap n* on the point that finishes a
   star), and **Ascend** with its Stardust toll and fragment count over it.
   Every star full: *Fully ascended*.
