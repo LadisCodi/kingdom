@@ -2,12 +2,12 @@
 // like the delve (Docs/proposals/world-menus.md §3.10, mockup m92;
 // Docs/features/19-world-map.md §10).
 //
-// Top to bottom: when it closes, the player's floor and the clears left
-// today; the floors going down a violet shaft — cleared, the frontier with
+// Top to bottom: when it closes, and the player's floor; the floors going down a violet shaft — cleared, the frontier with
 // its power and pay, the floors ahead that carry a pack, a lump or a
 // milestone — with every kingdom's shield on its deepest floor, the
 // player's own larger and the leader crowned; and the player's army docked
-// at the foot as the deployment draws it, with Withdraw and Descend.
+// at the foot as the deployment draws it, with Withdraw and Descend. There
+// is no daily cap: every floor is fought for its Mana.
 
 import type { Game } from '../../game';
 import { HEROES, WORLD_PORTAL } from '../../sim/data/definitions';
@@ -76,7 +76,7 @@ function floorNode(
 }
 
 /** The army docked at the foot: as the dungeon's. */
-function dock(game: Game, index: number, army: ArmyView | undefined, open: boolean, attemptsLeft: number, frontier: number): HTMLElement {
+function dock(game: Game, index: number, army: ArmyView | undefined, open: boolean, frontier: number): HTMLElement {
   if (army === undefined) {
     return el('div', { class: 'dv-dock' },
       el('p', { class: 'wd-line' }, 'No army is down there.'),
@@ -104,8 +104,7 @@ function dock(game: Game, index: number, army: ArmyView | undefined, open: boole
       btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
       btn({
         label: 'Descend', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
-        disabledReason: !open ? 'The Portal is shut' : attemptsLeft === 0 ? 'No clears left today'
-          : frontier > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+        disabledReason: !open ? 'The Portal is shut' : frontier > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
         onClick: () => void game.doDescendPortal(army.id),
       })));
 }
@@ -118,7 +117,6 @@ export function renderPortalScreen(game: Game): HTMLElement {
   const open = p?.open === true;
   const floor = p?.floor ?? 0;
   const frontier = Math.min(WORLD_PORTAL.floors, floor + 1);
-  const attemptsLeft = p?.attemptsLeft ?? 0;
   const me = game.worldSeat();
 
   // The ranking, on the floors: each kingdom's shield on its deepest floor,
@@ -139,10 +137,6 @@ export function renderPortalScreen(game: Game): HTMLElement {
   const ribbon = el('div', { class: 'wd-ribbon' }, iconEl('hourglass', { size: 'sm' }), p === null ? 'Shut'
     : open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
       : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
-  const pips = el('div', { class: 'pt-pips', 'aria-label': `${formatExact(attemptsLeft)} clears left today` },
-    el('span', { class: 'pt-pips-label' }, 'Clears today'),
-    el('span', { class: 'pt-pips-row' }, ...Array.from({ length: WORLD_PORTAL.attemptsPerDay }, (_, i) =>
-      el('span', { class: `pt-pip${i < attemptsLeft ? ' is-lit' : ''}` }))));
 
   const floors = Array.from({ length: WORLD_PORTAL.floors }, (_, i) => floorNode(game, i + 1, frontier, at.get(i + 1) ?? []));
   const shaft = el('div', { class: 'dv-descent pt-shaft', 'data-keep-scroll': 'portal-shaft' }, ...floors);
@@ -166,8 +160,8 @@ export function renderPortalScreen(game: Game): HTMLElement {
     el('div', { class: 'dv-band' },
       el('p', { class: 'dv-where' }, `Your floor ${formatExact(floor)} of ${formatExact(WORLD_PORTAL.floors)}`),
       el('p', { class: 'dv-race-line' }, 'Ranked by the deepest floor reached; the first there leads.')),
-    el('div', { class: 'dv-stage' }, shaft, pips),
-    dock(game, index, armyThere(game), open, attemptsLeft, floor + 1));
+    el('div', { class: 'dv-stage' }, shaft),
+    dock(game, index, armyThere(game), open, floor + 1));
   const root = sheet({ title: 'The Dark Portal', tall: true, onClose: () => game.dismiss() }, body);
   root.classList.add('is-panes');
   return root;

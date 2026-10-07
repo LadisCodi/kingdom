@@ -770,18 +770,11 @@ The fixed appointment is worth more than the surprise.
   enter regardless of where their territory is**.
 - A **maximum depth** of 40 floors (`worldPortal.floors`), tuned so nobody empties it in one event.
 - Floors are taken **one at a time, no skipping**.
-- **Three attempts a day**, restored at a fixed hour. **An attempt is spent only
-  on clearing a floor — failing costs nothing.**
-- **Every floor fought costs Mana** (§4), won or lost.
+- **No daily cap.** **Every floor fought costs Mana** (§4), won or lost —
+  Mana is what paces it, and more of it is bought or watched for.
 - Descending costs casualties, and **an army in the Portal is not on the board**:
   it defends nothing while it is down there.
 - Ranked by **deepest floor reached**, ties broken by **who got there first**.
-
-The attempt limit is what keeps the ranking a measure of strength and decisions
-rather than hours on the sofa, and what stretches the event across its three
-days instead of settling it on the first night. In production it is also the
-natural Gem sale — extra attempts, which is a better thing to sell than
-finishing instantly.
 
 ### 10.3a The descent
 
@@ -793,7 +786,6 @@ finishing instantly.
   worth going down for (a pack, a milestone). It opens on the frontier.
 - **The ranking is on the floors**: every kingdom's shield on its deepest
   floor, the player's own *You*, the leader under the gold rank ribbon.
-- **Clears today** as pips on the right edge.
 - **The army**, docked as the delve's: Withdraw and **Descend** (the next
   floor, in Mana). None down there: Send.
 
@@ -874,7 +866,6 @@ it is there to compare.
 | **Tribute premium** (×1.5) | what not fighting costs | nobody fights camps, or nobody pays one off |
 | **Inner-ring multiplier** (+200%) | how badly the centre is wanted | nobody fights over ring 1, or everybody does |
 | **Dungeon return time** (12–24 h) | how often a sixth has a dungeon to race for | dungeons sit closed too long, or never feel won |
-| **Portal attempts per day** (3) | how much of the army the Portal eats | the Portal empties the board |
 | **Reveal radius** (1, upgrading to 2) | how fast the board opens | exploring becomes the bottleneck |
 
 ## 14. Deliberately not in this design

@@ -5652,7 +5652,7 @@ export class Game {
       NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
       Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
       OwnGround: 'That ground is yours already',
-      Shut: 'The Portal is shut', NoAttempts: 'No clears left in the Portal today',
+      Shut: 'The Portal is shut',
       NoRoute: 'No way there through explored ground',
       NothingBuilding: 'Nothing is being built there',
       Guarded: 'A camp holds it — beat it, or pay it off, first',

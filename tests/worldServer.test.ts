@@ -498,7 +498,7 @@ describe('the Dark Portal', () => {
     expect(loot?.kind === 'loot' && loot.precious?.amount).toBe(floorReward(WORLD_PORTAL.preciousEvery).precious);
   });
 
-  it('takes floors one at a time, spends a clear only on a win, and pays the ranking at the close', () => {
+  it('takes floors one at a time, as often as Mana pays for, and pays the ranking at the close', () => {
     const { b, seat } = quietBoard();
     const opens = portalOpensAt(portalEvent(T0) + 1);
     expect(sendArmy(b, seat, { purpose: 'portal', target: PORTAL_INDEX, heroes: [], board: leader(50_000, 's') }, T0))
@@ -508,15 +508,13 @@ describe('the Dark Portal', () => {
     const there = r.arrivesAt;
     resolveTo(b, there);
     expect(b.armies[0].phase).toBe('camp');
-    for (let i = 0; i < WORLD_PORTAL.attemptsPerDay; i++) {
+    // No daily cap: every floor is fought for its Mana (19 §10.3).
+    // Four floors in a row on one day: past the three the old daily cap allowed.
+    for (let i = 0; i < 4; i++) {
       const f = descendPortal(b, seat, r.army, there + i);
       expect(f.ok && f.won).toBe(true);
     }
-    expect(descendPortal(b, seat, r.army, there + 10)).toEqual({ ok: false, why: 'NoAttempts' });
-    expect(snapshotOf(b, seat, there + 10).portal.floor).toBe(WORLD_PORTAL.attemptsPerDay);
-    // A new UTC day brings the clears back.
-    const nextDay = (Math.floor(there / DAY) + 1) * DAY + 1;
-    expect(descendPortal(b, seat, r.army, nextDay).ok).toBe(true);
+    expect(snapshotOf(b, seat, there + 10).portal.floor).toBe(4);
     drainEffects(b, seat);
     // The close: the ranking pays, and the diver walks home.
     resolveTo(b, portalClosesAt(portalEvent(opens)));
