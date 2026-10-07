@@ -12,19 +12,21 @@
 //
 //   1. the chest drops onto the carpet — silver for the common call, gold for
 //      the golden one, the relic chest for a fragment pack, the war chest for
-//      spoils — with a count of what is inside;
-//   2. a tap turns the key and throws the lid; the first card rises out of it
-//      face down;
+//      spoils — with a count of what is inside, and opens on its own (the
+//      player already paid); the first card rises out of it face down;
 //   3. a tap flips it;
 //   4. the next tap sends it to its own place on the stage — smaller, a little
 //      dimmed — while the next card rises. The places are the summary: when
 //      the last card lands they all light up, the chest sinks away and the
 //      only thing left to do is Collect. There is no receipt drawn afterwards.
 //
-// A NEW HERO is a bigger event than a stack of fragments and is staged as one:
-// its card back glows in its rarity before the flip (a Legendary's rises with
-// a drum roll), and the flip raises rays, confetti and a plaque. Skip deals
-// everything else at once and still stops at every new hero.
+// A WHOLE NEW HERO is the rarest thing in a chest and is celebrated: its card
+// back glows and trembles over a drum roll, and the flip darkens the room,
+// flashes, shakes, raises rays, fires confetti and fireworks and plays a full
+// fanfare. Fragments carry a bar under their card; one that reaches the
+// recruiting price (Game.openReveal recruits the hero) slams the NEW flag on
+// and is celebrated the same way. Skip deals everything else at once and
+// still stops at every new hero.
 //
 // Presentation only: the sim paid everything before this mounted, so a reveal
 // cut short (a reload, a closed tab) loses nothing but the show.
@@ -33,11 +35,11 @@ import { ARTIFACTS, HEROES } from '../sim/data/definitions';
 import { fragmentArt } from './relicSheet';
 import { playSfx, type SfxName } from '../audio/sfx';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { Game, GachaPrize, GachaReveal } from '../game';
+import type { FragmentProgress, Game, GachaPrize, GachaReveal } from '../game';
 import type { CurrencyId, HeroId } from '../sim/state';
 import { el, formatExact } from './format';
 import { heroFragmentIcon } from './heroFragment';
-import { btn, iconEl } from './kit';
+import { btn, iconEl, progress, type Progress } from './kit';
 import { particleLayer, type ParticleLayer } from './particles';
 
 const RARITY_CLASS = { Common: 'is-common', Rare: 'is-rare', Legendary: 'is-legendary' } as const;
@@ -64,8 +66,16 @@ function portrait(id: HeroId, cls: string): HTMLElement {
   return url ? spriteImgAt(url, cls) : el('div', { class: `${cls} is-glyph` }, def.glyph);
 }
 
-/** The new hero a prize is, if it is one — the only prize staged as an event. */
-const newHero = (p: GachaPrize): HeroId | null => (p.kind === 'hero' ? p.heroId : null);
+/** The hero a prize brings onto the roster, if it does: a hero card, or
+ *  fragments that filled the recruiting bar. The only prizes staged as an
+ *  event. */
+const newHero = (p: GachaPrize): HeroId | null =>
+  p.kind === 'hero' || (p.kind === 'fragments' && p.progress?.recruited === true) ? p.heroId : null;
+
+/** A fragments bar's reading: "8 / 10", or what filling it did. */
+const barText = (p: FragmentProgress, n: number): string =>
+  p.recruited && n >= p.goal ? 'Recruited!'
+    : `${formatExact(p.toward === 'recruit' ? Math.min(n, p.goal) : n)} / ${formatExact(p.goal)}`;
 
 /** How loud a prize is: its rarity where it has one. */
 function rarityOf(p: GachaPrize): keyof typeof RARITY_LIGHT | null {
@@ -74,8 +84,10 @@ function rarityOf(p: GachaPrize): keyof typeof RARITY_LIGHT | null {
   return null;
 }
 
-/** One prize as a card: a back and a face, flipped by its inner. */
-function prizeCard(prize: GachaPrize): HTMLElement {
+/** One prize as a card: a back and a face, flipped by its inner. Fragments
+ *  carry their bar UNDER the card (outside the flip), and a recruit the
+ *  NEW stamp that drops onto it when the bar fills. */
+function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLElement {
   const count = (n: number, mark?: Node): HTMLElement =>
     el('div', { class: 'gr-card-count' }, ...(mark ? [mark] : []), `×${formatExact(n)}`);
   let cls = '';
@@ -101,7 +113,7 @@ function prizeCard(prize: GachaPrize): HTMLElement {
       cls = `is-hero ${RARITY_CLASS[def.rarity]}`;
       face = [
         el('div', { class: 'gr-card-art' }, portrait(prize.heroId, 'gr-card-img')),
-        el('div', { class: 'gr-card-new' }, 'New'),
+        el('div', { class: 'gr-card-new', role: 'img', 'aria-label': 'New' }),
         el('div', { class: 'gr-card-name' }, def.name.replace(/^The /, '')),
       ];
     } else {
@@ -113,10 +125,19 @@ function prizeCard(prize: GachaPrize): HTMLElement {
       ];
     }
   }
-  return el('div', { class: `gr-card ${cls} is-down is-hidden` },
+  const card = el('div', { class: `gr-card ${cls} is-down is-hidden` },
     el('div', { class: 'gr-card-inner' },
       el('div', { class: 'gr-card-back' }),
       el('div', { class: 'gr-card-face' }, ...face)));
+  if (prize.kind === 'fragments' && prize.progress !== undefined) {
+    const p = prize.progress;
+    const bar = progress(p.toward === 'recruit' ? 'gold' : 'blue');
+    bar.set(p.from / p.goal, barText(p, p.from));
+    bars.set(card, bar);
+    card.append(el('div', { class: 'gr-card-bar' }, bar.root));
+    if (p.recruited) card.append(el('div', { class: 'gr-stamp', role: 'img', 'aria-label': 'New' }));
+  }
+  return card;
 }
 
 /** How many across, for how many cards — and how wide each is, in --px. */
@@ -132,8 +153,12 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
    *  every tick, and rebuilding the screen mid-sequence would restart it. */
   let showing: GachaReveal | null = null;
   let fx: ParticleLayer | null = null;
+  /** The reveal's own timers, cut when it is torn down. */
+  let stopTimers: (() => void) | null = null;
 
   const teardown = (): void => {
+    stopTimers?.();
+    stopTimers = null;
     fx?.destroy();
     fx = null;
     root.replaceChildren();
@@ -143,7 +168,8 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     teardown();
     const quiet = calm();
     const { prizes } = reveal;
-    const cards = prizes.map(prizeCard);
+    const bars = new Map<HTMLElement, Progress>();
+    const cards = prizes.map((p) => prizeCard(p, bars));
     const shape = boardShape(cards.length);
 
     const board = el('div', { class: 'gr-board' }, ...cards);
@@ -153,7 +179,6 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     const left = el('div', { class: 'gr-left' }, formatExact(prizes.length));
     const chest = el('div', { class: `gr-chest is-${reveal.chest} is-closed` },
       el('div', { class: 'gr-chest-art' }),
-      el('div', { class: 'gr-key' }),
       left);
     const rays = el('div', { class: 'gr-rays' });
     const kicker = el('div', { class: 'gr-kicker' });
@@ -166,9 +191,11 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     const collect = btn({ label: 'Collect', kind: 'primary', onClick: () => game.dismissGachaReveal() });
     const foot = el('div', { class: 'gr-foot' }, collect);
     const skip = el('button', { class: 'gr-skip', type: 'button' }, 'Skip');
+    const veil = el('div', { class: 'gr-veil' });
+    const flash = el('div', { class: 'gr-flash' });
 
     const screen = el('div', { class: `gr-screen is-${reveal.chest}` },
-      rays, board, chest, kicker, heroLine, prompt, title, foot, skip);
+      veil, rays, board, chest, kicker, heroLine, prompt, title, foot, skip, flash);
     root.replaceChildren(screen);
     fx = quiet ? null : particleLayer(screen, 'gr-fx');
     const layer = fx;
@@ -222,12 +249,28 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
 
     // ------------------------------------------------------------- state
 
-    type Phase = 'landing' | 'closed' | 'busy' | 'down' | 'up' | 'done';
+    type Phase = 'landing' | 'busy' | 'down' | 'up' | 'done';
     let phase: Phase = 'landing';
     let next = 0; // the next card to come out of the chest
     let current: HTMLElement | null = null;
     let currentAt = '';
     let currentPrize: GachaPrize | null = null;
+    /** A celebration is not skipped by the tap that is still on its way:
+     *  taps before this moment only hurry, they do not move on. */
+    let holdUntil = 0;
+    /** The celebration's own timers — rain, fireworks, the fanfare — cut
+     *  when the card leaves. */
+    let party: number[] = [];
+    const later = (ms: number, fn: () => void): void => { party.push(window.setTimeout(fn, ms * pace())); };
+    stopTimers = () => { party.forEach((t) => window.clearTimeout(t)); party = []; };
+    const endParty = (): void => {
+      party.forEach((t) => window.clearTimeout(t));
+      party = [];
+      screen.classList.remove('is-party');
+      rays.classList.remove('is-on');
+      kicker.classList.remove('is-on');
+      heroLine.classList.remove('is-on');
+    };
 
     const say = (text: string): void => {
       prompt.textContent = text;
@@ -246,31 +289,24 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         { transform: 'translateY(-4%) scale(0.98, 1.03)', offset: 0.86 },
         { transform: 'none', opacity: 1 },
       ], 620, 'ease-in');
+      chest.getAnimations().forEach((an) => an.cancel()); // its own opacity again (the party dims it)
       playSfx('chestLand');
       const r = chest.getBoundingClientRect();
       const [x, y] = at(r, 0.5, 0.88);
       layer?.burst(x - r.width * 0.3, y, { kind: 'dust', count: 9, colors: ['rgba(214, 186, 140, 0.8)'], speed: 90, angle: Math.PI, spread: 0.9, size: 14, life: 900 });
       layer?.burst(x + r.width * 0.3, y, { kind: 'dust', count: 9, colors: ['rgba(214, 186, 140, 0.8)'], speed: 90, angle: 0, spread: 0.9, size: 14, life: 900 });
-      phase = 'closed';
-      say('Tap to open');
-      syncSkip();
+      // It opens on its own: the player already paid, the chest is not a
+      // second door to knock on.
+      await wait(260);
+      await open();
     };
 
-    // 2. The key turns, the lid flies.
+    // 2. The latch, the lid flies.
     const open = async (): Promise<void> => {
       phase = 'busy';
       say('');
       syncSkip();
-      const keyed = reveal.chest === 'common' || reveal.chest === 'golden';
-      if (keyed) {
-        const key = chest.querySelector('.gr-key')!;
-        await play(key, [
-          { transform: 'translate(60%, 0) rotate(0deg)', opacity: 0 },
-          { transform: 'translate(0, 0) rotate(0deg)', opacity: 1, offset: 0.45 },
-          { transform: 'translate(0, 0) rotate(90deg)', opacity: 1 },
-        ], 520);
-        playSfx('chestUnlock');
-      }
+      playSfx('chestUnlock');
       const art = chest.querySelector('.gr-chest-art')!;
       await play(art, [
         { transform: 'none' }, { transform: 'rotate(-3deg) scale(1.03)' }, { transform: 'rotate(3deg) scale(1.05)' },
@@ -310,11 +346,108 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       ], 560);
       card.style.transform = currentAt;
       card.classList.add('is-centre');
-      if (charged && rarity === 'Legendary') playSfx('heroRiser');
+      // A drum roll under a hero still face down; a Legendary's is the long one.
+      if (newHero(prize) !== null) playSfx(rarity === 'Legendary' ? 'heroRiser' : 'heroRiserShort');
       phase = 'down';
       say('Tap to reveal');
       syncSkip();
       if (skipping && !charged) await flip();
+    };
+
+    /** A fragments card's bar fills from what was held to what is held now.
+     *  A recruit's fills to the brim and the NEW stamp drops onto the card. */
+    const fillBar = async (card: HTMLElement, p: FragmentProgress): Promise<void> => {
+      const bar = bars.get(card);
+      if (bar === undefined) return;
+      const fill = card.querySelector<HTMLElement>('.k-fill');
+      const to = Math.min(p.to, p.goal);
+      if (fill !== null && !quiet) {
+        await play(fill, [
+          { clipPath: `inset(0 ${(1 - p.from / p.goal) * 100}% 0 0)` },
+          { clipPath: `inset(0 ${(1 - to / p.goal) * 100}% 0 0)` },
+        ], 700 + 500 * Math.min(1, (to - p.from) / p.goal), 'cubic-bezier(.3,0,.2,1)');
+        fill.getAnimations().forEach((a) => a.cancel());
+      }
+      bar.set(to / p.goal, barText(p, p.to));
+      if (!p.recruited) {
+        sfx('cardSettle');
+        return;
+      }
+      // Full: the bar flares, and the stamp comes down hard.
+      card.classList.add('is-full');
+      playSfx('cardSparkle');
+      const b = card.querySelector('.gr-card-bar')!.getBoundingClientRect();
+      const [bx, by] = at(b);
+      layer?.burst(bx, by, { kind: 'spark', count: 24, colors: GOLD, speed: 260, size: 9, life: 800, radius: b.width / 3 });
+      const stamp = card.querySelector('.gr-stamp')!;
+      await play(stamp, [
+        { transform: 'scale(3.2) rotate(-28deg)', opacity: 0 },
+        { transform: 'scale(0.92) rotate(-14deg)', opacity: 1, offset: 0.7 },
+        { transform: 'scale(1) rotate(-14deg)', opacity: 1 },
+      ], 380, 'cubic-bezier(.6,0,.9,.5)');
+      card.classList.add('is-stamped');
+      playSfx('chestLand');
+      await play(card, [
+        { transform: currentAt }, { transform: `${currentAt} translateY(1.5%) scale(0.97)` }, { transform: currentAt },
+      ], 200);
+    };
+
+    /** A WHOLE hero joins: the rarest thing in a chest, and the party says
+     *  so — the room darkens, a flash, a shake, rays, the plaque, cannons of
+     *  confetti, a rain of it, fireworks, and a fanfare. */
+    const celebrate = async (id: HeroId, card: HTMLElement): Promise<void> => {
+      const def = HEROES[id];
+      const legend = def.rarity === 'Legendary';
+      const light = RARITY_LIGHT[def.rarity];
+      screen.classList.add('is-party');
+      rays.className = `gr-rays is-on ${RARITY_CLASS[def.rarity]}`;
+      kicker.textContent = legend ? 'A legend answers' : 'A new hero answers';
+      kicker.classList.add('is-on');
+      heroLine.replaceChildren(
+        el('div', { class: 'gr-heroline-name' }, def.name),
+        el('div', { class: 'gr-heroline-title' }, def.title),
+        el('div', { class: `gr-heroline-rarity ${RARITY_CLASS[def.rarity]}` }, def.rarity));
+      heroLine.classList.add('is-on');
+      playSfx(legend ? 'heroLegend' : 'heroNew');
+      playSfx('heroPop');
+      later(260, () => playSfx(legend ? 'heroFanfareLegend' : 'heroFanfare'));
+      if (legend) later(700, () => playSfx('heroApplause'));
+      holdUntil = performance.now() + 1300 * pace();
+      if (!quiet) {
+        void play(flash, [{ opacity: 0.85 }, { opacity: 0 }], 650, 'ease-out');
+        void play(screen, [
+          { transform: 'none' }, { transform: 'translate(-1.2%, 0.6%)' }, { transform: 'translate(1%, -0.8%)' },
+          { transform: 'translate(-0.6%, 0.4%)' }, { transform: 'none' },
+        ], 380, 'linear');
+      }
+      const s = screenRect();
+      const r = card.getBoundingClientRect();
+      const [x, y] = at(r);
+      layer?.burst(x, y, { kind: 'spark', count: 50, colors: light, speed: 420, size: 13, life: 1200 });
+      // Two cannons from the bottom corners, aimed at the card.
+      layer?.burst(0, s.height * 0.95, { kind: 'confetti', count: legend ? 90 : 60, colors: CONFETTI, speed: 760, angle: -Math.PI / 3, spread: 0.5, size: 11, life: 3000, gravity: 380 });
+      layer?.burst(s.width, s.height * 0.95, { kind: 'confetti', count: legend ? 90 : 60, colors: CONFETTI, speed: 760, angle: -Math.PI * 2 / 3, spread: 0.5, size: 11, life: 3000, gravity: 380 });
+      // A rain from above, for a while.
+      for (let i = 0; i < (legend ? 14 : 9); i++) {
+        later(200 + i * 220, () => layer?.burst(Math.random() * s.width, -10, {
+          kind: 'confetti', count: 8, colors: CONFETTI, speed: 60, angle: Math.PI / 2, spread: 1, size: 10, life: 3200, gravity: 120,
+        }));
+      }
+      // Fireworks round the card.
+      for (let i = 0; i < (legend ? 6 : 4); i++) {
+        later(350 + i * 330, () => {
+          const fx2 = s.width * (0.15 + Math.random() * 0.7);
+          const fy = s.height * (0.12 + Math.random() * 0.4);
+          layer?.burst(fx2, fy, { kind: 'spark', count: 28, colors: i % 2 === 0 ? light : GOLD, speed: 240, size: 8, life: 900, gravity: 90 });
+          playSfx('cardSparkle', { gain: 0.5, rate: 1 + i * 0.05 });
+        });
+      }
+      await play(card, [
+        { transform: `${currentAt} scale(0.85)` }, { transform: `${currentAt} scale(1.18)`, offset: 0.55 }, { transform: currentAt },
+      ], 520, 'cubic-bezier(.34,1.56,.64,1)');
+      phase = 'up';
+      say('Tap to continue');
+      syncSkip();
     };
 
     // 3. The flip.
@@ -336,22 +469,11 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       const [x, y] = at(r);
       const hero = newHero(prize);
       const rarity = rarityOf(prize);
+      if (prize.kind === 'fragments' && prize.progress !== undefined) {
+        await fillBar(card, prize.progress);
+      }
       if (hero !== null) {
-        const def = HEROES[hero];
-        rays.className = `gr-rays is-on ${RARITY_CLASS[def.rarity]}`;
-        kicker.textContent = def.rarity === 'Legendary' ? 'A legend answers' : 'A new hero answers';
-        kicker.classList.add('is-on');
-        heroLine.replaceChildren(
-          el('div', { class: 'gr-heroline-title' }, def.title),
-          el('div', { class: `gr-heroline-rarity ${RARITY_CLASS[def.rarity]}` }, def.rarity));
-        heroLine.classList.add('is-on');
-        playSfx(def.rarity === 'Legendary' ? 'heroLegend' : 'heroNew');
-        layer?.burst(x, y, { kind: 'spark', count: 40, colors: RARITY_LIGHT[def.rarity], speed: 380, size: 12, life: 1100 });
-        layer?.burst(x, r.top - screenRect().top, { kind: 'confetti', count: def.rarity === 'Legendary' ? 110 : 70, colors: CONFETTI, speed: 420, angle: -Math.PI / 2, spread: 2.4, size: 11, life: 2600, gravity: 420 });
-        await play(card, [{ transform: currentAt }, { transform: `${currentAt} scale(1.1)` }, { transform: currentAt }], 380);
-        phase = 'up';
-        say('Tap to continue');
-        syncSkip();
+        await celebrate(hero, card);
         return;
       }
       if (rarity === 'Rare' || rarity === 'Legendary') {
@@ -372,9 +494,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       if (current === null) return;
       phase = 'busy';
       say('');
-      rays.classList.remove('is-on');
-      kicker.classList.remove('is-on');
-      heroLine.classList.remove('is-on');
+      endParty();
       const card = current;
       current = null;
       currentPrize = null;
@@ -432,8 +552,8 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
 
     screen.addEventListener('click', () => {
       if (phase === 'busy' || phase === 'landing') { hurry(); return; }
-      if (phase === 'closed') void open();
-      else if (phase === 'down') void flip();
+      if (phase === 'up' && performance.now() < holdUntil) return;
+      if (phase === 'down') void flip();
       else if (phase === 'up') void settle();
       else if (phase === 'done') game.dismissGachaReveal();
     });
@@ -442,8 +562,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       skipping = true;
       syncSkip();
       hurry();
-      if (phase === 'closed') void open();
-      else if (phase === 'down' && current !== null && !current.classList.contains('is-charged')) void flip();
+      if (phase === 'down' && current !== null && !current.classList.contains('is-charged')) void flip();
       else if (phase === 'up' && currentPrize !== null && newHero(currentPrize) === null) void settle();
     });
 

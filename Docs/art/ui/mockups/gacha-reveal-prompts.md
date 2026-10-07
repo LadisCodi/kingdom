@@ -78,3 +78,17 @@ GENERATE A NEW IMAGE. The attached files are only references, do not edit or exp
 Draw ONLY THE BACKGROUND of image 1, as an opaque full-bleed portrait painting, 1080x1920: the interior of a castle treasure hall at night, dark and warm, torches burning on stone pillars at both sides, two blue banners with a gold fleur-de-lis hanging high at the sides, a round red carpet with a gold emblem on the floor in the lower third, a soft pool of warm light falling from above onto the centre. NO chest, NO card, NO plaque, NO text, NO confetti, NO UI at all. Keep the middle and the upper half dark and quiet so cards read over it; detail only at the edges. Same flat cartoon style as image 2. Raw image only: do not resize, verify or save a corrected file.
 
 (Second message, same chat:) GENERATE A NEW IMAGE. Now the BACK of a playing card for the same game, alone, portrait 2:3, filling the image: carved dark wood planks in a gold frame with brass corner fittings, a red wax seal with a gold crown in the centre, same flat cartoon style. Do not draw shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
+
+## Round 3 — painted card fronts and ribbons (refs: m99-refs/ref-card-back, m99c)
+
+After playing it the user asked for textured, material cards like the back,
+more party for a whole hero, the chest to open on its own (the key never
+lined up with the lock), and a fragments bar that recruits.
+
+- Fronts: a 4×1 sheet, "EXACTLY the same gold frame … only the centre panel
+  changes … EMPTY": reward (parchment), common (blue cloth + rays), rare
+  (violet), legendary (gold, red gem on the frame). True alpha first try;
+  cut by even quarters → `card-front-*.png` 400×600.
+- Ribbons: three rows — an empty red name ribbon with swallow tails, a "NEW"
+  pennant on a gold pole, an empty wooden count plate. True alpha; cut by row
+  bands → `card-ribbon.png`, `card-new.png`, `card-plate.png`.

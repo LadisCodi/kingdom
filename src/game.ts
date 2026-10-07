@@ -114,7 +114,8 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
-import { addHeroXp, boonText, pullPrice } from './sim/heroes';
+import { ascensionFragmentCost, isMaxAscension } from './sim/heroLadder';
+import { addHeroXp, boonText, heroEntry, heroUnlockCost, ownsHeroId, pullPrice } from './sim/heroes';
 import {
   boughtToday, claimNextDay, dailyOffers, dailyResetsAt, nextDayReady, nextDayWaiting, offerOn, offerTrigger,
   offerWindow, offersOn, refreshOffers, skuValuePercent,
@@ -422,11 +423,23 @@ export interface Banner {
  */
 export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
-  | { kind: 'fragments'; heroId: HeroId; amount: number }
+  | { kind: 'fragments'; heroId: HeroId; amount: number; progress?: FragmentProgress }
   // A card pack, which a room pays and a call never does.
   | { kind: 'currency'; currency: CurrencyId; amount: number }
   // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
   | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
+
+/**
+ * Where a call's fragments of one hero leave them: toward RECRUITING a hero
+ * not yet owned, or toward the next ascension point of one who is. `from` and
+ * `to` are the fragments held before and after the call (the bar fills
+ * between them); `recruited` says the call filled the recruiting bar and the
+ * hero joined (Docs/features/10-heroes.md §8.3).
+ */
+export interface FragmentProgress {
+  toward: 'recruit' | 'ascension';
+  from: number; to: number; goal: number; recruited: boolean;
+}
 
 /**
  * A sequence of prizes, dealt one at a time.
@@ -3342,6 +3355,26 @@ export class Game {
   private openReveal(banner: BannerId, pulls: readonly PullResult[]): void {
     const prizes = gachaPrizes(pulls);
     if (prizes.length === 0) return;
+    // ENOUGH FRAGMENTS RECRUIT. A call that brings a stranger's fragments to
+    // the recruiting price recruits them on the spot — the reveal is where
+    // the player watches the bar fill, so it is where the hero joins.
+    for (const p of prizes) {
+      if (p.kind !== 'fragments') continue;
+      const held = this.state.heroes.fragments[p.heroId] ?? 0;
+      if (!ownsHeroId(this.state, p.heroId)) {
+        const recruited = unlockHero(this.state, p.heroId) === 'Unlocked';
+        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(), recruited };
+      } else {
+        const entry = heroEntry(this.state, p.heroId);
+        if (!isMaxAscension(entry)) {
+          p.progress = { toward: 'ascension', from: held - p.amount, to: held, goal: ascensionFragmentCost(entry.ascension), recruited: false };
+        }
+      }
+    }
+    // A recruit is what the call was for: it comes after the other
+    // fragments, just before the heroes.
+    const rank = (p: GachaPrize): number => (p.kind === 'hero' ? 2 : p.kind === 'fragments' && p.progress?.recruited ? 1 : 0);
+    prizes.sort((a, b) => rank(a) - rank(b));
     this.gachaReveal = { banner, calls: pulls.length, prizes, chest: banner === 'advanced' ? 'golden' : 'common' };
   }
 

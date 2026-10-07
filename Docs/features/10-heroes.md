@@ -252,6 +252,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - Without that second door, fragments of a stranger pile up against a door
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
+- **A call that brings them to ten recruits on the spot**, in the reveal
+  (§8.3). Fragments from anywhere else wait for the roster's Recruit button.
 - **Recruiting is not an ascension.** A hero recruited with fragments starts
   with every star empty, exactly as a pulled one does. Change on a bigger pile
   carries over.
@@ -467,14 +469,21 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - **The chest says where the rewards come from**: silver-bound for the common
   call, gold for the golden call, violet for a relic fragment pack, a rope-tied
   war chest for spoils. Every reveal of RANDOM rewards uses it.
-- **The sequence**, one tap per beat:
-  1. the chest drops onto the carpet with a count of the cards inside —
-     *Tap to open*;
-  2. a call's key turns, the lid flies, the first card rises face down —
-     *Tap to reveal*;
-  3. the card flips;
+- **The sequence**:
+  1. the chest drops onto the carpet with a count of the cards inside and
+     opens on its own — the player already paid;
+  2. the first card rises face down — *Tap to reveal*;
+  3. a tap flips it;
   4. the next tap sends it to its own place on the stage — smaller and
      dimmed — while the next card rises.
+- **The cards are painted**: the back's gold frame round parchment for a
+  reward, round its rarity's cloth for a whole hero; a hero's name on a red
+  ribbon, a NEW flag on its corner, an amount on a wooden plate.
+- **Fragments show where they leave the hero**: a bar under the card fills
+  from what was held to what is held now — toward recruiting (gold) or the
+  next ascension point (blue).
+- **A bar that reaches the recruiting price recruits the hero**: it flares,
+  the NEW flag slams onto the card, and the hero is celebrated as a whole one.
 - **The places are the summary.** When the last card lands the chest sinks
   away, every card lights up, a *Rewards* plaque and **Collect** appear. No
   separate receipt is drawn.
@@ -482,16 +491,20 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   paying 50 Stardust each are one 500, and four fragments of one hero are one
   stack of four.
 - **Heroes come last**, so the sequence arrives at what the player called for.
-- **A new hero is an event.** Its card back glows in its rarity and trembles
-  before the flip (a Legendary's with a rising drum roll); the flip raises
-  rays, confetti, a plaque — *A new hero answers* / *A legend answers* — and
-  the hero's title and rarity. A relic's keystone glows the same way.
+- **A whole new hero is the rarest thing in a chest, and is celebrated.**
+  Before the flip its card back glows and trembles in its rarity over a drum
+  roll (a Legendary's longer). The flip darkens the room, flashes, shakes the
+  screen, raises rays, fires two confetti cannons, rains confetti, sets off
+  fireworks round the card and plays a full fanfare (a Legendary's grander,
+  with applause); a plaque — *A new hero answers* / *A legend answers* — and
+  the hero's name, title and rarity. The celebration cannot be tapped away
+  in its first second. A relic's keystone glows the same way before its flip.
 - **A tap during an animation finishes it.** **Skip** deals every other card
   at once and still stops at each new hero.
 - A duplicate is **not** drawn as a hero. It already paid its fragments, and a
   hero card would promise a roster entry that is already there.
-- Every beat has its sound (land, key, lid, draw, flip, whoosh, settle,
-  sparkle, riser, fanfare, summary chime) and its particles (dust, sparks,
+- Every beat has its sound (land, latch, lid, draw, flip, whoosh, settle,
+  sparkle, riser, pop, fanfare, applause, summary chime) and its particles (dust, sparks,
   confetti, embers). Reduced motion keeps the beats and drops the motion.
 - **The banners sit on the store**, padlocked until a Tavern stands. Moving
   them into the Tavern — **tapping it is how one is called**
