@@ -726,9 +726,12 @@ export const RULES: Readonly<Record<string, Rule>> = {
       if (s.after === id) push(id, ['after'], 'cannot follow itself');
       else if (s.after !== null && shelfOf.get(s.after as string) !== 'offer') push(id, ['after'], 'follows something that is not an offer');
       if (s.opensOn === 'townhall' && !(num(s.townhall) > 0)) push(id, ['townhall'], 'opens on a Townhall level — which one?');
-      const repeats = s.opensOn === 'townhall' || s.opensOn === 'manaLow' || s.opensOn === 'buildersBusy';
-      if (repeats && !(num(s.hours) > 0)) push(id, ['hours'], 'a trigger that comes back needs a window that closes');
-      if (!repeats && num(s.cooldownHours) > 0) push(id, ['cooldownHours'], 'only manaLow, buildersBusy and townhall come back');
+      // A need may be met once for good (a slot); the recurring triggers sell
+      // again and again, so their window has to close.
+      const recurring = ['townhall', 'manaLow', 'manaOut', 'buildersBusy'].includes(s.opensOn as string);
+      const repeats = recurring || s.opensOn === 'explorersBusy' || s.opensOn === 'heroesBenched';
+      if (recurring && !(num(s.hours) > 0)) push(id, ['hours'], 'a trigger that comes back needs a window that closes');
+      if (!repeats && num(s.cooldownHours) > 0) push(id, ['cooldownHours'], 'always, door and after never come back');
     }
     if (shelfOf.get('Survey') !== 'survey') push('Survey', ['shelf'], 'the Survey must exist, sold on the Survey');
   },

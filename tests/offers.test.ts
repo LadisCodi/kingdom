@@ -4,7 +4,7 @@
 // and the first-purchase reward.
 import { describe, expect, it } from 'vitest';
 import {
-  DAILY_POOL, KINGDOM_DEF, LANDMARKS, OFFERS, OFFER_ORDER, STORE, WORLD,
+  DAILY_POOL, HERO_ORDER, KINGDOM_DEF, LANDMARKS, OFFERS, OFFER_ORDER, STORE, WORLD,
 } from '../src/sim/data/definitions';
 import { newGame } from '../src/sim/newGame';
 import {
@@ -14,19 +14,26 @@ import {
 import { deserialize, serialize } from '../src/sim/save';
 import { addToWallet, getWallet, townhall, type GameState, type StoreSkuId } from '../src/sim/state';
 import { buyStoreSku, choosePayerProfile } from '../src/sim/store';
+import { recordWatchedRefill, watchedRefillsLeft } from '../src/sim/manaRefill';
 import { buyExplorer, explorerGemCost, explorerSlots } from '../src/sim/world/explorers';
 import { map, T0 } from './helpers';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+const SPACING = OFFERS.spacingHours * HOUR;
 
-/** A kingdom with the store open (Townhall 2) and a big spender's budget. */
-function shop(): GameState {
+/** A kingdom with the store open (Townhall 2, or the level asked) and a big
+ *  spender's budget. */
+function shop(level = 2): GameState {
   const state = newGame(map, T0);
-  townhall(state).level = 2;
+  townhall(state).level = level;
   choosePayerProfile(state, 'SuperWhale', T0);
   return state;
 }
+
+const raiseTavern = (state: GameState): void => {
+  state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+};
 
 const byTrigger = (t: string): StoreSkuId => OFFER_ORDER.find((id) => STORE[id].opensOn === t)!;
 
@@ -51,18 +58,23 @@ describe('an offer window', () => {
     expect(offerOn(state, sku, T0 + 400 * DAY)).toBe(false);
   });
 
-  it('opens the next step of a chain the moment the step before is bought', () => {
+  it('opens the next step of a chain the day after the step before is bought', () => {
     const state = shop();
     refreshOffers(state, T0);
     const next = OFFER_ORDER.find((id) => STORE[id].opensOn === 'after')!;
     const before = STORE[next].after!;
-    expect(offerOn(state, next, T0)).toBe(false);
-    expect(buyStoreSku(state, before, T0)).toBe('Purchased');
-    expect(offerOn(state, next, T0)).toBe(true);
+    // Bought once the spacing has run, so only the day holds the next back.
+    expect(buyStoreSku(state, before, T0 + SPACING)).toBe('Purchased');
+    refreshOffers(state, T0 + SPACING);
+    const tomorrow = dailyResetsAt(T0 + SPACING);
+    refreshOffers(state, tomorrow - 1);
+    expect(offerOn(state, next, tomorrow - 1)).toBe(false);
+    refreshOffers(state, tomorrow);
+    expect(offerOn(state, next, tomorrow)).toBe(true);
   });
 
   it('closes on the clock it is handed, and a trigger that comes back waits out its cooldown', () => {
-    const state = shop();
+    const state = shop(3);
     const sku = byTrigger('buildersBusy');
     const { hours, cooldownHours } = STORE[sku];
     expect(offerTrigger(state, 'buildersBusy', T0)).toContain(sku);
@@ -76,20 +88,69 @@ describe('an offer window', () => {
     expect(offerOn(state, sku, cooled)).toBe(true);
   });
 
-  it('opens on a Townhall level raised, from its first level on', () => {
+  it('opens on a Townhall level raised, from its first level on, keeping the raise while it waits its turn', () => {
     const state = shop();
     const sku = byTrigger('townhall');
     refreshOffers(state, T0);
     expect(offerOn(state, sku, T0)).toBe(false);
     townhall(state).level = STORE[sku].townhall;
     refreshOffers(state, T0 + 1);
-    expect(offerOn(state, sku, T0 + 1)).toBe(true);
+    // The store's own offer opened at T0: this one waits.
+    expect(offerOn(state, sku, T0 + 1)).toBe(false);
+    refreshOffers(state, T0 + SPACING);
+    expect(offerOn(state, sku, T0 + SPACING)).toBe(true);
   });
 
-  it('opens when the Mana pool runs low', () => {
+  it('opens one at a time, spaced, in shelf order', () => {
     const state = shop();
-    const sku = byTrigger('manaLow');
+    raiseTavern(state);
+    refreshOffers(state, T0);
+    const open = () => OFFER_ORDER.filter((id) => offerOn(state, id, T0 + 2 * SPACING));
+    expect(open()).toEqual(['FirstPurchase']);
+    refreshOffers(state, T0 + SPACING - 1);
+    expect(open()).toEqual(['FirstPurchase']);
+    refreshOffers(state, T0 + SPACING);
+    expect(open()).toEqual(['FirstPurchase', 'NovicePack1']);
+  });
+
+  it('opens a need at once, whatever else just opened, but never below its Townhall level', () => {
+    const state = shop(2);
+    const sku = byTrigger('buildersBusy');
+    refreshOffers(state, T0);
+    expect(offerTrigger(state, 'buildersBusy', T0)).toEqual([]);
+    townhall(state).level = STORE[sku].townhall;
+    expect(offerTrigger(state, 'buildersBusy', T0)).toEqual([sku]);
+  });
+
+  it('opens when the Mana pool is empty and the day\'s ad refills are spent', () => {
+    const state = shop(3);
+    const sku = byTrigger('manaOut');
     addToWallet(state.city.wallet, 'Mana', -getWallet(state.city.wallet, 'Mana'));
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(false);
+    while (watchedRefillsLeft(state, T0) > 0) recordWatchedRefill(state, T0);
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(true);
+  });
+
+  it('opens a hero slot when a hero is left without one', () => {
+    const state = shop(3);
+    const sku = byTrigger('heroesBenched');
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(false);
+    state.heroes.owned.push(...HERO_ORDER.slice(0, 2));
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(true);
+  });
+
+  it('opens an explorer when every explorer is out', () => {
+    const state = shop(3);
+    const sku = byTrigger('explorersBusy');
+    state.landmarks.claimed[LANDMARKS.find((l) => l.kind === 'Watchtower')!.id] = true;
+    state.research.completed.push('Cartography');
+    refreshOffers(state, T0);
+    expect(offerOn(state, sku, T0)).toBe(false);
+    for (let i = 0; i < explorerSlots(state); i++) state.world.explorers.push({} as never);
     refreshOffers(state, T0);
     expect(offerOn(state, sku, T0)).toBe(true);
   });
@@ -103,7 +164,7 @@ describe('an offer window', () => {
   });
 
   it('survives a save', () => {
-    const state = shop();
+    const state = shop(3);
     offerTrigger(state, 'buildersBusy', T0);
     refreshOffers(state, T0);
     const back = deserialize(serialize(state, T0), map, T0);
@@ -142,10 +203,10 @@ describe('a purchase', () => {
     const sku = 'FirstPurchase' as StoreSkuId;
     refreshOffers(state, T0);
     expect(offerOn(state, sku, T0)).toBe(false);
-    state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
-    refreshOffers(state, T0);
-    expect(offerOn(state, sku, T0)).toBe(true);
-    const at = T0 + 3 * HOUR;
+    raiseTavern(state);
+    refreshOffers(state, T0 + SPACING);
+    expect(offerOn(state, sku, T0 + SPACING)).toBe(true);
+    const at = T0 + SPACING + 3 * HOUR;
     expect(buyStoreSku(state, sku, at)).toBe('Purchased');
     const hero = STORE[sku].hero!;
     expect(state.heroes.owned).toContain(hero);
@@ -171,8 +232,12 @@ describe('a purchase', () => {
 });
 
 describe('the daily offers', () => {
+  it('waits for its Townhall level', () => {
+    expect(dailyOffers(shop(2), T0)).toEqual([]);
+  });
+
   it('draws the same products however often it is asked, and a new set tomorrow', () => {
-    const state = shop();
+    const state = shop(3);
     const today = dailyOffers(state, T0);
     expect(today.length).toBeLessThanOrEqual(OFFERS.dailyCount);
     expect(today.every((id) => DAILY_POOL.includes(id))).toBe(true);
@@ -182,7 +247,7 @@ describe('the daily offers', () => {
   });
 
   it('sells each today up to its limit, and again after the reset', () => {
-    const state = shop();
+    const state = shop(3);
     const sku = dailyOffers(state, T0)[0]!;
     for (let i = 0; i < STORE[sku].limit; i++) expect(buyStoreSku(state, sku, T0)).toBe('Purchased');
     expect(dailyOn(state, sku, T0)).toBe(false);
@@ -234,7 +299,7 @@ describe('the offer splash', () => {
     try {
       vi.setSystemTime(T0);
       const state = shop();
-      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      raiseTavern(state);
       const first = freshPresenter(state);
       refreshOffers(state, first.now());
       // Opened in this session: it waits for the next one.
@@ -272,7 +337,7 @@ describe('the offer widget', () => {
       const game = freshPresenter(state);
       const first = () => game.offerWidgets().filter((w) => w.sku === 'FirstPurchase');
       expect(first()).toEqual([]);
-      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      raiseTavern(state);
       refreshOffers(state, game.now());
       expect(first().map((w) => [w.sku, w.state])).toEqual([['FirstPurchase', 'sale']]);
       expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, game.now())).toBe('Purchased');
@@ -292,7 +357,7 @@ describe('the offer widget', () => {
 describe('an offer\'s sale', () => {
   it('says its chain step, what it opens for good, and whether it is sold once ever', async () => {
     const { freshPresenter } = await import('./helpers');
-    const state = shop();
+    const state = shop(3);
     const game = freshPresenter(state);
     refreshOffers(state, game.now());
     const novice = game.offerSale('NovicePack1' as StoreSkuId);
@@ -315,10 +380,11 @@ describe('the grouped offers widget', () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(T0);
-      const state = shop();
-      state.city.districts.push({ ...state.city.districts[0]!, uniqueId: 'tavern', definitionId: 'Tavern', state: 'Built' } as never);
+      const state = shop(3);
+      raiseTavern(state);
       const game = freshPresenter(state);
       refreshOffers(state, game.now());
+      offerTrigger(state, 'buildersBusy', game.now());
       expect(game.offerWidgets().length).toBeGreaterThan(1);
       expect(buyStoreSku(state, 'FirstPurchase' as StoreSkuId, game.now())).toBe('Purchased');
       vi.setSystemTime(dailyResetsAt(T0));

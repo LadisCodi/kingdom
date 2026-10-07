@@ -28,6 +28,11 @@
           "type": "int",
           "min": 0,
           "doc": "How many daily offers the store shows each day, drawn from the shelf-daily products."
+        },
+        "spacingHours": {
+          "type": "int",
+          "min": 0,
+          "doc": "Hours after an offer's window opens before another may open on its own (store, door, chain, Townhall level). An offer that answers a need — manaLow, manaOut, buildersBusy, explorersBusy, heroesBenched — does not wait, but counts."
         }
       }
     }
