@@ -103,6 +103,7 @@ describe('a deposit\'s district', () => {
     for (const s of b.seats) if (s?.bot) s.nextMoveAt = null;
     // No camp guards or raids it: this is about the store alone.
     b.beaten = { [seat]: data.hexes.filter((h) => h.camp !== null).map((h) => h.index) };
+    for (const r of Object.values(b.raids ?? {})) r.at = Infinity;
     const first = claim(b, seat, step, T0);
     if (!first.ok) throw new Error(first.why);
     resolveTo(b, first.finishesAt);

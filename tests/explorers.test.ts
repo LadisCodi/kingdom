@@ -6,7 +6,7 @@ import { deserialize, serialize, type CatchUpReport } from '../src/sim/save';
 import type { GameState } from '../src/sim/state';
 import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import {
-  arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf,
+  arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf, fogStatesOf,
   explorerRushCost, finishExplorerWithGems, freshWorld, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt,
 } from '../src/sim/world/explorers';
 import { RUSH } from '../src/sim/data/definitions';
@@ -68,6 +68,15 @@ describe('a new kingdom on the board', () => {
     for (const n of boardNeighbors(homeIndex(state))) expect(fogStateOf(state, n, T0)).toBe('Sensed');
     for (const d of HEX_DIRS) expect(fogStateOf(state, hexIndex(d), T0)).toBe('Unknown');
     expect(fogStateOf(state, PORTAL_INDEX, T0)).toBe('Revealed');
+  });
+
+  it('reads the fog of the whole world at once as it reads one hex', () => {
+    const state = freshGame();
+    // A scatter of revealed hexes, Portals and seams among them.
+    const fog = bitsFrom(Array.from({ length: BOARD_SIZE }, (_, i) => i).filter((i) => (i * 7919) % 11 === 0));
+    const states = fogStatesOf(fog);
+    expect(states).toHaveLength(BOARD_SIZE);
+    for (let i = 0; i < BOARD_SIZE; i++) expect(states[i]).toBe(fogStateOf(state, i, T0, fog));
   });
 
   it('has its board and seat from its own seed', () => {

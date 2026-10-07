@@ -13,10 +13,11 @@ import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } f
 import {
   claim, claimGold, claimRefusal, collect, delveRoom, descendPortal, districtOf, districtRate, drainEffects,
   floorReward, portalClosesAt, portalEvent, portalOpen, portalOpensAt, nextRoom, roomPower, roomReward, emptyWorld, join,
-  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, upgrade,
+  recall, recomputeChains, resolveTo, sendArmy, snapshotOf, storedAt, tribute, upgrade,
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
+import { badBody } from '../src/worldServer/serve';
 import type { ServerBoard } from '../src/worldServer/types';
 
 const T0 = Date.parse('2026-08-20T12:00:00Z');
@@ -31,6 +32,8 @@ function quietBoard(): { b: ServerBoard; seat: number } {
   const w = emptyWorld();
   const { board, seat } = join(w, { id: 'me', name: 'Me', prefer: { id: 'test', seed: 0x5eed, seat: 0 } }, T0);
   for (const s of board.seats) if (s?.bot) s.nextMoveAt = null;
+  // No camp raids: these tests are about something else (tests/worldRaids).
+  for (const r of Object.values(board.raids ?? {})) r.at = Infinity;
   return { b: board, seat };
 }
 
@@ -253,6 +256,8 @@ describe('armies', () => {
     const line = hexLine(hexAt(home(rival)), hexAt(home(seat))).map(hexIndex);
     let t = T0;
     for (const i of line.slice(1, -1)) {
+      // A camp on the road is paid off first.
+      if (claimRefusal(b, rival, i, t) === 'Guarded') tribute(b, rival, i, t);
       if (b.hexes[i] === undefined && claimRefusal(b, rival, i, t) === null) {
         claim(b, rival, i, t);
         t += CLAIM_MS;
@@ -518,5 +523,18 @@ describe('the Dark Portal', () => {
     const owed = drainEffects(b, seat);
     expect(owed.some((e) => e.kind === 'loot' && (e.gems ?? 0) > 0)).toBe(true);
     expect(b.armies[0]?.phase ?? 'home').toBe('home');
+  });
+});
+
+describe('the edge function door', () => {
+  // The local stand-in never reads the body check, so a command missing from
+  // it worked offline and was refused as Offline online.
+  it('takes every command the server handles', () => {
+    for (const cmd of [
+      { kind: 'hurry', index: 3, seconds: 60 },
+      { kind: 'hostRelic', index: 3, relic: 'x', level: 1 },
+      { kind: 'unhostRelic', relic: 'x' },
+    ]) expect(badBody({ opId: 'op', ack: 0, cmd })).toBeNull();
+    expect(badBody({ opId: 'op', ack: 0, cmd: { kind: 'nope' } })).toBe('cmd');
   });
 });

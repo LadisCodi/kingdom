@@ -7,7 +7,7 @@ import { WORLD_BUILD } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard } from '../src/sim/world/board';
 import { PORTAL_INDEX, boardNeighbors, hexAt, hexDistance, hexIndex, hexLine } from '../src/sim/world/hex';
 import {
-  chapelsAllowed, claim, claimRefusal, districtOf, drainEffects, emptyWorld, hasChapel, hostRelic, join, resolveTo,
+  chapelsAllowed, claim, claimRefusal, districtOf, drainEffects, emptyWorld, hasChapel, hostRelic, join, resolveTo, tribute,
   sendArmy, snapshotOf, unhostRelic, upgrade, upgradeRefusal,
 } from '../src/worldServer/core';
 import type { ServerBoard } from '../src/worldServer/types';
@@ -106,6 +106,8 @@ describe('a world relic in a Chapel', () => {
     const line = hexLine(hexAt(SEAT_INDICES[rival]), hexAt(SEAT_INDICES[seat])).map(hexIndex);
     let t = T0;
     for (const i of line.slice(1, -1)) {
+      // A camp on the road is paid off first.
+      if (claimRefusal(b, rival, i, t) === 'Guarded') tribute(b, rival, i, t);
       if (b.hexes[i] === undefined && claimRefusal(b, rival, i, t) === null) {
         claim(b, rival, i, t);
         t += CLAIM_MS;

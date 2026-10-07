@@ -113,7 +113,9 @@ describe('collecting', () => {
     const board = game.worldSource().board();
     const at = boardNeighbors(SEAT_INDICES[game.state.world.board.seat]).find((n) =>
       hexActions(game.worldSource(), game.worldSeat(), board.hexes[n], SEEN).some((a) => a.kind === 'claim')
-      && districtRate(board.hexes[n]).currency !== null && districtRate(board.hexes[n]).currency !== 'Gold')!;
+      && districtRate(board.hexes[n]).currency !== null && districtRate(board.hexes[n]).currency !== 'Gold'
+      // No camp beside it to raid it: this is about the store.
+      && boardNeighbors(n).every((c) => board.hexes[c].camp === null))!;
     await game.doClaimHex(at, claimGold(0));
     clock.t += CLAIM_MS + 10 * 3_600_000;
     advance(game.state, map, clock.t);

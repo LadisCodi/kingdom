@@ -44,10 +44,14 @@ export type Served =
   | { status: 200; reply: unknown }
   | { status: 400 | 409; error: string };
 
-const KINDS: ReadonlySet<WorldCommandKind> = new Set<WorldCommandKind>([
-  'join', 'snapshot', 'claim', 'upgrade', 'tribute', 'repair', 'finish', 'collect', 'reportSeen', 'sendArmy', 'recall', 'delveRoom', 'descendPortal', 'setBoost',
-  'setCrest',
-]);
+/** Every command the server takes. A record, not a list, so a command added
+ *  to `WorldCommands` and missing here is a type error, not a 400 online. */
+const KIND_TABLE: Record<WorldCommandKind, true> = {
+  join: true, snapshot: true, claim: true, upgrade: true, tribute: true, repair: true, finish: true, hurry: true,
+  collect: true, reportSeen: true, sendArmy: true, recall: true, delveRoom: true, descendPortal: true, setBoost: true,
+  setCrest: true, hostRelic: true, unhostRelic: true,
+};
+const KINDS: ReadonlySet<string> = new Set(Object.keys(KIND_TABLE));
 
 /** How many times a request starts again on a board written under it. */
 const ATTEMPTS = 5;

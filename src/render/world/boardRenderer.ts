@@ -12,22 +12,25 @@
 // stands on it rising out as a pale silhouette; Unknown is under the cloud
 // bank. A reveal eases a hex from one to the next.
 //
-// Three canvases, bottom to top: the GROUND (plates, sides, seams, the grey
-// of a cut-off hex), the CLOUD BANK and its veil, and this one — first the
-// rims on the hex edges (ownership, selection), then everything that stands
-// on a hex, then every mark over the board. So the clouds lap over the near
-// edge of a tile, and nothing upright is hidden or under a rim.
+// Four canvases, bottom to top: the GROUND (plates, sides, seams, the grey
+// of a cut-off hex), the CLOUD BANK and its veil, what STANDS on the board —
+// first the rims on the hex edges (ownership, selection), then everything
+// upright on a hex — and this one, every mark over the board that moves or
+// counts down. So the clouds lap over the near edge of a tile, and nothing
+// upright is hidden or under a rim. The ground and what stands are kept,
+// and slide under a pan (keepLayers): only this canvas is drawn every frame.
 
 import type { GameState } from '../../sim/state';
 import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, exploreGold, fogStateOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
+  arrivesAt, exploreGold, fogStatesOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
 import { crestOf, type Crest } from '../../sim/crest';
 import { chargeUrl, fieldUrl } from '../../ui/crestArt';
-import type { WorldSource } from '../../sim/world/source';
+import type { Seat, WorldSource } from '../../sim/world/source';
+import type { HexBits } from '../../sim/world/fogBits';
 import type { ArmyView } from '../../worldServer/types';
 import { depositMaterial, type WorldDistrict, type WorldTerrain } from '../../sim/world/types';
 import { formatCount, formatCountdown } from '../../ui/format';
@@ -40,7 +43,7 @@ import {
 import { TILT, hexCorners, labelShown, regionEdges, type WorldLabel } from './hexLayout';
 import { drawCloudBank } from '../fog/fogLayer';
 import { DENSITY, HEX_GRID, MASK_ORIGIN, MASK_SPAN, maskIndex } from './cloudGrid';
-import type { HexCamera } from './hexCamera';
+import { HexCamera } from './hexCamera';
 import { featureNudge, hash01, hexDecorations } from './hexScatter';
 import { DIFFICULTY_COLOR, campDifficulty, campShown, strongestParty } from '../../sim/world/camps';
 import { ARTIFACTS, LAIRS, WORLD_DUNGEON } from '../../sim/data/definitions';
@@ -136,85 +139,54 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   }
   camera.settle();
   const layers = worldLayers(canvas);
-  if (layers.ground.width !== canvas.width || layers.ground.height !== canvas.height) {
-    layers.ground.width = canvas.width;
-    layers.ground.height = canvas.height;
-  }
-  const begin = (c: HTMLCanvasElement): CanvasRenderingContext2D => {
-    const g = c.getContext('2d')!;
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.clearRect(0, 0, c.width, c.height);
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.imageSmoothingEnabled = true;
-    g.imageSmoothingQuality = 'high';
-    return g;
-  };
-  const ctx = begin(canvas);
+  const ctx = canvas.getContext('2d')!;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   const { state, source, now } = frame;
   const board = source.board();
-  const fog = worldFogAt(state, now);
   const r = camera.hexRadius;
-  const states = withFriends(source, board.hexes.map((bh) => fogStateOf(state, bh.index, now, fog)));
-  const clock = performance.now();
   const motion = motionOf(canvas);
-  // THE GROUND, KEPT: plates, their blends, seams and roads change only with
-  // the camera, the fog, what is held and what has loaded — at rest it is
-  // not drawn again. A ground that is not stale is drawn into nothing.
-  let held = '';
-  for (const bh of board.hexes) {
-    const hc = source.hexOf(bh.index);
-    if (hc !== null) held += `${bh.index}:${hc.owner}:${hc.held ? 1 : 0}${hc.active ? 1 : 0}${hc.burnt ? 1 : 0};`;
-  }
-  const groundKey = `${camera.x}|${camera.y}|${camera.zoom}|${w}|${h}|${dpr}|${imageCounts().settled}|${states.join(',')}|${held}`;
-  const groundStale = groundKey !== motion.groundKey;
-  motion.groundKey = groundKey;
-  const ground = groundStale ? begin(layers.ground) : nowhere();
-  const density = easeDensities(motion, states.map((st) => DENSITY[st]), clock);
+  const facts = factsOf(source);
+  const states = fogStates(motion, state, source, now);
+  const clock = performance.now();
+  const density = easeDensities(motion, motion.targets!, clock);
   /** How much veil a hex carries, 0 clear to 1 Sensed or thicker. */
   const veilAt = (i: number): number => Math.min(1, density[i] / DENSITY.Sensed);
   /** How much of the bank still stands on a hex, 0 to 1. */
   const bankAt = (i: number): number => Math.max(0, (density[i] - DENSITY.Sensed) / (1 - DENSITY.Sensed));
 
-  // The clouds, over the ground and under this canvas: every Unknown hex,
-  // and the world past the board's edge — the board stops and the clouds go
-  // on (19 §1) — and the veil over every Sensed one.
-  const mask = new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
-  let sig = '';
-  for (const bh of board.hexes) {
-    const byte = Math.round(density[bh.index] * 255);
-    mask[maskIndex(bh.hex)] = byte;
-    sig += `${byte},`;
-  }
+  // The clouds, over the ground and under what stands on it: every Unknown
+  // hex, and the world past the board's edge — the board stops and the
+  // clouds go on (19 §1) — and the veil over every Sensed one.
+  const mask = cloudMask(motion, board, density);
   drawCloudBank(layers.clouds, HEX_GRID, {
     w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,
     mask, maskX: MASK_ORIGIN, maskY: MASK_ORIGIN, maskW: MASK_SPAN, maskH: MASK_SPAN,
-    maskSig: sig, clock,
+    maskSig: String(motion.maskVersion), clock,
     // Far out, the puffs grow so they stay calm: the texture at twice the
     // size takes over between these zooms.
     far: smoothstep(FAR_FROM_ZOOM, FAR_FULL_ZOOM, camera.zoom),
   });
 
-  // Borders: each kingdom's city and the ground it holds or is claiming, as
-  // far as the player can see it, in its owner's colour — dashed round a hex
-  // whose district is still building. Drawn before anything stands on the
-  // board, so it lies over the land and its veil and under what stands there.
-  for (const seat of source.seats()) {
-    const region = [seat.index, ...board.hexes.filter((bh) => source.hexOf(bh.index)?.owner === seat.seat).map((bh) => bh.index)]
-      .filter((i) => states[i] !== 'Unknown');
-    if (region.length === 0) continue;
-    const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
-    const seen = region.some((i) => states[i] === 'Revealed');
-    const claiming = (h: Hex): boolean => source.hexOf(hexIndex(h))?.held === false;
-    drawBorder(ctx, camera, region.map(hexAt), color, seen ? 1 : 0.55, 3, claiming);
-  }
-
-  // The selected hex's rim, the same way. A tap flashes the hex and swells
-  // its rim for a moment, so it is answered before the sheet is read.
+  // The selected hex: a tap flashes it and swells its rim for a moment, so
+  // it is answered before the sheet is read.
   if (frame.selected !== motion.selected) {
     motion.selected = frame.selected;
     motion.pressAt = clock;
   }
+
+  // THE KEPT LAYERS: the ground, and everything that stands on the board,
+  // drawn again only when what they show changes; a pan slides them.
+  keepLayers(layers, camera, frame, motion, facts, states, veilAt, w, h, dpr, clock);
+
+  // From here on, THIS canvas: what moves or counts down, over everything.
+  const onScreen = (c: { x: number; y: number }, above = 3): boolean =>
+    c.x >= -r * 2 && c.x <= w + r * 2 && c.y >= -r * above && c.y <= h + r * 2;
+
   if (frame.selected !== null) {
     const press = Math.max(0, 1 - (clock - motion.pressAt) / PRESS_MS);
     if (press > 0) {
@@ -224,29 +196,19 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       ctx.fillStyle = `rgba(255, 244, 214, ${(0.5 * press * press).toFixed(3)})`;
       ctx.fill();
       ctx.restore();
+      drawBorder(ctx, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4 * (1 + 0.8 * press));
     }
-    drawBorder(ctx, camera, [hexAt(frame.selected)], PALETTE.selected, 1, 4 * (1 + 0.8 * press));
   }
 
-  // Row by row, top to bottom, so a prop that rises over the hex above is
-  // drawn after it.
-  for (const bh of board.hexes) {
-    const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
-    drawHex(ground, ctx, camera, bh, states[bh.index], veilAt(bh.index), c, frame, (sx, sy) => {
-      const i = hexIndex(camera.screenToHex(sx, sy));
-      return i < 0 || states[i] !== 'Unknown';
-    });
+  // Over the ground the player holds or claims: a builder's time left, or a
+  // store ready to collect.
+  for (const index of facts.held) {
+    const fogState = states[index];
+    if (fogState === 'Unknown') continue;
+    const c = camera.hexToScreen(hexAt(index));
+    if (!onScreen(c)) continue;
+    drawHeldMarks(ctx, camera, source.hexOf(index)!, c, fogState, now);
   }
-
-  // Where two terrains meet, each plate fades softly across the edge into
-  // its neighbour, so the ground reads as land rather than tiles.
-  if (groundStale) blendPlates(ground, camera, frame, states, w, h);
-
-  // Roads: every standing district joined to its owner's neighbours, its
-  // city included — on the ground, over the plates, so what stands on a
-  // hex stands over it (19 §7.1).
-  if (groundStale) drawRoads(ground, camera, frame, states);
 
   // Burnt districts: fire at their foot and smoke rising in columns (19 §5.5).
   // A raid to come is an arc from the camp to each district of the player's
@@ -254,16 +216,16 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   // "this camp raids this district in this time".
   const raids: Array<{ camp: number; target: number }> = [];
   const raidAt = new Map<number, number>();
-  for (const bh of board.hexes) {
-    const hc = source.hexOf(bh.index);
-    if (hc === null || states[bh.index] !== 'Revealed') continue;
+  for (const index of facts.held) {
+    const hc = source.hexOf(index)!;
+    if (states[index] !== 'Revealed') continue;
     if (hc.burnt) {
-      const c = camera.hexToScreen(bh.hex);
-      if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 4 || c.y > h + r * 2) continue;
-      drawFire(ctx, camera, c, bh.index, clock);
+      const c = camera.hexToScreen(hexAt(index));
+      if (!onScreen(c, 4)) continue;
+      drawFire(ctx, camera, c, index, clock);
     } else if (hc.threat != null) {
       for (const camp of hc.threat.camps) {
-        raids.push({ camp, target: bh.index });
+        raids.push({ camp, target: index });
         raidAt.set(camp, Math.min(raidAt.get(camp) ?? Infinity, hc.threat.nextRaidAt));
       }
     }
@@ -283,7 +245,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (states[bh.index] !== 'Revealed' || bh.camp === null || !campShown(source, bh, 'Revealed')) continue;
     if (!raidAt.has(bh.index) && !shows('camp')) continue;
     const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    if (!onScreen(c)) continue;
     // Its power, in the units of the player's own army, coloured by how it
     // compares with the strongest party they could send.
     const difficulty = campDifficulty(bh.camp.power, party);
@@ -300,7 +262,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (!shows('dungeon')) break;
     if (!bh.features.includes('Dungeon') || states[bh.index] !== 'Revealed') continue;
     const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    if (!onScreen(c)) continue;
     const camped = (frame.armies ?? []).some((a) => a.target === bh.index && a.purpose === 'delve' && a.phase === 'camp'
       && source.seats()[a.owner]?.owner.you === true);
     drawProgressRing(ctx, camera, c.x, c.y - r * 0.55, source.delved(bh.index), total, camped);
@@ -314,7 +276,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     const material = depositMaterial(bh.features);
     if (material === null) continue;
     const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    if (!onScreen(c)) continue;
     drawRich(ctx, camera, c.x + camera.hexWidth * 0.3, c.y + r * 0.1, material, clock + bh.index * 397);
   }
 
@@ -324,7 +286,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (!shows('promise')) break;
     if (states[bh.index] !== 'Sensed' || bh.scout === null) continue;
     const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 3 || c.y > h + r * 2) continue;
+    if (!onScreen(c)) continue;
     const going = tripRevealing(state, bh.index) !== null;
     const seat = state.world.board.seat;
     const icon = bh.scout.reward === 'Pack' ? 'pack'
@@ -355,7 +317,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     if (!seat.owner.you && (states[seat.index] === 'Unknown' || (!friend && !shows('rival')))) continue;
     const c = camera.hexToScreen(hexAt(seat.index));
     if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 2 || c.y > h + r * 3) continue;
-    const color = seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
+    const color = seatColor(seat);
     const crest = crestOf(seat.owner.name, seat.owner.you ? state.kingdom.profile.crest : seat.owner.crest);
     drawNameplate(ctx, camera, c.x, c.y + r * 0.62, seat.owner.name, color, seat.owner.you, crest);
   }
@@ -365,13 +327,306 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   for (const trip of state.world.explorers) drawExplorer(ctx, camera, trip, now, routeAlpha);
   for (const army of frame.armies ?? []) {
     const seat = source.seats()[army.owner];
-    const color = seat === undefined ? '#888' : seat.owner.you ? SEAT_COLORS.you
-      : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
+    const color = seat === undefined ? '#888' : seatColor(seat);
     const at = armyPosition(army, now);
     // A rival's army is seen only where the player can see.
     const near = states[at.from] !== 'Unknown' || states[at.to] !== 'Unknown';
     // Only the player's own armies show the way they are taking.
     if (seat?.owner.you || near) drawArmy(ctx, camera, army, at, color, now, seat?.owner.you === true, routeAlpha);
+  }
+}
+
+/** A seat's colour: the player's blue, or its rival's. */
+function seatColor(seat: Seat): string {
+  return seat.owner.you ? SEAT_COLORS.you : SEAT_COLORS.rivals[seat.owner.rival % SEAT_COLORS.rivals.length];
+}
+
+// ------------------------------------------------------- what is read once
+
+/** What the board draws from a source that only a new source changes: the
+ *  hexes held or claimed, each seat's ground for its border, and the
+ *  signatures the kept layers are compared against. */
+interface Facts {
+  /** Every hex someone holds or is claiming, by index. */
+  held: number[];
+  /** Each seat, and its city with the ground it holds or claims. */
+  regions: Array<{ seat: Seat; region: number[] }>;
+  /** What the ground is drawn from: who holds what, and how it stands. */
+  ground: string;
+  /** What everything standing on the board is drawn from. */
+  stand: string;
+}
+const factsBySource = new WeakMap<WorldSource, Facts>();
+
+function factsOf(source: WorldSource): Facts {
+  let f = factsBySource.get(source);
+  if (f !== undefined) return f;
+  const board = source.board();
+  const held: number[] = [];
+  const owned = new Map<number, number[]>();
+  let ground = '';
+  let stand = '';
+  for (const bh of board.hexes) {
+    const hc = source.hexOf(bh.index);
+    if (hc !== null) {
+      held.push(bh.index);
+      if (hc.owner !== null) {
+        const list = owned.get(hc.owner) ?? [];
+        list.push(bh.index);
+        owned.set(hc.owner, list);
+      }
+      const how = `${bh.index}:${hc.owner}:${hc.held ? 1 : 0}${hc.active ? 1 : 0}${hc.burnt ? 1 : 0}`;
+      ground += `${how};`;
+      stand += `${how}:${hc.district}:${hc.fortress}:${hc.work?.upgrade ?? ''}${hc.work?.toLevel ?? ''}`
+        + `:${hc.chapel ? 1 : 0}:${hc.relic?.id ?? ''};`;
+    }
+    if (bh.features.includes('Dungeon')) stand += `d${bh.index};`;
+    if (bh.camp !== null && source.campBeaten(bh.index)) stand += `b${bh.index};`;
+  }
+  const regions = source.seats().map((seat) => ({ seat, region: [seat.index, ...(owned.get(seat.seat) ?? [])] }));
+  for (const { seat } of regions) {
+    stand += `s${seat.seat}:${seat.owner.you ? 'y' : `${seat.owner.rival}${seat.owner.friend ? 'f' : ''}`};`;
+  }
+  f = { held, regions, ground, stand };
+  factsBySource.set(source, f);
+  return f;
+}
+
+/** Every hex's fog state, read again only when the fog or the source
+ *  changes — and each hex's density target with it. */
+function fogStates(m: Motion, state: GameState, source: WorldSource, now: number): readonly FogState[] {
+  const fog = worldFogAt(state, now);
+  if (m.states === undefined || m.fogSource !== source || m.fog === undefined || !sameBits(m.fog, fog)) {
+    m.fog = fog;
+    m.fogSource = source;
+    m.states = withFriends(source, fogStatesOf(fog));
+    m.statesSig = m.states.map((s) => s[0]).join('');
+    m.targets = m.states.map((s) => DENSITY[s]);
+  }
+  return m.states;
+}
+
+function sameBits(a: HexBits, b: HexBits): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/** The cloud bank's mask: each hex's density as a byte, and 255 past the
+ *  board. Its version moves on only when a byte does, so the texture is
+ *  uploaded — and what stands in the veil drawn again — only then. */
+function cloudMask(m: Motion, board: ReturnType<WorldSource['board']>, density: Float32Array): Uint8Array {
+  const next = m.maskNext ??= new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
+  for (const bh of board.hexes) next[maskIndex(bh.hex)] = Math.round(density[bh.index] * 255);
+  const mask = m.mask;
+  let same = mask !== undefined;
+  for (let i = 0; same && i < next.length; i++) if (mask![i] !== next[i]) same = false;
+  if (same) return mask!;
+  m.maskNext = mask ?? new Uint8Array(MASK_SPAN * MASK_SPAN).fill(255);
+  m.mask = next;
+  m.maskVersion += 1;
+  return next;
+}
+
+// --------------------------------------------------------- the kept layers
+
+/**
+ * THE GROUND AND WHAT STANDS ON IT, KEPT — the province's floor
+ * (mapRenderer.ts drawFloor), twice. Plates, blends, seams and roads on the
+ * ground canvas; borders, the selected rim and everything upright on the
+ * hexes — their silhouettes in the veil among them — on the canvas over
+ * the clouds. Neither changes unless the camera does, the fog does, what is
+ * held does or art loads, so both are drawn `SLIDE_MARGIN` px past the
+ * screen on every side:
+ *
+ * - a PAN slides them (a CSS transform, composited) until the screen
+ *   reaches their edge, and only then are they drawn again around the view;
+ * - a ZOOM scales them while it is still moving, and draws them again,
+ *   sharp, once it has settled — or sooner, if they no longer cover the
+ *   screen or are blown up past `SLIDE_MAX_SCALE`;
+ * - each is drawn again, where it lies, when what it shows changes.
+ */
+const SLIDE_MARGIN = 256;
+const SLIDE_MAX_SCALE = 1.3;
+const SLIDE_ZOOM_SETTLE_MS = 160;
+
+interface Slide {
+  /** The camera both layers were drawn through, frozen at the view. */
+  cam: HexCamera;
+  w: number;
+  h: number;
+  dpr: number;
+  /** Their size in CSS px. */
+  cw: number;
+  ch: number;
+  /** What each was last drawn from, or null to draw it. */
+  ground: string | null;
+  stand: string | null;
+  /** The zoom of the last frame, and when it last changed. */
+  lastZoom: number;
+  zoomAt: number;
+}
+
+function keepLayers(
+  layers: WorldLayers, camera: HexCamera, frame: WorldFrame, motion: Motion, facts: Facts,
+  states: readonly FogState[], veilAt: (i: number) => number, w: number, h: number, dpr: number, clock: number,
+): void {
+  const zoom = camera.zoom;
+  let s = motion.slide;
+  if (s !== undefined && s.lastZoom !== zoom) {
+    s.lastZoom = zoom;
+    s.zoomAt = clock;
+  }
+  // Where the layers as drawn land on screen now.
+  const place = (sl: Slide) => {
+    const px = sl.cam.x + (-SLIDE_MARGIN - w / 2) / sl.cam.zoom;
+    const py = sl.cam.y + (-SLIDE_MARGIN - h / 2) / sl.cam.zoom;
+    return { k: zoom / sl.cam.zoom, x: (px - camera.x) * zoom + w / 2, y: (py - camera.y) * zoom + h / 2 };
+  };
+  let at = s === undefined ? null : place(s);
+  const keep = s !== undefined && at !== null
+    && s.w === w && s.h === h && s.dpr === dpr
+    && (s.cam.zoom === zoom || (clock - s.zoomAt < SLIDE_ZOOM_SETTLE_MS && at.k <= SLIDE_MAX_SCALE))
+    && at.x <= 0 && at.y <= 0 && at.x + s.cw * at.k >= w && at.y + s.ch * at.k >= h;
+  if (!keep || s === undefined) {
+    const cam = new HexCamera({ clientWidth: w, clientHeight: h });
+    cam.x = camera.x;
+    cam.y = camera.y;
+    cam.zoom = zoom;
+    const cw = w + 2 * SLIDE_MARGIN;
+    const ch = h + 2 * SLIDE_MARGIN;
+    for (const c of [layers.ground, layers.stand]) {
+      const bw = Math.round(cw * dpr);
+      const bh = Math.round(ch * dpr);
+      if (c.width !== bw || c.height !== bh) {
+        c.width = bw;
+        c.height = bh;
+      }
+      c.style.width = `${cw}px`;
+      c.style.height = `${ch}px`;
+    }
+    s = { cam, w, h, dpr, cw, ch, ground: null, stand: null, lastZoom: zoom, zoomAt: s?.zoomAt ?? -Infinity };
+    motion.slide = s;
+    at = place(s);
+  }
+  const settled = imageCounts().settled;
+  const ground = `${settled}|${motion.statesSig}|${facts.ground}`;
+  const stand = `${settled}|${motion.statesSig}|${motion.maskVersion}|${frame.selected}|${facts.stand}`;
+  if (s.ground !== ground) {
+    s.ground = ground;
+    drawGroundLayer(beginSlide(layers.ground, dpr), s.cam, frame, states, w, h);
+  }
+  if (s.stand !== stand) {
+    s.stand = stand;
+    drawStandLayer(beginSlide(layers.stand, dpr), s.cam, frame, facts, states, veilAt, w, h);
+  }
+  // Snapped to the device pixel while not scaled, so a still layer is never
+  // resampled.
+  const x = at!.k === 1 ? Math.round(at!.x * dpr) / dpr : at!.x;
+  const y = at!.k === 1 ? Math.round(at!.y * dpr) / dpr : at!.y;
+  const transform = at!.k === 1 ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px) scale(${at!.k})`;
+  for (const c of [layers.ground, layers.stand]) if (c.style.transform !== transform) c.style.transform = transform;
+}
+
+/** A kept layer, cleared, drawing in SCREEN coordinates shifted by the margin. */
+function beginSlide(c: HTMLCanvasElement, dpr: number): CanvasRenderingContext2D {
+  const g = c.getContext('2d')!;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, c.width, c.height);
+  g.setTransform(dpr, 0, 0, dpr, SLIDE_MARGIN * dpr, SLIDE_MARGIN * dpr);
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = 'high';
+  return g;
+}
+
+/** Is a hex centred at `c` on a kept layer — `above` radii of art over it? */
+const onSlide = (c: { x: number; y: number }, r: number, w: number, h: number, above = 3): boolean =>
+  c.x >= -SLIDE_MARGIN - r * 2 && c.x <= w + SLIDE_MARGIN + r * 2
+  && c.y >= -SLIDE_MARGIN - r * above && c.y <= h + SLIDE_MARGIN + r * 2;
+
+/** The ground: each seen hex's side, plate and seam, the grey of ground cut
+ *  off or burnt, then the plates' blends and the roads over them. */
+function drawGroundLayer(
+  g: CanvasRenderingContext2D, cam: HexCamera, frame: WorldFrame, states: readonly FogState[], w: number, h: number,
+): void {
+  const r = cam.hexRadius;
+  const hw = cam.hexWidth;
+  for (const bh of frame.source.board().hexes) {
+    // Under the clouds, the hex is not there.
+    if (states[bh.index] === 'Unknown') continue;
+    const c = cam.hexToScreen(bh.hex);
+    if (!onSlide(c, r, w, h)) continue;
+    // The tile's thickness under its two lower edges: hidden by the row in
+    // front, it shows only along the board's near rim and over the clouds.
+    drawSkirt(g, c.x, c.y, r);
+    // A city's hex and the Portal have their own drawing; every other hex is
+    // its plate and its art (world-hex-art.md §2–§3).
+    const held = bh.seat === null && bh.role !== 'portal' ? frame.source.hexOf(bh.index) : null;
+    g.save();
+    hexPath(g, c.x, c.y, r);
+    g.clip();
+    if (bh.role === 'portal') {
+      drawPortalGround(g, c.x, c.y, r);
+    } else if (bh.terrain !== null) {
+      const art = hexArt(bh.terrain, bh.features, held?.district ?? null, hw < STRATEGIC_PX);
+      g.fillStyle = PLATE_COLOR[bh.terrain];
+      g.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+      drawSprite(g, variant(art.plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+    }
+    g.restore();
+    // Cut off from its city: greyed; burnt by raiders: charred (art-direction §8).
+    if (held !== null && bh.terrain !== null) {
+      const wash = held.held && !held.active ? CUT_OFF : held.burnt ? BURNT : null;
+      if (wash !== null) {
+        hexPath(g, c.x, c.y, r);
+        g.fillStyle = wash;
+        g.fill();
+      }
+    }
+    hexPath(g, c.x, c.y, r * 0.995);
+    g.strokeStyle = SEAM;
+    g.lineWidth = Math.max(1, r * 0.025);
+    g.stroke();
+  }
+  // Where two terrains meet, each plate fades softly across the edge into
+  // its neighbour, so the ground reads as land rather than tiles.
+  blendPlates(g, cam, frame, states, w, h);
+  // Roads: every standing district joined to its owner's neighbours, its
+  // city included — on the ground, over the plates, so what stands on a
+  // hex stands over it (19 §7.1).
+  drawRoads(g, cam, frame, states);
+}
+
+/** Everything standing on the board: first the rims on the hex edges —
+ *  each kingdom's border, the selected hex's — then, row by row from the
+ *  back, what stands on each hex. */
+function drawStandLayer(
+  g: CanvasRenderingContext2D, cam: HexCamera, frame: WorldFrame, facts: Facts, states: readonly FogState[],
+  veilAt: (i: number) => number, w: number, h: number,
+): void {
+  const r = cam.hexRadius;
+  // Borders: each kingdom's city and the ground it holds or is claiming, as
+  // far as the player can see it, in its owner's colour — dashed round a hex
+  // whose district is still building.
+  const claiming = (hex: Hex): boolean => frame.source.hexOf(hexIndex(hex))?.held === false;
+  for (const { seat, region } of facts.regions) {
+    const seen = region.filter((i) => states[i] !== 'Unknown');
+    if (seen.length === 0) continue;
+    const lit = seen.some((i) => states[i] === 'Revealed');
+    drawBorder(g, cam, seen.map(hexAt), seatColor(seat), lit ? 1 : 0.55, 3, claiming);
+  }
+  if (frame.selected !== null) drawBorder(g, cam, [hexAt(frame.selected)], PALETTE.selected, 1, 4);
+  // Row by row, top to bottom, so a prop that rises over the hex above is
+  // drawn after it.
+  const seenAt = (sx: number, sy: number): boolean => {
+    const i = hexIndex(cam.screenToHex(sx, sy));
+    return i < 0 || states[i] !== 'Unknown';
+  };
+  for (const bh of frame.source.board().hexes) {
+    if (states[bh.index] === 'Unknown') continue;
+    const c = cam.hexToScreen(bh.hex);
+    if (!onSlide(c, r, w, h)) continue;
+    drawStanding(g, cam, bh, states[bh.index], veilAt(bh.index), c, frame, seenAt);
   }
 }
 
@@ -443,12 +698,23 @@ const smoothstep = (a: number, b: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** What the board remembers between frames, for what moves on screen
- *  alone: each hex's density as it eases toward its fog state, and the tap
- *  on the selected hex. */
+/** What the board remembers between frames: the fog it last read, each
+ *  hex's density as it eases toward its fog state, the cloud mask, the tap
+ *  on the selected hex, and the kept layers. */
 interface Motion {
-  /** What the ground was last drawn from (drawWorld). */
-  groundKey?: string;
+  /** The fog and source the states were read from (fogStates). */
+  fog?: HexBits;
+  fogSource?: WorldSource;
+  states?: FogState[];
+  /** The states, a letter a hex, to compare layers against. */
+  statesSig?: string;
+  /** Each hex's density as its state would have it. */
+  targets?: number[];
+  /** The cloud mask, the next one being filled, and how often it changed. */
+  mask?: Uint8Array;
+  maskNext?: Uint8Array;
+  maskVersion: number;
+  slide?: Slide;
   density: Float32Array | null;
   at: number;
   selected: number | null;
@@ -459,7 +725,7 @@ const motions = new WeakMap<HTMLCanvasElement, Motion>();
 function motionOf(canvas: HTMLCanvasElement): Motion {
   let m = motions.get(canvas);
   if (m === undefined) {
-    m = { density: null, at: 0, selected: null, pressAt: -Infinity };
+    m = { density: null, at: 0, selected: null, pressAt: -Infinity, maskVersion: 0 };
     motions.set(canvas, m);
   }
   return m;
@@ -551,7 +817,7 @@ function blendPlates(
     });
     if (!differs) continue;
     const c = camera.hexToScreen(bh.hex);
-    if (c.x < -r * 2 || c.x > w + r * 2 || c.y < -r * 2 || c.y > h + r * 2) continue;
+    if (!onSlide(c, r, w, h, 2)) continue;
     const plate = featheredPlate(variant(PLATE_SPRITE[bh.terrain], bh.index), r, camera.dpr);
     if (plate === null) continue;
     const rw = r * BLEND_OUTER;
@@ -666,63 +932,53 @@ function drawRoads(ctx: CanvasRenderingContext2D, camera: HexCamera, frame: Worl
   }
 }
 
-/** A context that draws nowhere: the ground's, on a frame it is kept. */
-let nowhereCtx: CanvasRenderingContext2D | null = null;
-function nowhere(): CanvasRenderingContext2D {
-  if (nowhereCtx === null) {
-    const c = document.createElement('canvas');
-    c.width = c.height = 1;
-    nowhereCtx = c.getContext('2d')!;
-  }
-  return nowhereCtx;
-}
-
-/** The canvases under the board's: the ground, then the clouds — made the
- *  first time the board is drawn and laid under it (`.world-layer`). */
+/** The layers under the board's canvas, bottom to top: the sky far below,
+ *  the ground, the clouds, and what stands on the board — made the first
+ *  time the board is drawn and laid under it (`.world-layer`). The ground
+ *  and what stands are kept and slide (keepLayers). */
 interface WorldLayers {
   ground: HTMLCanvasElement;
   clouds: HTMLCanvasElement;
+  stand: HTMLCanvasElement;
 }
 const worldLayerSets = new WeakMap<HTMLCanvasElement, WorldLayers>();
 
 function worldLayers(canvas: HTMLCanvasElement): WorldLayers {
   let layers = worldLayerSets.get(canvas);
   if (layers === undefined) {
-    const make = (): HTMLCanvasElement => {
-      const c = document.createElement('canvas');
-      c.className = 'world-layer';
+    const make = <K extends 'div' | 'canvas'>(tag: K, kind: string): HTMLElementTagNameMap[K] => {
+      const c = document.createElement(tag);
+      c.className = `world-layer ${kind}`;
       c.setAttribute('aria-hidden', 'true');
       canvas.parentElement?.insertBefore(c, canvas);
       return c;
     };
-    layers = { ground: make(), clouds: make() };
-    layers.ground.classList.add('world-ground');
+    make('div', 'world-sky');
+    layers = {
+      ground: make('canvas', 'world-slide'),
+      clouds: make('canvas', 'world-clouds'),
+      stand: make('canvas', 'world-slide'),
+    };
     worldLayerSets.set(canvas, layers);
   }
   return layers;
 }
 
-/** Lay `fills` over a hex: on its ground, and over what this canvas has
- *  drawn standing on it — never over the clouds between the two. */
-function veilHex(
-  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D,
-  c: { x: number; y: number }, r: number, fills: readonly string[],
-): void {
-  for (const g of [ground, ctx]) {
-    g.save();
-    if (g === ctx) g.globalCompositeOperation = 'source-atop';
-    hexPath(g, c.x, c.y, r);
-    for (const fill of fills) {
-      g.fillStyle = fill;
-      g.fill();
-    }
-    g.restore();
-  }
+/** Lay `fill` over what has been drawn standing on a hex. */
+function veilStanding(g: CanvasRenderingContext2D, c: { x: number; y: number }, r: number, fill: string): void {
+  g.save();
+  g.globalCompositeOperation = 'source-atop';
+  hexPath(g, c.x, c.y, r);
+  g.fillStyle = fill;
+  g.fill();
+  g.restore();
 }
 
-/** A canvas the size of the board's, for drawing what stands on a Sensed
- *  hex before it is turned into a silhouette. */
-const scratches = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
+/** A canvas for drawing what stands on one hex before it is washed: the
+ *  size of the largest hex's box so far, never of the whole board — it is
+ *  copied out once a hex, and a copy of a canvas drawn on again costs what
+ *  the canvas weighs. */
+let scratch: HTMLCanvasElement | null = null;
 
 /**
  * Draw what stands on a hex apart, then lay it on the board — so a wash over
@@ -735,26 +991,29 @@ function drawSilhouetted(
   draw: (g: CanvasRenderingContext2D) => void,
 ): void {
   const board = ctx.canvas;
-  let scratch = scratches.get(board);
-  if (scratch === undefined) {
-    scratch = document.createElement('canvas');
-    scratches.set(board, scratch);
-  }
-  if (scratch.width !== board.width || scratch.height !== board.height) {
-    scratch.width = board.width;
-    scratch.height = board.height;
+  const m = ctx.getTransform();
+  // The box everything on the hex stands in: on the board's coordinates,
+  // then in its backing pixels, cut to the canvas.
+  const ux0 = c.x - hw * 0.75;
+  const uy0 = c.y - r * 3.2;
+  const ux1 = c.x + hw * 0.75;
+  const uy1 = c.y + r * 1.1;
+  const x0 = Math.max(0, Math.floor(ux0 * m.a + m.e));
+  const y0 = Math.max(0, Math.floor(uy0 * m.d + m.f));
+  const x1 = Math.min(board.width, Math.ceil(ux1 * m.a + m.e));
+  const y1 = Math.min(board.height, Math.ceil(uy1 * m.d + m.f));
+  if (x1 <= x0 || y1 <= y0) return;
+  const bw = x1 - x0;
+  const bh = y1 - y0;
+  scratch ??= document.createElement('canvas');
+  if (scratch.width < bw || scratch.height < bh) {
+    scratch.width = Math.max(scratch.width, bw);
+    scratch.height = Math.max(scratch.height, bh);
   }
   const g = scratch.getContext('2d')!;
-  const m = ctx.getTransform();
-  // The box everything on the hex stands in, in backing pixels, on the canvas.
-  const x0 = Math.max(0, Math.floor((c.x - hw * 0.75) * m.a));
-  const y0 = Math.max(0, Math.floor((c.y - r * 3.2) * m.d));
-  const x1 = Math.min(board.width, Math.ceil((c.x + hw * 0.75) * m.a));
-  const y1 = Math.min(board.height, Math.ceil((c.y + r * 1.1) * m.d));
-  if (x1 <= x0 || y1 <= y0) return;
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.clearRect(x0, y0, x1 - x0, y1 - y0);
-  g.setTransform(m);
+  g.clearRect(0, 0, bw, bh);
+  g.setTransform(m.a, 0, 0, m.d, m.e - x0, m.f - y0);
   g.imageSmoothingEnabled = true;
   g.imageSmoothingQuality = 'high';
   draw(g);
@@ -766,12 +1025,12 @@ function drawSilhouetted(
     wash.addColorStop(0, rgba(SILHOUETTE_FOOT));
     wash.addColorStop(1, rgba(SILHOUETTE_TOP));
     g.fillStyle = wash;
-    g.fillRect(x0 / m.a, y0 / m.d, (x1 - x0) / m.a, (y1 - y0) / m.d);
+    g.fillRect(ux0, uy0, ux1 - ux0, uy1 - uy0);
     g.restore();
   }
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(scratch, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+  ctx.drawImage(scratch, 0, 0, bw, bh, x0, y0, bw, bh);
   ctx.restore();
 }
 
@@ -783,42 +1042,22 @@ function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
   ctx.closePath();
 }
 
-function drawHex(
-  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
+/** What stands on a seen hex: as itself, or on a Sensed hex as a silhouette
+ *  rising out of its veil. It is drawn apart whenever it is washed — the
+ *  veil, or the grey of a hex cut off from its city — so the wash never
+ *  reaches the rims drawn under it. */
+function drawStanding(
+  ctx: CanvasRenderingContext2D, camera: HexCamera, bh: BoardHex, fogState: FogState,
   veil: number, c: { x: number; y: number }, frame: WorldFrame,
   seenAt: (sx: number, sy: number) => boolean,
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
-
-  // Under the clouds, the hex is not there.
-  if (fogState === 'Unknown') return;
-
-  // The tile's thickness under its two lower edges: hidden by the row in
-  // front, it shows only along the board's near rim and over the clouds.
-  drawSkirt(ground, c.x, c.y, r);
-
   // A city's hex and the Portal have their own drawing; every other hex is
   // its plate and its art (world-hex-art.md §2–§3).
   const held = bh.seat === null && bh.role !== 'portal' ? frame.source.hexOf(bh.index) : null;
   const art = bh.terrain === null ? null : hexArt(bh.terrain, bh.features, held?.district ?? null, hw < STRATEGIC_PX);
 
-  ground.save();
-  hexPath(ground, c.x, c.y, r);
-  ground.clip();
-  if (bh.role === 'portal') {
-    drawPortalGround(ground, c.x, c.y, r);
-  } else if (bh.terrain !== null && art !== null) {
-    ground.fillStyle = PLATE_COLOR[bh.terrain];
-    ground.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
-    drawSprite(ground, variant(art.plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
-  }
-  ground.restore();
-
-  // What stands on the hex: as itself, or on a Sensed hex as a silhouette
-  // rising out of its veil. It is drawn apart whenever it is washed — the
-  // veil, or the grey of a hex cut off from its city — so the wash never
-  // reaches the rims drawn under it.
   const stand = (g: CanvasRenderingContext2D): void => {
     if (bh.seat !== null) {
       const mine = bh.index === homeIndex(frame.state);
@@ -853,7 +1092,7 @@ function drawHex(
         else drawProp(g, DISTRICT_STAND_IN[art.district.kind], c.x + hw * 0.12, c.y + r * 0.7 * TILT, hw * 0.42);
         g.restore();
       }
-      if (held !== null) drawHeld(ground, g, camera, held, c, fogState, frame);
+      if (held !== null) drawHeld(g, camera, held, c);
       // A camp stands at the hex's near left, in front of its feature (19 §5.4).
       if (campShown(frame.source, bh, fogState) && bh.camp !== null) {
         const own = `whex_camp_${bh.camp.creature.toLowerCase()}`;
@@ -864,12 +1103,6 @@ function drawHex(
   };
   if (veil > 0.01 || (held !== null && held.held && (!held.active || held.burnt === true))) drawSilhouetted(ctx, c, r, hw, veil, stand);
   else stand(ctx);
-
-
-  hexPath(ground, c.x, c.y, r * 0.995);
-  ground.strokeStyle = SEAM;
-  ground.lineWidth = Math.max(1, r * 0.025);
-  ground.stroke();
 }
 
 /** A camp's drawing, as a share of the hex's width. */
@@ -994,8 +1227,8 @@ function drawFortress(
 }
 
 function drawHeld(
-  ground: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D, camera: HexCamera,
-  held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, frame: WorldFrame,
+  ctx: CanvasRenderingContext2D, camera: HexCamera,
+  held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number },
 ): void {
   const r = camera.hexRadius;
   const hw = camera.hexWidth;
@@ -1017,12 +1250,21 @@ function drawHeld(
     const x = held.district === 'Shrine' ? c.x : c.x - hw * 0.26;
     drawProp(ctx, ARTIFACTS[held.relic.id].sprite, x, c.y - r * 0.62 * TILT, hw * 0.12);
   }
-  // Cut off from its city: greyed, buildings intact (art-direction §8).
-  if (held.held && !held.active) veilHex(ground, ctx, c, r, [CUT_OFF]);
+  // Cut off from its city: greyed, buildings intact (art-direction §8); its
+  // ground is greyed with it (drawGroundLayer).
+  if (held.held && !held.active) veilStanding(ctx, c, r, CUT_OFF);
   // Burnt by raiders: charred, its fires drawn over the board (19 §5.5).
-  else if (held.burnt) veilHex(ground, ctx, c, r, [BURNT]);
+  else if (held.burnt) veilStanding(ctx, c, r, BURNT);
+}
+
+/** Over held ground, what counts down or fills: a builder at work, or a
+ *  store ready to collect. */
+function drawHeldMarks(
+  ctx: CanvasRenderingContext2D, camera: HexCamera,
+  held: NonNullable<ReturnType<WorldSource['hexOf']>>, c: { x: number; y: number }, fogState: FogState, now: number,
+): void {
+  const r = camera.hexRadius;
   // A builder at work: an hourglass and the time left.
-  const now = frame.now;
   const busyUntil = !held.held ? held.standsAt : held.work?.at ?? null;
   if (busyUntil !== null && fogState === 'Revealed') drawPill(ctx, camera, c.x, c.y - r * 0.62, formatCountdown(Math.max(0, busyUntil - now) / 1000));
   // The player's own store, ready: a bubble with what it holds.
@@ -1411,14 +1653,20 @@ function drawBorder(
   const r = camera.hexRadius;
   const lineWidth = Math.max(2, width * camera.zoom * 1.4);
   const edges = regionEdges(region);
+  // Its glow: the line again under it, wider and fainter each time — what
+  // a canvas shadow blur looked like, without a blur on every stroke.
+  const blur = Math.max(2, r * 0.12);
+  const strokes = [
+    { width: lineWidth + blur * 1.1, alpha: 0.08 },
+    { width: lineWidth + blur * 0.7, alpha: 0.12 },
+    { width: lineWidth + blur * 0.35, alpha: 0.2 },
+    { width: lineWidth, alpha: 1 },
+  ];
   ctx.save();
-  ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = Math.max(2, r * 0.12);
-  ctx.lineWidth = lineWidth;
   for (const dash of [false, true]) {
     ctx.beginPath();
+    let any = false;
     for (const { hex, edge } of edges) {
       if (dashed(hex) !== dash) continue;
       const c = camera.hexToScreen(hex);
@@ -1427,10 +1675,16 @@ function drawBorder(
       const b = corners[(edge + 1) % 6];
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
+      any = true;
     }
+    if (!any) continue;
     ctx.lineCap = dash ? 'butt' : 'round';
     ctx.setLineDash(dash ? [lineWidth * 2.5, lineWidth * 1.8] : []);
-    ctx.stroke();
+    for (const s of strokes) {
+      ctx.globalAlpha = alpha * s.alpha;
+      ctx.lineWidth = s.width;
+      ctx.stroke();
+    }
   }
   ctx.restore();
 }
