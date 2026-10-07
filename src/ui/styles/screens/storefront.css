@@ -183,19 +183,36 @@
 .stx-offer-figure.is-empty { display: grid; place-items: center; align-self: center; width: 100%; margin: 0; }
 .stx-offer-figure.is-empty > .icon { --icon-size: calc(var(--px) * 80); }
 .stx-offer-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
+/* An offer's name on the calls' plank, red, nailed over the frame's top
+ * edge in the body's column, half above it. */
+.stx-offer-body { padding-top: calc(var(--px) * 12); }
 .stx-offer-name {
-  align-self: flex-start;
-  max-width: 82%;
-  padding: calc(var(--px) * 3) calc(var(--px) * 12);
-  background: linear-gradient(#c43a2c, #8e2219);
-  border-top: calc(var(--px) * 2) solid #e7b347;
-  border-bottom: calc(var(--px) * 2) solid #e7b347;
-  color: #fbe6c8;
+  --rb-h: calc(var(--px) * 36);
+  --rb-cap: calc(var(--rb-h) * 115 / 169);
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--px) * -18 - var(--rb-h) / 2);
+  left: calc(34% - var(--px) * 4);
+  max-width: calc(66% - var(--px) * 8);
+  display: flex;
+  align-items: center;
+  height: var(--rb-h);
+  box-sizing: border-box;
+  padding: 0 0 calc(var(--px) * 2);
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--rb-cap);
+  border-image: url('../../assets/plank-red.png') 0 115 fill / 0 var(--rb-cap) stretch;
+  color: #fff6e0;
   font-family: var(--font-ornate);
   font-weight: var(--weight-ornate);
   font-size: calc(var(--px) * 16);
-  line-height: 1.1;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 10, 6, 0.8);
+  filter: drop-shadow(0 calc(var(--px) * 2) calc(var(--px) * 2) rgba(60, 30, 10, 0.35));
 }
+.stx-offer-name > span { overflow: hidden; text-overflow: ellipsis; }
 .stx-offer-pitch { margin: 0; color: var(--ink-muted); font-size: calc(var(--px) * 12); line-height: 1.25; }
 .stx-offer-tiles { display: flex; gap: calc(var(--px) * 3); }
 .stx-offer-tiles > .ofs-tile { flex: 0 0 calc(var(--px) * 46); }
@@ -216,6 +233,7 @@
 .stx-offer-foot > .stx-timer { margin-right: auto; }
 .stx-seal {
   position: absolute;
+  z-index: 3; /* over the name's plank, which runs under it */
   top: calc(var(--px) * -32);
   right: calc(var(--px) * -4);
   display: grid;
