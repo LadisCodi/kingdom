@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
 import { formatDuration } from '../src/ui/format';
 import type { Game } from '../src/game';
-import { HARVEST, HEROES, LAIRS, LANDMARKS, QUESTS, TECHNOLOGIES, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, HEROES, LANDMARKS, QUESTS, TECHNOLOGIES, TRAINING } from '../src/sim/data/definitions';
 import { isTechComplete, pourKnowledge } from '../src/sim/research';
 import { validPlacementCells } from '../src/sim/districts';
 import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
@@ -332,42 +332,34 @@ describe('transient UI hints', () => {
   });
 });
 
-describe('the banner queue', () => {
-  it('hands banners back one at a time, in order', () => {
-    const game = freshPresenter();
-    game.queueBanner({ title: 'First', icon: '🌲', name: 'a', desc: '' });
-    game.queueBanner({ title: 'Second', icon: '🪨', name: 'b', desc: '' });
+describe('the news a presenter files (Docs/features/26-notices.md)', () => {
+  /** Every news filed since the last drain, by key, and the inbox emptied. */
+  const drain = (game: Game): string[] => {
+    const keys = game.state.notices.map((n) => n.key);
+    game.state.notices = [];
+    return keys;
+  };
 
-    expect(game.takeBanner()?.title).toBe('First');
-    expect(game.takeBanner()?.title).toBe('Second');
-    expect(game.takeBanner()).toBe(null);
-  });
-
-  it('a finished build announces itself', () => {
+  it('a finished build is a news, and the same build is one news however often it is seen', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     fund(state, { Gold: 9999, Wood: 9999, Stone: 9999, Food: 9999 });
     game.startPlacement('Housing');
     game.confirmBuild();
-    while (game.takeBanner() !== null) { /* drain anything already queued */ }
+    drain(game);
 
     vi.useFakeTimers();
     vi.setSystemTime(Date.now() + 60 * 60 * 1000); // an hour is past any build time
     game.tick();
+    game.tick();
 
-    const banner = game.takeBanner();
-    expect(banner?.title).toBe('Construction complete!');
-    expect(banner?.name).toBe('Housing');
+    const built = state.notices.filter((n) => n.group === 'built');
+    expect(built).toHaveLength(1);
+    const housing = state.city.districts.find((d) => d.definitionId === 'Housing' && d.state === 'Built')!;
+    expect(built[0]).toMatchObject({ district: housing.uniqueId, level: 1 });
   });
 
-  // What answers the player's own press is not announced: they know.
-  const drain = (game: Game): string[] => {
-    const titles: string[] = [];
-    for (let b = game.takeBanner(); b !== null; b = game.takeBanner()) titles.push(b.title);
-    return titles;
-  };
-
-  it('announces no research: it is instant, and the sheet says what it opened', () => {
+  it('files no research: it is instant, and the sheet says what it opened', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     for (const req of TECHNOLOGIES.Warrior.requires) completeTech(state, req);
@@ -394,7 +386,7 @@ describe('the banner queue', () => {
     expect(state.city.wallet.Gold).toBe(gold - 20 + (QUESTS.find((q) => q.id === 'Woodcraft')!.reward.Gold ?? 0));
   });
 
-  it('announces no claim, nor the first coin of a resource', () => {
+  it('files no claim, nor the first coin of a resource', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     const tower = LANDMARKS.find((l) => l.kind === 'Watchtower')!;
@@ -405,14 +397,13 @@ describe('the banner queue', () => {
     game.doClaimLandmark(tower.location);
     expect(state.landmarks.claimed[tower.id]).toBe(true);
     // Its wider sight may bring OTHER sites into view; those are news.
-    const sightings = new Set(['A place of power!', 'Lair sighted!', 'An abandoned building!']);
-    expect(drain(game).filter((t) => !sightings.has(t))).toEqual([]);
+    expect(drain(game).filter((k) => !k.startsWith('sighted:'))).toEqual([]);
     state.pendingDiscoveries.push('resource:Wood');
     game.notify();
     expect(drain(game)).toEqual([]);
   });
 
-  it('leaves a site a scene introduces to the scene, and tells a veteran by banner', () => {
+  it('leaves a site a scene introduces to the scene, and tells a veteran by news', () => {
     for (const veteran of [false, true]) {
       const state = firstGame();
       state.tutorial.veteran = veteran;
@@ -420,11 +411,9 @@ describe('the banner queue', () => {
       drain(game);
       state.pendingDiscoveries.push('site:Orcs', 'site:Goblins');
       game.notify();
-      const names: string[] = [];
-      for (let b = game.takeBanner(); b !== null; b = game.takeBanner()) names.push(b.name);
-      const orcs = LAIRS.Orcs.name;
-      expect(names.includes(orcs), `veteran ${veteran}`).toBe(veteran);
-      expect(names).toContain(LAIRS.Goblins.name);
+      const keys = drain(game);
+      expect(keys.includes('sighted:Orcs'), `veteran ${veteran}`).toBe(veteran);
+      expect(keys).toContain('sighted:Goblins');
     }
   });
 });

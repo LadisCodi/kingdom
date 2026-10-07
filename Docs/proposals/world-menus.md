@@ -184,8 +184,9 @@ Every hex opens the same card, built like the district card (Townhall Lv 1):
 
 ## 3.12 The art these menus use
 
-- **New** (ChatGPT, `Docs/art/originals/world-menus/`): the explorer's and
-  the Portal's vignettes (`whex_explorer`, `whex_portal`).
+- **New** (ChatGPT, `Docs/art/originals/world-menus/`): the explorer's
+  vignette (`whex_explorer`). The Portal's card shows the board's painted
+  Portal, shut or open (`whex_portal`, `whex_portal_open`, Docs/art/world/portal/).
 - **Recoloured** from shipped art: the purple ribbon (`ribbon-purple`, from
   the blue), the Portal's floor nodes (`portal-node*`, from the delve's) and
   its shaft's stone (`portal-rock`).

@@ -566,8 +566,14 @@ function drawGroundLayer(
     g.save();
     hexPath(g, c.x, c.y, r);
     g.clip();
-    if (bh.role === 'portal') {
+    if (bh.role === 'portal' && portalSprite(frame.source) === null) {
       drawPortalGround(g, c.x, c.y, r);
+    } else if (bh.role === 'portal') {
+      // The painted Portal carries its own ring of grass: it stands on
+      // grassland's plate so it meets its neighbours.
+      g.fillStyle = PLATE_COLOR.Grassland;
+      g.fillRect(c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
+      drawSprite(g, variant(hexArt('Grassland', [], null, hw < STRATEGIC_PX).plate, bh.index), c.x - r, c.y - r * TILT, r * 2, r * 2 * TILT);
     } else if (bh.terrain !== null) {
       const art = hexArt(bh.terrain, bh.features, held?.district ?? null, hw < STRATEGIC_PX);
       g.fillStyle = PLATE_COLOR[bh.terrain];
@@ -1068,7 +1074,9 @@ function drawStanding(
       const mine = bh.index === homeIndex(frame.state);
       drawProp(g, mine ? 'townhall_l8' : 'townhall_l4', c.x, c.y + r * 0.35 * TILT, hw * 0.86);
     } else if (bh.role === 'portal') {
-      drawPortal(g, c.x, c.y, r);
+      const sprite = portalSprite(frame.source);
+      if (sprite === null) drawPortal(g, c.x, c.y, r);
+      else drawProp(g, sprite, c.x, c.y + r * FOOT * TILT, hw * 1.1);
     } else if (art !== null) {
       // The district, which carries its feature in its art; or the feature,
       // with the district's stand-in in front of it until it has art.
@@ -1179,6 +1187,24 @@ function drawProp(ctx: CanvasRenderingContext2D, sprite: string, x: number, foot
   drawSprite(ctx, sprite, x - width / 2, footY - height, width, height);
 }
 
+/** The Portal's painted art, shut or open (Docs/art/world/portal/), or null
+ *  while it is not on disk. */
+function portalSprite(source: WorldSource): string | null {
+  const sprite = source.portal()?.open ? 'whex_portal_open' : 'whex_portal';
+  return spriteUrl(sprite) === null ? null : sprite;
+}
+
+/** The Portal's card portrait: its painted art, shut or open. */
+export function portalPortrait(open: boolean, px: number): HTMLElement {
+  const url = spriteUrl(open ? 'whex_portal_open' : 'whex_portal');
+  if (url === null) return portalThumb(px);
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = '';
+  img.draggable = false;
+  return img;
+}
+
 /** The Portal's hex has no ground: cracked dark stone. */
 function drawPortalGround(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
   const g = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r * 1.1);
@@ -1216,6 +1242,22 @@ function drawPortal(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
     ctx.fill();
     ctx.stroke();
   }
+}
+
+/** The Portal as the board draws it, alone on a small canvas: its card's
+ *  portrait (Docs/proposals/world-menus.md §3.6). */
+export function portalThumb(px: number): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+  canvas.width = canvas.height = Math.round(px * dpr);
+  const ctx = canvas.getContext('2d');
+  if (ctx !== null) {
+    ctx.scale(dpr, dpr);
+    const r = px * 0.62;
+    drawPortalGround(ctx, px / 2, px / 2, r);
+    drawPortal(ctx, px / 2, px * 0.56, r);
+  }
+  return canvas;
 }
 
 // ------------------------------------------------------------ held ground

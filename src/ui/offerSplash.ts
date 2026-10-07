@@ -275,27 +275,3 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
   game.onChange(refresh);
   refresh();
 }
-
-/** The pill on the right edge for a bought pack's next-day part: a countdown
- *  until tomorrow, then a glowing "Claim". It opens the splash. */
-export function mountNextDayPill(game: Game, root: HTMLElement): void {
-  const label = el('b', { class: 'nd-tab-label' }, '');
-  const tab = el('button', { class: 'ad-tab nd-tab', type: 'button', 'aria-label': 'Tomorrow’s reward' },
-    iconEl('chest', { size: 'lg' }), label);
-  let sku: StoreSkuId | null = null;
-  tab.addEventListener('click', () => { if (sku !== null) game.openOfferSplash(sku); });
-  root.replaceChildren(tab);
-
-  const refresh = (): void => {
-    const pill = game.nextDayPill();
-    const showing = pill !== null && !game.hasOpenSheet() && game.offerSplashOnScreen() === null;
-    root.hidden = !showing;
-    if (!showing) return;
-    sku = pill!.sku;
-    tab.classList.add('is-in');
-    tab.classList.toggle('is-ready', pill!.ready);
-    label.textContent = pill!.ready ? 'Claim' : formatCountdown(Math.max(0, Math.ceil((pill!.at - game.now()) / 1000)));
-  };
-  game.onChange(refresh);
-  refresh();
-}

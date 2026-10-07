@@ -107,7 +107,8 @@ Two routes pay it, and they share nothing but the prize.
 **By video**
 
 - Offered only **below half a pool**, on a cooldown **randomised 30–90 s**.
-- **5 a day.** With the day spent, the tab does not return until the reset.
+- Offered as the *Mana refill* notice ([`26-notices.md`](26-notices.md) §2.2), whose card's **Watch** plays it.
+- **5 a day.** With the day spent, the notice does not return until the reset.
 
 **By Gems**
 
@@ -129,7 +130,7 @@ Two routes pay it, and they share nothing but the prize.
 ### The screen
 
 - Both routes live in the **Mana sheet**, which the header gauge opens as well
-  as the offer tab — the Gem ladder is not an ad, so it must be reachable on a
+  as the Mana refill notice — the Gem ladder is not an ad, so it must be reachable on a
   day with no video left.
 - It carries the pool, the one rate line, and the two buttons under a single
   prize line — **Gems left, video right, equal widths**, each under its own

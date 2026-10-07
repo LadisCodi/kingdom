@@ -87,6 +87,8 @@ Every event is one row:
 | `reveal_unasked` | `cells` |
 | `return_tap` | `kind` |
 | `survey_opened` · `survey_claimed` | `level`, `paid` on a claim |
+| `notice_opened` | `id` — `news:<group>`, `state:<name>` or `more` — and `count`, the news it read |
+| `portal_prize_claimed` | `place` and `gems` — a closed Portal opening's ranking Gems claimed |
 | `friends_named` · `friends_invited` | — |
 | `crest_changed` | `tincture`, `charge` |
 | `friend_request` · `friend_accept` · `friend_decline` · `friend_remove` | — (only those that took); `from: 'search'` on a request from the search popup |

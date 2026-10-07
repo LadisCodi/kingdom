@@ -142,8 +142,9 @@ never a discount, because a discount dies at 100%.
   - Houses an awake Crown pays, and buildings with crews an awake Hammer
     speeds, wear a **+X%** badge.
   - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
-  - A window that closes raises a tab on the right edge — **The Tribute Crown
-    is asleep** · Activate — one tab for all of them (*2 relics are asleep*).
+  - A window that closes raises the *Relic asleep* notice
+    ([`26-notices.md`](26-notices.md) §2.2) — **The Tribute Crown is asleep**
+    — one bubble for all of them (*2 relics are asleep*); Go opens the relic.
 
 ### 2.2 The world relics' spells
 

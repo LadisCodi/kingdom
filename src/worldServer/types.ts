@@ -91,7 +91,13 @@ export type WorldEffect = { seq?: number } & (
     fallen: Array<{ unitId: UnitId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
-  | { kind: 'report'; at: number; text: string; good: boolean }
+  /** A line for the notices; `hex` is where it happened, when it has a
+   *  place (Docs/features/26-notices.md §2.1). */
+  | { kind: 'report'; at: number; text: string; good: boolean; hex?: number }
+  /** A Portal opening closed and the player had gone down: their place
+   *  in its ranking and the Gems it pays, claimed from the notices
+   *  (19 §10.4, 26-notices.md §2.2). `event` names the opening. */
+  | { kind: 'portalClosed'; at: number; event: number; place: number; of: number; floor: number; gems: number }
   /** Precious material the server hands back: an offer the closed
    *  Exchange still held. */
   | { kind: 'goods'; at: number; lot: Lot; text: string }

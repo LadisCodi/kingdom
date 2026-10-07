@@ -24,6 +24,7 @@ import { syncHeroBoons } from './heroes';
 import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
+import { readSavedNews } from './notices';
 import { parseCrest } from './crest';
 import { isStoreFull } from './storage';
 import { freshWorld } from './world/explorers';
@@ -1110,6 +1111,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         ReturnTaps: state.signals.returnTaps.map((r) => ({ AtUtc: iso(r.at), Kind: r.kind })),
         PlayMs: state.signals.playMs,
       },
+      // The news inbox (Docs/features/26-notices.md §7), each as the sim
+      // wrote it; `at` stays epoch ms, as it is only ever compared.
+      'kingdom.notices': state.notices.map((n) => ({ ...n })),
       'kingdom.research': {
         Completed: state.research.completed,
         Poured: state.research.poured,
@@ -1228,6 +1232,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
         // The last world-server effect applied: saved with what it changed.
         EffectSeq: state.world.effectSeq,
+        // The Portal: the last opening announced, and ranking Gems unclaimed.
+        PortalAnnounced: state.world.portalAnnounced,
+        PortalPrizes: state.world.portalPrizes.map((p) => ({ Event: p.event, Place: p.place, Of: p.of, Floor: p.floor, Gems: p.gems })),
       },
       'player.currencies': state.player.wallet,
       // The simulated payer. Additive: a save from before it has none, so the
@@ -1558,6 +1565,13 @@ export function deserialize(
     playMs: Number.isFinite(signalsDto?.PlayMs) && signalsDto!.PlayMs! >= 0 ? signalsDto!.PlayMs! : 0,
   };
 
+  // Additive (v104): a kingdom from before the notices has no news. A
+  // news of a group this build does not know is dropped.
+  const noticesDto = modules['kingdom.notices'];
+  state.notices = Array.isArray(noticesDto)
+    ? noticesDto.flatMap((n) => { const news = readSavedNews(n); return news === null ? [] : [news]; })
+    : [];
+
   // Additive (v89). An item the build no longer knows is dropped, and a
   // count that is not a positive whole number is no item.
   const bagDto = modules['kingdom.bag'] as
@@ -1854,6 +1868,8 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     Chapels?: unknown;
     Armies?: Array<Record<string, unknown>>;
     EffectSeq?: unknown;
+    PortalAnnounced?: unknown;
+    PortalPrizes?: Array<Record<string, unknown>>;
   };
   const seat = Number.isInteger(d.Seat) && (d.Seat as number) >= 0 && (d.Seat as number) < 6 ? d.Seat as number : fresh.board.seat;
   // A trip's time to leave each hex of its path. (A trip from before v78
@@ -1912,5 +1928,9 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),
     effectSeq: Number.isInteger(d.EffectSeq) && (d.EffectSeq as number) >= 0 ? d.EffectSeq as number : 0,
+    portalAnnounced: typeof d.PortalAnnounced === 'number' && d.PortalAnnounced >= 0 ? d.PortalAnnounced : 0,
+    portalPrizes: (Array.isArray(d.PortalPrizes) ? d.PortalPrizes : [])
+      .filter((p) => [p.Event, p.Place, p.Of, p.Floor, p.Gems].every(Number.isInteger) && (p.Gems as number) > 0)
+      .map((p) => ({ event: p.Event as number, place: p.Place as number, of: p.Of as number, floor: p.Floor as number, gems: p.Gems as number })),
   };
 }

@@ -93,6 +93,7 @@ export function newGame(map: MapData, now: number): GameState {
     bag: { held: {}, fresh: {}, badge: 0 },
     relics: { held: {}, chests: 0, premiumShrines: 0 },
     signals: { sightedAt: {}, discoveredAt: {}, treasureWaitMs: 0, returnTaps: [], playMs: 0 },
+    notices: [],
     pendingDiscoveries: [],
     pendingAnalytics: [],
     // The world board and seat are derived from the kingdom's own seed until
