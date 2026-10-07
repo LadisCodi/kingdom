@@ -185,12 +185,10 @@ take = floor( min(base, stored × raid.takeFractionMax) )
 
 ## 7. The screens
 
-- **The raid widget** sits on the **right edge of the screen, in the slot the
-  Mana-refill offer uses**, and hides behind any sheet. It shows the gate
-  whose counter is nearest and its countdown — *The Orcs raid
-  in 27 min* — with a count when more are open. After a raid it carries the
-  report until dismissed; several raids in one absence are one summary.
-  Tapping it opens the ruin sheet. It never opens itself.
+- **The raid notices** ([`26-notices.md`](26-notices.md) §2): the
+  *Raid coming* bubble while a gate is open — the nearest raid and its
+  countdown, with a count when more are open — and a *Raided* news after each
+  raid; several raids in one absence are one. Go goes to the lair.
 - **The ruin's card** ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.3) leads with
   the gate while it stands: the creature and its type, the countdown, trips
   left, and the hoard if any — *they hold 320 Gold and 90 Food; cleared, it

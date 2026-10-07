@@ -82,6 +82,7 @@ yet inside it.
 | Harmony and the decorations | [`21`](features/21-harmony.md) | — |
 | Progression doors, tutorials, the dialogue stage | [`22`](features/22-progression.md), [`23`](features/23-tutorials.md), [`24`](features/24-dialogue.md) | the advisor's portrait |
 | The Royal Survey | [`25`](features/25-the-survey.md) | the seal that flies to the pill (§4) |
+| Notices — the bubbles in the corner | [`26`](features/26-notices.md) | all of it |
 | The tick auto-battler and its replay screen | [`combat`](features/combat.md) | unit tiers T2–T5, authored boss formations (OQ-86) |
 | The fantasy signals, kept in the save | [`playtest`](playtest.md) §5 | a pipeline: the save is the log |
 | The data editor, the map editor, the tree editor | [`data-editor`](plans/data-editor.md), [`map-editor`](map-editor.md), [`tech-tree-editor`](tech-tree-editor.md) | — |
