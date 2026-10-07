@@ -118,7 +118,7 @@ describe('a player can actually play the onboarding', () => {
     };
     // The forest cells the opening reveals, tapped round-robin so exhaustion
     // is waited out rather than assumed away.
-    const TREES: Coord[] = [FOREST, { x: 2, y: -2 }, { x: 1, y: -2 }, { x: -1, y: 3 }];
+    const TREES: Coord[] = [FOREST, { x: 3, y: 0 }, { x: 1, y: -2 }, { x: 0, y: 3 }];
     const chop = (units: number) => {
       const target = getWallet(state.city.wallet, 'Wood') + units;
       let guard = 0;
@@ -149,7 +149,7 @@ describe('a player can actually play the onboarding', () => {
     // than in whatever direction the player happened to face — and the ground
     // it clears is the ground quest 3 then asks them to chop. These four are
     // every forest cell reachable from the opening block.
-    for (const cell of [{ x: -1, y: 3 }, FOREST, { x: 2, y: -2 }, { x: 1, y: -2 }]) clear(cell);
+    for (const cell of [{ x: 0, y: 3 }, FOREST, { x: 3, y: 0 }, { x: 1, y: -2 }]) clear(cell);
     finish('FirstSteps');
 
     research('Forestry');

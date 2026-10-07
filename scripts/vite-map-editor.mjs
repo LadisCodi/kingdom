@@ -47,9 +47,12 @@ const lairLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
   // How far it is sighted past the fog before it is found
   // (Docs/features/01-map-and-fog.md §4.1).
   `      "sight": ${r.sight}`,
-  // The guard: one garrison, and the warning before its first raid.
+  // The guard: one garrison, the warning before its first raid, and — when
+  // it is authored — the mix of troops it fields. The editor has no field
+  // for the mix, so the file must carry it through a save untouched.
   `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
-    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes} }`,
+    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}`
+    + `${r.guard.mix !== undefined ? `, "mix": { ${Object.entries(r.guard.mix).map(([u, w]) => `${JSON.stringify(u)}: ${w}`).join(', ')} }` : ''} }`,
   // The card's line over its painting (§6).
   `      "flavour": ${JSON.stringify(r.flavour)}`,
 ].join(',\n') + '\n    }';

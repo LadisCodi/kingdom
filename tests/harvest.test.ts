@@ -81,7 +81,7 @@ describe('harvest sources', () => {
     expect(harvestSourceAt(state, FOREST)).toBe('Forest');
     expect(harvestSourceAt(state, { x: 0, y: 0 })).toBe(null); // Townhall
     expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // Townhall footprint cell
-    expect(harvestSourceAt(state, { x: 3, y: 0 })).toBe(null); // empty grass
+    expect(harvestSourceAt(state, { x: 2, y: 2 })).toBe(null); // empty grass
   });
 });
 

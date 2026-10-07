@@ -14,11 +14,11 @@ import { effectiveStock, harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost } from '../src/sim/population';
 import { canAfford, pay } from '../src/sim/wallet';
 import {
-  addBuilt, addTrainer, BERRIES, canGather, completeTech, drain, freshGame, fund, map, T0,
+  addBuilt, addTrainer, ANIMALS, BERRIES, canGather, completeTech, drain, freshGame, fund, map, T0,
 } from './helpers';
 
 const BERRY_BUSH = BERRIES; // the one authored bush
-const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
+const WILD_ANIMALS = ANIMALS; // also unrevealed
 
 describe('wallet math', () => {
   it('affords what it holds, and nothing more', () => {

@@ -15,11 +15,11 @@ import {
 import { advanceWorkers, assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  addAllTrainers, addBuilt, canGather, completeTech, freshGame, fund, map, reveal, T0, tickAt,
+  addAllTrainers, addBuilt, canGather, clearAround, completeTech, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
 
-// Sawmill at (3,1), its three trees planted by the fixture rather than read
-// off the map, so clearing the opening's ground never moves them. Its own
+// Sawmill at (3,1), on ground the fixture clears and its three trees planted
+// by the fixture rather than read off the map, so a redraw never moves them. Its own
 // completion re-reveals exactly ONE tree — the adjacent one. Every other tree
 // in range stays under fog unless this fixture reveals it, which is what lets
 // each test below hand the sawmill a precise number of workable cells.
@@ -44,6 +44,7 @@ const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 
   // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
+  clearAround(state, SAWMILL_CELL, 3);
   for (const c of [FOREST_A, FOREST_B, FOREST_C]) state.features[coordKey(c)] = 'Trees';
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.

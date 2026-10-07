@@ -21,15 +21,15 @@ import { addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, pourA
 // mainland rocks and the northern iron went elsewhere. They are named and
 // commented rather than inlined so the next redraw is a diff of this block
 // instead of a hunt through the file.
-const NEAR_ROCKS = { x: -2, y: -2 }; // the one loose Mountain, held by no lair
-const QUARRY_CELL = { x: -2, y: -3 }; // clear Grassland beside it, inside radius 2
+const NEAR_ROCKS = { x: -4, y: -3 }; // the nearest loose Mountain, held by no lair
+const QUARRY_CELL = { x: -5, y: -3 }; // clear Grassland beside it, inside radius 2
 const COVE_WATER = { x: -6, y: 1 }; // the nearest open water, west
 const SHOAL = { x: -8, y: 2 }; // authored FishShoal, 2 cells off the pier
 // Docks anchor: a 2x1 pier wants exactly one wet cell, and the ANCHOR is the
 // Water one — (-6,0) is Water, (-5,0) is the land half.
 const PIER = { x: -6, y: 0 };
 const PIER_LAND = { x: -5, y: 0 };
-const INLAND = { x: -1, y: 2 }; // (-1,2)+(0,2): two clear land cells, no shoreline
+const INLAND = { x: -2, y: 1 }; // (-2,1)+(-1,1): two clear land cells, no shoreline
 const IRON_MOUNTAIN = { x: -7, y: -13 }; // MountainIron, deep in the northern fog
 
 describe('stone line (Masonry → Quarry)', () => {

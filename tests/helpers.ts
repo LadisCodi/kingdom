@@ -98,8 +98,8 @@ export const fund = (state: GameState, wallet: Record<string, number>): void => 
  *  ring out, so the player explores toward what they can see. Tests that are
  *  about what happens after the fog use `canGather`. */
 export const FOREST: Coord = { x: 3, y: -1 };
-export const BERRIES: Coord = { x: -2, y: 1 };
-export const ANIMALS: Coord = { x: -1, y: -2 };
+export const BERRIES: Coord = { x: -2, y: 2 };
+export const ANIMALS: Coord = { x: -2, y: -3 };
 
 /**
  * A kingdom that can actually gather: Forestry researched, and the forest and
@@ -369,3 +369,12 @@ export const researchNow = (
   if (shortG > 0) addToWallet(state.city.wallet, 'Gold', shortG);
   return pourAndResearch(state, mapData, id, now);
 };
+
+/** Clear every feature the MAP put within Chebyshev `radius` of `center`, so a
+ *  fixture that plants its own trees is not moved by the next redraw — a bush
+ *  on the build cell, or a tree next door that would add a workable cell. */
+export function clearAround(state: GameState, center: Coord, radius: number): void {
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) delete state.features[coordKey({ x: center.x + dx, y: center.y + dy })];
+  }
+}
