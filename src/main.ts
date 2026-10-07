@@ -14,7 +14,7 @@ import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { shouldDraw } from './render/framePacer';
 import { SaveManager } from './persist/saveManager';
-import { ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, BANNERS, DISTRICTS, GAME_VERSION, ITEM_ORDER, SAVE_VERSION, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifactLevel } from './sim/artifacts';
 import { dropFragments, giveRelic, openRelicDoor } from './sim/relics';
 import { grantItem } from './sim/bag';
@@ -751,6 +751,18 @@ async function boot(): Promise<void> {
       dropFragments(game.state, 'any', 24, ['dev', devDrops++]);
       runTick();
     };
+    // A chest on demand (ui/gachaScreen.ts): a REAL call on a banner, the
+    // keys handed over first, or a real relic pack with the Gems for it.
+    const devCall = (banner: 'basic' | 'advanced', count: number) => {
+      grantItem(game.state, BANNERS[banner].key, count);
+      if (count === 1) game.doPull(banner);
+      else game.doPullMany(banner, count);
+    };
+    const devRelicPack = () => {
+      for (const door of [...LAIR_ORDER, 'room', 'boss', 'portal', 'scouting']) openRelicDoor(game.state, door);
+      addToWallet(game.state.player.wallet, 'Gems', game.fragmentPackOffer().gems);
+      game.doBuyFragmentPack();
+    };
     // Three of every item, so the Bag's tiles, popovers and Use ×N can be
     // seen before anything in the game pays an item.
     const someItems = () => {
@@ -825,6 +837,9 @@ async function boot(): Promise<void> {
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
       button('🧩 fragments', someFragments), button('🎒 items', someItems),
+      button('🪙 call ×1', () => devCall('basic', 1)), button('🪙 call ×10', () => devCall('basic', 10)),
+      button('👑 call ×1', () => devCall('advanced', 1)), button('👑 call ×10', () => devCall('advanced', 10)),
+      button('🔮 relic pack', devRelicPack),
       // The only way to raise the builder count until the store exists
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {
