@@ -44,7 +44,7 @@
 - The relic itself never drops. Ruins pay **card packs** (§6), not relics.
 - **A city relic is activated** (§2.1): hosted in a Shrine, it does nothing
   until the player pays its Mana; then its effect reaches the Shrine's aura
-  for the Shrine's window. A world relic acts while a Chapel holds it, and
+  for the relic's window. A world relic acts while a Chapel holds it, and
   two carry a spell (§2.2). The Magic tome holds no spells
   ([`07-research.md`](07-research.md) §6).
 - The nav tab is **Relics** (§11.2). It is padlocked until the player holds
@@ -85,18 +85,33 @@ never a discount, because a discount dies at 100%.
 - **Hosting is free; activating costs Mana.** A city relic in a Shrine sleeps
   until the player activates it. Then its effect reaches every cell of the
   Shrine's aura for a window.
-- **The relic's level is the POWER**: its number (`X` below) and its reach.
-  The aura is the Shrine's cell and **`activeRadius` cells round it**
-  (Chebyshev), plus **one ring at relic levels 5, 10 and 20**.
-- **The Shrine's level is the DURATION**: **5 min · 30 min · 1 h · 4 h · 8 h**
-  at levels 1 to 5. A top Shrine covers a night away.
-- **One activation, one price**: `activeManaCost` per relic (**20** on all
-  four), whatever the window. A higher Shrine is more minutes for the same
-  Mana.
+- **The relic's level is everything an activation is worth**: its number
+  (`X` below), its reach and its window. At level 1:
+  - the number is `passiveBase`;
+  - the aura is the Shrine's cell and **`activeRadius` cells round it**
+    (Chebyshev, 2);
+  - the window is **30 min**.
+- **Every level-up raises one of the three, round a fixed cycle**:
+
+  | Level | 2 | 3 | 4 | 5 | 6 | 7 | … |
+  |---|---|---|---|---|---|---|---|
+  | Raises | window | reach | number | window | reach | number | … |
+
+  - **Window** steps **30 min → 1 h → 2 h → 4 h → 8 h**. A top window covers
+    a night away.
+  - **Reach** adds one ring.
+  - **Number** adds `passivePerLevel`.
+  - **A window step past 8 h raises the number instead**, so every level
+    raises something.
+- **A Shrine has one level.** It holds and wakes a relic and adds nothing of
+  its own.
+- **One activation, one price**: `activeManaCost` per relic (**20** on every
+  city relic), whatever the window. A longer window is more minutes for the
+  same Mana.
 - **No cooldown and no stacking.** It can be activated again the moment the
   window closes, never while it is open.
-- **The window is priced when it opens.** A Shrine that climbs mid-window
-  does not stretch it.
+- **The window is priced when it opens.** A level-up mid-window does not
+  stretch it.
 - **The window survives everything but leaving the Shrine.** It runs while
   the player is away and through a save; it follows a Shrine that is moved.
   Taking the relic out, or hosting it elsewhere, ends it.
@@ -172,9 +187,10 @@ Chapel holds it.
   last one worth having.
 - **Nothing moves the respawn clock.** Berries, game and shoals come back on
   their authored time and the mechanic stays transparent to the player.
-- `X = passiveBase + passivePerLevel × (level − 1)`, both authored per relic in
-  `artifacts`. A level is **a season's worth of growth**, so `passivePerLevel`
-  is sized to be **felt on a headline number** — of the order of +10% a level
+- `X = passiveBase + passivePerLevel × steps`, both authored per relic in
+  `artifacts`. On a world relic `steps` is every level after the first; on a
+  city relic it is the number steps of its cycle (§2.1). `passivePerLevel`
+  is sized to be **felt on a headline number** — of the order of +10% a step
   on the Crown — not to be safe.
 - The Staff and the Sickle split the two harvest clocks between them: what grows
   back in place and what reappears elsewhere are different numbers, and one
@@ -711,13 +727,14 @@ Every number below is a **proposal until it is authored**; the ones marked
 | Sends a day | **3, fixed**; gold never | `collection.sendsPerDay` |
 | A relic's `passiveBase` and `passivePerLevel` | per relic | `artifacts` |
 | What a level-up costs | **one fragment of each of the six slots**, every level, and **Stardust**: 100, ×1.5 a level (100 · 150 · 225 · 340…) | `relics.fragments`, `levelStardustBase` · `levelStardustGrowth` |
-| How long a city relic stays awake, by Shrine level | **5 · 30 · 60 · 240 · 480 min** | `buildings`, Shrine `relicWindowMinutesPerLevel` |
+| What a city relic's level-ups raise, in turn | **window → reach → number**, from level 2 | `relics.cityLevels.cycle` |
+| How long a city relic stays awake, by window step | **30 · 60 · 120 · 240 · 480 min**; a step past the last raises the number | `relics.cityLevels.windowMinutes` |
 | What activating a city relic costs | **20 Mana** each | `artifacts`, `activeManaCost` |
 | How far a city relic's aura reaches at level 1 | **2** cells round the Shrine | `artifacts`, `activeRadius` |
 | What a world spell costs and reaches | per relic | `artifacts`, `activeManaCost` · `activeRadius` |
 | Uses an event-counted spell buys | **3 rooms, +1 a level** on the Lantern | `artifacts`, `activeCharges` · `activeChargesPerLevel` |
 | A world spell's cooldown | **5 min, flat**, counted from its close | `artifactCooldownSeconds` |
-| Where a reach steps up | **levels 5, 10 and 20**, one ring each — a city relic's aura and a world spell alike | `artifactRadiusSteps` |
+| Where a world spell's reach steps up | **levels 5, 10 and 20**, one ring each | `artifactRadiusSteps` |
 | Production hours an album pays | 2 · 2 · 4 · 4 · 6 · 8 · 8 · 8 — **one rung per album** | `collection.albumHours` |
 | Keys an album pays | **silver ×5, then gold ×3** — one key a page | `collection.albumSilverKeys`, `…GoldKeys` |
 | Rarity per slot, per album | authored | seasons file |
@@ -750,6 +767,9 @@ Every number below is a **proposal until it is authored**; the ones marked
 - **A city relic spell.** The activation is the one thing a city relic is
   pressed for.
 - **A cooldown on an activation**, or a window that stacks.
+- **A Shrine that levels**, or anything a Shrine adds of its own.
+- **A choice of what a level-up raises.** The cycle is fixed and the same for
+  every city relic.
 - **An ability that lives in a tome** ([`07-research.md`](07-research.md) §6).
 - **A separate album screen.** A relic and its nine cards are one page
   (§11.3), and the button that spends them is on it.

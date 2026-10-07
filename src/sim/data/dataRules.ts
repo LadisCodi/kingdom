@@ -72,7 +72,7 @@ export const COLLECTIONS: readonly CollectionDef[] = [
   { id: 'artifacts', label: 'Artifacts', domain: 'Magic', view: 'table', noun: 'artifact', source: 'artifacts' },
   { id: 'currencies', label: 'Currencies', domain: 'Magic', view: 'table', noun: 'currency', source: 'currencies' },
   { id: 'relics', label: 'Relic rules', domain: 'Magic', view: 'form', noun: 'setting',
-    groups: ['artifactCooldownSeconds', 'artifactRadiusSteps', 'fragments', 'shrines'] },
+    groups: ['artifactCooldownSeconds', 'artifactRadiusSteps', 'cityLevels', 'fragments', 'shrines'] },
 
   { id: 'quests', label: 'Quests', domain: 'Progression', view: 'ordered', noun: 'quest', source: 'quests' },
   { id: 'survey', label: 'The Survey', domain: 'Progression', view: 'form', noun: 'setting', groups: ['survey'] },
@@ -579,8 +579,7 @@ export const RULES: Readonly<Record<string, Rule>> = {
       // nothing: its whole contribution is its Harmony.
       if (num(b.harmonySupply) > 0) {
         if (!Number.isInteger(b.harmonySupply)) push(id, ['harmonySupply'], 'is not a whole number');
-        // A relic's host climbs levels for its window (09-relics.md §2).
-        if (b.maxLevel !== 1 && b.hostsRelic !== true) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
+        if (b.maxLevel !== 1) push(id, ['maxLevel'], 'a decoration has no ladder — maxLevel must be 1');
         for (const f of ['maxWorkersPerLevel', 'populationCapacityPerLevel', 'armyCapPerLevel', 'bedsPerLevel', 'influenceRadiusPerLevel', 'queueLengthPerLevel']) {
           if (list(b[f]).length > 0) push(id, [f], 'a decoration has none');
         }
@@ -588,9 +587,9 @@ export const RULES: Readonly<Record<string, Rule>> = {
         if (list(b.harmonyCostPerLevel).length > 0) push(id, ['harmonyCostPerLevel'], 'a decoration supplies Harmony; it does not demand it');
       }
       neverFalls(push, id, 'harmonyCostPerLevel', b.harmonyCostPerLevel);
-      if ((b.hostsRelic === true) !== (list(b.relicWindowMinutesPerLevel).length > 0)) {
-        push(id, ['relicWindowMinutesPerLevel'], 'a relic\'s host needs its window, and only a host has one');
-      }
+      // A relic's host has one level: the relic's own level is its window
+      // and its reach (09-relics.md §2.1).
+      if (b.hostsRelic === true && b.maxLevel !== 1) push(id, ['maxLevel'], 'a relic\'s host has one level — maxLevel must be 1');
       // The rent bonus is a house's ladder.
       if (list(b.taxBonusPerLevel).length > 0 && list(b.populationCapacityPerLevel).length === 0) {
         push(id, ['taxBonusPerLevel'], 'on a building that houses nobody');

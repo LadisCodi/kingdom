@@ -41,7 +41,7 @@ import {
 import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
 import {
   activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, buildingInAura, hostOf, hostRelic,
-  isAwake, shrines, unhostRelic, windowMsOf,
+  isAwake, relicWindowMs, shrines, unhostRelic,
 } from './sim/hosts';
 import { shrineBubbleAt } from './render/shrineBubbles';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
@@ -315,7 +315,7 @@ export interface RelicActivationView {
   awake: boolean;
   /** What is left of the open window, derived from its end every frame. */
   leftMs: number;
-  /** How long an activation in its Shrine lasts — the Shrine's level. */
+  /** How long an activation lasts — the relic's level. */
   windowMs: number;
   cost: number;
   affordable: boolean;
@@ -335,7 +335,7 @@ export interface ShrineView {
   holds: ArtifactId | null;
   /** How far round its footprint the aura reaches — its relic's level. */
   radius: number;
-  /** How long one activation lasts here — this Shrine's level. */
+  /** How long one activation of what it holds lasts — its relic's level. */
   windowMs: number;
   /** Every restored city relic it could host instead, and where each is now. */
   candidates: Array<{ id: ArtifactId; name: string; at: string | null }>;
@@ -1534,7 +1534,7 @@ export class Game {
       }
       // What it does and for how long, over the Shrine, and the Mana it
       // took (M85).
-      const window = formatDuration(Math.round(windowMsOf(host) / 1000));
+      const window = formatDuration(Math.round(relicWindowMs(this.state, id) / 1000));
       this.floaters.add(host.location, `${relicShortEffect(id, passiveValue(this.state, id))} \u00b7 ${window}`);
       this.floaters.add({ x: host.location.x, y: host.location.y - 1 }, `\u2212${formatExact(activationCost(this.state, id))}`, 'Mana');
       this.relicBursts.push({
@@ -1559,7 +1559,7 @@ export class Game {
       hosted: host !== null,
       awake,
       leftMs: awake ? Math.max(0, endsAt - now) : 0,
-      windowMs: host === null ? 0 : windowMsOf(host),
+      windowMs: relicWindowMs(this.state, id),
       cost,
       affordable: mana(this.state) >= cost,
       radius: auraRadiusAt(id, artifactLevel(this.state, id)),
@@ -1635,7 +1635,7 @@ export class Game {
         relic, districtId: d.uniqueId, location: d.location, size: DISTRICTS[d.definitionId].size,
         sprite: ARTIFACTS[relic].sprite,
         awake, cost, affordable: have >= cost,
-        left: awake ? Math.max(0, Math.min(1, (endsAt - this.now()) / Math.max(1, windowMsOf(d)))) : 0,
+        left: awake ? Math.max(0, Math.min(1, (endsAt - this.now()) / Math.max(1, relicWindowMs(this.state, relic)))) : 0,
       }];
     });
   }
@@ -1695,7 +1695,7 @@ export class Game {
       const relic = host.hosts;
       if (relic === undefined || !isAwake(this.state, relic)) return [];
       const c = this.state.artifacts.casts[relic]!;
-      const span = Math.max(1, windowMsOf(host));
+      const span = Math.max(1, relicWindowMs(this.state, relic));
       const area = auraOf(this.state, host, relic);
       return [{
         relic,
@@ -1816,7 +1816,7 @@ export class Game {
     return {
       holds: district.hosts ?? null,
       radius: auraRadiusAt(district.hosts ?? 'GildedLedger', district.hosts === undefined ? 1 : artifactLevel(this.state, district.hosts)),
-      windowMs: windowMsOf(district),
+      windowMs: district.hosts === undefined ? 0 : relicWindowMs(this.state, district.hosts),
       candidates: ARTIFACT_ORDER
         .filter((id) => relicKind(id) === 'city' && artifactLevel(this.state, id) >= 1 && id !== district.hosts)
         .map((id) => ({ id, name: ARTIFACTS[id].name, at: this.hostLabel(id) })),

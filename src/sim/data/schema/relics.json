@@ -2,7 +2,28 @@
   "type": "object",
   "fields": {
     "artifactCooldownSeconds": { "type": "int" },
-    "artifactRadiusSteps": { "type": "list", "of": { "type": "int" } },
+    "artifactRadiusSteps": {
+      "type": "list",
+      "of": { "type": "int" },
+      "doc": "The levels at which a WORLD relic's spell widens a ring (09-relics.md §2.2). A city relic's aura grows by `cityLevels` instead."
+    },
+    "cityLevels": {
+      "type": "object",
+      "doc": "How a CITY relic grows (09-relics.md §2.1): each level-up from level 2 raises one of three things, in this order, round and round.",
+      "fields": {
+        "cycle": {
+          "type": "list",
+          "of": { "type": "text", "options": ["window", "radius", "effect"] },
+          "length": { "exact": 3 },
+          "doc": "Level 2 raises the first, level 3 the second, level 4 the third, level 5 the first again. window: the activation lasts the next entry of windowMinutes. radius: the aura reaches one ring further. effect: the relic's number rises by its passivePerLevel. Each must appear once."
+        },
+        "windowMinutes": {
+          "type": "list",
+          "of": { "type": "int", "min": 1 },
+          "doc": "How long an activation lasts: entry 0 at level 1, one entry further at every window step. A window step past the last entry raises the effect instead."
+        }
+      }
+    },
     "fragments": {
       "type": "object",
       "doc": "Fragments and restoration (Docs/proposals/relic-restoration.md §2, §4, §9, §11).",

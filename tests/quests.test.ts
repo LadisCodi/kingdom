@@ -513,7 +513,8 @@ describe('quests fund the research tree', () => {
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
-    expect(tree).toBe(4_922_305); // the same sum tests/fog.test.ts freezes, and why
+    // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
+    expect(tree).toBe(4_732_305); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has

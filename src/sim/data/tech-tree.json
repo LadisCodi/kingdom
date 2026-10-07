@@ -819,13 +819,6 @@
         {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
       ]
     },
-    "SacredGrounds": {
-      "name": "Sacred Grounds", "icon": "Shrine", "kind": "unlock",
-      "tome": "Kingdom", "era": 9, "row": 47, "col": 0,
-      "requires": ["IronPicksI"],
-      "gold": 190000, "knowledge": 14,
-      "unlocks": [{"districtLevel":{"id":"Shrine","level":2}}]
-    },
     "FishersI": {
       "name": "Fishers I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 47, "col": 1,
@@ -847,7 +840,7 @@
     "FlowerbedsI": {
       "name": "Flowerbeds I", "icon": "harmony", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 48, "col": 0,
-      "requires": ["SacredGrounds", "FishersI", "WarhornsII"],
+      "requires": ["FishersI", "WarhornsII"],
       "gold": 190000, "knowledge": 14, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
       "effects": [
         {"stat":"decorationHarmony","op":"percent","value":25}

@@ -4,7 +4,8 @@
 // pays, and the tab that asks for a relic to be woken again.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DISTRICTS, SCENES } from '../src/sim/data/definitions';
+import { SCENES } from '../src/sim/data/definitions';
+import { relicWindowMsAt } from '../src/sim/artifacts';
 import { giveRelic } from '../src/sim/relics';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { hostRelic } from '../src/sim/hosts';
@@ -14,14 +15,18 @@ import type { Game } from '../src/game';
 import type { GameState } from '../src/sim/state';
 import { addBuilt, freshGame, freshPresenter, fund, reveal, T0 } from './helpers';
 
-const WINDOW_MS = DISTRICTS.Shrine.relicWindowMinutesPerLevel[0]! * 60_000;
+/** The Crown's level in `crowned`: two effect steps of its cycle, so +30%
+ *  tax (09-relics.md §2.1). */
+const CROWN_LEVEL = 7;
+/** Its window at that level. */
+const WINDOW_MS = relicWindowMsAt('GildedLedger', CROWN_LEVEL);
 
 /** A Tribute Crown hosted beside one house with residents, and the Mana to
  *  wake it — in a Shrine clear of the Townhall. */
 function crowned(): { state: GameState; game: Game } {
   const state = freshGame();
   state.lastAdvance = T0;
-  state.artifacts.levels.GildedLedger = 3;
+  state.artifacts.levels.GildedLedger = CROWN_LEVEL;
   fund(state, { Mana: 200 });
   reveal(state, [{ x: 3, y: 3 }, { x: 4, y: 3 }]);
   state.city.districts.push({

@@ -4,9 +4,11 @@
 // tests/relics.test.ts.
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ARTIFACTS, ARTIFACT_ORDER, HARVEST, HERO_ORDER, HEROES, relicKind } from '../src/sim/data/definitions';
 import {
-  artifactLevel, grantArtifactLevel, ownedArtifacts, ownsArtifact,
+  ARTIFACTS, ARTIFACT_ORDER, CITY_RELIC_LEVELS, HARVEST, HERO_ORDER, HEROES, relicKind,
+} from '../src/sim/data/definitions';
+import {
+  artifactLevel, cityRelicSteps, grantArtifactLevel, nextCityRelicAxis, ownedArtifacts, ownsArtifact,
   passiveValueAtLevel, syncArtifactModifiers,
 } from '../src/sim/artifacts';
 import { armyCap } from '../src/sim/army';
@@ -73,7 +75,12 @@ describe('a relic is a permanent passive with no ceiling', () => {
     for (let i = 0; i < 10; i++) grantArtifactLevel(state, 'GildedLedger');
     expect(artifactLevel(state, 'GildedLedger')).toBe(10);
     const { base, perLevel } = ARTIFACTS.GildedLedger.passive;
-    expect(passiveValueAtLevel('GildedLedger', 10)).toBeCloseTo(base + perLevel * 9, 6);
+    // A city relic's number rises on the effect steps of its cycle
+    // (09-relics.md §2.1); a world relic's on every level.
+    expect(passiveValueAtLevel('GildedLedger', 10))
+      .toBeCloseTo(base + perLevel * cityRelicSteps('GildedLedger', 10).effect, 6);
+    const world = ARTIFACTS.MusterHorn.passive;
+    expect(passiveValueAtLevel('MusterHorn', 10)).toBeCloseTo(world.base + world.perLevel * 9, 6);
   });
 
   it('moves the number it names, at the base stage, inside its Shrine\'s aura', () => {
@@ -81,6 +88,10 @@ describe('a relic is a permanent passive with no ceiling', () => {
     host(state, 'GildedLedger');
     const before = resolveAt(state, 'taxRate', 1, AT);
     expect(before).toBeGreaterThan(1);
+    // Up to the cycle's next effect step: the number rises there.
+    while (nextCityRelicAxis('GildedLedger', artifactLevel(state, 'GildedLedger')) !== 'effect') {
+      grantArtifactLevel(state, 'GildedLedger');
+    }
     grantArtifactLevel(state, 'GildedLedger');
     expect(resolveAt(state, 'taxRate', 1, AT)).toBeGreaterThan(before);
     // Outside the aura, nothing.
@@ -91,12 +102,19 @@ describe('a relic is a permanent passive with no ceiling', () => {
   // a yield or a capacity — the call site divides by a speed — so no level can
   // walk one to zero and stop paying. Before this, the Staff and the Sickle were
   // time multipliers falling 0.05 a level and both read 0.00 at level 18.
+  //
+  // A city relic's number rises one level in each turn of its cycle — the
+  // others raise its window or its reach (tests/hosts.test.ts) — so it never
+  // falls, and a whole turn always raises it.
   it('never reaches a level where the next one is worth nothing', () => {
+    const turn = CITY_RELIC_LEVELS.cycle.length;
     for (const id of ARTIFACT_ORDER) {
+      const city = ARTIFACTS[id].activation !== null;
       for (const level of [1, 18, 50, 200]) {
-        expect(passiveValueAtLevel(id, level + 1),
+        expect(passiveValueAtLevel(id, level + (city ? turn : 1)),
           `${id} stopped paying at level ${level}`)
           .toBeGreaterThan(passiveValueAtLevel(id, level));
+        expect(passiveValueAtLevel(id, level + 1)).toBeGreaterThanOrEqual(passiveValueAtLevel(id, level));
       }
     }
   });
@@ -119,12 +137,17 @@ describe('a relic is a permanent passive with no ceiling', () => {
     let last = effectiveRecoveryMs(state, HARVEST.Forest, AT);
     grantArtifactLevel(state, 'DowsingRod');
     host(state, 'DowsingRod');
+    // Every effect step of the Staff's cycle shortens it; the other steps
+    // leave it where it was.
     for (let i = 0; i < 40; i++) {
-      if (i > 0) grantArtifactLevel(state, 'DowsingRod');
+      const level = artifactLevel(state, 'DowsingRod');
+      const effect = i === 0 || nextCityRelicAxis('DowsingRod', level - 1) === 'effect';
       const now = effectiveRecoveryMs(state, HARVEST.Forest, AT);
-      expect(now).toBeLessThan(last);
+      if (effect) expect(now).toBeLessThan(last);
+      else expect(now).toBe(last);
       expect(now).toBeGreaterThan(0);
       last = now;
+      grantArtifactLevel(state, 'DowsingRod');
     }
   });
 

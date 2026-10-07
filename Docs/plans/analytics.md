@@ -75,7 +75,7 @@ Every event is one row:
 | `fragment_pack` | `gems`, `n` — the store's pack of random fragments |
 | `premium_shrine` | `n` (which), `gems` |
 | `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
-| `relic_activated` | `relic`, `level`, `shrine_level`, `mana` — a city relic woken in its Shrine |
+| `relic_activated` | `relic`, `level`, `mana` — a city relic woken in its Shrine |
 | `item_used` | `item`, `count` — one Use, ×N counted once; `job` (`queue`, `training`, `workshop`, `explorer`, `hex`) for a speed-up, `coin` for a choice chest |
 
 ### 3.3 The playtest signals
