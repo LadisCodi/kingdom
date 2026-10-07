@@ -17,6 +17,7 @@ import {
 } from '../src/worldServer/core';
 import { homeboundMs } from '../src/sim/world/travel';
 import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
+import { badBody } from '../src/worldServer/serve';
 import type { ServerBoard } from '../src/worldServer/types';
 
 const T0 = Date.parse('2026-08-20T12:00:00Z');
@@ -518,5 +519,18 @@ describe('the Dark Portal', () => {
     const owed = drainEffects(b, seat);
     expect(owed.some((e) => e.kind === 'loot' && (e.gems ?? 0) > 0)).toBe(true);
     expect(b.armies[0]?.phase ?? 'home').toBe('home');
+  });
+});
+
+describe('the edge function door', () => {
+  // The local stand-in never reads the body check, so a command missing from
+  // it worked offline and was refused as Offline online.
+  it('takes every command the server handles', () => {
+    for (const cmd of [
+      { kind: 'hurry', index: 3, seconds: 60 },
+      { kind: 'hostRelic', index: 3, relic: 'x', level: 1 },
+      { kind: 'unhostRelic', relic: 'x' },
+    ]) expect(badBody({ opId: 'op', ack: 0, cmd })).toBeNull();
+    expect(badBody({ opId: 'op', ack: 0, cmd: { kind: 'nope' } })).toBe('cmd');
   });
 });
