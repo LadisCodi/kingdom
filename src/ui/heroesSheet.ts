@@ -217,34 +217,26 @@ function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   ));
 }
 
-/** The skill's mark, by what it does. */
-const SKILL_ICON: Record<string, IconName> = {
-  strike: 'atk', heal: 'hp', shield: 'def', daze: 'sparkle', rally: 'crest', spoils: 'sparkle',
-};
-
 /**
- * THE SKILL (Docs/features/10-heroes.md §2.5): what it does at its rank, and
- * under it the next rank — its price and Upgrade, or what is missing. A level
- * only UNLOCKS a rank; the rank is bought.
+ * THE SKILL (Docs/features/10-heroes.md §2.5): one widget — its name, its
+ * rank pips and what it does at its rank, and at its foot the next rank's
+ * price and Upgrade, or what is missing. A level only UNLOCKS a rank; the
+ * rank is bought.
  */
 function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   const def = HEROES[id];
   const info = SKILLS[def.skill.id];
   const rank = owned ? skillRank(game.state, id) : 1;
   const top = maxSkillRank();
-  const head = el('div', { class: 'hd-skill k-section' },
-    iconEl(SKILL_ICON[info.kind] ?? 'sparkle'),
-    el('div', { class: 'hd-skill-text' },
-      el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), pips(rank, top)),
-      el('div', { class: 'hd-skill-says' }, skillSentence(def.skill, rank))));
-  if (!owned || rank >= top) return head;
+  const card = (foot: HTMLElement | null) => el('div', { class: 'hd-skill k-section' },
+    el('div', { class: 'hd-skill-name' }, el('b', {}, info.name), pips(rank, top)),
+    el('div', { class: 'hd-skill-says' }, skillSentence(def.skill, rank)),
+    ...(foot ? [foot] : []));
+  if (!owned || rank >= top) return card(null);
   const unlock = nextSkillRankLevel(rank)!;
-  const next = el('div', { class: 'hd-read' },
-    el('div', { class: 'hd-read-line' }, el('b', {}, `Rank ${formatExact(rank + 1)}: `), skillSentence(def.skill, rank + 1)));
-  const level = game.heroLevelOf(id);
-  if (level < unlock) {
+  if (game.heroLevelOf(id) < unlock) {
     const cap = heroLevelCap(game.state.heroes.ascension[id] ?? 0);
-    return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next,
+    return card(el('div', { class: 'hd-skill-foot' },
       el('div', { class: 'hd-note' }, iconEl('padlock', { size: 'sm' }),
         cap < unlock ? `Ascend, then reach level ${formatExact(unlock)}` : `Reach level ${formatExact(unlock)}`)));
   }
@@ -254,7 +246,7 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   for (const [good, n] of Object.entries(price.goods)) {
     terms.push({ icon: good as IconName, amount: formatExact(n ?? 0), short: block === 'NotEnoughMaterial' });
   }
-  return el('div', { class: 'hd-skill-wrap' }, head, tray('hd-rank', next, buy(
+  return card(el('div', { class: 'hd-skill-foot' },
     priceLine(terms),
     btn({
       label: 'Upgrade',
@@ -262,8 +254,7 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
       onClick: () => game.doBuySkillRank(id),
       disabledReason: block === 'NotEnoughStardust' ? 'Not enough Stardust'
         : block === 'NotEnoughMaterial' ? `Not enough ${info.material}` : undefined,
-    }),
-  )));
+    })));
 }
 
 function detail(game: Game, id: HeroId): HTMLElement {
