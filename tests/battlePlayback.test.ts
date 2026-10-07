@@ -11,6 +11,9 @@ import { BATTLE_RESULT_DELAY_MS } from '../src/game';
 import { UNIT_CREATURE_AVATAR } from '../src/render/lairMap';
 import { COMBAT, LAIRS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
+import { buildBoard, resolveBattle } from '../src/sim/battle';
+import { LocalWorldServer, memoryStore } from '../src/worldServer/local';
+import type { DelveResult, WorldSnapshot } from '../src/worldServer/types';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
   addAllTrainers, freshGame, freshPresenter, fund, map, reveal, T0,
@@ -148,5 +151,47 @@ describe('the lair opens the same screen', () => {
     expect(getWallet(game.state.kingdom.wallet, 'Knowledge')).toBe(knowledge + lump);
     expect(game.inspectedSite).toBeNull();
     expect(game.vanishingLairs.has(ORCS)).toBe(true);
+  });
+});
+
+describe('a world fight wears the right faces and ground', () => {
+  /** A seated presenter whose server answers every fight with `boss`. */
+  async function fighting(boss: boolean) {
+    const game = freshPresenter(freshGame());
+    let clock = T0;
+    game.now = () => clock;
+    const server = new LocalWorldServer(memoryStore(), () => clock);
+    game.worldServer = server;
+    await game.connectWorld();
+    await game.doJoinWorld('Mel');
+    clock += 1000;
+    const answer = async (): Promise<DelveResult> => ({
+      ok: true, won: true, depth: 0, room: 1, boss, lost: 0,
+      log: resolveBattle(buildBoard([{ unitId: 'Warrior', count: 20 }], []), buildBoard([{ unitId: 'Archer', count: 5 }], [])),
+      snapshot: { ...(game.worldView as WorldSnapshot), effects: [] },
+    });
+    server.delveRoom = answer;
+    server.descendPortal = answer;
+    return game;
+  }
+
+  it('draws a dungeon room’s squads as the creatures the delve screen shows, on a dungeon floor', async () => {
+    const game = await fighting(false);
+    await game.doDelveRoom('a1');
+    expect(game.battle!.enemyFaces).toEqual(UNIT_CREATURE_AVATAR);
+    expect(game.battle!.backdrop).toBe('dungeon');
+  });
+
+  it('puts a boss room in the boss hall', async () => {
+    const game = await fighting(true);
+    await game.doDelveRoom('a1');
+    expect(game.battle!.backdrop).toBe('boss');
+  });
+
+  it('draws the Portal’s squads as creatures too, in its depths', async () => {
+    const game = await fighting(false);
+    await game.doDescendPortal('a1');
+    expect(game.battle!.enemyFaces).toEqual(UNIT_CREATURE_AVATAR);
+    expect(game.battle!.backdrop).toBe('portal');
   });
 });

@@ -43,9 +43,11 @@
  * the bar would have padded for. Keyed on what is actually mounted, like the
  * settings knob, so it cannot drift from what is on screen. */
 #ui.has-menu,
-#ui.has-card { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
+#ui.has-card,
+#ui.has-battle { --nav-h: var(--safe-bottom, env(safe-area-inset-bottom, 0px)); }
 #ui.has-menu > #navbar.nav,
-#ui.has-card > #navbar.nav {
+#ui.has-card > #navbar.nav,
+#ui.has-battle > #navbar.nav {
   transform: translateY(calc(100% + var(--rpx) * 20));
   pointer-events: none;
   transition-timing-function: cubic-bezier(0.5, 0, 0.8, 0.4);
@@ -54,7 +56,9 @@
 #ui.has-menu > #navbar.nav .k-cta::before,
 #ui.has-menu > #navbar.nav .k-cta::after,
 #ui.has-card > #navbar.nav .k-cta::before,
-#ui.has-card > #navbar.nav .k-cta::after { animation-play-state: paused; }
+#ui.has-card > #navbar.nav .k-cta::after,
+#ui.has-battle > #navbar.nav .k-cta::before,
+#ui.has-battle > #navbar.nav .k-cta::after { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   #navbar.nav { transition: none; }
 }

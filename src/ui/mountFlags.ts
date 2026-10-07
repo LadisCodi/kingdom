@@ -13,16 +13,21 @@ export function mirrorMountFlags(ui: HTMLElement): void {
   const overlay = ui.querySelector<HTMLElement>(':scope > #overlay');
   const panel = ui.querySelector<HTMLElement>(':scope > #panel');
   const unlock = ui.querySelector<HTMLElement>(':scope > #unlock');
+  // A fight's playback hides the bar on its own account — not only through
+  // the sheet that launched it, which another flow may not leave open.
+  const battle = ui.querySelector<HTMLElement>(':scope > #battle');
 
   const sync = () => {
     ui.classList.toggle('has-menu', overlay?.hasChildNodes() === true);
     ui.classList.toggle('has-card', panel?.querySelector('.dc') != null);
     ui.classList.toggle('has-unlock', unlock?.hasChildNodes() === true);
+    ui.classList.toggle('has-battle', battle?.hasChildNodes() === true);
   };
 
   const observer = new MutationObserver(sync);
   if (overlay) observer.observe(overlay, { childList: true });
   if (panel) observer.observe(panel, { childList: true, subtree: true });
   if (unlock) observer.observe(unlock, { childList: true });
+  if (battle) observer.observe(battle, { childList: true });
   sync();
 }
