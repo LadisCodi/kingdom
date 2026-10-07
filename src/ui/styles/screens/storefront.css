@@ -173,6 +173,13 @@
   object-position: 50% 100%;
   filter: drop-shadow(0 calc(var(--px) * 3) calc(var(--px) * 2) rgba(30, 16, 6, 0.35));
 }
+.stx-offer-figure.is-hero {
+  position: relative;
+  z-index: 1;
+  width: 150%;
+  max-height: calc(var(--px) * 240);
+  margin: calc(var(--px) * -64) 0 calc(var(--px) * -10) calc(var(--px) * -26);
+}
 .stx-offer-figure.is-empty { display: grid; place-items: center; align-self: center; width: 100%; margin: 0; }
 .stx-offer-figure.is-empty > .icon { --icon-size: calc(var(--px) * 80); }
 .stx-offer-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
