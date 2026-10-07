@@ -292,7 +292,7 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
     p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
       : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
   const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
-    el('div', { class: 'dc-portrait-mask wd-portal-art' }, portalPortrait(p?.open ?? false, 84)),
+    el('div', { class: `dc-portrait-mask wd-portal-art${p?.open ? ' is-open' : ''}` }, portalPortrait(p?.open ?? false, 84)),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
   const head = el('div', { class: 'dc-head' }, art,
     el('div', { class: 'dc-what-col' },
