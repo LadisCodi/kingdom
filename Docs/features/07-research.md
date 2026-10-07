@@ -266,8 +266,8 @@ A `bonus` names its effects, and each is four fields:
   at once for every site already claimed or cleared, so researching it late
   never costs what researching it early would have paid.
 - **A new kingdom starts with no Knowledge.** The opening chain pays for its
-  own cards: eighteen quests pay Knowledge, enough to carry the chain's own
-  research with no drip ([`12-quests.md`](12-quests.md) §2.1). After the
+  own cards: the quest before each research quest pays exactly that card,
+  enough to carry the chain's own research with no drip and no more ([`12-quests.md`](12-quests.md) §2.1). After the
   opening the drip, the lumps and the purchases are the funding.
 
 | Source | Pays | Key |
@@ -278,7 +278,7 @@ A `bonus` names its effects, and each is four fields:
 | every **dungeon room** and **Portal floor** (world map) | at least 1, rising with depth and room ([`19-world-map.md`](19-world-map.md) §8.1, §10) | `worldDungeon.knowledge` (0.25) · `worldPortal` |
 | a held **world-map landmark** | 4 a day into a store of 8, collected with a tap | `worldBuild.landmark` |
 | `knowledgeYield` modifier | × on every lump | the Necromancer's boon (×1.25, [`10-heroes.md`](10-heroes.md) §2.6) |
-| the **quest chain** | 41 across eighteen quests | `quests` › `rewardKnowledge` |
+| the **quest chain** | 21 across thirteen quests | `quests` › `rewardKnowledge` |
 | **events** | a lump in the reward table (**OQ-12**) | [`13-events.md`](13-events.md) |
 | **buying it** | Gold or Gems (§3.2) | `knowledge.goldPriceBase` · `knowledge.goldPriceExponent` · `knowledge.gemsPerPoint` |
 
