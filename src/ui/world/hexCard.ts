@@ -24,7 +24,7 @@ import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import type { CurrencyId, GoodId } from '../../sim/state';
+import type { CurrencyId, GoodId, LairId } from '../../sim/state';
 import { claimGold, districtOf, districtRate, upgradeLevel } from '../../worldServer/core';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
@@ -34,7 +34,11 @@ import { action, btn, costChips, iconEl, sectionHead, sheet, type IconName } fro
 import { crestEl } from '../friends/kingdomBits';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
-import { chapelRoom, hexWork } from './worldActions';
+import { chapelRoom, hexActions, hexWork } from './worldActions';
+import { CAMP_CREATURE, DIFFICULTY_COLOR, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
+import { campLoot } from '../../sim/world/fights';
+import { enemyPanel } from '../battleSheet';
+import { creatureFace } from '../lairSheet';
 import { FEATURE_NAME, TERRAIN_NAME } from './hexNames';
 
 /** A feature's mark on its tile: what it is worked for. */
@@ -211,6 +215,61 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
       sectionHead('The hex'), hex,
       sectionHead('Explore'), exploreHead, ...blocked, ...journey, ...(trip === null ? [] : [trip]),
       ...pays));
+}
+
+// ------------------------------------------------------------ a camp
+
+/** What a camp is called, on its card's plank. */
+const CAMP_TITLE: Record<LairId, string> = {
+  Orcs: 'Orc camp', Harpies: 'Harpy camp', Goblins: 'Goblin camp', WolfRiders: 'Wolf-rider camp', Drake: 'Drake’s camp',
+};
+
+/**
+ * A MONSTER CAMP (m86c): THE HEX, then CAMP — its art with how hard it
+ * looks against the player's strongest army, and the enemy alone — what
+ * beating it pays, and one row with its two answers: Negotiate, priced, and
+ * Attack, which opens the deployment. A raid it will make is the board's
+ * arrow, not a line here.
+ */
+export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
+  const camp = bh.camp!;
+  const index = bh.index;
+  const source = game.worldSource();
+  const difficulty = campDifficulty(camp.power, strongestParty(game.state));
+  const creature = CAMP_CREATURE[camp.creature];
+  const hex = el('div', { class: 'dc-head' },
+    portrait(groundSprite(bh), 'tile'),
+    el('div', { class: 'dc-what-col' }, distanceLine(game, index)));
+  const art = portrait(`whex_camp_${camp.creature.toLowerCase()}`, 'skull');
+  art.append(el('span', { class: 'wd-seal', style: `--seal: ${DIFFICULTY_COLOR[difficulty]}` }, difficulty));
+  const campHead = el('div', { class: 'dc-head' }, art,
+    el('div', { class: 'dc-what-col' },
+      el('p', { class: 'wd-name' }, creature.charAt(0).toUpperCase() + creature.slice(1)),
+      el('div', { class: 'dc-what' }, 'Beat them, and take their loot.')));
+  const enemy = enemyPanel(campSquads(source.board().seed, index, camp), camp.power, creatureFace);
+  const loot = (Object.entries(campLoot(game.state, camp.power)) as Array<[CurrencyId, number]>)
+    .filter(([, n]) => n > 0)
+    .map(([c, n]): Tile => ({ icon: c as IconName, label: c === 'HeroXp' ? 'Hero XP' : c, value: `+${formatShort(n)}` }));
+  // An army of the player's already marching on it: its way home instead.
+  const marching = source.armies().find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
+  const reach = hexActions(source, game.worldSeat(), bh, { revealed: true });
+  const tribute = reach.find((a) => a.kind === 'tribute');
+  const answers = marching !== undefined
+    ? action({ label: 'Recall', kind: 'secondary', info: 'Your army is on its way', onClick: () => void game.doRecallArmy(marching.id) })
+    : el('div', { class: 'wd-choices' },
+      btn({
+        label: 'Negotiate', kind: 'secondary',
+        cost: tribute?.kind === 'tribute' ? tribute.cost : campTribute(camp.power),
+        have: (c: CurrencyId) => game.walletValue(c),
+        onClick: () => void game.doTributeCamp(index),
+      }),
+      btn({ label: 'Attack', kind: 'destructive', onClick: () => game.openArmy(index, 'clear') }));
+  return sheet({ title: CAMP_TITLE[camp.creature], onClose: () => game.dismiss() },
+    el('div', { class: 'wd-card' },
+      sectionHead('The hex'), hex, tiles(groundTiles(bh)),
+      sectionHead('Camp'), campHead, enemy,
+      ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), tiles(loot)]),
+      answers));
 }
 
 // ------------------------------------------------------------ free ground

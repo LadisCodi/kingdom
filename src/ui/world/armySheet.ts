@@ -4,7 +4,8 @@
 
 import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import { CAMP_CREATURE } from '../../sim/world/camps';
+import { CAMP_CREATURE, campSquads } from '../../sim/world/camps';
+import { creatureFace } from '../lairSheet';
 import { sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
@@ -30,6 +31,7 @@ export function renderArmySheet(game: Game): HTMLElement {
   const route = game.armyRoute(target);
   const steps = route === null ? hexDistance(hexAt(game.homeHex()), hexAt(target)) : route.path.length - 1;
   const preview = game.armyPreview();
+  const camp = source.board().hexes[target]?.camp;
   const march = route === null ? 'no way there' : formatDuration(outboundMs(route.stepMs) / 1000);
   const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.upgrades.Fortress.name}`
     : game.armyPurpose === 'claim' ? 'Ground nobody holds'
@@ -40,9 +42,10 @@ export function renderArmySheet(game: Game): HTMLElement {
   const view: BattleView = {
     title: `${where} · ${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'}, ${march}`,
     enemy: {
-      squads: [],
+      // A camp's army is seeded by its hex, so it is shown before the fight.
+      squads: game.armyPurpose === 'clear' && camp != null ? campSquads(source.board().seed, target, camp) : [],
       power: preview.power,
-      portrait: (unitId: UnitId) => unitBust(unitId, 'k-portrait-art'),
+      portrait: (unitId: UnitId) => (game.armyPurpose === 'clear' ? creatureFace(unitId) : unitBust(unitId, 'k-portrait-art')),
     },
     attack: preview.attack,
     enough: preview.attack >= preview.power,

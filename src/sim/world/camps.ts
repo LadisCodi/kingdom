@@ -3,11 +3,13 @@
 // player could field. Who has beaten which camp is the world server's.
 
 import { roundPrice } from '../roundPrice';
-import { COMBAT, HEROES, UNITS, WORLD_CAMPS } from '../data/definitions';
+import { COMBAT, HEROES, LAIRS, UNITS, WORLD_CAMPS } from '../data/definitions';
+import { buildBoard, generateEnemy, type Board as FightBoard } from '../battle';
+import type { EnemySquad } from '../combat';
 import { heroSlots } from '../heroes';
 import { heroBody } from '../heroLadder';
 import type { GameState, LairId, Wallet } from '../state';
-import type { BoardHex } from './board';
+import type { BoardHex, Camp } from './board';
 import type { FogState } from './explorers';
 import type { WorldSource } from './source';
 
@@ -71,3 +73,21 @@ export const DIFFICULTY_COLOR: Record<CampDifficulty, string> = {
 export const CAMP_CREATURE: Record<LairId, string> = {
   Orcs: 'Orcs', Harpies: 'Harpies', Goblins: 'Goblins', WolfRiders: 'Wolf-riders', Drake: 'a Drake',
 };
+
+/** The army a camp fields: generated from the board's seed and the camp's
+ *  hex, so the server fights the same one the player was shown. A camp of
+ *  a creature fields what its lair does. */
+export function campFightBoard(seed: number, index: number, camp: Camp): FightBoard {
+  const guard = LAIRS[camp.creature].guard;
+  const plan = generateEnemy({
+    seed, parts: ['camp', index], budget: camp.power, affinity: guard.threat,
+    ...(guard.mix ? { mix: guard.mix } : {}),
+  });
+  return buildBoard(plan.squads, plan.fighters);
+}
+
+/** A camp's squads, as a screen draws them. */
+export const campSquads = (seed: number, index: number, camp: Camp): EnemySquad[] =>
+  campFightBoard(seed, index, camp).slots
+    .filter((s) => s.kind === 'troop' && s.unitId !== null)
+    .map((s) => ({ unitId: s.unitId as EnemySquad['unitId'], count: s.count }));

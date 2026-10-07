@@ -26,7 +26,7 @@ import { spoilsOf, type Spoils } from '../sim/skills';
 import { rand, randInt } from '../sim/rng';
 import { type ArtifactId, type HeroId, type LairId, type PreciousId, type UnitId } from '../sim/state';
 import { SEATS_PER_BOARD, SEAT_INDICES, lumpMaterial, wedgeIndexOf, withDungeons, type Board, type BoardHex } from '../sim/world/board';
-import { CAMP_CREATURE } from '../sim/world/camps';
+import { CAMP_CREATURE, campFightBoard } from '../sim/world/camps';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexDistance, isBoardIndex, ringOf } from '../sim/world/hex';
 import { fastestRoute, homeboundMs, outboundMs, stepTimes } from '../sim/world/travel';
 import { boardOf } from '../sim/world/source';
@@ -205,13 +205,7 @@ const beatenNow = (b: ServerBoard, seat: number, t: number): number[] =>
 /** The camp's army: its creature's lair is its formation's type, as a lair's
  *  garrison is (18 §2), rolled under the hex. */
 function campBoard(b: ServerBoard, index: number): FightBoard {
-  const camp = campAt(b, index)!;
-  const plan = generateEnemy({
-    seed: b.seed, parts: ['camp', index], budget: camp.power, affinity: LAIRS[camp.creature].guard.threat,
-    // A camp of a creature fields what its lair does.
-    ...(LAIRS[camp.creature].guard.mix ? { mix: LAIRS[camp.creature].guard.mix } : {}),
-  });
-  return buildBoard(plan.squads, plan.fighters);
+  return campFightBoard(b.seed, index, campAt(b, index)!);
 }
 
 /** Pay a camp off: the client paid its tribute; the camp is beaten for this
