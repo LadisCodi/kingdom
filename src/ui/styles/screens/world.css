@@ -84,13 +84,14 @@
   color: var(--ink-muted);
 }
 .wd-card .dc-what-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--px) * 2); }
-.wd-card .k-reason.is-blocked { display: flex; align-items: center; gap: calc(var(--px) * 4); margin: calc(var(--px) * 4) 0 0; font-size: var(--text-desc); }
+.wd-blocked { display: flex; align-items: center; gap: calc(var(--px) * 4); margin: 0; font-size: var(--text-desc); font-weight: var(--weight-strong); }
 /* The hex's tiles stand upright — the mark over its name and value — so
  * four fit a row: the ground's facts beside the district's. */
 .wd-stats { --stat-gap: calc(var(--px) * 8); flex-wrap: nowrap; }
 .wd-stats > .dc-stat.k-section {
   flex: 1 1 0;
   width: auto;
+  max-width: calc(var(--px) * 112);
   height: auto;
   flex-direction: column;
   justify-content: center;
@@ -462,3 +463,16 @@
   box-shadow: inset 0 calc(var(--rpx) * 3) 0 rgba(255, 255, 255, 0.35), 0 calc(var(--rpx) * 6) calc(var(--rpx) * 10) rgba(30, 18, 8, 0.45);
 }
 .wmini-canvas { display: block; width: 100%; height: 100%; cursor: pointer; touch-action: none; }
+
+/* Ground in the mist: a cloud over the tile; a Sensed hex's shapes faint
+ * under it. */
+.wd-mist .wd-mist-ground { opacity: 0.45; filter: blur(calc(var(--px) * 1.5)) saturate(0.6); }
+.wd-mist .wd-mist-cloud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120%;
+  height: auto;
+  translate: -50% -50%;
+}
+.wd-mist.is-sensed .wd-mist-cloud { opacity: 0.8; }

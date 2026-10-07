@@ -142,7 +142,7 @@ import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type Qu
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
-  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, homeIndex, returnsAt, revealsAt,
+  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, fogStateOf, freeExplorers, homeIndex, returnsAt, revealsAt,
   worldFogAt, type ExplorerHome,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
@@ -6294,8 +6294,14 @@ export class Game {
   }
 
   hudSlot(): {
-    kind: 'population' | 'workers' | 'builders' | 'army'; value: number; max: number;
+    kind: 'population' | 'workers' | 'builders' | 'army' | 'explorers'; value: number; max: number;
   } {
+    // Looking at ground in the mist → the explorers free to send there.
+    if (this.scene === 'world' && this.openOverlay === 'world' && this.selectedHex !== null
+      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex, this.now()) !== 'Revealed') {
+      const max = explorerSlots(this.state);
+      return { kind: 'explorers', value: freeExplorers(this.state), max };
+    }
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
       const max = builderCount(this.state);

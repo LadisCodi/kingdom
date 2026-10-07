@@ -42,11 +42,11 @@ import { currencyIcon, iconEl, setCta } from './kit';
 
 /** What the plaque shows, per kind. */
 const SLOT_ICON = {
-  population: 'population', workers: 'workers', builders: 'builders', army: 'army',
+  population: 'population', workers: 'workers', builders: 'builders', army: 'army', explorers: 'compass',
 } as const;
 const SLOT_LABEL = {
   population: 'Population', workers: 'Free villagers', builders: 'Builders free',
-  army: 'Army',
+  army: 'Army', explorers: 'Explorers free',
 } as const;
 
 export function mountHeader(game: Game, root: HTMLElement): void {
