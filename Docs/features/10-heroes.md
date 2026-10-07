@@ -449,8 +449,11 @@ Each of these is data, not code:
   card fits the screen without scrolling:
   - **Skill** — one widget: its name, its rank pips and what it does at its
     rank; at its foot the next rank's price and **Upgrade** (what the next
-    rank does is not shown), or a padlock saying what is missing (*Reach level 11*, *Ascend, then reach level 19*). A rank
-    that can be bought now lights the card's orb.
+    rank does is not shown), or a padlock saying what is missing (*Reach
+    level 11*, *Ascend, then reach level 19*). A rank that can be bought now
+    lights the card's orb. A rank bought punches its new pip and every number
+    in the sentence that grew, and the gain floats up beside the pips in
+    green.
   - **Kingdom boon** — on the six that have one.
   - On the roster, a skill past rank 1 shows as a brass numeral on the card.
   - **Level** — *Level n of cap* over a green bar, and **Level Up** with its
