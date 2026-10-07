@@ -38,6 +38,7 @@ import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
 import { chapelRoom, hexActions, hexWork } from './worldActions';
+import { marchingDock } from './delveScreen';
 import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
 import { enemyPanel } from '../battleSheet';
@@ -244,7 +245,8 @@ function groundStrip(bh: BoardHex): HTMLElement {
  * A MONSTER CAMP (m86c, compacted to fit one screen): the ground in one
  * line, the enemy — its difficulty a wax seal on its plank — what beating
  * it pays, and one row with its two answers: Negotiate, priced, and Attack,
- * which opens the deployment. How far it is and what it looks like are the
+ * which opens the deployment. With the player's army on its way, the
+ * dungeon's dock instead: its board, its bar and Finish. How far it is and what it looks like are the
  * board's; a raid it will make is the board's arrow.
  */
 export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
@@ -259,12 +261,13 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   const loot = (Object.entries(campLoot(game.state, camp.power)) as Array<[CurrencyId, number]>)
     .filter(([, n]) => n > 0)
     .map(([c, n]) => el('span', { class: 'k-chip' }, currencyIcon(c, { size: 'sm' }), `+${formatShort(n)}`));
-  // An army of the player's already marching on it: its way home instead.
-  const marching = source.armies().find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
+  // An army of the player's already marching on it: its board, its bar and
+  // Finish, as at a dungeon. A march is not called back halfway, only hurried.
+  const marching = game.worldView?.armies.find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
   const reach = hexActions(source, game.worldSeat(), bh, { revealed: true });
   const tribute = reach.find((a) => a.kind === 'tribute');
   const answers = marching !== undefined
-    ? action({ label: 'Recall', kind: 'secondary', info: 'Your army is on its way', onClick: () => void game.doRecallArmy(marching.id) })
+    ? marchingDock(game, marching, 'On the way')
     : el('div', { class: 'wd-choices' },
       btn({
         label: 'Negotiate', kind: 'secondary',
@@ -276,7 +279,8 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   return sheet({ title: CAMP_TITLE[camp.creature], onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       groundStrip(bh), enemy,
-      ...(loot.length === 0 ? [] : [sectionHead('Beaten, it pays'), el('div', { class: 'wd-loot' }, ...loot)]),
+      // On its way, the fight is chosen: the army's board takes the pay's room.
+      ...(loot.length === 0 || marching !== undefined ? [] : [sectionHead('Beaten, it pays'), el('div', { class: 'wd-loot' }, ...loot)]),
       answers));
 }
 

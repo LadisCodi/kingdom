@@ -372,6 +372,9 @@ accident.**
       city's own production per 1,000 power;
     - a lump of precious material (§7.4).
   - The camp's sheet shows what it pays before the army is sent.
+  - On its way, the camp's sheet docks the army as a dungeon's: its board,
+    its bar to arrival and **Finish**. A march to a camp is not called
+    back, only hurried.
   - Lost: the army walks home with its survivors; the camp stands, whole.
 - **Paying it off**: its *tribute*, from the hex's sheet, no army, no wait.
   It is the training cost of the soldiers a winning army would lose
