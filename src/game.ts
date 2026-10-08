@@ -23,7 +23,7 @@ import {
   BANNER_ORDER,
   AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, FEATURES, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
+  ERA_REWARDS, TECHNOLOGIES, TROOPS, TROOP_ORDER, UNITS, levelIndexed, troopsOf, unitOf, type AdjacencyStat, BANNERS, type BannerId,
   RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
@@ -67,7 +67,7 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
-import { availableRoster, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
+import { availableRoster, rankGate, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
@@ -127,7 +127,7 @@ import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId,
-  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
+  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type TroopId, type UnitId,
   type QueueItem, type Wallet,
 } from './sim/state';
 import {
@@ -4337,13 +4337,13 @@ export class Game {
    * (Docs/features/combat.md §4). A partial squad is legal, so the roster is
    * a floor on nothing: eleven Archers send eleven.
    */
-  troopsAvailableFor(unitId: UnitId): number {
-    return Math.max(0, Math.min(UNITS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
+  troopsAvailableFor(unitId: TroopId): number {
+    return Math.max(0, Math.min(TROOPS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
   }
 
   /** Of this type, how many are still at home — the roster minus what the
    *  party has already committed. */
-  troopsLeftAtHome(unitId: UnitId): number {
+  troopsLeftAtHome(unitId: TroopId): number {
     const roster = availableRoster(this.state);
     return Math.max(0, roster[unitId] - this.expeditionParty
       .filter((slot) => slot.unitId === unitId)
@@ -4358,7 +4358,7 @@ export class Game {
    * fight is its unit's business (combat.md §8), never the player's, and the
    * deploy screen does not show it.
    */
-  assignTroop(unitId: UnitId): void {
+  assignTroop(unitId: TroopId): void {
     const refusal = this.troopRefusal(unitId);
     if (refusal !== null) {
       this.toast(refusal);
@@ -4371,8 +4371,8 @@ export class Game {
 
   /** Why a tile would send nothing right now, in the words the toast uses —
    *  or null when a tap would place a squad. */
-  troopRefusal(unitId: UnitId): string | null {
-    if (this.troopsAvailableFor(unitId) <= 0) return `No ${UNITS[unitId].name}s left to send`;
+  troopRefusal(unitId: TroopId): string | null {
+    if (this.troopsAvailableFor(unitId) <= 0) return `No ${TROOPS[unitId].name}s left to send`;
     if (this.expeditionParty.length >= this.troopSlotsOpen()) return 'Every troop slot is full';
     return null;
   }
@@ -4397,7 +4397,7 @@ export class Game {
   /** Squad after squad, best answer first, inside every rule a tap obeys. */
   private fillTroops(affinity: UnitId | 'Any'): void {
     this.expeditionParty = [];
-    const order = (Object.keys(availableRoster(this.state)) as UnitId[])
+    const order = (Object.keys(availableRoster(this.state)) as TroopId[])
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
     for (;;) {
       const next = order.find((u) => this.troopRefusal(u) === null);
@@ -4743,7 +4743,7 @@ export class Game {
 
   /** The troop roster the picker rail draws, minus nothing: a type with none
    *  left still shows, saying so, because an absent card reads as a bug. */
-  availableTroops(): Record<UnitId, number> {
+  availableTroops(): Record<TroopId, number> {
     return availableRoster(this.state);
   }
 
@@ -4959,7 +4959,7 @@ export class Game {
 
   /** Put a ward's worth of wounded back in the ranks. One order, one wait,
    *  in the hall the player pressed it on. */
-  doHealWounded(unitId: UnitId, count: number, at?: District): void {
+  doHealWounded(unitId: TroopId, count: number, at?: District): void {
     const result = healWounded(this.state, unitId, count, this.now(), at);
     if (result === 'Queued') {
       playSfx('unitTrained');
@@ -4975,18 +4975,18 @@ export class Game {
 
   /** The infirmary, for the card that draws it: who is waiting, and how full
    *  the ward is. */
-  woundedInfo(): { byUnit: Array<{ unitId: UnitId; count: number }>; used: number; cap: number } {
-    const byUnit = (Object.keys(UNITS) as UnitId[])
+  woundedInfo(): { byUnit: Array<{ unitId: TroopId; count: number }>; used: number; cap: number } {
+    const byUnit = TROOP_ORDER
       .map((unitId) => ({ unitId, count: woundedOf(this.state, unitId) }))
       .filter((w) => w.count > 0);
     return { byUnit, used: woundedCount(this.state), cap: woundedCap(this.state) };
   }
 
-  healPrice(unitId: UnitId, count: number): Record<string, number> {
+  healPrice(unitId: TroopId, count: number): Record<string, number> {
     return healCost(this.state, unitId, count);
   }
 
-  healWait(unitId: UnitId, count: number): number {
+  healWait(unitId: TroopId, count: number): number {
     const infirmary = infirmaries(this.state)[0];
     return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
@@ -4994,6 +4994,61 @@ export class Game {
   /** How many one press of Train orders (the card's x1 · x10 · x100 · All).
    *  A presenter's choice, kept for the session: every card shares it. */
   trainAmount: TrainAmount = 1;
+
+  /**
+   * THE RANK A HALL TRAINS (Docs/features/combat.md §6.4) — a presenter's
+   * choice, kept for the session and never saved.
+   *
+   * Each pick remembers the best rank open when it was made: once a better
+   * one opens, the pick lapses and the hall shows the new rank, so a player
+   * never forgets the troops they just unlocked, and training a worse rank
+   * stays a choice they make again.
+   */
+  private rankPicks = new Map<string, { troop: TroopId; top: TroopId }>();
+  /** The hall whose rank list is open, if any. */
+  rankMenuFor: string | null = null;
+
+  /** The best rank of its unit this hall can train right now — rank I when
+   *  none is open, so the card still has a trainee to show. */
+  private topRank(district: District): TroopId | null {
+    const unit = DISTRICTS[district.definitionId].trains.find((t) => t !== 'Villager') as UnitId | undefined;
+    if (unit === undefined) return null;
+    const open = troopsOf(unit).filter((t) => rankGate(this.state, t, district) === null);
+    return open[open.length - 1] ?? unit;
+  }
+
+  /** What the hall's card shows and Train trains: its picked rank, or the best
+   *  one open. A Townhall's villager is its own and only trainee. */
+  traineeAt(district: District): TrainableId {
+    const top = this.topRank(district);
+    if (top === null) return DISTRICTS[district.definitionId].trains[0]!;
+    const pick = this.rankPicks.get(district.uniqueId);
+    return pick !== undefined && pick.top === top ? pick.troop : top;
+  }
+
+  toggleRankMenu(district: District): void {
+    this.rankMenuFor = this.rankMenuFor === district.uniqueId ? null : district.uniqueId;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** A row of the rank list tapped: that rank is the hall's until a better one
+   *  opens. A locked rank says why instead. */
+  pickRank(district: District, troop: TroopId): void {
+    const top = this.topRank(district);
+    if (top === null) return;
+    const gate = rankGate(this.state, troop, district);
+    if (gate !== null) {
+      this.toast(gate === 'HallLevel'
+        ? `${TROOPS[troop].name} needs the hall at level ${formatExact(TROOPS[troop].minBuildingLevel)}`
+        : `${TROOPS[troop].name} is not researched yet`);
+      return;
+    }
+    this.rankPicks.set(district.uniqueId, { troop, top });
+    this.rankMenuFor = null;
+    playSfx('click');
+    this.notify();
+  }
 
   /** The amount selector's tap: the next amount, round. */
   cycleTrainAmount(): void {
@@ -5010,7 +5065,7 @@ export class Game {
       const cost = plan.cost as Wallet;
       const name = unitId === 'Villager'
         ? (plan.count === 1 ? 'a villager' : `${formatExact(plan.count)} villagers`)
-        : (plan.count === 1 ? `a ${UNITS[unitId].name}` : `${formatExact(plan.count)} ${UNITS[unitId].name}s`);
+        : (plan.count === 1 ? `a ${TROOPS[unitId].name}` : `${formatExact(plan.count)} ${TROOPS[unitId].name}s`);
       if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
@@ -5018,8 +5073,12 @@ export class Game {
     if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
-        `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
+        `Build the ${trainerName(unitOf(unitId))} first — it is where ${UNITS[unitOf(unitId)].name}s are trained`);
     }
+    if (result === 'HallLevel' && unitId !== 'Villager') {
+      this.toast(`${TROOPS[unitId].name} needs the hall at level ${formatExact(TROOPS[unitId].minBuildingLevel)}`);
+    }
+    if (result === 'OtherRank') this.toast('Finish the current batch first — a hall trains one rank at a time');
     if (result === 'ArmyAtCapacity') {
       this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
@@ -7281,8 +7340,8 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
 
 /** How well a unit type answers a lair's threat — used only to pre-fill a
  *  sensible party, never to decide anything. */
-const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
-  typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;
+const scoreAgainst = (troop: TroopId, affinity: UnitId | 'Any'): number =>
+  typeMultiplier(unitOf(troop), affinity) * TROOPS[troop].dmg;
 
 /** "in 3 days" / "in 5 hours" / "in 12 minutes" — coarse on purpose; the
  *  budget refills on the first of the month, not on a stopwatch. */

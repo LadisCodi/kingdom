@@ -10,7 +10,7 @@
 import { DISTRICTS, WORLD, levelIndexed } from '../data/definitions';
 import { applyLosses, woundedCap, woundedCount, woundedOf, woundedShareFor } from '../army';
 import { setHeroHp } from '../heroHealth';
-import { newId, type GameState, type HeroId, type UnitId, type WorldArmyOut } from '../state';
+import { newId, type GameState, type HeroId, type TroopId, type WorldArmyOut } from '../state';
 import { techMultiplier } from '../techEffects';
 
 /**
@@ -53,8 +53,8 @@ export function departArmy(state: GameState, out: WorldArmyOut): void {
 export interface ArmyHome {
   armyId: string;
   at: number;
-  troops: Array<{ unitId: UnitId; count: number }>;
-  fallen: Array<{ unitId: UnitId; count: number }>;
+  troops: Array<{ unitId: TroopId; count: number }>;
+  fallen: Array<{ unitId: TroopId; count: number }>;
   heroes: Array<{ id: HeroId; hp: number }>;
 }
 

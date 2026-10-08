@@ -18,43 +18,36 @@ stops being able to say "hero" and "troop" at a glance.
 
 ## 2. Each one ships two files
 
-`iconEl(unitId, { size: 'lg' })` draws a unit at **48px** in the squad slots
-(`.bt-face`, `battleSheet.ts`) and inside a 64px card in the picker
-(`.bt-card-art`, `battlePicker.ts`). A whole standing figure at 48px is a
-smudge — which is exactly why an avatar is wanted.
-
 | File | Size | Where |
 |---|---|---|
-| `unit_<id>.png` | 512×768, 2:3 | the picker card, anywhere the troop is shown big |
-| `unit_<id>_avatar.png` | 256×256, square | the 48px squad slots and any small widget |
+| `unit_<id>.png` | 512×768, 2:3 | the training panel, anywhere the troop is shown big |
+| `unit_<id>_avatar.png` | 256×256, square (cut from a 512 master) | every small widget: squad slots, the party picker, the battle screen, the map's training bar |
 
-**The avatar is CROPPED from the full body's master, not generated.** A second
-generation would drift — a different face on the same soldier is worse than a
-small figure — and the crop is free. So the prompt carries one extra demand
-the hero prompts do not: *"la cabeza y los hombros amplios y despejados, sin
-nada cruzándolos"*, and no weapon in front of the face. Without it the
-Warrior's shield sits under his chin and there is nothing to crop.
+**The avatar is the bust alone, cut out — no base.** Every screen draws its
+own base under it (a paper disc, a squad slot, a banner), so the file carries
+none: no ring, no disc, no paper, alpha 0 around the figure.
+
+- Head and shoulders, facing front, the face centred.
+- Cut straight across mid-chest, **the cut on the canvas's bottom edge**, the
+  shoulders filling most of the width.
+- Same face size and eye height in every bust of every unit, so a row of them
+  reads as one set; a plume or wings fit inside the canvas, shortened if they
+  must, and never move the face.
+- No weapon or shield in front of the chest.
+- **The Cavalry keeps its horse's head** beside the rider: at 48px a rider
+  bust with a lance is a Lancer.
+
+**Generated, not cropped.** One sheet per unit holds the busts of all its
+ranks (§5), rank I included, drawn in the chat that drew the full figures so
+the face carries over: a 3×2 grid of square cells, the sixth empty, 40px
+gutters, true alpha. Cut and framed with:
 
 ```sh
-python3 Docs/art/portraits/bust.py master.png unit_<id>_avatar.png
+python3 Docs/art/portraits/units/evolutions/norm_bust.py SHEET 3 2 OUT_PREFIX 512
 ```
 
-`bust.py` measures the square against the figure's **height** and centres it on
-the **head**, and both of those are corrections to the obvious version. Cropping
-the top half and filling a square gives every unit a different zoom, because the
-crop inherits the figure's aspect ratio — the narrow Warrior came back tight on
-the face and the wide mounted Cavalry came back far away, and four zooms in a row
-of slots read as four mistakes. Centring on the canvas instead of the head crops
-the Cavalry's rider out of his own portrait, because he sits well left of his
-horse.
-
-**The Cavalry then takes the one deliberate exception.** A consistent bust drops
-the horse's head, and at 48px the horse is the whole point: a rider bust with a
-lance is a Lancer. So its avatar is a wider square (`840px` of a `901×1449`
-master, from `+110+10`) that holds rider, lance and horse head, and its head
-therefore reads a little smaller than the other three. Distinguishability beats
-consistency at that size — the avatar exists to tell four units apart, not to
-frame a face.
+It keeps the scale the sheet drew (which is what holds the face size steady),
+puts the flat cut on the bottom edge and centres the shoulders.
 
 ## 3. The blocks
 
@@ -194,3 +187,31 @@ python3 Docs/art/portraits/bust.py villager.png src/render/assets/unit_villager_
 
 `src/ui/styles/screens/portraits.css` already lists `unit_villager`, so the
 smooth render is not pixelated on landing.
+
+## 5. Evolutions — the same soldier, better kit
+
+Every unit has five ranks ([`../../features/combat.md`](../../features/combat.md) §6).
+A rank is **the same soldier**: same face, pose, weapon and livery. Only the
+kit climbs, so each rank reads stronger than the last at thumbnail size.
+
+| Rank | Kit |
+|---|---|
+| I | the unit as shipped |
+| II · Veteran | mail on arms and skirt, steel pauldrons, a nasal helm |
+| III · Elite | a steel breastplate, a short cape, gold trim on the helm |
+| IV · Champion | full plate with gold trim, a plume in the livery colour |
+| V · Legend | silver-and-gold plate, a fur-lined cape, a winged or crested helm, a softly glowing weapon |
+
+The Archer climbs in leather, then mail and an ornate recurve; the
+Cavalry's horse climbs with its rider (leather, steel chanfron, part barding,
+then a white horse in silver-and-gold barding).
+
+- **Files**: rank I keeps `unit_<id>`; ranks II–V are `unit_<id>_e<n>.png` and
+  `unit_<id>_e<n>_avatar.png`, both to §2's sizes.
+- **Masters and prompts**: `units/evolutions/` — `<unit>.prompt.txt` for the
+  four full figures (a 2×2 sheet, II–V), the busts asked for in the same chat.
+- **The numeral is the UI's, never the art's**: no file carries a number.
+  A rank above I wears a brass coin over the portrait's bottom-right, about
+  40% of its width and overhanging it a little, its numeral in Alegreya 900
+  pressed into the metal — on the player's troops and on evolved enemy
+  creatures alike.

@@ -8,11 +8,11 @@
 > Building levels and costs: [`buildings.md`](buildings.md).
 >
 > **Status: built.** The resolver is `src/sim/battle.ts` and the
-> screen that replays its stream is `src/ui/battleScreen.ts`. Still ahead:
-> **troop evolutions** (§6 — designed, not built), the generator's evolved
-> squads and scaled villains (§11, §9.4 — designed, not built), villains in a
-> room (§11 — the generator takes a pool and a boss villain, and no caller
-> passes one) and authored boss formations.
+> screen that replays its stream is `src/ui/battleScreen.ts`. Troop
+> evolutions (§6), the generator's evolved squads and its scaled villains
+> (§9.4, §11) are built. Still ahead: villains in a dungeon's standard room
+> (§11 — the generator takes a pool, and only the Portal passes one) and
+> authored boss formations.
 
 ## 1. Model
 
@@ -134,8 +134,6 @@ Gold is what an army is mostly paid in:
 
 ## 6. Evolutions
 
-**Status: designed, not built.**
-
 ### 6.1 The rules
 
 - Every unit has **five evolutions, I to V**. Rank I is the unit as §5 has
@@ -232,10 +230,11 @@ Gold is what an army is mostly paid in:
 
 The hall's training widget ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md)):
 
-- **The portrait is a button.** It opens a drop-down, one row per rank:
-  portrait, name, the four stats as values (never multipliers), the recruit
-  cost. A locked rank shows its padlock and its reason — *Needs Warriors III*,
-  *Barracks level 5*.
+- **The portrait is a button.** It opens a list in the panel, one row per
+  rank: portrait with its coin, name, the four stats as values (never
+  multipliers). A locked rank shows its padlock and its reason — *Needs
+  Warriors III*, *Barracks level 5*. The price is the Train button's once a
+  rank is picked.
 - **The selected rank is what the panel shows** — its stats, price and time —
   and what Train trains.
 - **A newly unlocked rank becomes the selected one** in its hall. Training a
@@ -372,8 +371,6 @@ as ticks.
 
 ### 9.4 A scaled villain
 
-**Status: designed, not built.**
-
 - A villain's authored block is its **floor**. Only the generator raises it,
   with budget a full board of rank-V squads cannot hold (§11).
 - Its scale is `k = (authored power + the budget it takes) / authored power`:
@@ -412,12 +409,12 @@ them:
 5. Per type: `count = floor(share / power)`, clamped to `squadSize`;
    overflow spills into a second squad of the same type, and whatever the
    shares leave on the table goes to the affinity while a slot remains.
-6. **Evolved squads** (designed, not built). When six squads of rank I
-   cannot hold the budget, the generator finds the lowest rank R at which
+6. **Evolved squads.** When six squads of rank I cannot hold the budget —
+   more than a tenth of it left unfielded on a full board — the generator finds the lowest rank R at which
    they can and fields the board in **R−1 and R**, promoting as few squads to
    R as it needs — the affinity's (or the mix's heaviest) first. Each squad
    is one rank; counts are recomputed at its rank's `power`.
-7. **Scaled villains** (designed, not built). Budget a board of rank-V squads
+7. **Scaled villains.** Budget a board of rank-V squads
    cannot hold is split evenly across the villains on the board, drawn from
    the pool now if none were, and each is scaled (§9.4). Without a pool it is
    not fielded.

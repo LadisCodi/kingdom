@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { ArtifactId, HeroId, LairId, PreciousId, UnitId } from '../sim/state';
+import type { ArtifactId, HeroId, LairId, PreciousId, TroopId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -76,7 +76,7 @@ export interface ServerArmy {
    *  stands in a Fortress or camps at a dungeon. */
   at: number | null;
   /** Everyone it has lost so far, for the count it comes home with. */
-  fallen: Array<{ unitId: UnitId; count: number }>;
+  fallen: Array<{ unitId: TroopId; count: number }>;
 }
 
 /** What the server owes a player, delivered with every snapshot until the
@@ -87,8 +87,8 @@ export interface ServerArmy {
 export type WorldEffect = { seq?: number } & (
   | {
     kind: 'armyHome'; armyId: string; at: number;
-    troops: Array<{ unitId: UnitId; count: number }>;
-    fallen: Array<{ unitId: UnitId; count: number }>;
+    troops: Array<{ unitId: TroopId; count: number }>;
+    fallen: Array<{ unitId: TroopId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
   /** A line for the notices; `hex` is where it happened, when it has a
@@ -317,8 +317,8 @@ export interface ArmyView {
   heroes: HeroId[] | null;
   /** Its own owner sees what it fights with as it stands: each slot, a
    *  hero's wounds, and the soldiers lost so far. */
-  slots?: Array<{ kind: 'troop' | 'hero'; unitId: UnitId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
-  fallen?: Array<{ unitId: UnitId; count: number }>;
+  slots?: Array<{ kind: 'troop' | 'hero'; unitId: TroopId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
+  fallen?: Array<{ unitId: TroopId; count: number }>;
 }
 
 export interface SeatView {

@@ -27,13 +27,13 @@
 // hero tile puts the hero in or takes it out, and a tap on a filled slot of
 // your board sends it home. The board above only shows the party.
 
-import { HEROES, UNIT_ORDER, UNITS } from '../sim/data/definitions';
+import { HEROES, TROOP_ORDER, TROOPS, rankOf } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import type { HeroId, UnitId, Wallet } from '../sim/state';
+import type { HeroId, TroopId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
 import { btn, headPanel, hpBar, iconEl, sectionHead, sheet } from './kit';
-import { unitBust } from './unitArt';
+import { portraitFrame, unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
 
 /** Everything the screen needs that is not the player's own army. */
@@ -45,7 +45,7 @@ export interface BattleView {
     power: number;
     /** The face a squad of each type wears on the enemy side: a lair's
      *  creatures, not the player's own soldiers. */
-    portrait: (unitId: UnitId) => HTMLElement;
+    portrait: (unitId: TroopId) => HTMLElement;
     /** The faces of the heroes or villains it fields, if any. */
     heroes?: HTMLElement[];
   };
@@ -66,9 +66,9 @@ export interface BattleView {
 }
 
 /** A squad on the board: its face in the round frame, its count under it. */
-const squadCell = (face: HTMLElement, count: number): HTMLElement =>
+const squadCell = (face: HTMLElement, count: number, troop: TroopId): HTMLElement =>
   el('span', { class: 'bt-cell is-filled' },
-    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, face)),
+    portraitFrame(face, troop),
     el('span', { class: 'bt-count' }, `×${formatExact(count)}`));
 
 const emptyCell = (): HTMLElement => el('span', { class: 'bt-cell is-empty', 'aria-hidden': 'true' });
@@ -96,8 +96,8 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
 /** The enemy's board alone — its red plank, its power and its squads — for
  *  a screen that shows what a fight is against before it is composed (a
  *  world camp's card). */
-export const enemyPanel = (squads: readonly EnemySquad[], power: number, portrait: (u: UnitId) => HTMLElement): HTMLElement =>
-  armyBox('Enemy', power, 'is-enemy', [slotGroup('Troops', squads.map((s) => squadCell(portrait(s.unitId), s.count)), 0, 'is-troops')]);
+export const enemyPanel = (squads: readonly EnemySquad[], power: number, portrait: (u: TroopId) => HTMLElement): HTMLElement =>
+  armyBox('Enemy', power, 'is-enemy', [slotGroup('Troops', squads.map((s) => squadCell(portrait(s.unitId), s.count, s.unitId)), 0, 'is-troops')]);
 
 /** An army already in the field — camped at a dungeon or in the Portal —
  *  as the deployment draws the player's own: troops above, heroes below,
@@ -109,12 +109,12 @@ export function fieldArmyPanel(
   game: Game,
   army: {
     power: number;
-    troops: ReadonlyArray<{ unitId: UnitId; count: number; lost: number }>;
+    troops: ReadonlyArray<{ unitId: TroopId; count: number; lost: number }>;
     heroes: ReadonlyArray<{ heroId: HeroId; hp: number; hpMax: number }>;
   },
 ): HTMLElement {
   const troops = army.troops.map((s) => {
-    const cell = squadCell(unitBust(s.unitId, 'k-portrait-art'), s.count);
+    const cell = squadCell(unitBust(s.unitId, 'k-portrait-art'), s.count, s.unitId);
     cell.classList.add('is-mine');
     if (s.lost > 0) cell.append(el('span', { class: 'bt-lost' }, `−${formatExact(s.lost)}`));
     return cell;
@@ -138,7 +138,7 @@ const cardSlot = (cls: string, ...children: HTMLElement[]): HTMLElement =>
  *  heroes or villains only when it has any. An empty slot on their side says
  *  nothing the player can act on. */
 function enemyBoard(view: BattleView): HTMLElement {
-  const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count));
+  const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count, s.unitId));
   const heroes = (view.enemy.heroes ?? []).map((face) => squadlessCell(face));
   return armyBox('Enemy', view.enemy.power, 'is-enemy', [
     slotGroup('Troops', troops, 0, 'is-troops'),
@@ -160,10 +160,9 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     .map((slot, index) => {
       const cell = el('button', {
         class: 'bt-cell is-filled is-mine', type: 'button',
-        'aria-label': `Send ${slot.count} ${UNITS[slot.unitId].name}s home`,
+        'aria-label': `Send ${slot.count} ${TROOPS[slot.unitId].name}s home`,
       },
-      el('span', { class: 'k-portrait' },
-        el('span', { class: 'k-portrait-mask' }, unitBust(slot.unitId, 'k-portrait-art'))),
+      portraitFrame(unitBust(slot.unitId, 'k-portrait-art'), slot.unitId),
       el('span', { class: 'bt-count' }, `×${formatExact(slot.count)}`));
       cell.addEventListener('click', () => game.clearTroopSlot(index));
       return cell;
@@ -207,7 +206,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
 
 // -------------------------------------------------------------- the roster
 
-function troopTile(game: Game, unitId: UnitId): HTMLElement {
+function troopTile(game: Game, unitId: TroopId): HTMLElement {
   const left = game.troopsLeftAtHome(unitId);
   const refusal = game.troopRefusal(unitId);
   // The board's own medallion, so a troop reads the same at home and in the
@@ -215,12 +214,12 @@ function troopTile(game: Game, unitId: UnitId): HTMLElement {
   const tile = el('button', {
     class: `bt-troop${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
     type: 'button',
-    'aria-label': refusal ?? `Send a squad of ${UNITS[unitId].name}s`,
+    'aria-label': refusal ?? `Send a squad of ${TROOPS[unitId].name}s`,
   },
   el('span', { class: 'bt-cell is-filled' },
-    el('span', { class: 'k-portrait' }, el('span', { class: 'k-portrait-mask' }, unitBust(unitId, 'k-portrait-art'))),
+    portraitFrame(unitBust(unitId, 'k-portrait-art'), unitId),
     el('span', { class: 'bt-count' }, formatExact(left))),
-  el('span', { class: 'bt-troop-name' }, UNITS[unitId].name));
+  el('span', { class: 'bt-troop-name' }, TROOPS[unitId].name));
   tile.addEventListener('click', () => game.assignTroop(unitId));
   return tile;
 }
@@ -252,7 +251,10 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
 // -------------------------------------------------------------- the screen
 
 export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
-  const troops = UNIT_ORDER.filter((u) => UNITS[u] !== undefined);
+  // Every unit's rank I, always — a type with none left still shows, saying
+  // so — and a higher rank once the kingdom has any of it (combat.md §6.5).
+  const roster = game.availableTroops();
+  const troops = TROOP_ORDER.filter((t) => rankOf(t) === 1 || (roster[t] ?? 0) > 0);
   const body = el('div', { class: 'bt' },
     enemyBoard(view),
     partyBoard(game, view),

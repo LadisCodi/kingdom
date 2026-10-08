@@ -165,7 +165,8 @@ export function statsAt(game: Game, district: District, level: number): Building
   // trainee per building (dataRules.ts), so the building's own figure — and
   // the Train button carries only the price.
   if (def.trains.length > 0) {
-    const secs = trainSecondsAt(game.state, district.uniqueId, def.trains[0]);
+    // At the rank the hall is set to: a Warrior III takes longer than a I.
+    const secs = trainSecondsAt(game.state, district.uniqueId, game.traineeAt(district));
     add('train-time', 'hourglass', 'Training time', 'Training', formatDuration(secs), secs,
       (d) => signed(d, formatDuration(Math.abs(d))));
     out[out.length - 1].lowerIsBetter = true;

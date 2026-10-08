@@ -1,0 +1,20 @@
+GENERA UNA IMAGEN NUEVA. No edites ni exportes los adjuntos: son SOLO referencias.
+
+Adjunto 1: la Arquera de rango I tal como está en el juego. Adjunto 2: un montaje de tropas y héroes del juego. Tu imagen va a convivir con ellas: mismo estilo exacto.
+
+ENCARGO: una hoja con las CUATRO EVOLUCIONES de la misma Arquera — rangos II, III, IV y V — en una cuadrícula de 2×2, de izquierda a derecha y de arriba abajo: II arriba a la izquierda, III arriba a la derecha, IV abajo a la izquierda, V abajo a la derecha. Hoja vertical 2:3. Cada figura cabe entera en su cuarto, centrada, con una banda vacía de al menos 40 px a lo largo de las líneas medias: nada cruza de un cuarto a otro.
+
+ES EL MISMO SOLDADO SUBIENDO DE RANGO, no cuatro personajes distintos: la misma joven de pelo castaño y cara amable, la misma pose tensando el arco, la misma CAPUCHA VERDE, el mismo ARCO de madera y la misma aljaba, la misma ropa VERDE con ribete crema y cuero marrón. Lo que cambia con cada rango es SOLO el equipo: más metal, mejor acabado, más dorado y más presencia. Cada rango tiene que leerse claramente más fuerte que el anterior a tamaño de miniatura.
+
+- Rango II · Veterana: jubón de cuero reforzado con tachuelas, brazal de cuero y guante de arquero, arco con empuñadura forrada, aljaba más llena. Todavía sencilla.
+- Rango III · Élite: hombreras de cuero endurecido con remaches de acero, capa verde más larga con ribete crema, brazales de acero, arco largo reforzado con puntas de acero.
+- Rango IV · Campeona: cota de malla fina bajo el jubón, hombreras de acero con ribete dorado, capa verde con broche dorado, arco recurvo con adornos dorados, flechas con plumas azules.
+- Rango V · Leyenda: armadura ligera élfica plateada y dorada sobre ropa verde, capa verde forrada de crema con la capucha bajada sobre los hombros o puesta pero con la cara totalmente visible, arco recurvo dorado y ornamentado con un brillo suave en la flecha. La más imponente, sin dejar de ser simpática.
+
+En los cuatro: la cara siempre visible y sin nada delante, la cabeza y los hombros despejados (de ahí se recorta su retrato), las dos manos y los dos pies visibles, el arco y la aljaba enteros dentro de su cuarto. Mismo tamaño de figura en los cuatro cuartos.
+
+ESTILO, copiado del montaje: cartoon plano de juego móvil, contorno marrón oscuro grueso y uniforme, color plano con un solo tono de sombra y un brillo, sin texturas, sin arañazos, poco detalle, proporciones compactas con cabeza y manos algo grandes. Saturación como el montaje. Dibuja como si se fuera a mostrar a 128 px de ancho.
+
+EVITAR: sin texto, sin números, sin etiquetas, sin numerales, sin marcos, sin suelo, sin pedestal, sin sombras proyectadas, sin resplandor de fondo, sin caballo, sin capa negra ni armadura de villano, sin cuernos, sin calaveras, sin yelmo cerrado que tape la cara.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

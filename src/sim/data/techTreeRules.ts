@@ -31,6 +31,9 @@ import type { TomeId } from '../state';
  *  (ui/research/layout.ts) is drawn from this. */
 export const COLS = 3;
 
+/** A troop's rank as the player reads it — I to V (combat.md §6). */
+export const ROMAN_RANK = ['', 'I', 'II', 'III', 'IV', 'V'];
+
 /** What a technology puts in the player's hands. One entry per thing it
  *  opens; every gate the game checks is derived from these. */
 export type TechUnlock =
@@ -38,6 +41,8 @@ export type TechUnlock =
   | { districtLevel: { id: string; level: number } }
   | { districtCount: string }
   | { unit: string }
+  /** One rank (2–5) of a unit becomes trainable (combat.md §6.1). */
+  | { evolution: { unit: string; rank: number } }
   | { harvest: string }
   | { terrain: string }
   /** A building raised in a district on the world board: Fortress, Chapel. */
@@ -289,6 +294,7 @@ export function unlockKey(unlock: TechUnlock): string {
   }
   if ('districtCount' in unlock) return `districtCount:${unlock.districtCount}`;
   if ('unit' in unlock) return `unit:${unlock.unit}`;
+  if ('evolution' in unlock) return `evolution:${unlock.evolution.unit}:${unlock.evolution.rank}`;
   if ('harvest' in unlock) return `harvest:${unlock.harvest}`;
   if ('terrain' in unlock) return `terrain:${unlock.terrain}`;
   if ('worldUpgrade' in unlock) return `worldUpgrade:${unlock.worldUpgrade}`;
@@ -303,6 +309,7 @@ export function unlockLabel(unlock: TechUnlock): string {
   }
   if ('districtCount' in unlock) return `one more ${unlock.districtCount}`;
   if ('unit' in unlock) return `the ${unlock.unit}`;
+  if ('evolution' in unlock) return `${unlock.evolution.unit} ${ROMAN_RANK[unlock.evolution.rank] ?? unlock.evolution.rank}`;
   if ('harvest' in unlock) return `${unlock.harvest} cells`;
   if ('terrain' in unlock) return `${unlock.terrain} cells`;
   if ('worldUpgrade' in unlock) return `the ${unlock.worldUpgrade} on the world board`;
@@ -331,6 +338,12 @@ function unlockProblem(unlock: TechUnlock): string | null {
   if ('unit' in unlock) {
     return UNIT_IDS.includes(unlock.unit) ? null
       : `trains "${unlock.unit}", which is not a unit`;
+  }
+  if ('evolution' in unlock) {
+    const { unit, rank } = unlock.evolution ?? { unit: '', rank: 0 };
+    if (!UNIT_IDS.includes(unit)) return `evolves "${unit}", which is not a unit`;
+    return Number.isInteger(rank) && rank >= 2 && rank <= 5 ? null
+      : `opens ${unit} rank ${rank} — a rank is 2 to 5`;
   }
   if ('harvest' in unlock) {
     return HARVEST_IDS.includes(unlock.harvest) ? null

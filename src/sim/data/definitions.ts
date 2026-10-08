@@ -22,7 +22,7 @@ import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrad
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId, ItemId,
-  LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
+  LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, TroopId, UnitId, UnitRank,
   Wallet,
 } from '../state';
 
@@ -167,6 +167,7 @@ const GATES = (() => {
   const districtLevel = new Map<string, TechId>();
   const districtCount = new Map<string, TechId>();
   const unit = new Map<string, TechId>();
+  const evolution = new Map<string, TechId>();
   const harvest = new Map<string, TechId>();
   const terrain = new Map<string, TechId>();
   const worldUpgrade = new Map<string, TechId>();
@@ -178,12 +179,13 @@ const GATES = (() => {
         districtLevel.set(`${unlock.districtLevel.id}:${unlock.districtLevel.level}`, id);
       } else if ('districtCount' in unlock) districtCount.set(unlock.districtCount, id);
       else if ('unit' in unlock) unit.set(unlock.unit, id);
+      else if ('evolution' in unlock) evolution.set(`${unlock.evolution.unit}:${unlock.evolution.rank}`, id);
       else if ('harvest' in unlock) harvest.set(unlock.harvest, id);
       else if ('terrain' in unlock) terrain.set(unlock.terrain, id);
       else if ('worldUpgrade' in unlock) worldUpgrade.set(unlock.worldUpgrade, id);
     }
   }
-  return { district, districtLevel, districtCount, unit, harvest, terrain, worldUpgrade };
+  return { district, districtLevel, districtCount, unit, evolution, harvest, terrain, worldUpgrade };
 })();
 
 /** The technology a new building of this kind on the world board waits on
@@ -1179,6 +1181,82 @@ export const UNITS: Record<UnitId, UnitDef> = Object.fromEntries(
 ) as unknown as Record<UnitId, UnitDef>;
 
 export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
+
+// ---------------------------------------------------------------- troops
+
+/**
+ * ONE TROOP — a unit at one rank (Docs/features/combat.md §6).
+ *
+ * Rank I is the unit's own row; ranks II–V are its `evolutions`, every number
+ * authored whole (the ×1.6 ladder is a balancing rule, not a formula, so a
+ * rank can be tuned on its own in `?dev=data`). What does NOT change with
+ * rank is read off the unit: type, tags, `squadSize`, `frontage`, `cooldown`.
+ */
+export interface TroopDef extends Omit<UnitDef, 'id'> {
+  id: TroopId;
+  unit: UnitId;
+  rank: UnitRank;
+  /** The level its hall must stand at before this rank can be trained. */
+  minBuildingLevel: number;
+}
+
+interface EvolutionRow {
+  atk: number; dmg: number; def: number; hp: number; power: number;
+  recruitCost: Wallet; trainDurationSeconds: number; minBuildingLevel: number;
+}
+
+export const RANKS: readonly UnitRank[] = [1, 2, 3, 4, 5];
+
+/** The troop a unit is at a rank: `Warrior` at I, `Warrior_e3` at III. */
+export const troopId = (unit: UnitId, rank: UnitRank): TroopId =>
+  (rank === 1 ? unit : `${unit}_e${rank}`) as TroopId;
+
+/** The unit a troop is — what the type chart, the rows and a hero's passive
+ *  read. */
+export const unitOf = (troop: TroopId): UnitId => troop.split('_e')[0] as UnitId;
+
+export const rankOf = (troop: TroopId): UnitRank => {
+  const at = troop.indexOf('_e');
+  return (at < 0 ? 1 : Number(troop.slice(at + 2))) as UnitRank;
+};
+
+export const isTroopId = (id: string): id is TroopId => {
+  const unit = id.split('_e')[0] as UnitId;
+  if (!(unit in UNITS)) return false;
+  return id === unit || RANKS.slice(1).some((r) => id === `${unit}_e${r}`);
+};
+
+export const TROOPS: Record<TroopId, TroopDef> = (() => {
+  const out: Partial<Record<TroopId, TroopDef>> = {};
+  for (const unit of UNIT_ORDER) {
+    const base = UNITS[unit];
+    out[unit] = { ...base, id: unit, unit, rank: 1, minBuildingLevel: 1 };
+    const rows = (balance.units[unit] as { evolutions?: EvolutionRow[] }).evolutions ?? [];
+    rows.forEach((row, i) => {
+      const rank = (i + 2) as UnitRank;
+      const id = troopId(unit, rank);
+      out[id] = {
+        ...base,
+        id, unit, rank,
+        name: `${base.name} ${['', 'I', 'II', 'III', 'IV', 'V'][rank]}`,
+        sprite: `${base.sprite}_e${rank}`,
+        atk: row.atk, dmg: row.dmg, def: row.def, hp: row.hp, power: row.power,
+        recruitCost: row.recruitCost,
+        trainDurationSeconds: row.trainDurationSeconds,
+        minBuildingLevel: row.minBuildingLevel,
+        requiredTech: GATES.evolution.get(`${unit}:${rank}`) ?? null,
+      };
+    });
+  }
+  return out as Record<TroopId, TroopDef>;
+})();
+
+/** Every troop, unit by unit and rank by rank. */
+export const TROOP_ORDER: TroopId[] = UNIT_ORDER.flatMap((u) =>
+  RANKS.map((r) => troopId(u, r)).filter((t) => t in TROOPS));
+
+/** A unit's ranks, I first. */
+export const troopsOf = (unit: UnitId): TroopId[] => TROOP_ORDER.filter((t) => unitOf(t) === unit);
 
 // ---------------------------------------------------------------- magic
 
@@ -2550,4 +2628,7 @@ export const GAME_VERSION: string = pkg.version;
 // becomes a `Crops` cell (a migrator); a growing cell's `Growing`, additive.
 // v112: an explorer waits at its hex for the player's tap — `RevealedAtUtc` on
 // a trip, and the trips ever sent (`TripsSent` on the world), additive.
-export const SAVE_VERSION = 113;
+// v113→v114: troop evolutions — an army unit, a wounded entry, a training
+// item or a world army may name a troop at a rank (`Warrior_e3`); additive,
+// rank I keeps the unit's own id. Bumped so an older build refuses the save.
+export const SAVE_VERSION = 114;

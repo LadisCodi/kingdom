@@ -35,6 +35,7 @@ export function districtCardSignature(game: Game, district: District): string {
   // The rent clock's anchor moves on every tick a store earns — or stands
   // full — and the card draws the store, never the anchor.
   const { rentAnchor: _anchor, ...drawn } = district;
+  const trainees = def.trains.length > 0 ? [game.traineeAt(district)] : [];
   const parts: unknown[] = [
     drawn,
     queueItem?.uniqueId ?? null,
@@ -57,13 +58,16 @@ export function districtCardSignature(game: Game, district: District): string {
     // Training: its line, what it costs against the purse, the room it
     // has, the army's room, the ward.
     lineFor(s, district.uniqueId).map((i) => i.trainee),
-    // How many of its trainee the player owns, shown under the portrait.
-    def.trains.map((t) => (t === 'Villager' ? s.city.population
+    // The rank the hall is set to, and whether its list is open (combat.md
+    // §6.4); how many of that trainee the player owns, under the portrait.
+    trainees,
+    game.rankMenuFor === district.uniqueId,
+    trainees.map((t) => (t === 'Villager' ? s.city.population
       : s.army.filter((u) => u.definitionId === t).length)),
     // The Train amount picked, and the order it prices against the purse
     // ("All" moves with the purse itself).
     game.trainAmount,
-    def.trains.map((t) => {
+    trainees.map((t) => {
       const plan = trainPlan(s, t, game.trainAmount);
       return [plan.count, shorts(plan.cost as Record<string, number>)];
     }),

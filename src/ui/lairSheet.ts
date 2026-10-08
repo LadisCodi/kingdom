@@ -9,12 +9,15 @@ import { LAIRS } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { UNIT_CREATURE_AVATAR } from '../render/lairMap';
-import type { UnitId } from '../sim/state';
+import { unitOf } from '../sim/data/definitions';
+import type { TroopId } from '../sim/state';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { unitBust } from './unitArt';
 
-export const creatureFace = (unitId: UnitId): HTMLElement => {
-  const url = spriteUrl(UNIT_CREATURE_AVATAR[unitId]);
+/** An enemy squad's face: the creature its UNIT is, whatever its rank — the
+ *  rank rides on the coin the frame wears (unitArt.ts `portraitFrame`). */
+export const creatureFace = (unitId: TroopId): HTMLElement => {
+  const url = spriteUrl(UNIT_CREATURE_AVATAR[unitOf(unitId)]);
   return url ? spriteImgAt(url, 'k-portrait-art') : unitBust(unitId, 'k-portrait-art');
 };
 

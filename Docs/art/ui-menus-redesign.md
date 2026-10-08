@@ -440,10 +440,11 @@ wood of its sides touches the screen's edges.
   `mockups/m28-training-widget.png`), one block for every building that
   turns something out — the Townhall's villagers, a hall's soldiers. Each
   building trains ONE thing; a hall picks only its unit's rank:
-  - **Rank picker** (designed, not built — [`../features/combat.md`](../features/combat.md)
-    §6.4): on a hall, the portrait is a button that drops a list of the
-    unit's ranks — portrait, name, the four stats as values, the cost, or a
-    padlock and its reason. The picked rank is what the panel shows and
+  - **Rank picker** ([`../features/combat.md`](../features/combat.md) §6.4):
+    on a hall, the portrait is a button (a carved caret on its rim) that
+    opens a list in the panel under the numbers — one row a rank: portrait
+    with its coin, name, the four stats as values, and a padlock with its
+    reason on a rank still shut. The picked rank is what the panel shows and
     Train trains; a newly unlocked rank is picked for the player.
   - **Unit portrait** (kit `unitPortrait`, reused wherever a unit is shown
     round): three layers — a round paper base in a flat outline, a circular

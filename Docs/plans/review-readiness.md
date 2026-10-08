@@ -33,7 +33,7 @@ Each is answered by editing the doc named, then striking the row in
 | B5 | **Heroes onto the resolver** — closes OQ-95 | [`../features/10-heroes.md`](../features/10-heroes.md) §2 | — |
 | B6 | **The Dragon's Nest** | [`../proposals/builder-30-days.md`](../proposals/builder-30-days.md) §3 | — |
 | B7 | **Dungeons** — supplies, the Scout preview, boss chests (**OQ-122**) | [`../features/11-expeditions.md`](../features/11-expeditions.md) | OQ-122 |
-| B8 | **Combat** — troop evolutions II–V, authored boss formations (**OQ-86**) | [`../features/combat.md`](../features/combat.md) | OQ-86 |
+| B8 | **Combat** — authored boss formations (**OQ-86**) | [`../features/combat.md`](../features/combat.md) | OQ-86 |
 | B9 | **New sounds** (H7) | [`../audio-wishlist.md`](../audio-wishlist.md) | — |
 
 - Order for the review: **B1 and B2 first** — without them the playtest

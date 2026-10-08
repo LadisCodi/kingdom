@@ -25,7 +25,7 @@ import { roundPrice } from './roundPrice';
 import { resolve, resolveAt } from './modifiers';
 import { techMultiplier } from './techEffects';
 import {
-  ARMY, DISTRICTS, HEROES, TRAINING, UNITS, levelIndexed,
+  ARMY, DISTRICTS, HEROES, TRAINING, TROOPS, TROOP_ORDER, levelIndexed, unitOf,
 } from './data/definitions';
 import { isTechComplete } from './research';
 import {
@@ -35,7 +35,7 @@ import { adjacencyMultiplier } from './adjacency';
 import {
   addToWallet, districtById, getWallet, newId,
   type District, type GameState, type HeroId, type TrainableId, type TrainingItem,
-  type UnitId,
+  type TroopId,
 } from './state';
 import { canAfford, pay } from './wallet';
 import { recordEvent } from './events';
@@ -100,7 +100,7 @@ export const woundedCap = (state: GameState): number => Math.floor(infirmaries(s
 export const woundedCount = (state: GameState): number =>
   Object.values(state.city.wounded).reduce((sum, n) => sum + (n ?? 0), 0);
 
-export const woundedOf = (state: GameState, unitId: UnitId): number =>
+export const woundedOf = (state: GameState, unitId: TroopId): number =>
   state.city.wounded[unitId] ?? 0;
 
 /** What one fight did to the ranks: everyone who left them, and how many of
@@ -108,9 +108,9 @@ export const woundedOf = (state: GameState, unitId: UnitId): number =>
 export interface Casualties {
   /** Everyone taken off the roster — dead and wounded together. This is what
    *  the party lost, which is what a screen showing squads has to say. */
-  losses: Array<{ unitId: UnitId; count: number }>;
+  losses: Array<{ unitId: TroopId; count: number }>;
   /** The share of them that reached the infirmary. */
-  wounded: Array<{ unitId: UnitId; count: number }>;
+  wounded: Array<{ unitId: TroopId; count: number }>;
 }
 
 /**
@@ -151,10 +151,10 @@ export function woundedShareFor(state: GameState, heroIds: readonly HeroId[] = [
  */
 export function applyLosses(
   state: GameState,
-  losses: readonly { unitId: UnitId; count: number }[],
+  losses: readonly { unitId: TroopId; count: number }[],
   share: number = woundedShareFor(state),
 ): Casualties {
-  const wounded: Array<{ unitId: UnitId; count: number }> = [];
+  const wounded: Array<{ unitId: TroopId; count: number }> = [];
   let room = Math.max(0, woundedCap(state) - woundedCount(state));
   for (const loss of losses) {
     let left = loss.count;
@@ -181,7 +181,7 @@ export const itemCount = (item: TrainingItem): number =>
 /** What it costs to put `count` of a type back on their feet: a fraction of
  *  recruiting them, in the same coins. Cheaper than the funeral. */
 export function healCost(
-  state: GameState, unitId: UnitId, count: number,
+  state: GameState, unitId: TroopId, count: number,
 ): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [c, n] of Object.entries(trainCost(state, unitId))) {
@@ -192,7 +192,7 @@ export function healCost(
 
 /** And what it costs in time. One wait for the whole batch — an infirmary
  *  works on a ward, not on a queue of beds. */
-export const healSeconds = (unitId: UnitId, count: number): number =>
+export const healSeconds = (unitId: TroopId, count: number): number =>
   Math.max(1, Math.round(trainSeconds(unitId) * count * ARMY.healTimeShare));
 
 export type HealResult =
@@ -207,7 +207,7 @@ export type HealResult =
  */
 export function healWounded(
   state: GameState,
-  unitId: UnitId,
+  unitId: TroopId,
   count: number,
   now = 0,
   at?: District,
@@ -261,9 +261,12 @@ export function armyCap(state: GameState): number {
 /** The built building that trains `trainee`, if the player has one. A building
  *  lists everything it can turn out, so one hall can offer several. */
 export const trainerFor = (state: GameState, trainee: TrainableId): District | undefined =>
-  state.city.districts.find(
-    (d) => d.state === 'Built' && DISTRICTS[d.definitionId].trains.includes(trainee),
-  );
+  state.city.districts.find((d) => d.state === 'Built' && trainsAt(d, trainee));
+
+/** Whether this building turns `trainee` out. A hall lists its UNIT and trains
+ *  every rank of it (Docs/features/combat.md §6.1). */
+export const trainsAt = (district: District, trainee: TrainableId): boolean =>
+  DISTRICTS[district.definitionId].trains.includes(trainee === 'Villager' ? trainee : unitOf(trainee));
 
 /** Everything this building can turn out — the UNITS row on its card. */
 export const trainableAt = (district: District): readonly TrainableId[] =>
@@ -279,7 +282,7 @@ export const runsALine = (district: District): boolean =>
  *  FIRST villager's (`villagerTrainSeconds` climbs from it); soldiers carry
  *  their own duration. */
 export const trainSeconds = (trainee: TrainableId): number =>
-  trainee === 'Villager' ? TRAINING.seconds : UNITS[trainee].trainDurationSeconds;
+  trainee === 'Villager' ? TRAINING.seconds : TROOPS[trainee].trainDurationSeconds;
 
 /**
  * Which villager this one will be (0-based): the population plus every
@@ -315,7 +318,7 @@ export function trainSecondsAt(
   // a floor: Civics trains villagers, Warfare trains soldiers.
   const speed = (trainee === 'Villager'
     ? techMultiplier(state, 'villagerTrainingSpeed')
-    : techMultiplier(state, 'recruitSpeed', { unit: trainee }))
+    : techMultiplier(state, 'recruitSpeed', { unit: unitOf(trainee) }))
     // An awake Winged Hammer round the building (09-relics.md §2): read
     // here, when the clock starts, so a window closing later never reprices
     // a wait already running.
@@ -331,7 +334,7 @@ export function trainSecondsAt(
 function startTrainee(state: GameState, item: TrainingItem, at: number): void {
   item.startedAt = at;
   item.seconds = item.kind === 'heal'
-    ? healSecondsAt(state, item.buildingId, item.trainee as UnitId, itemCount(item))
+    ? healSecondsAt(state, item.buildingId, item.trainee as TroopId, itemCount(item))
     : trainSecondsAt(state, item.buildingId, item.trainee, item);
 }
 
@@ -342,7 +345,7 @@ function startTrainee(state: GameState, item: TrainingItem, at: number): void {
  * a technology finished mid-heal does not reprice the wait already running.
  */
 export function healSecondsAt(
-  state: GameState, buildingId: string | undefined, unitId: UnitId, count: number,
+  state: GameState, buildingId: string | undefined, unitId: TroopId, count: number,
 ): number {
   const building = buildingId === undefined ? undefined : districtById(state, buildingId);
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
@@ -354,7 +357,7 @@ export function healSecondsAt(
  *  duration for a pre-30 save that has none. */
 export const itemTrainSeconds = (item: TrainingItem): number =>
   item.seconds ?? (item.kind === 'heal'
-    ? healSeconds(item.trainee as UnitId, itemCount(item))
+    ? healSeconds(item.trainee as TroopId, itemCount(item))
     : trainSeconds(item.trainee));
 
 // There is no tap that hurries a trainee along. A queue is a FIXED duration
@@ -370,7 +373,7 @@ export function trainCost(state: GameState, trainee: TrainableId): Record<string
     // The tree never discounts; the modifier stack still may.
     const mult = Math.max(0, resolve(state, 'recruitCost', 1));
     const out: Record<string, number> = {};
-    for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
+    for (const [c, n] of Object.entries(TROOPS[trainee].recruitCost)) {
       out[c] = Math.max(1, roundPrice((n as number) * mult));
     }
     return out;
@@ -381,7 +384,37 @@ export function trainCost(state: GameState, trainee: TrainableId): Record<string
 
 export type TrainResult =
   | 'Queued' | 'NotEnoughResources' | 'ArmyAtCapacity' | 'AtMax'
-  | 'TechRequired' | 'NoBuilding';
+  | 'TechRequired' | 'NoBuilding'
+  /** The hall stands below the level this rank needs (combat.md §6.1). */
+  | 'HallLevel'
+  /** The hall's line holds a batch of another rank of the same unit: one rank
+   *  in a line at a time (combat.md §6.4). */
+  | 'OtherRank';
+
+/**
+ * What stands between a hall and training this rank, before price and room:
+ * the unit's technology, the rank's own, and the hall's level. Null = open.
+ *
+ * The UNIT's gate is asked too: a rank whose technology is not on the page is
+ * ungated like everything else in the tree (definitions.ts `GATES`), and
+ * that must never open Warriors V to a kingdom that has no Warriors.
+ */
+export function rankGate(
+  state: GameState, troop: TroopId, building?: District,
+): 'TechRequired' | 'HallLevel' | null {
+  const def = TROOPS[troop];
+  const unitTech = TROOPS[unitOf(troop)].requiredTech;
+  if (unitTech !== null && !isTechComplete(state, unitTech)) return 'TechRequired';
+  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return 'TechRequired';
+  if (building !== undefined && building.level < def.minBuildingLevel) return 'HallLevel';
+  return null;
+}
+
+/** The rank of this unit already in the hall's line, if any recruit is. */
+export const rankInLine = (state: GameState, buildingId: string): TroopId | null => {
+  const item = lineFor(state, buildingId).find((i) => i.trainee !== 'Villager' && i.kind !== 'heal');
+  return item === undefined ? null : item.trainee as TroopId;
+};
 
 /**
  * Queue one unit. Cost is paid UP FRONT, exactly as villager training is, so
@@ -398,13 +431,15 @@ export function trainUnit(
    *  question. Omitted, the first hall that can is used. */
   at?: District,
 ): TrainResult {
-  if (trainee !== 'Villager') {
-    const def = UNITS[trainee];
-    if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return 'TechRequired';
-  }
+  if (trainee !== 'Villager' && rankGate(state, trainee) !== null) return 'TechRequired';
   const building = at ?? trainerFor(state, trainee);
-  if (!building || !DISTRICTS[building.definitionId].trains.includes(trainee)) return 'NoBuilding';
+  if (!building || !trainsAt(building, trainee)) return 'NoBuilding';
   if (building.state !== 'Built') return 'NoBuilding';
+  if (trainee !== 'Villager') {
+    if (rankGate(state, trainee, building) === 'HallLevel') return 'HallLevel';
+    const inLine = rankInLine(state, building.uniqueId);
+    if (inLine !== null && inLine !== trainee) return 'OtherRank';
+  }
   // Two different ceilings, because they are two different scarcities: an army
   // is bounded by the halls that hold it, a population by the beds it sleeps
   // in. Queued trainees count against both — a queue must never be a way to
@@ -509,7 +544,7 @@ export function cancelTraining(state: GameState, itemId: string): CancelTraining
   // A cancelled heal is not a cancelled purchase: the soldiers go back to
   // their beds, and the ward is where they were before the order.
   if (item.kind === 'heal') {
-    const unitId = item.trainee as UnitId;
+    const unitId = item.trainee as TroopId;
     state.city.wounded[unitId] = woundedOf(state, unitId) + itemCount(item);
     for (const [c, n] of Object.entries(healCost(state, unitId, itemCount(item)))) {
       state.city.wallet[c as keyof typeof state.city.wallet] =
@@ -609,7 +644,8 @@ function deliver(state: GameState, trainee: TrainableId, at: number, count = 1):
   }
   for (let i = 0; i < count; i++) {
     state.army.push({ uniqueId: newId(state, `unit_${trainee}`), definitionId: trainee });
-    recordEvent(state, { kind: 'unitTrained', unit: trainee });
+    // Quests count a UNIT: a Warrior III is a Warrior trained.
+    recordEvent(state, { kind: 'unitTrained', unit: unitOf(trainee) });
   }
 }
 
@@ -628,7 +664,7 @@ export function lineRemainingSeconds(
       // Not started, so not stamped: it will be priced by the neighbours
       // standing there when its turn comes.
       total += item.kind === 'heal'
-        ? healSecondsAt(state, buildingId, item.trainee as UnitId, itemCount(item))
+        ? healSecondsAt(state, buildingId, item.trainee as TroopId, itemCount(item))
         : trainSecondsAt(state, buildingId, item.trainee, item);
     }
   });
@@ -700,10 +736,11 @@ export function nextTrainingCompletion(state: GameState, after: number): number 
 
 // ------------------------------------------------------------ what you own
 
-/** How many of each type are standing in the city right now. */
-export function armyRoster(state: GameState): Record<UnitId, number> {
-  const roster = { Warrior: 0, Lancer: 0, Archer: 0, Cavalry: 0 };
-  for (const u of state.army) roster[u.definitionId] += 1;
+/** How many of each troop are standing in the city right now — every rank of
+ *  every unit, in `TROOP_ORDER`, at zero when there are none. */
+export function armyRoster(state: GameState): Record<TroopId, number> {
+  const roster = Object.fromEntries(TROOP_ORDER.map((t) => [t, 0])) as Record<TroopId, number>;
+  for (const u of state.army) roster[u.definitionId] = (roster[u.definitionId] ?? 0) + 1;
   return roster;
 }
 
@@ -716,5 +753,5 @@ export function armyRoster(state: GameState): Record<UnitId, number> {
  * good — a garrison's casualties
  * (Docs/features/18-garrisons-and-raids.md §5).
  */
-export const availableRoster = (state: GameState): Record<UnitId, number> =>
+export const availableRoster = (state: GameState): Record<TroopId, number> =>
   armyRoster(state);

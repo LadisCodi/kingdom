@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, SAVE_VERSION, TECHNOLOGIES, isTroopId,
   ARTIFACTS, STORE, relicKind,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
@@ -36,7 +36,7 @@ import {
   type ArtifactId, type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type LairId, type UnitId, type CurrencyId,
+  type LairId, type TroopId, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -1493,7 +1493,7 @@ export function deserialize(
     }));
     state.city.wounded = {};
     for (const w of (cityDto.Wounded ?? []) as any[]) {
-      state.city.wounded[w.UnitID as UnitId] = w.Count ?? 0;
+      if (isTroopId(String(w.UnitID))) state.city.wounded[w.UnitID as TroopId] = w.Count ?? 0;
     }
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
@@ -1635,7 +1635,7 @@ export function deserialize(
 
   const armyDto = modules['kingdom.army']?.Units;
   if (armyDto) {
-    state.army = (armyDto as any[]).map((u) => ({
+    state.army = (armyDto as any[]).filter((u) => isTroopId(String(u.DefinitionID))).map((u) => ({
       uniqueId: u.UniqueID,
       definitionId: u.DefinitionID,
     }));
@@ -2060,7 +2060,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         id: a.ID as string,
         heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],
         troops: (a.Troops as Array<{ unitId: string; count: number }>)
-          .filter((t) => t.unitId in UNITS && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
+          .filter((t) => isTroopId(t.unitId) && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
         target: a.Target as number,
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),

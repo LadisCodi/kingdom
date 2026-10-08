@@ -296,6 +296,13 @@
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
+    "WarriorsII": {
+      "name": "Warriors II", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 16, "col": 0,
+      "requires": ["Spears"],
+      "gold": 8000, "knowledge": 6,
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":2}}]
+    },
     "Architecture": {
       "name": "Architecture", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 16, "col": 1,
@@ -369,6 +376,13 @@
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
     },
+    "ArchersII": {
+      "name": "Archers II", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 19, "col": 1,
+      "requires": ["ShieldWallI"],
+      "gold": 8000, "knowledge": 6,
+      "unlocks": [{"evolution":{"unit":"Archer","rank":2}}]
+    },
     "WoodshedsI": {
       "name": "Woodsheds I", "icon": "chestWood", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 19, "col": 2,
@@ -384,6 +398,13 @@
       "requires": ["CarpentryII"],
       "gold": 12000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":5}}]
+    },
+    "LancersII": {
+      "name": "Lancers II", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 5, "row": 21, "col": 0,
+      "requires": ["Charter"],
+      "gold": 9000, "knowledge": 8,
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":2}}]
     },
     "Ironmongery": {
       "name": "Ironmongery", "icon": "builders", "kind": "unlock",
@@ -423,6 +444,13 @@
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
+    },
+    "CavalryII": {
+      "name": "Cavalry II", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 5, "row": 23, "col": 1,
+      "requires": ["Cavalry"],
+      "gold": 9000, "knowledge": 8,
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":2}}]
     },
     "WarbandIII": {
       "name": "Warband III", "icon": "Barracks", "kind": "unlock",
@@ -516,6 +544,13 @@
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"district":"Well"}, {"district":"Statue"}]
     },
+    "WarriorsIII": {
+      "name": "Warriors III", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 28, "col": 1,
+      "requires": ["Fortifications"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":3}}]
+    },
     "Tactics": {
       "name": "Tactics", "icon": "power", "kind": "mechanic",
       "description": "Reading the ground — a bad matchup costs a tenth less.",
@@ -550,12 +585,26 @@
         {"stat":"unitHp","op":"percent","value":10}
       ]
     },
+    "ArchersIII": {
+      "name": "Archers III", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 30, "col": 0,
+      "requires": ["VigourI"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":3}}]
+    },
     "AttunementIII": {
       "name": "Attunement III", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 30, "col": 1,
       "requires": ["ApprenticesI", "IrrigationII"],
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":5}}]
+    },
+    "LancersIII": {
+      "name": "Lancers III", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 30, "col": 2,
+      "requires": ["VigourI"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":3}}]
     },
     "CarpentryIII": {
       "name": "Carpentry III", "icon": "build", "kind": "bonus",
@@ -597,6 +646,13 @@
       "requires": ["Chancery"],
       "gold": 42000, "knowledge": 14, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Housing","level":7}}]
+    },
+    "CavalryIII": {
+      "name": "Cavalry III", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 33, "col": 1,
+      "requires": ["Chancery"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":3}}]
     },
     "Bastions": {
       "name": "Bastions", "icon": "Barracks", "kind": "unlock",
@@ -655,6 +711,13 @@
         {"stat":"unitAtk","op":"percent","value":10}
       ]
     },
+    "LancersIV": {
+      "name": "Lancers IV", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 36, "col": 0,
+      "requires": ["WarhornsI"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":4}}]
+    },
     "MinersI": {
       "name": "Miners I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 36, "col": 1,
@@ -663,6 +726,13 @@
       "effects": [
         {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Quarry"}}
       ]
+    },
+    "WarriorsIV": {
+      "name": "Warriors IV", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 36, "col": 2,
+      "requires": ["WarhornsI"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":4}}]
     },
     "OldGrowthI": {
       "name": "Old Growth I", "icon": "Heartwood", "kind": "bonus",
@@ -744,6 +814,13 @@
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
+    "CavalryIV": {
+      "name": "Cavalry IV", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 8, "row": 41, "col": 0,
+      "requires": ["ColoursI"],
+      "gold": 90000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":4}}]
+    },
     "SurveyingI": {
       "name": "Surveying I", "icon": "tile", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 41, "col": 1,
@@ -752,6 +829,13 @@
       "effects": [
         {"stat":"influenceRadius","op":"flat","value":1}
       ]
+    },
+    "ArchersIV": {
+      "name": "Archers IV", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 8, "row": 41, "col": 2,
+      "requires": ["ColoursI"],
+      "gold": 90000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":4}}]
     },
     "TradeRoutesV": {
       "name": "Trade Routes V", "icon": "boostRent", "kind": "bonus",
@@ -824,6 +908,13 @@
       "gold": 190000, "knowledge": 14, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":9}}, {"districtLevel":{"id":"SpearHall","level":9}}, {"districtLevel":{"id":"ShootingGrounds","level":9}}, {"districtLevel":{"id":"Stables","level":9}}, {"districtLevel":{"id":"Barracks","level":10}}, {"districtLevel":{"id":"SpearHall","level":10}}, {"districtLevel":{"id":"ShootingGrounds","level":10}}, {"districtLevel":{"id":"Stables","level":10}}]
     },
+    "LancersV": {
+      "name": "Lancers V", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 46, "col": 0,
+      "requires": ["Warlords"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":5}}]
+    },
     "IronPicksI": {
       "name": "Iron Picks I", "icon": "Iron", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 46, "col": 1,
@@ -832,6 +923,13 @@
       "effects": [
         {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
       ]
+    },
+    "WarriorsV": {
+      "name": "Warriors V", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 46, "col": 2,
+      "requires": ["Warlords"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":5}}]
     },
     "FishersI": {
       "name": "Fishers I", "icon": "workers", "kind": "bonus",
@@ -860,6 +958,13 @@
         {"stat":"decorationHarmony","op":"percent","value":25}
       ]
     },
+    "ArchersV": {
+      "name": "Archers V", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 48, "col": 1,
+      "requires": ["WarhornsII"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":5}}]
+    },
     "SupplyDepotsI": {
       "name": "Supply Depots I", "icon": "chest", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 48, "col": 2,
@@ -887,6 +992,13 @@
       "effects": [
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Farm"}}
       ]
+    },
+    "CavalryV": {
+      "name": "Cavalry V", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 49, "col": 2,
+      "requires": ["SupplyDepotsI"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":5}}]
     },
     "GoldenAge": {
       "name": "Golden Age", "icon": "Townhall", "kind": "unlock",

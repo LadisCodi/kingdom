@@ -84,12 +84,13 @@ export function drawTroughBar(
 /**
  * The one in training, as the training card's queue shows it (kit.css
  * `.k-portrait`, district.css `.tr-count`): a round paper portrait with the
- * bust clipped inside it, a touch larger than the circle, and the count on a
- * dark pill at its foot — only when there is more than one.
+ * cut-out bust inside it, its chest cut just below the circle's foot, the
+ * count on a dark pill at its foot — only when there is more than one — and
+ * the rank's brass coin at its bottom-right above rank I.
  */
 export function drawTraineeBadge(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, d: number,
-  bust: string, count: number, font: string,
+  bust: string, count: number, font: string, rank = 1,
 ): void {
   const r = d / 2;
   const line = Math.max(1.5, d * 0.045);
@@ -106,14 +107,14 @@ export function drawTraineeBadge(
   ctx.beginPath();
   ctx.arc(cx, cy, r - line / 2, 0, Math.PI * 2);
   ctx.clip();
-  const art = d * 1.28;
-  drawSprite(ctx, bust, cx - art / 2, cy - art / 2, art, art);
+  drawSprite(ctx, bust, cx - r, cy - r + d * 0.08, d, d);
   ctx.restore();
   ctx.lineWidth = line;
   ctx.strokeStyle = '#cfa874';
   ctx.beginPath();
   ctx.arc(cx, cy, r - line / 2, 0, Math.PI * 2);
   ctx.stroke();
+  if (rank > 1) drawRankCoin(ctx, cx + r * 0.72, cy + r * 0.72, d * 0.42, rank);
   if (count <= 1) return;
   ctx.save();
   ctx.font = font;
@@ -246,3 +247,43 @@ export function drawWorkingHammer(
     }
   }
 }
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/**
+ * A troop's rank on the canvas: the brass coin the DOM portraits wear
+ * (kit.css `.k-rank`), centred at (cx, cy), `d` across, the numeral pressed
+ * into it — dark, with a light lip under it.
+ */
+export function drawRankCoin(ctx: CanvasRenderingContext2D, cx: number, cy: number, d: number, rank: number): void {
+  const r = d / 2;
+  ctx.save();
+  ctx.shadowColor = 'rgba(60, 35, 10, 0.35)';
+  ctx.shadowBlur = d * 0.08;
+  ctx.shadowOffsetY = d * 0.05;
+  const metal = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.05, cx, cy, r);
+  metal.addColorStop(0, '#ffe9a3');
+  metal.addColorStop(0.45, '#e2b14f');
+  metal.addColorStop(1, '#a8761f');
+  ctx.fillStyle = metal;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.lineWidth = Math.max(1, d * 0.07);
+  ctx.strokeStyle = '#5c3a1e';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - ctx.lineWidth / 2, 0, Math.PI * 2);
+  ctx.stroke();
+  const text = ROMAN[rank] ?? String(rank);
+  ctx.font = `900 ${Math.round(d * (text.length > 2 ? 0.42 : 0.52))}px Alegreya, Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255, 240, 190, 0.85)';
+  ctx.fillText(text, cx, cy + d * 0.06);
+  ctx.fillStyle = '#5a3412';
+  ctx.fillText(text, cx, cy + d * 0.02);
+  ctx.restore();
+}
+

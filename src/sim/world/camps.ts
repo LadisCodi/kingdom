@@ -3,7 +3,7 @@
 // player could field. Who has beaten which camp is the world server's.
 
 import { roundPrice } from '../roundPrice';
-import { COMBAT, HEROES, LAIRS, UNITS, WORLD_CAMPS } from '../data/definitions';
+import { COMBAT, HEROES, LAIRS, TROOPS, UNITS, WORLD_CAMPS } from '../data/definitions';
 import { buildBoard, generateEnemy, type Board as FightBoard } from '../battle';
 import type { EnemySquad } from '../combat';
 import { heroSlots } from '../heroes';
@@ -41,7 +41,7 @@ export function campShown(source: WorldSource, bh: BoardHex, fog: FogState): boo
  *  as many of their best heroes as the board has hero slots. */
 export function strongestParty(state: GameState): number {
   let power = 0;
-  for (const u of state.army) power += UNITS[u.definitionId].power;
+  for (const u of state.army) power += TROOPS[u.definitionId].power;
   const heroes = state.heroes.owned
     .map((id) => heroBody(HEROES[id], state.heroes.levels[id] ?? 1, state.heroes.ascension[id] ?? 0).dmg
       * COMBAT.heroPowerPerDmg)

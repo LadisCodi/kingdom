@@ -7,7 +7,7 @@
 // second button. Nothing here changes the game but those buttons.
 
 import { siteBanner, type Game } from '../../game';
-import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE, UNITS, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE, TROOPS, WORLD_PORTAL } from '../../sim/data/definitions';
 import type { BannerId } from '../../sim/data/definitions';
 import { lairCreature } from '../../sim/lairs';
 import { NEWS_GROUPS, type News, type NewsGroup } from '../../sim/notices';
@@ -165,7 +165,7 @@ function newsLine(game: Game, n: News): NewsLine | null {
         name,
         line: 'Queue done',
         title: 'Training complete',
-        body: `${name} has trained its last ${UNITS[n.unit].name} and stands idle. Queue more to keep it busy.`,
+        body: `${name} has trained its last ${TROOPS[n.unit].name} and stands idle. Queue more to keep it busy.`,
         go: () => game.focusDistrict(d.uniqueId),
         view: 'province',
       };
