@@ -13,6 +13,7 @@ import englishBalance from './balance';
 import englishRegionMap from './region-map.json';
 import englishTreeDoc from './tech-tree.json';
 import { localizeData } from '../../i18n/data';
+import { tr } from '../../i18n/tr';
 import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
@@ -897,7 +898,7 @@ export interface FeatureDef {
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
   Trees: {
-    id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵',
+    id: 'Trees', name: tr('Forest'), glyph: '🌲', exhaustedGlyph: '🪵',
     sprite: 'forest', source: 'Forest', respawnTerrain: 'Grassland',
   },
   // A mountain is where Stone comes from, and the Quarry works every one in
@@ -906,34 +907,34 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
   // ordinary, and what makes the cell unbuildable is the feature sitting on
   // it — which `placementBlock` already refused before this existed.
   Mountain: {
-    id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
+    id: 'Mountain', name: tr('Mountain'), glyph: '🏔️', exhaustedGlyph: '🧱',
     sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
     maxFootprint: 3,
   },
   MountainIron: {
-    id: 'MountainIron', name: 'Iron mountain', glyph: '⛰️', exhaustedGlyph: '🕳️',
+    id: 'MountainIron', name: tr('Iron mountain'), glyph: '⛰️', exhaustedGlyph: '🕳️',
     sprite: 'mountain_iron', source: 'MountainIron', respawnTerrain: 'Grassland',
   },
   MountainGold: {
-    id: 'MountainGold', name: 'Gold mountain', glyph: '🏔️', exhaustedGlyph: '🕳️',
+    id: 'MountainGold', name: tr('Gold mountain'), glyph: '🏔️', exhaustedGlyph: '🕳️',
     sprite: 'mountain_gold', source: 'MountainGold', respawnTerrain: 'Grassland',
   },
   // Finite sources (recovery 0): consumed and removed from the map when drained.
   BerryBush: {
-    id: 'BerryBush', name: 'Berry bush', glyph: '🫐', exhaustedGlyph: '🍂',
+    id: 'BerryBush', name: tr('Berry bush'), glyph: '🫐', exhaustedGlyph: '🍂',
     sprite: 'berry_bush', source: 'Berries', respawnTerrain: 'Grassland',
   },
   WildAnimals: {
-    id: 'WildAnimals', name: 'Wild animals', glyph: '🐗', exhaustedGlyph: '🦴',
+    id: 'WildAnimals', name: tr('Wild animals'), glyph: '🐗', exhaustedGlyph: '🦴',
     sprite: 'wild_animals', source: 'Meat', respawnTerrain: 'Grassland',
   },
   FishShoal: {
-    id: 'FishShoal', name: 'Fish shoal', glyph: '🐟', exhaustedGlyph: '🫧',
+    id: 'FishShoal', name: tr('Fish shoal'), glyph: '🐟', exhaustedGlyph: '🫧',
     sprite: 'fish_shoal', source: 'Fish', respawnTerrain: 'Water',
   },
   // Planted from the Build menu (the crop plots), never painted on the map.
   Crops: {
-    id: 'Crops', name: 'Crop plot', glyph: '🌾', exhaustedGlyph: '🥀',
+    id: 'Crops', name: tr('Crop plot'), glyph: '🌾', exhaustedGlyph: '🥀',
     sprite: 'farmlands', source: 'Crops', respawnTerrain: 'Grassland',
   },
 };
@@ -1014,16 +1015,16 @@ export interface TomeDef {
  */
 export const TOMES: Record<TomeId, TomeDef> = {
   Kingdom: {
-    id: 'Kingdom', name: 'Kingdom', glyph: '🏛️',
-    blurb: 'Everything the kingdom learns, chapter by chapter.',
+    id: 'Kingdom', name: tr('Kingdom'), glyph: '🏛️',
+    blurb: tr('Everything the kingdom learns, chapter by chapter.'),
   },
   Sagas: {
-    id: 'Sagas', name: 'Sagas', glyph: '📖',
-    blurb: 'Heroes, and the Tavern that hosts them.',
+    id: 'Sagas', name: tr('Sagas'), glyph: '📖',
+    blurb: tr('Heroes, and the Tavern that hosts them.'),
   },
   Atlas: {
-    id: 'Atlas', name: 'Atlas', glyph: '🧭',
-    blurb: 'Sight, landmarks, and the world beyond the province.',
+    id: 'Atlas', name: tr('Atlas'), glyph: '🧭',
+    blurb: tr('Sight, landmarks, and the world beyond the province.'),
   },
 };
 
@@ -1149,8 +1150,8 @@ export interface UnitDef {
 const UNIT_CONTENT = {
   Warrior: {
     id: 'Warrior',
-    name: 'Warrior',
-    description: 'Sturdy front line: the most armour and health per Gold.',
+    name: tr('Warrior'),
+    description: tr('Sturdy front line: the most armour and health per Gold.'),
     sprite: 'unit_warrior',
     glyph: '⚔️',
     tags: ['Melee'],
@@ -1158,8 +1159,8 @@ const UNIT_CONTENT = {
   },
   Lancer: {
     id: 'Lancer',
-    name: 'Lancer',
-    description: 'Long reach that keeps the line safe.',
+    name: tr('Lancer'),
+    description: tr('Long reach that keeps the line safe.'),
     sprite: 'unit_lancer',
     glyph: '🔱',
     tags: ['Melee'],
@@ -1167,8 +1168,8 @@ const UNIT_CONTENT = {
   },
   Archer: {
     id: 'Archer',
-    name: 'Archer',
-    description: 'Ranged support: the most attack per Gold, and the least of everything else.',
+    name: tr('Archer'),
+    description: tr('Ranged support: the most attack per Gold, and the least of everything else.'),
     sprite: 'unit_archer',
     glyph: '🏹',
     tags: ['Distance'],
@@ -1176,8 +1177,8 @@ const UNIT_CONTENT = {
   },
   Cavalry: {
     id: 'Cavalry',
-    name: 'Cavalry',
-    description: 'Fast and hard-hitting.',
+    name: tr('Cavalry'),
+    description: tr('Fast and hard-hitting.'),
     sprite: 'unit_cavalry',
     glyph: '🐎',
     tags: ['Mounted', 'Melee'],
@@ -1331,9 +1332,9 @@ export interface LandmarkDef {
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
-  StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
-  Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
-  Watchtower: { name: 'Watchtower', glyph: '🗼', sprite: 'landmark_watchtower' },
+  StandingStones: { name: tr('Standing stones'), glyph: '🗿', sprite: 'landmark_stones' },
+  Leyspring: { name: tr('Leyspring'), glyph: '💧', sprite: 'landmark_leyspring' },
+  Watchtower: { name: tr('Watchtower'), glyph: '🗼', sprite: 'landmark_watchtower' },
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
@@ -1366,7 +1367,7 @@ export const ABANDONED: readonly AbandonedDef[] = ((regionMap as {
   districtId: a.district as DistrictId,
   location: { x: a.x, y: a.y },
   sight: a.sight,
-  name: a.name ?? `The old ${DISTRICTS[a.district as DistrictId]?.name ?? a.district}`,
+  name: a.name ?? tr('The old {building}', { building: DISTRICTS[a.district as DistrictId]?.name ?? a.district }),
 }));
 
 /**
@@ -1471,8 +1472,8 @@ const activation = (id: ArtifactId): ArtifactDef['activation'] =>
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
-    id: 'DowsingRod', name: 'Staff of Renewal', glyph: '🪄', sprite: 'artifact_staff_of_renewal',
-    passiveText: 'Forests, fields, rocks and shoals hold more and grow back faster',
+    id: 'DowsingRod', name: tr('Staff of Renewal'), glyph: '🪄', sprite: 'artifact_staff_of_renewal',
+    passiveText: tr('Forests, fields, rocks and shoals hold more and grow back faster'),
     passive: {
       stats: [
         { stat: 'harvestStock', scope: null, op: 'mul' },
@@ -1485,8 +1486,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   VerdantSeal: {
-    id: 'VerdantSeal', name: 'Sickle of Plenty', glyph: '🌾', sprite: 'artifact_sickle_of_plenty',
-    passiveText: 'More out of every swing and every tap',
+    id: 'VerdantSeal', name: tr('Sickle of Plenty'), glyph: '🌾', sprite: 'artifact_sickle_of_plenty',
+    passiveText: tr('More out of every swing and every tap'),
     passive: {
       stats: [{ stat: 'harvestUnitsPerStrike', scope: null, op: 'mul' }],
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
@@ -1496,8 +1497,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   ForemansSigil: {
-    id: 'ForemansSigil', name: 'The Winged Hammer', glyph: '🔨', sprite: 'artifact_winged_hammer',
-    passiveText: 'Your crews work and your buildings train faster',
+    id: 'ForemansSigil', name: tr('The Winged Hammer'), glyph: '🔨', sprite: 'artifact_winged_hammer',
+    passiveText: tr('Your crews work and your buildings train faster'),
     passive: {
       stats: [
         { stat: 'workerStrikeSpeed', scope: null, op: 'mul' },
@@ -1511,8 +1512,8 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   GildedLedger: {
-    id: 'GildedLedger', name: 'The Tribute Crown', glyph: '👑', sprite: 'artifact_tribute_crown',
-    passiveText: 'Your villagers pay more tax',
+    id: 'GildedLedger', name: tr('The Tribute Crown'), glyph: '👑', sprite: 'artifact_tribute_crown',
+    passiveText: tr('Your villagers pay more tax'),
     passive: {
       stats: [{ stat: 'taxRate', scope: null, op: 'mul' }],
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
@@ -1522,9 +1523,9 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   DelversLantern: {
-    id: 'DelversLantern', name: 'The Wisp Lantern', glyph: '\u{1F3EE}',
+    id: 'DelversLantern', name: tr('The Wisp Lantern'), glyph: '\u{1F3EE}',
     sprite: 'artifact_wisp_lantern',
-    passiveText: 'Every room pays more gold and stone',
+    passiveText: tr('Every room pays more gold and stone'),
     passive: {
       stats: [{ stat: 'roomHaul', scope: null, op: 'mul' }],
       base: ab('DelversLantern').passiveBase, perLevel: ab('DelversLantern').passivePerLevel,
@@ -1535,22 +1536,22 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     // in the party screen. It is UNTARGETED for the same reason: a delve is
     // the place, and the player is already standing in it.
     active: {
-      id: 'Lamplight', name: 'Lamplight', targeted: false,
+      id: 'Lamplight', name: tr('Lamplight'), targeted: false,
       manaCost: ab('DelversLantern').activeManaCost, durationSeconds: 0, radius: 0,
       power: ab('DelversLantern').activePower,
       powerPerLevel: ab('DelversLantern').activePowerPerLevel,
       durationPerLevel: 0,
       charges: ab('DelversLantern').activeCharges,
       chargesPerLevel: ab('DelversLantern').activeChargesPerLevel,
-      text: 'The next rooms you clear pay double \u2014 cast it before you go down',
+      text: tr('The next rooms you clear pay double — cast it before you go down'),
     },
     activation: null,
     pending: null,
   },
   MusterHorn: {
-    id: 'MusterHorn', name: 'Warhorn of the Host', glyph: '\u{1F4EF}',
+    id: 'MusterHorn', name: tr('Warhorn of the Host'), glyph: '\u{1F4EF}',
     sprite: 'artifact_warhorn',
-    passiveText: 'Your halls field a bigger army',
+    passiveText: tr('Your halls field a bigger army'),
     passive: {
       stats: [{ stat: 'armyCap', scope: null, op: 'mul' }],
       base: ab('MusterHorn').passiveBase, perLevel: ab('MusterHorn').passivePerLevel,
@@ -1560,9 +1561,9 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     pending: null,
   },
   BailiffsTally: {
-    id: 'BailiffsTally', name: 'The Steward\u2019s Signet', glyph: '\u{1F48D}',
+    id: 'BailiffsTally', name: tr('The Steward’s Signet'), glyph: '\u{1F48D}',
     sprite: 'artifact_stewards_signet',
-    passiveText: 'Every improvement you hold pays more an hour',
+    passiveText: tr('Every improvement you hold pays more an hour'),
     passive: {
       stats: [{ stat: 'worldImprovementYield', scope: null, op: 'mul' }],
       base: ab('BailiffsTally').passiveBase, perLevel: ab('BailiffsTally').passivePerLevel,
@@ -1571,12 +1572,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     // The Sawmill, the Farm and the Quarry are authored in
     // Docs/features/19-world-map.md and the map itself is not built.
     activation: null,
-    pending: 'when the world map opens',
+    pending: tr('when the world map opens'),
   },
   WanderersCompass: {
-    id: 'WanderersCompass', name: 'The Stargazer’s Orb', glyph: '🔮',
+    id: 'WanderersCompass', name: tr('The Stargazer’s Orb'), glyph: '🔮',
     sprite: 'artifact_stargazers_orb',
-    passiveText: 'Rooms pay more Stardust',
+    passiveText: tr('Rooms pay more Stardust'),
     passive: {
       stats: [{ stat: 'stardustYield', scope: null, op: 'mul' }],
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
@@ -1588,12 +1589,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     // RADIUS IS ITS WHOLE GROWTH (09-relics.md §2.2) — for a reveal, more ground IS the
     // effect, so it needs no second axis and has none.
     active: {
-      id: 'Survey', name: 'Survey', targeted: true,
+      id: 'Survey', name: tr('Survey'), targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0,
       radius: ab('WanderersCompass').activeRadius,
       power: 0, powerPerLevel: 0,
       durationPerLevel: 0, charges: 0, chargesPerLevel: 0,
-      text: 'Clears the fog around a cell you hold, free of gold',
+      text: tr('Clears the fog around a cell you hold, free of gold'),
     },
     activation: null,
     pending: null,
@@ -1691,24 +1692,24 @@ export interface GuardDef {
 
 const lairContent: Record<LairId, Pick<LairDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
   Orcs: {
-    name: 'Orc Lair', glyph: '👹', sprite: 'lair_orcs',
-    description: 'Orcs dug in on the hillside, and bored of waiting.',
+    name: tr('Orc Lair'), glyph: '👹', sprite: 'lair_orcs',
+    description: tr('Orcs dug in on the hillside, and bored of waiting.'),
   },
   Harpies: {
-    name: 'Harpy Roost', glyph: '🦅', sprite: 'lair_harpies',
-    description: 'Harpies on the high rocks, watching everything that shines.',
+    name: tr('Harpy Roost'), glyph: '🦅', sprite: 'lair_harpies',
+    description: tr('Harpies on the high rocks, watching everything that shines.'),
   },
   Goblins: {
-    name: 'Goblin Den', glyph: '👺', sprite: 'lair_goblins',
-    description: 'Goblins with sharp sticks and sharper ideas about your stores.',
+    name: tr('Goblin Den'), glyph: '👺', sprite: 'lair_goblins',
+    description: tr('Goblins with sharp sticks and sharper ideas about your stores.'),
   },
   WolfRiders: {
-    name: 'Wolf-rider Camp', glyph: '🐺', sprite: 'lair_wolfriders',
-    description: 'Wolf riders who reach your walls before the dust of their riding does.',
+    name: tr('Wolf-rider Camp'), glyph: '🐺', sprite: 'lair_wolfriders',
+    description: tr('Wolf riders who reach your walls before the dust of their riding does.'),
   },
   Drake: {
-    name: "Drake's Lair", glyph: '🐉', sprite: 'lair_drake',
-    description: 'A drake asleep on a hoard it means to make larger.',
+    name: tr("Drake's Lair"), glyph: '🐉', sprite: 'lair_drake',
+    description: tr('A drake asleep on a hoard it means to make larger.'),
   },
 };
 
@@ -1882,128 +1883,128 @@ export const VILLAIN_ORDER = Object.keys(VILLAINS) as VillainId[];
 
 const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sprite'>> = {
   Warden: {
-    name: 'The Warden', title: 'Shield of the old wall', glyph: '🛡️', sprite: 'hero_warden',
+    name: tr('The Warden'), title: tr('Shield of the old wall'), glyph: '🛡️', sprite: 'hero_warden',
   },
   Quartermaster: {
-    name: 'The Quartermaster', title: 'Counts every biscuit', glyph: '📦',
+    name: tr('The Quartermaster'), title: tr('Counts every biscuit'), glyph: '📦',
     sprite: 'hero_quartermaster',
   },
   Scholar: {
-    name: 'The Scholar', title: 'Reads what the walls say', glyph: '📖', sprite: 'hero_scholar',
+    name: tr('The Scholar'), title: tr('Reads what the walls say'), glyph: '📖', sprite: 'hero_scholar',
   },
   RelicHunter: {
-    name: 'The Relic-hunter', title: 'Knows a good lair by its smell', glyph: '🗝️',
+    name: tr('The Relic-hunter'), title: tr('Knows a good lair by its smell'), glyph: '🗝️',
     sprite: 'hero_relic_hunter',
   },
   Scout: {
-    name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
+    name: tr('The Scout'), title: tr('Goes on ahead'), glyph: '🧭', sprite: 'hero_scout',
   },
   Adventurer: {
-    name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
+    name: tr('The Adventurer'), title: tr('In it for the story'), glyph: '🎒',
     sprite: 'hero_adventurer',
   },
   Bard: {
-    name: 'The Bard', title: 'Sings the road shorter', glyph: '🎻',
+    name: tr('The Bard'), title: tr('Sings the road shorter'), glyph: '🎻',
     sprite: 'hero_bard',
   },
   BeastkinHunter: {
-    name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
+    name: tr('The Beastkin Hunter'), title: tr('Reads a trail nobody else sees'), glyph: '🐺',
     sprite: 'hero_beastkin_hunter',
   },
   Cleric: {
-    name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
+    name: tr('The Cleric'), title: tr('Keeps the wounded upright'), glyph: '✚',
     sprite: 'hero_cleric',
   },
   Cook: {
-    name: 'The Cook', title: 'Makes a week of three days’ rations', glyph: '🍲',
+    name: tr('The Cook'), title: tr('Makes a week of three days’ rations'), glyph: '🍲',
     sprite: 'hero_cook',
   },
   Gardener: {
-    name: 'The Gardener', title: 'Patient with everything that grows', glyph: '🌿',
+    name: tr('The Gardener'), title: tr('Patient with everything that grows'), glyph: '🌿',
     sprite: 'hero_gardener',
   },
   Joker: {
-    name: 'The Joker', title: 'Pockets what nobody was watching', glyph: '🃏',
+    name: tr('The Joker'), title: tr('Pockets what nobody was watching'), glyph: '🃏',
     sprite: 'hero_joker',
   },
   Merchant: {
-    name: 'The Merchant', title: 'Never pays the asking price', glyph: '⚖️',
+    name: tr('The Merchant'), title: tr('Never pays the asking price'), glyph: '⚖️',
     sprite: 'hero_merchant',
   },
   Priest: {
-    name: 'The Priest', title: 'Says the words that hold a line', glyph: '🕯️',
+    name: tr('The Priest'), title: tr('Says the words that hold a line'), glyph: '🕯️',
     sprite: 'hero_priest',
   },
   Rogue: {
-    name: 'The Rogue', title: 'Light fingers, lighter step', glyph: '🗡️',
+    name: tr('The Rogue'), title: tr('Light fingers, lighter step'), glyph: '🗡️',
     sprite: 'hero_rogue',
   },
   ThreeMice: {
-    name: 'Three Mice in a Coat', title: 'Nobody has ever asked', glyph: '🐭',
+    name: tr('Three Mice in a Coat'), title: tr('Nobody has ever asked'), glyph: '🐭',
     sprite: 'hero_three_mouses',
   },
   Sellsword: {
-    name: 'The Sellsword', title: 'Paid by the day, loyal by the hour', glyph: '⚔️',
+    name: tr('The Sellsword'), title: tr('Paid by the day, loyal by the hour'), glyph: '⚔️',
     sprite: 'hero_warrior',
   },
   DarkKnight: {
-    name: 'The Dark Knight', title: 'Owes somebody something', glyph: '🖤',
+    name: tr('The Dark Knight'), title: tr('Owes somebody something'), glyph: '🖤',
     sprite: 'hero_dark_knight',
   },
   Paladin: {
-    name: 'The Paladin', title: 'Has never once been late', glyph: '🛡️',
+    name: tr('The Paladin'), title: tr('Has never once been late'), glyph: '🛡️',
     sprite: 'hero_paladin',
   },
   Wizard: {
-    name: 'The Wizard', title: 'Certain about the wrong things, loudly', glyph: '🧙',
+    name: tr('The Wizard'), title: tr('Certain about the wrong things, loudly'), glyph: '🧙',
     sprite: 'hero_wizard',
   },
   Witch: {
-    name: 'The Witch', title: 'Knows which mushrooms', glyph: '🌙',
+    name: tr('The Witch'), title: tr('Knows which mushrooms'), glyph: '🌙',
     sprite: 'hero_witch',
   },
   Druid: {
-    name: 'The Druid', title: 'Eats what the road offers', glyph: '🍃',
+    name: tr('The Druid'), title: tr('Eats what the road offers'), glyph: '🍃',
     sprite: 'hero_druid',
   },
   IceLancer: {
-    name: 'The Ice Lancer', title: 'Colder than the depth she stands in', glyph: '❄️',
+    name: tr('The Ice Lancer'), title: tr('Colder than the depth she stands in'), glyph: '❄️',
     sprite: 'hero_ice_lancer',
   },
   HolyWarrior: {
-    name: 'The Holy Warrior', title: 'Digs where the light falls', glyph: '☀️',
+    name: tr('The Holy Warrior'), title: tr('Digs where the light falls'), glyph: '☀️',
     sprite: 'hero_holy_warrior',
   },
   SavageWarrior: {
-    name: 'The Savage', title: 'Takes the whole door with him', glyph: '🪓',
+    name: tr('The Savage'), title: tr('Takes the whole door with him'), glyph: '🪓',
     sprite: 'hero_savage_warrior',
   },
   Spymaster: {
-    name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
+    name: tr('The Spymaster'), title: tr('Was already down there yesterday'), glyph: '🕵️',
     sprite: 'hero_spymaster',
   },
   ElectricArcher: {
-    name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
+    name: tr('The Storm Archer'), title: tr('Counts the seconds between'), glyph: '⚡',
     sprite: 'hero_electric_archer',
   },
   GoldenDragon: {
-    name: 'The Golden Dragon', title: 'Older than the lair, and bored of it', glyph: '🐉',
+    name: tr('The Golden Dragon'), title: tr('Older than the lair, and bored of it'), glyph: '🐉',
     sprite: 'hero_golden_dragon',
   },
   VampireLord: {
-    name: 'The Vampire Lord', title: 'Collects, and has done for centuries', glyph: '🦇',
+    name: tr('The Vampire Lord'), title: tr('Collects, and has done for centuries'), glyph: '🦇',
     sprite: 'hero_vampire_lord',
   },
   Necromancer: {
-    name: 'The Necromancer', title: 'Asks the previous expedition', glyph: '💀',
+    name: tr('The Necromancer'), title: tr('Asks the previous expedition'), glyph: '💀',
     sprite: 'hero_necromancer',
   },
   Pharao: {
-    name: 'The Pharaoh', title: 'Was buried with better men', glyph: '𓂀',
+    name: tr('The Pharaoh'), title: tr('Was buried with better men'), glyph: '𓂀',
     sprite: 'hero_pharao',
   },
   ElvenPrincess: {
-    name: 'The Elven Princess', title: 'Travels light, and expects you to', glyph: '🌸',
+    name: tr('The Elven Princess'), title: tr('Travels light, and expects you to'), glyph: '🌸',
     sprite: 'hero_elven_princess',
   },
 };
@@ -2101,8 +2102,8 @@ export interface BannerLoot {
 }
 
 const bannerContent: Record<BannerId, { name: string }> = {
-  basic: { name: 'The common call' },
-  advanced: { name: 'The golden call' },
+  basic: { name: tr('The common call') },
+  advanced: { name: tr('The golden call') },
 };
 
 export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(

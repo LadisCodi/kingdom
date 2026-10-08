@@ -53,6 +53,7 @@ import { formatCount, formatDuration, formatExact } from '../ui/format';
 import { AURA_RGB, drawArea, drawAreaLine, drawReach } from './areaOverlays';
 import { drawTraineeBadge, drawTroughBar, drawWorkingHammer } from './constructionArt';
 import { drawFogLayer } from './fog/fogLayer';
+import { tr } from '../i18n/tr';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -1456,7 +1457,7 @@ export function drawMap(
     const barH = Math.max(20, Math.min(28, size * 0.22));
     const barW = Math.max(barH * 4, b.w * 0.6);
     drawTroughBar(ctx, c.x - barW / 2, c.y - barH / 2, barW, barH, progress,
-      item.startedAt === null ? 'queued' : formatDuration(remaining), labelFont(barH * 0.6, 12, true));
+      item.startedAt === null ? tr('queued') : formatDuration(remaining), labelFont(barH * 0.6, 12, true));
   }
 
   // Pass 2b: TRAINING, on every building with someone in its line — the
