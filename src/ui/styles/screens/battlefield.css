@@ -300,8 +300,8 @@
 }
 .bs-ribbon span {
   position: relative;
-  font-family: var(--font-body);
-  font-weight: var(--weight-title);
+    font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
   font-size: calc(var(--px) * 18);
   color: var(--parchment);
   -webkit-text-stroke: calc(var(--px) * 3) rgba(60, 36, 18, 0.8);

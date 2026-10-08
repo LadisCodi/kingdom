@@ -5,11 +5,11 @@ nothing to go wrong offline.
 
 | File | Face | Role | Used for |
 |---|---|---|---|
-| `nunito-800-latin.woff2` | **Nunito** ExtraBold | `--weight-title` | headings — *Store*, *Heroes*, *Timber!* |
+| `nunito-800-latin.woff2` | **Nunito** ExtraBold | `--weight-title` | a name or a number that leads its row |
 | `nunito-700-latin.woff2` | **Nunito** Bold | `--weight-strong` | buttons, amounts, names |
 | `nunito-600-latin.woff2` | **Nunito** SemiBold | `--weight-body` | ordinary prose — the default on `<body>` |
 | `nunito-400-latin.woff2` | **Nunito** Regular | `--weight-small` | the small description under it |
-| `alegreya-900-latin.woff2` | **Alegreya** Black | `--font-ornate` | the big painted titles of a splash — an offer's ribbon and its hero's name (m86b) |
+| `alegreya-900-latin.woff2` | **Alegreya** Black | `--font-display` / `--font-ornate` | every title and heading — a window's title, a section's heading, a ribbon — and a splash's painted titles (m86b) |
 
 Declared in [`../styles/tokens.css`](../styles/tokens.css) behind
 `--font-body`, `--font-display` and the four `--weight-*` tokens.
@@ -17,19 +17,16 @@ Declared in [`../styles/tokens.css`](../styles/tokens.css) behind
 **Licence: SIL Open Font License 1.1** — [`OFL.txt`](OFL.txt) covers all four
 files. No attribution line is owed to players; see [`NOTICE.md`](NOTICE.md).
 
-## One family, four weights
+## Two families: Alegreya for titles, Nunito for text
 
-Nunito replaced the PT Sans + Germania One pair on **2026-09-11**: it is the
-face the mockups are drawn in, and a title and a caption out of one family read
-as one voice where two families read as two. The rounded terminals are the
-warmth the parchment chrome was reaching for.
+- **Titles and headings** — a window's title, a section's heading, a ribbon,
+  a splash — are `--font-display`, Alegreya Black, at its one weight
+  (`--font-display-weight`). Never smaller than `--text-heading`.
+- **Everything else** is `--font-body`, Nunito.
 
-**The four weights are four roles.** A rule names the role, never the number,
-so retuning the colour of text across the whole game is four values in
-`tokens.css`. `--font-display` and `--font-body` name the same family now —
-what separates a title from a caption is the weight — and both tokens stay
-because the split is real and because a second display face drops back in by
-changing one line.
+**Nunito's four weights are four roles.** A rule names the role, never the
+number, so retuning the colour of text across the whole game is four values in
+`tokens.css`.
 
 **600 for prose is the point of the change.** On parchment, at 16px, Nunito
 Regular reads thin; SemiBold reads like the mockups. 400 is left to the helper
@@ -82,5 +79,5 @@ range does not carry. `★` is **not** in it — Nunito has no star glyph at all
 so the rarity marks fall to the system face, exactly as they did under PT Sans.
 
 Each file is ~15 KB — above Vite's 4096-byte inline threshold, so they ship as
-hashed files with `font-display: swap`; `boot()` waits for all four (with a
+hashed files with `font-display: swap`; `boot()` waits for all five (with a
 ceiling) before the first mount so nothing reflows.

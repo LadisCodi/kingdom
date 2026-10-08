@@ -284,8 +284,8 @@
 }
 .crew-copy { flex: 1; min-width: 0; }
 .crew-head {
-  font-family: var(--font-body);
-  font-weight: var(--weight-title);
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
   font-size: calc(var(--px) * 18);
   line-height: 1.15;
 }

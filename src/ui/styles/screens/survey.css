@@ -131,8 +131,8 @@
   color: var(--ink-inverse);
 }
 .rs-plank-title {
-  font-family: var(--font-body);
-  font-weight: var(--weight-title);
+    font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
   font-size: var(--text-body);
   line-height: 1.05;
   text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);
@@ -268,8 +268,8 @@ button.rs-tile:active { transform: translateY(calc(var(--px) * 2)); }
   padding: calc(var(--px) * 5) calc(var(--px) * 32) calc(var(--px) * 8);
   background: url('../../assets/ribbon-red.png') center / 100% 100% no-repeat;
   color: var(--ink-inverse);
-  font-family: var(--font-body);
-  font-weight: var(--weight-title);
+    font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
   font-size: var(--text-body);
   white-space: nowrap;
   text-shadow: 0 calc(var(--px) * 1) 0 rgba(40, 22, 10, 0.8);

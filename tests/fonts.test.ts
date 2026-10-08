@@ -110,10 +110,9 @@ describe('the type scale', () => {
 });
 
 describe('the title face', () => {
-  // One family sets the whole game now, so what makes a title a title is the
-  // WEIGHT. That only holds if every rule reads it from the token rather than
-  // inheriting a user-agent bold from an <h2> or hardcoding a number — which
-  // is also what lets a second display face drop back in by one line.
+  // The title face ships ONE weight. A rule that sets the family without the
+  // token weight inherits a user-agent bold from an <h2>, or the 600 of
+  // <body> — a weight Alegreya does not ship, so the browser fakes it.
   it('always carries --font-display-weight beside --font-display', () => {
     const bare = blocks().filter((b) => b.body.includes('var(--font-display)'));
     expect(bare.length).toBeGreaterThan(0);
@@ -123,15 +122,20 @@ describe('the title face', () => {
     expect(missing).toEqual([]);
   });
 
-  // A title smaller than the text under it is not a title. The plank sets
-  // the family in one rule and the size in another, so it is checked by name.
-  it('is only ever set at --text-title', () => {
+  // Titles and headings only: never smaller than a section's heading, the
+  // smallest thing that is still a heading. A size left to inherit is the
+  // size of the plaque or strip it sits on.
+  it('is never set below --text-heading', () => {
+    const px = (size: string): number => {
+      const token = /^var\(--text-(\w+)\)$/.exec(size);
+      if (token) return tokenPx(token[1]);
+      return Number(/calc\(var\(--px\) \* (\d+(?:\.\d+)?)\)/.exec(size)?.[1] ?? NaN);
+    };
     const wrong = blocks()
       .filter((b) => b.body.includes('var(--font-display)'))
       .map((b) => ({ ...b, size: /font-size:\s*([^;]+)/.exec(b.body)?.[1].trim() }))
-      .filter((b) => !(b.size === undefined && b.sel === '.k-plank'))
-      .filter((b) => b.size !== 'var(--text-title)')
-      .map((b) => `${b.file} ${b.sel} = ${b.size ?? '(inherited)'}`);
+      .filter((b) => b.size !== undefined && !(px(b.size) >= tokenPx('heading')))
+      .map((b) => `${b.file} ${b.sel} = ${b.size}`);
     expect(wrong).toEqual([]);
   });
 });
@@ -150,8 +154,8 @@ describe('the font files', () => {
   // 2026-09-11): 800 a heading, 700 a button or an amount or a name, 600
   // ordinary prose, 400 the small description under it. A fifth face on this
   // list is a weight nothing names and a download nobody asked for. The one
-  // other face is the ORNATE one (2026-10-06): Alegreya Black, for a
-  // splash's painted titles (m86b), behind `--font-ornate` and its own role.
+  // other face is the ORNATE one: Alegreya Black, for every title and
+  // heading and a splash's painted titles (m86b), behind `--font-ornate`.
   it('ships Nunito at 400, 600, 700 and 800, the ornate Alegreya 900, and nothing else', () => {
     const faces = [...tokens.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
     const declared = faces.map((f) =>
@@ -159,8 +163,8 @@ describe('the font files', () => {
     expect(declared).toEqual(['Alegreya 900', 'Nunito 400', 'Nunito 600', 'Nunito 700', 'Nunito 800']);
     expect(tokens).toMatch(/--font-ornate:\s*'Alegreya'/);
     expect(tokens).toMatch(/--weight-ornate:\s*900;/);
-    // Both type tokens name the same family: the split is the weight now.
-    expect(tokens).toMatch(/--font-display:\s*'Nunito'/);
+    // The title face is the ornate one; the text is Nunito.
+    expect(tokens).toMatch(/--font-display:\s*var\(--font-ornate\)/);
     expect(tokens).toMatch(/--font-body:\s*'Nunito'/);
   });
 
@@ -177,8 +181,8 @@ describe('the font files', () => {
       expect(shipped.has(Number(m![1])), `--weight-${role} is ${m![1]}, which ships no face`)
         .toBe(true);
     }
-    // The display weight is the title role, not a number of its own.
-    expect(tokens).toMatch(/--font-display-weight:\s*var\(--weight-title\);/);
+    // The display weight is the ornate face's one weight, not a number of its own.
+    expect(tokens).toMatch(/--font-display-weight:\s*var\(--weight-ornate\);/);
   });
 
   // The 700s that were the ONLY emphasis PT Sans could offer are now one of

@@ -16,7 +16,7 @@
   align-items: center;
 }
 .mana-head > .icon { grid-area: orb; --icon-size: calc(var(--px) * 72); filter: drop-shadow(0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.3)); }
-.mana-title { grid-area: title; align-self: end; font-family: var(--font-body); font-weight: var(--weight-strong); font-size: var(--text-title); line-height: 1.1; }
+.mana-title { grid-area: title; align-self: end; font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); line-height: 1.1; }
 .mana-hint { grid-area: hint; align-self: start; font-size: var(--text-body); color: var(--ink-muted); text-align: left; }
 /* The gauge is the kit bar (blue: a resource filling), a little taller. */
 .mana-sheet > .k-trough { --bar-h: calc(var(--px) * 22); }
