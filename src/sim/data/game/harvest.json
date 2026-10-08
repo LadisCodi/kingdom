@@ -4,55 +4,63 @@
     "secondsPerStrike": 10,
     "stock": 10,
     "recoverySeconds": 180,
-    "respawnSeconds": 0
+    "respawnSeconds": 0,
+    "growSeconds": 86400
   },
   "Crops": {
     "unitsPerStrike": 1,
     "secondsPerStrike": 8,
     "stock": 10,
     "recoverySeconds": 60,
-    "respawnSeconds": 0
+    "respawnSeconds": 0,
+    "growSeconds": 10
   },
   "Berries": {
     "unitsPerStrike": 1,
     "secondsPerStrike": 10,
     "stock": 10,
     "recoverySeconds": 0,
-    "respawnSeconds": 120
+    "respawnSeconds": 120,
+    "growSeconds": 0
   },
   "Meat": {
     "unitsPerStrike": 3,
     "secondsPerStrike": 20,
     "stock": 30,
     "recoverySeconds": 0,
-    "respawnSeconds": 180
+    "respawnSeconds": 180,
+    "growSeconds": 0
   },
   "Stone": {
     "unitsPerStrike": 1,
     "secondsPerStrike": 26,
     "stock": 0,
     "recoverySeconds": 0,
-    "respawnSeconds": 0
+    "respawnSeconds": 0,
+    "growSeconds": 0
   },
   "Fish": {
     "unitsPerStrike": 2,
     "secondsPerStrike": 20,
     "stock": 10,
     "recoverySeconds": 0,
-    "respawnSeconds": 90
+    "respawnSeconds": 90,
+    "growSeconds": 0
   },
   "MountainIron": {
     "unitsPerStrike": 5,
     "secondsPerStrike": 60,
     "stock": 0,
     "recoverySeconds": 0,
-    "respawnSeconds": 0
+    "respawnSeconds": 0,
+    "growSeconds": 0
   },
   "MountainGold": {
     "unitsPerStrike": 3,
     "secondsPerStrike": 60,
     "stock": 0,
     "recoverySeconds": 0,
-    "respawnSeconds": 0
+    "respawnSeconds": 0,
+    "growSeconds": 0
   }
 }

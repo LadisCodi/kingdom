@@ -6,12 +6,13 @@ import { advance, enqueueBuild } from '../src/sim/commands';
 import { DISTRICTS, HARVEST } from '../src/sim/data/definitions';
 import { districtCount, maxDistrictCount, nextBuildCost, placementBlock } from '../src/sim/districts';
 import { collectTap, depotStock, isExhausted, isGrowing, stockAt } from '../src/sim/harvest';
+import { pickUpBlock, transplant } from '../src/sim/plants';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, type Coord, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
+import { addBuilt, completeTech, freshGame, freshPresenter, fund, map, reveal, screenAt, T0 } from './helpers';
 
 const PLOT: Coord = { x: 2, y: 0 };
-const GROW_MS = DISTRICTS.FarmLands.buildDurationSeconds * 1000;
+const GROW_MS = HARVEST.Crops.growSeconds * 1000;
 
 const withAgriculture = (): GameState => {
   const state = freshGame();
@@ -102,5 +103,118 @@ describe('v111 turns a FarmLands district into a Crops cell', () => {
     expect(back.city.queue.some((q) => q.districtUniqueId === plot.uniqueId)).toBe(false);
     expect(back.features[coordKey(PLOT)]).toBe('Crops');
     expect(isGrowing(back, map, PLOT, T0)).toBe(false);
+  });
+});
+
+describe('moving a tree', () => {
+  const FROM: Coord = { x: 2, y: 0 };
+  const TO: Coord = { x: 2, y: 1 };
+  const DAY = HARVEST.Forest.growSeconds * 1000;
+
+  const withTree = (research = true): GameState => {
+    const state = freshGame();
+    reveal(state, [FROM, TO]);
+    state.features[coordKey(FROM)] = 'Trees';
+    if (research) completeTech(state, 'Transplanting');
+    return state;
+  };
+
+  it('waits for Transplanting', () => {
+    const state = withTree(false);
+    expect(pickUpBlock(state, FROM)).toBe('NeedsResearch');
+    expect(transplant(state, map, FROM, TO, T0)).toBe('NeedsResearch');
+    expect(state.features[coordKey(FROM)]).toBe('Trees');
+  });
+
+  it('leaves bare ground and lands growing for a day', () => {
+    const state = withTree();
+    expect(transplant(state, map, FROM, TO, T0)).toBe('Moved');
+    expect(state.features[coordKey(FROM)]).toBeUndefined();
+    expect(placementBlock(state, map, 'Housing', FROM)).toBeNull(); // buildable now
+    expect(state.features[coordKey(TO)]).toBe('Trees');
+    expect(isGrowing(state, map, TO, T0 + DAY - 1)).toBe(true);
+    expect(isGrowing(state, map, TO, T0 + DAY)).toBe(false);
+    expect(stockAt(state, map, TO, T0 + DAY)).toBe(depotStock(state, map, TO, HARVEST.Forest));
+  });
+
+  it('restarts the growth of a tree moved again while it grows', () => {
+    const state = withTree();
+    transplant(state, map, FROM, TO, T0);
+    expect(transplant(state, map, TO, FROM, T0 + DAY / 2)).toBe('Moved');
+    expect(isGrowing(state, map, FROM, T0 + DAY)).toBe(true);
+    expect(isGrowing(state, map, FROM, T0 + DAY / 2 + DAY)).toBe(false);
+  });
+
+  it('refuses ground a building or a feature already holds, and its own cell is no move', () => {
+    const state = withTree();
+    addBuilt(state, 'Housing', TO);
+    expect(transplant(state, map, FROM, TO, T0)).toBe('Occupied');
+    expect(transplant(state, map, FROM, FROM, T0)).toBe('SameCell');
+  });
+
+  it('moves a crop plot with no research, and nothing else at all', () => {
+    const state = freshGame();
+    reveal(state, [FROM, TO]);
+    state.features[coordKey(FROM)] = 'Crops';
+    expect(transplant(state, map, FROM, TO, T0)).toBe('Moved');
+    expect(isGrowing(state, map, TO, T0)).toBe(true);
+    state.features[coordKey(FROM)] = 'BerryBush';
+    expect(pickUpBlock(state, FROM)).toBe('NotMovable');
+  });
+});
+
+describe('a long press on a tree', () => {
+  const FROM: Coord = { x: 2, y: 0 };
+  const TO: Coord = { x: 2, y: 1 };
+
+  const withTree = (research = true) => {
+    const state = freshGame();
+    reveal(state, [FROM, TO]);
+    state.features[coordKey(FROM)] = 'Trees';
+    if (research) completeTech(state, 'Transplanting');
+    const game = freshPresenter(state);
+    game.camera.centerOnCell(FROM);
+    return { state, game };
+  };
+
+  it('picks it up, carries it and puts it down growing', () => {
+    const { state, game } = withTree();
+    expect(game.canHoldAt(...screenAt(game, FROM))).toBe(true);
+    expect(game.holdAt(...screenAt(game, FROM))).toBe(true);
+    expect(game.mode.kind).toBe('transplanting');
+    expect(game.transplantInfo()!.unmoved).toBe(true);
+    game.dragGhostTo(...screenAt(game, TO));
+    game.holdGhost(false);
+    expect(game.transplantInfo()!.growSeconds).toBe(HARVEST.Forest.growSeconds);
+    game.confirmTransplant();
+    expect(game.mode.kind).toBe('normal');
+    expect(state.features[coordKey(FROM)]).toBeUndefined();
+    expect(isGrowing(state, map, TO, game.now())).toBe(true);
+  });
+
+  it('put back where it stood is a cancel that keeps its Wood', () => {
+    const { state, game } = withTree();
+    game.holdAt(...screenAt(game, FROM));
+    game.confirmTransplant();
+    expect(game.mode.kind).toBe('normal');
+    expect(state.features[coordKey(FROM)]).toBe('Trees');
+    expect(isGrowing(state, map, FROM, game.now())).toBe(false);
+  });
+
+  it('turns red over a building and will not land there', () => {
+    const { state, game } = withTree();
+    addBuilt(state, 'Housing', TO);
+    game.holdAt(...screenAt(game, FROM));
+    game.dragGhostTo(...screenAt(game, TO));
+    expect(game.ghostBlock()).toBe('Occupied');
+    game.confirmTransplant();
+    expect(game.mode.kind).toBe('transplanting');
+    expect(state.features[coordKey(FROM)]).toBe('Trees');
+  });
+
+  it('before Transplanting, says what to research and picks nothing up', () => {
+    const { game } = withTree(false);
+    expect(game.holdAt(...screenAt(game, FROM))).toBe(false);
+    expect(game.mode.kind).toBe('normal');
   });
 });

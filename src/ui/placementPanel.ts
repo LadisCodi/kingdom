@@ -108,3 +108,38 @@ function auraLines(aura: { ground: boolean; here: number; now: number }): HTMLEl
     el('div', { class: 'plc-promise' }, `${formatExact(aura.now)} where it stands`),
   ];
 }
+
+/**
+ * Moving a tree or a crop plot (Docs/features/27-plantables.md §4): the same
+ * window as a building's move, and one line more — the price of a move here
+ * is the wait, so the wait is said before the button is pressed.
+ */
+export function renderTransplantPanel(game: Game): HTMLElement {
+  const info = game.transplantInfo()!;
+  const art = spriteUrl(info.sprite);
+  const blockedBy = info.blocked ?? undefined;
+  const confirm = coach(btn({
+    label: 'Move',
+    kind: 'primary',
+    onClick: () => game.confirmTransplant(),
+    disabledReason: blockedBy,
+  }), 'place-confirm');
+  const header = windowHead(info.name, [
+    closeKnob(() => game.closePlacement(), `Close ${info.name}`),
+  ]);
+  return el('div', { class: 'dc plc-win' },
+    el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
+    header,
+    el('div', { class: 'plc-row' },
+      el('div', { class: 'plc-art' }, art ? spriteImgAt(art) : iconEl('Wood', { size: 'lg' })),
+      el('div', { class: 'plc-body' },
+        el('div', { class: 'plc-promise' },
+          info.unmoved ? 'Drag it, or tap where it should go' : 'It grows again where it lands'),
+        el('div', { class: 'plc-time' },
+          iconEl('hourglass', { size: 'sm' }), formatDuration(info.growSeconds)),
+        ...(blockedBy
+          ? [el('div', { class: 'plc-reason' }, iconEl('padlock', { size: 'sm' }), blockedBy)]
+          : [])),
+      el('div', { class: 'plc-actions' }, confirm)),
+  );
+}

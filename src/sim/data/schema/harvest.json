@@ -5,6 +5,11 @@
     "secondsPerStrike": { "type": "int", "min": 0 },
     "stock": { "type": "int", "min": 0 },
     "recoverySeconds": { "type": "int" },
-    "respawnSeconds": { "type": "int" }
+    "respawnSeconds": { "type": "int" },
+    "growSeconds": {
+      "type": "int",
+      "min": 0,
+      "doc": "How long one planted or moved grows before it can be tapped or worked (Docs/features/27-plantables.md §2). 0 = never planted or moved."
+    }
   }
 }

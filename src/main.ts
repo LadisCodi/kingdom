@@ -41,7 +41,7 @@ import { renderBuilderSheet } from './ui/builderSheet';
 import { renderSurveySheet } from './ui/surveySheet';
 import { mountSurveyPill } from './ui/surveyPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
-import { renderPlacementPanel } from './ui/placementPanel';
+import { renderPlacementPanel, renderTransplantPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
 import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
@@ -436,6 +436,8 @@ async function boot(): Promise<void> {
       // tear the panel down between placing and moving for no visible reason.
       // The window carries its own close (placementPanel.ts), so no legacy knob.
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
+    } else if (game.mode.kind === 'transplanting') {
+      panelSlot.show('transplant', () => legacy(() => renderTransplantPanel(game)));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
     } else if (site !== null && standingLairAt(game.state, site)) {
@@ -572,6 +574,24 @@ async function boot(): Promise<void> {
   }, true);
 
   // ----------------------------------------------------------------- input
+  // THE HOLD RING: a long press on something that moves fills a little brass
+  // ring beside the finger — up and to the right, where the finger does not
+  // cover it (render/input.ts). Restarted by re-adding the class.
+  const holdRingEl = document.createElement('div');
+  holdRingEl.className = 'hold-ring';
+  holdRingEl.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true">'
+    + '<circle class="hold-ring-track" cx="20" cy="20" r="15"/>'
+    + '<circle class="hold-ring-fill" cx="20" cy="20" r="15" pathLength="100"/></svg>';
+  document.body.append(holdRingEl);
+  const showHoldRing = (at: { x: number; y: number; ms: number } | null): void => {
+    holdRingEl.classList.remove('is-filling');
+    if (at === null) return;
+    holdRingEl.style.left = `${at.x + 34}px`;
+    holdRingEl.style.top = `${at.y - 46}px`;
+    holdRingEl.style.setProperty('--hold-ms', `${at.ms}ms`);
+    void holdRingEl.offsetWidth; // restart the fill
+    holdRingEl.classList.add('is-filling');
+  };
   wireInput(
     canvas, camera,
     (sx, sy) => game.handleTap(sx, sy),
@@ -579,6 +599,8 @@ async function boot(): Promise<void> {
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
     (sx, sy) => game.holdAt(sx, sy),
+    (sx, sy) => game.canHoldAt(sx, sy),
+    showHoldRing,
   );
   // The world board takes the same gestures: a drag pans, a pinch or the
   // wheel zooms, a tap picks a hex. Nothing there is held or dragged.

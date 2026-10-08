@@ -11,7 +11,10 @@
 // A press that never moved past the threshold is a tap on release — unless
 // it stayed down HOLD_MS and `onHold` took it: then the press becomes a ghost
 // drag on the spot (a long press on a building picks it up to move it), and
-// its release is no tap. Holding repeats nothing.
+// its release is no tap. Holding repeats nothing. While the press waits, a
+// ring fills beside the finger — up and to the right, where the finger does
+// not cover it — but only over something a long press would pick up.
+// (Docs/features/05-city-and-districts.md §4.3.)
 //
 // A SECOND finger turns the gesture into a pinch: the pair zooms about its
 // midpoint and pans with it, so the ground under the fingers stays under
@@ -24,6 +27,9 @@ import { haptic } from '../ui/haptics';
 const DRAG_THRESHOLD_PX = 8;
 /** How long a still press waits before it is a long press. */
 const HOLD_MS = 450;
+/** How long a press waits before the hold ring shows, so a tap never
+ *  flashes one. */
+const RING_DELAY_MS = 120;
 
 export function wireInput(
   canvas: HTMLCanvasElement,
@@ -38,11 +44,21 @@ export function wireInput(
   holdGhost: (held: boolean) => void = () => {},
   /** A still press held HOLD_MS: true when it picked up a ghost to drag. */
   onHold: (sx: number, sy: number) => boolean = () => false,
+  /** Would a long press here pick something up? Only then does the ring show. */
+  canHold: (sx: number, sy: number) => boolean = () => false,
+  /** Show the hold ring at a page point, filling over `ms` — or hide it. */
+  holdRing: (at: { x: number; y: number; ms: number } | null) => void = () => {},
 ): void {
   let holdTimer: ReturnType<typeof setTimeout> | null = null;
+  let ringTimer: ReturnType<typeof setTimeout> | null = null;
+  let ringShown = false;
   const cancelHold = () => {
     if (holdTimer !== null) clearTimeout(holdTimer);
     holdTimer = null;
+    if (ringTimer !== null) clearTimeout(ringTimer);
+    ringTimer = null;
+    if (ringShown) holdRing(null);
+    ringShown = false;
   };
   let pointerDown = false;
   let dragged = false;
@@ -90,8 +106,19 @@ export function wireInput(
     if (draggingGhost) holdGhost(true);
     cancelHold();
     if (!draggingGhost) {
+      const r0 = canvas.getBoundingClientRect();
+      if (canHold(startX - r0.left, startY - r0.top)) {
+        ringTimer = setTimeout(() => {
+          ringTimer = null;
+          if (!pointerDown || dragged || pinch) return;
+          ringShown = true;
+          holdRing({ x: startX, y: startY, ms: HOLD_MS - RING_DELAY_MS });
+        }, RING_DELAY_MS);
+      }
       holdTimer = setTimeout(() => {
         holdTimer = null;
+        if (ringShown) holdRing(null);
+        ringShown = false;
         if (!pointerDown || dragged || pinch || pointers.size !== 1) return;
         const r = canvas.getBoundingClientRect();
         if (!onHold(startX - r.left, startY - r.top)) return;
