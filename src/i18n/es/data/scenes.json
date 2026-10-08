@@ -1,623 +1,623 @@
 {
   "scenes.intro.lines.0.text": {
     "en": "Oh! Your Majesty — you came! Welcome home to Oakville. Well… to what the fog has left of it.",
-    "es": ""
+    "es": "¡Oh! ¡Majestad, ha venido! Esto es Oakville, su hogar. Bueno… lo que la niebla ha dejado de él."
   },
   "scenes.intro.lines.1.text": {
     "en": "I’m Isolde. I kept the royal library — but most of the court fled the fog, so… I’m your Royal Advisor now!",
-    "es": ""
+    "es": "Soy Isolde. Cuidaba la biblioteca real… pero casi toda la corte huyó de la niebla, así que… ¡ahora soy su consejera real!"
   },
   "scenes.intro.lines.2.text": {
     "en": "Advisor. Ha! Last time she advised anyone, it was the old king. To read more.",
-    "es": ""
+    "es": "¿Consejera? ¡Ja! La última vez que aconsejó a alguien fue al viejo rey. Que leyera más."
   },
   "scenes.intro.lines.3.text": {
     "en": "This is Hob, our woodcutter. He’s the only one who never left. He says the fog doesn’t scare him.",
-    "es": ""
+    "es": "Este es Hob, nuestro leñador. Es el único que nunca se marchó. Dice que la niebla no le da miedo."
   },
   "scenes.intro.lines.4.text": {
     "en": "Scare me? It’s greedy, that’s all. Loves a shine. Toss it a coin and it gives a bit of ground back.",
-    "es": ""
+    "es": "¿Miedo? Lo que es, es avariciosa. Le pierde lo que brilla. Échele una moneda y le devuelve un trozo de tierra."
   },
   "scenes.intro.lines.5.text": {
     "en": "Then let’s feed it! Those trees in the fog are ours — tap it, Your Majesty. Five coins, Hob says.",
-    "es": ""
+    "es": "¡Pues démosle de comer! Esos árboles de la niebla son nuestros: tóquela, Majestad. Cinco monedas, dice Hob."
   },
   "scenes.intro.lines.6.text": {
     "en": "Timber! It worked! And look — right beside it. Something glinting in the fog. Clear that one too!",
-    "es": ""
+    "es": "¡Que cae! ¡Ha funcionado! Y mire, justo al lado: algo brilla en la niebla. ¡Despeje eso también!"
   },
   "scenes.intro.lines.7.text": {
     "en": "That’s Widow Pell’s purse. Dropped it running, she did. Well — the fog owes us. Tap it.",
-    "es": ""
+    "es": "Es el monedero de la viuda Pell. Se le cayó huyendo. Bueno, la niebla nos debe una. Tóquelo."
   },
   "scenes.intro.lines.8.text": {
     "en": "The fog kept more of what they left, I’m sure of it. Three more stands, and the axes will have work again.",
-    "es": ""
+    "es": "Seguro que la niebla guarda más de lo que dejaron. Tres arboledas más, y las hachas volverán a tener trabajo."
   },
   "scenes.intro.lines.10.text": {
     "en": "The folk sheltering in the Townhall saw it all — they’ve gathered you a gift! Go on, accept it.",
-    "es": ""
+    "es": "La gente refugiada en el Ayuntamiento lo ha visto todo… ¡y le ha reunido un regalo! Vamos, acéptelo."
   },
   "scenes.morningBook.lines.0.text": {
     "en": "Trees aplenty, and nobody left who knows how to drop one safe. My hands shake too much now.",
-    "es": ""
+    "es": "Árboles de sobra, y nadie que sepa tumbar uno sin peligro. A mí ya me tiemblan las manos."
   },
   "scenes.morningBook.lines.1.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.morningBook.lines.2.text": {
     "en": "Then a book will teach them! I have a book for that. I have a book for most things.",
-    "es": ""
+    "es": "¡Pues que lo aprendan de un libro! Tengo un libro para eso. Tengo un libro para casi todo."
   },
   "scenes.morningBook.lines.3.text": {
     "en": "Each page is a craft Oakville forgot. This one’s Forestry — chapter one. My favourite!",
-    "es": ""
+    "es": "Cada página es un oficio que Oakville olvidó. Esta es Silvicultura, capítulo uno. ¡Mi favorita!"
   },
   "scenes.morningBook.lines.4.text": {
     "en": "Learning takes Knowledge — that’s my studying, bottled up. Pour it in…",
-    "es": ""
+    "es": "Aprender cuesta Conocimiento: son mis estudios, embotellados. Viértalo…"
   },
   "scenes.morningBook.lines.5.text": {
     "en": "…then a little Gold for proper axes, and the craft is ours again. Just like that!",
-    "es": ""
+    "es": "…y un poco de Oro para buenas hachas, y el oficio vuelve a ser nuestro. ¡Así de fácil!"
   },
   "scenes.morningBook.lines.6.text": {
     "en": "Hear that? Axes in the woods! I study a point of Knowledge an hour, up to ten. Best spend it before then.",
-    "es": ""
+    "es": "¿Lo oye? ¡Hachas en el bosque! Estudio un punto de Conocimiento por hora, hasta diez. Mejor gastarlo antes."
   },
   "scenes.morningBook.lines.7.text": {
     "en": "Let’s close the book and go and watch them work. I’ll — I’ll mark the page.",
-    "es": ""
+    "es": "Cerremos el libro y vayamos a verlos trabajar. Yo… yo marco la página."
   },
   "scenes.morningAxe.lines.0.text": {
     "en": "Show ’em how it’s done, Majesty. Tap a tree. Every swing asks the land’s leave — a drop from that blue well.",
-    "es": ""
+    "es": "Enséñeles cómo se hace, Majestad. Toque un árbol. Cada hachazo pide permiso a la tierra: una gota de ese pozo azul."
   },
   "scenes.morningAxe.lines.1.text": {
     "en": "Hold it down and the axe keeps going. When a stand’s bare, move on — it grows back. Trees don’t sulk.",
-    "es": ""
+    "es": "Mantenga pulsado y el hacha no para. Si una arboleda queda pelada, a otra: rebrota. Los árboles no se enfurruñan."
   },
   "scenes.morningAxe.lines.2.text": {
     "en": "Oh — the well is lower! Every swing drew a drop. Don’t fret: it fills again by itself. I checked twice.",
-    "es": ""
+    "es": "¡Oh, el pozo ha bajado! Cada hachazo gastó una gota. No se apure: se vuelve a llenar solo. Lo comprobé dos veces."
   },
   "scenes.morningAxe.lines.3.text": {
     "en": "Three times. I counted.",
-    "es": ""
+    "es": "Tres. Las conté."
   },
   "scenes.morningRoof.lines.0.text": {
     "en": "Wood at last — and nowhere to sleep. But that shape past the trees… the Millers’ house! Clear the fog, Your Majesty!",
-    "es": ""
+    "es": "Por fin madera… y ningún sitio donde dormir. Pero esa silueta tras los árboles… ¡la casa de los Miller! ¡Despeje la niebla, Majestad!"
   },
   "scenes.morningRoof.lines.1.text": {
     "en": "There it is! The roof’s fallen in, but the walls are sound. Open it.",
-    "es": ""
+    "es": "¡Ahí está! El tejado se ha hundido, pero las paredes aguantan. Ábrala."
   },
   "scenes.morningRoof.lines.2.text": {
     "en": "Builders want their wood up front — it says so in the guild charter. Repair it!",
-    "es": ""
+    "es": "Los constructores quieren la madera por adelantado: lo dice el estatuto del gremio. ¡Repárela!"
   },
   "scenes.morningRoof.lines.3.text": {
     "en": "Hear that? Hammers! And builders keep at it while you’re away — they don’t need watching. Unlike me.",
-    "es": ""
+    "es": "¿Lo oye? ¡Martillos! Y los constructores siguen aunque usted no esté: no hay que vigilarlos. No como a mí."
   },
   "scenes.morningRoof.lines.4.text": {
     "en": "Young Tom Miller’s camped on the south road. Been waiting a year for a roof to come home to.",
-    "es": ""
+    "es": "El joven Tom Miller acampa en el camino del sur. Lleva un año esperando un tejado al que volver."
   },
   "scenes.morningFood.lines.0.text": {
     "en": "A roof won’t feed Tom, and our pantry is… a shelf. Berry bushes would do. Clear the fog off one, then pick it.",
-    "es": ""
+    "es": "Un tejado no alimenta a Tom, y la despensa es… un estante. Nos valdrían unas bayas: despeje de niebla una zarza y recójalas."
   },
   "scenes.morningVillager.lines.0.text": {
     "en": "The House is still going up. Nobody moves in under scaffolding — I asked.",
-    "es": ""
+    "es": "La Casa aún está en obras. Nadie se muda entre andamios: lo pregunté."
   },
   "scenes.morningVillager.lines.1.text": {
     "en": "A roof, a pantry… now Tom! The Townhall bell carries to the roads. Open it, Your Majesty.",
-    "es": ""
+    "es": "Un tejado, una despensa… ¡y ahora, Tom! La campana del Ayuntamiento llega a los caminos. Ábralo, Majestad."
   },
   "scenes.morningVillager.lines.2.text": {
     "en": "Ring for him! He’ll need that roof — and a little Food for the walk home.",
-    "es": ""
+    "es": "¡Llámelo! Necesitará ese tejado… y un poco de Comida para el camino a casa."
   },
   "scenes.morningVillager.lines.3.text": {
     "en": "He’s coming! We can wait for him — or a few Gems would hurry him along. Whichever you think best!",
-    "es": ""
+    "es": "¡Ya viene! Podemos esperarle… o unas Gemas le meterían prisa. ¡Lo que usted crea mejor!"
   },
   "scenes.morningVillager.lines.4.text": {
     "en": "Is that… our roof? Your Majesty! Tom Miller, home at last. I’ll pay my rent on time, I swear it.",
-    "es": ""
+    "es": "¿Eso es… nuestro tejado? ¡Majestad! Tom Miller, por fin en casa. Pagaré la renta puntualmente, se lo juro."
   },
   "scenes.morningVillager.lines.5.text": {
     "en": "Welcome home, Tom! You see, Your Majesty? Mend what the fog broke, and the people come back.",
-    "es": ""
+    "es": "¡Bienvenido a casa, Tom! ¿Lo ve, Majestad? Repare lo que rompió la niebla, y la gente vuelve."
   },
   "scenes.morningVillager.lines.6.text": {
     "en": "Let’s close the Townhall — Tom’s settling in.",
-    "es": ""
+    "es": "Cerremos el Ayuntamiento: Tom se está instalando."
   },
   "scenes.morningRent.lines.0.text": {
     "en": "Tom pays his rent into the House. When the purse shows, gather it — it’s his to give, and it costs you nothing.",
-    "es": ""
+    "es": "Tom paga la renta a su Casa. Cuando asome el monedero, recójalo: se lo da él, y a usted no le cuesta nada."
   },
   "scenes.morningRent.lines.1.text": {
     "en": "That’s how a kingdom is kept, I think: clear the fog, gather, build — and they come home, one by one.",
-    "es": ""
+    "es": "Así se lleva un reino, creo yo: despejar la niebla, recoger, construir… y vuelven a casa, uno a uno."
   },
   "scenes.morningRent.lines.2.text": {
     "en": "Lost? Look at their request and I’ll point the way. Come back tomorrow — the barns and the purse fill up overnight.",
-    "es": ""
+    "es": "¿No sabe qué hacer? Mire su petición y yo le señalo el camino. Vuelva mañana: graneros y monedero se llenan de noche."
   },
   "scenes.plots.lines.0.text": {
     "en": "Your Majesty! Before the fog, Dad kept two crop plots just past the Townhall. Best turnips in Oakville, he swore.",
-    "es": ""
+    "es": "¡Majestad! Antes de la niebla, mi padre tenía dos huertos pasado el Ayuntamiento. Los mejores nabos de Oakville, juraba."
   },
   "scenes.plots.lines.1.text": {
     "en": "Turnips. Hmph. Fog’s had them a year. Nothing left in there but weeds and a scarecrow.",
-    "es": ""
+    "es": "Nabos. Bah. La niebla se los quedó hace un año. Dentro solo hay malas hierbas y un espantapájaros."
   },
   "scenes.plots.lines.2.text": {
     "en": "Weeds we can pull! First we buy the ground back from the fog — follow my finger, Your Majesty.",
-    "es": ""
+    "es": "¡Las malas hierbas se arrancan! Primero le compramos el terreno a la niebla: siga mi dedo, Majestad."
   },
   "scenes.plots.lines.3.text": {
     "en": "There it is! The fence is down, but the soil’s still good. Open it, Your Majesty.",
-    "es": ""
+    "es": "¡Ahí está! La valla está caída, pero la tierra sigue buena. Ábralo, Majestad."
   },
   "scenes.plots.lines.4.text": {
     "en": "A fence wants wood. Here — off my pile. Don’t make a fuss.",
-    "es": ""
+    "es": "Una valla pide madera. Tome, de mi montón. Y sin aspavientos."
   },
   "scenes.plots.lines.5.text": {
     "en": "Fresh seed, a new fence, and no builders needed — a field mends itself once it’s sown. Repair it!",
-    "es": ""
+    "es": "Semilla nueva, valla nueva y sin constructores: un huerto se arregla solo una vez sembrado. ¡Repárelo!"
   },
   "scenes.plots.lines.6.text": {
     "en": "Sprouting already. Soil’s been waiting for somebody, that’s all.",
-    "es": ""
+    "es": "Ya brota. La tierra estaba esperando a alguien, nada más."
   },
   "scenes.plots.lines.7.text": {
     "en": "And the other one, right beside it! Dad always planted them in pairs.",
-    "es": ""
+    "es": "¡Y el otro, justo al lado! Mi padre siempre los plantaba de dos en dos."
   },
   "scenes.plots.lines.8.text": {
     "en": "There — open it…",
-    "es": ""
+    "es": "Ahí está… ábralo…"
   },
   "scenes.plots.lines.9.text": {
     "en": "More wood? …Fine. Last of the pile. Again.",
-    "es": ""
+    "es": "¿Más madera? …Vale. Lo último del montón. Otra vez."
   },
   "scenes.plots.lines.10.text": {
     "en": "…and repair it!",
-    "es": ""
+    "es": "…¡y repárelo!"
   },
   "scenes.plots.lines.11.text": {
     "en": "Two plots, just like Dad’s! When they’ve grown, tap them and bring the harvest in.",
-    "es": ""
+    "es": "¡Dos huertos, como los de mi padre! Cuando crezcan, tóquelos y recoja la cosecha."
   },
   "scenes.plots.lines.12.text": {
     "en": "Every sickle swing asks the well, same as an axe. Mind the blue.",
-    "es": ""
+    "es": "Cada golpe de hoz le pide al pozo, igual que el hacha. Ojo con lo azul."
   },
   "scenes.farm.lines.0.text": {
     "en": "Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.",
-    "es": ""
+    "es": "Cosechar cada huerto a mano nos va a agotar… y a vaciar el pozo. Una Granja manda aldeanos a hacerlo, día y noche."
   },
   "scenes.farm.lines.1.text": {
     "en": "Dad’s old farm is still out there, past the berry bushes. Clear the way, Your Majesty — I’ll know it when I see it.",
-    "es": ""
+    "es": "La vieja granja de mi padre sigue ahí, pasadas las zarzas. Abra camino, Majestad: la reconoceré en cuanto la vea."
   },
   "scenes.farm.lines.2.text": {
     "en": "That’s her! Roof’s sagging, but she’s sound. Open it!",
-    "es": ""
+    "es": "¡Es ella! El tejado está vencido, pero aguanta. ¡Ábrala!"
   },
   "scenes.farm.lines.3.text": {
     "en": "Farm wants wood too, does it. …Take it. I’ll chop more.",
-    "es": ""
+    "es": "Conque la granja también quiere madera. …Tome. Ya cortaré más."
   },
   "scenes.farm.lines.4.text": {
     "en": "Hammers, sawdust and one cheerful racket — repair it!",
-    "es": ""
+    "es": "Martillos, serrín y un jaleo de lo más alegre… ¡repárela!"
   },
   "scenes.farmMove.lines.0.text": {
     "en": "Nearly done — listen to those hammers!",
-    "es": ""
+    "es": "Casi lista… ¡escuche esos martillos!"
   },
   "scenes.farmMove.lines.1.text": {
     "en": "Oh. Oh no. A Farm works the plots one step around it, corners too — and ours are two steps away. I measured. Twice.",
-    "es": ""
+    "es": "Oh. Oh, no. Una Granja trabaja los huertos a un paso alrededor, esquinas incluidas… y los nuestros están a dos. Lo medí. Dos veces."
   },
   "scenes.farmMove.lines.2.text": {
     "en": "So pick it up and carry it. Did it with Widow Pell’s henhouse once. Hens weren’t pleased.",
-    "es": ""
+    "es": "Pues cójala y llévesela. Yo lo hice con el gallinero de la viuda Pell. A las gallinas no les hizo gracia."
   },
   "scenes.farmMove.lines.3.text": {
     "en": "Can we? …We can! The guild charter says a building may be moved for free, as often as you like. Page forty!",
-    "es": ""
+    "es": "¿Se puede? …¡Se puede! El estatuto del gremio dice que un edificio se mueve gratis, las veces que quiera. ¡Página cuarenta!"
   },
   "scenes.farmMove.lines.4.text": {
     "en": "It wants to stand right between the two plots. Clear the fog there first, Your Majesty.",
-    "es": ""
+    "es": "Tiene que ir justo entre los dos huertos. Primero despeje la niebla de ahí, Majestad."
   },
   "scenes.farmMove.lines.5.text": {
     "en": "Now open the Farm.",
-    "es": ""
+    "es": "Ahora abra la Granja."
   },
   "scenes.farmMove.lines.6.text": {
     "en": "That’s its Move knob. Tap it, and the whole Farm lifts right off the ground!",
-    "es": ""
+    "es": "Ese es su botón de Mover. Tóquelo, ¡y la Granja entera se despega del suelo!"
   },
   "scenes.farmMove.lines.7.text": {
     "en": "There — between Dad’s plots! Tap the spot.",
-    "es": ""
+    "es": "¡Ahí, entre los huertos de mi padre! Toque el sitio."
   },
   "scenes.farmMove.lines.8.text": {
     "en": "Both plots in reach! Move it.",
-    "es": ""
+    "es": "¡Los dos huertos a su alcance! Muévala."
   },
   "scenes.farmMove.lines.9.text": {
     "en": "Didn’t drop a single plank. Better than the henhouse.",
-    "es": ""
+    "es": "No se ha caído ni un tablón. Mejor que el gallinero."
   },
   "scenes.workers.lines.0.text": {
     "en": "The Farm is still going up. When it stands, it’ll need hands.",
-    "es": ""
+    "es": "La Granja aún está en obras. Cuando esté en pie, necesitará manos."
   },
   "scenes.workers.lines.1.text": {
     "en": "The Farm stands — and nobody’s working it. Open it, Your Majesty!",
-    "es": ""
+    "es": "La Granja está en pie… y nadie la trabaja. ¡Ábrala, Majestad!"
   },
   "scenes.workers.lines.2.text": {
     "en": "Send me! I know every furrow. Each pair of hands walks to a plot, reaps it and carries the crop home.",
-    "es": ""
+    "es": "¡Envíeme a mí! Conozco cada surco. Cada par de manos va a un huerto, lo cosecha y carga con todo hasta casa."
   },
   "scenes.workers.lines.3.text": {
     "en": "Look at them go! The harvest piles up in the Farm’s barn — gather it when it’s ready. A full barn stops the work.",
-    "es": ""
+    "es": "¡Mírelos! La cosecha se amontona en el granero de la Granja: recójala cuando esté lista. Con el granero lleno, se para todo."
   },
   "scenes.chest.lines.0.text": {
     "en": "I nearly forgot, Your Majesty! I brought something home from the road — a whole chest of good timber.",
-    "es": ""
+    "es": "¡Casi se me olvida, Majestad! Me traje algo del camino: un cofre entero de buena madera."
   },
   "scenes.chest.lines.1.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.chest.lines.2.text": {
     "en": "Into the Bag with it — that’s where I keep what the townsfolk give us. Open it, Your Majesty.",
-    "es": ""
+    "es": "A la Bolsa con él: ahí guardo lo que nos regala la gente del pueblo. Ábrala, Majestad."
   },
   "scenes.chest.lines.3.text": {
     "en": "A chest holds hours of the town’s work, packed for later. Tap it.",
-    "es": ""
+    "es": "Un cofre guarda horas de trabajo del pueblo, empaquetadas para luego. Tóquelo."
   },
   "scenes.chest.lines.4.text": {
     "en": "Use it, and the wood is ours — just when we need it most.",
-    "es": ""
+    "es": "Úselo, y la madera es nuestra: justo cuando más falta hace."
   },
   "scenes.chest.lines.5.text": {
     "en": "Good timber, that. Keep the next ones for when you’re short — chests don’t rot.",
-    "es": ""
+    "es": "Buena madera, esa. Guarde los siguientes para cuando le falte. Los cofres no se pudren."
   },
   "scenes.chest.lines.6.text": {
     "en": "Let’s close the Bag and put that wood to work.",
-    "es": ""
+    "es": "Cerremos la Bolsa y pongamos esa madera a trabajar."
   },
   "scenes.secondHouse.lines.0.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.secondHouse.lines.1.text": {
     "en": "Word’s spreading on the roads, and Tom’s house is full. The fog kept no other… so we’ll raise one of our own!",
-    "es": ""
+    "es": "Se corre la voz por los caminos, y la casa de Tom está llena. La niebla no guardaba otra… ¡así que levantaremos una nosotros!"
   },
   "scenes.secondHouse.lines.2.text": {
     "en": "New house wants more wood than you’ve got. Here — been stacking it all winter. Don’t make a fuss.",
-    "es": ""
+    "es": "Una casa nueva pide más madera de la que tiene. Tome, la he ido apilando todo el invierno. Y sin aspavientos."
   },
   "scenes.secondHouse.lines.3.text": {
     "en": "Builders want their wood up front — it says so in the guild charter. Choose the House.",
-    "es": ""
+    "es": "Los constructores quieren la madera por adelantado: lo dice el estatuto del gremio. Elija la Casa."
   },
   "scenes.secondHouse.lines.4.text": {
     "en": "Anywhere on the cleared ground. Drag it wherever feels right, then confirm. I’d pick somewhere sunny.",
-    "es": ""
+    "es": "En cualquier terreno despejado. Arrástrela adonde le parezca y confirme. Yo elegiría un sitio soleado."
   },
   "scenes.sawmill.lines.0.text": {
     "en": "Farm reaps by itself, and an old man’s still swinging an axe? There was a sawmill in the trees. Find it. Open it.",
-    "es": ""
+    "es": "¿La granja cosecha sola y un viejo sigue a hachazos? Había un aserradero entre los árboles. Encuéntrelo. Ábralo."
   },
   "scenes.sawmill.lines.1.text": {
     "en": "Mending it wants more wood than you’ve got. That’s the last of my pile, mind.",
-    "es": ""
+    "es": "Arreglarlo pide más madera de la que tiene. Es lo último de mi montón, ojo."
   },
   "scenes.sawmill.lines.2.text": {
     "en": "A Sawmill sends woodcutters into the trees around it — Wood without a single swing from you. Repair it!",
-    "es": ""
+    "es": "Un Aserradero manda leñadores a los árboles de alrededor: Madera sin que usted dé un solo hachazo. ¡Repárelo!"
   },
   "scenes.sawmillCrew.lines.0.text": {
     "en": "The Sawmill is still going up. When it stands, it’ll need hands.",
-    "es": ""
+    "es": "El Aserradero aún está en obras. Cuando esté en pie, necesitará manos."
   },
   "scenes.sawmillCrew.lines.1.text": {
     "en": "Sawmill’s up and nobody on the saws. Open it.",
-    "es": ""
+    "es": "Aserradero en pie y nadie en las sierras. Ábralo."
   },
   "scenes.sawmillCrew.lines.2.text": {
     "en": "Send it woodcutters. Young ones. The townsfolk want three at work — the Farm’s count too.",
-    "es": ""
+    "es": "Mándele leñadores. Jóvenes. El pueblo quiere tres trabajando; los de la Granja cuentan."
   },
   "scenes.sawmillCrew.lines.3.text": {
     "en": "Food and Wood come in by themselves now, even while you’re away. A real town, Your Majesty! I— I’m a little proud.",
-    "es": ""
+    "es": "La Comida y la Madera llegan solas, incluso cuando usted no está. ¡Un pueblo de verdad, Majestad! Estoy… estoy un poco orgullosa."
   },
   "scenes.sawmillCrew.lines.4.text": {
     "en": "Hmph. …Me too.",
-    "es": ""
+    "es": "Bah. …Yo también."
   },
   "scenes.picks.lines.0.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.picks.lines.1.text": {
     "en": "Tom wants a second floor, and that wants stone. Nobody here can cut it — but I know a chapter that can!",
-    "es": ""
+    "es": "Tom quiere un segundo piso, y eso pide piedra. Aquí nadie sabe cortarla… ¡pero conozco un capítulo que sí!"
   },
   "scenes.picks.lines.2.text": {
     "en": "Pickaxes. It opens the mountains to us.",
-    "es": ""
+    "es": "Picos. Nos abre las montañas."
   },
   "scenes.picks.lines.3.text": {
     "en": "Pour in our Knowledge…",
-    "es": ""
+    "es": "Vierta nuestro Conocimiento…"
   },
   "scenes.picks.lines.4.text": {
     "en": "…and a little Gold for the iron. Done!",
-    "es": ""
+    "es": "…y un poco de Oro para el hierro. ¡Hecho!"
   },
   "scenes.picks.lines.5.text": {
     "en": "Let’s close the book and go and find some rock.",
-    "es": ""
+    "es": "Cerremos el libro y vayamos a buscar piedra."
   },
   "scenes.rubble.lines.0.text": {
     "en": "Tap a mountain — clear its fog first, if need be. Every swing brings home Stone. My back’s writing to complain.",
-    "es": ""
+    "es": "Toque una montaña; despeje antes su niebla, si hace falta. Cada golpe trae Piedra. Mi espalda ya está redactando una queja."
   },
   "scenes.capital.lines.0.text": {
     "en": "Master Kofi, Builders’ Guild — Oakville chapter. Which is me. Three families under roofs? This town has earned a proper hall!",
-    "es": ""
+    "es": "Maestro Kofi, Gremio de Constructores de Oakville. Socio único. ¿Tres familias con techo? ¡Esto merece un Ayuntamiento como Dios manda!"
   },
   "scenes.capital.lines.1.text": {
     "en": "Master Kofi built half of old Oakville. The other half, he says, was built wrong.",
-    "es": ""
+    "es": "El maestro Kofi construyó medio Oakville antiguo. La otra mitad, dice él, se construyó mal."
   },
   "scenes.capital.lines.2.text": {
     "en": "Built by my cousin. Open the Townhall, Your Majesty — let’s see what she can become.",
-    "es": ""
+    "es": "La construyó mi primo. Abra el Ayuntamiento, Majestad: veamos en qué puede convertirse."
   },
   "scenes.capital.lines.3.text": {
     "en": "Upgrade! Every level asks for more than the last, and gives back more: more rent, more ground, more of everything.",
-    "es": ""
+    "es": "¡A mejorar! Cada nivel pide más que el anterior, y devuelve más: más renta, más terreno, más de todo."
   },
   "scenes.capital.lines.4.text": {
     "en": "The sheet says what she needs. Measure twice, pay once — then upgrade!",
-    "es": ""
+    "es": "La hoja dice lo que necesita. Medir dos veces, pagar una… ¡y a mejorar!"
   },
   "scenes.capital.lines.5.text": {
     "en": "Hammers up! A bigger job takes longer. That’s not slowness, that’s craftsmanship — and builders keep at it while you’re away.",
-    "es": ""
+    "es": "¡Arriba esos martillos! Una obra mayor tarda más. Eso no es lentitud, es oficio… y los constructores siguen aunque usted no esté."
   },
   "scenes.moreRoofs.lines.0.text": {
     "en": "Your Majesty! My cousins are on the south road — three of them, and a goat. Could we raise them a roof?",
-    "es": ""
+    "es": "¡Majestad! Mis primos vienen por el camino del sur: tres, y una cabra. ¿Les levantamos un tejado?"
   },
   "scenes.moreRoofs.lines.1.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.moreRoofs.lines.2.text": {
     "en": "Guild charter, article twelve: a bigger hall, a bigger town. Four houses she allows now. To the Build menu!",
-    "es": ""
+    "es": "Estatuto del gremio, artículo doce: a mayor ayuntamiento, mayor pueblo. Ahora permite cuatro casas. ¡Al menú Construir!"
   },
   "scenes.moreRoofs.lines.3.text": {
     "en": "Short on timber? The guild lends to a good cause. Just this once — don’t tell my cousin.",
-    "es": ""
+    "es": "¿Le falta madera? El gremio presta por una buena causa. Solo esta vez… no se lo diga a mi primo."
   },
   "scenes.moreRoofs.lines.4.text": {
     "en": "The House. Near the others — but not jammed against them.",
-    "es": ""
+    "es": "La Casa. Cerca de las otras… pero sin apretujarla."
   },
   "scenes.moreRoofs.lines.5.text": {
     "en": "Drag it where you like, then confirm. A house right against a house earns a little less — neighbours squabble over the fence.",
-    "es": ""
+    "es": "Arrástrela donde quiera y confirme. Una casa pegada a otra renta un poco menos: los vecinos riñen por la valla."
   },
   "scenes.furrows.lines.0.text": {
     "en": "Two plots won’t feed a town. Dad always said: when the barn looks thin, sow.",
-    "es": ""
+    "es": "Dos huertos no alimentan a un pueblo. Mi padre decía: si el granero se ve flaco, siembra."
   },
   "scenes.furrows.lines.1.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.furrows.lines.2.text": {
     "en": "Agriculture says we may sow new plots on any cleared ground. Page seven!",
-    "es": ""
+    "es": "Según Agricultura, podemos sembrar huertos en cualquier terreno despejado. ¡Página siete!"
   },
   "scenes.furrows.lines.3.text": {
     "en": "A crop plot. Put it by the Farm — its hands reach one step around, corners too.",
-    "es": ""
+    "es": "Un huerto. Póngalo junto a la Granja: sus manos llegan a un paso alrededor, esquinas incluidas."
   },
   "scenes.furrows.lines.4.text": {
     "en": "Right beside the Farm. Confirm!",
-    "es": ""
+    "es": "Justo al lado de la Granja. ¡Confirme!"
   },
   "scenes.furrows.lines.5.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.furrows.lines.6.text": {
     "en": "One more and we’ve four. Same again, Your Majesty!",
-    "es": ""
+    "es": "Uno más y tenemos cuatro. ¡Lo mismo otra vez, Majestad!"
   },
   "scenes.furrows.lines.7.text": {
     "en": "A crop plot again.",
-    "es": ""
+    "es": "Otro huerto."
   },
   "scenes.furrows.lines.8.text": {
     "en": "Beside the Farm. Confirm!",
-    "es": ""
+    "es": "Junto a la Granja. ¡Confirme!"
   },
   "scenes.faces.lines.0.text": {
     "en": "Three roofs, room for six — and the roads are full of folk who’d come home, Your Majesty.",
-    "es": ""
+    "es": "Tres tejados, sitio para seis… y los caminos están llenos de gente que volvería, Majestad."
   },
   "scenes.faces.lines.1.text": {
     "en": "Then ring the bell again! Open the Townhall.",
-    "es": ""
+    "es": "¡Pues vuelva a tocar la campana! Abra el Ayuntamiento."
   },
   "scenes.faces.lines.2.text": {
     "en": "Ring for each of them — they wait their turn at the door, and each wants a little Food for the walk home.",
-    "es": ""
+    "es": "Llame a cada uno: esperan su turno en la puerta, y cada cual quiere un poco de Comida para el camino."
   },
   "scenes.faces.lines.4.text": {
     "en": "That’s my cousins — and the goat. Welcome home, all of you!",
-    "es": ""
+    "es": "¡Son mis primos… y la cabra! ¡Bienvenidos a casa, todos!"
   },
   "scenes.barn.lines.0.text": {
     "en": "The Farm’s barn fills before I can carry it home — and when it’s full, the work stops dead.",
-    "es": ""
+    "es": "El granero de la Granja se llena antes de que lo vacíe… y cuando está lleno, el trabajo se para en seco."
   },
   "scenes.barn.lines.1.text": {
     "en": "Then build it bigger. Every building climbs, a level at a time. Open the Farm.",
-    "es": ""
+    "es": "Pues hágalo más grande. Todo edificio sube, nivel a nivel. Abra la Granja."
   },
   "scenes.barn.lines.2.text": {
     "en": "Upgrade: a bigger barn, quicker hands. The Townhall says how high anything in town may climb.",
-    "es": ""
+    "es": "Mejorar: granero más grande, manos más rápidas. El Ayuntamiento marca hasta dónde sube cualquier edificio."
   },
   "scenes.barn.lines.3.text": {
     "en": "There’s the price. Upgrade!",
-    "es": ""
+    "es": "Ahí tiene el precio. ¡A mejorar!"
   },
   "scenes.twoSaws.lines.0.text": {
     "en": "One sawmill. One old man’s worth of wood. Build another — in the thick of the trees, mind.",
-    "es": ""
+    "es": "Un aserradero. La madera de un solo viejo. Construya otro… en lo más espeso del bosque, ojo."
   },
   "scenes.twoSaws.lines.1.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.twoSaws.lines.2.text": {
     "en": "Build menu.",
-    "es": ""
+    "es": "Menú Construir."
   },
   "scenes.twoSaws.lines.3.text": {
     "en": "Short again? The guild covers it. We’ll call it an investment in Oakville.",
-    "es": ""
+    "es": "¿Otra vez falta? El gremio lo cubre. Digamos que es una inversión en Oakville."
   },
   "scenes.twoSaws.lines.4.text": {
     "en": "Sawmill.",
-    "es": ""
+    "es": "Aserradero."
   },
   "scenes.twoSaws.lines.5.text": {
     "en": "It starts where the trees are thickest. Leave it there. Confirm.",
-    "es": ""
+    "es": "Empieza donde los árboles son más espesos. Déjelo ahí. Confirme."
   },
   "scenes.hands.lines.0.text": {
     "en": "New saws, and nobody on them. Open the new one.",
-    "es": ""
+    "es": "Sierras nuevas y nadie en ellas. Abra el nuevo."
   },
   "scenes.hands.lines.1.text": {
     "en": "Two hands. Each walks to a tree in reach, cuts, and carries it home.",
-    "es": ""
+    "es": "Dos manos. Cada una va a un árbol a su alcance, lo corta y lo trae a casa."
   },
   "scenes.hands.lines.2.text": {
     "en": "Mind, Your Majesty: more hands than trees in reach, and the extra ones just stand about. Count before you send them.",
-    "es": ""
+    "es": "Ojo, Majestad: si hay más manos que árboles, las que sobran se quedan mano sobre mano. Cuente antes de mandarlas."
   },
   "scenes.pride.lines.0.text": {
     "en": "Excuse me! Your Majesty? I’m Priya. I’m nine and three quarters, and this town is UGLY.",
-    "es": ""
+    "es": "¡Perdone! ¿Majestad? Soy Priya. Tengo nueve años y tres cuartos, y este pueblo es FEO."
   },
   "scenes.pride.lines.1.text": {
     "en": "Priya! …She’s not wrong. The fog took every flower in Oakville.",
-    "es": ""
+    "es": "¡Priya! …No le falta razón. La niebla se llevó todas las flores de Oakville."
   },
   "scenes.pride.lines.2.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.pride.lines.3.text": {
     "en": "Isolde has a book with flower beds in it. I’ve seen it! Read it!",
-    "es": ""
+    "es": "Isolde tiene un libro con parterres. ¡Lo he visto! ¡Léalo!"
   },
   "scenes.pride.lines.4.text": {
     "en": "Village Pride. Benches, lanterns, flower beds — Isolde’s second favourite chapter.",
-    "es": ""
+    "es": "Orgullo aldeano. Bancos, farolas, parterres… el segundo capítulo favorito de Isolde."
   },
   "scenes.pride.lines.5.text": {
     "en": "Pour in some Knowledge…",
-    "es": ""
+    "es": "Vierta un poco de Conocimiento…"
   },
   "scenes.pride.lines.6.text": {
     "en": "…and a little Gold. Done! Done done done!",
-    "es": ""
+    "es": "…y un poco de Oro. ¡Hecho! ¡Hecho, hecho, hecho!"
   },
   "scenes.pride.lines.7.text": {
     "en": "Close the book, quick — I want to build!",
-    "es": ""
+    "es": "¡Cierre el libro, rápido, que quiero construir!"
   },
   "scenes.corner.lines.0.text": {
     "en": "Now the fun part: something pretty, anywhere you like! But beside a house is best.",
-    "es": ""
+    "es": "Ahora lo divertido: ¡algo bonito, donde quiera! Aunque al lado de una casa es lo mejor."
   },
   "scenes.corner.lines.1.text": {
     "en": "It’s true — a house beside a decoration collects a little more Gold. Folk pay for a nice view. I checked twice.",
-    "es": ""
+    "es": "Es verdad: una casa junto a una decoración recauda un poco más de Oro. La gente paga por las vistas. Lo comprobé dos veces."
   },
   "scenes.corner.lines.2.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.corner.lines.3.text": {
     "en": "The Build menu!",
-    "es": ""
+    "es": "¡El menú Construir!"
   },
   "scenes.corner.lines.4.text": {
     "en": "Decorations live in here.",
-    "es": ""
+    "es": "Las decoraciones viven aquí."
   },
   "scenes.corner.lines.5.text": {
     "en": "A flower bed!",
-    "es": ""
+    "es": "¡Un parterre!"
   },
   "scenes.corner.lines.6.text": {
     "en": "Next to a house. Then confirm!",
-    "es": ""
+    "es": "Al lado de una casa. ¡Y confirme!"
   },
   "scenes.corner.lines.7.text": {
     "en": "Oh — let’s set this aside first, and step back out to the kingdom.",
-    "es": ""
+    "es": "Oh… dejemos esto un momento y volvamos al reino."
   },
   "scenes.corner.lines.8.text": {
     "en": "Lovely! Now one more — back to the Build menu.",
-    "es": ""
+    "es": "¡Precioso! Ahora otra más: vuelta al menú Construir."
   },
   "scenes.corner.lines.9.text": {
     "en": "Decorations again…",
-    "es": ""
+    "es": "Decoraciones otra vez…"
   },
   "scenes.corner.lines.10.text": {
     "en": "…and this one’s yours to choose. Then put it somewhere lovely.",
-    "es": ""
+    "es": "…y esta la elige usted. Luego póngala en algún sitio bonito."
   },
   "scenes.corner.lines.11.text": {
     "en": "Psst — anything you build can be moved, any time, for free. Hold it and drag. Make the town yours!",
-    "es": ""
+    "es": "Psst: todo lo que construya se mueve gratis, cuando quiera. Manténgalo pulsado y arrástrelo. ¡Haga suyo el pueblo!"
   },
   "scenes.upperFloors.lines.0.text": {
     "en": "One house with an upper floor and the rest still cottages? Article thirty: a street climbs together.",
