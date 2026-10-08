@@ -1,7 +1,14 @@
 {
+  "Build": "Construir",
+  "Building": "Construyendo",
+  "Claim": "Reclamar",
   "Knowledge": "Conocimiento",
   "Met": "Cumplido",
+  "Not enough Gold": "No tienes Oro suficiente",
   "Not met": "Sin cumplir",
+  "Repair": "Reparar",
+  "Repair the old shrine first": "Repara antes el viejo altar",
   "Requirements": "Requisitos",
-  "Research {tech}": "Investiga {tech}"
+  "Research {tech}": "Investiga {tech}",
+  "Upgrade": "Mejorar"
 }
