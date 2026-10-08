@@ -33,6 +33,14 @@ export const PALETTE = {
   ghostOutline: '#fff8e1',
   // A ghost on a cell it may not stand on: rimmed and washed in this red.
   ghostBlocked: '#e0392b',
+  // The plot under a floating ghost, where it would land: a warm white wash,
+  // or a red one where it may not stand; and its shadow.
+  ghostPlot: 'rgba(255, 248, 225, 0.22)',
+  ghostBlockedPlot: 'rgba(224, 57, 43, 0.3)',
+  ghostShadow: '#1d140a',
+  // The dust a planted building kicks up: dry earth.
+  ghostDust: '#c9b48b',
+  ghostDustLight: '#f6eedd',
   // The placement ghost's move arrows: leaf green, lit from above, rimmed.
   moveArrow: '#4f9f33',
   moveArrowLight: '#8fd466',

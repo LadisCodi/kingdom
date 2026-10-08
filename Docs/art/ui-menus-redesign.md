@@ -1033,6 +1033,8 @@ Reference: `mockups/m49-placement.png`.
   cell to send it there; a drag that starts off the ghost pans the camera;
   a long press on a movable building picks it up. The ghost lifts while
   held, goes anywhere on the map and never commits.
+- The ghost floats over its plot — the plot washed white (red where
+  illegal), its shadow under it — and lifts higher while held.
 - **On a cell it may not stand on, the ghost is red** — rim and a red wash
   over its body — and the Build / Move button is disabled, the reason
   printed beside it.

@@ -19,6 +19,7 @@
 // lifting one finger leaves the other panning, and nothing fires on release.
 
 import type { Camera } from './camera';
+import { haptic } from '../ui/haptics';
 
 const DRAG_THRESHOLD_PX = 8;
 /** How long a still press waits before it is a long press. */
@@ -96,7 +97,7 @@ export function wireInput(
         if (!onHold(startX - r.left, startY - r.top)) return;
         draggingGhost = true;
         dragged = true; // the release is no tap: the press became a carry
-        navigator.vibrate?.(15);
+        haptic(15);
       }, HOLD_MS);
     }
   });

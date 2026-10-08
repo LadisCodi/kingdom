@@ -692,7 +692,7 @@ async function boot(): Promise<void> {
       if (view !== lastView) { lastView = view; lastActive = t; }
       if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
         lastDraw = t;
-        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs));
+        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs, game.ghostFx));
       }
     }
     requestAnimationFrame(frame);

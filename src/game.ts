@@ -176,6 +176,8 @@ import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
+import { GhostFx } from './render/ghostFx';
+import { haptic } from './ui/haptics';
 import { pay } from './sim/wallet';
 import { addGood, getGood } from './sim/goods';
 import { worldUpgradeGoods } from './sim/precious';
@@ -694,6 +696,8 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
+  /** The placement ghost's float, glide and landing (render/ghostFx.ts). */
+  readonly ghostFx = new GhostFx();
   private questWasComplete = false;
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
@@ -937,8 +941,7 @@ export class Game {
       handle: (cell) => {
         if (this.mode.kind !== 'moving') return false;
         // Any cell takes the ghost, legal or not: an illegal one turns it red.
-        this.mode.selected = cell;
-        this.notify();
+        this.stepGhostTo(cell);
         return true; // move mode swallows all map taps
       },
     });
@@ -948,8 +951,7 @@ export class Game {
       handle: (cell) => {
         if (this.mode.kind !== 'placing') return false;
         // Any cell takes the ghost, legal or not: an illegal one turns it red.
-        this.mode.selected = cell;
-        this.notify();
+        this.stepGhostTo(cell);
         return true; // placement mode swallows all map taps
       },
     });
@@ -1325,7 +1327,10 @@ export class Game {
     }
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
+    if (selected) {
+      this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
+      playSfx('ghostLift', { gain: 0.7 });
+    }
     this.notify();
   }
 
@@ -1356,6 +1361,7 @@ export class Game {
     // The ghost is out where the building stands: bring it into view, as
     // placement does for a new one — unless a finger is already on it.
     if (glide) this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
+    playSfx('ghostLift');
     this.notify();
   }
 
@@ -1374,6 +1380,7 @@ export class Game {
     if ((this.mode as Mode).kind !== 'moving') return false;
     this.ghostGrip = { x: cell.x - district.location.x, y: cell.y - district.location.y };
     this.ghostHeld = true;
+    this.ghostFx.grab();
     this.notify();
     return true;
   }
@@ -1401,21 +1408,22 @@ export class Game {
     const { districtUniqueId, selected, origin } = this.mode;
     const refusal = this.ghostBlockWords();
     if (refusal !== null) {
-      this.toast(refusal);
-      this.notify();
+      this.refuseGhost(refusal);
       return;
     }
     // Putting it back where it started is a cancel, not an error — the player
     // dragged it around, changed their mind, and dropped it home.
     if (selected.x === origin.x && selected.y === origin.y) {
+      this.setGhostDown(selected, this.mode.definitionId, true);
       this.mode = { kind: 'normal' };
       this.inspectedDistrictId = districtUniqueId;
       this.notify();
       return;
     }
+    const definitionId = this.mode.definitionId;
     const result = moveDistrict(this.state, this.map, districtUniqueId, selected, this.now());
     if (result === 'Moved') {
-      playSfx('buildPlaced');
+      this.setGhostDown(selected, definitionId);
       this.mode = { kind: 'normal' };
       // Land back on the card the move was started from: the player is very
       // likely to want the thing they just repositioned.
@@ -2542,14 +2550,13 @@ export class Game {
     const { definitionId, selected } = this.mode;
     const refusal = this.ghostBlockWords();
     if (refusal !== null) {
-      this.toast(refusal);
-      this.notify();
+      this.refuseGhost(refusal);
       return;
     }
     if (this.mode.premium) {
       const result = buildPremiumShrine(this.state, this.map, selected);
       if (result === 'Started') {
-        playSfx('buildPlaced');
+        this.setGhostDown(selected, definitionId);
         this.mode = { kind: 'normal' };
       } else if (result === 'NotEnoughGems') this.shake(['Gems']);
       else if (result === 'NoBuilderFree') this.offerBuilder();
@@ -2560,7 +2567,7 @@ export class Game {
     const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
-      playSfx('buildPlaced');
+      this.setGhostDown(selected, definitionId);
       this.mode = { kind: 'normal' };
       // Confirmed from a free builder's row: the sheet was only in the way.
       if (this.openOverlay === 'builder') this.openOverlay = null;
@@ -5052,6 +5059,10 @@ export class Game {
       previewSize: null,
       previewSteps: this.ghostSteps(),
       previewBlocked: this.ghostBlock() !== null,
+      previewHeld: this.ghostHeld,
+      previewId: this.mode.kind === 'placing' ? `build:${this.mode.definitionId}`
+        : this.mode.kind === 'moving' ? `move:${this.mode.districtUniqueId}` : '',
+      previewScaleIn: this.mode.kind === 'placing',
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
@@ -5387,7 +5398,40 @@ export class Game {
     const current = this.mode.selected;
     if (current && current.x === cell.x && current.y === cell.y) return;
     if (!this.map.terrain.has(coordKey(cell))) return;
+    this.stepGhostTo(cell);
+  }
+
+  /** The ghost takes a cell — a click for each, a duller one where it may
+   *  not stand. */
+  private stepGhostTo(cell: Coord): void {
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
+    const was = this.mode.selected;
     this.mode.selected = cell;
+    if (was === null || was.x !== cell.x || was.y !== cell.y) {
+      playSfx('ghostStep', { rate: this.ghostBlock() === null ? 1 : 0.78, group: 'ghostStep', limit: 2 });
+    }
+    this.notify();
+  }
+
+  /** The ghost is set down at `cell` and stands there now: it drops onto
+   *  its plot with a thud and a puff of dust. Put back where it started, it
+   *  only settles. */
+  private setGhostDown(cell: Coord, definitionId: DistrictId, home = false): void {
+    this.ghostFx.land(coordKey(cell), cell, DISTRICTS[definitionId].size);
+    if (home) {
+      playSfx('ghostStep', { rate: 0.85 });
+      return;
+    }
+    playSfx('ghostPlant');
+    haptic(20);
+  }
+
+  /** A confirm on a spot the ghost may not take: it shakes its head. */
+  private refuseGhost(words: string): void {
+    this.ghostFx.shake();
+    playSfx('error');
+    haptic([12, 40, 12]);
+    this.toast(words);
     this.notify();
   }
 
@@ -5395,6 +5439,12 @@ export class Game {
   holdGhost(held: boolean): void {
     if (this.ghostHeld === held) return;
     this.ghostHeld = held;
+    // Picked up: a pop and a stretch, and it rises under the finger.
+    if (held) {
+      this.ghostFx.grab();
+      playSfx('ghostLift');
+      haptic(10);
+    }
     this.notify();
   }
 
@@ -5421,7 +5471,11 @@ export class Game {
     this.mode = { kind: 'normal' };
     this.ghostHeld = false;
     if (mode.kind === 'placing') this.openOverlay = 'build';
-    else if (mode.kind === 'moving') this.inspectedDistrictId = mode.districtUniqueId;
+    else if (mode.kind === 'moving') {
+      this.inspectedDistrictId = mode.districtUniqueId;
+      // Back where it stood: it settles onto its old plot.
+      this.setGhostDown(mode.origin, mode.definitionId, true);
+    }
     this.notify();
   }
 
