@@ -32,37 +32,14 @@
 import { tr } from '../i18n/tr';
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
-import type { CurrencyId, DistrictId, ItemId } from '../sim/state';
+import type { CurrencyId, ItemId } from '../sim/state';
 import { itemIcon } from './itemArt';
 import { questLine } from '../sim/questProse';
 import { playSfx } from '../audio/sfx';
 import { el, formatExact } from './format';
 import { ScrollRoll } from './scrollRoll';
-import { iconEl, progress, currencyIcon, type IconName } from './kit';
-
-/** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
- *  icon — the coin it collects, the building it raises, the book it reads —
- *  so the card reads at a glance before its words do (mockup M1). */
-const goalIcon = (quest: QuestDef): IconName => {
-  switch (quest.goalType) {
-    case 'CollectResource': case 'HoldResource':
-      return (quest.goalTarget as CurrencyId | null) ?? 'quest';
-    case 'BuildDistrict': case 'RepairDistrict': case 'UpgradeDistrict': case 'WorkInReach':
-      return (quest.goalTarget as DistrictId | null) ?? 'build';
-    case 'CompleteTech': case 'CompleteTechs': return 'research';
-    case 'ReachPopulation': return 'population';
-    case 'AssignWorkers': return 'workers';
-    case 'TrainArmy': case 'ClearLairs': return 'army';
-    case 'CollectTaps': return 'showme';
-    case 'DiscoverCells': return 'tile';
-    case 'FindLairs': return 'compass';
-    case 'DiscoverFeature': return 'showme';
-    case 'ClaimLandmarks': return 'Mana';
-    case 'OwnArtifacts': return 'relics';
-    case 'OwnHeroes': return 'Warrior';
-    default: return 'quest';
-  }
-};
+import { iconEl, progress, currencyIcon } from './kit';
+import { goalIcon } from './questIcon';
 
 const rewardNodes = (quest: QuestDef): Node[] => {
   const parts: Node[] = [];

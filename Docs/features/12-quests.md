@@ -20,6 +20,20 @@
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
 
+- **The pill wears a mark for its goal**, an atlas icon:
+
+| Goal | Mark |
+|---|---|
+| Collect / Hold a resource | that resource |
+| Build / Repair / Upgrade / Work in reach | that building; a group by its use — decoration: Harmony, workshop: anvil, military hall: shield, producer: hammer |
+| Complete tech(s) | research |
+| Reach population · Assign workers · Train army | population · workers · shield |
+| Collect taps | the pointing hand |
+| Discover cells · Discover feature | a fog tile · what the feature is: a tree, or what tapping it pays |
+| Find lairs · Clear lairs | the lair mouth · crossed swords |
+| Claim landmarks | the standing stones; a Leyspring: Mana; the Watchtower: itself |
+| Own relics · Own heroes | relics · the heroes' helmet |
+
 ### 1.1 Goal types
 
 - **Absolute** goals are predicates over current state (*have 2 Housing*,
