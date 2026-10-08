@@ -24,7 +24,7 @@ import { worldStoreReady } from '../../sim/world/stores';
 import type { GameState } from '../../sim/state';
 import { lumpMaterial, type BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, exploreGold, fogStatesOf, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt, type FogState,
+  arrivesAt, exploreGold, fogStatesOf, homeIndex, readyAt, returnsAt, tripPhase, tripRevealing, worldFog, type FogState,
 } from '../../sim/world/explorers';
 import { PORTAL_INDICES, boardNeighbors, hexAt, hexIndex, type Hex } from '../../sim/world/hex';
 import { imageCounts, loadImage } from '../imageLoad';
@@ -152,7 +152,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
   const r = camera.hexRadius;
   const motion = motionOf(canvas);
   const facts = factsOf(source);
-  const states = fogStates(motion, state, source, now);
+  const states = fogStates(motion, state, source);
   const clock = performance.now();
   const density = easeDensities(motion, motion.targets!, clock);
   /** How much veil a hex carries, 0 clear to 1 Sensed or thicker. */
@@ -292,8 +292,9 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
     const seat = state.world.board.seat;
     const icon = bh.scout.reward === 'Pack' ? 'pack'
       : bh.scout.reward === 'Precious' ? lumpMaterial(board, seat, 'scout', bh.index, seat) : bh.scout.reward;
+    const gold = exploreGold(state, bh.index);
     drawPromise(ctx, camera, c.x, c.y - r * 0.15, icon,
-      going ? null : formatCount(exploreGold(state, bh.index)));
+      going ? null : gold === 0 ? 'Free' : formatCount(gold));
   }
 
   // The Portals' appointment, over each: when they open, or how long they
@@ -404,8 +405,8 @@ function factsOf(source: WorldSource): Facts {
 
 /** Every hex's fog state, read again only when the fog or the source
  *  changes — and each hex's density target with it. */
-function fogStates(m: Motion, state: GameState, source: WorldSource, now: number): readonly FogState[] {
-  const fog = worldFogAt(state, now);
+function fogStates(m: Motion, state: GameState, source: WorldSource): readonly FogState[] {
+  const fog = worldFog(state);
   if (m.states === undefined || m.fogSource !== source || m.fog === undefined || !sameBits(m.fog, fog)) {
     m.fog = fog;
     m.fogSource = source;
@@ -1954,18 +1955,20 @@ interface RoutePoint { x: number; y: number; a: number }
 
 /** Where a trip is at `now`: between step `step` and the next of its path,
  *  `f` of the way, and whether it is still on its way out. While it works the
- *  hex it went to, it stands there, its whole way out behind it. */
+ *  hex it went to, and while it waits there for the player, it stands there,
+ *  its whole way out behind it. */
 function tripPosition(
   trip: GameState['world']['explorers'][number], now: number,
-): { step: number; from: number; to: number; f: number; outbound: boolean; working: boolean } {
-  const working = now >= arrivesAt(trip) && now < revealsAt(trip);
-  const outbound = now < revealsAt(trip);
-  const at = working
+): { step: number; from: number; to: number; f: number; outbound: boolean; there: boolean } {
+  const phase = tripPhase(trip, now);
+  const there = phase === 'working' || phase === 'ready';
+  const outbound = phase !== 'home';
+  const at = there
     ? legPosition(trip.stepMs, Number.POSITIVE_INFINITY, true)
-    : legPosition(trip.stepMs, now - (outbound ? trip.departedAt : revealsAt(trip)), outbound);
+    : legPosition(trip.stepMs, now - (outbound ? trip.departedAt : trip.revealedAt!), outbound);
   // `step` is the lower of the two hexes, the way the trail reads it.
   const step = Math.min(at.k, at.next);
-  return { step, from: trip.path[at.k], to: trip.path[at.next], f: at.f, outbound, working };
+  return { step, from: trip.path[at.k], to: trip.path[at.next], f: at.f, outbound, there };
 }
 
 /**
@@ -2001,11 +2004,13 @@ function drawExplorer(
   routeAlpha: (index: number) => number,
 ): void {
   const pos = tripPosition(trip, now);
+  const ready = tripPhase(trip, now) === 'ready';
   const a = camera.hexToScreen(hexAt(pos.from));
   const b = camera.hexToScreen(hexAt(pos.to));
   const x = a.x + (b.x - a.x) * pos.f;
-  const y = a.y + (b.y - a.y) * pos.f;
   const unit = camera.hexWidth;
+  // Waiting for the player, it hops on the spot, calling them over.
+  const y = a.y + (b.y - a.y) * pos.f - (ready ? Math.abs(Math.sin(now / 260)) * unit * 0.06 : 0);
 
   drawTrail(ctx, camera, trip.path, pos.step, pos.outbound, { x, y }, routeAlpha);
 
@@ -2022,10 +2027,10 @@ function drawExplorer(
   }
 
   // A wooden pill: how long until it is there, until the hex is explored, or
-  // until it is home.
-  const until = pos.working ? revealsAt(trip) : pos.outbound ? arrivesAt(trip) : returnsAt(trip);
-  const left = Math.max(0, (until - now) / 1000);
-  const text = formatCountdown(left);
+  // until it is home — and, while it waits for the player, a golden one
+  // asking for the tap.
+  const until = pos.there ? readyAt(trip) : pos.outbound ? arrivesAt(trip) : returnsAt(trip);
+  const text = ready ? 'Tap!' : formatCountdown(Math.max(0, (until - now) / 1000));
   const fs = Math.max(11, Math.min(15, unit * 0.11));
   ctx.save();
   ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
@@ -2034,14 +2039,14 @@ function drawExplorer(
   const ph = fs * 1.6;
   const px = x - pw / 2;
   const py = y - fw * (aspect ?? 1) * 0.85 - ph - 4;
-  ctx.fillStyle = '#5a3a20';
+  ctx.fillStyle = ready ? '#e9b949' : '#5a3a20';
   ctx.strokeStyle = '#2e1c0e';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(px, py, pw, ph, ph / 2);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#fff3d6';
+  ctx.fillStyle = ready ? '#3a2410' : '#fff3d6';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, py + ph / 2 + 0.5);

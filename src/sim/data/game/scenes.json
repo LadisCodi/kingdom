@@ -1828,7 +1828,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Other kingdoms. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.",
+        "text": "Other kingdoms. Other banners! And all that mist between us… we’ll need someone with good boots.",
         "box": "auto",
         "point": "",
         "lock": "none",
@@ -1837,6 +1837,164 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "explorer",
+    "trigger": "worldOpen",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "where": "world",
+    "doneWhen": "explorerSent",
+    "doneTarget": "",
+    "doneAmount": 0,
+    "lines": [
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "Wren, Royal Scout, at your service! Boots laced, compass oiled — I’m ready the moment you send me.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Sending a scout costs Gold, as a rule… but this first trip is on the crown. I’ve already signed the chit!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
+      },
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "See the mist next door? Something’s waiting under it. Tap that hex, Your Majesty.",
+        "box": "auto",
+        "point": "hex:explore",
+        "lock": "target",
+        "until": "overlay",
+        "untilTarget": "world",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "Just say the word — Explore!",
+        "box": "auto",
+        "point": "ui:explore",
+        "lock": "target",
+        "until": "explorerSent",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "I’m off! I’ll walk there, have a good look round, and send word when I’m done. Then come and see what I found.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "She always sends word. Usually by shouting it across the valley.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      }
+    ]
+  },
+  {
+    "id": "explorerReady",
+    "trigger": "explorerReady",
+    "triggerTarget": "",
+    "triggerAmount": 0,
+    "anywhere": false,
+    "skippable": true,
+    "where": "any",
+    "doneWhen": "explorerRevealed",
+    "doneTarget": "",
+    "doneAmount": 0,
+    "lines": [
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "Your Majesty! I’m done at the hex — you’ll want to see this. Tap my message and I’ll take you there.",
+        "box": "auto",
+        "point": "ui:notice:state:explorerReady",
+        "lock": "target",
+        "until": "worldOpen",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "Here I am! Tap the hex, and I’ll show you everything I found.",
+        "box": "auto",
+        "point": "hex:ready",
+        "lock": "target",
+        "until": "explorerRevealed",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "scout",
+        "side": "right",
+        "text": "Look at all that land — and what I dug up is already in your purse. I’ll head home now; send me out again once I’m back.",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "Every trip pushes the mist back a little further. I’ll keep the map — and the ledger!",
+        "box": "auto",
+        "point": "",
+        "lock": "all",
+        "until": "tap",
+        "untilTarget": "",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": "happy"
       }
     ]
   },

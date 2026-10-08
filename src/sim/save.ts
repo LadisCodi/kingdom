@@ -1324,8 +1324,10 @@ export function serialize(state: GameState, now: number): SaveFile {
         Explorers: state.world.explorers.map((e) => ({
           ID: e.id, Target: e.target, Path: e.path,
           DepartedAtUtc: iso(e.departedAt), StepMs: e.stepMs, WorkMs: e.workMs, Radius: e.radius,
+          ...(e.revealedAt === null ? {} : { RevealedAtUtc: iso(e.revealedAt) }),
         })),
         ExplorersBought: state.world.explorersBought,
+        TripsSent: state.world.tripsSent,
         // The builders out on the board: a TIMER each, priced when the server
         // accepted the build, so a builder away during an absence is home on
         // return.
@@ -1975,6 +1977,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     BoardID?: unknown; BoardSeed?: unknown; Seat?: unknown; Revealed?: unknown;
     Explorers?: Array<Record<string, unknown>>;
     ExplorersBought?: unknown;
+    TripsSent?: unknown;
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
     Chapels?: unknown;
@@ -2013,8 +2016,14 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         stepMs: stepsOf(e)!,
         workMs: Number.isFinite(e.WorkMs) && (e.WorkMs as number) >= 0 ? e.WorkMs as number : 0,
         radius: Number.isInteger(e.Radius) ? Math.max(1, e.Radius as number) : 1,
+        // A trip from before v112 has not been revealed: it waits for the tap.
+        revealedAt: typeof e.RevealedAtUtc === 'string' ? ms(e.RevealedAtUtc) : null,
       })),
     explorersBought: Number.isInteger(d.ExplorersBought) && (d.ExplorersBought as number) >= 0 ? d.ExplorersBought as number : 0,
+    // Before v112 nobody counted: a kingdom that has explored, or has an
+    // explorer out, has had its free trip.
+    tripsSent: Number.isInteger(d.TripsSent) && (d.TripsSent as number) >= 0 ? d.TripsSent as number
+      : readBits(d.Revealed).some((w) => w !== 0) || (Array.isArray(d.Explorers) && d.Explorers.length > 0) ? 1 : 0,
     builds: (Array.isArray(d.Builds) ? d.Builds : [])
       .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
         && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never) || b.What === 'Repair'))

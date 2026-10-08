@@ -4,7 +4,7 @@
 // nothing here has to be the final word — only the right offer.
 
 import { WORLD_BUILD, WORLD_CAMPS } from '../../sim/data/definitions';
-import type { ArtifactId, Wallet, WorldBuildWhat } from '../../sim/state';
+import type { ArtifactId, GameState, Wallet, WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
 import type { HexControl, WorldSource } from '../../sim/world/source';
@@ -12,7 +12,8 @@ import { WORLD_UPGRADES, type WorldDistrict, type WorldUpgrade } from '../../sim
 import { claimGold, districtOf, upgradeLevel } from '../../worldServer/core';
 import { campTribute } from '../../sim/world/camps';
 import type { ScoutPay } from '../../sim/world/scouting';
-import { formatCount } from '../format';
+import { readyTrips } from '../../sim/world/explorers';
+import { formatCount, formatCountdown } from '../format';
 
 export type HexAction =
   /** Claim the hex: build its district, which its feature decides (19 §5.1). */
@@ -64,6 +65,15 @@ export function scoutWords(pay: ScoutPay): string {
   if (pay.pack !== null) return `a ${pay.pack} pack`;
   return [...Object.entries(pay.wallet), ...Object.entries(pay.goods)]
     .map(([c, n]) => `${formatCount(n as number)} ${c === 'HeroXp' ? 'Hero XP' : c}`).join(', ');
+}
+
+/** Why no explorer can go: when the first is back — or, with none on its
+ *  way home, that one waits for the player on the board. */
+export function explorersOutLine(state: GameState, nextFreeAt: number | null, now: number): string {
+  if (nextFreeAt !== null) return `Every explorer is out — one is back in ${formatCountdown(Math.max(0, nextFreeAt - now) / 1000)}`;
+  return readyTrips(state, now).length > 0
+    ? 'Every explorer is out — one waits for you on the map'
+    : 'Every explorer is out';
 }
 
 /** What repairing a burnt district costs: a share of what the next claim

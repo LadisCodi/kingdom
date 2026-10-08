@@ -405,9 +405,10 @@ export interface LairState {
  * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
  *
  * Everything a trip will ever do is priced when it leaves: its path, its
- * pace and how far it sees. What it has revealed at any moment is derived
- * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
- * with one boundary — the moment it is home.
+ * pace and how far it sees. Where it is at any moment is derived from those
+ * and the clock (sim/world/explorers.ts); its work done, it waits at the hex
+ * until the player reveals it, so a trip is a TIMER with one boundary — the
+ * moment it is home after that.
  */
 /** What can stand on a held world hex (sim/world/types.ts). */
 /** What a builder out on the world board is building: a hex's district
@@ -430,19 +431,23 @@ export interface ExplorerTrip {
   workMs: number;
   /** Hexes it reveals round its target. */
   radius: number;
+  /** When the player tapped its hex and revealed it — the moment it set out
+   *  for home. Null while it is out, working, or waiting for the tap. */
+  revealedAt: number | null;
 }
 
 export interface WorldState {
   /** Which board, and which of its six cities is the player's. */
   board: { id: string; seed: number; seat: number };
-  /** The hexes revealed and folded in: three uint32 words over the board's
-   *  91 indices. The city and the Portal are always revealed and never
-   *  stored; a march under way is derived, not stored. */
+  /** The hexes revealed: three uint32 words over the board's 91 indices.
+   *  The city and the Portal are always revealed and never stored. */
   revealed: number[];
   explorers: ExplorerTrip[];
-  /** Explorers bought — with Gems or in a pack — on top of what Cartography
-   *  and the Atlas open (sim/world/explorers.ts). */
+  /** Explorers bought — with Gems or in a pack — on top of the kingdom's
+   *  own and the Atlas's (sim/world/explorers.ts). */
   explorersBought: number;
+  /** Trips ever sent. The first is the tutorial's, and free. */
+  tripsSent: number;
   /** Builders out on the world board: what each is raising and when it is
    *  done. The server holds the hex; this is the builder's half, so a
    *  province build and a world build share the one crew. */

@@ -70,6 +70,7 @@ Every event is one row:
 | `research` | `tech` |
 | `townhall_level` | `level` |
 | `world_joined` | `board`, `players` (humans on it) |
+| `world_explored` | `hex` — the player revealed a hex an explorer waited at |
 | `relic_restored` · `relic_levelled` | `relic`, `level` on a level |
 | `fragment_pack` | `gems`, `n` — the store's pack of random fragments |
 | `premium_shrine` | `n` (which), `gems` |

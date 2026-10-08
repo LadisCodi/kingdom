@@ -22,6 +22,7 @@ import {
   buildQueueCapacity, busyBuilders, type DistrictId, type ItemId, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
 import { districtCount } from '../../sim/districts';
+import { readyTrips } from '../../sim/world/explorers';
 import type { Game } from '../../game';
 
 export interface ConditionArgs {
@@ -178,6 +179,14 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'worldOpen': return game.scene === 'world';
     // The player has been out to the world: its first trip names the kingdom.
     case 'worldVisited': return state.kingdom.profile.nickname !== null;
+    // The world's explorers (19-world-map.md §3.1): `amount` trips sent, ever;
+    // one waiting at its hex for the player's tap; `amount` hexes revealed by
+    // that tap, ever — every trip sent but the ones not yet revealed.
+    case 'explorerSent': return state.world.tripsSent >= Math.max(1, c.amount);
+    case 'explorerReady': return readyTrips(state, game.now()).length > 0;
+    case 'explorerRevealed':
+      return state.world.tripsSent - state.world.explorers.filter((t) => t.revealedAt === null).length
+        >= Math.max(1, c.amount);
     // The relic picker's slot holds it (or any relic, when '').
     case 'relicPicked': {
       const slot = game.relicPick?.slot ?? null;

@@ -9,7 +9,7 @@
 >
 > **Status: built against a local stand-in for the world server**:
 > the world of seven boards of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
-> the explorers and their scouting rewards (§3, §3.2); claiming a district, its store, its roads and the
+> the explorers, their scouting rewards and the first trip (§3–§3.3); claiming a district, its store, its roads and the
 > Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
 > armies, the War Camp, attacks, conquest and denial, Fortress garrisons
 > (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
@@ -147,24 +147,35 @@
 ### 3.1 Explorers
 
 - **You explore by sending an explorer to a Sensed hex.** It marches there,
-  works there, and marches home. There is no button that buys fog.
-- **Explorers are slots, like builders.** *Cartography* (Atlas) gives the
-  first; a rank ladder in the Atlas gives more. No training.
+  works there, **waits there for you**, and marches home. There is no button
+  that buys fog.
+- **Explorers are slots, like builders.** Every kingdom starts with
+  `startingExplorers` (1); *Scouts I* and *Scouts II* (Atlas) add one each.
+  No training.
 - **Up to `explorersForSale` (2) more are bought**, for Gems
   (`explorerGemCostBase` 2,500, ×`explorerGemCostGrowth` 2 each) or in the
-  Explorer pack ([`14-monetization.md`](14-monetization.md) §2.4). A bought
-  explorer waits for *Cartography* like the first.
+  Explorer pack ([`14-monetization.md`](14-monetization.md) §2.4).
 - **Sending one costs Gold**, paid when it leaves:
   `exploreGoldBase` (2,500) × `exploreGoldGrowth` (×1.5) for every hex past
   the first from the city — 2,500 next door, about 19,000 at 6 hexes, 96,000
   at 10. A short purse refuses the trip.
+  - **The first trip is free** — the tutorial's (§3.3). Its Explore button
+    and the plank over every misty hex say *Free*.
 - **An explorer never fights and can never be stopped, attacked or lost.** It
   lives in the player's own save, like the fog it reveals.
 - **The work**: once there, the explorer works the hex for
   `exploreWorkSeconds` (30) plus `exploreWorkSecondsPerHex` (30) for every
-  hex it lies from the city.
-- When the work is done, the hex **and the six around it** are revealed. The
-  radius upgrades to 2. Nothing is revealed on the way.
+  hex it lies from the city, divided by `exploreSpeed` (*Cartography*: +50%).
+- **When the work is done, nothing happens on its own.** The explorer waits
+  at the hex, hopping, under a golden *Tap!* pill, for as long as it takes:
+  - a standing notice says it waits (*Explorer ready*,
+    [`26-notices.md`](26-notices.md) §2.2); a tap on its bubble flies to the
+    hex, its card shut;
+  - **a tap on the hex reveals it**: the hex **and the six around it** are
+    revealed, its promise is paid (§3.2), and the explorer sets out for home.
+    On its card, the same is a **Reveal** button;
+  - its slot frees when it is home.
+- The radius upgrades to 2 (*Pathfinding*). Nothing is revealed on the way.
 - **A march costs time, hex by hex** (§4.1).
 - An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
 - **One trip per hex.** No explorer is sent to a hex one already out will
@@ -172,10 +183,12 @@
 - **While a hex in the mist is open, the header's plaque counts the free
   explorers** (*2/3*), as it counts free builders while building.
 - **A hex an explorer is out to shows the trip** in place of Explore: what
-  it is doing (on the way, exploring, coming home), one bar for the whole
-  trip, and **Finish**: Gems for the time left until it is home, at
-  `rush.secondsPerGem` like every other wait. Finished, its hexes are
-  revealed and the explorer is home.
+  it is doing (on the way, exploring, coming home), its bar, and **Finish**:
+  Gems for the time left, at `rush.secondsPerGem` like every other wait.
+  - Before the reveal, Finish (or a speed-up that covers the work) finishes
+    the work **and reveals the hex** — pressing it is the player's act.
+  - On the way home, Finish brings the explorer home now.
+  - While it waits there is nothing to hurry: the row is **Reveal**.
 
 ### 3.2 Scouting rewards
 
@@ -187,13 +200,24 @@
 - **A Sensed hex shows it**: a brass medallion with the reward's icon, and
   under it a plank with the Gold its exploring costs. The hex's sheet says
   what it pays. Once an explorer is on its way there, the plank goes.
-- **Paid when the explorer sent to it is home** (or finished with Gems), and
-  named in the toast that says it is home.
+- **Paid at the player's tap that reveals it** (or when its trip is finished
+  with Gems), and named in the toast that says what was found.
 - **Only the target pays.** The hexes revealed round it pay nothing, and a
-  hex revealed that way has lost its promise.
+  hex revealed that way has lost its promise — unless an explorer is already
+  on its way to it: a trip sent always pays its target.
 - **Gold, Wood, Food and Stone are priced in production** when paid:
   `hoursByRole` hours of the city's own production of it, floored at the
   reward's `amount`. Every other reward pays its `amount`.
+
+### 3.3 The first trip
+
+- Two scenes teach it ([`23-tutorials.md`](23-tutorials.md) §4.3):
+  - **`explorer`** — the first time the board is open: Wren, the Royal Scout,
+    introduces herself; the hand points at a misty hex next to the city, then
+    at **Explore**; nothing else can be pressed. The trip is free.
+  - **`explorerReady`** — the first time an explorer waits: Wren calls the
+    player to the notice, then to the hex; the tap on it is the only one
+    allowed.
 
 ## 4. Armies
 
@@ -471,7 +495,7 @@ Two plays out of one button:
 ## 7. Districts
 
 **A held hex is a district**, and its feature decides which. No technology
-gates them; *Cartography* opens the first explorer.
+gates them.
 
 | The hex holds | District | Pays, into its store |
 |---|---|---|
@@ -868,7 +892,7 @@ it is there to compare.
 | **Army seconds per hex** (120) | the tempo of conquest | the board resolves too fast or feels like waiting |
 | **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
-| **Explorer slots** (Cartography, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Explorer slots** (one from the start, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
 | **Precious prices** — levels 4–5 by name, levels 8–10 each (§7.6) | how much the city needs the world and trade | the late city stalls, or ignores the world |
 | **Deposit yield** (2 a day) and **places** (`worldGen.deposits`, 3/2/1) | how much of the world's materials the board makes, and how lopsided each seat is | late prices go unpaid, or nobody needs to trade |
 | **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |

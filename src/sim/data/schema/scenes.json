@@ -48,7 +48,10 @@
         "relicHosted",
         "holdsItem",
         "itemUsed",
-        "worldVisited"
+        "worldVisited",
+        "explorerSent",
+        "explorerReady",
+        "explorerRevealed"
       ],
       "doc": "What starts the scene, the first time it holds."
     },
@@ -111,7 +114,10 @@
         "relicHosted",
         "holdsItem",
         "itemUsed",
-        "worldVisited"
+        "worldVisited",
+        "explorerSent",
+        "explorerReady",
+        "explorerRevealed"
       ],
       "emptyOk": true,
       "doc": "What makes the scene needless: if this already holds when the scene is due, it is marked played without playing — the player did it on their own. Its lines still hand over what they give. Empty: never."
@@ -137,7 +143,7 @@
           },
           "point": {
             "type": "text",
-            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, quest — or empty."
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, hex:explore (the hex the first explorer should go to), hex:ready (the hex an explorer waits at), quest — or empty."
           },
           "lock": {
             "type": "text",
@@ -191,7 +197,10 @@
               "relicHosted",
               "holdsItem",
               "itemUsed",
-              "worldVisited"
+              "worldVisited",
+              "explorerSent",
+              "explorerReady",
+              "explorerRevealed"
             ],
             "doc": "What moves the line on; tap is a tap on the box."
           },

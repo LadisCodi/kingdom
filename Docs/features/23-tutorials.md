@@ -245,7 +245,30 @@ plays this before the lair's own scene. Its lines are beats.
 | `towerSighted` | the Watchtower's ruin is sighted (01-map-and-fog.md §4.1) — in view from the start, so it plays as the First Morning ends | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower's ruin is revealed | Isolde | *An old watchtower! Its great lens is gone — torn out. From its top you could see past the mountains. Oh, I'd love to sketch it.* | the Watchtower |
 | `watchtowerRepair` — **locked** | the Watchtower can be repaired (`canRepair`): its ruin revealed, the lens in the Bag, the price and a builder in hand — on the main screen | Isolde | *The lens the Orcs carried off — it belongs to the old watchtower! Let's put it back. Tap the tower.* · *Set the lens and mend the stair. One minute, and we'll see past the mountains. Repair it!* | the tower, then **Repair** — nothing else can be pressed |
-| `world` — **locked** | the world door opens — the Watchtower stands — on the main screen | Isolde | *The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.* · on the board: *Other kingdoms. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob, until the board is open (`worldOpen`) |
+| `world` — **locked** | the world door opens — the Watchtower stands — on the main screen | Isolde | *The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.* · on the board: *Other kingdoms. Other banners! And all that mist between us… we’ll need someone with good boots.* | the world knob, until the board is open (`worldOpen`) |
+
+**`explorer` — the first trip.** The first time the world board is open,
+until an explorer has been sent. Its lines are beats; the trip is free
+([`19-world-map.md`](19-world-map.md) §3.3).
+
+| Says (Wren, unless named) | Points at | Lock | Moves on |
+|---|---|---|---|
+| *Wren, Royal Scout, at your service! Boots laced, compass oiled — I’m ready the moment you send me.* | — | all | tap |
+| **Isolde:** *Sending a scout costs Gold, as a rule… but this first trip is on the crown. I’ve already signed the chit!* | — | all | tap |
+| *See the mist next door? Something’s waiting under it. Tap that hex, Your Majesty.* | the misty hex nearest the city (`hex:explore`) | that hex | its card is open |
+| *Just say the word — Explore!* | **Explore** | the button | an explorer is sent |
+| *I’m off! I’ll walk there, have a good look round, and send word when I’m done. Then come and see what I found.* | — | all | tap |
+| **Isolde:** *She always sends word. Usually by shouting it across the valley.* | — | all | tap |
+
+**`explorerReady` — the first find.** The first time an explorer waits at
+its hex, in the province or on the board, until a hex has been revealed.
+
+| Says (Wren, unless named) | Points at | Lock | Moves on |
+|---|---|---|---|
+| *Your Majesty! I’m done at the hex — you’ll want to see this. Tap my message and I’ll take you there.* (passed on the board) | the *Explorer ready* notice | the bubble | the board is open |
+| *Here I am! Tap the hex, and I’ll show you everything I found.* | the hex (`hex:ready`) | that hex | it is revealed |
+| *Look at all that land — and what I dug up is already in your purse. I’ll head home now; send me out again once I’m back.* | — | all | tap |
+| **Isolde:** *Every trip pushes the mist back a little further. I’ll keep the map — and the ledger!* | — | all | tap |
 
 ### 4.4 What the fog gives up
 

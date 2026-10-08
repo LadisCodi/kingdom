@@ -1,12 +1,14 @@
 // Scouting rewards (Docs/features/19-world-map.md §3.2): what exploring a hex
-// promises, and that only the explorer sent to it collects, once.
+// promises, and that only the explorer sent to it collects, once — at the
+// player's tap on its hex.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { WORLD_SCOUTING } from '../src/sim/data/definitions';
 import { serialize } from '../src/sim/save';
 import { getWallet, type GameState } from '../src/sim/state';
 import { generateBoard } from '../src/sim/world/board';
-import { dispatchExplorer, finishExplorerWithGems, homeIndex, returnsAt } from '../src/sim/world/explorers';
+import { dispatchExplorer, finishExplorerWithGems, homeIndex, readyAt, returnsAt, revealExplored } from '../src/sim/world/explorers';
+import { boardWithin, hexAt, hexDistance } from '../src/sim/world/hex';
 import { scoutPay } from '../src/sim/world/scouting';
 import { boardOf } from '../src/sim/world/source';
 import { PORTAL_INDEX, boardNeighbors, hexIndex, localHex, miniBoardOf, rotate60, worldHex } from '../src/sim/world/hex';
@@ -14,7 +16,6 @@ import { freshGame, fund, map, T0 } from './helpers';
 
 function exploring(): GameState {
   const state = freshGame();
-  state.research.completed.push('Cartography');
   fund(state, { Gold: 1e9 });
   return state;
 }
@@ -57,8 +58,8 @@ describe('what a hex promises', () => {
   });
 });
 
-describe('the explorer home pays it', () => {
-  it('pays its target’s promise once, when it is home', () => {
+describe('the tap on its hex pays it', () => {
+  it('pays nothing while the explorer waits, then its target’s promise, once, at the tap', () => {
     const state = exploring();
     const target = producing(state);
     expect(target).toBeDefined();
@@ -66,12 +67,15 @@ describe('the explorer home pays it', () => {
     const scout = boardOf(state.world.board).hexes[target].scout!;
     const r = dispatchExplorer(state, target, T0);
     if (r.kind !== 'Sent') throw new Error(r.kind);
+    advance(state, map, readyAt(r.trip) + 3_600_000);
     const before = getWallet(state.city.wallet, scout.reward as 'Gold');
-    const out = advance(state, map, returnsAt(r.trip));
-    const home = out.explorersHome[0];
-    expect(home.paid).not.toBeNull();
+    const tap = revealExplored(state, target, readyAt(r.trip) + 3_600_000);
+    expect(tap.kind === 'Revealed' && tap.found.paid).not.toBeNull();
     expect(getWallet(state.city.wallet, scout.reward as 'Gold')).toBeGreaterThan(before);
-    // Revealed now: nothing more to send an explorer for.
+    // Revealed now: nothing more to send an explorer for, and nothing more paid home.
+    const after = getWallet(state.city.wallet, scout.reward as 'Gold');
+    advance(state, map, returnsAt(r.trip));
+    expect(getWallet(state.city.wallet, scout.reward as 'Gold')).toBe(after);
     expect(dispatchExplorer(state, target, returnsAt(r.trip) + 1).kind).not.toBe('Sent');
   });
 
@@ -82,20 +86,25 @@ describe('the explorer home pays it', () => {
     const r = dispatchExplorer(state, target, T0);
     if (r.kind !== 'Sent') throw new Error(r.kind);
     const done = finishExplorerWithGems(state, r.trip.id, T0 + 1000);
-    expect(done.kind === 'Finished' && done.home.paid).not.toBeNull();
+    expect(done.kind === 'Finished' && done.finished.found?.paid).not.toBeNull();
   });
 
-  it('pays nothing for a target the fog already revealed', () => {
+  it('pays its target even when another trip’s reveal uncovered it first: that trip was paid for', () => {
     const state = exploring();
-    const target = boardNeighbors(homeIndex(state)).find((n) => n !== PORTAL_INDEX)!;
-    const a = dispatchExplorer(state, target, T0);
-    if (a.kind !== 'Sent') throw new Error(a.kind);
-    advance(state, map, returnsAt(a.trip));
-    // A hex revealed round the first target, sent to by hand: it pays nothing.
-    const trip = { ...a.trip, id: 'again', departedAt: returnsAt(a.trip) };
-    state.world.explorers.push(trip);
-    const out = advance(state, map, returnsAt(trip));
-    expect(out.explorersHome[0].paid).toBeNull();
+    const home = homeIndex(state);
+    // Two of the city's neighbours, two hexes apart: neither inside the other's
+    // reveal, but each next to a hex both reveals reach.
+    const ring = boardNeighbors(home).filter((n) => n !== PORTAL_INDEX);
+    const [a, b] = ring.flatMap((x) => ring.filter((y) => hexDistance(hexAt(x), hexAt(y)) === 2).map((y) => [x, y]))[0];
+    state.world.explorersBought = 1;
+    const far = dispatchExplorer(state, a, T0);
+    const near = dispatchExplorer(state, b, T0);
+    if (far.kind !== 'Sent' || near.kind !== 'Sent') throw new Error('not sent');
+    expect(boardWithin(b, near.trip.radius)).not.toContain(a);
+    const tap = Math.max(readyAt(far.trip), readyAt(near.trip));
+    expect(revealExplored(state, b, tap).kind).toBe('Revealed');
+    const second = revealExplored(state, a, tap);
+    expect(second.kind === 'Revealed' && (boardOf(state.world.board).hexes[a].scout === null || second.found.paid !== null)).toBe(true);
   });
 
   it('replays in one call as it ticks', () => {
@@ -104,8 +113,12 @@ describe('the explorer home pays it', () => {
       const target = boardNeighbors(homeIndex(state)).find((n) => n !== PORTAL_INDEX)!;
       const r = dispatchExplorer(state, target, T0);
       if (r.kind !== 'Sent') throw new Error(r.kind);
-      const end = returnsAt(r.trip) + 1000;
-      for (let t = T0 + step; t < end; t += step) advance(state, map, t);
+      const tap = readyAt(r.trip) + 60_000;
+      const end = tap + 3_600_000;
+      for (let t = T0 + step; t < tap; t += step) advance(state, map, t);
+      advance(state, map, tap);
+      revealExplored(state, target, tap);
+      for (let t = tap + step; t < end; t += step) advance(state, map, t);
       advance(state, map, end);
       return { state, end };
     };

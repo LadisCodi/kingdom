@@ -18,7 +18,7 @@
         "exploreWorkSeconds": {
           "type": "int",
           "min": 0,
-          "doc": "Seconds an explorer works at the hex it was sent to before it is revealed, whatever the distance."
+          "doc": "Seconds an explorer works at the hex it was sent to before the player can reveal it, whatever the distance; exploreSpeed divides it."
         },
         "exploreWorkSecondsPerHex": {
           "type": "int",
@@ -35,7 +35,7 @@
           "type": "int",
           "min": 1,
           "max": 2,
-          "doc": "Hexes round every hex of its path that a marching explorer reveals, before the tree."
+          "doc": "Hexes round its target that an explorer reveals, before the tree."
         },
         "revealRadiusMax": {
           "type": "int",
@@ -43,15 +43,15 @@
           "max": 2,
           "doc": "The most a reveal radius can reach, however the tree raises it."
         },
-        "cartographyExplorers": {
+        "startingExplorers": {
           "type": "int",
-          "min": 0,
-          "doc": "Explorer slots Cartography opens. The Atlas ladder adds to it."
+          "min": 1,
+          "doc": "Explorers every kingdom has from the start. The Atlas ladder adds to it."
         },
         "explorersForSale": {
           "type": "int",
           "min": 0,
-          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of what Cartography and the Atlas open."
+          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of its own and what the Atlas opens."
         },
         "explorerGemCostBase": { "type": "int", "min": 0, "doc": "Gems for the first explorer bought." },
         "explorerGemCostGrowth": {

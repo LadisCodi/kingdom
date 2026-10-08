@@ -209,18 +209,6 @@ function newsLine(game: Game, n: News): NewsLine | null {
         view: 'province',
       };
     }
-    case 'explorer':
-      return {
-        art: icon('compass'),
-        name: 'Your explorer is home',
-        line: n.revealed > 0 ? `${formatCount(n.revealed)} new hexes` : 'Nothing new out there',
-        title: 'Explorer home',
-        body: n.revealed > 0
-          ? `Your explorer is home — ${formatCount(n.revealed)} new hexes on the map.`
-          : 'Your explorer is home — nothing new out there.',
-        go: () => game.goToHex(n.hex),
-        view: 'world',
-      };
     case 'worldBuild':
       return {
         art: icon('hex'),
@@ -305,7 +293,6 @@ const GROUP_TITLE: Record<NewsGroup, (n: number) => string> = {
   goods: () => 'Goods ready',
   raided: (n) => `${formatExact(n)} raids on the city`,
   sighted: (n) => `${formatExact(n)} new places`,
-  explorer: (n) => `${formatExact(n)} explorers home`,
   worldBuild: (n) => `${formatExact(n)} builds on the world map`,
   armyHome: (n) => `${formatExact(n)} armies home`,
   world: () => 'From the world',
@@ -458,6 +445,25 @@ function states(game: Game): Notice[] {
       picture: art,
       go: () => game.goToHex(lead.target),
       action: null,
+    });
+  }
+
+  // EXPLORER READY: an explorer's work is done, and it waits at its hex for
+  // the player's tap. A tap on the bubble goes straight there, card shut:
+  // the tap on the hex is what reveals it (19 §3.1).
+  const waiting = game.explorersReady();
+  if (waiting.length > 0) {
+    const lead = waiting[0];
+    const go = (): void => game.lookAtHex(lead.target);
+    out.push({
+      ...base, id: 'state:explorerReady', art: icon('compass'), count: waiting.length > 1 ? waiting.length : 0, glow: true,
+      view: 'world',
+      title: waiting.length === 1 ? 'Your explorer is waiting' : `${formatExact(waiting.length)} explorers are waiting`,
+      body: 'The hex is explored. Tap it on the map to see what your explorer found.',
+      picture: icon('compass'),
+      go,
+      action: null,
+      tap: go,
     });
   }
 

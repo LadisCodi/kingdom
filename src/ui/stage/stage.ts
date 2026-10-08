@@ -31,6 +31,13 @@ import { buildShortfall, stockBuild } from '../../sim/districts';
 import { conditionHolds } from './conditions';
 import { inPlace, pickScene, sceneKey, settleScene } from './director';
 import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
+import { hexAt } from '../../sim/world/hex';
+
+/** The world board's camera, on a hex a line points at — the board's twin
+ *  of the province camera flying to a cell. */
+const glideToHex = (game: Game, target: Target | null): void => {
+  if (target?.kind === 'hex' && game.scene === 'world') game.worldCamera?.centerOnHex(hexAt(target.index));
+};
 
 /** A scene on the stage, and where it has got to. */
 interface Playing {
@@ -284,6 +291,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     if (playing.target?.kind === 'cell') {
       game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
     }
+    glideToHex(game, playing.target);
     // A speaker taking their turn says so — a little vocal emote in the
     // line's mood — once, not on every line they speak in a row.
     if (l.speaker !== voiced) playVoice(l.speaker, l.expression);
@@ -455,7 +463,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       let r = playing?.target ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
-      if (r !== null && playing?.target?.kind === 'cell') {
+      if (r !== null && (playing?.target?.kind === 'cell' || playing?.target?.kind === 'hex')) {
         r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
       }
       const judged = PLACES.map((p) => ({ p, ...judge(p, r) }));
@@ -515,6 +523,16 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     const l = line();
     if (playing === null || l === null || playing.lockReleased || away()) return 'none';
     return l.lock;
+  };
+
+  /** THE SAME GATE ON THE WORLD BOARD: which hex a tap may reach. */
+  game.hexGate = (index: number | null): boolean => {
+    if (waitsForTap() || inGrace()) return false;
+    const lock = lockNow();
+    if (lock === 'none' || lock === 'map') return true;
+    if (lock === 'all') return false;
+    const t = playing!.target;
+    return t?.kind === 'hex' && index === t.index;
   };
 
   /** THE ONE GATE ON THE MAP: which taps a line lets through. */
@@ -786,10 +804,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         // forest than the one pointed at, or panned away, and the hand is
         // pointing at nothing they can see. Once the hands are off the
         // screen for a moment — never mid-pan.
-        if (playing.target?.kind === 'cell' && r !== null && outOfSight(r)) {
+        if ((playing.target?.kind === 'cell' || playing.target?.kind === 'hex') && r !== null && outOfSight(r)) {
           playing.hiddenSince ??= now;
           if (now - playing.hiddenSince > REFOCUS_MS && now - lastActivity > REFOCUS_MS) {
-            game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
+            if (playing.target.kind === 'cell') game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
+            glideToHex(game, playing.target);
             playing.hiddenSince = null;
           }
         } else {
