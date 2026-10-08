@@ -12,7 +12,8 @@
 > (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
 > (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
-> moving into the Tavern (§8.3).
+> moving into the Tavern (§8.3). **Designed, not built:** the hero bag and
+> the hero chance that falls with the collection (§6.6).
 
 ## 1. The collection substrate
 
@@ -331,7 +332,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|---|
 | Key | Silver | Gold |
 | A key costs | **500 Gems** | **1,500 Gems** |
-| Base hero chance | **5%** | **5%** |
+| Base hero chance | **20% → 5%**, by heroes owned (§6.6) | **20% → 5%**, by heroes owned (§6.6) |
 | Soft pity from | pull 40 | pull 30 |
 | A hero guaranteed at | pull **60** | pull **50** |
 | A Legendary guaranteed at | — | pull **40** |
@@ -387,8 +388,8 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **Rolls are a deterministic hash of `(seed, namespace, bannerId,
   pullNumber)`**, not a stream — one draw for hit/miss, one for rarity, one for
   the hero within it.
-- **The pool prefers a hero the player does not own**, so breadth comes before
-  a duplicate.
+- **A hit can only be a hero in the bag** (§6.6), and prefers one the player
+  does not own, so breadth comes before a duplicate.
 
 ### 6.4 The loot
 
@@ -398,8 +399,8 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **Most of a call is for the town and the levels.** About half the prizes
   are fragments — about one a call — and the rest is Stardust, Hero XP,
   speed-ups and resource chests.
-- **A fragment is of any hero of its rarity the banner calls**, owned or not:
-  toward a recruit, or toward the next star.
+- **A fragment is of any hero of its rarity in the bag** (§6.6), owned or
+  not: toward a recruit, or toward the next star.
 - The golden table holds the same kinds, each worth more: Legendary
   fragments, more Stardust and Hero XP, 1 h speed-ups and chests.
 
@@ -418,6 +419,52 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - It refuses up front if the purse cannot pay all ten — never a partial batch.
 - Both pities carry across the ten, and each call rolls with its own pull
   number, so a batch is identical to ten taps.
+
+### 6.6 The hero bag and the falling chance
+
+Fragments go to a few heroes at a time, and the first heroes come
+quickly.
+
+- **The bag is per rarity, and both banners share it.** It holds every hero
+  the player owns plus a few they do not, the **open** ones:
+  **3 Common · 2 Rare · 1 Legendary**.
+- **A call only reaches the bag.** The hero of a hit, a duplicate and every
+  loot fragment of a rarity are drawn from that rarity's bag. A fragment is
+  an even draw over the bag, owned or open.
+- **The bag refills.** When an open hero is recruited (by a hit or by
+  Fragments), the next one of its rarity opens, so there are always as many
+  open as the rarity has left.
+- **What opens next:**
+  - first, the heroes with a `bagRank`, in ascending rank;
+  - then the rest, in an order shuffled per kingdom by
+    `rand(seed, 'heroBag', heroId)`.
+- **An unowned hero holding Fragments is always open**, over the count, so
+  a Fragment from any other source is never stranded.
+- **The bag is derived, never stored**: owned heroes, Fragments held and the
+  order decide it. No save field and no migrator are needed.
+- **The hero chance falls as the collection grows.** It is a ladder indexed
+  by the heroes owned; the last rung holds for ever:
+
+  | Heroes owned | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10+ |
+  |---|---|---|---|---|---|---|---|---|---|---|---|
+  | Hero chance | 20% | 18.5% | 17% | 15.5% | 14% | 12.5% | 11% | 9.5% | 8% | 6.5% | 5% |
+
+- **The pity does not move.** The soft-pity ramp starts from the ladder's
+  rung and still ends in a certainty at the hard pity (§6.3).
+- **The first calls are unchanged** (§6.2): the forced new hero is an
+  open one.
+- **The banner card lists the bag**: every open hero with its Fragments
+  toward a recruit (*Warden 7/10*).
+
+Measured with free calls only (5 common and 1 golden a day), over 400
+kingdoms; the bag and the ladder against the gacha without them:
+
+| Heroes owned | day 3 | day 7 | day 14 | day 30 | day 90 |
+|---|---|---|---|---|---|
+| Without | 2.9 | 4.0 | 6.3 | 15.3 | 28.6 |
+| **The bag and the ladder** | **4.5** | **7.3** | **10.9** | **17.8** | **29.2** |
+
+- Fragments held on heroes not owned, on day 90: 18.5 without, **1.9** with.
 
 - **The gacha sells power.** A Legendary is stronger than a Common, and the
   golden call is how one is reached — by a wallet, or by the daily free call
@@ -632,6 +679,9 @@ how many slots it wants (1…n) and what to do with the answer.
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
+| How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` *(not built)* |
+| The hero chance by heroes owned | §6.6 — 20% → 5% | `banners.heroChanceByOwned` *(not built; replaces `heroChance`)* |
+| Who opens first | §6.6 | `heroes.bagRank` *(not built)* |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
 | What a duplicate pays | §6.1 | `banners.duplicateFragments` |
@@ -680,4 +730,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-134, OQ-135, OQ-136.
