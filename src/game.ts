@@ -5382,11 +5382,13 @@ export class Game {
           this.map, this.mode.selected, def.size, this.reachAt(this.mode.definitionId, 1),
         ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
-          layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
+          const captured = this.capturedCells(this.mode.definitionId, this.mode.selected);
+          layer.yieldCells = captured.map(
             // What each captured cell HOLDS, so a Sawmill's radius shows which
             // trees are worth more before the shed is paid for.
             (cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }),
           );
+          layer.workedCells = captured;
         }
       }
     } else if (this.mode.kind === 'moving') {
@@ -5437,9 +5439,9 @@ export class Game {
             this.reachAt(this.mode.definitionId, district?.level ?? 1),
           ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
-            layer.yieldCells = this.capturedCells(
-              this.mode.definitionId, this.mode.selected, district?.level ?? 1,
-            ).map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
+            const captured = this.capturedCells(this.mode.definitionId, this.mode.selected, district?.level ?? 1);
+            layer.yieldCells = captured.map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
+            layer.workedCells = captured;
           }
         }
       }
@@ -5484,6 +5486,8 @@ export class Game {
         } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
+          // Who its crew works, rimmed white on the map (MarkerLayer.workedCells).
+          layer.workedCells = workableCells(this.state, this.map, district);
         }
       }
     }

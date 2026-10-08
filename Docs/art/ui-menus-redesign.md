@@ -494,8 +494,10 @@ wood of its sides touches the screen's edges.
   - nothing else: the card's stat band leads with what the crew MAKES
     (*Food +2.7k/h*, the resource as the tile's word) and how fast its level
     makes the crew work (*Speed ×1.25* — ×1 at level 1, climbing with each
-    level). What there is to work is the map's to show: it rings the cells in
-    range while the card is open. The crew size, range and haul are the
+    level). What there is to work is the map's to show: while the card is
+    open — and while the building is placed or moved — the area is outlined
+    and every tree, field or rock its crew would work wears the placement
+    ghost's white rim. The crew size, range and haul are the
     upgrade popup's only — the stepper already shows the crew, the map draws
     the range, and the haul is counted in that output;
   - no tip: how many villagers a building's fields keep busy is the

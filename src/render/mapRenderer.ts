@@ -68,6 +68,10 @@ export interface MarkerLayer {
   influenceCells: Coord[]; // area-of-influence outline
   /** The influence is a Shrine's aura: it glows gold. */
   influenceIsAura?: boolean;
+  /** What a crew would work: the trees, fields and rocks in a producer's
+   *  range, each wearing the ghost's white rim while its card is open or it
+   *  is being placed — who is in, read off the map itself. */
+  workedCells?: Coord[];
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
   yieldCells: Array<{
@@ -344,6 +348,9 @@ export function drawMap(
   // feature already swaps to its own sprite; no extra dim on top of it.
   // `source` is the cell's harvest source, which the caller already knows —
   // asked of the sim it is a scan of the district list per cell per frame.
+  /** The cells a crew would work, by key (`MarkerLayer.workedCells`). */
+  const workedKeys = new Set((markers.workedCells ?? []).map(coordKey));
+
   const drawResourceState = (cell: Coord, box: PlotBox, source: HarvestSourceId | null) => {
     if (source === null) return;
     // A field still being sown wears a construction's bar instead (pass 2c).
@@ -987,10 +994,18 @@ export function drawMap(
         }
         // On the move: faint at the address it is leaving, as a building is.
         const lifted = key === markers.liftedFeatureKey;
+        const worked = workedKeys.has(key);
         later(cell, () => dimmed(dim, () => {
           ctx.save();
           if (lifted) ctx.globalAlpha *= 0.28;
           punched(key, plot, () => {
+            // In a crew's reach: the ghost's white rim, under the drawing.
+            if (worked) {
+              const foot = base(plot);
+              const rim = Math.max(2.5, plot.w * 0.04);
+              keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y,
+                plot.w * featurePlots(def.sprite), PALETTE.ghostOutline, rim));
+            }
             stand(plot, keys,
               exhausted ? def.exhaustedGlyph : def.glyph, undefined, featurePlots(def.sprite));
           });
