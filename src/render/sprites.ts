@@ -36,7 +36,13 @@ export const preloadAllSprites = (): Promise<void> => preloadImages(spriteKeys.v
 export const spriteUrl = (key: string): string | null =>
   urls[`./assets/${key}.png`] ?? null;
 
+/** The growth stage a planted feature draws at `progress` (0…1), or null
+ *  when it has none (Docs/features/27-plantables.md §2). */
+export const growthStage = (stem: string, progress: number): string | null =>
+  pickGrowthStage(stem, progress, (key) => spriteUrl(key) !== null);
+
 import { spriteImgAt } from './spritePool';
+import { pickGrowthStage } from './growth';
 
 // The <img> pool lives in its own DOM-free-at-import module so the screen
 // host (ui/kit/host.ts) can import it under node; this file creates Images

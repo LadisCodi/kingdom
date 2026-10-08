@@ -184,5 +184,20 @@
     "what": "the ruined round stone tower of an old observatory, blackened by fire, its dome smashed open, a heap of gold coins spilling from its broken doorway, and a big red-and-bronze drake coiled around the top of the tower with its wings folded and a curl of smoke from its nostrils. Clearly the most dangerous thing on the map, still cartoonish and family-friendly",
     "scale": 1.2,
     "footprint": 2
+  },
+  "forest_growing1": {
+    "name": "A NEWLY PLANTED STAND OF FOREST",
+    "what": "the FIRST STAGE of three trees growing from seed: three small mounds of freshly dug dark earth standing apart, in the arrangement the grown trees will take, and from each mound rises ONE bright spring-green seedling, ankle-high on a person, with two or three rounded leaves. A short wooden stake stands beside each seedling, tied to it with a loop of twine. It must read at a glance as trees COMING UP — young, fresh and green, planted on purpose — and never as a felled or logged place: no stumps, no cut logs, no woodchips, no axe marks.",
+    "scale": 0.75
+  },
+  "forest_growing2": {
+    "name": "A STAND OF SAPLINGS",
+    "what": "the SECOND STAGE of the same three trees: three slender SAPLINGS standing apart in the same arrangement, each about as tall as a person, each a thin straight light-brown trunk carrying ONE small, compact, rounded ball of bright fresh-green foliage — the same round-headed shape as a grown tree, only small and young. Each sapling is tied to a tall wooden stake with a loop of twine, and stands on a small mound of dark earth. It must read at a glance as trees COMING UP — young, fresh and green, planted on purpose — and never as a felled or logged place: no stumps, no cut logs, no woodchips, no axe marks.",
+    "scale": 0.62
+  },
+  "forest_growing3": {
+    "name": "A STAND OF YOUNG TREES",
+    "what": "the THIRD STAGE of the same three trees, nearly grown: three young trees standing apart in the same arrangement, each about two-thirds the height of a mature tree. Each is ONE straight bare trunk carrying ONE compact rounded canopy — a ball of foliage, closed and solid at its edge, in a fresher, lighter green than an old wood. The nearest one is still tied to a wooden stake with a loop of twine. It must read at a glance as trees COMING UP — young, fresh and green, planted on purpose — and never as a felled or logged place: no stumps, no cut logs, no woodchips, no axe marks.",
+    "scale": 0.95
   }
 }

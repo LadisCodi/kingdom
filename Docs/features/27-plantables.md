@@ -30,7 +30,10 @@
 - A growing cell is an exhausted one: it cannot be tapped or worked. A tap on
   it shows a sprout.
 - When the wait ends it is an ordinary cell of its source, **full**.
-- It draws `<sprite>_growing`, else its exhausted art.
+- It draws its **growth stages** in turn, `<sprite>_growing1`, `_growing2`…,
+  each for an equal share of the wait; with none drawn, its exhausted art.
+  A stage reads as something coming up — never as a felled cell.
+- The tree has three: seedlings in dug earth, staked saplings, young trees.
 - Growth is the cell's ordinary lazy recovery, so it is no boundary of its own.
 
 ## 3. The crop plot
