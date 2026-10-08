@@ -26,6 +26,7 @@
 //    odds are the one thing that will eventually HAVE to be server-authoritative,
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
+import { track } from './analytics';
 import { roundPrice } from './roundPrice';
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
@@ -174,6 +175,7 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
   state.heroes.levels[id] = entry.level + 1;
   recordEvent(state, { kind: 'heroLevel', hero: id });
+  track(state, 'hero_up', { hero: id, what: 'level', to: entry.level + 1 });
   return 'Levelled';
 }
 
@@ -201,6 +203,7 @@ export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
   // player sitting on seventeen keeps two toward the first ascensions.
   state.heroes.fragments[id] = held - heroUnlockCost(id);
   grantHero(state, id);
+  track(state, 'hero_up', { hero: id, what: 'recruit', to: 1 });
   return 'Unlocked';
 }
 
@@ -237,6 +240,7 @@ export function ascendHero(state: GameState, id: HeroId): HeroAscendResult {
   addToWallet(state.kingdom.wallet, 'Stardust', -toll);
   state.heroes.fragments[id] = entry.fragments - ascensionFragmentCost(entry.ascension);
   state.heroes.ascension[id] = entry.ascension + 1;
+  track(state, 'hero_up', { hero: id, what: 'star', to: entry.ascension + 1 });
   return 'Ascended';
 }
 
@@ -291,6 +295,7 @@ export function buySkillRank(state: GameState, id: HeroId): SkillRankResult {
   addToWallet(state.kingdom.wallet, 'Stardust', -price.stardust);
   payGoods(state.city.goods, price.goods);
   state.heroes.skillRanks[id] = skillRank(state, id) + 1;
+  track(state, 'hero_up', { hero: id, what: 'skill', to: skillRank(state, id) });
   return 'Ranked';
 }
 
@@ -330,6 +335,7 @@ export function buyHeroSlot(state: GameState): BuyHeroSlotResult {
   const cost = heroSlotGemCost(state);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'hero_slot', gems: cost });
   state.heroes.heroSlotsPurchased += 1;
   return 'Purchased';
 }
@@ -762,6 +768,7 @@ export function pull(
     state.gacha.pityCounters[banner] = pity + 1;
     state.gacha.legendaryPity[banner] = legPity + 1;
     const loot = drawLoot(state, banner, n, false);
+    track(state, 'hero_call', { banner, n: n + 1, free: cost === 0, hero: null, rarity: null });
     return {
       result: 'Pulled', heroId: null, rarity: null, duplicate: false,
       fragments: 0, fragmentsOf: null, loot,
@@ -794,6 +801,9 @@ export function pull(
   const heroId = pool[Math.floor(rand(state.seed, 'gachaHero', banner, n) * pool.length)]!;
   const outcome = grantHero(state, heroId, b.duplicateFragments);
   const loot = drawLoot(state, banner, n, true);
+  track(state, 'hero_call', {
+    banner, n: n + 1, free: cost === 0, hero: heroId, rarity, duplicate: outcome === 'Duplicate',
+  });
   return {
     result: 'Pulled',
     heroId,

@@ -44,9 +44,15 @@ export const PROPS_MAX = 2000;
 /** At most this many errors a session are sent: a loop that throws every
  *  frame must not fill the table. */
 export const ERRORS_MAX = 20;
+/** A batch sent as the page goes away travels on a request the browser keeps
+ *  alive past the page, and such a request carries at most 64 KB. */
+export const LEAVING_BYTES_MAX = 60_000;
 
 export interface AnalyticsOptions {
   send: AnalyticsSend;
+  /** Send as the page goes away: a request that outlives it. `send` when
+   *  absent. */
+  sendLeaving?: AnalyticsSend;
   store: AnalyticsStore;
   context: () => AnalyticsContext;
   dev: boolean;
@@ -118,27 +124,40 @@ export class Analytics {
   }
 
   /** Send what waits, a batch at a time, until it is all sent or a batch
-   *  fails — then the rest waits for the next flush. One flush at a time. */
-  async flush(): Promise<void> {
+   *  fails — then the rest waits for the next flush. One flush at a time.
+   *  `leaving`: the page is going away, so ONE batch, on the request that
+   *  outlives it — even over a flush already under way, which the page may
+   *  not live to finish. */
+  async flush(leaving = false): Promise<void> {
+    if (leaving) {
+      const batch = leavingBatch(this.queue);
+      if (batch.length > 0) await this.sendBatch(batch, this.o.sendLeaving ?? this.o.send);
+      return;
+    }
     if (this.sending) return;
     this.sending = true;
     try {
       while (this.queue.length > 0) {
-        const batch = this.queue.slice(0, BATCH_MAX);
-        let ok = false;
-        try {
-          ok = await this.o.send(batch);
-        } catch {
-          ok = false;
-        }
-        if (!ok) return;
-        const sent = new Set(batch.map((r) => r.id));
-        this.queue = this.queue.filter((r) => !sent.has(r.id));
-        this.persist();
+        if (!await this.sendBatch(this.queue.slice(0, BATCH_MAX), this.o.send)) return;
       }
     } finally {
       this.sending = false;
     }
+  }
+
+  /** One batch out; on success, out of the queue. */
+  private async sendBatch(batch: EventRow[], send: AnalyticsSend): Promise<boolean> {
+    let ok = false;
+    try {
+      ok = await send(batch);
+    } catch {
+      ok = false;
+    }
+    if (!ok) return false;
+    const sent = new Set(batch.map((r) => r.id));
+    this.queue = this.queue.filter((r) => !sent.has(r.id));
+    this.persist();
+    return true;
   }
 
   private persist(): void {
@@ -148,6 +167,18 @@ export class Analytics {
       // A full or blocked store: the queue still lives in memory.
     }
   }
+}
+
+/** The oldest rows that fit the request a leaving page may send. */
+function leavingBatch(queue: EventRow[]): EventRow[] {
+  const out: EventRow[] = [];
+  let bytes = 2;
+  for (const row of queue.slice(0, BATCH_MAX)) {
+    bytes += JSON.stringify(row).length + 1;
+    if (bytes > LEAVING_BYTES_MAX) break;
+    out.push(row);
+  }
+  return out;
 }
 
 function readQueue(store: AnalyticsStore): EventRow[] {

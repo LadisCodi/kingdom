@@ -19,6 +19,7 @@
 // whole `k`-millisecond chunks — the same trick as the tax and Mana anchors —
 // so one-call replay and stepped ticking agree exactly (invariant 1).
 
+import { track } from './analytics';
 import { techMultiplier, techValue } from './techEffects';
 import { adjacencyMultiplier } from './adjacency';
 import { DISTRICTS, GOODS, RUSH, levelIndexed } from './data/definitions';
@@ -251,6 +252,7 @@ export function finishItemWithGems(
   if (cost === null) return 'NothingWorking';
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'rush_workshop', gems: cost });
   const line = state.city.workshops[d.uniqueId]!;
   line.items[0].workMs = needMs(line.items[0]);
   return 'Success';

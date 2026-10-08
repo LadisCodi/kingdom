@@ -101,6 +101,7 @@ export function buyBuilder(state: GameState): BuyBuilderResult {
   const cost = builderGemCost(state);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'builder', gems: cost });
   state.kingdom.builders += 1;
   return 'Purchased';
 }
@@ -120,6 +121,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
   const cost = def.keyGemCost * count;
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'keys', gems: cost, banner, keys: count });
   grantItem(state, def.key, count);
   return 'Purchased';
 }
@@ -248,6 +250,7 @@ export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord):
   if (placementBlock(state, map, 'Shrine', cell) !== null) return 'InvalidCell';
   if (getWallet(state.player.wallet, 'Gems') < price) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -price);
+  track(state, 'gems_spent', { sink: 'shrine', gems: price });
   state.relics.premiumShrines += 1;
   startBuild(state, map, 'Shrine', cell, false);
   track(state, 'premium_shrine', { n: state.relics.premiumShrines, gems: price });
@@ -547,6 +550,7 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     district.state = 'Built';
     revealAroundDistrict(state, map, district); // the new building pushes back the fog
     recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
+    track(state, 'building', { district: district.definitionId, level: 1 });
     // The Watchtower stands: what claiming a landmark pays, it pays — a lump
     // of Knowledge (its Mana is `manaCap`'s, its eight rings its own fog
     // radius, the world's door `watchtowerClaimed`).
@@ -558,6 +562,7 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     recordEvent(state, {
       kind: 'districtLevel', district: district.definitionId, level: district.level,
     });
+    track(state, 'building', { district: district.definitionId, level: district.level });
     if (district.definitionId === 'Townhall') track(state, 'townhall_level', { level: district.level });
   }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
@@ -579,6 +584,7 @@ export function finishWithGems(
   const cost = gemRushCost(item, now);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'rush_build', gems: cost });
   // Remove from the queue FIRST so the advance can't double-complete it.
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
   completeQueueItem(state, map, item, now);

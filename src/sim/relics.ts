@@ -193,6 +193,7 @@ export function openFragmentPack(state: GameState): FragmentPackResult {
   if (rollable(state, 'any').length === 0) return { kind: 'NothingMet' };
   if (getWallet(state.player.wallet, 'Gems') < RELIC_RULES.fragmentPackGems) return { kind: 'NotEnoughGems' };
   addToWallet(state.player.wallet, 'Gems', -RELIC_RULES.fragmentPackGems);
+  track(state, 'gems_spent', { sink: 'fragment_pack', gems: RELIC_RULES.fragmentPackGems });
   const n = (state.relics.chests += 1);
   const drops = dropFragments(state, 'any', RELIC_RULES.fragmentPackSize, ['pack', n], true);
   track(state, 'fragment_pack', { gems: RELIC_RULES.fragmentPackGems, n: drops.length });

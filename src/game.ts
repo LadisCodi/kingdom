@@ -926,6 +926,7 @@ export class Game {
     const offered = this.adOffer() !== null;
     if (offered && !this.adOfferShown) this.track('ad_offer_shown', { placement: 'mana' });
     this.adOfferShown = offered;
+    if (canPayMana(this.state, 1)) this.manaEmptySent = false;
     // The world board is server state: read it every second while it is on
     // screen, and now and then otherwise (a held Sanctuary moves the Mana
     // ceiling wherever the player is).
@@ -1278,6 +1279,10 @@ export class Game {
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
   private outOfMana(cell: Coord): void {
+    // Once a dry spell (Docs/plans/analytics.md §3.3): the first tap refused,
+    // with whether the video stood ready to refill it.
+    if (!this.manaEmptySent) this.track('mana_empty', { ad: this.adOffer() !== null });
+    this.manaEmptySent = true;
     playSfx('error');
     this.shake(['Mana']);
     this.floaters.add(cell, 'empty', 'Mana');
@@ -5714,6 +5719,8 @@ export class Game {
   // up; without it every event is dropped where it is made.
   analytics: Analytics | null = null;
   private adOfferShown = false;
+  /** A tap was refused for Mana and the pool has not filled since. */
+  private manaEmptySent = false;
 
   /** Record an event now, on the game's clock. */
   track(name: string, props: Record<string, unknown> = {}): void {

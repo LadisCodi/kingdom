@@ -412,5 +412,6 @@ export function finishExplorerWithGems(state: GameState, tripId: string, now: nu
   const gems = explorerRushCost(trip, now);
   if (getWallet(state.player.wallet, 'Gems') < gems) return { kind: 'NotEnoughGems', gems };
   state.player.wallet.Gems = getWallet(state.player.wallet, 'Gems') - gems;
+  track(state, 'gems_spent', { sink: 'rush_explorer', gems: gems });
   return { kind: 'Finished', finished: finishTrip(state, trip, now) };
 }
