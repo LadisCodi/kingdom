@@ -172,6 +172,15 @@ export function drawGround(
 export const FEATURE_PLOTS = 2;
 
 /**
+ * The canvas width, in plots, of one feature's art. A crop plot was a
+ * building before it was a feature, and its art is still a building's —
+ * one plot across, its soil the plot's own diamond — so it is the exception.
+ */
+const ONE_PLOT_FEATURES: ReadonlySet<string> = new Set(['farmlands']);
+export const featurePlots = (sprite: string): number =>
+  ONE_PLOT_FEATURES.has(sprite) ? 1 : FEATURE_PLOTS;
+
+/**
  * DRAW A THING THAT STANDS ON THE GROUND.
  *
  * Building art is authored exactly as wide as its plot's ground diamond, with
