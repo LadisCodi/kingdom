@@ -93,6 +93,11 @@ const rewardNodes = (quest: QuestDef): Node[] => {
 
 /** The pause between rolling one quest up and unrolling the next. */
 const BETWEEN_MS = 500;
+/** A quest that arrives already done fills its bar from empty in this long,
+ *  then turns to its Claim face — so the player sees it was met. */
+const FILL_MS = 900;
+/** The fill's last frame lands even if no frame is drawn (a hidden tab). */
+const FILL_GUARD_MS = FILL_MS + 400;
 
 const sleep = (ms: number) => new Promise<void>((r) => { window.setTimeout(r, ms); });
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -121,15 +126,18 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     el('div', { class: 'q-done' }, reward, claim));
   const scroll = el('button', { class: 'q-scroll', type: 'button', 'data-coach': 'quest' }, base, content);
 
-  // Nothing to tap while the scroll is rolling or unrolling.
+  // Nothing to tap while the scroll is rolling, unrolling or filling.
   let busy = false;
+  // Whether the face on screen is the Claim one: a tap answers what the
+  // player SEES, so a quest still filling points rather than claims.
+  let showing = false;
   // Read the state at CLICK time, not at render time: a tap can land in the
   // same frame the goal completes, and claiming a quest that is not finished
   // is refused by the sim anyway — but pointing at a goal you just met would
   // be a small lie.
   scroll.addEventListener('click', () => {
     if (busy) return;
-    if (game.questInfo()?.complete === true) game.doClaimQuest();
+    if (showing && game.questInfo()?.complete === true) game.doClaimQuest();
     else game.focusQuest();
   });
   root.replaceChildren(scroll);
@@ -142,6 +150,9 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   // A quest that arrived while a sheet covered the map unrolls when the map
   // comes back, not while nobody can see it.
   let owedUnroll = true;
+  // …and one that arrived already done fills when it does. Not at boot: a
+  // quest saved finished simply shows finished.
+  let owedFill = false;
 
   const fill = (info: NonNullable<ReturnType<Game['questInfo']>>) => {
     const { quest } = info;
@@ -154,6 +165,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
 
   const live = (info: NonNullable<ReturnType<Game['questInfo']>>) => {
     const { quest, value, complete } = info;
+    showing = complete;
     // One read-out for every goal, large or small: a filled bar with the count
     // written inside it. Small goals used to get a row of stamps instead,
     // which meant the widget changed SHAPE from quest to quest — and the
@@ -173,6 +185,39 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       complete ? tr('Claim the reward for {name}', { name: quest.name }) : tr('Show me where: {name}', { name: quest.name }),
     );
   };
+
+  /** A quest that arrives with its goal already met unrolls on its running
+   *  face, empty, and fills — bar and count — before it turns to Claim. */
+  const arriveDone = async (info: NonNullable<ReturnType<Game['questInfo']>>) => {
+    busy = true;
+    try {
+      live({ ...info, value: 0, complete: false });
+      await roll.unroll();
+      if (!calm()) await fillUp(info.quest.goalAmount);
+    } finally {
+      busy = false;
+    }
+    playSfx('questComplete');
+    refresh();
+  };
+
+  /** The bar and its count climb from 0 to the goal, eased out. */
+  const fillUp = (goal: number) => new Promise<void>((resolve) => {
+    const start = performance.now();
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    const frame = (now: number) => {
+      if (done) return;
+      const t = Math.min(1, (now - start) / FILL_MS);
+      const eased = 1 - (1 - t) ** 3;
+      const shown = t >= 1 ? goal : Math.floor(eased * goal);
+      bar.set(shown / goal, `${formatExact(shown)}/${formatExact(goal)}`);
+      if (t >= 1) finish();
+      else requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    window.setTimeout(finish, FILL_GUARD_MS);
+  });
 
   /** Roll the shown quest up and, if there is a next one, unroll it. */
   const handOver = async () => {
@@ -201,8 +246,16 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       return;
     }
     fill(next);
-    live(next);
     root.hidden = game.hasOpenSheet();
+    // Arriving behind a sheet, it unrolls (and fills) when the map is back.
+    if (root.hidden) {
+      live(next);
+      owedUnroll = true;
+      owedFill = next.complete;
+      return;
+    }
+    if (next.complete) { await arriveDone(next); return; }
+    live(next);
     await roll.unroll();
   };
 
@@ -224,14 +277,21 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // Hidden while anything covers the map.
     root.hidden = game.hasOpenSheet();
     if (info.index !== shownIndex) {
+      // A new quest after the first one shown, unrolled later behind a sheet.
+      owedFill = shownIndex >= 0 && info.complete;
       fill(info);
       owedUnroll = true;
     }
-    live(info);
     if (owedUnroll && !root.hidden) {
       owedUnroll = false;
+      const filling = owedFill && info.complete;
+      owedFill = false;
+      if (filling) { void arriveDone(info); return; }
+      live(info);
       void roll.unroll();
+      return;
     }
+    live(info);
   };
   game.onChange(refresh);
   refresh();
