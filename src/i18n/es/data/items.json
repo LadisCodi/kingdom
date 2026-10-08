@@ -1,0 +1,210 @@
+{
+  "items.GoldChest10m.name": {
+    "en": "Gold chest",
+    "es": ""
+  },
+  "items.GoldChest1h.name": {
+    "en": "Gold chest",
+    "es": ""
+  },
+  "items.GoldChest8h.name": {
+    "en": "Gold chest",
+    "es": ""
+  },
+  "items.FoodChest10m.name": {
+    "en": "Food chest",
+    "es": ""
+  },
+  "items.FoodChest1h.name": {
+    "en": "Food chest",
+    "es": ""
+  },
+  "items.FoodChest8h.name": {
+    "en": "Food chest",
+    "es": ""
+  },
+  "items.WoodChest10m.name": {
+    "en": "Wood chest",
+    "es": ""
+  },
+  "items.WoodChest1h.name": {
+    "en": "Wood chest",
+    "es": ""
+  },
+  "items.WoodChest8h.name": {
+    "en": "Wood chest",
+    "es": ""
+  },
+  "items.StoneChest10m.name": {
+    "en": "Stone chest",
+    "es": ""
+  },
+  "items.StoneChest1h.name": {
+    "en": "Stone chest",
+    "es": ""
+  },
+  "items.StoneChest8h.name": {
+    "en": "Stone chest",
+    "es": ""
+  },
+  "items.ChoiceChest1h.name": {
+    "en": "Choice chest",
+    "es": ""
+  },
+  "items.ChoiceChest8h.name": {
+    "en": "Choice chest",
+    "es": ""
+  },
+  "items.GeneralSpeedup1m.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup5m.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup15m.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup1h.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup3h.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup8h.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.GeneralSpeedup24h.name": {
+    "en": "Speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup1m.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup5m.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup15m.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup1h.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup3h.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup8h.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.ConstructionSpeedup24h.name": {
+    "en": "Construction speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup1m.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup5m.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup15m.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup1h.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup3h.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup8h.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.TrainingSpeedup24h.name": {
+    "en": "Training speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup1m.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup5m.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup15m.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup1h.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup3h.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup8h.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.WorkshopSpeedup24h.name": {
+    "en": "Workshop speed-up",
+    "es": ""
+  },
+  "items.RentBoost8h.name": {
+    "en": "Rent boost",
+    "es": ""
+  },
+  "items.HarvestBoost1h.name": {
+    "en": "Harvest boost",
+    "es": ""
+  },
+  "items.ManaBoost8h.name": {
+    "en": "Mana boost",
+    "es": ""
+  },
+  "items.ManaFlaskSmall.name": {
+    "en": "Mana flask",
+    "es": ""
+  },
+  "items.ManaFlask.name": {
+    "en": "Mana flask",
+    "es": ""
+  },
+  "items.KnowledgeTomeSmall.name": {
+    "en": "Knowledge tome",
+    "es": ""
+  },
+  "items.KnowledgeTome.name": {
+    "en": "Knowledge tome",
+    "es": ""
+  },
+  "items.SilverKey.name": {
+    "en": "Silver key",
+    "es": ""
+  },
+  "items.GoldKey.name": {
+    "en": "Gold key",
+    "es": ""
+  },
+  "items.WatchtowerLens.name": {
+    "en": "The Watchtower's lens",
+    "es": ""
+  }
+}

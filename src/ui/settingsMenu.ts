@@ -12,7 +12,9 @@ import { setSfxMuted, sfxMuted } from '../audio/sfx';
 import type { Game } from '../game';
 import { GAME_VERSION, SAVE_VERSION } from '../sim/data/definitions';
 import { el } from './format';
-import { action, sectionHead, sheet, switchCtl } from './kit';
+import { action, sectionHead, sheet, switchCtl, toggleGroup } from './kit';
+import { currentLang, LANG_NAMES, LANGS } from '../i18n/lang';
+import { chooseLang } from '../i18n/browser';
 
 // Armed state for the two-step reset. Module-level so it survives the
 // per-tick re-render; the timeout disarms it visually.
@@ -75,6 +77,13 @@ export function renderSettingsMenu(
     toggle('music', 'Music', 'The harp loop', !musicMuted(), (on) => setMusicMuted(on)),
     toggle('sfx', 'Sound effects', 'Taps, coins, construction', !sfxMuted(), (on) => setSfxMuted(on)),
     toggle('ambience', 'Ambience', 'Wind, waves, birdsong', !ambienceMuted(), (on) => setAmbienceMuted(on)),
+
+    // Each language named in itself, so a player lost in the wrong one can
+    // still find their own. Choosing one reloads the game in it.
+    sectionHead('Language'),
+    el('div', { class: 'set-row is-language' },
+      toggleGroup(LANGS.map((l) => ({ label: LANG_NAMES[l], value: l })), currentLang(),
+        (l) => { if (l !== currentLang()) chooseLang(l); })),
 
     sectionHead('Your kingdom'),
     el('div', { class: 'set-row' },

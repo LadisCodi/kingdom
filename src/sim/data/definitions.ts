@@ -9,9 +9,10 @@
 // the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
 import pkg from '../../../package.json';
-import balance from './balance';
-import regionMap from './region-map.json';
-import treeDoc from './tech-tree.json';
+import englishBalance from './balance';
+import englishRegionMap from './region-map.json';
+import englishTreeDoc from './tech-tree.json';
+import { localizeData } from '../../i18n/data';
 import {
   eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
@@ -25,6 +26,12 @@ import type {
   LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, TroopId, UnitId, UnitRank,
   Wallet,
 } from '../state';
+
+// Names and prose in the player's language (Docs/features/28-languages.md
+// §3): a localized copy, so the editors' imports keep the English.
+const balance = localizeData('balance', englishBalance);
+const regionMap = localizeData('regionMap', englishRegionMap);
+const treeDoc = localizeData('techTree', englishTreeDoc);
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
 export const levelIndexed = <T>(list: readonly T[], level: number): T =>

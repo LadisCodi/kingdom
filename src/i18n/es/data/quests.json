@@ -1,0 +1,358 @@
+{
+  "quests.FirstSteps.name": {
+    "en": "First steps",
+    "es": ""
+  },
+  "quests.Woodcraft.name": {
+    "en": "Forestry",
+    "es": ""
+  },
+  "quests.Timber.name": {
+    "en": "Timber!",
+    "es": ""
+  },
+  "quests.ARoof.name": {
+    "en": "A roof",
+    "es": ""
+  },
+  "quests.Rations.name": {
+    "en": "Rations",
+    "es": ""
+  },
+  "quests.FirstVillager.name": {
+    "en": "First villager",
+    "es": ""
+  },
+  "quests.TaxDay.name": {
+    "en": "Tax day",
+    "es": ""
+  },
+  "quests.Explorer.name": {
+    "en": "Explorer",
+    "es": ""
+  },
+  "quests.FirstPlot.name": {
+    "en": "First plot",
+    "es": ""
+  },
+  "quests.ByHand.name": {
+    "en": "By hand",
+    "es": ""
+  },
+  "quests.Lumber.name": {
+    "en": "Lumber",
+    "es": ""
+  },
+  "quests.Farmhand.name": {
+    "en": "Farmhand",
+    "es": ""
+  },
+  "quests.Fieldside.name": {
+    "en": "Fieldside",
+    "es": ""
+  },
+  "quests.ToWork.name": {
+    "en": "To work",
+    "es": ""
+  },
+  "quests.SecondVillager.name": {
+    "en": "Second villager",
+    "es": ""
+  },
+  "quests.GrowingTown.name": {
+    "en": "Growing town",
+    "es": ""
+  },
+  "quests.Neighbors.name": {
+    "en": "Neighbours",
+    "es": ""
+  },
+  "quests.TheSawmill.name": {
+    "en": "The Sawmill",
+    "es": ""
+  },
+  "quests.Crewed.name": {
+    "en": "Crewed",
+    "es": ""
+  },
+  "quests.ProperCapital.name": {
+    "en": "A proper capital",
+    "es": ""
+  },
+  "quests.MoreRoofs.name": {
+    "en": "More roofs",
+    "es": ""
+  },
+  "quests.Fields.name": {
+    "en": "Fields",
+    "es": ""
+  },
+  "quests.FreshFurrows.name": {
+    "en": "Fresh furrows",
+    "es": ""
+  },
+  "quests.NewFaces.name": {
+    "en": "New faces",
+    "es": ""
+  },
+  "quests.Tillage.name": {
+    "en": "Tillage",
+    "es": ""
+  },
+  "quests.BiggerBarn.name": {
+    "en": "A bigger barn",
+    "es": ""
+  },
+  "quests.SawTeeth.name": {
+    "en": "Saw teeth",
+    "es": ""
+  },
+  "quests.TwoSaws.name": {
+    "en": "Two saws",
+    "es": ""
+  },
+  "quests.ManyHands.name": {
+    "en": "Many hands",
+    "es": ""
+  },
+  "quests.Pride.name": {
+    "en": "Village pride",
+    "es": ""
+  },
+  "quests.PrettyCorner.name": {
+    "en": "A pretty corner",
+    "es": ""
+  },
+  "quests.Levies.name": {
+    "en": "Levies",
+    "es": ""
+  },
+  "quests.Sawpits.name": {
+    "en": "Sawpits",
+    "es": ""
+  },
+  "quests.FourRoofs.name": {
+    "en": "Four roofs",
+    "es": ""
+  },
+  "quests.Regrowth.name": {
+    "en": "Regrowth",
+    "es": ""
+  },
+  "quests.FurtherAfield.name": {
+    "en": "Further afield",
+    "es": ""
+  },
+  "quests.WarDrums.name": {
+    "en": "War drums",
+    "es": ""
+  },
+  "quests.ArmedMen.name": {
+    "en": "Armed men",
+    "es": ""
+  },
+  "quests.Mustered.name": {
+    "en": "Mustered",
+    "es": ""
+  },
+  "quests.SharperSaws.name": {
+    "en": "Sharper saws",
+    "es": ""
+  },
+  "quests.FirstSoldier.name": {
+    "en": "First soldier",
+    "es": ""
+  },
+  "quests.FullHouse.name": {
+    "en": "Full house",
+    "es": ""
+  },
+  "quests.MusterCompany.name": {
+    "en": "A company",
+    "es": ""
+  },
+  "quests.DriveThemOut.name": {
+    "en": "Drive them out",
+    "es": ""
+  },
+  "quests.TheWatchtower.name": {
+    "en": "The watchtower",
+    "es": ""
+  },
+  "quests.Attuned.name": {
+    "en": "Attuned",
+    "es": ""
+  },
+  "quests.Mapmakers.name": {
+    "en": "Mapmakers",
+    "es": ""
+  },
+  "quests.Surveyors.name": {
+    "en": "Surveyors",
+    "es": ""
+  },
+  "quests.Watered.name": {
+    "en": "Watered fields",
+    "es": ""
+  },
+  "quests.Fallow.name": {
+    "en": "Fallow",
+    "es": ""
+  },
+  "quests.Lamplight.name": {
+    "en": "Lamplight",
+    "es": ""
+  },
+  "quests.MoreRoom.name": {
+    "en": "More room",
+    "es": ""
+  },
+  "quests.Picks.name": {
+    "en": "Picks",
+    "es": ""
+  },
+  "quests.Rubble.name": {
+    "en": "Rubble",
+    "es": ""
+  },
+  "quests.SecondStory.name": {
+    "en": "A second storey",
+    "es": ""
+  },
+  "quests.UpperFloors.name": {
+    "en": "Upper floors",
+    "es": ""
+  },
+  "quests.Chisels.name": {
+    "en": "Chisels",
+    "es": ""
+  },
+  "quests.Stoneworks.name": {
+    "en": "Stoneworks",
+    "es": ""
+  },
+  "quests.Crafts.name": {
+    "en": "Crafts",
+    "es": ""
+  },
+  "quests.Knack.name": {
+    "en": "A knack for it",
+    "es": ""
+  },
+  "quests.DeeperCuts.name": {
+    "en": "Deeper cuts",
+    "es": ""
+  },
+  "quests.Hearth.name": {
+    "en": "A warm hearth",
+    "es": ""
+  },
+  "quests.OpenDoors.name": {
+    "en": "Open doors",
+    "es": ""
+  },
+  "quests.FirstSummon.name": {
+    "en": "First summon",
+    "es": ""
+  },
+  "quests.IronRoad.name": {
+    "en": "Iron road",
+    "es": ""
+  },
+  "quests.Deft.name": {
+    "en": "Lessons",
+    "es": ""
+  },
+  "quests.Fellowship.name": {
+    "en": "Fellowship",
+    "es": ""
+  },
+  "quests.Architect.name": {
+    "en": "Architect",
+    "es": ""
+  },
+  "quests.GrandCapital.name": {
+    "en": "A grand capital",
+    "es": ""
+  },
+  "quests.SixRoofs.name": {
+    "en": "Six roofs",
+    "es": ""
+  },
+  "quests.SecondFarm.name": {
+    "en": "A second farm",
+    "es": ""
+  },
+  "quests.DeepSeams.name": {
+    "en": "Deep seams",
+    "es": ""
+  },
+  "quests.Civic.name": {
+    "en": "Civic pride",
+    "es": ""
+  },
+  "quests.Finery.name": {
+    "en": "Finery",
+    "es": ""
+  },
+  "quests.TheSanctum.name": {
+    "en": "The Sanctum",
+    "es": ""
+  },
+  "quests.ThirdSaw.name": {
+    "en": "Three saws",
+    "es": ""
+  },
+  "quests.AWarband.name": {
+    "en": "A warband",
+    "es": ""
+  },
+  "quests.TheBarrowsPrize.name": {
+    "en": "Two shrines",
+    "es": ""
+  },
+  "quests.PutToSea.name": {
+    "en": "Put to sea",
+    "es": ""
+  },
+  "quests.StoriedStreet.name": {
+    "en": "A storied street",
+    "es": ""
+  },
+  "quests.Cartographers.name": {
+    "en": "Cartographers",
+    "es": ""
+  },
+  "quests.SecondQuarry.name": {
+    "en": "Two quarries",
+    "es": ""
+  },
+  "quests.Magistrate.name": {
+    "en": "Magistrate",
+    "es": ""
+  },
+  "quests.Township.name": {
+    "en": "Township",
+    "es": ""
+  },
+  "quests.Borough.name": {
+    "en": "A borough",
+    "es": ""
+  },
+  "quests.NineRoofs.name": {
+    "en": "Nine roofs",
+    "es": ""
+  },
+  "quests.Leylines.name": {
+    "en": "Leylines",
+    "es": ""
+  },
+  "quests.SecondLair.name": {
+    "en": "Wings over the market",
+    "es": ""
+  },
+  "quests.DeeperStill.name": {
+    "en": "Deeper still",
+    "es": ""
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "lairs.Orcs.flavour": {
+    "en": "They burn what they cannot carry. Every night the war drums draw closer to the town.",
+    "es": ""
+  },
+  "lairs.Harpies.flavour": {
+    "en": "Anything that shines is theirs by morning. The market has learned to trade in the dark.",
+    "es": ""
+  },
+  "lairs.Goblins.flavour": {
+    "en": "They tunnel under the yards and come up where the tools are. Nothing heavy is safe.",
+    "es": ""
+  },
+  "lairs.WolfRiders.flavour": {
+    "en": "They ride in at dawn, take the flocks and are gone before the dust settles.",
+    "es": ""
+  },
+  "lairs.Drake.flavour": {
+    "en": "It sleeps on a hill of gold and wakes hungry for more. The treasury is its larder.",
+    "es": ""
+  },
+  "abandoned.OldHouse.name": {
+    "en": "The Millers' house",
+    "es": ""
+  },
+  "abandoned.OldFarm.name": {
+    "en": "The old farm",
+    "es": ""
+  },
+  "abandoned.OldPlotNorth.name": {
+    "en": "An old crop plot",
+    "es": ""
+  },
+  "abandoned.OldPlotSouth.name": {
+    "en": "An old crop plot",
+    "es": ""
+  },
+  "abandoned.OldSawmill.name": {
+    "en": "The old sawmill",
+    "es": ""
+  },
+  "abandoned.ThornedShrine.name": {
+    "en": "The thorned shrine",
+    "es": ""
+  },
+  "abandoned.NorthWatch.name": {
+    "en": "The old watchtower",
+    "es": ""
+  }
+}

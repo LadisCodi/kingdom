@@ -13,6 +13,8 @@ declare module 'node:fs' {
   export function readdirSync(path: string | URL, options?: { recursive?: boolean }): string[];
   // `tests/fonts.test.ts`: every @font-face must point at a file that ships.
   export function existsSync(path: string | URL): boolean;
+  // `npm run i18n:sync` writes the data's Spanish overlays (tests/i18n.test.ts).
+  export function writeFileSync(path: string | URL, data: string): void;
 }
 
 // And the one global: a slow harness reads an env knob to shorten a run while

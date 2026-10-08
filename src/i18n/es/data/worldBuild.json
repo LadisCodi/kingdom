@@ -1,0 +1,50 @@
+{
+  "worldBuild.districts.Rural.name": {
+    "en": "Rural district",
+    "es": ""
+  },
+  "worldBuild.districts.LoggingCamp.name": {
+    "en": "Logging Camp",
+    "es": ""
+  },
+  "worldBuild.districts.Quarry.name": {
+    "en": "Quarry",
+    "es": ""
+  },
+  "worldBuild.districts.FarmLands.name": {
+    "en": "Farm Lands",
+    "es": ""
+  },
+  "worldBuild.districts.HuntingGrounds.name": {
+    "en": "Hunting Grounds",
+    "es": ""
+  },
+  "worldBuild.districts.Observatory.name": {
+    "en": "Observatory",
+    "es": ""
+  },
+  "worldBuild.districts.Shrine.name": {
+    "en": "Shrine",
+    "es": ""
+  },
+  "worldBuild.districts.GroveCamp.name": {
+    "en": "Grove Camp",
+    "es": ""
+  },
+  "worldBuild.districts.StarmetalDig.name": {
+    "en": "Starmetal Dig",
+    "es": ""
+  },
+  "worldBuild.districts.SpireQuarry.name": {
+    "en": "Spire Quarry",
+    "es": ""
+  },
+  "worldBuild.upgrades.Fortress.name": {
+    "en": "Fortress",
+    "es": ""
+  },
+  "worldBuild.upgrades.Chapel.name": {
+    "en": "Chapel",
+    "es": ""
+  }
+}

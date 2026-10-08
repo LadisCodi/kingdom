@@ -5,6 +5,7 @@
 // uses costChips() from the kit, which returns nodes. Gone with the last one.
 
 import { playSfx } from '../audio/sfx';
+import { currentLang, NUMBER_LOCALE } from '../i18n/lang';
 
 /** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
@@ -45,14 +46,15 @@ export function formatCountdown(seconds: number): string {
 }
 
 /**
- * THE VIEWER'S LOCALE decides how a number is written: *25,000* and *4.99* in
- * London, *25.000* and *4,99* in Madrid. Every number the UI prints goes
- * through the helpers below, which are the only place that asks — a bare
- * `n.toLocaleString()` anywhere else is refused by tests/numberFormat.test.ts.
+ * THE PLAYER'S LANGUAGE decides how a number is written: *25,000* and *4.99*
+ * in English, *25.000* and *4,99* in Spanish (src/i18n/lang.ts). Every number
+ * the UI prints goes through the helpers below, which are the only place that
+ * asks — a bare `n.toLocaleString()` anywhere else is refused by
+ * tests/numberFormat.test.ts.
  *
- * `undefined` is the browser's own locale. Tests pin it with `setNumberLocale`.
+ * Tests pin it with `setNumberLocale`.
  */
-let numberLocale: string | undefined;
+let numberLocale: string | undefined = NUMBER_LOCALE[currentLang()];
 const formatters = new Map<string, Intl.NumberFormat>();
 
 export function setNumberLocale(locale: string | undefined): void {

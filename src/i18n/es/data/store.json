@@ -1,0 +1,226 @@
+{
+  "store.GemsPouch.name": {
+    "en": "Pouch of Gems",
+    "es": ""
+  },
+  "store.GemsPurse.name": {
+    "en": "Purse of Gems",
+    "es": ""
+  },
+  "store.GemsChest.name": {
+    "en": "Chest of Gems",
+    "es": ""
+  },
+  "store.GemsVault.name": {
+    "en": "Vault of Gems",
+    "es": ""
+  },
+  "store.GemsHoard.name": {
+    "en": "Hoard of Gems",
+    "es": ""
+  },
+  "store.GemsTreasury.name": {
+    "en": "Treasury of Gems",
+    "es": ""
+  },
+  "store.Survey.name": {
+    "en": "The Royal Survey",
+    "es": ""
+  },
+  "store.SpeedupSatchel.name": {
+    "en": "A satchel of speed-ups",
+    "es": ""
+  },
+  "store.SpeedupCrate.name": {
+    "en": "A crate of speed-ups",
+    "es": ""
+  },
+  "store.SpeedupChest.name": {
+    "en": "A chest of speed-ups",
+    "es": ""
+  },
+  "store.ResourceSack.name": {
+    "en": "A sack of chests",
+    "es": ""
+  },
+  "store.ResourceCart.name": {
+    "en": "A cart of chests",
+    "es": ""
+  },
+  "store.BuildersCrate.name": {
+    "en": "The builder's crate",
+    "es": ""
+  },
+  "store.FirstPurchase.name": {
+    "en": "First Purchase Reward",
+    "es": ""
+  },
+  "store.NovicePack1.name": {
+    "en": "The novice's pack",
+    "es": ""
+  },
+  "store.NovicePack2.name": {
+    "en": "The squire's pack",
+    "es": ""
+  },
+  "store.NovicePack3.name": {
+    "en": "The knight's pack",
+    "es": ""
+  },
+  "store.ExplorerPack.name": {
+    "en": "A second explorer",
+    "es": ""
+  },
+  "store.HeroSlotPack.name": {
+    "en": "A seat at the war table",
+    "es": ""
+  },
+  "store.ManaPack.name": {
+    "en": "A cask of Mana",
+    "es": ""
+  },
+  "store.BuildPack.name": {
+    "en": "Rush the works",
+    "es": ""
+  },
+  "store.TownhallPack.name": {
+    "en": "The new charter",
+    "es": ""
+  },
+  "store.DailyKeys.name": {
+    "en": "A ring of keys",
+    "es": ""
+  },
+  "store.DailySpeed.name": {
+    "en": "A morning saved",
+    "es": ""
+  },
+  "store.DailyChests.name": {
+    "en": "Two full carts",
+    "es": ""
+  },
+  "store.DailyMana.name": {
+    "en": "A pair of flasks",
+    "es": ""
+  },
+  "store.DailyTomes.name": {
+    "en": "Two old tomes",
+    "es": ""
+  },
+  "store.DailyGold.name": {
+    "en": "A golden key",
+    "es": ""
+  },
+  "store.GemsPouch.description": {
+    "en": "A handful — a builder, or a pull.",
+    "es": ""
+  },
+  "store.GemsPurse.description": {
+    "en": "A few calls, or a couple of hires.",
+    "es": ""
+  },
+  "store.GemsChest.description": {
+    "en": "A crew's worth, with change.",
+    "es": ""
+  },
+  "store.GemsVault.description": {
+    "en": "Every slot the kingdom has, and then some.",
+    "es": ""
+  },
+  "store.GemsHoard.description": {
+    "en": "A season of pulls.",
+    "es": ""
+  },
+  "store.GemsTreasury.description": {
+    "en": "The whole ladder, twice over.",
+    "es": ""
+  },
+  "store.Survey.description": {
+    "en": "The Survey’s second column, for the whole province.",
+    "es": ""
+  },
+  "store.SpeedupSatchel.description": {
+    "en": "A few hours off whatever you are waiting for.",
+    "es": ""
+  },
+  "store.SpeedupCrate.description": {
+    "en": "Most of a day off your timers.",
+    "es": ""
+  },
+  "store.SpeedupChest.description": {
+    "en": "A long build, done tonight.",
+    "es": ""
+  },
+  "store.ResourceSack.description": {
+    "en": "Eight hours of the coin you pick.",
+    "es": ""
+  },
+  "store.ResourceCart.description": {
+    "en": "A day of the coins you pick.",
+    "es": ""
+  },
+  "store.BuildersCrate.description": {
+    "en": "Construction speed-ups and a chest for the materials.",
+    "es": ""
+  },
+  "store.FirstPurchase.description": {
+    "en": "A Legendary hero to start with — and more tomorrow.",
+    "es": ""
+  },
+  "store.NovicePack1.description": {
+    "en": "A strong start for a new lord.",
+    "es": ""
+  },
+  "store.NovicePack2.description": {
+    "en": "The second step: keys, chests and a day of speed-ups.",
+    "es": ""
+  },
+  "store.NovicePack3.description": {
+    "en": "The last step: a war chest for a kingdom on the rise.",
+    "es": ""
+  },
+  "store.ExplorerPack.description": {
+    "en": "One more explorer on the world map, for good.",
+    "es": ""
+  },
+  "store.HeroSlotPack.description": {
+    "en": "One more hero in every party, for good.",
+    "es": ""
+  },
+  "store.ManaPack.description": {
+    "en": "Every tap you were saving for.",
+    "es": ""
+  },
+  "store.BuildPack.description": {
+    "en": "Your crew, faster than legend.",
+    "es": ""
+  },
+  "store.TownhallPack.description": {
+    "en": "A Townhall raised — the next one, sooner.",
+    "es": ""
+  },
+  "store.DailyKeys.description": {
+    "en": "Six calls at the Tavern.",
+    "es": ""
+  },
+  "store.DailySpeed.description": {
+    "en": "Five hours off your timers.",
+    "es": ""
+  },
+  "store.DailyChests.description": {
+    "en": "A day of the coin you pick.",
+    "es": ""
+  },
+  "store.DailyMana.description": {
+    "en": "Four flasks, and the pool fills faster.",
+    "es": ""
+  },
+  "store.DailyTomes.description": {
+    "en": "Knowledge for the next book.",
+    "es": ""
+  },
+  "store.DailyGold.description": {
+    "en": "Five calls on the golden banner.",
+    "es": ""
+  }
+}

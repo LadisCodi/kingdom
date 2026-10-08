@@ -2,6 +2,9 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+// FIRST: the language is set before any module reads the data, which is
+// localized as it loads (src/i18n/browser.ts).
+import './i18n/browser';
 import { portalEvent, portalOpen, portalOpensAt } from './worldServer/core';
 import { renderHeroPicker } from './ui/heroPicker';
 import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
@@ -11,6 +14,7 @@ import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { setMusterMusic, startMusic } from './audio/music';
 import { warmBattleSfx } from './audio/sfx';
 import { Game, type OverlayName } from './game';
+import { currentLang } from './i18n/lang';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
@@ -140,6 +144,9 @@ const ANALYTICS_FLUSH_TICKS = 30;
 const NEW_SESSION_AFTER_MS = 5 * 60_000;
 
 async function boot(): Promise<void> {
+  // The page speaks the player's language (src/i18n/lang.ts): screen
+  // readers, hyphenation and the browser's own translate offer read it.
+  document.documentElement.lang = currentLang();
   // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),
   // INSTEAD of the game. Checked before anything else boots: it needs no
   // save, no tick and no supabase, and the game's chrome is in the way of a

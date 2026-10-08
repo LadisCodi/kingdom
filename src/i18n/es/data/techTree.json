@@ -1,0 +1,762 @@
+{
+  "technologies.Forestry.name": {
+    "en": "Forestry",
+    "es": ""
+  },
+  "technologies.Agriculture.name": {
+    "en": "Agriculture",
+    "es": ""
+  },
+  "technologies.VillagePride.name": {
+    "en": "Village Pride",
+    "es": ""
+  },
+  "technologies.Farming.name": {
+    "en": "Farming",
+    "es": ""
+  },
+  "technologies.Hunting.name": {
+    "en": "Hunting",
+    "es": ""
+  },
+  "technologies.Saws.name": {
+    "en": "Saws",
+    "es": ""
+  },
+  "technologies.SawpitsI.name": {
+    "en": "Sawpits I",
+    "es": ""
+  },
+  "technologies.TradeRoutesI.name": {
+    "en": "Trade Routes I",
+    "es": ""
+  },
+  "technologies.Warrior.name": {
+    "en": "Warrior",
+    "es": ""
+  },
+  "technologies.IrrigationI.name": {
+    "en": "Irrigation I",
+    "es": ""
+  },
+  "technologies.ReforestingI.name": {
+    "en": "Reforesting I",
+    "es": ""
+  },
+  "technologies.Consecration.name": {
+    "en": "Consecration",
+    "es": ""
+  },
+  "technologies.CropRotationI.name": {
+    "en": "Crop Rotation I",
+    "es": ""
+  },
+  "technologies.UrbanPlanning.name": {
+    "en": "Urban Planning",
+    "es": ""
+  },
+  "technologies.Pickaxes.name": {
+    "en": "Pickaxes",
+    "es": ""
+  },
+  "technologies.Masonry.name": {
+    "en": "Masonry",
+    "es": ""
+  },
+  "technologies.Transplanting.name": {
+    "en": "Transplanting",
+    "es": ""
+  },
+  "technologies.Hospitality.name": {
+    "en": "Hospitality",
+    "es": ""
+  },
+  "technologies.GranariesI.name": {
+    "en": "Granaries I",
+    "es": ""
+  },
+  "technologies.CarpentryI.name": {
+    "en": "Carpentry I",
+    "es": ""
+  },
+  "technologies.SchoolingI.name": {
+    "en": "Schooling I",
+    "es": ""
+  },
+  "technologies.Bureaucracy.name": {
+    "en": "Bureaucracy",
+    "es": ""
+  },
+  "technologies.Mining.name": {
+    "en": "Mining",
+    "es": ""
+  },
+  "technologies.CivicPride.name": {
+    "en": "Civic Pride",
+    "es": ""
+  },
+  "technologies.Infirmary.name": {
+    "en": "Infirmary",
+    "es": ""
+  },
+  "technologies.StonecuttingI.name": {
+    "en": "Stonecutting I",
+    "es": ""
+  },
+  "technologies.Aqueducts.name": {
+    "en": "Aqueducts",
+    "es": ""
+  },
+  "technologies.Archery.name": {
+    "en": "Archery",
+    "es": ""
+  },
+  "technologies.TimberFraming.name": {
+    "en": "Timber Framing",
+    "es": ""
+  },
+  "technologies.Communities.name": {
+    "en": "Communities",
+    "es": ""
+  },
+  "technologies.Sailing.name": {
+    "en": "Sailing",
+    "es": ""
+  },
+  "technologies.FletchingI.name": {
+    "en": "Fletching I",
+    "es": ""
+  },
+  "technologies.Fishing.name": {
+    "en": "Fishing",
+    "es": ""
+  },
+  "technologies.TradeRoutesII.name": {
+    "en": "Trade Routes II",
+    "es": ""
+  },
+  "technologies.TreasureHuntersI.name": {
+    "en": "Treasure Hunters I",
+    "es": ""
+  },
+  "technologies.Magistracy.name": {
+    "en": "Magistracy",
+    "es": ""
+  },
+  "technologies.Townhouses.name": {
+    "en": "Townhouses",
+    "es": ""
+  },
+  "technologies.StoneDressing.name": {
+    "en": "Stone Dressing",
+    "es": ""
+  },
+  "technologies.Spears.name": {
+    "en": "Spears",
+    "es": ""
+  },
+  "technologies.WarriorsII.name": {
+    "en": "Warriors II",
+    "es": ""
+  },
+  "technologies.Architecture.name": {
+    "en": "Architecture",
+    "es": ""
+  },
+  "technologies.SacredMasonry.name": {
+    "en": "Sacred Masonry",
+    "es": ""
+  },
+  "technologies.Joinery.name": {
+    "en": "Joinery",
+    "es": ""
+  },
+  "technologies.SawpitsII.name": {
+    "en": "Sawpits II",
+    "es": ""
+  },
+  "technologies.WarbandII.name": {
+    "en": "Warband II",
+    "es": ""
+  },
+  "technologies.GuildHallsI.name": {
+    "en": "Guild Halls I",
+    "es": ""
+  },
+  "technologies.LumberjacksI.name": {
+    "en": "Lumberjacks I",
+    "es": ""
+  },
+  "technologies.ShieldWallI.name": {
+    "en": "Shield Wall I",
+    "es": ""
+  },
+  "technologies.CarpentryII.name": {
+    "en": "Carpentry II",
+    "es": ""
+  },
+  "technologies.ArchersII.name": {
+    "en": "Archers II",
+    "es": ""
+  },
+  "technologies.WoodshedsI.name": {
+    "en": "Woodsheds I",
+    "es": ""
+  },
+  "technologies.Charter.name": {
+    "en": "Charter",
+    "es": ""
+  },
+  "technologies.LancersII.name": {
+    "en": "Lancers II",
+    "es": ""
+  },
+  "technologies.Ironmongery.name": {
+    "en": "Ironmongery",
+    "es": ""
+  },
+  "technologies.Terraces.name": {
+    "en": "Terraces",
+    "es": ""
+  },
+  "technologies.FarmhandsI.name": {
+    "en": "Farmhands I",
+    "es": ""
+  },
+  "technologies.Cavalry.name": {
+    "en": "Cavalry",
+    "es": ""
+  },
+  "technologies.TradeRoutesIII.name": {
+    "en": "Trade Routes III",
+    "es": ""
+  },
+  "technologies.CavalryII.name": {
+    "en": "Cavalry II",
+    "es": ""
+  },
+  "technologies.WarbandIII.name": {
+    "en": "Warband III",
+    "es": ""
+  },
+  "technologies.Gardening.name": {
+    "en": "Gardening",
+    "es": ""
+  },
+  "technologies.DeepMining.name": {
+    "en": "Deep Mining",
+    "es": ""
+  },
+  "technologies.BardingI.name": {
+    "en": "Barding I",
+    "es": ""
+  },
+  "technologies.RichSoilI.name": {
+    "en": "Rich Soil I",
+    "es": ""
+  },
+  "technologies.AttunementII.name": {
+    "en": "Attunement II",
+    "es": ""
+  },
+  "technologies.SmokehousesI.name": {
+    "en": "Smokehouses I",
+    "es": ""
+  },
+  "technologies.Exchequer.name": {
+    "en": "Exchequer",
+    "es": ""
+  },
+  "technologies.Manors.name": {
+    "en": "Manors",
+    "es": ""
+  },
+  "technologies.Waterwheels.name": {
+    "en": "Waterwheels",
+    "es": ""
+  },
+  "technologies.Fortifications.name": {
+    "en": "Fortifications",
+    "es": ""
+  },
+  "technologies.Sculpture.name": {
+    "en": "Sculpture",
+    "es": ""
+  },
+  "technologies.WarriorsIII.name": {
+    "en": "Warriors III",
+    "es": ""
+  },
+  "technologies.Tactics.name": {
+    "en": "Tactics",
+    "es": ""
+  },
+  "technologies.ApprenticesI.name": {
+    "en": "Apprentices I",
+    "es": ""
+  },
+  "technologies.IrrigationII.name": {
+    "en": "Irrigation II",
+    "es": ""
+  },
+  "technologies.VigourI.name": {
+    "en": "Vigour I",
+    "es": ""
+  },
+  "technologies.ArchersIII.name": {
+    "en": "Archers III",
+    "es": ""
+  },
+  "technologies.AttunementIII.name": {
+    "en": "Attunement III",
+    "es": ""
+  },
+  "technologies.LancersIII.name": {
+    "en": "Lancers III",
+    "es": ""
+  },
+  "technologies.CarpentryIII.name": {
+    "en": "Carpentry III",
+    "es": ""
+  },
+  "technologies.PoulticesI.name": {
+    "en": "Poultices I",
+    "es": ""
+  },
+  "technologies.GamekeepingI.name": {
+    "en": "Gamekeeping I",
+    "es": ""
+  },
+  "technologies.Chancery.name": {
+    "en": "Chancery",
+    "es": ""
+  },
+  "technologies.Mansions.name": {
+    "en": "Mansions",
+    "es": ""
+  },
+  "technologies.CavalryIII.name": {
+    "en": "Cavalry III",
+    "es": ""
+  },
+  "technologies.Bastions.name": {
+    "en": "Bastions",
+    "es": ""
+  },
+  "technologies.TradeRoutesIV.name": {
+    "en": "Trade Routes IV",
+    "es": ""
+  },
+  "technologies.Windmills.name": {
+    "en": "Windmills",
+    "es": ""
+  },
+  "technologies.SecondSanctum.name": {
+    "en": "Second Sanctum",
+    "es": ""
+  },
+  "technologies.CivicTreasuryI.name": {
+    "en": "Civic Treasury I",
+    "es": ""
+  },
+  "technologies.SawpitsIII.name": {
+    "en": "Sawpits III",
+    "es": ""
+  },
+  "technologies.WarhornsI.name": {
+    "en": "Warhorns I",
+    "es": ""
+  },
+  "technologies.LancersIV.name": {
+    "en": "Lancers IV",
+    "es": ""
+  },
+  "technologies.MinersI.name": {
+    "en": "Miners I",
+    "es": ""
+  },
+  "technologies.WarriorsIV.name": {
+    "en": "Warriors IV",
+    "es": ""
+  },
+  "technologies.OldGrowthI.name": {
+    "en": "Old Growth I",
+    "es": ""
+  },
+  "technologies.BunkhouseI.name": {
+    "en": "Bunkhouse I",
+    "es": ""
+  },
+  "technologies.FrontierWorksI.name": {
+    "en": "Frontier Works I",
+    "es": ""
+  },
+  "technologies.Dominion.name": {
+    "en": "Dominion",
+    "es": ""
+  },
+  "technologies.Sewers.name": {
+    "en": "Sewers",
+    "es": ""
+  },
+  "technologies.Hydraulics.name": {
+    "en": "Hydraulics",
+    "es": ""
+  },
+  "technologies.Citadels.name": {
+    "en": "Citadels",
+    "es": ""
+  },
+  "technologies.Paving.name": {
+    "en": "Paving",
+    "es": ""
+  },
+  "technologies.StonecuttingII.name": {
+    "en": "Stonecutting II",
+    "es": ""
+  },
+  "technologies.ColoursI.name": {
+    "en": "Colours I",
+    "es": ""
+  },
+  "technologies.CavalryIV.name": {
+    "en": "Cavalry IV",
+    "es": ""
+  },
+  "technologies.SurveyingI.name": {
+    "en": "Surveying I",
+    "es": ""
+  },
+  "technologies.ArchersIV.name": {
+    "en": "Archers IV",
+    "es": ""
+  },
+  "technologies.TradeRoutesV.name": {
+    "en": "Trade Routes V",
+    "es": ""
+  },
+  "technologies.AttunementIV.name": {
+    "en": "Attunement IV",
+    "es": ""
+  },
+  "technologies.ShieldWallII.name": {
+    "en": "Shield Wall II",
+    "es": ""
+  },
+  "technologies.GuildHallsII.name": {
+    "en": "Guild Halls II",
+    "es": ""
+  },
+  "technologies.SwiftScoutsI.name": {
+    "en": "Swift Scouts I",
+    "es": ""
+  },
+  "technologies.Sovereignty.name": {
+    "en": "Sovereignty",
+    "es": ""
+  },
+  "technologies.GrandAvenues.name": {
+    "en": "Grand Avenues",
+    "es": ""
+  },
+  "technologies.Mechanics.name": {
+    "en": "Mechanics",
+    "es": ""
+  },
+  "technologies.Warlords.name": {
+    "en": "Warlords",
+    "es": ""
+  },
+  "technologies.LancersV.name": {
+    "en": "Lancers V",
+    "es": ""
+  },
+  "technologies.IronPicksI.name": {
+    "en": "Iron Picks I",
+    "es": ""
+  },
+  "technologies.WarriorsV.name": {
+    "en": "Warriors V",
+    "es": ""
+  },
+  "technologies.FishersI.name": {
+    "en": "Fishers I",
+    "es": ""
+  },
+  "technologies.WarhornsII.name": {
+    "en": "Warhorns II",
+    "es": ""
+  },
+  "technologies.FlowerbedsI.name": {
+    "en": "Flowerbeds I",
+    "es": ""
+  },
+  "technologies.ArchersV.name": {
+    "en": "Archers V",
+    "es": ""
+  },
+  "technologies.SupplyDepotsI.name": {
+    "en": "Supply Depots I",
+    "es": ""
+  },
+  "technologies.StrongroomI.name": {
+    "en": "Strongroom I",
+    "es": ""
+  },
+  "technologies.GranariesII.name": {
+    "en": "Granaries II",
+    "es": ""
+  },
+  "technologies.CavalryV.name": {
+    "en": "Cavalry V",
+    "es": ""
+  },
+  "technologies.GoldenAge.name": {
+    "en": "Golden Age",
+    "es": ""
+  },
+  "technologies.CommonRoom.name": {
+    "en": "Common Room",
+    "es": ""
+  },
+  "technologies.TalesI.name": {
+    "en": "Tales I",
+    "es": ""
+  },
+  "technologies.WarmWelcomeI.name": {
+    "en": "Warm Welcome I",
+    "es": ""
+  },
+  "technologies.GuestRooms.name": {
+    "en": "Guest Rooms",
+    "es": ""
+  },
+  "technologies.GreatHall.name": {
+    "en": "Great Hall",
+    "es": ""
+  },
+  "technologies.MinstrelsGallery.name": {
+    "en": "Minstrels’ Gallery",
+    "es": ""
+  },
+  "technologies.Cartography.name": {
+    "en": "Cartography",
+    "es": ""
+  },
+  "technologies.FarsightI.name": {
+    "en": "Farsight I",
+    "es": ""
+  },
+  "technologies.FrontierBuildersI.name": {
+    "en": "Frontier Builders I",
+    "es": ""
+  },
+  "technologies.KeenEyesI.name": {
+    "en": "Keen Eyes I",
+    "es": ""
+  },
+  "technologies.FarsightII.name": {
+    "en": "Farsight II",
+    "es": ""
+  },
+  "technologies.Fortification.name": {
+    "en": "Fortification",
+    "es": ""
+  },
+  "technologies.ForcedMarchI.name": {
+    "en": "Forced March I",
+    "es": ""
+  },
+  "technologies.FieldNotesI.name": {
+    "en": "Field Notes I",
+    "es": ""
+  },
+  "technologies.RuralMarketsI.name": {
+    "en": "Rural Markets I",
+    "es": ""
+  },
+  "technologies.BountyHuntersI.name": {
+    "en": "Bounty Hunters I",
+    "es": ""
+  },
+  "technologies.LoggingRoadsI.name": {
+    "en": "Logging Roads I",
+    "es": ""
+  },
+  "technologies.Muster.name": {
+    "en": "Muster",
+    "es": ""
+  },
+  "technologies.QuarryCartsI.name": {
+    "en": "Quarry Carts I",
+    "es": ""
+  },
+  "technologies.HuntersLodgesI.name": {
+    "en": "Hunters’ Lodges I",
+    "es": ""
+  },
+  "technologies.HolyGround.name": {
+    "en": "Holy Ground",
+    "es": ""
+  },
+  "technologies.ForcedMarchII.name": {
+    "en": "Forced March II",
+    "es": ""
+  },
+  "technologies.LightPacksI.name": {
+    "en": "Light Packs I",
+    "es": ""
+  },
+  "technologies.GarrisonRightsI.name": {
+    "en": "Garrison Rights I",
+    "es": ""
+  },
+  "technologies.DelversI.name": {
+    "en": "Delvers I",
+    "es": ""
+  },
+  "technologies.StrongboxesI.name": {
+    "en": "Strongboxes I",
+    "es": ""
+  },
+  "technologies.FrontierBuildersII.name": {
+    "en": "Frontier Builders II",
+    "es": ""
+  },
+  "technologies.BountyHuntersII.name": {
+    "en": "Bounty Hunters II",
+    "es": ""
+  },
+  "technologies.WoodYardsI.name": {
+    "en": "Wood Yards I",
+    "es": ""
+  },
+  "technologies.PilgrimRoadsI.name": {
+    "en": "Pilgrim Roads I",
+    "es": ""
+  },
+  "technologies.StoneShedsI.name": {
+    "en": "Stone Sheds I",
+    "es": ""
+  },
+  "technologies.FieldNotesII.name": {
+    "en": "Field Notes II",
+    "es": ""
+  },
+  "technologies.DeepDigsI.name": {
+    "en": "Deep Digs I",
+    "es": ""
+  },
+  "technologies.BattleLoreI.name": {
+    "en": "Battle Lore I",
+    "es": ""
+  },
+  "technologies.RuralMarketsII.name": {
+    "en": "Rural Markets II",
+    "es": ""
+  },
+  "technologies.MendersI.name": {
+    "en": "Menders I",
+    "es": ""
+  },
+  "technologies.PortalWardensI.name": {
+    "en": "Portal Wardens I",
+    "es": ""
+  },
+  "technologies.LoggingRoadsII.name": {
+    "en": "Logging Roads II",
+    "es": ""
+  },
+  "technologies.ForcedMarchIII.name": {
+    "en": "Forced March III",
+    "es": ""
+  },
+  "technologies.QuarryCartsII.name": {
+    "en": "Quarry Carts II",
+    "es": ""
+  },
+  "technologies.HuntersLodgesII.name": {
+    "en": "Hunters’ Lodges II",
+    "es": ""
+  },
+  "technologies.GarrisonRightsII.name": {
+    "en": "Garrison Rights II",
+    "es": ""
+  },
+  "technologies.DelversII.name": {
+    "en": "Delvers II",
+    "es": ""
+  },
+  "technologies.RootCellarsI.name": {
+    "en": "Root Cellars I",
+    "es": ""
+  },
+  "technologies.FrontierBuildersIII.name": {
+    "en": "Frontier Builders III",
+    "es": ""
+  },
+  "technologies.BountyHuntersIII.name": {
+    "en": "Bounty Hunters III",
+    "es": ""
+  },
+  "technologies.StarGazersI.name": {
+    "en": "Star Gazers I",
+    "es": ""
+  },
+  "technologies.DeepDigsII.name": {
+    "en": "Deep Digs II",
+    "es": ""
+  },
+  "technologies.KeenEyesII.name": {
+    "en": "Keen Eyes II",
+    "es": ""
+  },
+  "technologies.LightPacksII.name": {
+    "en": "Light Packs II",
+    "es": ""
+  },
+  "technologies.DeepVaultsI.name": {
+    "en": "Deep Vaults I",
+    "es": ""
+  },
+  "technologies.BattleLoreII.name": {
+    "en": "Battle Lore II",
+    "es": ""
+  },
+  "technologies.FieldNotesIII.name": {
+    "en": "Field Notes III",
+    "es": ""
+  },
+  "technologies.PilgrimRoadsII.name": {
+    "en": "Pilgrim Roads II",
+    "es": ""
+  },
+  "technologies.PortalWardensII.name": {
+    "en": "Portal Wardens II",
+    "es": ""
+  },
+  "technologies.MendersII.name": {
+    "en": "Menders II",
+    "es": ""
+  },
+  "technologies.FrontierCharter.name": {
+    "en": "Frontier Charter",
+    "es": ""
+  },
+  "technologies.StrongboxesII.name": {
+    "en": "Strongboxes II",
+    "es": ""
+  },
+  "technologies.Pathfinding.name": {
+    "en": "Pathfinding",
+    "es": ""
+  },
+  "technologies.Transplanting.description": {
+    "en": "Hold a tree to pick it up and move it — it grows back in a day.",
+    "es": ""
+  },
+  "technologies.Tactics.description": {
+    "en": "Reading the ground — a bad matchup costs a tenth less.",
+    "es": ""
+  }
+}

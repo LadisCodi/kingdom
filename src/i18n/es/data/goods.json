@@ -1,0 +1,30 @@
+{
+  "goods.Planks.name": {
+    "en": "Planks",
+    "es": ""
+  },
+  "goods.CutStone.name": {
+    "en": "Cut Stone",
+    "es": ""
+  },
+  "goods.Iron.name": {
+    "en": "Iron",
+    "es": ""
+  },
+  "goods.Runestone.name": {
+    "en": "Runestone",
+    "es": ""
+  },
+  "goods.Starmetal.name": {
+    "en": "Starmetal",
+    "es": ""
+  },
+  "goods.Heartwood.name": {
+    "en": "Heartwood",
+    "es": ""
+  },
+  "goods.Moonglass.name": {
+    "en": "Moonglass",
+    "es": ""
+  }
+}

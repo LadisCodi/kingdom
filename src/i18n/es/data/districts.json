@@ -1,0 +1,386 @@
+{
+  "districts.Townhall.name": {
+    "en": "Townhall",
+    "es": ""
+  },
+  "districts.Housing.name": {
+    "en": "Housing",
+    "es": ""
+  },
+  "districts.Farm.name": {
+    "en": "Farm",
+    "es": ""
+  },
+  "districts.FarmLands.name": {
+    "en": "crop plots",
+    "es": ""
+  },
+  "districts.Sawmill.name": {
+    "en": "Sawmill",
+    "es": ""
+  },
+  "districts.Quarry.name": {
+    "en": "Quarry",
+    "es": ""
+  },
+  "districts.Docks.name": {
+    "en": "Docks",
+    "es": ""
+  },
+  "districts.Sanctum.name": {
+    "en": "Sanctum",
+    "es": ""
+  },
+  "districts.Tavern.name": {
+    "en": "Tavern",
+    "es": ""
+  },
+  "districts.Barracks.name": {
+    "en": "Barracks",
+    "es": ""
+  },
+  "districts.SpearHall.name": {
+    "en": "Spear Hall",
+    "es": ""
+  },
+  "districts.ShootingGrounds.name": {
+    "en": "Shooting Grounds",
+    "es": ""
+  },
+  "districts.Stables.name": {
+    "en": "Stables",
+    "es": ""
+  },
+  "districts.Infirmary.name": {
+    "en": "Infirmary",
+    "es": ""
+  },
+  "districts.Carpenter.name": {
+    "en": "Carpenter",
+    "es": ""
+  },
+  "districts.MasonsYard.name": {
+    "en": "Mason's Yard",
+    "es": ""
+  },
+  "districts.Smelter.name": {
+    "en": "Smelter",
+    "es": ""
+  },
+  "districts.RuneCarver.name": {
+    "en": "Rune Carver",
+    "es": ""
+  },
+  "districts.Flowerbed.name": {
+    "en": "Flower bed",
+    "es": ""
+  },
+  "districts.Bench.name": {
+    "en": "Bench",
+    "es": ""
+  },
+  "districts.Lantern.name": {
+    "en": "Lantern",
+    "es": ""
+  },
+  "districts.Topiary.name": {
+    "en": "Topiary",
+    "es": ""
+  },
+  "districts.Banner.name": {
+    "en": "Banner",
+    "es": ""
+  },
+  "districts.Birdbath.name": {
+    "en": "Birdbath",
+    "es": ""
+  },
+  "districts.Garden.name": {
+    "en": "Garden",
+    "es": ""
+  },
+  "districts.Well.name": {
+    "en": "Well",
+    "es": ""
+  },
+  "districts.Orchard.name": {
+    "en": "Orchard",
+    "es": ""
+  },
+  "districts.Statue.name": {
+    "en": "Statue",
+    "es": ""
+  },
+  "districts.Plaza.name": {
+    "en": "Plaza",
+    "es": ""
+  },
+  "districts.Shrine.name": {
+    "en": "Shrine",
+    "es": ""
+  },
+  "districts.WarCamp.name": {
+    "en": "War Camp",
+    "es": ""
+  },
+  "districts.Watchtower.name": {
+    "en": "Watchtower",
+    "es": ""
+  },
+  "districts.Townhall.promise": {
+    "en": "Trains new villagers",
+    "es": ""
+  },
+  "districts.Housing.promise": {
+    "en": "Villagers live here and pay taxes",
+    "es": ""
+  },
+  "districts.Farm.promise": {
+    "en": "Workers harvest crops nearby",
+    "es": ""
+  },
+  "districts.FarmLands.promise": {
+    "en": "A crop plot you can tap for food",
+    "es": ""
+  },
+  "districts.Sawmill.promise": {
+    "en": "Workers fell the forest around it",
+    "es": ""
+  },
+  "districts.Quarry.promise": {
+    "en": "Workers cut stone from nearby rock",
+    "es": ""
+  },
+  "districts.Docks.promise": {
+    "en": "Boats bring in fish",
+    "es": ""
+  },
+  "districts.Sanctum.promise": {
+    "en": "Holds more Mana while you are away",
+    "es": ""
+  },
+  "districts.Tavern.promise": {
+    "en": "Heroes gather here, and learn faster",
+    "es": ""
+  },
+  "districts.Barracks.promise": {
+    "en": "Trains soldiers and raises the army cap",
+    "es": ""
+  },
+  "districts.SpearHall.promise": {
+    "en": "Trains Lancers, who stop a charge",
+    "es": ""
+  },
+  "districts.ShootingGrounds.promise": {
+    "en": "Trains Archers, all attack and no armour",
+    "es": ""
+  },
+  "districts.Stables.promise": {
+    "en": "Trains Cavalry, fast and expensive",
+    "es": ""
+  },
+  "districts.Infirmary.promise": {
+    "en": "Mends wounded soldiers cheaply",
+    "es": ""
+  },
+  "districts.Carpenter.promise": {
+    "en": "Villagers work Wood into Planks",
+    "es": ""
+  },
+  "districts.MasonsYard.promise": {
+    "en": "Villagers dress Stone into blocks",
+    "es": ""
+  },
+  "districts.Smelter.promise": {
+    "en": "Villagers smelt ore into Iron",
+    "es": ""
+  },
+  "districts.RuneCarver.promise": {
+    "en": "Villagers pour Mana into cut stone",
+    "es": ""
+  },
+  "districts.Flowerbed.promise": {
+    "en": "A splash of colour",
+    "es": ""
+  },
+  "districts.Bench.promise": {
+    "en": "A seat in the sun",
+    "es": ""
+  },
+  "districts.Lantern.promise": {
+    "en": "Light on the corner",
+    "es": ""
+  },
+  "districts.Topiary.promise": {
+    "en": "A neatly clipped bush",
+    "es": ""
+  },
+  "districts.Banner.promise": {
+    "en": "The kingdom’s colours",
+    "es": ""
+  },
+  "districts.Birdbath.promise": {
+    "en": "Songbirds on the doorstep",
+    "es": ""
+  },
+  "districts.Garden.promise": {
+    "en": "Beds of flowers",
+    "es": ""
+  },
+  "districts.Well.promise": {
+    "en": "Cobbled stone and a bucket",
+    "es": ""
+  },
+  "districts.Orchard.promise": {
+    "en": "Two rows of fruit trees",
+    "es": ""
+  },
+  "districts.Statue.promise": {
+    "en": "A crowned figure in pale stone",
+    "es": ""
+  },
+  "districts.Plaza.promise": {
+    "en": "A paved square for market day",
+    "es": ""
+  },
+  "districts.Shrine.promise": {
+    "en": "A temple of runes that holds a relic",
+    "es": ""
+  },
+  "districts.WarCamp.promise": {
+    "en": "Sends more armies out at once",
+    "es": ""
+  },
+  "districts.Watchtower.promise": {
+    "en": "Sees past the province, to the world",
+    "es": ""
+  },
+  "districts.Townhall.description": {
+    "en": "The heart of the city, where new villagers begin their lives.",
+    "es": ""
+  },
+  "districts.Housing.description": {
+    "en": "A snug home for villagers, who pay their rent in gold.",
+    "es": ""
+  },
+  "districts.Farm.description": {
+    "en": "Its farmhands reap the fields nearby and fill the granary.",
+    "es": ""
+  },
+  "districts.FarmLands.description": {
+    "en": "A field of golden wheat, ripe for the reaping.",
+    "es": ""
+  },
+  "districts.Sawmill.description": {
+    "en": "Woodcutters fell the forest nearby and stack the timber.",
+    "es": ""
+  },
+  "districts.Quarry.description": {
+    "en": "Its workers cut stone and iron from the hills nearby.",
+    "es": ""
+  },
+  "districts.Docks.description": {
+    "en": "Fishing boats set out from here and come home full.",
+    "es": ""
+  },
+  "districts.Sanctum.description": {
+    "en": "Stores Mana within its enchanted walls.",
+    "es": ""
+  },
+  "districts.Tavern.description": {
+    "en": "Where heroes come for a hot meal and a hard job. The banner hangs by the fire.",
+    "es": ""
+  },
+  "districts.Barracks.description": {
+    "en": "Trains sturdy foot soldiers.",
+    "es": ""
+  },
+  "districts.SpearHall.description": {
+    "en": "Trains lancers, who hold the line against a charge.",
+    "es": ""
+  },
+  "districts.ShootingGrounds.description": {
+    "en": "Trains archers, deadly at range but fragile up close.",
+    "es": ""
+  },
+  "districts.Stables.description": {
+    "en": "Trains riders, swift and fierce but costly to keep.",
+    "es": ""
+  },
+  "districts.Infirmary.description": {
+    "en": "Heals wounded soldiers so they can fight again.",
+    "es": ""
+  },
+  "districts.Carpenter.description": {
+    "en": "Rough logs go in, and smooth planks come out.",
+    "es": ""
+  },
+  "districts.MasonsYard.description": {
+    "en": "Masons shape raw stone into fine building blocks.",
+    "es": ""
+  },
+  "districts.Smelter.description": {
+    "en": "Ore goes into the furnace and comes out as iron.",
+    "es": ""
+  },
+  "districts.RuneCarver.description": {
+    "en": "Carvers bind magic into stone, rune by rune.",
+    "es": ""
+  },
+  "districts.Flowerbed.description": {
+    "en": "A raised bed of mixed flowers. Neighbours smile when they pass it.",
+    "es": ""
+  },
+  "districts.Bench.description": {
+    "en": "A plain wooden bench where the street stops to talk.",
+    "es": ""
+  },
+  "districts.Lantern.description": {
+    "en": "An oil lantern on a post. The street feels safer after dark.",
+    "es": ""
+  },
+  "districts.Topiary.description": {
+    "en": "A round bush in a tub, clipped with great care by somebody small.",
+    "es": ""
+  },
+  "districts.Banner.description": {
+    "en": "A tall pole flying the royal banner. Oakville is home again.",
+    "es": ""
+  },
+  "districts.Birdbath.description": {
+    "en": "A carved stone basin. The birds came back before the people did.",
+    "es": ""
+  },
+  "districts.Garden.description": {
+    "en": "Bright flowerbeds that make the whole street smile.",
+    "es": ""
+  },
+  "districts.Well.description": {
+    "en": "Fresh water, and a spot where neighbours stop to chat.",
+    "es": ""
+  },
+  "districts.Orchard.description": {
+    "en": "Rows of fruit trees that sweeten the air of the town.",
+    "es": ""
+  },
+  "districts.Statue.description": {
+    "en": "A proud monument the townsfolk love to show off.",
+    "es": ""
+  },
+  "districts.Plaza.description": {
+    "en": "A paved square where the town comes alive on market day.",
+    "es": ""
+  },
+  "districts.Shrine.description": {
+    "en": "An old temple of runes. Repaired, it holds one city relic, whose power reaches every building in its aura.",
+    "es": ""
+  },
+  "districts.WarCamp.description": {
+    "en": "Where armies muster for the world beyond. Each level sends one more out at once.",
+    "es": ""
+  },
+  "districts.Watchtower.description": {
+    "en": "The old tower on the northern hills. Repaired, its lens looks past the mountains — to the world and the kingdoms in it.",
+    "es": ""
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "speakers.advisor.name": {
+    "en": "Isolde",
+    "es": ""
+  },
+  "speakers.warden.name": {
+    "en": "The Warden",
+    "es": ""
+  },
+  "speakers.cook.name": {
+    "en": "Bess",
+    "es": ""
+  },
+  "speakers.villager.name": {
+    "en": "Tom Miller",
+    "es": ""
+  },
+  "speakers.orcChief.name": {
+    "en": "Grukk",
+    "es": ""
+  },
+  "speakers.woodcutter.name": {
+    "en": "Old Hob",
+    "es": ""
+  },
+  "speakers.scout.name": {
+    "en": "Wren",
+    "es": ""
+  },
+  "speakers.mason.name": {
+    "en": "Master Kofi",
+    "es": ""
+  },
+  "speakers.florist.name": {
+    "en": "Priya",
+    "es": ""
+  },
+  "speakers.merchant.name": {
+    "en": "Marisol",
+    "es": ""
+  },
+  "speakers.courier.name": {
+    "en": "Idris",
+    "es": ""
+  },
+  "speakers.advisor.title": {
+    "en": "Royal Advisor",
+    "es": ""
+  },
+  "speakers.warden.title": {
+    "en": "Captain of the Guard",
+    "es": ""
+  },
+  "speakers.cook.title": {
+    "en": "Tavern keeper",
+    "es": ""
+  },
+  "speakers.villager.title": {
+    "en": "The Millers’ son, home from the road",
+    "es": ""
+  },
+  "speakers.orcChief.title": {
+    "en": "Orc warchief",
+    "es": ""
+  },
+  "speakers.woodcutter.title": {
+    "en": "The woodcutter who never left",
+    "es": ""
+  },
+  "speakers.scout.title": {
+    "en": "Royal Scout",
+    "es": ""
+  },
+  "speakers.mason.title": {
+    "en": "Master of the Builders’ Guild",
+    "es": ""
+  },
+  "speakers.florist.title": {
+    "en": "Nine and three quarters; makes the town pretty",
+    "es": ""
+  },
+  "speakers.merchant.title": {
+    "en": "Merchant of everywhere",
+    "es": ""
+  },
+  "speakers.courier.title": {
+    "en": "Royal courier",
+    "es": ""
+  }
+}
