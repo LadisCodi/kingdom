@@ -1,0 +1,11 @@
+GENERA UNA IMAGEN NUEVA. No edites ni exportes el archivo adjunto: currencies-ref.png es SOLO la referencia de estilo. Es la hoja de iconos de recursos del juego (moneda de oro, manzana, troncos, piedra, maná, conocimiento, etc.). Tu dibujo irá al lado de esos iconos, así que tiene que parecer hecho por el mismo artista: mismo contorno marrón oscuro grueso y uniforme, colores planos muy saturados con un solo tono de sombra y un solo brillo, formas grandes, redondeadas y simples, sin texturas ni detalles finos, iluminado desde arriba.
+
+QUÉ DIBUJAR: el icono del recurso premium del juego, las GEMAS, que son AZULES (zafiro: azul intenso y brillante, nada de morado ni violeta). Quiero CUATRO PROPUESTAS DISTINTAS en una hoja de 2×2, una por cuadrante, para elegir una:
+1. arriba izquierda: una sola gema de talla brillante clásica (corona plana octogonal arriba, pabellón en punta abajo), vista un poco desde arriba, con facetas grandes y claras.
+2. arriba derecha: una gema tallada en forma de lágrima/gota ancha con facetas grandes.
+3. abajo izquierda: un pequeño montón de tres gemas talladas, una grande delante y dos más pequeñas detrás.
+4. abajo derecha: una gema de talla esmeralda (rectangular con esquinas cortadas, mesa grande), algo inclinada.
+Todas en el mismo azul zafiro, con un destello blanco pequeño en forma de estrella de cuatro puntas como el del icono de maná, y legibles a 32 píxeles. Que se lea "gema preciosa", nunca "cristal de hielo" ni "piedra".
+
+Cada propuesta, centrada en su cuadrante y ocupando unos dos tercios de él. Nada puede cruzar las líneas medias del lienzo: deja una franja libre de 40 px alrededor de cada línea media.
+No drop shadows. Do not draw grid lines, cell borders, labels, numbers, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.
