@@ -31,6 +31,8 @@ export const PALETTE = {
   // The placement ghost's outline: a warm white, the brightest thing on the
   // grass, so the building being placed reads apart from the ones around it.
   ghostOutline: '#fff8e1',
+  // A ghost on a cell it may not stand on: rimmed and washed in this red.
+  ghostBlocked: '#e0392b',
   // The placement ghost's move arrows: leaf green, lit from above, rimmed.
   moveArrow: '#4f9f33',
   moveArrowLight: '#8fd466',

@@ -250,19 +250,21 @@ What follows the building:
 - An unfinished building has neither ring nor crew yet, so its address is the
   only thing that moves.
 
-### 4.3 The two gestures
+### 4.3 The gestures
 
-- **Tap** a legal cell to send the ghost there. **Drag** the ghost to carry it.
+- **Tap** any cell to send the ghost there. **Drag** the ghost to carry it.
 - The split is decided once, at pointerdown: a press inside the ghost's
   footprint drags the ghost; anything else pans the camera.
-- The anchor follows the finger by cell, not by pixel offset. An illegal cell
-  is not taken: dragging across a lake leaves the ghost on the shore.
+- The ghost follows the finger by cell, held by the cell of its footprint it
+  was grabbed at, onto any cell of the map — legal or not.
+- **On an illegal cell the ghost turns red**, and the Build / Move button is
+  disabled with the reason beside it.
+- **A long press on a building that may move** starts its move with the
+  ghost already under the finger: the same press carries it. Not while a
+  tutorial line holds a lock, nor with a menu or another mode open.
 - The building draws faint at its old address while its ghost is out.
 - Confirming a move to the cell it started on is a cancel, not an error.
 - Confirming reopens the card the move was started from.
-- Known rough edge: a refused drag leaves the ghost where it was, and the only
-  feedback is the green outline of legal cells, which is drawn for restricted
-  buildings only.
 
 ## 5. Dials, in the order to reach for them
 

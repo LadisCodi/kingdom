@@ -11,7 +11,7 @@
 // express against a box than against four corners.
 
 import type { PlotBox } from './camera';
-import { drawSprite, drawSpriteGlow, drawSpriteOutline, spriteAspect, spriteInkTop } from './sprites';
+import { drawSprite, drawSpriteGlow, drawSpriteOutline, drawSpriteTint, spriteAspect, spriteInkTop } from './sprites';
 
 /** The four corners of a plot's ground diamond, clockwise from the top. */
 export interface Corners {
@@ -210,6 +210,22 @@ export function drawStandingOutline(
   if (aspect === null) return false;
   const h = plotW * aspect;
   return drawSpriteOutline(ctx, key, baseX - plotW / 2, baseY - h, plotW, h, color, px);
+}
+
+/** A wash of `color` over what `drawStanding` would draw with the same
+ *  numbers (sprites.ts `drawSpriteTint`). */
+export function drawStandingTint(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  baseX: number,
+  baseY: number,
+  plotW: number,
+  color: string,
+): boolean {
+  const aspect = spriteAspect(key);
+  if (aspect === null) return false;
+  const h = plotW * aspect;
+  return drawSpriteTint(ctx, key, baseX - plotW / 2, baseY - h, plotW, h, color);
 }
 
 /** A soft glow round what `drawStanding` would draw with the same numbers,

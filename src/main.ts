@@ -578,6 +578,7 @@ async function boot(): Promise<void> {
     (sx, sy) => game.grabGhost(sx, sy),
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
+    (sx, sy) => game.holdAt(sx, sy),
   );
   // The world board takes the same gestures: a drag pans, a pinch or the
   // wheel zooms, a tap picks a hex. Nothing there is held or dragged.

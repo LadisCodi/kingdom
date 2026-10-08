@@ -31,7 +31,7 @@ import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, canPlaceAnywhere, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
-  requiredPopulation,
+  requiredPopulation, type PlacementBlock,
 } from './sim/districts';
 import {
   explorationGate, fogState, isPayable, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
@@ -180,6 +180,21 @@ import { pay } from './sim/wallet';
 import { addGood, getGood } from './sim/goods';
 import { worldUpgradeGoods } from './sim/precious';
 import { CAMP_CREATURE, campTribute } from './sim/world/camps';
+
+/** Why a ghost may not stand where it is, as the placement window says it. */
+const GHOST_BLOCK_WORDS: Record<PlacementBlock, string> = {
+  HasFeature: 'Clear the ground first',
+  NotRevealed: 'Reveal the ground first',
+  Occupied: 'Something already stands here',
+  OffMap: 'It does not fit on the map here',
+  CountLimit: 'Every one allowed is built',
+  NeedsResearch: 'Research it first',
+  NeedsShoreline: 'It needs a shoreline',
+  NeedsLand: 'It cannot stand on water',
+  NeedsHarmony: 'Needs more Harmony',
+  HasSite: 'Something already stands here',
+  LairZone: 'A lair holds this ground',
+};
 
 export type Mode =
   | { kind: 'normal' }
@@ -921,10 +936,9 @@ export class Game {
       priority: 310,
       handle: (cell) => {
         if (this.mode.kind !== 'moving') return false;
-        if (this.canDropAt(cell)) {
-          this.mode.selected = cell;
-          this.notify();
-        }
+        // Any cell takes the ghost, legal or not: an illegal one turns it red.
+        this.mode.selected = cell;
+        this.notify();
         return true; // move mode swallows all map taps
       },
     });
@@ -933,11 +947,9 @@ export class Game {
       priority: 300,
       handle: (cell) => {
         if (this.mode.kind !== 'placing') return false;
-        const valid = validPlacementCells(this.state, this.map, this.mode.definitionId);
-        if (valid.some((c) => c.x === cell.x && c.y === cell.y)) {
-          this.mode.selected = cell;
-          this.notify();
-        }
+        // Any cell takes the ghost, legal or not: an illegal one turns it red.
+        this.mode.selected = cell;
+        this.notify();
         return true; // placement mode swallows all map taps
       },
     });
@@ -1322,7 +1334,7 @@ export class Game {
   /** Enter move mode for a built building. The ghost starts where the
    *  building already stands, so the first thing the player sees is the thing
    *  they picked up, not a jump to somewhere else. */
-  startMove(districtUniqueId: string): void {
+  startMove(districtUniqueId: string, glide = true): void {
     const district = districtById(this.state, districtUniqueId);
     if (!district) return;
     if (!canMoveDistrict(district)) {
@@ -1342,22 +1354,57 @@ export class Game {
     this.openOverlay = null;
     this.inspectedDistrictId = null;
     // The ghost is out where the building stands: bring it into view, as
-    // placement does for a new one.
-    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
+    // placement does for a new one — unless a finger is already on it.
+    if (glide) this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
     this.notify();
   }
 
-  /** Is this a legal address for the building currently being moved? */
-  canDropAt(cell: Coord): boolean {
-    if (this.mode.kind !== 'moving') return false;
-    return placementBlock(
-      this.state, this.map, this.mode.definitionId, cell, this.mode.districtUniqueId,
-    ) === null;
+  /**
+   * A LONG PRESS on a building that may move picks it up: move mode starts
+   * with the ghost already under the finger, so the same press carries it.
+   * Only from the plain map — no mode, no menu, no tutorial lock.
+   */
+  holdAt(sx: number, sy: number): boolean {
+    if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
+    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    const cell = this.camera.screenToCell(sx, sy);
+    const district = districtAt(this.state, cell);
+    if (!district || !canMoveDistrict(district)) return false;
+    this.startMove(district.uniqueId, false);
+    if ((this.mode as Mode).kind !== 'moving') return false;
+    this.ghostGrip = { x: cell.x - district.location.x, y: cell.y - district.location.y };
+    this.ghostHeld = true;
+    this.notify();
+    return true;
+  }
+
+  /** Why the ghost may not stand where it is, or null when it may. */
+  ghostBlock(): PlacementBlock | null {
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return null;
+    if (this.mode.selected === null) return null;
+    return placementBlock(this.state, this.map, this.mode.definitionId, this.mode.selected,
+      this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined);
+  }
+
+  /** The ghost's refusal in words, for the placement window and the toast;
+   *  null when it may stand where it is. */
+  ghostBlockWords(): string | null {
+    const block = this.ghostBlock();
+    if (block === null || (this.mode.kind !== 'placing' && this.mode.kind !== 'moving')) return null;
+    return block === 'NeedsHarmony'
+      ? this.refusalWords(block, this.mode.definitionId, 1)
+      : GHOST_BLOCK_WORDS[block];
   }
 
   confirmMove(): void {
     if (this.mode.kind !== 'moving' || !this.mode.selected) return;
     const { districtUniqueId, selected, origin } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.toast(refusal);
+      this.notify();
+      return;
+    }
     // Putting it back where it started is a cancel, not an error — the player
     // dragged it around, changed their mind, and dropped it home.
     if (selected.x === origin.x && selected.y === origin.y) {
@@ -2493,6 +2540,12 @@ export class Game {
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.toast(refusal);
+      this.notify();
+      return;
+    }
     if (this.mode.premium) {
       const result = buildPremiumShrine(this.state, this.map, selected);
       if (result === 'Started') {
@@ -4998,6 +5051,7 @@ export class Game {
       previewSprite: null,
       previewSize: null,
       previewSteps: this.ghostSteps(),
+      previewBlocked: this.ghostBlock() !== null,
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
@@ -5196,6 +5250,8 @@ export class Game {
     captured: number;
     /** Move only: the ghost is still sitting where it started. */
     unmoved: boolean;
+    /** Why the ghost may not stand where it is; null when it may. */
+    blocked: string | null;
     /** Move only, a Shrine holding a relic: what its aura would reach here
      *  and reaches where it stands. */
     aura?: { ground: boolean; here: number; now: number };
@@ -5212,6 +5268,7 @@ export class Game {
         affordable: true,
         captured: selected ? this.capturedCells(definitionId, selected, level).length : 0,
         unmoved: selected !== null && selected.x === origin.x && selected.y === origin.y,
+        blocked: this.ghostBlockWords(),
         ...(() => {
           const aura = this.movingAura();
           return aura === null ? {} : {
@@ -5225,7 +5282,7 @@ export class Game {
     if (!selected) {
       return {
         kind: 'build', definitionId, cell: null, cost: {},
-        duration: 0, affordable: false, captured: 0, unmoved: false,
+        duration: 0, affordable: false, captured: 0, unmoved: false, blocked: null,
       };
     }
     // A premium Shrine is paid in Gems, the city's price not at all.
@@ -5240,6 +5297,7 @@ export class Game {
       affordable: this.mode.premium ? getWallet(this.state.player.wallet, 'Gems') >= gems : canAfford(this.state.city.wallet, cost),
       captured: this.capturedCells(definitionId, selected).length,
       unmoved: false,
+      blocked: this.ghostBlockWords(),
     };
   }
 
@@ -5305,29 +5363,30 @@ export class Game {
     if (ghost === null) return false;
     if (this.tapGate !== null && !this.tapGate(null, 'ghost')) return false;
     const cell = this.camera.screenToCell(sx, sy);
-    return cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
+    const inside = cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
       && cell.y >= ghost.cell.y && cell.y < ghost.cell.y + ghost.size.y;
+    if (inside) this.ghostGrip = { x: cell.x - ghost.cell.x, y: cell.y - ghost.cell.y };
+    return inside;
   }
+
+  /** Which cell of its footprint the finger holds the ghost by, so a drag
+   *  carries it from there rather than snapping its anchor under the finger. */
+  private ghostGrip: Coord = { x: 0, y: 0 };
 
   /**
    * Drag the ghost under the pointer.
    *
-   * The anchor follows the finger by CELL, not by pixel offset, and an
-   * illegal cell is simply not taken — the ghost stays on the last legal one
-   * it passed through rather than following the finger somewhere it cannot be
-   * dropped and then snapping back. Dragging across a lake leaves it on the
-   * shore, which is the honest preview of where a release would put it.
+   * The anchor follows the finger by CELL, not by pixel offset, onto any
+   * cell of the map: an illegal one is taken too, and the ghost turns red
+   * there, so the finger is never fighting a ghost that will not follow.
    */
   dragGhostTo(sx: number, sy: number): void {
     if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
-    const cell = this.camera.screenToCell(sx, sy);
+    const finger = this.camera.screenToCell(sx, sy);
+    const cell = { x: finger.x - this.ghostGrip.x, y: finger.y - this.ghostGrip.y };
     const current = this.mode.selected;
     if (current && current.x === cell.x && current.y === cell.y) return;
     if (!this.map.terrain.has(coordKey(cell))) return;
-    const legal = this.mode.kind === 'moving'
-      ? this.canDropAt(cell)
-      : placementBlock(this.state, this.map, this.mode.definitionId, cell) === null;
-    if (!legal) return;
     this.mode.selected = cell;
     this.notify();
   }
@@ -5340,22 +5399,16 @@ export class Game {
   }
 
   /**
-   * Which ways the ghost can step: one grid axis each, and only where the
-   * next cell that way is legal — so the arrows say where it can go, and
-   * their absence where it cannot.
+   * Which ways the ghost can step: one grid axis each, wherever the map
+   * goes on — legal or not, as a drag; the ghost's colour says which.
    */
   ghostSteps(): Coord[] {
     if (this.ghostHeld) return [];
     if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return [];
     const at = this.mode.selected;
     if (!at) return [];
-    const { definitionId } = this.mode;
-    const movingId = this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined;
-    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) => {
-      const cell = { x: at.x + d.x, y: at.y + d.y };
-      return this.map.terrain.has(coordKey(cell))
-        && placementBlock(this.state, this.map, definitionId, cell, movingId) === null;
-    });
+    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) =>
+      this.map.terrain.has(coordKey({ x: at.x + d.x, y: at.y + d.y })));
   }
 
   /**

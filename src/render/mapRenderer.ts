@@ -41,7 +41,7 @@ import {
   drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
+  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, drawStandingTint, edgePath, FEATURE_PLOTS,
   fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
@@ -73,6 +73,8 @@ export interface MarkerLayer {
   /** The grid steps the ghost can take — one green arrow each, on the ground
    *  beside the footprint, pointing that way. */
   previewSteps: Coord[];
+  /** The ghost stands where it may not: it is drawn red. */
+  previewBlocked?: boolean;
   /** The district currently being MOVED. It is drawn faint at its old address
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
@@ -1577,9 +1579,17 @@ export function drawMap(
     ctx.globalAlpha = 1;
     const foot = base(b);
     const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
-    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostOutline, rim));
+    // Red, rim and body, where it may not stand — it still follows the
+    // finger there, so the colour is the whole verdict.
+    const blocked = markers.previewBlocked === true;
+    const rimColor = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, rimColor, rim));
     ctx.globalAlpha = 0.6;
     stand(b, keys, markers.previewGlyph);
+    if (blocked) {
+      ctx.globalAlpha = 0.45;
+      keys.some((k) => drawStandingTint(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostBlocked));
+    }
     ctx.globalAlpha = 1;
     drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
   }

@@ -248,7 +248,7 @@ describe('the crew comes with it', () => {
 });
 
 describe('the two gestures', () => {
-  it('tapping a legal cell moves the ghost; tapping an illegal one does not', () => {
+  it('a tap sends the ghost to any cell; an illegal one turns it red and refuses the move', () => {
     const state = freshGame();
     reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
     const house = houseAt(state, HOUSE_CELL);
@@ -266,9 +266,18 @@ describe('the two gestures', () => {
     // Still only a ghost: nothing is committed until Move.
     expect(house.location).toEqual(HOUSE_CELL);
 
+    expect(game.placementInfo()!.blocked).toBe(null);
+    expect(game.markers().previewBlocked).toBe(false);
+
     const dark = { x: 9, y: 9 };
     game.handleTap(...screenAt(game, dark));
-    expect(game.placementInfo()!.cell).toEqual(NEIGHBOUR_CELL); // ignored
+    expect(game.placementInfo()!.cell).toEqual(dark);
+    expect(game.ghostBlock()).toBe('NotRevealed');
+    expect(game.placementInfo()!.blocked).not.toBe(null);
+    expect(game.markers().previewBlocked).toBe(true);
+    game.confirmMove();
+    expect(house.location).toEqual(HOUSE_CELL); // refused
+    expect(game.mode.kind).toBe('moving');
   });
 
   it('confirming commits it; cancelling leaves it where it was', () => {
@@ -311,9 +320,9 @@ describe('the two gestures', () => {
     expect(game.grabGhost(...screenAt(game, HOUSE_CELL))).toBe(false);
   });
 
-  // Dragging across ground it cannot occupy leaves it on the last legal cell
-  // rather than following the finger somewhere it would snap back from.
-  it('a drag over an illegal cell leaves the ghost where it was', () => {
+  // Dragging across ground it cannot occupy carries it there anyway, red, so
+  // the finger never fights a ghost that will not follow.
+  it('a drag follows the finger onto illegal ground, and back', () => {
     const state = freshGame();
     reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
     const house = houseAt(state, HOUSE_CELL);
@@ -322,7 +331,43 @@ describe('the two gestures', () => {
 
     game.dragGhostTo(...screenAt(game, NEIGHBOUR_CELL));
     game.dragGhostTo(...screenAt(game, { x: 9, y: 9 })); // unrevealed
-    expect(game.placementInfo()!.cell).toEqual(NEIGHBOUR_CELL);
+    expect(game.placementInfo()!.cell).toEqual({ x: 9, y: 9 });
+    expect(game.ghostBlock()).toBe('NotRevealed');
+    game.dragGhostTo(...screenAt(game, NEIGHBOUR_CELL));
+    expect(game.ghostBlock()).toBe(null);
+  });
+
+  it('a long press on a movable building picks it up under the finger', () => {
+    const state = freshGame();
+    reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
+    const house = houseAt(state, HOUSE_CELL);
+    const game = freshPresenter(state);
+
+    // The Townhall never moves, and bare ground holds nothing to pick up.
+    expect(game.holdAt(...screenAt(game, townhall(state).location))).toBe(false);
+    expect(game.holdAt(...screenAt(game, FAR_CELL))).toBe(false);
+    expect(game.mode.kind).toBe('normal');
+
+    expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(true);
+    expect(game.mode.kind).toBe('moving');
+    expect(game.placementInfo()!.unmoved).toBe(true);
+    expect(game.ghostSteps()).toEqual([]); // held: no arrows
+    game.dragGhostTo(...screenAt(game, NEIGHBOUR_CELL));
+    game.holdGhost(false);
+    game.confirmMove();
+    expect(house.location).toEqual(NEIGHBOUR_CELL);
+  });
+
+  it('a long press does nothing behind a tutorial lock or in a mode', () => {
+    const state = freshGame();
+    reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
+    const house = houseAt(state, HOUSE_CELL);
+    const game = freshPresenter(state);
+    game.tapGate = () => true;
+    expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(false);
+    game.tapGate = null;
+    game.startMove(house.uniqueId);
+    expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(false);
   });
 
   it('the same drag works on a NEW building being placed', () => {

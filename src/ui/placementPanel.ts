@@ -42,9 +42,10 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     if (isNumbered(game.state, def)) sub = `#${formatExact(districtCount(game.state, def.id) + 1)}`;
   }
 
+  // A ghost on an illegal cell is red on the map; the button says why.
   const blockedBy = info.cell === null
     ? (moving ? 'Nowhere legal to put it' : 'Nowhere legal to build it')
-    : undefined;
+    : info.blocked ?? undefined;
   // Refined goods ride beside the currencies, as everywhere a price is
   // quoted: a move pays nothing, so only a build carries them.
   const goodsTerms = moving || game.mode.kind === 'placing' && game.mode.premium ? [] : (Object.entries(buildGoodsCost(game.state, info.definitionId)) as
