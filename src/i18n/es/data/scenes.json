@@ -552,12 +552,12 @@
     "es": "Ah, dejemos esto un momento y volvamos al reino."
   },
   "scenes.pride.lines.3.text": {
-    "en": "Isolde has a book with flower beds in it. I’ve seen it! Read it!",
-    "es": "Isolde tiene un libro con parterres. ¡Lo he visto! ¡Léalo!"
+    "en": "Isolde has a book with flower gardens in it. I’ve seen it! Read it!",
+    "es": "Isolde tiene un libro con jardines de flores. ¡Lo he visto! ¡Léalo!"
   },
   "scenes.pride.lines.4.text": {
-    "en": "Village Pride. Benches, lanterns, flower beds — Isolde’s second favourite chapter.",
-    "es": "Orgullo aldeano. Bancos, farolas, parterres… el segundo capítulo favorito de Isolde."
+    "en": "Village Pride. Flower patches, shady nooks, lanterns — Isolde’s second favourite chapter.",
+    "es": "Orgullo aldeano. Rincones de flores, bancos a la sombra, faroles… el segundo capítulo favorito de Isolde."
   },
   "scenes.pride.lines.5.text": {
     "en": "Pour in some Knowledge…",
@@ -592,8 +592,8 @@
     "es": "Las decoraciones viven aquí."
   },
   "scenes.corner.lines.5.text": {
-    "en": "A flower bed!",
-    "es": "¡Un parterre!"
+    "en": "A flower patch!",
+    "es": "¡Un rincón de flores!"
   },
   "scenes.corner.lines.6.text": {
     "en": "Next to a house. Then confirm!",
@@ -728,8 +728,8 @@
     "es": "¡Al libro!"
   },
   "scenes.civic.lines.3.text": {
-    "en": "Civic Pride: clipped bushes, banners and a birdbath. For the birds. Obviously.",
-    "es": "Orgullo cívico: setos recortados, banderines y un bebedero para pájaros. Para los pájaros. Obviamente."
+    "en": "Civic Pride: topiary, a banner green and a bird garden. For the birds. Obviously.",
+    "es": "Orgullo cívico: arte topiario, un prado del estandarte y un jardín de pájaros. Para los pájaros. Obviamente."
   },
   "scenes.civic.lines.4.text": {
     "en": "Knowledge in…",

@@ -58,7 +58,7 @@
 | **Agriculture** | the crop plots | 25 G · 2 K |  |
 | **Farming** | the Farm | 25 G · 1 K |  |
 | **Hunting** | the Meat tap | 30 G · 1 K |  |
-| **Village Pride** | the Flower bed · the Bench · the Lantern | 40 G · 2 K | *dead end* |
+| **Village Pride** | the Flower patch · the Resting nook · the Lantern corner | 40 G · 2 K | *dead end* |
 | **Saws** | the Sawmill | 30 G · 2 K |  |
 | **Sawpits I** | +15% harvestYield — Wood | 120 G · 1 K |  |
 | **Trade Routes I** | +10% taxRate | 100 G · 1 K |  |
@@ -80,7 +80,7 @@
 
 | Card | Opens / moves | Price | |
 |---|---|---|---|
-| **Civic Pride** | the Topiary · the Banner · the Birdbath | 1,500 G · 3 K | *dead end* |
+| **Civic Pride** | the Topiary garden · the Banner green · the Bird garden | 1,500 G · 3 K | *dead end* |
 | **Mining** | the Smelter · the iron-mountain Stone tap · the gold-mountain Gold tap | 2,000 G · 3 K |  |
 | **Infirmary** | the Infirmary | 2,000 G · 3 K |  |
 | **Stonecutting I** | +15% harvestYield — Stone | 2,000 G · 3 K |  |
