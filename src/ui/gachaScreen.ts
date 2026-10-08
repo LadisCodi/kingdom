@@ -28,6 +28,11 @@
 // and is celebrated the same way. Skip deals everything else at once and
 // still stops at every new hero.
 //
+// A TEN-CALL IS DEALT IN BEATS, not a tap per card (10-heroes.md §8.3): its
+// goods — a card per currency, a card per supply family — rise together face
+// up and settle in one tap; then the bag card, every hero's bar filling at
+// once; then each new hero, one by one.
+//
 // Presentation only: the sim paid everything before this mounted, so a reveal
 // cut short (a reload, a closed tab) loses nothing but the show.
 
@@ -38,7 +43,7 @@ import { itemName } from './itemText';
 import { playSfx, type SfxName } from '../audio/sfx';
 import { duckFeast, setFeast } from '../audio/music';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
-import type { FragmentProgress, Game, GachaPrize, GachaReveal } from '../game';
+import type { BagRow, FragmentProgress, Game, GachaPrize, GachaReveal, SupplyFamily } from '../game';
 import type { CurrencyId, HeroId } from '../sim/state';
 import { el, formatExact } from './format';
 import { heroFragmentIcon } from './heroFragment';
@@ -80,11 +85,42 @@ const barText = (p: FragmentProgress, n: number): string =>
   p.recruited && n >= p.goal ? 'Recruited!'
     : `${formatExact(p.toward === 'recruit' ? Math.min(n, p.goal) : n)} / ${formatExact(p.goal)}`;
 
-/** How loud a prize is: its rarity where it has one. */
+const RARITY_RANK = { Common: 1, Rare: 2, Legendary: 3 } as const;
+
+/** How loud a prize is: its rarity where it has one — the bag card's, its
+ *  rarest hero's. */
 function rarityOf(p: GachaPrize): keyof typeof RARITY_LIGHT | null {
   if (p.kind === 'hero' || p.kind === 'fragments') return HEROES[p.heroId].rarity;
   if (p.kind === 'relicFragment' && p.slot === 5) return 'Legendary';
+  if (p.kind === 'bag') {
+    return p.rows.map((r) => HEROES[r.heroId].rarity)
+      .reduce<keyof typeof RARITY_LIGHT | null>((best, r) =>
+        best === null || RARITY_RANK[r] > RARITY_RANK[best] ? r : best, null);
+  }
   return null;
+}
+
+const FAMILY_NAME: Record<SupplyFamily, string> = { speedup: 'Speed-ups', chest: 'Chests' };
+
+/** One line of the bag card: the hero (a silhouette until recruited), what
+ *  the batch paid them, and their bar. */
+function bagRow(row: BagRow, bars: Map<HTMLElement, Progress>): HTMLElement {
+  const def = HEROES[row.heroId];
+  const missing = row.progress?.toward === 'recruit';
+  const line = el('div', { class: `gr-bag-row ${RARITY_CLASS[def.rarity]}${missing ? ' is-missing' : ''}` },
+    el('div', { class: 'gr-bag-art' }, portrait(row.heroId, 'gr-card-img')),
+    el('div', { class: 'gr-bag-body' },
+      el('div', { class: 'gr-bag-name' }, def.name.replace(/^The /, '')),
+      el('div', { class: 'gr-bag-count' }, heroFragmentIcon(row.heroId, { size: 'sm' }), `+${formatExact(row.amount)}`)));
+  if (row.progress !== undefined) {
+    const p = row.progress;
+    const bar = progress(p.toward === 'recruit' ? 'gold' : 'blue');
+    bar.set(p.from / p.goal, barText(p, p.from));
+    bars.set(line, bar);
+    line.querySelector('.gr-bag-body')!.append(el('div', { class: 'gr-bag-bar' }, bar.root));
+    if (p.recruited) line.append(el('div', { class: 'gr-stamp' }, 'New'));
+  }
+  return line;
 }
 
 /** One prize as a card: a back and a face, flipped by its inner. Fragments
@@ -108,6 +144,20 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
       el('div', { class: 'gr-card-art' }, iconEl(itemIcon(prize.item), { size: 'lg' })),
       el('div', { class: 'gr-card-name' }, itemName(ITEMS[prize.item])),
       count(prize.amount),
+    ];
+  } else if (prize.kind === 'supplies') {
+    cls = 'is-currency is-item is-supplies';
+    face = [
+      el('div', { class: 'gr-card-name' }, FAMILY_NAME[prize.family]),
+      el('div', { class: 'gr-supplies' }, ...prize.items.map((i) => el('div', { class: 'gr-supply' },
+        iconEl(itemIcon(i.item), { size: 'md', label: itemName(ITEMS[i.item]) }),
+        el('span', {}, `×${formatExact(i.amount)}`)))),
+    ];
+  } else if (prize.kind === 'bag') {
+    cls = 'is-bag';
+    face = [
+      el('div', { class: 'gr-card-name' }, 'Fragments'),
+      el('div', { class: 'gr-bag' }, ...prize.rows.map((r) => bagRow(r, bars))),
     ];
   } else if (prize.kind === 'relicFragment') {
     const def = ARTIFACTS[prize.relic];
@@ -146,6 +196,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
     el('div', { class: 'gr-card-inner' },
       el('div', { class: 'gr-card-back' }),
       el('div', { class: 'gr-card-face' }, ...face)));
+  if (prize.kind === 'bag') card.style.setProperty('--rows', String(Math.ceil(prize.rows.length / 2)));
   if (prize.kind === 'fragments' && prize.progress !== undefined) {
     const p = prize.progress;
     const bar = progress(p.toward === 'recruit' ? 'gold' : 'blue');
@@ -163,6 +214,13 @@ function boardShape(n: number): { cols: number; width: number } {
   if (n <= 6) return { cols: 3, width: 100 };
   if (n <= 12) return { cols: 4, width: 82 };
   return { cols: 5, width: 66 };
+}
+
+/** A board whose widest row holds n cards: never narrower than three, so the
+ *  bag card spanning it has room for its two columns. */
+function rowShape(n: number): { cols: number; width: number } {
+  const cols = Math.min(5, Math.max(3, n));
+  return { cols, width: cols === 3 ? 100 : cols === 4 ? 82 : 66 };
 }
 
 export function mountGachaScreen(game: Game, root: HTMLElement): void {
@@ -187,7 +245,12 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     const { prizes } = reveal;
     const bars = new Map<HTMLElement, Progress>();
     const cards = prizes.map((p) => prizeCard(p, bars));
-    const shape = boardShape(cards.length);
+    // A grouped ten-call: the bag takes a row of its own, so the board is as
+    // wide as its widest other row.
+    const others = prizes.filter((p) => p.kind !== 'bag');
+    const shape = prizes.some((p) => p.kind === 'bag')
+      ? rowShape(Math.max(others.filter((p) => p.kind !== 'hero').length, others.filter((p) => p.kind === 'hero').length))
+      : boardShape(cards.length);
 
     const board = el('div', { class: 'gr-board' }, ...cards);
     board.style.setProperty('--cols', String(shape.cols));
@@ -251,7 +314,10 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       const s = screenRect();
       const r = card.getBoundingClientRect();
       const bigW = Math.min(s.width * 0.54, (s.height * 0.38) / 1.5);
-      const k = bigW / r.width;
+      // The bag card is wide: it fits the stage rather than a card's size.
+      const k = card.classList.contains('is-bag')
+        ? Math.min((s.width * 0.94) / r.width, (s.height * 0.5) / r.height)
+        : bigW / r.width;
       const dx = s.left + s.width / 2 - (r.left + r.width / 2);
       const dy = s.top + s.height * 0.4 - (r.top + r.height / 2);
       return `translate(${dx}px, ${dy}px) scale(${k})`;
@@ -268,7 +334,21 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
 
     type Phase = 'landing' | 'busy' | 'down' | 'up' | 'done';
     let phase: Phase = 'landing';
-    let next = 0; // the next card to come out of the chest
+    /** What comes out of the chest at once: one card, or a ten-call's goods
+     *  together (10-heroes.md §8.3). */
+    const grouped = prizes.some((p) => p.kind === 'bag' || p.kind === 'supplies');
+    const deals: number[][] = [];
+    if (grouped) {
+      const goods = prizes.flatMap((p, i) => (p.kind === 'bag' || p.kind === 'hero' ? [] : [i]));
+      if (goods.length > 0) deals.push(goods);
+      prizes.forEach((p, i) => { if (p.kind === 'bag' || p.kind === 'hero') deals.push([i]); });
+    } else {
+      cards.forEach((_, i) => deals.push([i]));
+    }
+    let nextDeal = 0; // the next deal to come out of the chest
+    let dealt = 0; // cards out of it so far
+    /** A crowd of goods standing together, face up, waiting for one tap. */
+    let crowd: Array<{ card: HTMLElement; at: string }> = [];
     let current: HTMLElement | null = null;
     let currentAt = '';
     let currentPrize: GachaPrize | null = null;
@@ -294,7 +374,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       prompt.classList.toggle('is-on', text !== '');
     };
     const syncSkip = (): void => {
-      skip.classList.toggle('is-on', phase !== 'landing' && phase !== 'done' && !skipping && cards.length - next > 1);
+      skip.classList.toggle('is-on', phase !== 'landing' && phase !== 'done' && !skipping && cards.length - dealt > 1);
     };
 
     // 1. The chest lands.
@@ -339,14 +419,65 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       await draw();
     };
 
-    // The next card rises out of the chest, face down.
+    /** Where the i-th of n goods stands in their row: the middle of the
+     *  stage, as big as the width lets them be. */
+    const crowdAt = (card: HTMLElement, i: number, n: number): string => {
+      const s = screenRect();
+      const r = card.getBoundingClientRect();
+      const gap = s.width * 0.03;
+      const w = Math.min(s.width * 0.3, (s.height * 0.3) / 1.5, (s.width * 0.94 - gap * (n - 1)) / n);
+      const k = w / r.width;
+      const x = s.left + s.width / 2 + (i - (n - 1) / 2) * (w + gap);
+      const dx = x - (r.left + r.width / 2);
+      const dy = s.top + s.height * 0.4 - (r.top + r.height / 2);
+      return `translate(${dx}px, ${dy}px) scale(${k})`;
+    };
+
+    // A ten-call's goods rise together, face up: nothing in them is a
+    // surprise worth a flip each.
+    const drawCrowd = async (deal: number[]): Promise<void> => {
+      const out = deal.map((i, n) => {
+        const card = cards[i]!;
+        card.style.transform = '';
+        card.classList.remove('is-hidden', 'is-down');
+        return { card, at: crowdAt(card, n, deal.length) };
+      });
+      crowd = out;
+      sfx('cardDraw');
+      await Promise.all(out.map(({ card, at: to }, n) => wait(n * 70).then(() => play(card, [
+        { transform: chestMouthOf(card), opacity: 0 },
+        { transform: `${to} translateY(-8%)`, opacity: 1, offset: 0.72 },
+        { transform: to, opacity: 1 },
+      ], 560)).then(() => {
+        card.style.transform = to;
+        card.classList.add('is-centre');
+      })));
+      playSfx('cardImpact');
+      playSfx('cardRevealCommon');
+      for (const { card } of out) {
+        const [x, y] = at(card.getBoundingClientRect());
+        layer?.burst(x, y, { kind: 'spark', count: 8, colors: GOLD, speed: 200, size: 7, life: 650 });
+      }
+      phase = 'up';
+      say('Tap to continue');
+      syncSkip();
+      if (skipping) await settle();
+    };
+
+    // The next card rises out of the chest, face down — or the next crowd.
     const draw = async (): Promise<void> => {
       phase = 'busy';
-      const card = cards[next]!;
-      const prize = prizes[next]!;
-      next += 1;
-      left.textContent = formatExact(cards.length - next);
-      left.classList.toggle('is-empty', cards.length - next === 0);
+      const deal = deals[nextDeal]!;
+      nextDeal += 1;
+      dealt += deal.length;
+      left.textContent = formatExact(cards.length - dealt);
+      left.classList.toggle('is-empty', cards.length - dealt === 0);
+      if (deal.length > 1) {
+        await drawCrowd(deal);
+        return;
+      }
+      const card = cards[deal[0]!]!;
+      const prize = prizes[deal[0]!]!;
       current = card;
       currentPrize = prize;
       card.style.transform = '';
@@ -409,6 +540,48 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       await play(card, [
         { transform: currentAt }, { transform: `${currentAt} translateY(1.5%) scale(0.97)` }, { transform: currentAt },
       ], 200);
+    };
+
+    /** The bag card's bars, every one at once; a recruit's flares and takes
+     *  its seal. The hero itself is celebrated on its own card after. */
+    const fillBag = async (card: HTMLElement): Promise<void> => {
+      const rows = [...card.querySelectorAll<HTMLElement>('.gr-bag-row')];
+      const prize = currentPrize;
+      if (prize?.kind !== 'bag') return;
+      if (!quiet) playSfx('barFill', { gain: skipping ? 0.6 : 1 });
+      await Promise.all(rows.map(async (line, i) => {
+        const p = prize.rows[i]?.progress;
+        const bar = bars.get(line);
+        if (p === undefined || bar === undefined) return;
+        const fill = line.querySelector<HTMLElement>('.k-fill');
+        const to = Math.min(p.to, p.goal);
+        if (fill !== null && !quiet) {
+          await play(fill, [
+            { clipPath: `inset(0 ${(1 - p.from / p.goal) * 100}% 0 0)` },
+            { clipPath: `inset(0 ${(1 - to / p.goal) * 100}% 0 0)` },
+          ], 900, 'cubic-bezier(.3,0,.2,1)');
+          fill.getAnimations().forEach((a) => a.cancel());
+        }
+        bar.set(to / p.goal, barText(p, p.to));
+        if (!p.recruited) return;
+        line.classList.add('is-full');
+        const b = line.getBoundingClientRect();
+        const [bx, by] = at(b);
+        layer?.burst(bx, by, { kind: 'spark', count: 18, colors: GOLD, speed: 220, size: 8, life: 750, radius: b.width / 4 });
+        await play(line.querySelector('.gr-stamp')!, [
+          { transform: 'scale(3.2) rotate(-30deg)', opacity: 0 },
+          { transform: 'scale(0.9) rotate(-12deg)', opacity: 1, offset: 0.7 },
+          { transform: 'scale(1) rotate(-12deg)', opacity: 1 },
+        ], 380, 'cubic-bezier(.6,0,.9,.5)');
+        line.classList.add('is-stamped');
+        line.classList.remove('is-missing');
+      }));
+      if (prize.rows.some((r) => r.progress?.recruited === true)) {
+        playSfx('cardSparkle');
+        playSfx('chestLand');
+      } else {
+        sfx('cardSettle');
+      }
     };
 
     /** A WHOLE hero joins: the rarest thing in a chest, and the party says
@@ -501,6 +674,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       if (prize.kind === 'fragments' && prize.progress !== undefined) {
         await fillBar(card, prize.progress);
       }
+      if (prize.kind === 'bag') await fillBag(card);
       if (hero !== null) {
         await celebrate(hero, card);
         return;
@@ -517,8 +691,39 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       if (skipping) await settle();
     };
 
+    /** Every card going home, landing dimmed in its place. */
+    const flyHome = (card: HTMLElement, from: string): Promise<void> =>
+      play(card, [{ transform: from }, { transform: 'none' }], 440, 'cubic-bezier(.5,0,.2,1)')
+        .then(() => {
+          card.style.transform = '';
+          card.getAnimations().forEach((a) => a.cancel());
+          card.classList.add('is-dim');
+          sfx('cardSettle');
+          const [x, y] = at(card.getBoundingClientRect());
+          layer?.burst(x, y, { kind: 'spark', count: 5, colors: GOLD, speed: 90, size: 5, life: 450 });
+        });
+
     // 4. Home: the card flies to its place and the next one rises.
     const settle = async (): Promise<void> => {
+      if (crowd.length > 0) {
+        phase = 'busy';
+        say('');
+        const going = crowd;
+        crowd = [];
+        sfx('cardWhoosh');
+        const home = Promise.all(going.map(({ card, at: from }) => {
+          card.classList.remove('is-centre');
+          return flyHome(card, from);
+        }));
+        if (nextDeal < deals.length) {
+          await wait(120);
+          await Promise.all([home, draw()]);
+        } else {
+          await home;
+          await finish();
+        }
+        return;
+      }
       if (current === null) return;
       phase = 'busy';
       say('');
@@ -528,16 +733,8 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       currentPrize = null;
       card.classList.remove('is-centre');
       sfx('cardWhoosh');
-      const home = play(card, [{ transform: currentAt }, { transform: 'none' }], 440, 'cubic-bezier(.5,0,.2,1)')
-        .then(() => {
-          card.style.transform = '';
-          card.getAnimations().forEach((a) => a.cancel());
-          card.classList.add('is-dim');
-          sfx('cardSettle');
-          const [x, y] = at(card.getBoundingClientRect());
-          layer?.burst(x, y, { kind: 'spark', count: 5, colors: GOLD, speed: 90, size: 5, life: 450 });
-        });
-      if (next < cards.length) {
+      const home = flyHome(card, currentAt);
+      if (nextDeal < deals.length) {
         await wait(120);
         await Promise.all([home, draw()]);
       } else {
@@ -591,7 +788,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       syncSkip();
       hurry();
       if (phase === 'down' && current !== null && !current.classList.contains('is-charged')) void flip();
-      else if (phase === 'up' && currentPrize !== null && newHero(currentPrize) === null) void settle();
+      else if (phase === 'up' && (crowd.length > 0 || (currentPrize !== null && newHero(currentPrize) === null))) void settle();
     });
 
     void land();

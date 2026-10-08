@@ -239,10 +239,10 @@ function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
 }
 
 /** A hero not found yet: the fragments where the level was, and whichever of
- *  the two doors to them is open — Recruit once ten have piled up, the banner
+ *  the two doors to them is open — Recruit once its rarity's price has piled up, the banner
  *  until then (Docs/features/10-heroes.md §4.1). */
 function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
-  const need = heroUnlockCost();
+  const need = heroUnlockCost(id);
   const enough = view.entry.fragments >= need;
   return tray('hd-level', reading('Fragments', view.entry.fragments, need), buy(
     enough ? priceLine([{ icon: 'fragment', art: heroFragmentIcon(id), amount: formatExact(need) }]) : null,

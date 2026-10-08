@@ -98,7 +98,7 @@ function missingCard(game: Game, heroId: HeroId, opts: HeroCardOpts): HTMLElemen
   const def = HEROES[heroId];
   const url = spriteUrl(def.sprite);
   const have = game.state.heroes.fragments[heroId] ?? 0;
-  const need = heroUnlockCost();
+  const need = heroUnlockCost(heroId);
   const card = el(opts.onClick ? 'button' : 'span', {
     class: `hc is-missing${opts.small ? ' is-small' : ''}`,
     ...(opts.onClick ? { type: 'button' } : {}),

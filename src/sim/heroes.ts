@@ -30,7 +30,7 @@ import { roundPrice } from './roundPrice';
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import {
-  BANNERS, DISTRICTS, HERO_LADDER, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
+  BANNER_ORDER, BANNERS, DISTRICTS, HERO_LADDER, HERO_ORDER, HEROES, PARTY, heroesOfRarity, levelIndexed,
   type BannerId, type BannerLoot, type HeroBoon, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
@@ -189,24 +189,24 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
  * It is deliberately NOT an ascension: an unlocked hero still starts with
  * every star empty and the whole ascension ladder ahead of them.
  */
-export const heroUnlockCost = (): number => HERO_LADDER.recruitFragments;
+export const heroUnlockCost = (id: HeroId): number => HERO_LADDER.recruitFragments[HEROES[id].rarity];
 
 export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
 
 export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
   if (ownsHeroId(state, id)) return 'AlreadyOwned';
   const held = state.heroes.fragments[id] ?? 0;
-  if (held < heroUnlockCost()) return 'NotEnoughFragments';
+  if (held < heroUnlockCost(id)) return 'NotEnoughFragments';
   // Spend, then grant — `grantHero` preserves whatever is left over, so a
-  // player sitting on twelve keeps two toward the first ascensions.
-  state.heroes.fragments[id] = held - heroUnlockCost();
+  // player sitting on seventeen keeps two toward the first ascensions.
+  state.heroes.fragments[id] = held - heroUnlockCost(id);
   grantHero(state, id);
   return 'Unlocked';
 }
 
 /** Enough fragments to recruit them, and not owned yet. */
 export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
-  !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost();
+  !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost(id);
 
 /**
  * The Stardust the NEXT ascension asks for on top of the fragments — the
@@ -418,19 +418,32 @@ export const pullsToLegendary = (state: GameState, banner: BannerId): number | n
     : Math.max(0, BANNERS[banner].legendaryPityAt - legendaryPityCount(state, banner));
 
 /**
+ * The chance a call brings a hero BEFORE pity: a ladder by how many heroes
+ * the player owns (Docs/features/10-heroes.md §6.6) — generous while the
+ * roster is empty, thin once it is not, the last rung for ever after.
+ */
+export function baseHeroChance(state: GameState, banner: BannerId = STANDARD_BANNER): number {
+  const ladder = BANNERS[banner].heroChanceByOwned;
+  return ladder[Math.min(state.heroes.owned.length, ladder.length - 1)] ?? 0;
+}
+
+/**
  * The chance THIS pull yields a hero.
  *
  * Soft pity ramps the rate between `softPityAt` and `hardPityAt` so the run of
  * misses gets visibly better rather than staying flat until a cliff; hard pity
  * is a guarantee, not a probability.
  */
-export function heroChanceAt(pity: number, banner: BannerId = STANDARD_BANNER): number {
+export function heroChanceAt(
+  state: GameState, banner: BannerId = STANDARD_BANNER, pity = pityCount(state, banner),
+): number {
   const b = BANNERS[banner];
+  const base = baseHeroChance(state, banner);
   if (pity >= b.hardPityAt - 1) return 1;
-  if (pity < b.softPityAt) return b.heroChance;
+  if (pity < b.softPityAt) return base;
   const span = Math.max(1, b.hardPityAt - b.softPityAt);
   const t = (pity - b.softPityAt) / span;
-  return Math.min(1, b.heroChance + (1 - b.heroChance) * t);
+  return Math.min(1, base + (1 - base) * t);
 }
 
 /** Which rarities this banner can roll at all: a weight of 0 excludes one,
@@ -439,26 +452,74 @@ export const bannerRarities = (banner: BannerId): HeroRarity[] =>
   (Object.keys(BANNERS[banner].weights) as HeroRarity[])
     .filter((r) => BANNERS[banner].weights[r] > 0);
 
+// ------------------------------------------------------------------ the bag
+
 /**
- * Who this banner can hand you at this rarity, preferring heroes the player
- * does not own.
+ * THE BAG (Docs/features/10-heroes.md §6.6): the heroes a call can reach, per
+ * rarity and shared by both banners — every hero the player owns, plus a few
+ * they do not, the OPEN ones.
  *
- * The "prefer unowned" rule is what makes a roster of thirty-two a collection
- * rather than a slot machine: a duplicate is only reachable once that rarity
- * is complete, and then it pays Fragments instead. An empty list means the
- * caller must fall back to another rarity — `pull` does.
+ * It exists to put Fragments where they recruit. A call that pays a fragment
+ * of any of fourteen strangers leaves fourteen bars a tenth full; a call that
+ * pays one of three fills a bar to a recruit.
+ *
+ * Derived, never stored: who is owned, who holds Fragments and the order say
+ * what is in it, so there is no save field to migrate and nothing to drift.
+ */
+
+/** The order a rarity's heroes open in: the ranked ones by `bagRank`, then
+ *  the rest shuffled per kingdom — a hash of the hero, never of the moment. */
+export function bagOrder(state: GameState, rarity: HeroRarity): HeroId[] {
+  const all = heroesOfRarity(rarity);
+  const ranked = all.filter((id) => HEROES[id].bagRank !== null)
+    .sort((a, b) => HEROES[a].bagRank! - HEROES[b].bagRank!);
+  const shuffled = all.filter((id) => HEROES[id].bagRank === null)
+    .map((id) => ({ id, key: rand(state.seed, 'heroBag', id) }))
+    .sort((a, b) => a.key - b.key)
+    .map(({ id }) => id);
+  return [...ranked, ...shuffled];
+}
+
+/** The season heroes the banners lean toward. */
+const featuredHeroes = (): HeroId[] =>
+  BANNER_ORDER.map((b) => BANNERS[b].featuredHero).filter((id): id is HeroId => id !== '');
+
+/**
+ * The heroes of a rarity the player does not own that are open: the first
+ * `bagOpen` of them in the bag's order, and — over that count — any who
+ * already hold Fragments, so a Fragment from elsewhere is never stranded, and
+ * a season hero while its banner leans toward them.
+ */
+export function openHeroes(state: GameState, rarity: HeroRarity): HeroId[] {
+  const missing = bagOrder(state, rarity).filter((id) => !ownsHeroId(state, id));
+  const base = new Set(missing.slice(0, HERO_LADDER.bagOpen[rarity]));
+  const featured = featuredHeroes();
+  return missing.filter((id) =>
+    base.has(id) || (state.heroes.fragments[id] ?? 0) > 0 || featured.includes(id));
+}
+
+/** Everyone of a rarity in the bag: the owned, then the open. */
+export const bagHeroes = (state: GameState, rarity: HeroRarity): HeroId[] => [
+  ...heroesOfRarity(rarity).filter((id) => ownsHeroId(state, id)),
+  ...openHeroes(state, rarity),
+];
+
+/**
+ * Who a hit on this banner can hand you at this rarity: an open hero, a new
+ * one. Only once the rarity is complete is it someone already owned — a
+ * duplicate, paid in Fragments. An empty list means the banner does not call
+ * this rarity; the caller falls back to another (`pull` does).
  */
 export function bannerPool(state: GameState, banner: BannerId, rarity: HeroRarity): HeroId[] {
   if (BANNERS[banner].weights[rarity] <= 0) return [];
-  const all = heroesOfRarity(rarity);
-  const missing = all.filter((id) => !ownsHeroId(state, id));
-  return missing.length > 0 ? missing : all;
+  const open = openHeroes(state, rarity);
+  return open.length > 0 ? open : bagHeroes(state, rarity);
 }
 
-/** Everyone this banner could ever hand you, at any rarity — what a miss pays
- *  Fragments toward, and what the card lists. */
+/** Everyone this banner could hand you or pay Fragments of, at any rarity —
+ *  its share of the bag. */
 export const bannerHeroes = (state: GameState, banner: BannerId): HeroId[] =>
-  bannerRarities(banner).flatMap((r) => bannerPool(state, banner, r));
+  bannerRarities(banner).flatMap((r) => bagHeroes(state, r));
 
 /**
  * The rarity this pull lands on: a weighted draw, unless the Legendary
@@ -572,41 +633,59 @@ export function claimFreePull(
   return { result: 'Pulled', pull: pull(state, banner, { free: true }) };
 }
 
+/** A weighted draw from some rows of a loot table, or null when none
+ *  carries a weight. */
+function drawRow(rows: readonly BannerLoot[], roll: number): BannerLoot | null {
+  const live = rows.filter((e) => e.weight > 0);
+  const total = live.reduce((sum, e) => sum + e.weight, 0);
+  if (live.length === 0) return null;
+  let cut = roll * total;
+  for (const e of live) {
+    cut -= e.weight;
+    if (cut < 0) return e;
+  }
+  return live[live.length - 1]!;
+}
+
+/** Which slot a loot row fills: its reward says (10-heroes.md §6.4). */
+export type LootSlot = 'hero' | 'heroGoods' | 'supplies';
+export const lootSlot = (e: BannerLoot): LootSlot =>
+  e.reward === 'Fragments' ? 'hero' : e.reward === 'Item' ? 'supplies' : 'heroGoods';
+
 /**
- * A call's prizes from its banner's loot table (Docs/features/10-heroes.md
- * §6.4): `lootDrawsMin`…`lootDrawsMax` of them, each count as likely, each
- * prize a weighted draw. Paid as they are drawn. Every roll is keyed by
- * `(banner, pullNumber, draw)`, so a ten-call is ten taps.
+ * A call's prizes beside the hero roll (Docs/features/10-heroes.md §6.4) —
+ * THREE SLOTS, always: the hero slot pays a Fragment of a hero in the bag
+ * when the roll missed (a hit fills it with the hero instead); the
+ * hero-goods slot Stardust or Hero XP — or, on `extraHeroSlotChance` of
+ * calls, a second Fragment; the supplies slot a speed-up or a chest. Paid as
+ * drawn. Every roll is keyed by `(banner, pullNumber, slot)`, so a ten-call
+ * is ten taps.
  */
-export function drawLoot(state: GameState, banner: BannerId, n: number): CallLoot[] {
+export function drawLoot(state: GameState, banner: BannerId, n: number, hit: boolean): CallLoot[] {
   const b = BANNERS[banner];
-  const table = b.loot.filter((e) => e.weight > 0);
-  const total = table.reduce((sum, e) => sum + e.weight, 0);
-  if (table.length === 0 || b.lootDrawsMax <= 0) return [];
-  const span = Math.max(0, b.lootDrawsMax - b.lootDrawsMin) + 1;
-  const count = b.lootDrawsMin + Math.floor(rand(state.seed, 'gachaLootCount', banner, n) * span);
+  const rows = (slot: LootSlot): BannerLoot[] => b.loot.filter((e) => lootSlot(e) === slot);
   const out: CallLoot[] = [];
-  for (let i = 0; i < count; i += 1) {
-    let cut = rand(state.seed, 'gachaLoot', banner, n, i) * total;
-    let entry: BannerLoot = table[table.length - 1]!;
-    for (const e of table) {
-      cut -= e.weight;
-      if (cut < 0) { entry = e; break; }
-    }
+  const pay = (slot: LootSlot, i: number): void => {
+    const entry = drawRow(rows(slot), rand(state.seed, 'gachaLoot', banner, n, i));
+    if (entry === null) return;
     const paid = payLoot(state, banner, entry, rand(state.seed, 'gachaFrag', banner, n, i));
     if (paid !== null) out.push(paid);
-  }
+  };
+  if (!hit) pay('hero', 0);
+  const extra = rand(state.seed, 'gachaExtra', banner, n) < b.extraHeroSlotChance;
+  pay(extra ? 'hero' : 'heroGoods', 1);
+  pay('supplies', 2);
   return out;
 }
 
 function payLoot(state: GameState, banner: BannerId, e: BannerLoot, roll: number): CallLoot | null {
   switch (e.reward) {
     case 'Fragments': {
-      // Anyone of that rarity the banner calls, owned or not: a fragment of a
-      // held hero climbs the stars, of a missing one toward a recruit.
+      // Anyone of that rarity in the bag, owned or open: a fragment of a
+      // held hero climbs the stars, of an open one toward a recruit.
       const rarity = e.rarity === '' ? null : e.rarity;
       const pool = rarity !== null && BANNERS[banner].weights[rarity] > 0
-        ? heroesOfRarity(rarity) : bannerHeroes(state, banner);
+        ? bagHeroes(state, rarity) : bannerHeroes(state, banner);
       if (pool.length === 0) return null;
       const heroId = pool[Math.floor(roll * pool.length)]!;
       state.heroes.fragments[heroId] = (state.heroes.fragments[heroId] ?? 0) + e.amount;
@@ -634,10 +713,10 @@ function payLoot(state: GameState, banner: BannerId, e: BannerLoot, roll: number
  * pullNumber)` — never a stream, so a new consumer cannot shift every later
  * roll and a replay cannot desync (`rng.ts`):
  *
- *   0. the loot, drawn on every call (`drawLoot`)
- *   1. hit or miss, against the soft-pity ramp
+ *   1. hit or miss, against the hero-chance ladder and the soft-pity ramp
  *   2. on a hit, WHICH RARITY, by the banner's weights
- *   3. within that rarity, which hero — preferring unowned
+ *   3. within that rarity, which hero — an open one from the bag
+ *   4. the three slots' prizes (`drawLoot`) — the hero slot only on a miss
  *
  * `opts.free` skips the charge and nothing else: the allowance that grants it
  * lives in `claimFreePull`, so the roll cannot be reached without paying one
@@ -662,7 +741,6 @@ export function pull(
   if (cost > 0) takeItem(state, price.key, cost);
 
   const n = pullCount(state, banner);
-  const loot = drawLoot(state, banner, n);
   // THE FIRST CALL CANNOT MISS (Docs/features/22-progression.md §6): the
   // standard banner's first call is the free one, and a free call that pays
   // Fragments is a tutorial that teaches the wrong lesson. Only the hit is
@@ -679,10 +757,11 @@ export function pull(
   state.gacha.pullCounts[banner] = n + 1;
 
   const roll = rand(state.seed, 'gacha', banner, n);
-  if (!forcedHit && roll >= heroChanceAt(pity, banner)) {
-    // Never a dead pull: the loot was drawn whatever the roll said.
+  if (!forcedHit && roll >= heroChanceAt(state, banner, pity)) {
+    // Never a dead pull: the hero slot pays a Fragment instead.
     state.gacha.pityCounters[banner] = pity + 1;
     state.gacha.legendaryPity[banner] = legPity + 1;
+    const loot = drawLoot(state, banner, n, false);
     return {
       result: 'Pulled', heroId: null, rarity: null, duplicate: false,
       fragments: 0, fragmentsOf: null, loot,
@@ -714,6 +793,7 @@ export function pull(
   state.gacha.legendaryPity[banner] = rarity === 'Legendary' ? 0 : legPity + 1;
   const heroId = pool[Math.floor(rand(state.seed, 'gachaHero', banner, n) * pool.length)]!;
   const outcome = grantHero(state, heroId, b.duplicateFragments);
+  const loot = drawLoot(state, banner, n, true);
   return {
     result: 'Pulled',
     heroId,

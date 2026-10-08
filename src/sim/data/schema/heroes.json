@@ -2,6 +2,12 @@
   "type": "object",
   "fields": {
     "rarity": { "type": "text", "options": ["Common", "Rare", "Legendary"] },
+    "bagRank": {
+      "type": "int",
+      "min": 1,
+      "nullable": true,
+      "doc": "Where this hero opens in the bag, before every unranked hero of its rarity — lowest first. Empty: after them, in an order shuffled per kingdom (Docs/features/10-heroes.md §6.6)."
+    },
     "unitType": { "type": "text", "ref": "unit" },
     "skill": {
       "type": "text",

@@ -9,13 +9,12 @@
 > **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
 > card and the reveal screen (§8); the stat block and the type passive on the
 > board (§2.3, §2.4), the skills (§2.5) and the boons (§2.6); the whole ladder
-> (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
-> opens the Heroes tab and the banner. **Not built:** the rarity multipliers
-> (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
-> moving into the Tavern (§8.3). **Designed, not built:** the hero bag and
-> the hero chance that falls with the collection (§6.6), the three prize
-> slots (§6.4), the ten-call's grouped reveal (§8.3), and a recruit priced
-> by rarity (§4).
+> (§4); the Gem-bought hero slots (§3); the **Tavern**, whose standing
+> opens the Heroes tab and the banner; the hero bag and the falling hero
+> chance (§6.6), the three prize slots (§6.4) and the ten-call's grouped
+> reveal (§8.3). **Not built:** the rarity multipliers (§2.1) — every hero's
+> numbers are authored whole in `heroes` — and the banner moving into the
+> Tavern (§8.3).
 
 ## 1. The collection substrate
 
@@ -407,8 +406,11 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **The extra hero slot**: on **20%** of calls the hero-goods slot becomes a
   second hero slot and pays 1 Fragment of a hero in the bag. It is never a
   second hit: a call rolls for a hero once.
-- **Each slot is a weighted draw from its own table.** A Fragment's rarity is
-  drawn by the hero slot's weights; the hero within it from the bag.
+- **Each slot is a weighted draw from its own rows of the banner's loot
+  table**, and a row's reward says its slot: Fragments the hero slot,
+  Stardust and Hero XP the hero-goods slot, an item the supplies slot. A
+  Fragment's rarity is drawn by the hero slot's weights; the hero within it
+  from the bag.
 - **A fragment is of any hero of its rarity in the bag** (§6.6), owned or
   not: toward a recruit, or toward the next star.
 - The golden tables hold the same kinds, each worth more: Legendary
@@ -438,6 +440,9 @@ Every faucet is a fight or a banner. Room and floor amounts are
 Fragments go to a few heroes at a time, and the first heroes come
 quickly.
 
+- **The player never sees the bag.** It is a pacing tool: no screen lists
+  it, and the banners and the store show the same as without it.
+
 - **The bag is per rarity, and both banners share it.** It holds every hero
   the player owns plus a few they do not, the **open** ones:
   **3 Common · 2 Rare · 1 Legendary**.
@@ -453,6 +458,8 @@ quickly.
     `rand(seed, 'heroBag', heroId)`.
 - **An unowned hero holding Fragments is always open**, over the count, so
   a Fragment from any other source is never stranded.
+- **A season hero is always open**, over the count, while a banner leans
+  toward them (`banners.featuredHero`) and until they are recruited.
 - **The bag is derived, never stored**: owned heroes, Fragments held and the
   order decide it. No save field and no migrator are needed.
 - **The hero chance falls as the collection grows.** It is a ladder indexed
@@ -466,8 +473,6 @@ quickly.
   rung and still ends in a certainty at the hard pity (§6.3).
 - **The first calls are unchanged** (§6.2): the forced new hero is an
   open one.
-- **The banner card lists the bag**: every open hero with its Fragments
-  toward a recruit (*Warden 7/15*).
 
 **The target pace**, for a player who makes only the free calls (5 common
 and 1 golden a day): **7–8 heroes on day 7, about 12 on day 30.** Measured
@@ -704,19 +709,20 @@ how many slots it wants (1…n) and what to do with the answer.
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
 | What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
 | How long a hero's ladder is | 10 a point, 310 in all | `heroLadder.heroLevelsPerAscension`, `heroLadder.heroLevelsPerStar` (extra on a full star, 0), `heroLadder.heroMaxLevel` |
-| What a recruit costs | 15 Common · 25 Rare · 40 Legendary Fragments | `heroLadder.recruitFragments` *(per rarity, not built; today one 10)* |
+| What a recruit costs | 15 Common · 25 Rare · 40 Legendary Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
-| How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` *(not built)* |
-| The hero chance by heroes owned | §6.6 — 30% → 2% | `banners.heroChanceByOwned` *(not built; replaces `heroChance`)* |
-| Who opens first | §6.6 | `heroes.bagRank` *(not built)* |
-| The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
+| How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` |
+| The hero chance by heroes owned | §6.6 — 30% → 2% | `banners.heroChanceByOwned` |
+| Who opens first | §6.6 | `heroes.bagRank` |
+| The season hero, always open | §6.6 | `banners.featuredHero` |
+| Both pities | §6.3 | `banners.softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
 | What a duplicate pays | §6.1 | `banners.duplicateFragments` |
-| What each slot draws | §6.4 | `banners.loot`, each row with its `slot` *(not built; replaces `lootDrawsMin`, `lootDrawsMax`)* |
-| How often hero goods become a second hero slot | 20% | `banners.extraHeroSlotChance` *(not built)* |
+| What each slot draws | §6.4 | `banners.loot` — a row's reward is its slot |
+| How often hero goods become a second hero slot | 20% | `banners.extraHeroSlotChance` |
 | The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design
@@ -761,4 +767,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-135, OQ-136, OQ-137.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96.

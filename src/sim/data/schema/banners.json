@@ -7,9 +7,10 @@
       "doc": "The item one call costs: one key per banner (Docs/features/10-heroes.md §5)."
     },
     "keyGemCost": { "type": "int" },
-    "heroChance": {
-      "type": "float",
-      "doc": "The chance a call brings a whole hero, before soft pity ramps it (Docs/features/10-heroes.md §6.3)."
+    "heroChanceByOwned": {
+      "type": "list",
+      "of": { "type": "float", "min": 0, "max": 1 },
+      "doc": "The chance a call brings a whole hero, by how many heroes the player owns: the first entry with none, the last for that many and more. Soft pity ramps from it (Docs/features/10-heroes.md §6.6)."
     },
     "softPityAt": { "type": "int" },
     "hardPityAt": { "type": "int" },
@@ -18,33 +19,35 @@
       "type": "object",
       "fields": { "Common": { "type": "int" }, "Rare": { "type": "int" }, "Legendary": { "type": "int" } }
     },
-    "duplicateFragments": { "type": "int", "doc": "Fragments a hero already held turns into: the price of a recruit." },
+    "duplicateFragments": { "type": "int", "doc": "Fragments a hero already held turns into, when a call hits them again." },
     "freePerDay": { "type": "int" },
     "freeCooldownSeconds": { "type": "int" },
     "showsHero": {
       "type": "bool",
       "doc": "The store's Heroes tab stands a hero on this banner: one of the rarest rarity it can call, a different one each time the store is opened, every one before any repeats. Off: the banner shows its key."
     },
-    "lootDrawsMin": {
-      "type": "int",
-      "min": 0,
-      "doc": "The fewest prizes a call draws from `loot`, hero or not (Docs/features/10-heroes.md §6.4)."
+    "featuredHero": {
+      "type": "text",
+      "ref": "hero",
+      "emptyOk": true,
+      "doc": "The season hero this banner leans toward: while it is set, that hero is open in the player's bag over the count, until recruited (Docs/features/10-heroes.md §6.6). Empty for none."
     },
-    "lootDrawsMax": {
-      "type": "int",
+    "extraHeroSlotChance": {
+      "type": "float",
       "min": 0,
-      "doc": "The most prizes a call draws from `loot`. Each count from min to max is as likely."
+      "max": 1,
+      "doc": "The share of calls whose hero-goods prize is a second hero prize instead: one more Fragment of a hero in the bag. Never a second hit (Docs/features/10-heroes.md §6.4)."
     },
     "loot": {
       "type": "list",
-      "doc": "What a call draws its prizes from, by weight — every call, hero or not.",
+      "doc": "What a call pays, one prize per slot, each a weighted draw from its slot's rows: Fragments are the hero slot (on a miss), Stardust and HeroXp the hero-goods slot, Items the supplies slot (Docs/features/10-heroes.md §6.4).",
       "of": {
         "type": "object",
         "fields": {
           "reward": {
             "type": "text",
             "options": ["Fragments", "Stardust", "HeroXp", "Item"],
-            "doc": "Fragments: of one hero of `rarity` this banner calls. Stardust, HeroXp: into the wallet. Item: `item` into the Bag."
+            "doc": "Fragments: of one hero of `rarity` in the bag — the hero slot. Stardust, HeroXp: into the wallet — the hero-goods slot. Item: `item` into the Bag — the supplies slot."
           },
           "rarity": {
             "type": "text",
@@ -54,7 +57,11 @@
           },
           "item": { "type": "text", "ref": "item", "emptyOk": true, "doc": "Item: which. Empty for anything else." },
           "amount": { "type": "int", "min": 1, "doc": "How many." },
-          "weight": { "type": "float", "min": 0, "doc": "Its share of the draws, against the rest of the list." }
+          "weight": {
+            "type": "float",
+            "min": 0,
+            "doc": "Its share of its slot's draws, against the other rows of that slot."
+          }
         }
       }
     }

@@ -1707,6 +1707,9 @@ export interface HeroDef {
   /** Heroes carry a unit type of their own, so the hero choice feeds the same
    *  matchup chart as the troops. */
   rarity: HeroRarity;
+  /** Where it opens in the bag, before every unranked hero of its rarity;
+   *  null → after them, in a per-kingdom shuffle (10-heroes.md §6.6). */
+  bagRank: number | null;
   unitType: UnitId;
   skill: SkillDef;
   /** The body it brings to the board: it hits for `dmg` every `cooldown`
@@ -1912,7 +1915,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
 };
 
 const heroBalance = balance.heroes as Record<HeroId, {
-  rarity: string; unitType: string; skill: string; skillValue: number; skillEvery: number;
+  rarity: string; bagRank?: number; unitType: string; skill: string; skillValue: number; skillEvery: number;
   atk: number; dmg: number; def: number; hp: number; cooldown: number;
   atkPerLevel: number; dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
   troopDmgMult: number; troopHpMult: number; troopDefBonus: number;
@@ -1925,6 +1928,7 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       id,
       ...heroContent[id],
       rarity: b.rarity as HeroRarity,
+      bagRank: b.bagRank ?? null,
       unitType: b.unitType as UnitId,
       skill: { id: b.skill as SkillId, value: b.skillValue, every: b.skillEvery },
       atk: b.atk, dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
@@ -1966,7 +1970,9 @@ export interface BannerDef {
   key: ItemId;
   /** What one key costs in Gems, in the store. */
   keyGemCost: number;
-  heroChance: number;
+  /** The chance a call brings a whole hero, by heroes owned: the entry at
+   *  that count, the last one for every count past it (10-heroes.md §6.6). */
+  heroChanceByOwned: number[];
   softPityAt: number;
   hardPityAt: number;
   /** Pulls since the last Legendary that force one. 0 = this banner has no
@@ -1977,9 +1983,12 @@ export interface BannerDef {
   /** The store stands a hero of its rarest rarity on this banner, a new one
    *  each visit; false → its key. */
   showsHero: boolean;
-  /** How many prizes a call draws from `loot`, each count as likely. */
-  lootDrawsMin: number;
-  lootDrawsMax: number;
+  /** The season hero this banner leans toward: open in the bag over the
+   *  count until recruited. '' for none (10-heroes.md §6.6). */
+  featuredHero: HeroId | '';
+  /** The share of calls whose hero-goods slot pays a second Fragment. */
+  extraHeroSlotChance: number;
+  /** One prize per slot (10-heroes.md §6.4): the row's reward says its slot. */
   loot: BannerLoot[];
   /** Free pulls a day for a rewarded ad, and how long between them. */
   freePerDay: number;

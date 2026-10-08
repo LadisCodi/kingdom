@@ -36,16 +36,16 @@ const result = (over: Partial<PullResult> = {}): PullResult => ({
 });
 
 describe('fragments are the second door to a hero', () => {
-  it('recruits an unowned hero for ten fragments and keeps the change', () => {
+  it('recruits an unowned hero for its rarity\'s price and keeps the change', () => {
     const state = freshGame();
     expect(ownsHeroId(state, 'Bard')).toBe(false);
 
-    state.heroes.fragments.Bard = heroUnlockCost() + 2;
+    state.heroes.fragments.Bard = heroUnlockCost('Bard') + 2;
     expect(canUnlockHero(state, 'Bard')).toBe(true);
     expect(unlockHero(state, 'Bard')).toBe('Unlocked');
 
     expect(ownsHeroId(state, 'Bard')).toBe(true);
-    // The overflow survives, so a player sitting on twelve starts two along
+    // The overflow survives, so a player sitting on the price and two starts two along
     // the ascension ladder rather than back at zero.
     expect(state.heroes.fragments.Bard).toBe(2);
     // Unlocking is NOT an ascension: every star is still empty.
@@ -55,12 +55,12 @@ describe('fragments are the second door to a hero', () => {
 
   it('refuses below the price, and refuses a hero already owned', () => {
     const state = freshGame();
-    state.heroes.fragments.Bard = heroUnlockCost() - 1;
+    state.heroes.fragments.Bard = heroUnlockCost('Bard') - 1;
     expect(canUnlockHero(state, 'Bard')).toBe(false);
     expect(unlockHero(state, 'Bard')).toBe('NotEnoughFragments');
     expect(ownsHeroId(state, 'Bard')).toBe(false);
     // …and the refusal took nothing.
-    expect(state.heroes.fragments.Bard).toBe(heroUnlockCost() - 1);
+    expect(state.heroes.fragments.Bard).toBe(heroUnlockCost('Bard') - 1);
 
     grantHero(state, 'Bard');
     state.heroes.fragments.Bard = 99;
@@ -68,8 +68,10 @@ describe('fragments are the second door to a hero', () => {
     expect(state.heroes.fragments.Bard).toBe(99);
   });
 
-  it('prices the unlock at its own authored number', () => {
-    expect(heroUnlockCost()).toBe(HERO_LADDER.recruitFragments);
+  it('prices the unlock at its rarity\'s authored number', () => {
+    expect(heroUnlockCost('Bard')).toBe(HERO_LADDER.recruitFragments.Common);
+    expect(heroUnlockCost('Wizard')).toBe(HERO_LADDER.recruitFragments.Rare);
+    expect(heroUnlockCost('VampireLord')).toBe(HERO_LADDER.recruitFragments.Legendary);
   });
 
   // The property the whole design turns on: a hero the banner never offers is
@@ -80,7 +82,7 @@ describe('fragments are the second door to a hero', () => {
     for (let i = 0; i < 40; i++) pull(state, 'basic');
     const reachable = Object.entries(state.heroes.fragments)
       .filter(([id]) => !ownsHeroId(state, id as never))
-      .some(([, n]) => (n ?? 0) >= heroUnlockCost());
+      .some(([id, n]) => (n ?? 0) >= heroUnlockCost(id as never));
     expect(reachable || state.heroes.owned.length > 1).toBe(true);
   });
 });
