@@ -14,7 +14,8 @@
 > (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
 > moving into the Tavern (§8.3). **Designed, not built:** the hero bag and
 > the hero chance that falls with the collection (§6.6), the three prize
-> slots (§6.4), and the ten-call's grouped reveal (§8.3).
+> slots (§6.4), the ten-call's grouped reveal (§8.3), and a recruit priced
+> by rarity (§4).
 
 ## 1. The collection substrate
 
@@ -243,15 +244,15 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | | Raise | Cost |
 |---|---|---|
-| **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
+| **Recruit** | not owned → owned, no star, level 1 | that hero's Fragments: **15 Common · 25 Rare · 40 Legendary** |
 | **Level** | +1, up to the ascension's cap | Hero XP: `round(20 × 1.0165^level)` — 20 for level 2, 3,140 for level 310, **192,333** for the whole ladder |
 | **Ascension** | +1 point of the current star: **every stat +2%** and the cap **+10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
 - **A call hands over either a hero or fragments of one. They are different
-  prizes**, and both end at the same place: **ten fragments recruit the hero
-  outright.**
+  prizes**, and both end at the same place: **enough fragments (15 · 25 · 40 by
+  rarity) recruit the hero outright.**
 - Without that second door, fragments of a stranger pile up against a door
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
@@ -457,26 +458,28 @@ quickly.
 - **The hero chance falls as the collection grows.** It is a ladder indexed
   by the heroes owned; the last rung holds for ever:
 
-  | Heroes owned | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10+ |
-  |---|---|---|---|---|---|---|---|---|---|---|---|
-  | Hero chance | 20% | 18.5% | 17% | 15.5% | 14% | 12.5% | 11% | 9.5% | 8% | 6.5% | 5% |
+  | Heroes owned | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8+ |
+  |---|---|---|---|---|---|---|---|---|---|
+  | Hero chance | 30% | 26.5% | 23% | 19.5% | 16% | 12.5% | 9% | 5.5% | 2% |
 
 - **The pity does not move.** The soft-pity ramp starts from the ladder's
   rung and still ends in a certainty at the hard pity (§6.3).
 - **The first calls are unchanged** (§6.2): the forced new hero is an
   open one.
 - **The banner card lists the bag**: every open hero with its Fragments
-  toward a recruit (*Warden 7/10*).
+  toward a recruit (*Warden 7/15*).
 
-Measured with free calls only (5 common and 1 golden a day), over 400
-kingdoms; the bag and the ladder against the gacha without them:
+**The target pace**, for a player who makes only the free calls (5 common
+and 1 golden a day): **7–8 heroes on day 7, about 12 on day 30.** Measured
+over 400 kingdoms with the bag, the ladder, the three slots (§6.4) and the
+recruit prices:
 
-| Heroes owned | day 3 | day 7 | day 14 | day 30 | day 90 |
-|---|---|---|---|---|---|
-| Without | 2.9 | 4.0 | 6.3 | 15.3 | 28.6 |
-| **The bag and the ladder** | **4.5** | **7.3** | **10.9** | **17.8** | **29.2** |
+| Heroes owned | day 3 | day 7 | day 14 | day 30 | day 60 | day 90 |
+|---|---|---|---|---|---|---|
+| Free calls only | 4.9 | 7.1 | 8.6 | 12.2 | 19.6 | 25.4 |
 
-- Fragments held on heroes not owned, on day 90: 18.5 without, **1.9** with.
+- After the first week a free player's heroes come mostly from the two hard
+  pities and from Fragments, not from the 2% rung.
 
 - **The gacha sells power.** A Legendary is stronger than a Common, and the
   golden call is how one is reached — by a wallet, or by the daily free call
@@ -701,13 +704,13 @@ how many slots it wants (1…n) and what to do with the answer.
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
 | What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
 | How long a hero's ladder is | 10 a point, 310 in all | `heroLadder.heroLevelsPerAscension`, `heroLadder.heroLevelsPerStar` (extra on a full star, 0), `heroLadder.heroMaxLevel` |
-| What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
+| What a recruit costs | 15 Common · 25 Rare · 40 Legendary Fragments | `heroLadder.recruitFragments` *(per rarity, not built; today one 10)* |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
 | How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` *(not built)* |
-| The hero chance by heroes owned | §6.6 — 20% → 5% | `banners.heroChanceByOwned` *(not built; replaces `heroChance`)* |
+| The hero chance by heroes owned | §6.6 — 30% → 2% | `banners.heroChanceByOwned` *(not built; replaces `heroChance`)* |
 | Who opens first | §6.6 | `heroes.bagRank` *(not built)* |
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
@@ -758,4 +761,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-134, OQ-135, OQ-136, OQ-137.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-135, OQ-136, OQ-137.

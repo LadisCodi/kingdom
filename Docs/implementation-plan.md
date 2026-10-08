@@ -120,8 +120,8 @@ Numbers only, measured with the thirty-day harness (`npm run harness`) and the p
 - **Combat and garrisons:** OQ-72, OQ-109, OQ-110, OQ-112.
 - **The book names:** OQ-15, before a playtester sees them.
 - **The hero bag and the three prize slots** (`10-heroes.md` §6.4, §6.6,
-  designed, not built): OQ-134 (the collection's target pace), OQ-135,
-  OQ-136, OQ-137.
+  designed, not built; the target pace is set, §6.6): OQ-135, OQ-136,
+  OQ-137.
 
 ### Step 3 · The event archetype
 
