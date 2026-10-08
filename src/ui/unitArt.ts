@@ -28,6 +28,7 @@ import { el } from './format';
 import type { TrainableId, TroopId } from '../sim/state';
 import { iconEl } from './kit';
 import type { IconName } from './kit/icon';
+import BUST_FRAMING from './bustFraming.json';
 
 const img = (url: string, cls: string): HTMLElement => spriteImgAt(url, cls);
 
@@ -90,10 +91,32 @@ export function unitPortrait(trainee: TrainableId, cls = ''): HTMLElement {
  */
 export function portraitFrame(face: HTMLElement, troop: TroopId | null, cls = ''): HTMLElement {
   const badge = troop === null ? null : rankBadge(troop);
-  return el('span', { class: `k-portrait${cls ? ` ${cls}` : ''}` },
+  const frame = el('span', { class: `k-portrait${cls ? ` ${cls}` : ''}` },
     el('span', { class: 'k-portrait-mask' }, face),
     ...(badge === null ? [] : [badge]));
+  const framing = FRAMING_BY_URL.get(face.getAttribute('data-sprite') ?? '');
+  if (framing !== undefined) {
+    frame.style.setProperty('--bust-dx', String(framing.dx));
+    frame.style.setProperty('--bust-dy', String(framing.dy));
+    frame.style.setProperty('--bust-scale', String(framing.scale));
+  }
+  return frame;
 }
+
+/**
+ * HOW EACH BUST SITS IN THE ROUND FRAME, by sprite (`bustFraming.json`):
+ * scaled about its bottom centre, then moved `dx`/`dy` pixels of its 256px
+ * file. Set by eye, bust by bust, so every face sits at the same height in
+ * the circle. Only the frame reads it — a squad slot or a banner shows the
+ * file as it is — which is why the PNGs are not re-cut to match.
+ */
+const FRAMING_BY_URL = new Map(
+  Object.entries(BUST_FRAMING as Record<string, { dx: number; dy: number; scale: number }>)
+    .flatMap(([key, f]) => {
+      const url = spriteUrl(key);
+      return url === null ? [] : [[url, f] as const];
+    }),
+);
 
 /** The rank coin alone, or null at rank I. */
 export function rankBadge(troop: TroopId): HTMLElement | null {
