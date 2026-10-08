@@ -39,9 +39,10 @@ import {
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
-import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
+import { activeZones, areaCovers, type Modifier, type ModifierArea } from './sim/modifiers';
 import {
-  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, buildingInAura, hostOf, hostRelic,
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, auraTargets, buildingInAura, hostOf, hostRelic,
+  reachesBuilding, worksOnGround,
   isAwake, relicWindowMs, shrines, unhostRelic,
 } from './sim/hosts';
 import { shrineBubbleAt } from './render/shrineBubbles';
@@ -1652,13 +1653,8 @@ export class Game {
     for (const host of shrines(this.state)) {
       const relic = host.hosts;
       if (relic === undefined || !isAwake(this.state, relic)) continue;
-      const reaches = relic === 'GildedLedger'
-        ? (d: District) => residentsOf(this.state, d) > 0
-        : relic === 'ForemansSigil'
-          ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
-            || DISTRICTS[d.definitionId].trains.length > 0
-          : null;
-      if (reaches === null) continue;
+      if (worksOnGround(relic)) continue;
+      const reaches = (d: District) => reachesBuilding(this.state, relic, d);
       const text = `+${relicPercent(passiveValue(this.state, relic))}`;
       const aura = auraOf(this.state, host, relic);
       for (const d of this.state.city.districts) {
@@ -5152,6 +5148,16 @@ export class Game {
         }
         const provided = providedYieldLabel(this.state, this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
+        // A SHRINE WITH A RELIC carries its aura with it: the gold ring where
+        // it would land, and a badge on everything the relic would work on
+        // there — the reading a Shrine is placed by.
+        const aura = this.movingAura();
+        if (aura !== null) {
+          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura.area, c));
+          layer.influenceIsAura = true;
+          const label = `+${relicPercent(passiveValue(this.state, aura.relic))}`;
+          for (const cell of aura.here) layer.yieldCells.push({ cell, label, tone: 'good' });
+        }
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
@@ -5225,6 +5231,24 @@ export class Game {
    * ways — no price, no wait, and it previews the influence the building
    * ALREADY has rather than a level-1 footprint.
    */
+  /** The relic a Shrine on the move holds, its aura where the ghost stands,
+   *  and what that aura would reach there and where it stands now; null for
+   *  anything else on the move. */
+  private movingAura(): { relic: ArtifactId; area: ModifierArea; here: Coord[]; now: number } | null {
+    if (this.mode.kind !== 'moving' || this.mode.selected === null) return null;
+    const district = districtById(this.state, this.mode.districtUniqueId);
+    const relic = district?.hosts;
+    if (district === undefined || relic === undefined) return null;
+    const home = auraOf(this.state, district, relic);
+    const area = { ...home, centre: this.mode.selected };
+    return {
+      relic,
+      area,
+      here: auraTargets(this.state, this.map, relic, area, district.uniqueId),
+      now: auraTargets(this.state, this.map, relic, home, district.uniqueId).length,
+    };
+  }
+
   placementInfo(): {
     kind: 'build' | 'move';
     definitionId: DistrictId;
@@ -5235,6 +5259,9 @@ export class Game {
     captured: number;
     /** Move only: the ghost is still sitting where it started. */
     unmoved: boolean;
+    /** Move only, a Shrine holding a relic: what its aura would reach here
+     *  and reaches where it stands. */
+    aura?: { ground: boolean; here: number; now: number };
   } | null {
     if (this.mode.kind === 'moving') {
       const { definitionId, selected, origin, districtUniqueId } = this.mode;
@@ -5248,6 +5275,12 @@ export class Game {
         affordable: true,
         captured: selected ? this.capturedCells(definitionId, selected, level).length : 0,
         unmoved: selected !== null && selected.x === origin.x && selected.y === origin.y,
+        ...(() => {
+          const aura = this.movingAura();
+          return aura === null ? {} : {
+            aura: { ground: worksOnGround(aura.relic), here: aura.here.length, now: aura.now },
+          };
+        })(),
       };
     }
     if (this.mode.kind !== 'placing') return null;

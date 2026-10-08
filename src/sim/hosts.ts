@@ -33,7 +33,9 @@ import {
 import { ARTIFACTS, DISTRICTS, relicKind } from './data/definitions';
 import { mana, payMana } from './mana';
 import { resolve, type ModifierArea, type ModifierStat, areaCovers } from './modifiers';
-import { repriceTaxAnchorAround } from './population';
+import { harvestSpecAt, isInexhaustible } from './harvest';
+import { repriceTaxAnchorAround, residentsOf } from './population';
+import type { MapData } from './grid';
 import type { ArtifactId, Coord, District, GameState } from './state';
 
 /** Every Shrine standing — built, not under construction. */
@@ -230,4 +232,55 @@ export function closeRelicWindows(state: GameState, t: number): ArtifactId[] {
     closed.push(relic as ArtifactId);
   }
   return closed;
+}
+
+// ------------------------------------------------------------- what it reaches
+
+/** The stats that act on the GROUND — a cell's stock, its regrowth, a swing
+ *  or a tap on it — rather than on a building. */
+const GROUND_STATS: ReadonlySet<ModifierStat> = new Set(['harvestStock', 'recoverySpeed', 'harvestUnitsPerStrike']);
+
+/** Does this relic work on the ground (the Staff, the Sickle) rather than on
+ *  buildings (the Hammer, the Crown)? */
+export const worksOnGround = (relic: ArtifactId): boolean =>
+  ARTIFACTS[relic].passive.stats.some((s) => GROUND_STATS.has(s.stat));
+
+/** Does this relic's number move anything on this cell? A resource that
+ *  never runs dry holds no stock and never regrows, so only a relic that
+ *  moves a swing reaches it. */
+export function reachesCell(state: GameState, relic: ArtifactId, cell: Coord): boolean {
+  const spec = harvestSpecAt(state, cell);
+  if (spec === null) return false;
+  return !isInexhaustible(spec) || ARTIFACTS[relic].passive.stats.some((s) => s.stat === 'harvestUnitsPerStrike');
+}
+
+/** Does this relic's number move anything in this building: the Crown's
+ *  houses with residents, the Hammer's buildings with a crew or that train. */
+export function reachesBuilding(state: GameState, relic: ArtifactId, d: District): boolean {
+  const def = DISTRICTS[d.definitionId];
+  return ARTIFACTS[relic].passive.stats.some((s) => {
+    switch (s.stat) {
+      case 'taxRate': return residentsOf(state, d) > 0;
+      case 'workerStrikeSpeed': case 'workerSpeed': return def.maxWorkersPerLevel.length > 0;
+      case 'trainingSpeed': return def.trains.length > 0;
+      default: return false;
+    }
+  });
+}
+
+/**
+ * WHAT AN AURA WOULD REACH: the cells a ground relic works on, or the
+ * anchors of the buildings a building relic works on — built ones, never the
+ * Shrine itself. The answer a Shrine on the move is placed by.
+ */
+export function auraTargets(
+  state: GameState, map: MapData, relic: ArtifactId, area: ModifierArea, shrineId: string,
+): Coord[] {
+  if (worksOnGround(relic)) {
+    return map.cells.filter((c) => areaCovers(area, c) && reachesCell(state, relic, c));
+  }
+  return state.city.districts
+    .filter((d) => d.uniqueId !== shrineId && d.state === 'Built'
+      && reachesBuilding(state, relic, d) && buildingInAura(area, d))
+    .map((d) => d.location);
 }

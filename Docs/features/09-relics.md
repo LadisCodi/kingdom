@@ -226,6 +226,12 @@ Chapel holds it.
 - **Then Gems only**, one price each from `shrines.premiumGems` — 3,000 ·
   5,000 · 8,000 — and the ladder ends at **5 Shrines**.
 - A repaired ruin moves before its technology: a move is not a build.
+- **A Shrine holding a relic is moved by its aura.** While it is out, the
+  ghost carries the gold aura and a **+X%** badge on everything the relic
+  would work on there — resource cells for the Staff and the Sickle,
+  buildings for the Hammer and the Crown. The move bar says **Reaches N**
+  (green when it beats the current spot, red when it loses) over **M where
+  it stands**.
 
 ## 3. The season
 
