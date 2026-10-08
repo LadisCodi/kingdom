@@ -70,8 +70,8 @@ Every resource cell carries:
   `recoverySeconds`.
 - `workers a cell supports = drain ÷ (drain + recovery)`; it never reaches 1.
 - Author `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`.
-  A cell then supports about **0.55** workers, rising with the walk (0.59 for a
-  Forest cell next door). **Roughly two cells per worker.**
+  A cell then supports about **0.55** workers, rising with the walk.
+  **Roughly two cells per worker.**
 - The law authors the cell; the trip belongs to where the shed sits. The rate
   column below varies with distance; the cell's numbers do not.
 - `tap.workSeconds` = 10 makes a ten-unit tree about ten taps.
@@ -79,7 +79,7 @@ Every resource cell carries:
 
 | Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
 |---|---|---|---|---|---|---|---|---|
-| **Forest** | 1 | 10 | 10 | 90 | **1** | **10** | 4.7 → 3.3/min | 0.59 |
+| **Forest** | 1 | 10 | 10 | 180 | **1** | **10** | 4.7 → 3.3/min | 0.42 |
 | **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 5.6 → 3.8/min | 0.64 |
 | **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 4.7 → 3.3/min | — |
 | **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 7.9 → 6.4/min | — |
@@ -91,7 +91,10 @@ Every resource cell carries:
 - The spread narrows as the ground slows: a tree next door pays 1.4× one at
   radius 4, an iron peak 1.1×. Fast ground rewards a close shed; slow ground
   does not care.
-- The renewables hold the law to within a hundredth.
+- Crops hold the law to within a hundredth. **Forest is authored at twice
+  the law's recovery**: a tree supports 0.42 workers, so a Sawmill reaches a
+  ring further (radius 2) to keep its crew of three fed
+  ([`buildings.md`](buildings.md) §4.4).
 - On slow ground the **floor** governs: ten seconds of work on a rock, an iron
   peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
   shows in the first `TapPower` levels.
@@ -123,9 +126,9 @@ Every resource cell carries:
 - The Stone column moves nothing while no Stone source holds stock.
 - Poor ground is bad twice: the total per cycle scales with the multiplier, the
   sustainable rate falls further because recovery is a fixed cost. A desert
-  forest drains in 50 s and sits out 90, yielding 2.1 Wood/min against a
-  grassland tree's 3.5 (61%, not 50%); its workers-per-cell drops from 0.59 to
-  0.36, so a desert needs about three cells per worker.
+  forest drains in 50 s and sits out 180, yielding 1.3 Wood/min against a
+  grassland tree's 2.5 (53%, not 50%); its workers-per-cell drops from 0.41 to
+  0.22, so a desert needs about five cells per worker.
 - On the map as painted, Grassland holds 45 of the 57 trees; Tundra holds no
   trees (OQ-56).
 
@@ -133,9 +136,9 @@ Every resource cell carries:
 
 - A cell's sustainable rate is `stock ÷ (drain + recovery)`, so the province has
   one too.
-- At **57 Trees** on the map as painted, sheds next door: **157 Wood/min** is
-  everything the province can grow, and **33 workers** collect all of it
-  (against the 30 a Townhall-3 city can house).
+- At **57 Trees** on the map as painted, sheds next door: **about 113
+  Wood/min** is everything the province can grow, and **about 24 workers**
+  collect all of it (against the 30 a Townhall-3 city can house).
 - Both figures move with the walk: farther sheds collect less of the same
   ceiling and need more bodies.
 - The map editor should compute this census, weighting each cell by its ground

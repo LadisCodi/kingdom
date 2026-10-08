@@ -285,7 +285,7 @@
     "fogDiscoverRadius": 2,
     "maxWorkersPerLevel": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     "maxCountPerTownhallLevel": [1, 2, 3, 4, 4, 5, 5, 6, 6, 6],
-    "influenceRadiusPerLevel": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "influenceRadiusPerLevel": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
     "requiredTownhallLevelPerLevel": [1, 2, 3, 4, 6, 7, 8, 9, 10],
     "requiredPopulationPerLevel": [],
     "armyCapPerLevel": [],

@@ -165,8 +165,10 @@
 
 ### 4.4 Sawmill
 
-- Sends its crew to every forest inside its area of influence: **radius 1,
-  3 workers, at every level**.
+- Sends its crew to every forest inside its area of influence: **radius 2,
+  3 workers, at every level** — a ring further than the other producers,
+  because a forest takes twice as long to grow back
+  ([`04-harvest.md`](04-harvest.md) §2.1).
 - Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
   per level.
 
