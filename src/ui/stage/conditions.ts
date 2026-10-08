@@ -23,7 +23,12 @@ import {
 } from '../../sim/state';
 import { districtCount, placementBlock } from '../../sim/districts';
 import { workableCountAt } from '../../sim/workers';
-import { reachSpot } from './targets';
+import { reachSpot, uiNode } from './targets';
+import { campHex, dungeonHex, heldHexes } from './boardRead';
+import { goalNames } from '../../sim/quests';
+import { isStoreFull } from '../../sim/storage';
+import { knowledgeCap, knowledgeHeld } from '../../sim/knowledge';
+import { idleCrew } from './targets';
 import { readyTrips } from '../../sim/world/explorers';
 import type { Game } from '../../game';
 
@@ -125,9 +130,10 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     // needs before a line can point at it (it steps aside for all of them).
     case 'mainScreen': return !game.hasOpenSheet();
     // ON SCREEN, not merely in the document: the quest scroll stays in the
-    // DOM, hidden, while a card covers it.
+    // DOM, hidden, while a card covers it. A key ending in `:` is any of its
+    // kind (`notice:` — any notice).
     case 'ui': {
-      const node = document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(c.target)}"]`);
+      const node = uiNode(c.target);
       if (node === null) return false;
       const r = node.getBoundingClientRect();
       return r.width > 0 || r.height > 0;
@@ -221,6 +227,30 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     // The Bag: `amount` (at least one) of an item, or of an item kind, held —
     // and none left of it, once it has been used.
     case 'holdsItem': return itemsHeld(state, c.target) >= Math.max(1, c.amount);
+    // One of a kind (or of a group, `AnyProducer`) at level `amount` — or
+    // with its upgrade to it under way: the Upgrade pressed is the lesson.
+    case 'upgraded':
+      return state.city.districts.some((d) => goalNames(c.target, d.definitionId)
+        && (d.level >= Math.max(2, c.amount) || state.city.queue.some((q) => q.kind === 'upgrade'
+          && q.districtUniqueId === d.uniqueId && (q.targetLevel ?? 0) >= Math.max(2, c.amount))));
+    // Soldiers: `amount` of them standing, or one in training.
+    case 'troops':
+      return state.army.length >= Math.max(1, c.amount)
+        || state.city.trainingQueue.some((i) => i.trainee !== 'Villager');
+    // A building's store full (one of a kind, when it names one): what stops it.
+    case 'storeFull':
+      return state.city.districts.some((d) => (c.target === '' || d.definitionId === c.target)
+        && isStoreFull(state, d));
+    // A crew with more hands than ground in reach (04-harvest.md §6).
+    case 'idleCrew': return idleCrew(game) !== null;
+    case 'knowledgeFull': return knowledgeHeld(state) >= knowledgeCap();
+    // The world board (19-world-map.md): ground claimed beyond the city, and
+    // what the player has come to see on it.
+    case 'hexHeld': return heldHexes(game) >= Math.max(1, c.amount);
+    case 'boardSeen':
+      return c.target === 'camp' ? campHex(game) !== null
+        : c.target === 'dungeon' ? dungeonHex(game) !== null
+          : c.target === 'portal' ? game.worldSource().portal()?.open === true : false;
     case 'itemUsed': return itemsHeld(state, c.target) === 0;
     default: return false;
   }

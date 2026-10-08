@@ -95,20 +95,24 @@
 
 | `point` | Shows |
 |---|---|
-| `ui:<key>` | a control on screen — a nav tab, a card, a button (the keys are listed in `src/ui/stage/targets.ts`) |
+| `ui:<key>` | a control on screen — a nav tab, a card, a button (the keys are listed in `src/ui/stage/targets.ts`); a key ending in `:` is the first of its kind (`ui:notice:`) |
 | `cell:<x>,<y>` | one map cell |
 | `feature:<id>` | the nearest cell with that feature out of the dark |
 | `feature:<id>Fog` | the nearest fogged one the player can pay for — to be bought; with none payable, the frontier cell that leads towards the nearest one |
 | `feature:<id>Revealed` | the nearest revealed one that is not spent — to be tapped |
 | `district:<id>` | the nearest building of that kind |
+| `crew:<id>` · `lowest:<id>` | the one of that kind with the most room for hands · the furthest behind in level |
+| `idle:` · `full:` | a building whose crew has more hands than ground in reach · one whose store is full |
 | `lair:<id>` · `landmark:<id>` | that site |
-| `lair:` | the first lair found that still stands |
+| `lair:` · `landmark:` | the first lair found that still stands · the nearest landmark out of the dark and unclaimed |
 | `abandoned:<id>` | an abandoned building, wherever the fog has it — silhouette, ruin or revealed |
 | `abandoned:<id>Fog` | the way to it: the ruin once its fog can be paid for; until then the cell the player can pay for that is nearest it |
 | `reach:<building>` | where that building would work the most — its crew's cells in reach — of the ground it could stand on, cleared or still fogged; clear ground first, then the nearest the Townhall. The building being moved counts its own cell as free |
 | `treasure` | the nearest treasure still on the ground |
 | `hex:explore` | on the world board: the misty hex nearest the city that an explorer can reach and nobody is out to — one with a promise first |
 | `hex:ready` | on the world board: the hex an explorer waits at for the player's tap |
+| `hex:claim` | on the world board: the nearest revealed hex nobody holds, unguarded, beside the city or ground the player holds |
+| `hex:camp` · `hex:dungeon` · `hex:portal` | on the world board: the nearest camp in sight and unbeaten · dungeon out of the dark · the player's Portal |
 | `quest` | the quest pill |
 | `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
@@ -165,6 +169,10 @@ which one a line waits on is data.
 | `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
 | `explorerSent` · `explorerReady` · `explorerRevealed` | `amount` explorers sent, ever · one waits at its hex for the tap · `amount` hexes revealed by that tap, ever |
 | `holdsItem` · `itemUsed` | the Bag holds `amount` (at least one) of that item or kind of item · holds none of it any more |
+| `upgraded` | one of that kind (or group, `AnyProducer`) is at level `amount`, or its upgrade to it is under way |
+| `troops` | `amount` soldiers stand, or one is in training |
+| `storeFull` · `idleCrew` · `knowledgeFull` | a building's store (of that kind, or any) is full · a crew has more hands than ground in reach · the Knowledge bar is at its cap |
+| `hexHeld` · `boardSeen` | `amount` hexes claimed beyond the city · a `camp` or `dungeon` is in sight on the world board, or the `portal` is open |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
 
@@ -178,6 +186,10 @@ which one a line waits on is data.
 | `woodcutter` | **Old Hob** | the woodcutter who never left the fog: gruff, superstitious, distrusts books, secretly proud of Isolde. Her foil | `portrait_hob` | full figure |
 | `villager` | **Tom Miller** | the Millers' son, the first villager home | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
+| `mason` | **Master Kofi** | master of the Builders' Guild, Oakville chapter (of one): a proud, warm perfectionist in his fifties who quotes the guild charter by article and blames his cousin for every crooked wall. Teaches building, upgrading and waiting | `portrait_mason` | full figure |
+| `florist` | **Priya** | nine and three quarters, and certain the town is ugly: bossy, delighted, makes Oakville pretty. Teaches the decorations, moving things and transplanting | `portrait_florist` (drawn shorter: a child) | full figure |
+| `merchant` | **Marisol** | merchant of everywhere: charming, a little sly, sold Isolde's aunt a bridge. Speaks when the Store opens | `portrait_merchant` | full figure |
+| `courier` | **Idris** | the royal courier, young and breathless, a pigeon on his shoulder. Speaks when the friends' letters arrive and the first notice is pinned | `portrait_courier` | full figure |
 | `scout` | **Wren** | the Royal Scout, the kingdom's explorer on the world board: eager, quick, always first out of the gate. Speaks when she is sent out and when she has found something | `hero_scout` (until she has her own) | full figure |
 
 - **Isolde has five faces** — at rest, happy (eyes closed, a wide smile, the
@@ -186,7 +198,8 @@ which one a line waits on is data.
   never moves her. Claims and praise are happy; threats and shortfalls
   worried; what the fog gives up surprised; a new building or book to try,
   an idea.
-- **Hob and Tom have four faces** — at rest, happy, worried, surprised.
+- **Hob, Tom, Kofi, Priya, Marisol and Idris have four faces** — at rest,
+  happy, worried, surprised.
   Hob's worried is a grumpy scowl, arms crossed.
 - **Every speaker is a full figure**: it stands on the box, cut at the waist
   by it. The figures share the heroes' style and frame (512×768); the

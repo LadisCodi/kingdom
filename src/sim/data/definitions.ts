@@ -577,7 +577,8 @@ export type SceneCondition =
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
   | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen' | 'worldVisited'
   | 'explorerSent' | 'explorerReady' | 'explorerRevealed'
-  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
+  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed'
+  | 'upgraded' | 'troops' | 'storeFull' | 'idleCrew' | 'knowledgeFull' | 'hexHeld' | 'boardSeen';
 
 export interface SceneLine {
   speaker: string;

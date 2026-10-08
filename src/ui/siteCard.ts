@@ -19,7 +19,7 @@ import { manaCap } from '../sim/mana';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import type { ItemId, LairId } from '../sim/state';
 import { itemIcon } from './itemArt';
-import { el, formatDuration, formatExact } from './format';
+import { coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, sectionHead, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
 
@@ -209,7 +209,7 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       el('div', { class: 'lc-reward' }, ...chips),
       el('div', { class: 'lc-go' }, lair.defeated
         ? btn({ label: 'Claim', kind: 'primary', onClick: () => game.doClaimLair(lairId) })
-        : btn({ label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId) })));
+        : coach(btn({ label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId) }), 'lair-attack')));
   };
 
   return {

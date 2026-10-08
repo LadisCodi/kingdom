@@ -372,7 +372,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     if (upgradeRefusal(game.state, district.uniqueId) === null) {
       upgrade.append(ctaBadge(1, `upgrade:${district.uniqueId}`));
     }
-    upgradeAction.push(el('div', { class: 'dc-upgrade' }, upgrade));
+    if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, coach(upgrade, 'card:upgrade')));
   }
 
   // THE HEADER: the building's name, and its two tools on the right — Move,

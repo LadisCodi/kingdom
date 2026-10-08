@@ -4,8 +4,7 @@
 > instead of raising a building — the crop plot — and moving a tree or a
 > crop plot to another cell, so the player can arrange the city around them.
 >
-> **Status:** built, but for the tutorial scene that teaches moving a tree
-> (§5).
+> **Status: built.**
 
 ## 1. A plantable
 
@@ -63,10 +62,11 @@
 - A worker going to it or swinging at it finds it gone and walks home.
 - The number of trees in the province never changes.
 
-## 5. The tutorial — not built
+## 5. The tutorial
 
-- When Transplanting is researched, a scene walks the player through moving
-  one tree.
+- When Transplanting is researched, Priya says a tree may be held and moved,
+  and points at one (`transplant`, [`23-tutorials.md`](23-tutorials.md) §4.5).
+- A crop plot is planted from the Build menu in the `furrows` lesson (§3.2).
 
 ## 6. Dials, in the order to reach for them
 

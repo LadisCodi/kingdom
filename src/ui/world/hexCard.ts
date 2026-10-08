@@ -539,11 +539,11 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
   const hex = el('div', { class: 'dc-head' },
     portrait(groundSprite(bh), 'tile'),
     el('div', { class: 'dc-what-col' }, distanceLine(game, bh.index)));
-  const build = btn({
+  const build = coach(btn({
     label: 'Build', kind: 'primary', cost: { Gold: gold }, have: (c: CurrencyId) => game.walletValue(c),
     disabledReason: reason,
     onClick: () => void game.doClaimHex(bh.index, gold),
-  });
+  }), 'hex-build');
   const districtHead = el('div', { class: 'dc-head' },
     portrait(DISTRICT_SPRITE[district], 'build'),
     el('div', { class: 'dc-what-col' },

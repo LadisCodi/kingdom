@@ -226,6 +226,7 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
     class: `bld-tab${tab === openTab ? ' is-open' : ''}`,
     type: 'button',
     'aria-pressed': tab === openTab ? 'true' : 'false',
+    'data-coach': `build-tab:${tab}`,
   },
     iconEl(TAB_ICON[tab], { size: 'sm' }),
     el('span', { class: 'bld-tab-label' }, tab),

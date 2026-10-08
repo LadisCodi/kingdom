@@ -84,8 +84,14 @@ function bringIntoView(game: Game, key: string): void {
     const scrolls = /(auto|scroll)/.test(style.overflowX + style.overflowY);
     if (!scrolls) continue;
     const box = p.getBoundingClientRect();
+    // The row itself, and nothing above it: `scrollIntoView` would also
+    // scroll the frame — clipped, but still scrollable — and slide the whole
+    // game sideways, the quest pill off the screen.
     if (r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom) {
-      node.scrollIntoView({ block: 'nearest', inline: 'center' });
+      p.scrollBy({
+        left: r.left + r.width / 2 - (box.left + box.width / 2),
+        top: r.top < box.top ? r.top - box.top : r.bottom > box.bottom ? r.bottom - box.bottom : 0,
+      });
     }
     return;
   }

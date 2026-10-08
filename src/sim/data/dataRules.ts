@@ -516,7 +516,12 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   bookOpen: () => ['Kingdom', 'Sagas', 'Atlas'],
   featureSeen: () => STATIC_IDS.feature ?? [],
   sighted: () => ['', 'mountain', 'landmark', 'lair', 'abandoned', ...(STATIC_IDS.landmarkKind ?? []), ...(STATIC_IDS.lair ?? []), ...ABANDONED_IDS],
-  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag'],
+  doorOpen: () => ['research', 'build', 'heroes', 'relics', 'store', 'world', 'knowledge', 'banner', 'survey', 'bag', 'friends'],
+  // One kind, or a group of kinds, at a level.
+  upgraded: (doc) => [...Object.keys(doc.districts ?? {}), ...ADJACENCY_GROUPS],
+  // '' is any building's store.
+  storeFull: (doc) => ['', ...Object.keys(doc.districts ?? {})],
+  boardSeen: () => ['camp', 'dungeon', 'portal'],
   abandonedRevealed: () => ABANDONED_IDS,
   siteOpen: () => ABANDONED_IDS,
   repairing: () => ABANDONED_IDS,
