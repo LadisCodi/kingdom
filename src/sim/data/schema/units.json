@@ -21,6 +21,16 @@
     "squadSize": { "type": "int", "min": 1 },
     "frontage": { "type": "int" },
     "cooldown": { "type": "int" },
+    "speed": {
+      "type": "int",
+      "min": 0,
+      "doc": "How far it walks in one tick, in field units — a slot is 100 across (combat.md §10)."
+    },
+    "range": {
+      "type": "int",
+      "min": 1,
+      "doc": "How near its target it must stand to strike, centre to centre, in field units (combat.md §8)."
+    },
     "recruitCost": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "currency" },
     "trainDurationSeconds": { "type": "int" },
     "evolutions": {

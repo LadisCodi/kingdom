@@ -1,4 +1,4 @@
-// The tick resolver (Docs/features/combat.md §7, §8, §9, §10, §13).
+// The tick resolver (Docs/features/combat.md §3, §7, §8, §9, §10, §13).
 //
 // A fight is a deterministic auto-battler with no input in it, and this file
 // is the whole of it: two boards go in, an ORDERED LIST OF EVENTS comes out.
@@ -13,8 +13,9 @@
 // resolved on a server later — a replay is `(both boards, the list)`, and
 // nothing about the renderer knows which produced it.
 //
-// EVERYTHING IS INTEGER. The only division is the type fraction, floored
-// (§7), so the same boards produce the same list bit-for-bit on any engine —
+// EVERYTHING IS INTEGER, positions on the field included. The only divisions
+// are the type fraction (§7) and a walk's step (§10), each rounded to a whole
+// number, so the same boards produce the same list bit-for-bit on any engine —
 // which is what makes the golden test in `tests/battle.test.ts` a real guard
 // rather than a snapshot that drifts.
 
@@ -79,8 +80,21 @@ export interface SlotRef {
   id: number;
 }
 
+/** A point on the field, in field units (§3): x across, y from the line the
+ *  two sides face over — the attacker's rows below it (positive), the
+ *  defender's above. */
+export interface FieldPt {
+  x: number;
+  y: number;
+}
+
+/** A slot as the fight opens: where it stands with it. */
+export type PlacedSlot = BoardSlot & FieldPt;
+
 export type BattleEvent =
-  | { kind: 'start'; ours: BoardSlot[]; theirs: BoardSlot[] }
+  | { kind: 'start'; ours: PlacedSlot[]; theirs: PlacedSlot[] }
+  /** A slot walked this tick, and where it now stands (§10). */
+  | { kind: 'move'; tick: number; at: SlotRef; x: number; y: number }
   | {
     kind: 'attack';
     tick: number;
@@ -258,6 +272,39 @@ const alive = (s: BoardSlot): number => Math.ceil(s.hpPool / s.hpUnit);
 const living = (board: Board): BoardSlot[] => board.slots.filter((s) => s.hpPool > 0);
 
 /**
+ * WHERE A SIDE STANDS when the fight opens (§3): three lines behind the gap —
+ * the front row, the back row, the heroes — each centred, its slots in id
+ * order `fieldColPitch` apart. A hero stands in the heroes' line whatever row
+ * its type targets as.
+ */
+export function placeSide(slots: readonly BoardSlot[], side: Side): FieldPt[] {
+  const sign = side === 'ours' ? 1 : -1;
+  const lineOf = (s: BoardSlot): number => (s.kind === 'hero' ? 2 : s.row === 'front' ? 0 : 1);
+  const out: FieldPt[] = [];
+  for (let line = 0; line < 3; line++) {
+    const inLine = slots.filter((s) => lineOf(s) === line);
+    inLine.forEach((s, i) => {
+      out[s.id] = {
+        x: Math.trunc(((2 * i - (inLine.length - 1)) * COMBAT.fieldColPitch) / 2),
+        y: sign * (Math.trunc(COMBAT.fieldGap / 2) + line * COMBAT.fieldRowPitch),
+      };
+    });
+  }
+  return out;
+}
+
+/** The whole square root, exact on any engine: `Math.sqrt` is only the
+ *  first guess, and the two loops settle it on the integer. */
+function isqrt(n: number): number {
+  let r = Math.floor(Math.sqrt(n));
+  while (r * r > n) r -= 1;
+  while ((r + 1) * (r + 1) <= n) r += 1;
+  return r;
+}
+
+const dist2 = (a: FieldPt, b: FieldPt): number => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+
+/**
  * THE ATTACK AND DEFENCE RULE (§7), Heroes III's: the damage a blow carries
  * is moved by how far the attacker's Attack stands from the target's
  * Defence. Each point of Attack over adds `attackStepPerMille`, up to
@@ -288,33 +335,42 @@ function fraction(attacker: UnitId, target: UnitId): { num: number; den: number 
 }
 
 /**
- * Who this slot swings at, resolved fresh on every attack (§8).
+ * Who this slot goes for, resolved fresh on every tick (§8): what it walks
+ * toward, and what it strikes once it is near enough.
  *
  * Ties break by the lowest slot id, which is what makes the whole fight
  * reproducible: there is never a moment where two targets are equally good
  * and the answer depends on how a list happened to be ordered.
  */
-function pickTarget(attacker: BoardSlot, enemy: Board): BoardSlot | null {
+function pickTarget(
+  attacker: BoardSlot, here: FieldPt, enemy: Board, where: readonly FieldPt[],
+): BoardSlot | null {
   const candidates = living(enemy);
   if (candidates.length === 0) return null;
   const inRow = (row: Row): BoardSlot[] => candidates.filter((s) => s.row === row);
-  const lowestId = (list: BoardSlot[]): BoardSlot => list
-    .reduce((best, s) => (s.id < best.id ? s : best));
+  const nearest = (list: BoardSlot[]): BoardSlot => list.reduce((best, s) => {
+    const d = dist2(here, where[s.id]!);
+    const b = dist2(here, where[best.id]!);
+    return d < b || (d === b && s.id < best.id) ? s : best;
+  });
 
   switch (targetingFor(attacker.type)) {
     case 'ranged': {
-      // The weakest thing on the board, wherever it is standing: an archer
-      // line finishes what the front rank started.
-      return candidates.reduce((best, s) => (
+      // The weakest thing it can reach, wherever it is standing: an archer
+      // line finishes what the front rank started. Nothing in reach: it
+      // walks toward the nearest.
+      const reach = UNITS[attacker.type].range ** 2;
+      const near = candidates.filter((s) => dist2(here, where[s.id]!) <= reach);
+      return near.length === 0 ? nearest(candidates) : near.reduce((best, s) => (
         s.hpPool < best.hpPool || (s.hpPool === best.hpPool && s.id < best.id) ? s : best));
     }
     case 'flanker': {
       const back = inRow('back');
-      return lowestId(back.length > 0 ? back : candidates);
+      return nearest(back.length > 0 ? back : candidates);
     }
     default: {
       const front = inRow('front');
-      return lowestId(front.length > 0 ? front : candidates);
+      return nearest(front.length > 0 ? front : candidates);
     }
   }
 }
@@ -333,9 +389,13 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     ours: { slots: ours.slots.map((s) => ({ ...s })) },
     theirs: { slots: theirs.slots.map((s) => ({ ...s })) },
   };
-  const events: BattleEvent[] = [
-    { kind: 'start', ours: sides.ours.slots.map((s) => ({ ...s })), theirs: sides.theirs.slots.map((s) => ({ ...s })) },
-  ];
+  // Where every slot stands, by side and id — the only state the field adds.
+  const where: Record<Side, FieldPt[]> = {
+    ours: placeSide(sides.ours.slots, 'ours'),
+    theirs: placeSide(sides.theirs.slots, 'theirs'),
+  };
+  const placed = (side: Side): PlacedSlot[] => sides[side].slots.map((s) => ({ ...s, ...where[side][s.id]! }));
+  const events: BattleEvent[] = [{ kind: 'start', ours: placed('ours'), theirs: placed('theirs') }];
   const ready: Record<Side, number[]> = {
     ours: sides.ours.slots.map((s) => s.cooldown),
     theirs: sides.theirs.slots.map((s) => s.cooldown),
@@ -474,15 +534,55 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
   };
 
   for (let tick = 1; tick <= COMBAT.timeoutTicks; tick++) {
+    // EVERYONE WALKS AT ONCE, from where everyone stood as the tick began:
+    // otherwise the side that moves second closes the last gap on its own
+    // turn and strikes first, and the attacker's first blow (below) is lost
+    // to the order of a loop.
+    const before: Record<Side, readonly FieldPt[]> = { ours: [...where.ours], theirs: [...where.theirs] };
     for (const side of ['ours', 'theirs'] as Side[]) {
       const foe: Side = side === 'ours' ? 'theirs' : 'ours';
       for (const slot of sides[side].slots) {
         if (slot.hpPool <= 0) continue;
-        ready[side][slot.id] -= 1;
-        if (ready[side][slot.id]! <= 0) {
+        const here = before[side][slot.id]!;
+        const target = pickTarget(slot, here, sides[foe], before[foe]);
+        if (target === null) break;
+        // OUT OF REACH, it walks: straight at its target, `speed` a tick,
+        // stopping where it can strike. Nothing blocks it.
+        const { speed, range } = UNITS[slot.type];
+        const there = before[foe][target.id]!;
+        const d2 = dist2(here, there);
+        if (d2 > range * range && speed > 0) {
+          const dist = isqrt(d2);
+          const dx = there.x - here.x;
+          const dy = there.y - here.y;
+          // The last step lands just inside `range` of the target — over
+          // `dist + 1`, which is past the true distance, and truncated toward
+          // it, so it is always in reach. Every other step is `speed` along
+          // the line, rounded.
+          const last = dist - range <= speed;
+          const x = last ? there.x - Math.trunc((dx * range) / (dist + 1)) : here.x + Math.round((dx * speed) / dist);
+          const y = last ? there.y - Math.trunc((dy * range) / (dist + 1)) : here.y + Math.round((dy * speed) / dist);
+          if (x !== here.x || y !== here.y) {
+            where[side][slot.id] = { x, y };
+            events.push({ kind: 'move', tick, at: { side, id: slot.id }, x, y });
+          }
+        }
+      }
+    }
+    // THEN THE BLOWS, attacker first, each slot at whatever is its target
+    // now and within reach of where it stands.
+    for (const side of ['ours', 'theirs'] as Side[]) {
+      const foe: Side = side === 'ours' ? 'theirs' : 'ours';
+      for (const slot of sides[side].slots) {
+        if (slot.hpPool <= 0) continue;
+        const target = pickTarget(slot, where[side][slot.id]!, sides[foe], where[foe]);
+        if (target === null) break;
+        const { range } = UNITS[slot.type];
+        // Its countdown runs while it walks, and a slot that is ready holds
+        // its blow until it arrives.
+        if (ready[side][slot.id]! > 0) ready[side][slot.id] -= 1;
+        if (ready[side][slot.id]! <= 0 && dist2(where[side][slot.id]!, where[foe][target.id]!) <= range * range) {
           ready[side][slot.id] = slot.cooldown;
-          const target = pickTarget(slot, sides[foe]);
-          if (target === null) break;
           const hits = Math.min(alive(slot), slot.frontage);
           if (land(tick, side, slot, target, hits, slot.dmg)) return finish(tick, side, 'wiped');
         }

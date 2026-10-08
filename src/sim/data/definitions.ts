@@ -1121,6 +1121,11 @@ export interface UnitDef {
   frontage: number;
   /** Ticks between this type's attacks (§10). A tick is 100 ms logical. */
   cooldown: number;
+  /** Field units it walks in one tick (§10); a slot is `fieldColPitch` across. */
+  speed: number;
+  /** How near its target it must stand to strike, centre to centre, in field
+   *  units (§8). A hero of this type walks and reaches the same. */
+  range: number;
   /** Troops of this type in ONE squad — the cap on a party slot's count, and
    *  the size the battle screen fills a slot to (Docs/features/combat.md §4).
    *  Fixed at every tier: a tier multiplies what a troop is worth, never how

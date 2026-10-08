@@ -17,8 +17,11 @@
 ## 1. Model
 
 - Deterministic tick auto-battler. **No input during the fight.**
+- **Slots stand on a field and walk** to their targets before they strike
+  (§3, §10). No pathfinding, no collision.
 - **Headless resolver + renderer**, separated by an event stream (§12).
-- **Integer arithmetic only.** The only divisions are the fixed fractions in §7.
+- **Integer arithmetic only.** The only divisions are the fixed fractions in §7
+  and a step's share of a walk (§10).
 - **No RNG in resolution.** The only seeded RNG is enemy generation (§10).
 - One resolver for every caller.
 
@@ -40,7 +43,18 @@ Per side:
   its type puts it in (§11).
 - Hero slots are independent of troop slots: a hero never occupies a troop slot
   and never joins a squad.
-- Position determines targeting order only (§8).
+- The row is a slot's **rank** for targeting (§8), and stays its rank
+  wherever it walks.
+
+**The field.** Integer coordinates in field units; a slot is 100 across.
+
+- Each side stands in three lines behind the middle line: front row, back
+  row, heroes.
+- The two front rows open `combat.fieldGap` (360) apart; each line behind is
+  `combat.fieldRowPitch` (100) further back.
+- A line is centred, its slots in id order `combat.fieldColPitch` (100)
+  apart.
+- The attacker stands below the middle line, the defender above it.
 
 How many slots the player may fill: **every troop slot, always** — nothing
 gates one and nothing sells one, so what limits a party is the army at home
@@ -98,19 +112,26 @@ and the army cap; hero slots one free, the rest Gems
 
 ## 5. Unit stats — rank I
 
-| Unit | `squadSize` | `frontage` | `atk` | `dmg` | `def` | `hp` | `cooldown` | `power` | Targeting |
-|---|---|---|---|---|---|---|---|---|---|
-| **Warrior** | 100 | 15 | 4 | 5 | 6 | 60 | 10 | 3 | Melee |
-| **Lancer** | 100 | 15 | 6 | 8 | 4 | 48 | 10 | 4 | Melee |
-| **Archer** | 80 | 20 | 6 | 6 | 2 | 30 | 12 | 4 | Ranged |
-| **Cavalry** | 60 | 8 | 8 | 20 | 3 | 72 | 15 | 7 | Flanker |
+| Unit | `squadSize` | `frontage` | `atk` | `dmg` | `def` | `hp` | `cooldown` | `speed` | `range` | `power` | Targeting |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Warrior** | 100 | 15 | 4 | 5 | 6 | 60 | 10 | 10 | 90 | 3 | Melee |
+| **Lancer** | 100 | 15 | 6 | 8 | 4 | 48 | 10 | 10 | 120 | 4 | Melee |
+| **Archer** | 80 | 20 | 6 | 6 | 2 | 30 | 12 | 8 | 1,000 | 4 | Ranged |
+| **Cavalry** | 60 | 8 | 8 | 20 | 3 | 72 | 15 | 20 | 90 | 7 | Flanker |
 
 - **Attack** (`atk`) and **Defence** (`def`) are ratings; **Damage** (`dmg`)
   is what one troop takes off at an even pair (§7).
 - The four are what a unit's and a hero's card shows, in that order.
 
-`cooldown` is in ticks. `squadSize`, `frontage` and `cooldown` are the same
-at every rank (§6).
+`cooldown` is in ticks. `speed` is field units a tick; `range` is how near
+its target a slot must stand to strike, centre to centre. `squadSize`,
+`frontage`, `cooldown`, `speed` and `range` are the same at every rank (§6).
+
+- **Melee closes in about a second and a half** (front rows 360 apart, both
+  walking 10 a tick, striking at 90). The Lancer's spear strikes from 120.
+- **Cavalry rides twice as fast**, through the front to the back row.
+- **An Archer reaches the whole field** from where it stands, so it never
+  walks.
 
 - **A fight lasts at least ten seconds**, a fair one fifteen to thirty, a
   dungeon's boss room up to a minute and a half. Two dials hold it there:
@@ -297,15 +318,18 @@ linearly.
 
 ## 8. Targeting
 
-Resolved fresh on every attack. Hero slots are valid targets.
+Resolved fresh on every tick: the target is what a slot walks toward, and
+what it strikes once within `range`. Hero slots are valid targets.
 
 | Rule | Behaviour |
 |---|---|
-| **Melee** | Enemy front row while any front-row slot lives; then the back row |
-| **Ranged** | Lowest `hp_pool` enemy slot, any row |
-| **Flanker** | Enemy back row while any back-row slot lives; then the front row |
+| **Melee** | The nearest enemy in the front row while any front-row slot lives; then the nearest of the rest |
+| **Ranged** | Lowest `hp_pool` enemy slot within `range`, any row; none within range → the nearest |
+| **Flanker** | The nearest enemy in the back row while any back-row slot lives; then the nearest of the rest |
 
-Ties break by lowest slot index.
+- Nearness is squared distance, so it stays integer.
+- Ties break by lowest slot index.
+- A hero walks and reaches as its type does.
 
 ## 9. Heroes and villains
 
@@ -359,6 +383,7 @@ as ticks.
 
   - A skill's hit is one hit of `base`, through the Attack/Defence step and
     the type fraction (§7). Ties break by lowest slot id.
+  - **A skill has no range**: it reaches its targets wherever they stand.
   - A heal never lifts a wiped slot, and brings troops back as the pool
     climbs.
 - **Rally** — at battle start, to **every** squad on its side, on the
@@ -383,8 +408,21 @@ as ticks.
 
 - One tick = **100 ms logical**, unrelated to frame rate.
 - Each slot carries a countdown initialised to its `cooldown`.
-- Per tick, in ascending slot order — attacker side first, then defender:
-  decrement countdowns; every slot reaching 0 attacks and resets.
+- Each tick has two passes, each in ascending slot order, attacker side
+  first, then defender:
+  1. **Walk.** Every living slot picks its target (§8) from where everyone
+     stood as the tick began. Out of `range`, it walks straight at it,
+     `speed` units, stopping at `range`. Everyone walks at once, nothing
+     blocks, and a slot walks through anyone.
+  2. **Strike.** Every living slot picks its target again from where
+     everyone now stands, and counts its countdown down, stopping at 0. At 0
+     and within `range`, it attacks and resets. Out of range, it holds the
+     blow and strikes on the tick it arrives.
+- Two slots that close on each other arrive on the same tick, so the
+  attacker's first blow is the attacker's.
+- A step is `round(d × speed / distance)` on each axis, the distance an
+  exact integer square root. The last step lands just inside `range`:
+  `target − trunc(d × range / (distance + 1))`.
 - **Victory:** all enemy slots at 0 → that side wins.
 - **Timeout: 1,800 ticks** (three minutes). The **defender** wins. In PvE the player is always the
   attacker. There are no draws.
@@ -462,7 +500,8 @@ fast-forward or restart.
 
 | Event | Payload |
 |---|---|
-| `start` | Both boards, slot types, ranks, rows, applied bonuses, seed |
+| `start` | Both boards, slot types, ranks, rows, applied bonuses, and where each slot stands (§3) |
+| `move` | tick, slot, where it stands after this tick's walk |
 | `attack` | tick, source slot, target slot, `hits`, `dealt` (after a shield), and `skill` and `absorbed` when a skill struck or a shield soaked; `edge` (`adv` · `dis`) when the type chart was not even (§7) |
 | `troops_lost` | tick, slot, new `alive`, new `hp_pool` |
 | `skill` | tick (0 for a Rally), the fighter, the skill — the screen shows its name |
@@ -519,7 +558,8 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 ## 16. Determinism
 
-- All state in integers. Only the type fraction divides, floored.
+- All state in integers, positions included. Only the type fraction and a
+  walk's step divide (§7, §10).
 - Resolution order is fixed (§10); never iterate an unordered collection.
 - **Golden tests:** `tests/battle.test.ts` holds one board pair and its whole
   event stream, compared as a snapshot. A change to §7, §8 or §10 rewrites it,
@@ -531,7 +571,8 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 | Dial | Key |
 |---|---|
-| Unit stats, `frontage`, `squadSize`, `power` | `units` |
+| Unit stats, `frontage`, `squadSize`, `power`, `speed`, `range` | `units` |
+| The field: front-row gap, row and column pitch | `combat.fieldGap`, `fieldRowPitch`, `fieldColPitch` |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
 | Every rank's stats, recruit cost, training time and hall level | `units` (§6) |
 | A rank's technology | `?dev=data#tree` |
@@ -552,7 +593,9 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 ## 18. Not in this version
 
 - Any input during the fight
-- Movement, pathfinding or facing
+- Pathfinding, collision, formation-keeping or facing
+- Range on a skill
+- A skill that moves a slot or changes its speed
 - Abilities on unit types; ultimates, energy, a skill the player triggers,
   or a skill that rolls
 - A hero-only battle mode — a hero arena is a possible future

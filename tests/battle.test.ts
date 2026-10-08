@@ -7,7 +7,7 @@
 // the golden log at the bottom is for.
 import { describe, expect, it } from 'vitest';
 import {
-  attackMultiplier, boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf, targetingFor,
+  attackMultiplier, boardPower, buildBoard, generateEnemy, placeSide, resolveBattle, survivorsOf, targetingFor,
   type BattleEvent, type FighterSpec, type SquadSpec,
 } from '../src/sim/battle';
 import { COMBAT, LAIRS, UNITS, VILLAINS } from '../src/sim/data/definitions';
@@ -63,7 +63,8 @@ describe('the damage formula', () => {
     const ours = buildBoard([squad('Warrior', 100)], []);
     const theirs = buildBoard([squad('Archer', 80)], []);
     const log = resolveBattle(ours, theirs);
-    const first = attacks(log.events)[0]!;
+    // Ours: the archers loose while the warriors are still walking (§10).
+    const first = ourAttacks(log.events)[0]!;
     expect(first.from).toEqual({ side: 'ours', id: 0 });
     const front = UNITS.Warrior.frontage;
     expect(front).toBeLessThan(100);
@@ -87,7 +88,7 @@ describe('the damage formula', () => {
     const ours = buildBoard([squad('Warrior', 10)], []);
     const theirs = buildBoard([], [body({ def: 200, hp: 1000, type: 'Lancer' })]);
     const log = resolveBattle(ours, theirs);
-    const first = attacks(log.events)[0]!;
+    const first = ourAttacks(log.events)[0]!;
     // Warrior beats Lancer: ten troops, a quarter of their damage, ×3/2.
     const raw = Math.floor((10 * UNITS.Warrior.dmg * (1000 - COMBAT.defenceCapPerMille)) / 1000);
     expect(first.dealt).toBe(Math.floor((raw * 3) / 2));
@@ -150,6 +151,70 @@ describe('targeting', () => {
     const thin = theirs.slots.find((s) => s.unitId === 'Cavalry')!;
     const log = resolveBattle(ours, theirs);
     expect(ourAttacks(log.events)[0]!.to.id).toBe(thin.id);
+  });
+});
+
+describe('the field', () => {
+  const moves = (events: readonly BattleEvent[], side: 'ours' | 'theirs', id: number) => events
+    .filter((e): e is Extract<BattleEvent, { kind: 'move' }> => e.kind === 'move' && e.at.side === side && e.at.id === id);
+
+  it('stands each side in three lines behind the middle, centred (§3)', () => {
+    const board = buildBoard([squad('Warrior', 10), squad('Lancer', 10), squad('Archer', 10)], [body()]);
+    const ours = placeSide(board.slots, 'ours');
+    const half = COMBAT.fieldGap / 2;
+    expect(ours[0]).toEqual({ x: -COMBAT.fieldColPitch / 2, y: half });
+    expect(ours[1]).toEqual({ x: COMBAT.fieldColPitch / 2, y: half });
+    expect(ours[2]).toEqual({ x: 0, y: half + COMBAT.fieldRowPitch });
+    // A hero stands in the heroes' line, whatever row it targets as.
+    expect(ours[3]).toEqual({ x: 0, y: half + 2 * COMBAT.fieldRowPitch });
+    expect(placeSide(board.slots, 'theirs')[0]).toEqual({ x: -COMBAT.fieldColPitch / 2, y: -half });
+  });
+
+  it('walks melee to its target before the first blow, and holds the blow until it arrives', () => {
+    const log = resolveBattle(buildBoard([squad('Warrior', 30)], []), buildBoard([squad('Warrior', 30)], []));
+    const walk = moves(log.events, 'ours', 0);
+    expect(walk.length).toBeGreaterThan(0);
+    const first = ourAttacks(log.events)[0]!;
+    // Further than one cooldown away: the blow waits for the walk.
+    expect(first.tick).toBeGreaterThan(UNITS.Warrior.cooldown);
+    const end = walk.filter((m) => m.tick <= first.tick).at(-1)!;
+    const them = log.events.filter((e): e is Extract<BattleEvent, { kind: 'move' }> => (
+      e.kind === 'move' && e.at.side === 'theirs' && e.tick <= first.tick)).at(-1)!;
+    expect((end.x - them.x) ** 2 + (end.y - them.y) ** 2).toBeLessThanOrEqual(UNITS.Warrior.range ** 2);
+    // Never more than `speed` a tick — give or take the rounding of a step.
+    let at = { x: 0, y: COMBAT.fieldGap / 2 };
+    for (const m of walk) {
+      expect(Math.hypot(m.x - at.x, m.y - at.y)).toBeLessThanOrEqual(UNITS.Warrior.speed + 2);
+      at = m;
+    }
+  });
+
+  it('lets cavalry reach the back row sooner than infantry reaches the front', () => {
+    const theirs = () => buildBoard([squad('Lancer', 100), squad('Archer', 80)], []);
+    const firstBlow = (unit: UnitId) => ourAttacks(
+      resolveBattle(buildBoard([squad(unit, 10)], []), theirs()).events)[0]!;
+    const horse = firstBlow('Cavalry');
+    const foot = firstBlow('Warrior');
+    expect(horse.to.id).toBe(1); // the Archers, behind the Lancers
+    expect(UNITS.Cavalry.speed).toBeGreaterThan(UNITS.Warrior.speed);
+    // Further to ride, and still there no later than one cooldown after.
+    expect(horse.tick).toBeLessThanOrEqual(foot.tick + UNITS.Cavalry.cooldown);
+  });
+
+  it('keeps an archer where it stands: the whole field is in its range', () => {
+    const log = resolveBattle(buildBoard([squad('Archer', 80)], []), buildBoard([squad('Warrior', 30)], []));
+    expect(moves(log.events, 'ours', 0)).toEqual([]);
+    expect(ourAttacks(log.events)[0]!.tick).toBe(UNITS.Archer.cooldown);
+  });
+
+  it('sends melee at the NEAREST of the front row', () => {
+    // Three of theirs in front; ours stands alone in the middle, so the
+    // middle one is nearest — not the lowest id.
+    const log = resolveBattle(
+      buildBoard([squad('Warrior', 30)], []),
+      buildBoard([squad('Warrior', 30), squad('Warrior', 30), squad('Warrior', 30)], []),
+    );
+    expect(ourAttacks(log.events)[0]!.to.id).toBe(1);
   });
 });
 
@@ -339,6 +404,8 @@ describe('determinism', () => {
       ? 'start'
       : e.kind === 'end'
         ? `end ${e.tick} ${e.winner} ${e.reason}`
+        : e.kind === 'move'
+          ? `${e.tick} ${e.at.side[0]}${e.at.id} @${e.x},${e.y}`
         : e.kind === 'attack'
           ? `${e.tick} ${e.from.side[0]}${e.from.id}→${e.to.side[0]}${e.to.id} ${e.hits}×${e.dealt}`
           : e.kind === 'troops_lost'
