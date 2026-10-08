@@ -75,7 +75,7 @@
 | `exit` | the speaker leaves after this line |
 | `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` · `idea` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
 | `gives` | a book the speaker hands the player as the line is read — only a book that opens on a gift; none does today, so no line carries it |
-| `stocks` | a building whose price the speaker makes up: the line plays only while the wallet cannot pay for one more of it, and as it is read hands over the missing currencies (never goods). Absent on every other line |
+| `stocks` | a building whose price the speaker makes up: the line plays only while the wallet cannot pay for one more of it, and as it is read hands over the missing currencies (never goods), flown from the speaker into the header like a collect. Absent on every other line |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and:
   - `skippable` — an introduction, which waits a breath after the last

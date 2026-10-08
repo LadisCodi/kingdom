@@ -19,6 +19,17 @@ import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
 import { conditionHolds } from './conditions';
 
+/** Conditions that record how far the kingdom has got, and so can tell a
+ *  scene where to resume. The rest (a sheet open, a control on screen, taps
+ *  since the line began) are moments, not progress. */
+export const PROGRESS: ReadonlySet<string> = new Set([
+  'questReached', 'questComplete', 'questClaimed', 'questProgress', 'techDone', 'techFilled',
+  'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
+  'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
+  'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair', 'worldVisited',
+  'reachCleared', 'upgraded', 'troops', 'relicHosted', 'explorerSent', 'explorerRevealed', 'hexHeld',
+]);
+
 export const sceneKey = (id: string): string => `scene:${id}`;
 
 /** Introductions that would only interrupt the First Morning: what stands

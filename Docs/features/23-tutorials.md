@@ -31,7 +31,8 @@
    gacha reveal, the rewarded video, an unlock splash or a sheet the player
    opened — unless the sheet is what the scene is about. Scenes due at once
    queue in authored order, and an introduction waits a breath (6 s) after
-   the last scene.
+   the last scene. Closing the last sheet ends the breath: back on the map,
+   the next scene due starts at once.
 7. **A scene plays where it belongs** (`where`): the province, the world
    board, or either. A scene about the city never starts on the world board;
    one that has started pauses, out of sight and locking nothing, while the
@@ -150,7 +151,9 @@ nervous, a bookworm who got the job because nobody else stayed:
   shows once `TaxDay` is claimed.
 - **A scene resumes where the kingdom is**: after a reload it picks up after
   the last line whose PROGRESS condition already holds (a quest, a research,
-  a building) — never on a moment like a sheet being shut.
+  a building, an upgrade under way) — never on a moment like a sheet being
+  shut. Mid-scene, on the player's turn, a later line's progress already met
+  jumps the scene past it the same way.
 - **A tap on the plot the hand points at is a tap on that plot**, even where
   a store's bubble or a lair's picture floats over it.
 - **A lock releases itself** if its target is missing for five seconds; the
