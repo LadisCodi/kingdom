@@ -113,13 +113,14 @@ export function placementBlock(
   // Universal rules — every footprint cell must pass.
   for (const c of footprint) {
     if (!cellExists(map, c)) return 'OffMap';
+    // The fog first: what lies under it is not the player's to read yet.
+    if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     if (state.features[coordKey(c)]) return 'HasFeature';
     // Landmarks and lairs are content, not building ground.
     if (cellHasSite(state, c)) return 'HasSite';
     // A lair holds the ground around it: nothing is built, or moved, into
     // its zone while it stands.
     if (lairHolding(state, c) !== null) return 'LairZone';
-    if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     const sitting = districtAt(state, c);
     if (sitting && sitting.uniqueId !== movingId) return 'Occupied';
     // Only the Docks (which checks its own land+water mix) may touch Water.

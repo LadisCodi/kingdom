@@ -413,6 +413,26 @@ export function drawSpriteOutline(
 }
 let ringCanvas: HTMLCanvasElement | null = null;
 
+/**
+ * Sprite `key`'s silhouette in `color` filling (x, y, w, h), at whatever
+ * `globalAlpha` the caller set — a wash laid OVER the sprite, as the red on
+ * a ghost that may not stand where it is. False while the art is loading.
+ */
+export function drawSpriteTint(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  ctx.drawImage(sil, x, y, w, h);
+  return true;
+}
+
 // ---------------------------------------------------------------- UI atlas
 
 // The UI icon atlas, on the CANVAS. The DOM has had these since the atlas

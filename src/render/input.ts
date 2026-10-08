@@ -8,8 +8,10 @@
 // fighting mid-flick — the alternative (hit-testing every move) would hand
 // the ghost off to the camera the instant the finger left it.
 //
-// A press that never moved past the threshold is a tap on release, however
-// long the finger stayed down: holding repeats nothing.
+// A press that never moved past the threshold is a tap on release — unless
+// it stayed down HOLD_MS and `onHold` took it: then the press becomes a ghost
+// drag on the spot (a long press on a building picks it up to move it), and
+// its release is no tap. Holding repeats nothing.
 //
 // A SECOND finger turns the gesture into a pinch: the pair zooms about its
 // midpoint and pans with it, so the ground under the fingers stays under
@@ -19,6 +21,8 @@
 import type { Camera } from './camera';
 
 const DRAG_THRESHOLD_PX = 8;
+/** How long a still press waits before it is a long press. */
+const HOLD_MS = 450;
 
 export function wireInput(
   canvas: HTMLCanvasElement,
@@ -31,7 +35,14 @@ export function wireInput(
   dragGhost: (sx: number, sy: number) => void,
   /** The finger took the ghost (true) or let it go (false). */
   holdGhost: (held: boolean) => void = () => {},
+  /** A still press held HOLD_MS: true when it picked up a ghost to drag. */
+  onHold: (sx: number, sy: number) => boolean = () => false,
 ): void {
+  let holdTimer: ReturnType<typeof setTimeout> | null = null;
+  const cancelHold = () => {
+    if (holdTimer !== null) clearTimeout(holdTimer);
+    holdTimer = null;
+  };
   let pointerDown = false;
   let dragged = false;
   let draggingGhost = false;
@@ -54,6 +65,7 @@ export function wireInput(
   };
 
   const startPinch = () => {
+    cancelHold();
     dragged = true; // no tap: the pinch owns the gesture now
     if (draggingGhost) holdGhost(false);
     draggingGhost = false;
@@ -75,6 +87,18 @@ export function wireInput(
     const rect = canvas.getBoundingClientRect();
     draggingGhost = grabGhost(e.clientX - rect.left, e.clientY - rect.top);
     if (draggingGhost) holdGhost(true);
+    cancelHold();
+    if (!draggingGhost) {
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        if (!pointerDown || dragged || pinch || pointers.size !== 1) return;
+        const r = canvas.getBoundingClientRect();
+        if (!onHold(startX - r.left, startY - r.top)) return;
+        draggingGhost = true;
+        dragged = true; // the release is no tap: the press became a carry
+        navigator.vibrate?.(15);
+      }, HOLD_MS);
+    }
   });
 
   canvas.addEventListener('pointermove', (e) => {
@@ -97,6 +121,7 @@ export function wireInput(
       Math.abs(e.clientY - startY) > DRAG_THRESHOLD_PX
     ) {
       dragged = true;
+      cancelHold();
     }
     if (dragged) {
       if (draggingGhost) {
@@ -112,6 +137,7 @@ export function wireInput(
 
   const release = (e: PointerEvent, cancelled: boolean) => {
     if (!pointers.delete(e.pointerId)) return;
+    cancelHold();
     if (pinch) {
       if (pointers.size >= 2) {
         pinch = measurePinch(); // a third finger lifted: re-anchor on the pair left

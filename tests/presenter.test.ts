@@ -182,15 +182,14 @@ describe('the placement window and the builder sheet', () => {
     expect(game.placementInfo()!.duration).toBe(quoted);
   });
 
-  it('the ghost shows a move arrow only for legal steps, and none while it is held', () => {
+  it('the ghost shows a move arrow for every step on the map, and none while it is held', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     game.startPlacement('Housing');
     const at = (game.mode as { selected: { x: number; y: number } }).selected;
-    const legal = new Set(validPlacementCells(state, map, 'Housing').map((c) => `${c.x},${c.y}`));
     const steps = game.ghostSteps();
     expect(steps.length).toBeGreaterThan(0);
-    for (const d of steps) expect(legal.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
+    for (const d of steps) expect(map.terrain.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
     game.holdGhost(true);
     expect(game.ghostSteps()).toEqual([]);
     expect(game.markers().previewSteps).toEqual([]);

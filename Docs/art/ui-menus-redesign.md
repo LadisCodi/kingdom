@@ -1023,15 +1023,19 @@ Reference: `mockups/m49-placement.png`.
   §4.1).
 - **Move arrows**: four green arrows on the ground round the ghost's
   footprint, one per side, pointing outward along the isometric grid's axes.
-  An arrow shows only where the next cell that way is legal. They bob gently
+  An arrow shows wherever the map goes on that way. They bob gently
   outward along their axis (none under reduced motion), and hide while the
   ghost is held.
 - No verdict: the depot labels on the captured cells are the whole reading
   of a spot.
 - Only the Docks outline their legal cells.
-- Gestures (§4.3 of the city doc): drag the ghost to carry it; tap a legal
-  cell to send it there; a drag that starts off the ghost pans the camera.
-  The ghost lifts while held, snaps to legal cells only and never commits.
+- Gestures (§4.3 of the city doc): drag the ghost to carry it; tap any
+  cell to send it there; a drag that starts off the ghost pans the camera;
+  a long press on a movable building picks it up. The ghost lifts while
+  held, goes anywhere on the map and never commits.
+- **On a cell it may not stand on, the ghost is red** — rim and a red wash
+  over its body — and the Build / Move button is disabled, the reason
+  printed beside it.
 - The first placement ever shows a one-time coach line: *Drag the building,
   or tap where it should go*.
 
