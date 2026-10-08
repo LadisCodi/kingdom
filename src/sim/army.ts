@@ -20,6 +20,7 @@
 // moment units are expedition capital rather than a quest gate, because it
 // removes the only pacing on party size.
 
+import { track } from './analytics';
 import { roundPrice } from './roundPrice';
 import { resolve, resolveAt } from './modifiers';
 import { techMultiplier } from './techEffects';
@@ -650,6 +651,7 @@ export function finishLineWithGems(
   const cost = lineRushCost(state, buildingId, now);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'rush_training', gems: cost });
   // Out of the queue FIRST, so a concurrent advance cannot deliver them twice.
   state.city.trainingQueue = state.city.trainingQueue.filter(
     (i) => i.buildingId !== buildingId);

@@ -29,6 +29,7 @@
 // long absence for no simulation benefit, and nothing in the sim reads these
 // counters — buying and claiming are always live player commands.
 
+import { track } from './analytics';
 import { AD, MANA } from './data/definitions';
 import { dayIndex } from './day';
 import { grantMana, mana, manaCap } from './mana';
@@ -90,6 +91,7 @@ export function refillManaWithGems(state: GameState, now: number): RefillResult 
   if (mana(state) >= manaCap(state)) return 'AlreadyFull';
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'mana_refill', gems: cost });
   // On TOP of the ceiling, exactly as the ad reward lands: a refill the player
   // paid for must never pay less than the video does.
   grantMana(state, manaCap(state));

@@ -12,6 +12,9 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 let client: SupabaseClient | null = null;
 let userId: string | null = null;
+/** The session's token, kept current, for a request sent as the page goes
+ *  away — when there is no time left to ask the client for it. */
+let accessToken: string | null = null;
 
 export const cloudConfigured = (): boolean => Boolean(url && anonKey);
 
@@ -20,14 +23,17 @@ export async function cloudInit(): Promise<boolean> {
   if (!cloudConfigured()) return false;
   try {
     client = createClient(url!, anonKey!);
+    client.auth.onAuthStateChange((_event, session) => { accessToken = session?.access_token ?? null; });
     const { data } = await client.auth.getSession();
     if (data.session) {
       userId = data.session.user.id;
+      accessToken = data.session.access_token;
       return true;
     }
     const { data: anon, error } = await client.auth.signInAnonymously();
     if (error || !anon.user) return false;
     userId = anon.user.id;
+    accessToken = anon.session?.access_token ?? accessToken;
     return true;
   } catch {
     return false;
@@ -107,6 +113,29 @@ export const cloudAnalyticsSend: AnalyticsSend = async (rows) => {
   try {
     const { error } = await client.from('analytics_events').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
     return !error;
+  } catch {
+    return false;
+  }
+};
+
+/** The same insert, as the page goes away (Docs/plans/analytics.md §5): a
+ *  `keepalive` request, which the browser finishes after the page is gone —
+ *  the one way a short first visit's events reach the server at all. */
+export const cloudAnalyticsSendLeaving: AnalyticsSend = async (rows) => {
+  if (!url || !anonKey || !userId || !accessToken) return false;
+  try {
+    const res = await fetch(`${url}/rest/v1/analytics_events?on_conflict=id`, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=ignore-duplicates,return=minimal',
+      },
+      body: JSON.stringify(rows),
+    });
+    return res.ok;
   } catch {
     return false;
   }

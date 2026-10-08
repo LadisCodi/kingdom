@@ -77,7 +77,7 @@ import { renderWishFilled, renderWishGive, renderWishNeed } from './ui/friends/w
 import { renderFriendProfile, renderFriendsSheet } from './ui/friends/friendsSheet';
 import { LocalSocialServer, LOCAL_SOCIAL_KEY, browserSocialStore } from './socialServer/local';
 import { RemoteSocialServer } from './socialServer/remote';
-import { cloudAnalyticsSend, cloudSocialCall, cloudWorldCall } from './persist/cloud';
+import { cloudAnalyticsSend, cloudAnalyticsSendLeaving, cloudSocialCall, cloudWorldCall } from './persist/cloud';
 import { Analytics, browserAnalyticsStore } from './analytics/analytics';
 import { trackedWorld } from './analytics/worldEvents';
 import { mountWorldKnob } from './ui/worldKnob';
@@ -225,6 +225,7 @@ async function boot(): Promise<void> {
   if (saveManager.cloudActive) {
     game.analytics = new Analytics({
       send: cloudAnalyticsSend,
+      sendLeaving: cloudAnalyticsSendLeaving,
       store: browserAnalyticsStore(),
       context: () => game.analyticsContext(),
       dev: new URLSearchParams(location.search).has('dev'),
@@ -651,6 +652,9 @@ async function boot(): Promise<void> {
   };
   setInterval(runTick, 1000);
   runTick(); // catch up immediately on load (offline progress pays out here)
+  // The session's start goes now, not at the first half minute: a visit that
+  // ends sooner is the one the numbers most need to see.
+  void game.analytics?.flush();
 
   // A page out of sight ends its session for now: it carries on if it is
   // seen again soon, and a new one starts after a longer absence.
@@ -658,7 +662,7 @@ async function boot(): Promise<void> {
   const leaving = (): void => {
     saveManager.save(game.state, game.now(), true);
     game.analytics?.endSession(game.now());
-    void game.analytics?.flush();
+    void game.analytics?.flush(true);
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {

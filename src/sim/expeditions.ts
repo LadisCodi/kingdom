@@ -22,7 +22,8 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { lairBoard, lairFights, lairIsCleared, markLairCleared, markLairFightWon } from './lairs';
+import { lairBoard, lairFightIndex, lairFights, lairIsCleared, markLairCleared, markLairFightWon } from './lairs';
+import { track } from './analytics';
 import { fightMana } from './world/fights';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
@@ -321,6 +322,9 @@ export function attackLair(
   const ours = partyBoard(party);
   const attack = partyPower(party);
   const log = resolveBattle(ours, theirs);
+  const fight = lairFightIndex(state, lairId) + 1;
+  const outcome = (result: LairReport['result']): void =>
+    track(state, 'lair_attack', { lair: lairId, fight, result, attack, power });
   // Win or lose, every hero keeps what the fight did to it.
   const heroes = heroesAfter(log, ours);
   for (const h of heroes) setHeroHp(state, h.id, h.hp, t);
@@ -329,6 +333,7 @@ export function attackLair(
   const { losses, wounded } = applyLosses(
     state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
+    outcome('Repelled');
     return {
       result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, heroXp: 0, supplies, losses, wounded, heroes,
     };
@@ -340,6 +345,7 @@ export function attackLair(
   if (!markLairFightWon(state, lairId)) {
     const heroXp = roundPrice(lairFightXp(lairId) * (1 + spoils.seasoned));
     addHeroXp(state, heroXp);
+    outcome('Won');
     return {
       result: 'Won', attack, power, log, hoard: {}, knowledge: 0, heroXp, supplies, losses, wounded, heroes,
     };
@@ -356,6 +362,7 @@ export function attackLair(
   // What the claim will pay, for the report — nothing has moved yet.
   const hoard: Wallet = { ...lair.hoard };
   const { knowledge } = lairClearReward(state, lairId);
+  outcome('Cleared');
   return { result: 'Cleared', attack, power, log, hoard, knowledge, heroXp: 0, supplies, losses, wounded, heroes };
 }
 
@@ -409,6 +416,7 @@ export function claimLair(state: GameState, lairId: LairId): ClaimReport {
     ...openRelicDoor(state, lairId),
     ...dropFragments(state, 'city', RELIC_RULES.perLairTier[tier - 1] ?? 0, ['lair', lairId]),
   ];
+  track(state, 'lair_claimed', { lair: lairId, tier });
   return { result: 'Claimed', hoard, heroXp, knowledge, items, fragments };
 }
 
