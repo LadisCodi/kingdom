@@ -28,6 +28,7 @@ import { el, formatDuration, formatExact } from './format';
 import { costChips, ctaBadge, iconEl, sheet, type IconName } from './kit';
 import type { CurrencyId, DistrictId, GoodId } from '../sim/state';
 import { PROMISE } from './buildPromise';
+import { tr } from '../i18n/tr';
 
 // ------------------------------------------------------------- menu state
 // UI conveniences, not game state: which tab was last open and where each
@@ -36,6 +37,13 @@ import { PROMISE } from './buildPromise';
 
 let openTab: BuildTab = 'Economy';
 const listScroll: Partial<Record<BuildTab, number>> = {};
+
+/** A tab's name, as its button says it. */
+const tabLabel = (tab: BuildTab): string => ({
+  Economy: tr('Economy'),
+  Military: tr('Military'),
+  Decoration: tr('Decoration'),
+} as Record<BuildTab, string>)[tab] ?? tab;
 
 const TAB_ICON: Record<BuildTab, IconName> = {
   Economy: 'Gold',
@@ -113,14 +121,16 @@ function harmonyLine(game: Game): HTMLElement {
   const tier = harmonySurplusTier(game.state);
   const nextTier = HARMONY.surplusTiers.find((t) => tier === null || t.at > tier.at);
   const note = tier !== null
-    ? `+${Math.round(tier.bonus * 100)}% taxes`
+    ? tr('+{pct}% taxes', { pct: formatExact(Math.round(tier.bonus * 100)) })
     : nextTier !== undefined && demand > 0
-      ? `${Math.round(nextTier.at * 100)}% pays +${Math.round(nextTier.bonus * 100)}%`
+      ? tr('{at}% pays +{pct}%', {
+        at: formatExact(Math.round(nextTier.at * 100)), pct: formatExact(Math.round(nextTier.bonus * 100)),
+      })
       : '';
   return el('div', { class: `bld-harmony k-section${supply < demand ? ' is-short' : ''}` },
     iconEl('harmony', { size: 'sm' }),
     el('b', {}, formatExact(supply)),
-    el('span', {}, `supplied of ${formatExact(demand)} demanded`),
+    el('span', {}, tr('supplied of {n} demanded', { n: formatExact(demand) })),
     el('span', { class: `bld-harmony-note${tier !== null ? ' is-paying' : ''}` }, note),
   );
 }
@@ -129,24 +139,24 @@ function harmonyLine(game: Game): HTMLElement {
 function blockedBy(game: Game, id: DistrictId): string | null {
   const def = DISTRICTS[id];
   // Not yet opened: the technology that opens it, by name.
-  if (!isKnown(game, id)) return `Research ${TECHNOLOGIES[def.requiredTech!]?.name ?? def.requiredTech}`;
+  if (!isKnown(game, id)) return tr('Research {tech}', { tech: TECHNOLOGIES[def.requiredTech!]?.name ?? def.requiredTech! });
   const count = districtCount(game.state, id);
   // The Shrine ladder: the ruin first, and an end (sim `shrineBuild`).
   if (def.hostsRelic) {
     const offer = game.shrineBuild().kind;
-    if (offer === 'ruinFirst') return 'Repair the old shrine first';
-    if (offer === 'none') return 'You have as many as the realm allows';
+    if (offer === 'ruinFirst') return tr('Repair the old shrine first');
+    if (offer === 'none') return tr('You have as many as the realm allows');
   }
   if (count >= maxDistrictCount(game.state, def)) {
     // Say what lifts the cap. A count cap is the harder wall of the two: no
     // amount of decoration lifts it, so it is said first.
     const nextLevel = def.maxCountPerTownhallLevel.findIndex((n) => n > count) + 1;
     return nextLevel > 0
-      ? `Needs Townhall level ${nextLevel}`
-      : 'You have as many as the realm allows';
+      ? tr('Needs Townhall level {n}', { n: formatExact(nextLevel) })
+      : tr('You have as many as the realm allows');
   }
   const short = harmonyBlock(game.state, def, 1);
-  return short === null ? null : `Needs ${formatExact(short.shortBy)} more Harmony`;
+  return short === null ? null : tr('Needs {n} more Harmony', { n: formatExact(short.shortBy) });
 }
 
 /** Everything a card reads from the game — and so what its signature is. */
@@ -224,10 +234,10 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
     ...(!known ? [] : [el('div', { class: 'bld-side' },
       ...(blocked !== null ? [] : [el('span', { class: 'bld-foot-time' },
         iconEl('hourglass', { size: 'sm' }), formatDuration(duration))]),
-      el('span', { class: 'bld-foot-built' }, `Built ${formatExact(count)}/${formatExact(max)}`))]),
+      el('span', { class: 'bld-foot-built' }, tr('Built {count}/{max}', { count: formatExact(count), max: formatExact(max) })))]),
   );
   if (isNew && blocked === null) {
-    card.append(el('span', { class: 'bld-new', 'aria-label': 'New' }, el('span', {}, 'New!')));
+    card.append(el('span', { class: 'bld-new', 'aria-label': tr('New') }, el('span', {}, tr('New!'))));
   }
   if (blocked !== null) {
     card.disabled = true;
@@ -259,7 +269,7 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
     'data-coach': `build-tab:${tab}`,
   },
     iconEl(TAB_ICON[tab], { size: 'sm' }),
-    el('span', { class: 'bld-tab-label' }, tab),
+    el('span', { class: 'bld-tab-label' }, tabLabel(tab)),
     ...(count > 0 ? [ctaBadge(count, `build-tab:${tab}`)] : []),
   );
   b.addEventListener('click', () => {
@@ -321,7 +331,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
 
   const surface = sheet(
     {
-      title: 'Build',
+      title: tr('Build'),
       tall: true,
       onClose: () => {
         commitSeen();
@@ -335,7 +345,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
       : harmonyMatters(game)
         ? [harmonyLine(game)]
         : known.length > 0 ? [el('div', { class: 'bld-tip k-section' },
-          iconEl('Housing', { size: 'sm' }), el('span', {}, 'A house beside a decoration earns more Gold'))] : []),
+          iconEl('Housing', { size: 'sm' }), el('span', {}, tr('A house beside a decoration earns more Gold')))] : []),
     list,
   );
   // The tabs stay put; only the list under them scrolls (as the Bag's).

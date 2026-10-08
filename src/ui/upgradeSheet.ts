@@ -24,12 +24,13 @@ import { buildingPortrait } from './districtCard';
 import { coach, el, formatDuration, formatExact } from './format';
 import { btn, iconEl, priceLine, sectionHead, sheet, type IconName } from './kit';
 import { requirements, statChanges } from './upgradeStats';
+import { tr } from '../i18n/tr';
 
 /** The building at a level, with the level on its plaque. */
 const levelTile = (district: District, level: number, tone: 'from' | 'to'): HTMLElement =>
   el('div', { class: `up-level is-${tone}` },
     buildingPortrait(DISTRICTS[district.definitionId], level),
-    el('span', { class: 'up-level-plaque' }, `Level ${level}`));
+    el('span', { class: 'up-level-plaque' }, tr('Level {n}', { n: formatExact(level) })));
 
 export function renderUpgradeSheet(game: Game, district: District): HTMLElement {
   const next = district.level + 1;
@@ -54,7 +55,7 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   const gateRows = gates.map((r) => el('div', { class: `up-row k-section is-gate${r.met ? ' is-met' : ''}` },
     iconEl(r.icon),
     el('span', { class: 'up-row-label' }, r.label),
-    iconEl(r.met ? 'tick' : 'cross', { label: r.met ? 'Met' : 'Not met' })));
+    iconEl(r.met ? 'tick' : 'cross', { label: r.met ? tr('Met') : tr('Not met') })));
 
   // The price: the currencies, then the refined goods beside them (they are
   // not wallet rows), then the build time.
@@ -75,27 +76,27 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   // press the command would refuse; the requirements decide its words.
   const refusal = upgradeRefusal(game.state, district.uniqueId);
   const note = locked
-    ? 'Complete all requirements to upgrade'
-    : refusal === 'NoBuilderFree' ? 'Every builder is busy' : null;
+    ? tr('Complete all requirements to upgrade')
+    : refusal === 'NoBuilderFree' ? tr('Every builder is busy') : null;
   const button = coach(btn({
-    label: 'Upgrade',
+    label: tr('Upgrade'),
     kind: 'primary',
     icon: locked ? 'padlock' : undefined,
     onClick: () => { game.doUpgrade(district.uniqueId); game.closeUpgrade(); },
-    disabledReason: refusal === null ? undefined : (note ?? 'Not enough to pay for it'),
+    disabledReason: refusal === null ? undefined : (note ?? tr('Not enough to pay for it')),
   }), 'upgrade-go');
 
   const body = el('div', { class: 'up' },
     levels,
-    ...(gains.length === 0 ? [] : [sectionHead('Improvements'), el('div', { class: 'up-table' }, ...gains)]),
-    ...(gateRows.length === 0 ? [] : [sectionHead('Requirements'), el('div', { class: 'up-table' }, ...gateRows)]),
+    ...(gains.length === 0 ? [] : [sectionHead(tr('Improvements')), el('div', { class: 'up-table' }, ...gains)]),
+    ...(gateRows.length === 0 ? [] : [sectionHead(tr('Requirements')), el('div', { class: 'up-table' }, ...gateRows)]),
     el('div', { class: 'up-buy k-section' },
       price,
       button,
       ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])),
   );
 
-  return sheet({ title: `Upgrade to Level ${next}`, onClose: () => game.closeUpgrade(), centred: true }, body);
+  return sheet({ title: tr('Upgrade to Level {n}', { n: formatExact(next) }), onClose: () => game.closeUpgrade(), centred: true }, body);
 }
 
 /** What the popup draws that can change while it is open — the gates, the

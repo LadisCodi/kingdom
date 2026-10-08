@@ -29,6 +29,7 @@ import { townhall, type District } from '../sim/state';
 import type { Game } from '../game';
 import type { IconName } from './kit/icon';
 import { formatDuration, formatExact, formatNumber } from './format';
+import { tr, trn } from '../i18n/tr';
 
 /** One number a building is judged on, at one level. */
 export interface BuildingStat {
@@ -83,14 +84,14 @@ export function statsAt(game: Game, district: District, level: number): Building
     (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
 
   if (def.populationCapacityPerLevel.length > 0) {
-    add('homes', 'bed', 'Beds', 'Beds', levelIndexed(def.populationCapacityPerLevel, level));
+    add('homes', 'bed', tr('Beds'), tr('Beds'), levelIndexed(def.populationCapacityPerLevel, level));
   }
   if (def.influenceRadiusPerLevel.length > 0) {
-    add('reach', 'showme', 'Exploration range', 'Range', levelIndexed(def.influenceRadiusPerLevel, level));
+    add('reach', 'showme', tr('Exploration range'), tr('Range'), levelIndexed(def.influenceRadiusPerLevel, level));
     // The map draws the range around the building while its card is open;
     // the popup keeps the pair, since a level can widen it.
     out[out.length - 1].onCard = false;
-    add('crew', 'workers', 'Workers', 'Crew', levelIndexed(def.maxWorkersPerLevel, level));
+    add('crew', 'workers', tr('Workers'), tr('Crew'), levelIndexed(def.maxWorkersPerLevel, level));
     // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
     out[out.length - 1].onCard = false;
   }
@@ -99,12 +100,12 @@ export function statsAt(game: Game, district: District, level: number): Building
   // what a level buys, the card does not repeat them.
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
     const haul = term(def.extraUnitsPerDeliveryPerLevel, 0);
-    add('delivery', 'plus', 'Per delivery', 'Haul', `+${formatExact(haul)}`, haul);
+    add('delivery', 'plus', tr('Per delivery'), tr('Haul'), `+${formatExact(haul)}`, haul);
     out[out.length - 1].onCard = false;
   }
   if (def.strikeSpeedPerLevel.length > 0) {
     const swing = term(def.strikeSpeedPerLevel, 1);
-    add('swing', 'clock', 'Swing', 'Swing', `×${swing}`, swing);
+    add('swing', 'clock', tr('Swing'), tr('Swing'), `×${swing}`, swing);
     out[out.length - 1].onCard = false;
   }
   // What it holds uncollected (03-economy.md §3.2), in the coin it makes: a
@@ -115,50 +116,50 @@ export function statsAt(game: Game, district: District, level: number): Building
       * techMultiplier(game.state, 'storageCapacity', { district: def.id }));
     const coin = (def.harvestSources.length > 0
       ? HARVEST[def.harvestSources[0]].currencyId : 'Gold') as IconName;
-    add('store', coin, 'Storage', 'Storage', formatExact(cap), cap,
+    add('store', coin, tr('Storage'), tr('Storage'), formatExact(cap), cap,
       (d) => signed(d, formatExact(Math.abs(d))));
   }
   if (def.armyCapPerLevel.length > 0) {
-    add('army', 'army', 'Army cap', 'Army', levelIndexed(def.armyCapPerLevel, level));
+    add('army', 'army', tr('Army cap'), tr('Army'), levelIndexed(def.armyCapPerLevel, level));
   }
   if (def.bedsPerLevel.length > 0) {
-    add('beds', 'hp', 'Beds', 'Beds', levelIndexed(def.bedsPerLevel, level));
+    add('beds', 'hp', tr('Beds'), tr('Beds'), levelIndexed(def.bedsPerLevel, level));
   }
   // The War Camp's whole ladder: armies more out at once on the world board.
   if (def.armySlotsPerLevel.length > 0) {
-    add('armySlots', 'army', 'Armies out', 'Armies', levelIndexed(def.armySlotsPerLevel, level));
+    add('armySlots', 'army', tr('Armies out'), tr('Armies'), levelIndexed(def.armySlotsPerLevel, level));
   }
   // The Tavern's whole ladder: a share more Hero XP, the TOTAL at the level.
   if (def.heroXpBonusPerLevel.length > 0) {
     const xp = levelIndexed(def.heroXpBonusPerLevel, level);
-    add('heroXp', 'HeroXp', 'Hero XP', 'Hero XP', `+${formatExact(xp)}%`, xp,
+    add('heroXp', 'HeroXp', tr('Hero XP'), tr('Hero XP'), `+${formatExact(xp)}%`, xp,
       (d) => signed(d, `${formatExact(Math.abs(d))}%`));
   }
   // A level buys a house MORE ROOM and BETTER RENT, and the second half is
   // the reason to keep upgrading a house that is already full.
   if (def.taxBonusPerLevel.length > 0) {
     const rent = Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100);
-    add('rent', 'Gold', 'Rent each', 'Rent', `+${rent}%`, rent, (d) => signed(d, `${Math.abs(d)}%`));
+    add('rent', 'Gold', tr('Rent each'), tr('Rent'), `+${formatExact(rent)}%`, rent, (d) => signed(d, `${formatExact(Math.abs(d))}%`));
     // The card's Gold /h already counts it in; the popup shows what a level adds.
     out[out.length - 1].onCard = false;
   }
   // The Sanctum owns BOTH Mana numbers — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).
   if (district.definitionId === 'Sanctum') {
-    add('mana-cap', 'Mana', 'Mana held', 'Stored', levelIndexed(MANA.sanctumCapPerLevel, level));
-    add('mana-rate', 'Mana', 'Mana /h', 'Rate', levelIndexed(MANA.sanctumPerHourPerLevel, level));
+    add('mana-cap', 'Mana', tr('Mana held'), tr('Stored'), levelIndexed(MANA.sanctumCapPerLevel, level));
+    add('mana-rate', 'Mana', tr('Mana /h'), tr('Rate'), levelIndexed(MANA.sanctumPerHourPerLevel, level));
   }
   if (district.definitionId === 'Townhall') {
     // Its own Gold, made with nobody living in it, into its own store.
     if (def.goldPerMinutePerLevel.length > 0) {
       const perHour = levelIndexed(def.goldPerMinutePerLevel, level) * 60;
-      add('taxes', 'Gold', 'Gold /h', 'Income', perHour);
+      add('taxes', 'Gold', tr('Gold /h'), tr('Income'), perHour);
     }
     const reach = FOG.reachPerTownhallLevel;
     if (reach.length > 0) {
       const ring = levelIndexed(reach, level);
-      add('fog', 'Townhall', 'Fog reach', 'Fog', `ring ${ring}`, ring,
-        (d) => signed(d, `${Math.abs(d)} ring${Math.abs(d) === 1 ? '' : 's'}`));
+      add('fog', 'Townhall', tr('Fog reach'), tr('Fog'), tr('ring {n}', { n: formatExact(ring) }), ring,
+        (d) => signed(d, trn(Math.abs(d), '{n} ring', '{n} rings', { n: formatExact(Math.abs(d)) })));
     }
   }
   // Last of all: what one of its trainees takes to train HERE, neighbours included. One
@@ -167,7 +168,7 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.trains.length > 0) {
     // At the rank the hall is set to: a Warrior III takes longer than a I.
     const secs = trainSecondsAt(game.state, district.uniqueId, game.traineeAt(district));
-    add('train-time', 'hourglass', 'Training time', 'Training', formatDuration(secs), secs,
+    add('train-time', 'hourglass', tr('Training time'), tr('Training'), formatDuration(secs), secs,
       (d) => signed(d, formatDuration(Math.abs(d))));
     out[out.length - 1].lowerIsBetter = true;
   }
@@ -217,7 +218,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (requiredTh > 1 && district.definitionId !== 'Townhall') {
     out.push({
       icon: 'Townhall',
-      label: `Townhall level ${requiredTh}`,
+      label: tr('Townhall level {n}', { n: formatExact(requiredTh) }),
       met: townhall(game.state).level >= requiredTh,
     });
   }
@@ -225,7 +226,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (gateTech !== null) {
     out.push({
       icon: 'research',
-      label: `Research ${TECHNOLOGIES[gateTech].name}`,
+      label: tr('Research {tech}', { tech: TECHNOLOGIES[gateTech].name }),
       met: isTechComplete(game.state, gateTech),
     });
   }
@@ -233,7 +234,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (pop > 0) {
     out.push({
       icon: 'population',
-      label: `Reach ${formatExact(pop)} population`,
+      label: tr('Reach {n} population', { n: formatExact(pop) }),
       met: game.state.city.population >= pop,
     });
   }
@@ -244,7 +245,7 @@ export function requirements(game: Game, district: District, next: number): Requ
   if (demand > harmonyCost(def, district.level)) {
     out.push({
       icon: 'harmony',
-      label: `${formatExact(demand)} Harmony`,
+      label: tr('{n} Harmony', { n: formatExact(demand) }),
       met: harmonyBlock(game.state, def, next, district) === null,
     });
   }
