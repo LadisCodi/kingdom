@@ -166,10 +166,12 @@ export function questLine(quest: {
     }
     case 'UpgradeDistrict': {
       const what = target === null ? tr('building') : districtName(target);
+      // There is one Townhall: *the* Townhall, never *a* Townhall.
+      const which = target === 'Townhall' ? the(what) : one(what);
       if (amount === 1) {
         return level === null
-          ? tr('Upgrade {what}.', { what: one(what) })
-          : tr('Upgrade {what} to level {level}.', { what: one(what), level });
+          ? tr('Upgrade {what}.', { what: which })
+          : tr('Upgrade {what} to level {level}.', { what: which, level });
       }
       return level === null
         ? tr('Upgrade {n} {things}.', { n, things: plural(amount, what) })
