@@ -95,18 +95,21 @@ export function statsAt(game: Game, district: District, level: number): Building
     // The card's workers stepper says it (*2 / 3*); the popup keeps the pair.
     out[out.length - 1].onCard = false;
   }
-  // A crew's haul and swing are the late levels' gift, neutral until then,
-  // and the card's Production already counts them in: the popup's pair shows
-  // what a level buys, the card does not repeat them.
+  // A crew's haul is the late levels' gift, neutral until then, and the
+  // card's Production already counts it in: the popup's pair shows what a
+  // level buys, the card does not repeat it.
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
     const haul = term(def.extraUnitsPerDeliveryPerLevel, 0);
     add('delivery', 'plus', tr('Per delivery'), tr('Haul'), `+${formatExact(haul)}`, haul);
     out[out.length - 1].onCard = false;
   }
+  // How fast its crew works, as the building's own level gives it: ×1 at
+  // level 1, climbing with every level. On the card too — it is what a
+  // producer's level buys first.
   if (def.strikeSpeedPerLevel.length > 0) {
     const swing = term(def.strikeSpeedPerLevel, 1);
-    add('swing', 'clock', tr('Swing'), tr('Swing'), `×${swing}`, swing);
-    out[out.length - 1].onCard = false;
+    add('swing', 'clock', tr('Work speed'), tr('Speed'), `×${formatNumber(swing, 2)}`, swing,
+      (d) => signed(d, `×${formatNumber(Math.abs(d), 2)}`));
   }
   // What it holds uncollected (03-economy.md §3.2), in the coin it makes: a
   // level buys a bigger store, and a bigger store is a longer absence.

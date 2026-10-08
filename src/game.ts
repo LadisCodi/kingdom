@@ -1447,7 +1447,7 @@ export class Game {
    */
   holdAt(sx: number, sy: number): boolean {
     if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
-    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    if (this.openOverlay !== null || this.holdLocked()) return false;
     const cell = this.camera.screenToCell(sx, sy);
     const district = districtAt(this.state, cell);
     if (!district) return this.holdFeatureAt(cell);
@@ -1549,9 +1549,19 @@ export class Game {
 
   /** Can a long press here pick something up? What the hold ring asks
    *  before it shows (render/input.ts). */
+  /**
+   * Does a tutorial line hold the map still? The stage's gate is installed
+   * once and stays (ui/stage/stage.ts), so it is ASKED, never tested for
+   * being there: a free map lets a ghost be dragged anywhere; a line locked
+   * to its target, or one being read, does not.
+   */
+  holdLocked(): boolean {
+    return this.tapGate !== null && !this.tapGate(null, 'ghost');
+  }
+
   canHoldAt(sx: number, sy: number): boolean {
     if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
-    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    if (this.openOverlay !== null || this.holdLocked()) return false;
     const cell = this.camera.screenToCell(sx, sy);
     const district = districtAt(this.state, cell);
     if (district) return canMoveDistrict(district);
@@ -5394,11 +5404,13 @@ export class Game {
           this.map, this.mode.selected, def.size, this.reachAt(this.mode.definitionId, 1),
         ), this.mode.selected, def.size);
         if (def.harvestSources.length > 0) {
-          layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
+          const captured = this.capturedCells(this.mode.definitionId, this.mode.selected);
+          layer.yieldCells = captured.map(
             // What each captured cell HOLDS, so a Sawmill's radius shows which
             // trees are worth more before the shed is paid for.
             (cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }),
           );
+          layer.workedCells = captured;
         }
       }
     } else if (this.mode.kind === 'moving') {
@@ -5449,9 +5461,9 @@ export class Game {
             this.reachAt(this.mode.definitionId, district?.level ?? 1),
           ), this.mode.selected, def.size);
           if (def.harvestSources.length > 0) {
-            layer.yieldCells = this.capturedCells(
-              this.mode.definitionId, this.mode.selected, district?.level ?? 1,
-            ).map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
+            const captured = this.capturedCells(this.mode.definitionId, this.mode.selected, district?.level ?? 1);
+            layer.yieldCells = captured.map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
+            layer.workedCells = captured;
           }
         }
       }
@@ -5496,6 +5508,8 @@ export class Game {
         } else if (district.state === 'Built') {
           layer.influenceCells = withFootprint(influenceCells(this.state, this.map, district),
             district.location, DISTRICTS[district.definitionId].size);
+          // Who its crew works, rimmed white on the map (MarkerLayer.workedCells).
+          layer.workedCells = workableCells(this.state, this.map, district);
         }
       }
     }

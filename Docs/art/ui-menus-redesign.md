@@ -492,18 +492,21 @@ wood of its sides touches the screen's edges.
   - the red − knob, the villager's round portrait, *2 / 3* — the crew in
     title type, the most it can hold smaller and muted — and the green + knob;
   - nothing else: the card's stat band leads with what the crew MAKES
-    (*Food +2.7k/h*, the resource as the tile's word) and what there is to
-    work, a tile per source in a short word (*Fields 3*, *Trees*, *Rocks*,
-    *Iron*, *Gold*, *Shoals*). The crew size, range, haul and swing are the
+    (*Food +2.7k/h*, the resource as the tile's word) and how fast its level
+    makes the crew work (*Speed ×1.25* — ×1 at level 1, climbing with each
+    level). What there is to work is the map's to show: while the card is
+    open — and while the building is placed or moved — the area is outlined
+    and every tree, field or rock its crew would work wears the placement
+    ghost's white rim. The crew size, range and haul are the
     upgrade popup's only — the stepper already shows the crew, the map draws
-    the range, and haul and swing are counted in that output;
+    the range, and the haul is counted in that output;
   - no tip: how many villagers a building's fields keep busy is the
     player's to see by watching them work;
   - the villagers still free to assign are the header's counter while the
     card is open — a plain count, not a share.
 - **Stat tiles** (the district card's figures): one tile per figure — a big
   icon, then the SHORT name (bold, in ink; eight letters at most — *Range*,
-  *Fields*, *Training* — so three fit a phone's width; the full name is the tile's
+  *Speed*, *Training* — so three fit a phone's width; the full name is the tile's
   tooltip and the upgrade popup's) over the value (lighter ink), at the
   building's CURRENT level only (the next level's value is the upgrade
   popup's). Rates are per hour: a producer's output and a house's rent

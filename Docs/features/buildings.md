@@ -161,7 +161,7 @@
 - Build 45 Gold + 30 Wood, 20 s. Level 2: 83 Gold + 55 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH2 |
@@ -178,7 +178,7 @@
 - Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH1 |
@@ -196,7 +196,7 @@
 - Build 45 Gold + 30 Wood, 120 s. Level 2: 66 Gold + 44 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH2 · `Quarry Hoists` |
@@ -212,7 +212,7 @@
 - Build 38 Gold + 25 Wood, 20 s. Level 2: 59 Gold + 39 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | `Shipbuilding` |

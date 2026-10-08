@@ -26,7 +26,6 @@ import {
   districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
 import { isStoreFull, storedTotal } from '../sim/storage';
-import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { nameFor, trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
@@ -101,16 +100,6 @@ function workingHammer(): HTMLElement {
 }
 
 
-
-/** What a crew works, in a stat tile's short words and mark. */
-const sourceWord = (src: string): string => ({
-  Crops: tr('Fields'), Forest: tr('Trees'), Stone: tr('Rocks'), MountainIron: tr('Iron'),
-  MountainGold: tr('Gold'), Fish: tr('Shoals'), Berries: tr('Bushes'), Meat: tr('Game'),
-} as Record<string, string>)[src];
-const SOURCE_ICON: Record<string, IconName> = {
-  Crops: 'FarmLands', Forest: 'Wood', Stone: 'Stone', MountainIron: 'Iron',
-  MountainGold: 'Gold', Fish: 'Fish', Berries: 'Berries', Meat: 'Meat',
-};
 
 /** What a crew makes an hour, per coin: the rate one worker earns at this
  *  building — its haul and its swing included — times the crew. */
@@ -403,7 +392,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // does not show. Each figure is a tile of darker paper (kit .k-section),
   // three to a row; the next level's value belongs to the upgrade popup.
   // A worker building leads with what its crew makes (the resource is the
-  // tile's word: *Food +2.7k/h*) and what it has to work (*Fields 3*); a
+  // tile's word: *Food +2.7k/h*) and how fast its level makes the crew work
+  // (*Work speed ×1.25*) — the cells it works the map shows, ringed; a
   // house leads with its rent (*Gold +1.8k/h*) — its level's rent bonus is
   // already in that figure — and its Beds read residents/beds (*2/2*). The
   // Storage tile reads what the store holds against what it can (*Storage
@@ -416,12 +406,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         ...crewOutput(game, district).map(([c, n]) => ({
           icon: c as IconName, label: tr('{coin} an hour', { coin: coinWord(c) }), short: coinWord(c), value: `+${formatShort(n)}/h`,
         })),
-        // What there is to work, per source (the Quarry has three).
-        ...def.harvestSources.map((src) => {
-          const cells = game.workableCellsOf(district);
-          const n = cells.filter((c) => harvestSourceAt(game.state, c) === src).length;
-          return { icon: SOURCE_ICON[src], label: tr('{what} in range', { what: sourceWord(src) }), short: sourceWord(src), value: formatExact(n) };
-        }),
       ]
       : []),
     ...(districtCapacity(game.state, district) > 0 && built
