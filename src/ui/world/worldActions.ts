@@ -15,6 +15,8 @@ import { campTribute } from '../../sim/world/camps';
 import type { ScoutPay } from '../../sim/world/scouting';
 import { readyTrips } from '../../sim/world/explorers';
 import { formatCount, formatCountdown } from '../format';
+import { tr } from '../../i18n/tr';
+import { A_PACK, coinName } from './hexNames';
 
 export type HexAction =
   /** Claim the hex: build its district, which its feature decides (19 §5.1). */
@@ -46,7 +48,7 @@ export const isUpgrade = (what: WorldBuildWhat): what is WorldUpgrade => (WORLD_
 
 /** A world build's name: the district's, the upgrade's, or a repair. */
 export const worldBuildName = (what: WorldBuildWhat): string =>
-  what === 'Repair' ? 'Repair' : isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
+  what === 'Repair' ? tr('Repair') : isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
 
 /** The board as it is without any research: nothing faster, nothing capped. */
 const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
@@ -61,25 +63,26 @@ export const worldBuildSeconds = (what: WorldBuildWhat, level: number, boost: Se
 
 /** What the player is told when a world build stands. */
 export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
-  what === 'Repair' ? 'Your district is repaired, and works again'
-    : !isUpgrade(what) ? `Your ${worldBuildName(what)} stands — the ground is yours`
-      : level === 1 ? `Your ${worldBuildName(what)} stands` : `${worldBuildName(what)} reached level ${formatCount(level)}`;
+  what === 'Repair' ? tr('Your district is repaired, and works again')
+    : !isUpgrade(what) ? tr('Your {name} stands — the ground is yours', { name: worldBuildName(what) })
+      : level === 1 ? tr('Your {name} stands', { name: worldBuildName(what) })
+        : tr('{name} reached level {n}', { name: worldBuildName(what), n: formatCount(level) });
 
 /** What a scouting reward is called, as a player reads it: "1,000 Gold",
  *  "a Green pack". */
 export function scoutWords(pay: ScoutPay): string {
-  if (pay.pack !== null) return `a ${pay.pack} pack`;
+  if (pay.pack !== null) return A_PACK[pay.pack];
   return [...Object.entries(pay.wallet), ...Object.entries(pay.goods)]
-    .map(([c, n]) => `${formatCount(n as number)} ${c === 'HeroXp' ? 'Hero XP' : c}`).join(', ');
+    .map(([c, n]) => `${formatCount(n as number)} ${coinName(c as keyof typeof pay.wallet)}`).join(', ');
 }
 
 /** Why no explorer can go: when the first is back — or, with none on its
  *  way home, that one waits for the player on the board. */
 export function explorersOutLine(state: GameState, nextFreeAt: number | null, now: number): string {
-  if (nextFreeAt !== null) return `Every explorer is out — one is back in ${formatCountdown(Math.max(0, nextFreeAt - now) / 1000)}`;
+  if (nextFreeAt !== null) return tr('Every explorer is out — one is back in {time}', { time: formatCountdown(Math.max(0, nextFreeAt - now) / 1000) });
   return readyTrips(state, now).length > 0
-    ? 'Every explorer is out — one waits for you on the map'
-    : 'Every explorer is out';
+    ? tr('Every explorer is out — one waits for you on the map')
+    : tr('Every explorer is out');
 }
 
 /** What repairing a burnt district costs: a share of what the next claim
@@ -107,16 +110,16 @@ function touches(source: WorldSource, seat: number, index: number): boolean {
 export function hexWork(h: HexControl, boost: SeatBoost = NO_BOOST): { what: string; startedAt: number; endsAt: number } | null {
   if (!h.held) {
     const ms = worldBuildSeconds(h.district, 1, boost) * 1000;
-    return { what: `Building the ${WORLD_BUILD.districts[h.district].name}`, startedAt: h.standsAt - ms, endsAt: h.standsAt };
+    return { what: tr('Building the {name}', { name: WORLD_BUILD.districts[h.district].name }), startedAt: h.standsAt - ms, endsAt: h.standsAt };
   }
   if ((h.repairAt ?? null) !== null) {
     const ms = worldBuildSeconds('Repair', 1, boost) * 1000;
-    return { what: 'Repairing the district', startedAt: h.repairAt! - ms, endsAt: h.repairAt! };
+    return { what: tr('Repairing the district'), startedAt: h.repairAt! - ms, endsAt: h.repairAt! };
   }
   if (h.work === null) return null;
   const def = WORLD_BUILD.upgrades[h.work.upgrade];
   return {
-    what: h.work.toLevel === 1 ? `Building the ${def.name}` : `${def.name} to level ${formatCount(h.work.toLevel)}`,
+    what: h.work.toLevel === 1 ? tr('Building the {name}', { name: def.name }) : tr('{name} to level {n}', { name: def.name, n: formatCount(h.work.toLevel) }),
     startedAt: h.work.at - worldBuildSeconds(h.work.upgrade, h.work.toLevel, boost) * 1000,
     endsAt: h.work.at,
   };
@@ -147,15 +150,15 @@ export function fortressRoom(source: WorldSource, seat: number, boost: SeatBoost
 export function upgradeBlocked(source: WorldSource, seat: number, upgrade: WorldUpgrade, boost: SeatBoost = NO_BOOST): string | null {
   if (boost.upgrades !== undefined && !boost.upgrades.includes(upgrade)) {
     const gate = worldUpgradeGate(upgrade);
-    return gate === null ? null : `Research ${TECHNOLOGIES[gate].name} in the Atlas`;
+    return gate === null ? null : tr('Research {tech} in the Atlas', { tech: TECHNOLOGIES[gate].name });
   }
   if (upgrade === 'Fortress') {
     const room = fortressRoom(source, seat, boost);
-    if (room.allowed !== null && room.built >= room.allowed) return 'Research the Atlas to hold another Fortress';
+    if (room.allowed !== null && room.built >= room.allowed) return tr('Research the Atlas to hold another Fortress');
   } else {
     const room = chapelRoom(source, seat, boost);
     if (room.built >= room.allowed) {
-      return `Hold ${formatCount((room.allowed - (boost.chapels ?? 0)) * WORLD_BUILD.chapelsPerHexes)} hexes to build another Chapel`;
+      return tr('Hold {n} hexes to build another Chapel', { n: formatCount((room.allowed - (boost.chapels ?? 0)) * WORLD_BUILD.chapelsPerHexes) });
     }
   }
   return null;

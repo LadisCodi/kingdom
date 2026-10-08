@@ -11,17 +11,18 @@ import { behind, type RankedSeat } from '../../sim/world/ranking';
 import { el, formatCount, formatExact } from '../format';
 import { iconEl, sheet } from '../kit';
 import { crestEl, rankRibbon, townhallTag } from '../friends/kingdomBits';
+import { tr, trn } from '../../i18n/tr';
 
 export function renderRankingSheet(game: Game): HTMLElement {
   const rows = game.worldRanking() ?? [];
   const me = rows.find((r) => r.you);
   // The whole screen (`is-panes`, kit.css): the heading and the player's
   // own row stay put, and the list between them is what scrolls.
-  const surface = sheet({ title: 'Ranking', onClose: () => game.dismiss(), tall: true },
+  const surface = sheet({ title: tr('Ranking'), onClose: () => game.dismiss(), tall: true },
     el('div', { class: 'rk-top' },
-      el('p', { class: 'rk-where' }, `${formatExact(rows.length)} kingdoms in this world`),
+      el('p', { class: 'rk-where' }, trn(rows.length, '{n} kingdom in this world', '{n} kingdoms in this world', { n: formatExact(rows.length) })),
       el('div', { class: 'rk-head', 'aria-hidden': 'true' },
-        el('span', {}, 'Kingdom'), el('span', {}, 'Hexes'))),
+        el('span', {}, tr('Kingdom')), el('span', {}, tr('Hexes')))),
     el('div', { class: 'rk-list', 'data-keep-scroll': 'ranking' },
       el('div', { class: 'fr-rows' }, ...rows.map((r) => row(game, r, null)))),
     ...(me === undefined ? [] : [el('div', { class: 'rk-mine' }, row(game, me, gapWords(behind(rows))))]));
@@ -31,20 +32,20 @@ export function renderRankingSheet(game: Game): HTMLElement {
 
 /** The line under the player's name. */
 function gapWords(gap: { hexes: number; rank: number } | null): string {
-  if (gap === null) return 'First in this world';
-  return `${formatCount(gap.hexes)} ${gap.hexes === 1 ? 'hex' : 'hexes'} behind #${formatExact(gap.rank)}`;
+  if (gap === null) return tr('First in this world');
+  return trn(gap.hexes, '{n} hex behind #{rank}', '{n} hexes behind #{rank}', { n: formatCount(gap.hexes), rank: formatExact(gap.rank) });
 }
 
 function row(game: Game, r: RankedSeat, note: string | null): HTMLElement {
   const b = el('button', {
     class: `fr-row is-tappable rk-row${r.you ? ' is-you' : ''}`, type: 'button',
-    'aria-label': `${r.you ? 'You' : r.name}, place ${formatExact(r.rank)}, ${formatCount(r.hexes)} hexes. Show their city`,
+    'aria-label': tr('{who}, place {rank}, {n} hexes. Show their city', { who: r.you ? tr('You') : r.name, rank: formatExact(r.rank), n: formatCount(r.hexes) }),
   },
   rankRibbon(r.rank),
   crestEl(r.name, r.crest),
   el('div', { class: 'fr-who' },
-    el('div', { class: 'fr-name rk-name' }, r.you ? 'You' : r.name,
-      ...(r.friend ? [el('span', { class: 'rk-friend', title: 'A friend' }, iconEl('friends', { size: 'sm' }))] : [])),
+    el('div', { class: 'fr-name rk-name' }, r.you ? tr('You') : r.name,
+      ...(r.friend ? [el('span', { class: 'rk-friend', title: tr('A friend') }, iconEl('friends', { size: 'sm' }))] : [])),
     ...(r.townhall === null ? [] : [el('div', { class: 'fr-sub' }, townhallTag(r.townhall))]),
     ...(note === null ? [] : [el('div', { class: 'fr-note rk-gap' }, note)])),
   el('span', { class: 'rk-hexes' }, iconEl('hex', { size: 'md' }), formatCount(r.hexes)));

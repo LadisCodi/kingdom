@@ -13,7 +13,7 @@
 
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
-import { ARTIFACTS, DISTRICTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
+import { ARTIFACTS, DISTRICTS, GOODS, WORLD_BUILD, WORLD_DUNGEON, WORLD_GEN, WORLD_PORTAL } from '../../sim/data/definitions';
 import { buildingPortrait } from '../districtCard';
 import { crestEl, rankRibbon, townhallTag } from '../friends/kingdomBits';
 import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgrade } from '../../sim/world/types';
@@ -38,11 +38,12 @@ import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
 import { chapelRoom, explorersOutLine, fortressRoom, hexActions, hexWork, upgradeBlocked, worldBuildSeconds } from './worldActions';
 import { armyBoard, marchingDock } from './delveScreen';
-import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
+import { campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
 import { enemyPanel } from '../battleSheet';
 import { creatureFace } from '../lairSheet';
-import { CAMP_TITLE, FEATURE_NAME, TERRAIN_NAME } from './hexNames';
+import { CAMP_TITLE, CREATURE_NAME, DIFFICULTY_NAME, FEATURE_NAME, PACK_NAME, TERRAIN_NAME, coinName, withTag } from './hexNames';
+import { tr, trn } from '../../i18n/tr';
 
 /** A feature's mark on its tile: what it is worked for. */
 const FEATURE_ICON: Partial<Record<WorldFeature, IconName>> = {
@@ -52,8 +53,14 @@ const FEATURE_ICON: Partial<Record<WorldFeature, IconName>> = {
 
 /** What a building does, in one line. */
 const BUILDING_LINE: Record<WorldUpgrade, string> = {
-  Fortress: 'Its garrison fights raiders',
-  Chapel: 'Hosts a world relic',
+  Fortress: tr('Its garrison fights raiders'),
+  Chapel: tr('Hosts a world relic'),
+};
+
+/** The same, as a sentence on the building's own popup. */
+const BUILDING_SENTENCE: Record<WorldUpgrade, string> = {
+  Fortress: tr('Its garrison fights raiders.'),
+  Chapel: tr('Hosts a world relic.'),
 };
 
 const buildingSprite = (b: WorldUpgrade, level: number): string =>
@@ -63,11 +70,12 @@ const buildingSprite = (b: WorldUpgrade, level: number): string =>
 function districtLine(bh: BoardHex, d: WorldDistrict): string {
   const def = WORLD_BUILD.districts[d];
   const material = depositMaterial(bh.features);
-  if (material !== null) return `Digs ${material} for your city.`;
-  if (d === 'Shrine') return 'Raises your Mana’s ceiling. Its Chapel hosts a world relic.';
-  if (def.produces === 'Food') return 'Farms Food for your city.';
-  if (def.produces === '') return 'Works its ground for your city.';
-  return `${def.produces === 'Gold' ? 'Pays' : 'Brings'} ${def.produces} to your city.`;
+  if (material !== null) return tr('Digs {material} for your city.', { material: GOODS[material].name });
+  if (d === 'Shrine') return tr('Raises your Mana’s ceiling. Its Chapel hosts a world relic.');
+  if (def.produces === 'Food') return tr('Farms Food for your city.');
+  if (def.produces === '') return tr('Works its ground for your city.');
+  if (def.produces === 'Gold') return tr('Pays Gold to your city.');
+  return tr('Brings {coin} to your city.', { coin: coinName(def.produces) });
 }
 
 /** The art in a portrait: a sprite, drawn larger than its tile and clipped. */
@@ -98,7 +106,7 @@ const tiles = (list: readonly Tile[]): HTMLElement => el('div', { class: 'dc-sta
 function distanceLine(game: Game, index: number): HTMLElement {
   const n = hexDistance(hexAt(game.homeHex()), hexAt(index));
   return el('p', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }),
-    `${formatCount(n)} ${n === 1 ? 'hex' : 'hexes'} from your city`);
+    trn(n, '{n} hex from your city', '{n} hexes from your city', { n: formatCount(n) }));
 }
 
 /** The ground's own tiles: terrain, feature, the march across it — at its
@@ -106,9 +114,9 @@ function distanceLine(game: Game, index: number): HTMLElement {
 function groundTiles(game: Game, bh: BoardHex): Tile[] {
   const feature = bh.features[0];
   return [
-    { icon: 'tile', label: 'Terrain', value: TERRAIN_NAME[bh.terrain ?? 'Grassland'] },
-    ...(feature === undefined ? [] : [{ icon: FEATURE_ICON[feature] ?? 'tile', label: 'Feature', value: FEATURE_NAME[feature] }]),
-    { icon: 'boot', label: 'March', value: `${formatDuration(Math.round(hexTravelMs(bh, 'army', hexDistance(hexAt(game.homeHex()), bh.hex)) / 1000))} / hex` },
+    { icon: 'tile', label: tr('Terrain'), value: TERRAIN_NAME[bh.terrain ?? 'Grassland'] },
+    ...(feature === undefined ? [] : [{ icon: FEATURE_ICON[feature] ?? 'tile', label: tr('Feature'), value: FEATURE_NAME[feature] }]),
+    { icon: 'boot', label: tr('March'), value: tr('{time} / hex', { time: formatDuration(Math.round(hexTravelMs(bh, 'army', hexDistance(hexAt(game.homeHex()), bh.hex)) / 1000)) }) },
   ];
 }
 
@@ -119,16 +127,16 @@ function yieldTiles(game: Game, bh: BoardHex, h: HexControl | null): Tile[] {
   if (rate.currency !== null) {
     const coin = rate.currency as IconName;
     out.push(h?.stores != null
-      ? { icon: coin, label: 'Storage', value: `${formatShort(Math.floor(h.stores.amount))}/${formatShort(h.stores.cap)}`, bad: h.stores.amount >= h.stores.cap }
-      : { icon: coin, label: 'Storage', value: formatShort(rate.cap) });
-    out.push({ icon: coin, label: 'Income', value: `${formatShort(rate.perHour)} /h` });
+      ? { icon: coin, label: tr('Storage'), value: `${formatShort(Math.floor(h.stores.amount))}/${formatShort(h.stores.cap)}`, bad: h.stores.amount >= h.stores.cap }
+      : { icon: coin, label: tr('Storage'), value: formatShort(rate.cap) });
+    out.push({ icon: coin, label: tr('Income'), value: `${formatShort(rate.perHour)} /h` });
   }
   // A deposit's precious store, beside its coin's.
   if (h?.precious != null && h.precious.cap > 0) {
-    out.push({ icon: h.precious.id, label: h.precious.id, value: `${formatShort(Math.floor(h.precious.amount))}/${formatShort(h.precious.cap)}` });
+    out.push({ icon: h.precious.id, label: GOODS[h.precious.id].name, value: `${formatShort(Math.floor(h.precious.amount))}/${formatShort(h.precious.cap)}` });
   } else if (h === null) {
     const material = depositMaterial(bh.features);
-    if (material !== null) out.push({ icon: material, label: 'Yields', value: material });
+    if (material !== null) out.push({ icon: material, label: tr('Yields'), value: GOODS[material].name });
   }
   return out;
 }
@@ -170,32 +178,32 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
     el('div', { class: 'dc-what-col' },
       distanceLine(game, index),
       el('div', { class: 'dc-what' }, fog === 'Sensed'
-        ? 'Shapes in the mist. Send an explorer to see it.'
-        : 'Nobody has been this way.')));
+        ? tr('Shapes in the mist. Send an explorer to see it.')
+        : tr('Nobody has been this way.'))));
 
   const route = explorerRoute(state, index);
   const work = exploreWorkMs(state, index) / 1000;
   const there = route === null ? 0 : (outboundMs(route.stepMs) + homeboundMs(route.stepMs)) / 1000 + work;
   let reason: string | undefined;
-  if (route === null) reason = 'No way there through explored ground';
+  if (route === null) reason = tr('No way there through explored ground');
   else if (freeExplorers(state) === 0) reason = explorersOutLine(state, nextFreeAt(state), now);
   // The first trip is the tutorial's: no Gold, and the button says so.
   const explore = trip !== null ? null : coach(btn({
-    label: 'Explore', kind: 'primary', cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => game.walletValue(c),
-    ...(firstTripFree(state) ? { note: 'Free' } : {}),
+    label: tr('Explore'), kind: 'primary', cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => game.walletValue(c),
+    ...(firstTripFree(state) ? { note: tr('Free') } : {}),
     disabledReason: reason,
     onClick: () => game.doSendExplorer(),
   }), 'explore');
   const exploreHead = el('div', { class: 'dc-head' },
     portrait('whex_explorer', 'compass'),
     el('div', { class: 'dc-what-col' },
-      el('p', { class: 'wd-name' }, 'Send an explorer'),
-      el('div', { class: 'dc-what' }, 'It explores the hex, then waits there for you.')),
+      el('p', { class: 'wd-name' }, tr('Send an explorer')),
+      el('div', { class: 'dc-what' }, tr('It explores the hex, then waits there for you.'))),
     ...(explore === null ? [] : [el('div', { class: 'dc-upgrade' }, explore)]));
   const blocked = reason === undefined || trip !== null ? [] : [blockedLine(reason)];
   const journey = route === null ? [] : [tiles([
-    { icon: 'compass', label: 'There and back', value: formatDuration(Math.round(there)) },
-    { icon: 'hourglass', label: 'To explore', value: formatDuration(Math.round(work)) },
+    { icon: 'compass', label: tr('There and back'), value: formatDuration(Math.round(there)) },
+    { icon: 'hourglass', label: tr('To explore'), value: formatDuration(Math.round(work)) },
   ])];
 
   // What the explorer brings home, priced as of now (19 §3.2).
@@ -203,17 +211,17 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
   if (fog === 'Sensed' && bh.scout !== null) {
     const pay = scoutPay(state, bh.scout, bh.role, index);
     const rewards: Tile[] = pay.pack !== null
-      ? [{ icon: 'pack', label: `${pay.pack} pack`, value: '+1' }]
+      ? [{ icon: 'pack', label: PACK_NAME[pay.pack], value: `+${formatExact(1)}` }]
       : [...Object.entries(pay.wallet), ...Object.entries(pay.goods)].map(([c, n]) => ({
-        icon: c as IconName, label: c === 'HeroXp' ? 'Hero XP' : c, value: `+${formatShort(n as number)}`,
+        icon: c as IconName, label: coinName(c as CurrencyId), value: `+${formatShort(n as number)}`,
       }));
-    if (rewards.length > 0) pays.push(sectionHead('Exploring it pays'), tiles(rewards));
+    if (rewards.length > 0) pays.push(sectionHead(tr('Exploring it pays')), tiles(rewards));
   }
 
   return sheet({ title, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
-      sectionHead('The hex'), hex,
-      sectionHead('Explore'), exploreHead, ...blocked, ...journey, ...(trip === null ? [] : [trip]),
+      sectionHead(tr('The hex')), hex,
+      sectionHead(tr('Explore')), exploreHead, ...blocked, ...journey, ...(trip === null ? [] : [trip]),
       ...pays));
 }
 
@@ -226,11 +234,11 @@ function groundStrip(game: Game, bh: BoardHex): HTMLElement {
   const feature = bh.features[0];
   const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
   const edges = groundEdges(bh).map((e) =>
-    `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`);
+    edgeLine(e));
   const strip = el('button', { class: 'wd-ground k-section', type: 'button' },
     ...groundTiles(game, bh).map((t) => el('span', { class: 'wd-ground-fact', 'aria-label': `${t.label} ${t.value}` },
       iconEl(t.icon, { size: 'md' }), el('span', { class: 'wd-ground-value', 'aria-hidden': 'true' }, t.value))));
-  return withTooltip(strip, edges.length === 0 ? 'No effect on the fight' : edges.join(' · '), name);
+  return withTooltip(strip, edges.length === 0 ? tr('No effect on the fight') : edges.join(' · '), name);
 }
 
 /**
@@ -250,7 +258,7 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   const enemy = enemyPanel(campSquads(source.board().seed, index, camp), camp.power, creatureFace);
   // A wax seal in the board's colour for it: green easy, gold fair, red hard.
   const wax = difficulty === 'Fair' ? 'is-fair' : difficulty === 'Hard' || difficulty === 'Deadly' ? 'is-hard' : 'is-easy';
-  enemy.querySelector('.k-headpanel-head')?.prepend(el('span', { class: `wd-seal ${wax}` }, difficulty));
+  enemy.querySelector('.k-headpanel-head')?.prepend(el('span', { class: `wd-seal ${wax}` }, DIFFICULTY_NAME[difficulty]));
   const loot = (Object.entries(campLoot(game.state, camp.power)) as Array<[CurrencyId, number]>)
     .filter(([, n]) => n > 0)
     .map(([c, n]) => el('span', { class: 'k-chip' }, currencyIcon(c, { size: 'sm' }), `+${formatShort(n)}`));
@@ -264,26 +272,26 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
     ? el('div', { class: 'dv-dock' },
       armyBoard(game, marching),
       el('div', { class: 'dv-calls' },
-        btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(marching.id) }),
+        btn({ label: tr('Withdraw'), kind: 'secondary', onClick: () => void game.doRecallArmy(marching.id) }),
         btn({
-          label: 'Attack', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
+          label: tr('Attack'), kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c: CurrencyId) => game.walletValue(c),
           onClick: () => void game.doFightCamp(marching.id),
         })))
     : marching !== undefined
-    ? marchingDock(game, marching, 'On the way')
+    ? marchingDock(game, marching, tr('On the way'))
     : el('div', { class: 'wd-choices' },
       btn({
-        label: 'Negotiate', kind: 'secondary',
+        label: tr('Negotiate'), kind: 'secondary',
         cost: tribute?.kind === 'tribute' ? tribute.cost : campTribute(camp.power),
         have: (c: CurrencyId) => game.walletValue(c),
         onClick: () => void game.doTributeCamp(index),
       }),
-      btn({ label: 'Attack', kind: 'destructive', onClick: () => game.openArmy(index, 'clear') }));
+      btn({ label: tr('Attack'), kind: 'destructive', onClick: () => game.openArmy(index, 'clear') }));
   return sheet({ title: CAMP_TITLE[camp.creature], onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       groundStrip(game, bh), enemy,
       // On its way, the fight is chosen: the army's board takes the pay's room.
-      ...(loot.length === 0 || marching !== undefined ? [] : [sectionHead('Beaten, it pays'), el('div', { class: 'wd-loot' }, ...loot)]),
+      ...(loot.length === 0 || marching !== undefined ? [] : [sectionHead(tr('Beaten, it pays')), el('div', { class: 'wd-loot' }, ...loot)]),
       answers));
 }
 
@@ -300,23 +308,23 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
   const p = source.portal();
   const now = game.now();
   const ribbon = p === null ? null : el('div', { class: 'wd-ribbon is-portal' }, iconEl('hourglass', { size: 'sm' }),
-    p.open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
-      : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
+    p.open ? tr('Closes in {time}', { time: formatCountdown(Math.max(0, p.closesAt - now) / 1000) })
+      : tr('Opens in {time}', { time: formatCountdown(Math.max(0, p.opensAt - now) / 1000) }));
   const art = el('div', { class: 'dc-portrait k-section wd-portrait' },
     el('div', { class: `dc-portrait-mask wd-portal-art${p?.open ? ' is-open' : ''}` }, portalPortrait(p?.open ?? false, 84)),
     ...(['tl', 'tr', 'bl', 'br'] as const).map((corner) => el('span', { class: `dc-orn is-${corner}`, 'aria-hidden': 'true' })));
   const head = el('div', { class: 'dc-head' }, art,
     el('div', { class: 'dc-what-col' },
       distanceLine(game, index),
-      el('div', { class: 'dc-what' }, 'Nobody holds it, and nobody ever will.')));
+      el('div', { class: 'dc-what' }, tr('Nobody holds it, and nobody ever will.'))));
   const floor = p?.floor ?? 0;
   const next = Math.min(WORLD_PORTAL.floors, floor + 1);
   // Where the player stands in the world's ranking: 0 before a first floor.
   const place = (p?.ranking ?? []).findIndex((r) => r.seat === game.worldSeat()) + 1;
   const stats = tiles([
-    { icon: 'dungeon', label: 'Your floor', value: `${formatExact(floor)}/${formatExact(WORLD_PORTAL.floors)}` },
-    { icon: 'star', label: 'Your place', value: place === 0 ? '—' : `#${formatExact(place)}` },
-    { icon: 'power', label: 'Next floor', value: formatShort(floorPower(next)) },
+    { icon: 'dungeon', label: tr('Your floor'), value: `${formatExact(floor)}/${formatExact(WORLD_PORTAL.floors)}` },
+    { icon: 'star', label: tr('Your place'), value: place === 0 ? '—' : `#${formatExact(place)}` },
+    { icon: 'power', label: tr('Next floor'), value: formatShort(floorPower(next)) },
   ]);
   // The ranking: the friends list's rows, the player's own lit.
   const me = game.worldSeat();
@@ -327,21 +335,21 @@ export function renderPortal(game: Game, bh: BoardHex): HTMLElement {
   if (mine !== undefined && !shown.includes(mine)) shown.push(mine);
   const rows = shown.map((r) => {
     const s = seats[r.seat];
-    const name = s === undefined ? 'A kingdom' : s.owner.you ? 'You' : s.owner.name;
+    const name = s === undefined ? tr('A kingdom') : s.owner.you ? tr('You') : s.owner.name;
     return el('div', { class: `fr-row wd-rank${r.seat === me ? ' is-you' : ''}` },
       rankRibbon(r.rank),
       crestEl(s?.owner.name ?? '?', s?.owner.crest ?? null),
       el('div', { class: 'fr-who' }, el('div', { class: 'fr-name' }, name)),
-      el('div', { class: 'fr-trail wd-rank-floor' }, `Floor ${formatExact(r.floor)}`));
+      el('div', { class: 'fr-trail wd-rank-floor' }, tr('Floor {n}', { n: formatExact(r.floor) })));
   });
   // Descend: the descent, where the army is sent and the floors fought.
-  const foot = [btn({ label: 'Descend', kind: 'blue', onClick: () => game.openPortalDescent(index) })];
-  const shut = p === null || !p.open ? [blockedLine(p === null ? 'The Portal is shut' : `It opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`)] : [];
-  return sheet({ title: 'The Dark Portal', onClose: () => game.dismiss() },
+  const foot = [btn({ label: tr('Descend'), kind: 'blue', onClick: () => game.openPortalDescent(index) })];
+  const shut = p === null || !p.open ? [blockedLine(p === null ? tr('The Portal is shut') : tr('It opens in {time}', { time: formatCountdown(Math.max(0, p.opensAt - now) / 1000) }))] : [];
+  return sheet({ title: tr('The Dark Portal'), onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       ...(ribbon === null ? [] : [ribbon]),
       head, stats,
-      ...(rows.length === 0 ? [] : [sectionHead('Ranking'), el('div', { class: 'wd-ranks' }, ...rows)]),
+      ...(rows.length === 0 ? [] : [sectionHead(tr('Ranking')), el('div', { class: 'wd-ranks' }, ...rows)]),
       ...shut,
       el('div', { class: 'wd-foot' }, ...foot)));
 }
@@ -359,7 +367,7 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
   const source = game.worldSource();
   const seat = bh.seat!;
   const s = source.seats()[seat];
-  const name = s?.owner.name ?? 'A kingdom';
+  const name = s?.owner.name ?? tr('A kingdom');
   const mine = s?.owner.you === true;
   const friendView = mine ? undefined : game.friends.snap?.friends.find((f) => f.nickname === name);
   const ground = source.board().hexes.filter((h) => source.hexOf(h.index)?.owner === seat).length;
@@ -370,10 +378,10 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
     el('div', { class: 'dc-what-col' },
       ...(friendView !== undefined ? [townhallTag(friendView.townhall)] : []),
       ...(mine ? [] : [distanceLine(game, index)]),
-      el('div', { class: 'dc-what' }, mine ? 'Your province, seen from the world.' : 'Another kingdom. A city can never be attacked.')));
+      el('div', { class: 'dc-what' }, mine ? tr('Your province, seen from the world.') : tr('Another kingdom. A city can never be attacked.'))));
   const facts: Tile[] = [
-    { icon: 'tile', label: 'Ground', value: `${formatExact(ground)} ${ground === 1 ? 'hex' : 'hexes'}` },
-    { icon: 'dungeon', label: 'Portal floor', value: formatExact(floor) },
+    { icon: 'tile', label: tr('Ground'), value: trn(ground, '{n} hex', '{n} hexes', { n: formatExact(ground) }) },
+    { icon: 'dungeon', label: tr('Portal floor'), value: formatExact(floor) },
   ];
   const parts: HTMLElement[] = [head, tiles(facts)];
   const foot: HTMLElement[] = [];
@@ -382,19 +390,19 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
     // (Docs/plans/precious-deposits.md §1.2).
     const deal = source.board().deposits[seat];
     if (deal !== undefined) {
-      parts.push(sectionHead('Deposits'), tiles((['strong', 'middle', 'weak'] as const).map((rank) => ({
-        icon: deal[rank] as IconName, label: deal[rank], value: `×${formatExact(WORLD_GEN.deposits[rank].length)}`,
+      parts.push(sectionHead(tr('Deposits')), tiles((['strong', 'middle', 'weak'] as const).map((rank) => ({
+        icon: deal[rank] as IconName, label: coinName(deal[rank]), value: `×${formatExact(WORLD_GEN.deposits[rank].length)}`,
       }))));
-      foot.push(btn({ label: 'Trade', kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
+      foot.push(btn({ label: tr('Trade'), kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
     }
   } else if (friendView !== undefined) {
-    foot.push(btn({ label: 'Profile', kind: 'secondary', onClick: () => game.friends.openProfile(friendView.code) }));
+    foot.push(btn({ label: tr('Profile'), kind: 'secondary', onClick: () => game.friends.openProfile(friendView.code) }));
   } else if (s !== undefined && !s.owner.you && game.friends.named()) {
     const asked = game.friends.snap?.outgoing.some((r) => r.nickname === name) === true;
     foot.push(btn({
-      label: 'Add friend', kind: 'primary',
-      disabledReason: asked ? 'Request sent' : game.friends.busy.has(name) ? 'Sending' : undefined,
-      onClick: () => void game.friends.request(name).then(() => game.toast(`A request is on its way to ${name}`)),
+      label: tr('Add friend'), kind: 'primary',
+      disabledReason: asked ? tr('Request sent') : game.friends.busy.has(name) ? tr('Sending') : undefined,
+      onClick: () => void game.friends.request(name).then(() => game.toast(tr('A request is on its way to {name}', { name }))),
     }));
   }
   const root = sheet({ title: name, onClose: () => game.dismiss() },
@@ -407,7 +415,12 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
 // ------------------------------------------------------------ the deployment's widgets
 
 /** What a troop type is called on a modifier's line. */
-const TYPE_WORD: Partial<Record<UnitId, string>> = { Warrior: 'Warriors', Lancer: 'Lancers', Archer: 'Archers', Cavalry: 'Cavalry' };
+const TYPE_WORD: Partial<Record<UnitId, string>> = { Warrior: tr('Warriors'), Lancer: tr('Lancers'), Archer: tr('Archers'), Cavalry: tr('Cavalry') };
+
+/** "Archers +20% attack": what the ground does to one troop type. */
+const edgeLine = (e: ReturnType<typeof groundEdges>[number]): string => tr('{type} {sign}{pct}% attack', {
+  type: TYPE_WORD[e.unit] ?? e.unit, sign: e.attack > 0 ? '+' : '−', pct: formatExact(Math.round(Math.abs(e.attack) * 100)),
+});
 const TYPE_ICON: Partial<Record<UnitId, IconName>> = { Warrior: 'typeWarrior', Lancer: 'typeLancer', Archer: 'typeArcher', Cavalry: 'typeCavalry' };
 
 /** A widget on the deployment (m87b): a parchment plate with its header. */
@@ -418,7 +431,7 @@ const widget = (title: string, ...body: HTMLElement[]): HTMLElement =>
 export function lootWidget(pay: Partial<Record<CurrencyId, number>>): HTMLElement | null {
   const coins = (Object.entries(pay) as Array<[CurrencyId, number]>).filter(([, n]) => n > 0);
   if (coins.length === 0) return null;
-  return widget('Loot', el('div', { class: 'wd-widget-chips' }, ...coins.map(([c, n]) => chip(c, n))));
+  return widget(tr('Loot'), el('div', { class: 'wd-widget-chips' }, ...coins.map(([c, n]) => chip(c, n))));
 }
 
 /** TERRAIN: the ground the fight is on, the march there, and what the
@@ -428,14 +441,14 @@ export function terrainWidget(bh: BoardHex, march: string): HTMLElement {
   const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
   const lines = groundEdges(bh).map((e) => el('div', { class: `wd-edge${e.attack < 0 ? ' is-bad' : ' is-good'}` },
     iconEl(TYPE_ICON[e.unit] ?? 'army', { size: 'sm' }),
-    `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`));
+    edgeLine(e)));
   const url = spriteUrl(groundSprite(bh));
-  return widget('Terrain', el('div', { class: 'wd-widget-ground' },
+  return widget(tr('Terrain'), el('div', { class: 'wd-widget-ground' },
     el('span', { class: 'wd-widget-art' }, url ? spriteImgAt(url, 'wd-slot-img') : iconEl('tile', { size: 'lg' })),
     el('div', { class: 'wd-widget-what' },
       el('div', { class: 'wd-widget-name' }, name),
       el('div', { class: 'wd-far' }, iconEl('boot', { size: 'sm' }), march),
-      ...(lines.length === 0 ? [el('div', { class: 'wd-edge' }, 'No effect on the fight')] : lines))));
+      ...(lines.length === 0 ? [el('div', { class: 'wd-edge' }, tr('No effect on the fight'))] : lines))));
 }
 
 // ------------------------------------------------------------ a dungeon
@@ -461,19 +474,19 @@ export function renderDungeon(game: Game, bh: BoardHex): HTMLElement {
   const total = WORLD_DUNGEON.depths * per;
   const cleared = source.delved(index);
   const room = nextRoom(cleared);
-  const creature = info === undefined ? null : CAMP_CREATURE[info.creature];
+  const creature = info === undefined ? null : CREATURE_NAME[info.creature];
   const head = el('div', { class: 'dc-head' },
     portrait('whex_mountain_dungeon', 'dungeon'),
     el('div', { class: 'dc-what-col' },
-      el('div', { class: 'dc-what' }, `${creature === null ? '' : `Held by ${creature}. `}${
-        WORLD_DUNGEON.depths === 3 ? 'Three' : formatExact(WORLD_DUNGEON.depths)} depths of ${formatExact(per)} rooms.`),
+      el('div', { class: 'dc-what' }, `${creature === null ? '' : `${tr('Held by {who}.', { who: creature })} `}${
+        tr('{depths} depths of {n} rooms.', { depths: WORLD_DUNGEON.depths === 3 ? tr('Three') : formatExact(WORLD_DUNGEON.depths), n: formatExact(per) })}`),
       distanceLine(game, index)),
-    el('div', { class: 'dc-upgrade' }, btn({ label: 'Delve', kind: 'primary', onClick: () => game.openDelve(index) })));
+    el('div', { class: 'dc-upgrade' }, btn({ label: tr('Delve'), kind: 'primary', onClick: () => game.openDelve(index) })));
   const progress = tiles(room === null
-    ? [{ icon: 'tick', label: 'Cleared', value: 'To the bottom' }]
+    ? [{ icon: 'tick', label: tr('Cleared'), value: tr('To the bottom') }]
     : [
-      { icon: 'dungeon', label: 'Depth', value: `${formatExact(room.depth + 1)}/${formatExact(WORLD_DUNGEON.depths)}` },
-      { icon: 'skull', label: 'Room', value: `${formatExact(room.room)}/${formatExact(per)}` },
+      { icon: 'dungeon', label: tr('Depth'), value: `${formatExact(room.depth + 1)}/${formatExact(WORLD_DUNGEON.depths)}` },
+      { icon: 'skull', label: tr('Room'), value: `${formatExact(room.room)}/${formatExact(per)}` },
     ]);
 
   // THE RACE: the world ranking's rows, ranked by rooms cleared.
@@ -485,14 +498,14 @@ export function renderDungeon(game: Game, bh: BoardHex): HTMLElement {
     if (r.cleared !== last) { place = i + 1; last = r.cleared; }
     const k = seen.get(r.seat);
     const s = source.seats()[r.seat];
-    const name = s?.owner.name ?? k?.name ?? 'A kingdom';
+    const name = s?.owner.name ?? k?.name ?? tr('A kingdom');
     const you = r.seat === me;
     return el('div', { class: `fr-row rk-row${you ? ' is-you' : ''}`, ...(you ? { 'data-you': 'true' } : {}) },
       rankRibbon(place),
       crestEl(name, k?.crest ?? s?.owner.crest ?? null),
       el('div', { class: 'fr-who' },
-        el('div', { class: 'fr-name rk-name' }, you ? 'You' : name,
-          ...(k?.friend ? [el('span', { class: 'rk-friend', title: 'A friend' }, iconEl('friends', { size: 'sm' }))] : [])),
+        el('div', { class: 'fr-name rk-name' }, you ? tr('You') : name,
+          ...(k?.friend ? [el('span', { class: 'rk-friend', title: tr('A friend') }, iconEl('friends', { size: 'sm' }))] : [])),
         ...(k?.townhall == null ? [] : [el('div', { class: 'fr-sub' }, townhallTag(k.townhall))])),
       el('span', { class: 'rk-hexes wd-race-at' }, iconEl('dungeon', { size: 'md' }), `${formatExact(r.cleared)}/${formatExact(total)}`));
   });
@@ -511,14 +524,14 @@ export function renderDungeon(game: Game, bh: BoardHex): HTMLElement {
       live.scrollTop = off - (live.clientHeight - mine.offsetHeight) / 2;
     });
   }
-  const last_ = info?.bosses[WORLD_DUNGEON.depths - 1] ?? 'its last boss';
-  const surface = sheet({ title: info?.name ?? 'A dungeon', onClose: () => game.dismiss() },
+  const last_ = info?.bosses[WORLD_DUNGEON.depths - 1] ?? tr('its last boss');
+  const surface = sheet({ title: info?.name ?? tr('A dungeon'), onClose: () => game.dismiss() },
     el('div', { class: 'wd-card wd-race-card' },
-      sectionHead('Dungeon'), head, progress,
-      sectionHead('The race'),
+      sectionHead(tr('Dungeon')), head, progress,
+      sectionHead(tr('The race')),
       el('p', { class: 'wd-far wd-race-line' },
-        `First to beat ${last_} closes it for everyone, and is paid his chest ×${formatExact(WORLD_DUNGEON.closeRewardMultiplier)}`),
-      race.length === 0 ? el('p', { class: 'wd-far' }, 'Nobody has cleared a room yet.') : list));
+        tr('First to beat {boss} closes it for everyone, and is paid his chest ×{n}', { boss: last_, n: formatExact(WORLD_DUNGEON.closeRewardMultiplier) })),
+      race.length === 0 ? el('p', { class: 'wd-far' }, tr('Nobody has cleared a room yet.')) : list));
   // The card's body does not scroll; the race does, in what is left of it.
   surface.classList.add('is-panes');
   return surface;
@@ -540,7 +553,7 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
     portrait(groundSprite(bh), 'tile'),
     el('div', { class: 'dc-what-col' }, distanceLine(game, bh.index)));
   const build = coach(btn({
-    label: 'Build', kind: 'primary', cost: { Gold: gold }, have: (c: CurrencyId) => game.walletValue(c),
+    label: tr('Build'), kind: 'primary', cost: { Gold: gold }, have: (c: CurrencyId) => game.walletValue(c),
     disabledReason: reason,
     onClick: () => void game.doClaimHex(bh.index, gold),
   }), 'hex-build');
@@ -552,10 +565,10 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
     el('div', { class: 'dc-upgrade' }, build));
   return sheet({ title, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
-      sectionHead('The hex'), hex, tiles(groundTiles(game, bh)),
-      sectionHead('District'), districtHead, ...(reason === undefined ? [] : [blockedLine(reason)]),
+      sectionHead(tr('The hex')), hex, tiles(groundTiles(game, bh)),
+      sectionHead(tr('District')), districtHead, ...(reason === undefined ? [] : [blockedLine(reason)]),
       tiles([...yieldTiles(game, bh, null),
-        { icon: 'hourglass', label: 'Build', value: formatDuration(worldBuildSeconds(district, 1, game.worldBoost())) }])));
+        { icon: 'hourglass', label: tr('Build'), value: formatDuration(worldBuildSeconds(district, 1, game.worldBoost())) }])));
 }
 
 // ------------------------------------------------------------ your district
@@ -577,9 +590,9 @@ export function districtSlots(bh: BoardHex, h: HexControl): Array<{ building: Wo
 /** One slot: its building's art, name and level — or the empty well. */
 function slotEl(game: Game, index: number, slot: ReturnType<typeof districtSlots>[number], h: HexControl): HTMLElement {
   if (slot === null) {
-    const b = el('button', { class: 'wd-slot is-empty', type: 'button', 'aria-label': 'Build here' },
+    const b = el('button', { class: 'wd-slot is-empty', type: 'button', 'aria-label': tr('Build here') },
       el('span', { class: 'hc-plus', 'aria-hidden': 'true' }, '+'),
-      el('span', { class: 'wd-slot-name' }, 'Build here'));
+      el('span', { class: 'wd-slot-name' }, tr('Build here')));
     b.addEventListener('click', () => game.openWorldSlot(index));
     return b;
   }
@@ -588,13 +601,13 @@ function slotEl(game: Game, index: number, slot: ReturnType<typeof districtSlots
   const b = el('button', { class: `wd-slot${slot.going ? ' is-going' : ''}`, type: 'button', 'aria-label': name },
     el('span', { class: 'wd-slot-art' }, art ? spriteImgAt(art, 'wd-slot-img') : iconEl('build', { size: 'lg' })),
     el('span', { class: 'wd-slot-name' }, name),
-    ...(slot.building === 'Fortress' && slot.level > 0 ? [el('span', { class: 'wd-slot-level' }, `Lv ${formatExact(slot.level)}`)] : []),
-    ...(slot.going ? [el('span', { class: 'wd-slot-level' }, iconEl('hourglass', { size: 'sm' }), 'Building')] : []));
+    ...(slot.building === 'Fortress' && slot.level > 0 ? [el('span', { class: 'wd-slot-level' }, tr('Lv {n}', { n: formatExact(slot.level) }))] : []),
+    ...(slot.going ? [el('span', { class: 'wd-slot-level' }, iconEl('hourglass', { size: 'sm' }), tr('Building'))] : []));
   b.addEventListener('click', () => game.openWorldBuilding(index, slot.building));
   // A Chapel's relic socket at its top right: a tap opens the relic picker.
   if (slot.building === 'Chapel' && !slot.going) {
     const relic = h.relic == null ? null : game.relicCard(h.relic.id);
-    const socket = el('button', { class: 'wd-socket', type: 'button', 'aria-label': relic === null ? 'Host a relic' : `Change ${relic.name}` },
+    const socket = el('button', { class: 'wd-socket', type: 'button', 'aria-label': relic === null ? tr('Host a relic') : tr('Change {name}', { name: relic.name }) },
       relic === null ? el('span', { class: 'hc-plus', 'aria-hidden': 'true' }, '+') : relicArt(relic, 'wd-socket-art'));
     socket.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -622,10 +635,10 @@ export function renderOwnDistrict(game: Game, bh: BoardHex, h: HexControl, extra
   return withShield(game, sheet({ title: def.name, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       head,
-      tiles([...yieldTiles(game, bh, h), ...groundTiles(game, bh).filter((t) => t.label !== 'Feature')]),
+      tiles([...yieldTiles(game, bh, h), ...groundTiles(game, bh).filter((t) => t.label !== tr('Feature'))]),
       ...extra,
       ...(slots.length === 0 ? [] : [
-        sectionHead('Buildings'),
+        sectionHead(tr('Buildings')),
         el('div', { class: 'wd-slots' }, ...slots.map((s) => slotEl(game, bh.index, s, h))),
       ]))));
 }
@@ -634,9 +647,9 @@ export function renderOwnDistrict(game: Game, bh: BoardHex, h: HexControl, extra
 
 /** Why a building cannot go into this district now, or undefined. */
 function slotRefusal(game: Game, h: HexControl, b: WorldUpgrade): string | undefined {
-  if (h.burnt) return 'Repair it first';
-  if (!h.active) return 'Cut off from your city';
-  if (h.work !== null) return 'A builder is at work here';
+  if (h.burnt) return tr('Repair it first');
+  if (!h.active) return tr('Cut off from your city');
+  if (h.work !== null) return tr('A builder is at work here');
   // Its card in the Atlas, and how many the kingdom may hold.
   return upgradeBlocked(game.worldSource(), game.worldSeat(), b, game.worldBoost()) ?? undefined;
 }
@@ -662,7 +675,7 @@ function slotCard(game: Game, index: number, h: HexControl, b: WorldUpgrade): HT
         iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))))]),
     el('div', { class: 'bld-foot' },
       el('span', { class: 'bld-foot-time' }, iconEl('hourglass', { size: 'sm' }), formatDuration(worldBuildSeconds(b, 1, game.worldBoost()))),
-      ...(room.allowed === null ? [] : [el('span', { class: 'bld-foot-built' }, `Built ${formatExact(room.built)}/${formatExact(room.allowed)}`)])));
+      ...(room.allowed === null ? [] : [el('span', { class: 'bld-foot-built' }, tr('Built {n}/{max}', { n: formatExact(room.built), max: formatExact(room.allowed) }))])));
   if (blocked !== undefined) {
     card.disabled = true;
     card.querySelector('.bld-art')!.append(el('div', { class: 'bld-ribbon' }, iconEl('padlock', { size: 'sm' }), el('span', {}, blocked)));
@@ -688,7 +701,7 @@ export function renderWorldSlot(game: Game): HTMLElement {
   if (index === null || h === null) return el('div');
   const standing = new Set(districtSlots(game.worldSource().board().hexes[index], h).flatMap((s) => (s === null ? [] : [s.building])));
   const offer = (['Fortress', 'Chapel'] as const).filter((b) => !standing.has(b));
-  return sheet({ title: `Build in ${WORLD_BUILD.districts[h.district].name}`, onClose: () => game.backToHex() },
+  return sheet({ title: tr('Build in {name}', { name: WORLD_BUILD.districts[h.district].name }), onClose: () => game.backToHex() },
     el('div', { class: 'bld-row wd-slot-row' }, ...offer.map((b) => slotCard(game, index, h, b))));
 }
 
@@ -713,37 +726,37 @@ export function renderWorldBuilding(game: Game): HTMLElement {
   if (!goingUp && level > 0 && next !== undefined) {
     const goods = Object.entries(worldUpgradeGoods(game.state, b, level + 1)) as Array<[GoodId, number]>;
     upgrade = [el('div', { class: 'dc-upgrade' }, btn({
-      label: 'Upgrade', kind: 'primary', cost: { Gold: next.gold }, have: (c: CurrencyId) => game.walletValue(c),
+      label: tr('Upgrade'), kind: 'primary', cost: { Gold: next.gold }, have: (c: CurrencyId) => game.walletValue(c),
       costExtra: goods.map(([g, n]) => ({ icon: g, amount: formatCount(n), short: getGood(game.state.city.goods, g) < n })),
-      disabledReason: h.work !== null ? 'A builder is at work here' : !h.active ? 'Cut off from your city' : h.burnt ? 'Repair it first' : undefined,
+      disabledReason: h.work !== null ? tr('A builder is at work here') : !h.active ? tr('Cut off from your city') : h.burnt ? tr('Repair it first') : undefined,
       onClick: () => void game.doUpgradeHex(index, b, level + 1, next.gold),
     }))];
   }
   parts.push(el('div', { class: 'dc-head' },
     portrait(buildingSprite(b, Math.max(1, level)), 'build'),
     el('div', { class: 'dc-what-col' },
-      el('div', { class: 'dc-what' }, `${BUILDING_LINE[b]}.`),
-      ...(next !== undefined && !goingUp && level > 0 ? [el('p', { class: 'wd-far' }, `Level ${formatExact(level + 1)} takes ${formatDuration(worldBuildSeconds(b, level + 1, game.worldBoost()))}`)] : [])),
+      el('div', { class: 'dc-what' }, BUILDING_SENTENCE[b]),
+      ...(next !== undefined && !goingUp && level > 0 ? [el('p', { class: 'wd-far' }, tr('Level {n} takes {time}', { n: formatExact(level + 1), time: formatDuration(worldBuildSeconds(b, level + 1, game.worldBoost())) }))] : [])),
     ...upgrade));
-  if (goingUp && work !== null) parts.push(el('p', { class: 'wd-line' }, `${work.what} — ${formatDuration(Math.max(0, Math.ceil((work.endsAt - game.now()) / 1000)))} left`));
+  if (goingUp && work !== null) parts.push(el('p', { class: 'wd-line' }, tr('{what} — {time} left', { what: work.what, time: formatDuration(Math.max(0, Math.ceil((work.endsAt - game.now()) / 1000))) })));
   if (b === 'Fortress' && level > 0) {
     const mine = h.garrison != null && h.garrison.owner === game.worldSeat();
-    parts.push(sectionHead('Garrison'), action({
-      label: mine ? 'Recall' : 'Garrison', kind: mine ? 'secondary' : 'primary',
-      info: mine ? el('span', {}, 'An army of ', powerTag(h.garrison!.power), ' stands here') : 'Station an army here: it fights raiders and rivals',
+    parts.push(sectionHead(tr('Garrison')), action({
+      label: mine ? tr('Recall') : tr('Garrison'), kind: mine ? 'secondary' : 'primary',
+      info: mine ? withTag(tr('An army of {power} stands here'), { power: powerTag(h.garrison!.power) }) : tr('Station an army here: it fights raiders and rivals'),
       onClick: () => (mine ? void game.doRecallArmy(h.garrison!.army) : game.openArmy(index, 'garrison')),
     }));
   }
   if (b === 'Chapel' && h.chapel === true) {
     const relic = h.relic == null ? null : game.relicCard(h.relic.id);
-    const socket = el('button', { class: 'wd-chapel-socket', type: 'button', 'aria-label': relic === null ? 'Host a relic' : `Change ${relic.name}` },
+    const socket = el('button', { class: 'wd-chapel-socket', type: 'button', 'aria-label': relic === null ? tr('Host a relic') : tr('Change {name}', { name: relic.name }) },
       relic === null ? emptyRelicSlot() : relicArt(relic, 'rl-art'),
       el('span', { class: 'wd-chapel-what' }, relic === null
-        ? 'Empty — host a restored world relic'
-        : `${ARTIFACTS[relic.id].name}, level ${formatExact(h.relic?.level ?? 0)}`));
+        ? tr('Empty — host a restored world relic')
+        : tr('{name}, level {n}', { name: ARTIFACTS[relic.id].name, n: formatExact(h.relic?.level ?? 0) })));
     socket.addEventListener('click', () => game.openChapelPicker(index));
-    parts.push(sectionHead('Relic'), socket);
+    parts.push(sectionHead(tr('Relic')), socket);
   }
-  return sheet({ title: level > 0 && b === 'Fortress' ? `${def.name} Lv ${formatExact(level)}` : def.name, onClose: back },
+  return sheet({ title: level > 0 && b === 'Fortress' ? tr('{name} Lv {n}', { name: def.name, n: formatExact(level) }) : def.name, onClose: back },
     el('div', { class: 'wd-card' }, ...parts));
 }
