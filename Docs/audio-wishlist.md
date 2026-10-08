@@ -23,7 +23,7 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 | `tap_empty` | Tapping an exhausted cell (the 💤) | Muffled thud/whiff — "nothing here" |
 | `reveal_paid` | Each fog tap that pays gold toward a cell | Tiny coin tick / chisel tap (hearable 3–5× in a row) |
 | `reveal_done` | A fog cell fully REVEALS | Short shimmer/whoosh — a mini discovery, lighter than `discovery` |
-| `build_placed` | Confirming Build (construction starts) | Single hammer thunk + wood knock |
+| `build_placed` | A world build started, a repair | Single hammer thunk + wood knock |
 | `quest_complete` | The quest pill turns green (goal met, BEFORE claiming) | Bright objective "ding" — distinct from `quest_claimed` |
 | `villager_trained` | +1 👥 lands | Small cheer / cork-pop / bell |
 
@@ -154,6 +154,19 @@ file each in `src/audio/sounds/`.
 | `raidAlarm` | A lair's garrison came down on the city | Battle Viking Horn Call Far |
 | `speedup` | A speed-up takes time off a wait | Clock Tick (four takes) |
 | `spellCast` · `relicWake` | A world relic's spell · a city relic woken | Casting Magic · Arcane Symbol Activate |
+
+## The placement ghost
+
+Peak-normalised to −3 dB, one file each in `src/audio/sounds/`. Alternatives
+are auditioned on the Ghost Bench artifact.
+
+| Name | Plays when | Source |
+|---|---|---|
+| `ghostLift` | A ghost appears, a finger takes it, a long press lifts a building | Pop 09 |
+| `ghostStep` | The ghost takes a cell (pitched down onto illegal ground); a move cancelled | Wood Block Sticks Hit Clap 01–03, cut to 0.16 s |
+| `ghostPlant` | Build or Move confirmed | Impact Deep Thud Bounce 03 under Hitting Nail with Hammer 01 |
+
+A confirm on illegal ground plays `error`.
 
 A world build started or finished sounds as a city one does (`buildPlaced`,
 `constructionComplete`). A news whose event already sounded — a build, an

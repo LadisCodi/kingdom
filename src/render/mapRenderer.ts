@@ -35,6 +35,7 @@ import { drawAsleepBubble, drawAuraBadge, drawClaimBubble, drawCollectBubble, dr
 import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
+import type { GhostFx } from './ghostFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
@@ -75,6 +76,12 @@ export interface MarkerLayer {
   previewSteps: Coord[];
   /** The ghost stands where it may not: it is drawn red. */
   previewBlocked?: boolean;
+  /** A finger holds the ghost: it lifts higher. */
+  previewHeld?: boolean;
+  /** Which ghost is out, so a new one appears (render/ghostFx.ts); and
+   *  whether it is a new build, which scales in, or a move, which rises. */
+  previewId?: string;
+  previewScaleIn?: boolean;
   /** The district currently being MOVED. It is drawn faint at its old address
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
@@ -207,6 +214,8 @@ export function drawMap(
   /** Lairs just claimed, and the `performance.now()` of the claim: their
    *  going-away is played from it, then they are forgotten (§5). */
   vanishing: Map<LairId, number> = new Map(),
+  /** The placement ghost's float, glide and landing (render/ghostFx.ts). */
+  ghostFx: GhostFx | null = null,
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -365,9 +374,12 @@ export function drawMap(
 
   // Tap punch: draw a sprite squashed/stretched about its bottom center
   // (things smoosh into the ground), brightened while the flash lasts.
+  // A building just planted from the ghost falls the last of the way and
+  // squashes the same way, about the same corner.
   const punched = (anchorKey: string, box: PlotBox, draw: () => void) => {
-    const p = tapFx.sample(anchorKey);
-    if (!p) {
+    const p = tapFx.idle ? null : tapFx.sample(anchorKey);
+    const land = ghostFx === null || ghostFx.settled ? null : ghostFx.landing(anchorKey);
+    if (!p && !land) {
       draw();
       return;
     }
@@ -375,10 +387,10 @@ export function drawMap(
     // The squash anchors on the diamond's BOTTOM CORNER, which is the same
     // point the art stands on: a tapped building smooshes into its own plot.
     const { x: cx, y: cy } = base(box);
-    ctx.translate(cx, cy);
-    ctx.scale(p.sx, p.sy);
+    ctx.translate(cx, cy - (land ? land.lift * box.w : 0));
+    ctx.scale((p?.sx ?? 1) * (land?.sx ?? 1), (p?.sy ?? 1) * (land?.sy ?? 1));
     ctx.translate(-cx, -cy);
-    brightened(p.flash > 0.02 ? 2.5 * p.flash : 0, draw);
+    brightened(p && p.flash > 0.02 ? 2.5 * p.flash : 0, draw);
     ctx.restore();
   };
 
@@ -1552,30 +1564,95 @@ export function drawMap(
     }
   }
   if (markers.previewCell && markers.previewGlyph) {
-    const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
-    // No footprint diamond: the ghost's rim and its move arrows are what
-    // tell it apart, and a square round its feet was one outline too many.
+    const fp = markers.previewSize ?? { x: 1, y: 1 };
+    // THE GHOST FLOATS over the plot it would land on (render/ghostFx.ts):
+    // a little at rest, higher under a finger, gliding between cells.
+    const pose = ghostFx?.pose(markers.previewCell, markers.previewHeld === true,
+      markers.previewId ?? '', markers.previewScaleIn === true)
+      ?? { at: markers.previewCell, lift: 0, sx: 1, sy: 1, shake: 0, alpha: 1 };
+    const ground = camera.plotBox(pose.at, fp);
+    const blocked = markers.previewBlocked === true;
+    // On the ground, where it would land: its plot, washed white — or red
+    // where it may not stand — and its shadow, smaller the higher it is.
+    ctx.save();
+    ctx.globalAlpha = pose.alpha;
+    ctx.fillStyle = blocked ? PALETTE.ghostBlockedPlot : PALETTE.ghostPlot;
+    fillDiamond(ctx, ground);
+    ctx.strokeStyle = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
+    ctx.lineWidth = Math.max(1.5, size * 0.025);
+    ctx.globalAlpha = pose.alpha * 0.8;
+    strokeDiamond(ctx, ground, 1);
+    const c = mid(ground);
+    const spread = 1 - Math.min(0.4, pose.lift * 2);
+    ctx.globalAlpha = pose.alpha * 0.28 * spread;
+    ctx.fillStyle = PALETTE.ghostShadow;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, ground.w * 0.32 * spread, ground.h * 0.32 * spread, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    const b = { ...ground, x: ground.x + pose.shake * ground.w, y: ground.y - pose.lift * ground.w };
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
     const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    const foot = base(b);
+    ctx.save();
+    ctx.translate(foot.x, foot.y);
+    ctx.scale(pose.sx, pose.sy);
+    ctx.translate(-foot.x, -foot.y);
     // A solid rim round the ghost, opaque under the translucent building,
     // so it stands out from the grass and the roofs around it.
-    ctx.globalAlpha = 1;
-    const foot = base(b);
-    const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
+    ctx.globalAlpha = pose.alpha;
+    const rim = Math.max(2.5, b.w / (fp.x + fp.y) * 0.05);
     // Red, rim and body, where it may not stand — it still follows the
     // finger there, so the colour is the whole verdict.
-    const blocked = markers.previewBlocked === true;
     const rimColor = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
     keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, rimColor, rim));
-    ctx.globalAlpha = 0.6;
+    ctx.globalAlpha = 0.6 * pose.alpha;
     stand(b, keys, markers.previewGlyph);
     if (blocked) {
-      ctx.globalAlpha = 0.45;
+      ctx.globalAlpha = 0.45 * pose.alpha;
       keys.some((k) => drawStandingTint(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostBlocked));
     }
+    ctx.restore();
     ctx.globalAlpha = 1;
-    drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
+    drawMoveArrows(pose.at, fp, markers.previewSteps);
+  } else {
+    ghostFx?.clear();
+  }
+  // A PLANTED GHOST'S DUST: puffs rolling out from the front and sides of
+  // its plot as it lands — never the back, which is behind the building —
+  // growing, rising a little and thinning as they go.
+  if (ghostFx !== null && !ghostFx.settled) {
+    for (const d of ghostFx.dust()) {
+      const g = camera.plotBox(d.cell, d.size);
+      const c = mid(g);
+      const ease = 1 - (1 - d.k) * (1 - d.k);
+      const fade = Math.pow(1 - d.k, 1.5);
+      const n = 12;
+      ctx.save();
+      for (let i = 0; i < n; i++) {
+        // From the left corner round the front to the right one; each puff
+        // a little bigger or smaller, a little nearer or further out.
+        const a = Math.PI * (-0.12 + 1.24 * (i / (n - 1)));
+        const vary = [1, 0.75, 1.15, 0.85, 1.25, 0.8, 1.1, 0.7, 1.2, 0.9, 1.05, 0.8][i];
+        const r = 0.92 + (0.3 + 0.12 * vary) * ease;
+        const x = c.x + Math.cos(a) * g.w * 0.5 * r;
+        const y = c.y + Math.sin(a) * g.h * 0.5 * r - ease * g.h * 0.18 * vary;
+        const rad = g.w * (0.06 + 0.1 * ease) * vary;
+        // Two tones, lit from above: earth below, a pale crown on top.
+        ctx.globalAlpha = 0.75 * fade;
+        ctx.fillStyle = PALETTE.ghostDust;
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.8 * fade;
+        ctx.fillStyle = PALETTE.ghostDustLight;
+        ctx.beginPath();
+        ctx.arc(x - rad * 0.15, y - rad * 0.25, rad * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
   }
   // A placement's or a move's target is the ghost itself; only a spell's
   // target keeps the outline.

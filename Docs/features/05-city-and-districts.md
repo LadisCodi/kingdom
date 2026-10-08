@@ -263,6 +263,14 @@ What follows the building:
   ghost already under the finger: the same press carries it. Not while a
   tutorial line holds a lock, nor with a menu or another mode open.
 - The building draws faint at its old address while its ghost is out.
+- **The ghost floats** a little above the plot it would land on, bobbing,
+  over a wash of that plot (white, or red) and its shadow. A finger lifts it
+  higher; it glides from cell to cell.
+- **Feedback**: a pop and a stretch when it is picked up; a wooden click per
+  cell it is carried (duller on illegal ground); on Build or Move it hops,
+  drops onto its plot, squashes, kicks up dust and sounds a thud and a
+  hammer; a confirm on illegal ground shakes it with the error sound. No
+  motion under reduced motion.
 - Confirming a move to the cell it started on is a cancel, not an error.
 - Confirming reopens the card the move was started from.
 
