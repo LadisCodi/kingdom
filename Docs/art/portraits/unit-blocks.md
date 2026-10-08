@@ -185,6 +185,10 @@ magick villager.png -trim +repage -resize x706 -background none \
 python3 Docs/art/portraits/bust.py villager.png src/render/assets/unit_villager_avatar.png
 ```
 
+The hat puts the villager's face lower in `bust.py`'s square than a helmet
+does, so the bust is then scaled ×1.1 about its bottom centre and raised
+16px, which brings its eyes level with the troops' (§2).
+
 `src/ui/styles/screens/portraits.css` already lists `unit_villager`, so the
 smooth render is not pixelated on landing.
 
