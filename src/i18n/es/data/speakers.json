@@ -1,90 +1,90 @@
 {
   "speakers.advisor.name": {
     "en": "Isolde",
-    "es": ""
+    "es": "Isolde"
   },
   "speakers.warden.name": {
     "en": "The Warden",
-    "es": ""
+    "es": "La guardiana"
   },
   "speakers.cook.name": {
     "en": "Bess",
-    "es": ""
+    "es": "Bess"
   },
   "speakers.villager.name": {
     "en": "Tom Miller",
-    "es": ""
+    "es": "Tom Miller"
   },
   "speakers.orcChief.name": {
     "en": "Grukk",
-    "es": ""
+    "es": "Grukk"
   },
   "speakers.woodcutter.name": {
     "en": "Old Hob",
-    "es": ""
+    "es": "El viejo Hob"
   },
   "speakers.scout.name": {
     "en": "Wren",
-    "es": ""
+    "es": "Wren"
   },
   "speakers.mason.name": {
     "en": "Master Kofi",
-    "es": ""
+    "es": "Maestro Kofi"
   },
   "speakers.florist.name": {
     "en": "Priya",
-    "es": ""
+    "es": "Priya"
   },
   "speakers.merchant.name": {
     "en": "Marisol",
-    "es": ""
+    "es": "Marisol"
   },
   "speakers.courier.name": {
     "en": "Idris",
-    "es": ""
+    "es": "Idris"
   },
   "speakers.advisor.title": {
     "en": "Royal Advisor",
-    "es": ""
+    "es": "Consejera real"
   },
   "speakers.warden.title": {
     "en": "Captain of the Guard",
-    "es": ""
+    "es": "Capitana de la guardia"
   },
   "speakers.cook.title": {
     "en": "Tavern keeper",
-    "es": ""
+    "es": "Tabernera"
   },
   "speakers.villager.title": {
     "en": "The Millers’ son, home from the road",
-    "es": ""
+    "es": "El hijo de los Miller, de vuelta del camino"
   },
   "speakers.orcChief.title": {
     "en": "Orc warchief",
-    "es": ""
+    "es": "Caudillo orco"
   },
   "speakers.woodcutter.title": {
     "en": "The woodcutter who never left",
-    "es": ""
+    "es": "El leñador que nunca se fue"
   },
   "speakers.scout.title": {
     "en": "Royal Scout",
-    "es": ""
+    "es": "Exploradora real"
   },
   "speakers.mason.title": {
     "en": "Master of the Builders’ Guild",
-    "es": ""
+    "es": "Maestro del gremio de constructores"
   },
   "speakers.florist.title": {
     "en": "Nine and three quarters; makes the town pretty",
-    "es": ""
+    "es": "Nueve años y tres cuartos; pone guapo el pueblo"
   },
   "speakers.merchant.title": {
     "en": "Merchant of everywhere",
-    "es": ""
+    "es": "Mercader de todas partes"
   },
   "speakers.courier.title": {
     "en": "Royal courier",
-    "es": ""
+    "es": "Correo real"
   }
 }

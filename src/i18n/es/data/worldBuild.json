@@ -1,50 +1,50 @@
 {
   "worldBuild.districts.Rural.name": {
     "en": "Rural district",
-    "es": ""
+    "es": "Distrito rural"
   },
   "worldBuild.districts.LoggingCamp.name": {
     "en": "Logging Camp",
-    "es": ""
+    "es": "Campamento maderero"
   },
   "worldBuild.districts.Quarry.name": {
     "en": "Quarry",
-    "es": ""
+    "es": "Cantera"
   },
   "worldBuild.districts.FarmLands.name": {
     "en": "Farm Lands",
-    "es": ""
+    "es": "Tierras de cultivo"
   },
   "worldBuild.districts.HuntingGrounds.name": {
     "en": "Hunting Grounds",
-    "es": ""
+    "es": "Coto de caza"
   },
   "worldBuild.districts.Observatory.name": {
     "en": "Observatory",
-    "es": ""
+    "es": "Observatorio"
   },
   "worldBuild.districts.Shrine.name": {
     "en": "Shrine",
-    "es": ""
+    "es": "Altar"
   },
   "worldBuild.districts.GroveCamp.name": {
     "en": "Grove Camp",
-    "es": ""
+    "es": "Campamento de la arboleda"
   },
   "worldBuild.districts.StarmetalDig.name": {
     "en": "Starmetal Dig",
-    "es": ""
+    "es": "Mina de metal estelar"
   },
   "worldBuild.districts.SpireQuarry.name": {
     "en": "Spire Quarry",
-    "es": ""
+    "es": "Cantera de la aguja"
   },
   "worldBuild.upgrades.Fortress.name": {
     "en": "Fortress",
-    "es": ""
+    "es": "Fortaleza"
   },
   "worldBuild.upgrades.Chapel.name": {
     "en": "Chapel",
-    "es": ""
+    "es": "Capilla"
   }
 }
