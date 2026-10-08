@@ -33,6 +33,16 @@ export async function bundleWorldServer({ write = false } = {}) {
     minifyWhitespace: true,
     minifySyntax: true,
     banner: { js: '// Built by scripts/server-bundle.mjs from src/worldServer/serve.ts. Do not edit.' },
+    // The server reads English (Docs/features/28-languages.md §1): the Spanish
+    // catalogs and data overlays are left out, as empty documents.
+    plugins: [{
+      name: 'english-only',
+      setup(b) {
+        b.onResolve({ filter: /^\.\/es\/.*\.json$/ }, (args) => (args.resolveDir.endsWith(path.join('src', 'i18n'))
+          ? { path: args.path, namespace: 'english-only' } : undefined));
+        b.onLoad({ filter: /.*/, namespace: 'english-only' }, () => ({ contents: '{}', loader: 'json' }));
+      },
+    }],
   });
   const code = result.outputFiles[0].text;
   if (write) {

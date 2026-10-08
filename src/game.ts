@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { PAYER_LABEL } from './ui/payerSheet';
 import { recordEvent } from './sim/events';
 import { crestId, crestOf, type Crest } from './sim/crest';
 import type { ItemStock } from './sim/rewards';
@@ -114,7 +115,7 @@ import {
 import {
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
+  budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { ascensionFragmentCost, isMaxAscension } from './sim/heroLadder';
@@ -3368,7 +3369,7 @@ export class Game {
     const now = this.now();
     return {
       profile: payer.profile,
-      label: PROFILE_LABEL[payer.profile],
+      label: PAYER_LABEL[payer.profile],
       budgetCents: monthlyBudgetCents(payer.profile),
       remainingCents: budgetRemainingCents(this.state, now) ?? 0,
       resetsIn: describeWait(monthResetsAt(now) - now),

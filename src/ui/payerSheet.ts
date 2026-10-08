@@ -19,8 +19,7 @@ import type { PayerProfile } from '../sim/state';
 import { el, formatUsd } from './format';
 import { btn, currencyIcon, iconEl, panel, windowHead } from './kit';
 
-/** What the player sees a profile called, in their language (the sim's
- *  `PROFILE_LABEL` is the English, for the server's bundle). */
+/** What the player sees a profile called, in their language. */
 export const PAYER_LABEL: Record<PayerProfile, string> = {
   F2P: 'F2P', Minnow: tr('Minnow'), Dolphin: tr('Dolphin'), Whale: tr('Whale'), SuperWhale: tr('Super Whale'),
 };
