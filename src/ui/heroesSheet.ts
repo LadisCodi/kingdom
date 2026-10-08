@@ -136,7 +136,7 @@ function stats(game: Game, id: HeroId): HTMLElement {
       ...(gain > 0 ? [el('span', { class: 'hd-stat-gain', 'aria-hidden': 'true' }, `+${formatExact(gain)}`)] : []));
   };
   return el('div', { class: 'hd-stats' },
-    stat('atk', tr('Attack')),
+    stat('atk', tr('stat::Attack')),
     stat('dmg', tr('Damage')),
     stat('def', tr('Defence')),
     stat('hp', tr('Health')));

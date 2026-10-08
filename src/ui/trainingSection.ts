@@ -312,7 +312,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   // blurb, beside Train; any more would take a row of their own under both,
   // the same tiles, four to the row.
   const figures = unit === null ? [] : [
-    stat('atk', tr('Attack'), unit.atk),
+    stat('atk', tr('stat::Attack'), unit.atk),
     stat('dmg', tr('Damage'), unit.dmg),
     stat('def', tr('Defence'), unit.def),
     stat('hp', tr('Health'), unit.hp),

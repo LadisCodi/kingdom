@@ -161,13 +161,11 @@
   "{lot} came back": "{lot} ha vuelto",
   "{name} had already asked you.": "{name} ya te lo había pedido.",
   "{name}, open their profile": "{name}, abrir su perfil",
-  "{n} cells": "{n} casillas",
   "{n} month ago|{n} months ago": "Hace {n} mes|Hace {n} meses",
   "{n} weeks ago": "Hace {n} semanas",
   "{n}d ago": "hace {n}d",
   "{n}h ago": "hace {n}h",
   "{n}m ago": "hace {n}m",
   "{relic} keystone": "Piedra angular de {relic}",
-  "{relic} piece {n}": "Pieza {n} de {relic}",
-  "{time} left": "Quedan {time}"
+  "{relic} piece {n}": "Pieza {n} de {relic}"
 }
