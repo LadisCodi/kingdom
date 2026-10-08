@@ -86,9 +86,11 @@ nervous, a bookworm who got the job because nobody else stayed:
   with her — she reads why, he knows how — and gives the town's reasons for
   the fog and the well. **Tom Miller**, the first villager home, asks for
   what the people need.
-- **She walks the player through accepting a gift twice** — `FirstSteps`
-  and `Timber` — and never again: from the third request on, the pill is
-  the player's to claim.
+- **Every scripted quest ends on its gift accepted**, up to `Rubble`: the
+  next lesson starts on the next quest, so the hand leads the player from
+  one to the other. Isolde asks for the first gift (`FirstSteps`); from
+  then on the hand alone points at the pill, locked to it, once the quest
+  is complete.
 - **The hand never points at something paid for with Gems.** A line may
   name a Gem shortcut; following the hand never spends one
   (`tests/tutorialGems.test.ts`).
@@ -116,7 +118,7 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 3.2 | `Timber` | **Hob:** *Hold it down and the axe keeps going. When a stand's bare, move on — it grows back. Trees don't sulk.* | the nearest forest with wood left | none | the quest completes |
 | 3.3 | `Timber` | *Oh — the well is lower! Every swing drew a drop. Don't fret: it fills again by itself. I checked twice.* | the Mana gauge | everything | a tap |
 | 3.3b | `Timber` | **Hob:** *Three times. I counted.* | — | all | tap |
-| 3.4 | `Timber` | *Wood for Oakville! The Townhall folk sent their thanks — accept it, and the well gets a little magic back.* | the quest pill | the pill | claimed |
+| 3.4 | `Timber` | — (the hand alone) | the quest pill | the pill | claimed |
 | 4.1 | `ARoof` | *Wood at last — and nowhere to sleep. But that shape past the trees… the Millers' house! Clear the fog, Your Majesty!* | the old House ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3) | that cell | revealed |
 | 4.2 | `ARoof` | *There it is! The roof's fallen in, but the walls are sound. Open it.* | the old House | the House | its card is open |
 | 4.3 | `ARoof` | *Builders want their wood up front — it says so in the guild charter. Repair it!* | **Repair** | the button | repairing |
@@ -132,8 +134,13 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 6.3b | `FirstVillager` | *Let's close the Townhall — Tom's settling in.* (skipped if it is closed) | the card's close knob | the knob | the scroll is on screen |
 | 7.1 | `TaxDay` | *Tom pays his rent into the House. When the purse shows, gather it — it's his to give, and it costs you nothing.* | the House | none | the quest completes |
 | 7.2 | `TaxDay` | *That's how a kingdom is kept, I think: clear the fog, gather, build — and they come home, one by one.* | the quest pill | all | tap |
-| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. Come back tomorrow — the barns and the purse fill up overnight.* | the quest pill | all | tap — **the First Morning ends** |
+| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. Come back tomorrow — the barns and the purse fill up overnight.* | the quest pill | all | tap |
+| 7.4 | `TaxDay` | — (the hand alone) | the quest pill | the pill | claimed — **the First Morning ends** |
 
+- **Every scene from `Woodcraft` to `Rubble` ends the same way**: once its
+  lines are done it waits, invisible and locking nothing, for its quest to
+  complete, then the hand alone points at the pill until the gift is
+  accepted. The tables leave that last beat out.
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.
 - **The Townhall's own Gold stays quiet through the First Morning**: no
@@ -156,7 +163,8 @@ nervous, a bookworm who got the job because nobody else stayed:
 
 ### 3.1 The lessons: buildings that work for you
 
-Beats, as the First Morning's, each on its quest.
+Beats, as the First Morning's, each on its quest, and each ending on its
+quest's gift accepted with the hand alone (§3).
 
 | Scene | Quest | Says (Isolde, unless named) | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
