@@ -51,6 +51,10 @@
    map**: with a sheet, a card or a placement open, Isolde first asks them to
    set it aside and points at its close ([`24-dialogue.md`](24-dialogue.md)
    §4).
+12. **A lesson never asks for what the player cannot pay.** One that leads to
+   a build or an upgrade (a `placing`, `placed` or `upgraded` line) waits
+   until the purse — currencies and goods — can pay for it, unless one of
+   its lines `stocks` the building, making up the currencies itself.
 
 ## 2. Three kinds of guidance
 
