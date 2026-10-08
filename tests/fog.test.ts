@@ -260,7 +260,8 @@ describe('exploring pays in ground, not in currency', () => {
     // 4,922,305: chapters 5–9 at half the Gold, so their Knowledge, not a
     // second Gold wall, is what holds them.
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
-    expect(tree).toBe(4_732_305);
+    // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
+    expect(tree).toBe(4_740_305);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // raw materials: a full quarry buys no research, which is what keeps the

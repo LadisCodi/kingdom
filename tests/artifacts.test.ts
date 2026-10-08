@@ -140,23 +140,23 @@ describe('a relic is a permanent passive with no ceiling', () => {
     const wait = () => trainSecondsAt(state, hall.uniqueId, 'Warrior');
     const bare = wait();
     let last = bare;
-    grantArtifactLevel(state, 'DowsingRod');
-    host(state, 'DowsingRod');
-    // Every effect step of the Staff's cycle shortens it; the other steps
+    grantArtifactLevel(state, 'ForemansSigil');
+    host(state, 'ForemansSigil');
+    // Every effect step of the Hammer's cycle shortens it; the other steps
     // leave it where it was.
     for (let i = 0; i < 40; i++) {
-      const level = artifactLevel(state, 'DowsingRod');
-      const effect = i === 0 || nextCityRelicAxis('DowsingRod', level - 1) === 'effect';
+      const level = artifactLevel(state, 'ForemansSigil');
+      const effect = i === 0 || nextCityRelicAxis('ForemansSigil', level - 1) === 'effect';
       const now = wait();
       if (effect) expect(now).toBeLessThanOrEqual(last);
       else expect(now).toBe(last);
       expect(now).toBeGreaterThan(0);
       last = now;
-      grantArtifactLevel(state, 'DowsingRod');
+      grantArtifactLevel(state, 'ForemansSigil');
     }
     expect(last).toBeLessThan(bare / 2);
     // Asleep, it does nothing: the hall trains at its own pace again.
-    delete state.artifacts.casts.DowsingRod;
+    delete state.artifacts.casts.ForemansSigil;
     expect(wait()).toBe(bare);
   });
 

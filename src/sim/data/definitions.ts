@@ -1365,9 +1365,12 @@ const activation = (id: ArtifactId): ArtifactDef['activation'] =>
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
     id: 'DowsingRod', name: 'Staff of Renewal', glyph: '🪄', sprite: 'artifact_staff_of_renewal',
-    passiveText: 'Your buildings train soldiers and villagers faster',
+    passiveText: 'Forests, fields, rocks and shoals hold more and grow back faster',
     passive: {
-      stats: [{ stat: 'trainingSpeed', scope: null, op: 'mul' }],
+      stats: [
+        { stat: 'harvestStock', scope: null, op: 'mul' },
+        { stat: 'recoverySpeed', scope: null, op: 'mul' },
+      ],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     active: null,
@@ -1387,11 +1390,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'The Winged Hammer', glyph: '🔨', sprite: 'artifact_winged_hammer',
-    passiveText: 'Your crews swing and walk faster',
+    passiveText: 'Your crews work and your buildings train faster',
     passive: {
       stats: [
         { stat: 'workerStrikeSpeed', scope: null, op: 'mul' },
         { stat: 'workerSpeed', scope: null, op: 'mul' },
+        { stat: 'trainingSpeed', scope: null, op: 'mul' },
       ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
@@ -1509,7 +1513,7 @@ export const relicDoor = (id: ArtifactId): string => ab(id).door;
 /** The Shrines (`relics.json`'s `shrines`): the Gems each premium Shrine
  *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
  *  own: it holds and wakes a relic (09-relics.md §2.1). */
-export const SHRINE_RULES = balance.shrines as { premiumGems: number[] };
+export const SHRINE_RULES = balance.shrines as { materialBuilds: number; premiumGems: number[] };
 
 /** What a level-up can raise on a city relic. */
 export type CityRelicAxis = 'window' | 'radius' | 'effect';
@@ -1524,9 +1528,7 @@ export const CITY_RELIC_LEVELS = balance.cityLevels as {
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
-  keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
-  replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
-  replicaGemsPiece: number; replicaGemsKeystone: number;
+  keystoneOneIn: number; levelStardustBase: number; levelStardustGrowth: number;
   fragmentPackGems: number; fragmentPackSize: number;
   treasureEvery: number; perLairTier: number[]; perPackTier: Record<string, number>;
 };

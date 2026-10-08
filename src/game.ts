@@ -13,7 +13,8 @@ import { forgetRested, heroCanFight, heroHp, heroMaxHp, heroRestEndsAt, restedHe
 import { newsOf, postNews, readNews, type News, type NewsGroup } from './sim/notices';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
-  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
+  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, shrineBuild, upgradeDistrict,
+  type ShrineBuild,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
   repairAbandoned,
@@ -23,7 +24,7 @@ import {
   AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
+  RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
@@ -54,8 +55,8 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openFragmentPack, replicaPrice, restoreRelic,
-  dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
+  canRestore, isMet, levelStardust, levelUpRelic, openFragmentPack, restoreRelic,
+  dropFragments, openRelicDoor, slotCount, type FragmentDrop,
 } from './sim/relics';
 import {
   activeRadius, cast, castBlock, castState, chargesLeft,
@@ -274,8 +275,6 @@ export interface RelicView {
   level: number; restored: boolean; met: boolean;
   /** Fragments held per slot: five pieces, then the keystone. */
   slots: number[];
-  /** Copies past the first of each slot, worth what a replica asks. */
-  spares: number;
   /** Stardust the next level asks; it also takes one fragment of each slot. */
   levelStardust: number;
   /** Every slot holds a fragment — the set a level takes. */
@@ -284,8 +283,6 @@ export interface RelicView {
   now: string; next: string;
   pending: string | null;
   cast: { phase: CastPhase; leftMs: number; charges: number };
-  /** The replica offer for its first missing fragment, or null. */
-  forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
   /** A restored city relic's Shrine, and the Shrines it could move to; null
    *  for a world relic or one not restored (sim/hosts.ts). */
   host: { at: string | null; shrines: ShrineOption[] } | null;
@@ -1372,6 +1369,10 @@ export class Game {
     const selected = this.defaultPlacementCell(definitionId);
     this.ghostHeld = false;
     this.mode = { kind: 'placing', definitionId, selected };
+    // Past the ruin and the material Shrines, a Shrine is paid in Gems.
+    if (DISTRICTS[definitionId].hostsRelic && shrineBuild(this.state).kind === 'gems') {
+      this.mode = { ...this.mode, premium: true };
+    }
     this.openOverlay = null;
     this.inspectedDistrictId = null;
     if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
@@ -1643,8 +1644,8 @@ export class Game {
   /**
    * WHAT AN AWAKE AURA PAYS THE BUILDINGS IN IT (M84), one badge a roof — on
    * what the relic actually moves: the Crown's houses with residents, the
-   * Hammer's buildings with a crew, the Staff's buildings that train. The
-   * Sickle moves the GROUND, which the tint already says.
+   * Hammer's buildings with a crew or that train. The Staff and the Sickle
+   * move the GROUND, which the tint already says.
    */
   private auraBadges(): MarkerLayer['auraBadges'] {
     const out: MarkerLayer['auraBadges'] = [];
@@ -1655,9 +1656,8 @@ export class Game {
         ? (d: District) => residentsOf(this.state, d) > 0
         : relic === 'ForemansSigil'
           ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
-          : relic === 'DowsingRod'
-            ? (d: District) => DISTRICTS[d.definitionId].trains.length > 0
-            : null;
+            || DISTRICTS[d.definitionId].trains.length > 0
+          : null;
       if (reaches === null) continue;
       const text = `+${relicPercent(passiveValue(this.state, relic))}`;
       const aura = auraOf(this.state, host, relic);
@@ -1753,34 +1753,23 @@ export class Game {
   // ---------------------------------------------------------------- relics
 
   /**
-   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, its spares,
-   * what it does now and next, and the one thing to press — Restore, Level
-   * up, or Forge the missing fragment.
+   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, what it does
+   * now and next, and the one thing to press — Restore or Level up.
    */
   relicCard(id: ArtifactId): RelicView {
     const def = ARTIFACTS[id];
     const level = artifactLevel(this.state, id);
     const restored = level >= 1;
     const slots = Array.from({ length: 6 }, (_, s) => slotCount(this.state, id, s));
-    const missing = slots.findIndex((n) => n === 0);
-    const spares = spareWorth(this.state, id);
-    const forge = restored || missing < 0 ? null : (() => {
-      const price = replicaPrice(missing);
-      return {
-        slot: missing, freeSpares: price.freeSpares, spares: price.spares, gems: price.gems,
-        canFree: spares >= price.freeSpares, canGems: spares >= price.spares,
-      };
-    })();
     return {
       id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
-      level, restored, met: isMet(this.state, id), slots, spares,
+      level, restored, met: isMet(this.state, id), slots,
       levelStardust: levelStardust(Math.max(1, level)), hasSet: slots.every((n) => n > 0),
       canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
       pending: def.pending,
       cast: this.castPhase(id),
-      forge,
       host: restored && relicKind(id) === 'world' ? {
         at: (() => {
           const c = this.myChapels().find((x) => x.relic === id);
@@ -1913,15 +1902,6 @@ export class Game {
       const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
       if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
     } else this.shake(result === 'NotEnoughStardust' ? ['Stardust'] : []);
-    this.notify();
-  }
-
-  doForgeReplica(id: ArtifactId, withGems: boolean): void {
-    const view = this.relicCard(id);
-    if (view.forge === null) return;
-    const result = forgeReplica(this.state, id, view.forge.slot, withGems);
-    if (result === 'Forged') playSfx(withGems ? 'gemSpend' : 'click');
-    else this.shake(result === 'NotEnoughGems' ? ['Gems'] : []);
     this.notify();
   }
 
@@ -2567,20 +2547,14 @@ export class Game {
   }
 
   /** Place a Shrine anywhere, for Gems (relic-restoration.md §5.1). */
-  startPremiumShrine(): void {
-    if (premiumShrinePrice(this.state) === null) return;
-    this.startPlacement('Shrine');
-    if (this.mode.kind === 'placing') this.mode = { ...this.mode, premium: true };
-    this.notify();
+  /** How the next Shrine is built from the Build menu (`shrineBuild`). */
+  shrineBuild(): ShrineBuild {
+    return shrineBuild(this.state);
   }
 
-  /** The next premium Shrine's Gem price, and how many Shrines stand. */
-  shrineOffer(): { gems: number | null; standing: number; max: number } {
-    return {
-      gems: premiumShrinePrice(this.state),
-      standing: districtCount(this.state, 'Shrine'),
-      max: 1 + SHRINE_RULES.premiumGems.length,
-    };
+  /** How many Shrines stand, of how many the realm allows. */
+  shrineCount(): { standing: number; max: number } {
+    return { standing: districtCount(this.state, 'Shrine'), max: maxDistrictCount(this.state, DISTRICTS.Shrine) };
   }
 
   confirmBuild(): void {
@@ -2593,7 +2567,7 @@ export class Game {
         this.mode = { kind: 'normal' };
       } else if (result === 'NotEnoughGems') this.shake(['Gems']);
       else if (result === 'NoBuilderFree') this.offerBuilder();
-      else this.toast(result === 'NoneLeft' ? 'Every Shrine is built' : result === 'CountLimit' ? 'Five Shrines stand already' : 'Not here');
+      else this.toast(result === 'NoneLeft' || result === 'CountLimit' ? 'Every Shrine is built' : result === 'NotForGems' ? 'Not for Gems yet' : 'Not here');
       this.notify();
       return;
     }
@@ -3050,6 +3024,9 @@ export class Game {
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
       return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
+    }
+    if (result === 'NotForMaterials') {
+      return shrineBuild(this.state).kind === 'ruinFirst' ? 'Repair the old shrine first' : 'Every Shrine is built';
     }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
@@ -4997,6 +4974,11 @@ export class Game {
   canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
+    if (def.hostsRelic) {
+      const offer = shrineBuild(this.state);
+      if (offer.kind === 'gems') return this.walletValue('Gems') >= offer.gems && canPlaceAnywhere(this.state, this.map, id);
+      if (offer.kind !== 'materials') return false;
+    }
     if (!canAfford(this.state.city.wallet, nextBuildCost(this.state, id))) return false;
     return canPlaceAnywhere(this.state, this.map, id);
   }
@@ -6930,9 +6912,9 @@ function relicShortEffect(id: ArtifactId, value: number): string {
 }
 
 const RELIC_SHORT: Record<ArtifactId, string> = {
-  DowsingRod: 'training',
+  DowsingRod: 'resources',
   VerdantSeal: 'per swing',
-  ForemansSigil: 'crew speed',
+  ForemansSigil: 'work speed',
   GildedLedger: 'tax',
   WanderersCompass: 'Stardust',
   DelversLantern: 'room haul',
@@ -6942,9 +6924,9 @@ const RELIC_SHORT: Record<ArtifactId, string> = {
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
-  DowsingRod: 'Your buildings train',
+  DowsingRod: 'Forests, fields and rocks hold',
   VerdantSeal: 'Every swing and tap takes',
-  ForemansSigil: 'Your crews swing and walk',
+  ForemansSigil: 'Your crews work and halls train',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',
   DelversLantern: 'A room pays gold and stone',

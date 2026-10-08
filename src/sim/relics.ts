@@ -4,15 +4,15 @@
 // A relic is six fragments — five pieces and one keystone. Fragments are
 // found where the game already pays; six distinct ones restore the relic at
 // level 1, and every level after takes one of each of the six again, and
-// Stardust, with no ceiling. Copies past the first of a slot are spares,
-// which forge a missing one. Rules this file keeps:
+// Stardust, with no ceiling. A missing fragment is never made: it is found,
+// bought in the store's pack or traded. Rules this file keeps:
 //
 //  1. THE FIRST FRAGMENT IS FOUND BY PLAY, at the relic's door — a lair's
 //     prize for a city relic, a world source for a world one. A drop never
 //     rolls a relic the player has not met.
 //  2. ROLLS ARE COUNTER/HASH on the event that paid them (`parts`), never on
 //     the moment: a replay deals the same fragments.
-//  3. FOUND AND BOUND ARE COUNTED APART. What was bought or forged is bound;
+//  3. FOUND AND BOUND ARE COUNTED APART. What was bought is bound;
 //     only found fragments may ever be sent (step 8).
 //  4. A RELIC'S LEVEL IS `artifacts.levels`, so its passive and its active
 //     are what they were (`artifacts.ts`, `casting.ts`) until it is hosted.
@@ -64,43 +64,10 @@ export const distinctHeld = (state: GameState, id: ArtifactId): number =>
 export const canRestore = (state: GameState, id: ArtifactId): boolean =>
   !isRestored(state, id) && distinctHeld(state, id) === SLOTS;
 
-const worthOf = (slot: number): number => (slot === KEYSTONE ? RELIC_RULES.keystoneWorth : 1);
-
-/** What the spares are worth in levels: every fragment once the relic is
- *  restored; before that, only the copies past the first of each slot. */
-export function spareWorth(state: GameState, id: ArtifactId): number {
-  const keep = isRestored(state, id) ? 0 : 1;
-  let worth = 0;
-  for (let s = 0; s < SLOTS; s++) worth += Math.max(0, slotCount(state, id, s) - keep) * worthOf(s);
-  return worth;
-}
-
 /** Stardust the next level-up asks, from `level`: `levelStardustBase`, times
  *  `levelStardustGrowth` a level, rounded as every curve's price is. */
 export const levelStardust = (level: number): number =>
   roundPrice(RELIC_RULES.levelStardustBase * RELIC_RULES.levelStardustGrowth ** Math.max(0, level - 1));
-
-/**
- * Spend spares worth at least `worth`: bound before found (the found are
- * what can be sent), pieces before the keystone (it is worth more). Before
- * restoration the first of each slot is never touched. Returns false, and
- * spends nothing, when they are not worth enough.
- */
-function spendSpares(state: GameState, id: ArtifactId, worth: number): boolean {
-  if (spareWorth(state, id) < worth) return false;
-  const f = own(state, id);
-  const keep = isRestored(state, id) ? 0 : 1;
-  let left = worth;
-  for (const slot of [0, 1, 2, 3, 4, KEYSTONE]) {
-    for (const pile of [f.bound, f.found]) {
-      while (left > 0 && pile[slot] > 0 && f.found[slot] + f.bound[slot] > keep) {
-        pile[slot] -= 1;
-        left -= worthOf(slot);
-      }
-    }
-  }
-  return true;
-}
 
 export type RestoreResult = 'Restored' | 'Missing' | 'AlreadyRestored';
 
@@ -215,33 +182,7 @@ export function openRelicDoor(state: GameState, door: string): FragmentDrop[] {
   return out;
 }
 
-// --------------------------------------------------------- the paid doors
-
-/** What forging a missing fragment costs (§9): spares alone, or a few
- *  spares and Gems. */
-export const replicaPrice = (slot: number): { freeSpares: number; spares: number; gems: number } => ({
-  freeSpares: slot === KEYSTONE ? RELIC_RULES.replicaFreeSparesKeystone : RELIC_RULES.replicaFreeSparesPiece,
-  spares: RELIC_RULES.replicaSpares,
-  gems: slot === KEYSTONE ? RELIC_RULES.replicaGemsKeystone : RELIC_RULES.replicaGemsPiece,
-});
-
-export type ForgeResult = 'Forged' | 'NotMissing' | 'AlreadyRestored' | 'NotEnoughSpares' | 'NotEnoughGems';
-
-/** Forge a missing fragment, bound: with spares alone (`free`), or with
- *  fewer spares and Gems. */
-export function forgeReplica(state: GameState, id: ArtifactId, slot: number, withGems: boolean): ForgeResult {
-  if (isRestored(state, id)) return 'AlreadyRestored';
-  if (slotCount(state, id, slot) > 0) return 'NotMissing';
-  const price = replicaPrice(slot);
-  const spares = withGems ? price.spares : price.freeSpares;
-  if (spareWorth(state, id) < spares) return 'NotEnoughSpares';
-  if (withGems && getWallet(state.player.wallet, 'Gems') < price.gems) return 'NotEnoughGems';
-  spendSpares(state, id, spares);
-  if (withGems) addToWallet(state.player.wallet, 'Gems', -price.gems);
-  own(state, id).bound[slot] += 1;
-  track(state, 'relic_forged', { relic: id, slot, gems: withGems });
-  return 'Forged';
-}
+// --------------------------------------------------------- the paid door
 
 export type FragmentPackResult = { kind: 'Opened'; drops: FragmentDrop[] } | { kind: 'NothingMet' } | { kind: 'NotEnoughGems' };
 

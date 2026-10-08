@@ -1909,7 +1909,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "There's the Staff. Its power trains soldiers and villagers faster in the buildings round the shrine. Choose it.",
+        "text": "There's the Staff. It renews the land round the shrine: woods, fields and stone hold more and grow back faster. Choose it.",
         "box": "auto",
         "point": "ui:relic-pick:DowsingRod",
         "lock": "target",

@@ -357,7 +357,7 @@
 
 .rl-shrines { display: flex; align-items: center; gap: calc(var(--px) * 8); margin-bottom: calc(var(--px) * 10); font-weight: var(--weight-strong); color: var(--ink); }
 .rl-shrines .icon { --icon-size: calc(var(--px) * 24); }
-.rl-shrines > .k-btn { margin-left: auto; }
+.rl-shrines-note { margin-left: auto; font-size: var(--text-desc); font-weight: var(--weight-body); color: var(--ink-muted); }
 
 /* WHERE A RELIC STANDS, on its card (M80). Awake: the card is lit and a
  * gold plank carries the time. Asleep: the art dims under the kit's resting
@@ -423,6 +423,9 @@
  * their own, the heading is the separator. */
 .rl-block { display: flex; flex-direction: column; gap: calc(var(--px) * 8); }
 .rl-more { display: flex; justify-content: center; }
+/* WHAT THE RELIC DOES, in a sentence — read, not scanned, so body ink at
+ * body size, under the art and over the tiles. */
+.rl-story { margin: 0; padding-inline: calc(var(--px) * 8); text-align: center; font-size: var(--text-body); font-style: italic; color: var(--ink); }
 .rl-note { margin: 0; text-align: center; font-size: var(--text-desc); color: var(--ink-muted); }
 /* The building card's tiles, two to a row: a relic's tile carries its next
  * value too (`+30% → +40%`), which the card's 112 px was never sized for. */

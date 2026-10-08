@@ -514,7 +514,8 @@ describe('quests fund the research tree', () => {
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
-    expect(tree).toBe(4_732_305); // the same sum tests/fog.test.ts freezes, and why
+    // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
+    expect(tree).toBe(4_740_305); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has

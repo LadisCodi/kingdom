@@ -6,8 +6,8 @@ import { artifactLevel } from '../src/sim/artifacts';
 import { ARTIFACT_ORDER, RELIC_RULES, relicDoor, relicKind } from '../src/sim/data/definitions';
 import { claimLair } from '../src/sim/expeditions';
 import {
-  canRestore, distinctHeld, dropFragments, forgeReplica, isMet, KEYSTONE, levelStardust, levelUpRelic,
-  openFragmentPack, openRelicDoor, replicaPrice, restoreRelic, slotCount, spareWorth,
+  canRestore, distinctHeld, dropFragments, isMet, levelStardust, levelUpRelic,
+  openFragmentPack, openRelicDoor, restoreRelic,
 } from '../src/sim/relics';
 import { deserialize, serialize } from '../src/sim/save';
 import type { ArtifactId, GameState } from '../src/sim/state';
@@ -66,7 +66,6 @@ describe('restoring and levelling', () => {
     expect(restoreRelic(state, id)).toBe('Missing');
     hold(state, id, [3, 1, 1, 1, 1, 1]);
     expect(distinctHeld(state, id)).toBe(6);
-    expect(spareWorth(state, id)).toBe(2);
     expect(restoreRelic(state, id)).toBe('Restored');
     expect(artifactLevel(state, id)).toBe(1);
   });
@@ -100,14 +99,6 @@ describe('restoring and levelling', () => {
     expect(state.relics.held[id]).toEqual({ found: [1, 0, 0, 0, 0, 0], bound: [0, 0, 0, 0, 0, 0] });
   });
 
-  it('a spare keystone counts for more towards a replica', () => {
-    const state = freshGame();
-    const id = ARTIFACT_ORDER[0];
-    hold(state, id, [1, 1, 1, 1, 1, 2]);
-    restoreRelic(state, id);
-    expect(spareWorth(state, id)).toBe(RELIC_RULES.keystoneWorth);
-  });
-
   it('the Stardust climbs every level, rounded like every curve', () => {
     expect(levelStardust(1)).toBe(RELIC_RULES.levelStardustBase);
     expect(levelStardust(3)).toBeGreaterThan(levelStardust(2));
@@ -116,22 +107,6 @@ describe('restoring and levelling', () => {
 });
 
 describe('the paid doors', () => {
-  it('forges a missing fragment, bound, from spares — or fewer spares and Gems', () => {
-    const state = freshGame();
-    const id = ARTIFACT_ORDER[0];
-    const price = replicaPrice(KEYSTONE);
-    hold(state, id, [1 + price.spares, 1, 1, 1, 1, 0]);
-    state.player.wallet.Gems = 0;
-    expect(forgeReplica(state, id, KEYSTONE, true)).toBe('NotEnoughGems');
-    expect(forgeReplica(state, id, KEYSTONE, false)).toBe('NotEnoughSpares');
-    state.player.wallet.Gems = price.gems;
-    expect(forgeReplica(state, id, KEYSTONE, true)).toBe('Forged');
-    expect(state.relics.held[id]!.bound[KEYSTONE]).toBe(1);
-    expect(state.player.wallet.Gems).toBe(0);
-    expect(slotCount(state, id, 0)).toBe(1);
-    expect(canRestore(state, id)).toBe(true);
-  });
-
   it('the store\'s fragment pack pays bound fragments of relics met, for Gems', () => {
     const state = freshGame();
     state.player.wallet.Gems = RELIC_RULES.fragmentPackGems;

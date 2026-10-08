@@ -3,9 +3,9 @@
 //
 // The relic in its six slots — five pieces and the keystone — set where a
 // fragment is held, a chalk outline where one is missing; what it does now
-// and at the next level; where its fragments drop; its spares; and the one
-// thing to press for the state it is in: Forge the missing fragment, Restore
-// it, or Level it up. Its spell, once restored, is cast from here.
+// and at the next level; where its fragments come from; and the one thing to
+// press for the state it is in: Restore it, or Level it up. A missing
+// fragment is never made — it is won, bought or traded. Its spell, once restored, is cast from here.
 
 import type { Game, RelicView } from '../game';
 import { ARTIFACTS } from '../sim/data/definitions';
@@ -13,7 +13,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import { el, formatCountdown, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, restMarks, sectionHead, sheet } from './kit';
-import { relicStatChanges } from './relicStats';
+import { relicStatChanges, relicStory } from './relicStats';
 
 /** The relic's own art, or the Relics mark while the art has not landed —
  *  an atlas icon, never an emoji (tests/icons.test.ts). */
@@ -116,20 +116,14 @@ export function relicCardTile(game: Game, view: RelicView): HTMLElement {
   return b;
 }
 
-/** The Shrines: how many stand, and the next one for Gems while any are
- *  left (relic-restoration.md §5.1). */
+/** The Shrines: how many stand. More are built from the Build menu, never
+ *  from here. */
 function shrineRow(game: Game): HTMLElement {
-  const offer = game.shrineOffer();
+  const { standing, max } = game.shrineCount();
   return el('div', { class: 'rl-shrines' },
     iconEl('Shrine', { size: 'sm' }),
-    el('span', {}, `Shrines ${formatExact(offer.standing)} / ${formatExact(offer.max)}`),
-    ...(offer.gems === null ? [] : [btn({
-      label: 'Build',
-      kind: 'gem',
-      cost: { Gems: offer.gems },
-      have: (c) => game.walletValue(c),
-      onClick: () => game.startPremiumShrine(),
-    })]));
+    el('span', {}, `Shrines ${formatExact(standing)} / ${formatExact(max)}`),
+    ...(standing >= max ? [] : [el('span', { class: 'rl-shrines-note' }, 'More from the Build menu')]));
 }
 
 /** The Bag's Relics tab: the Shrines, then city relics, then world relics,
@@ -261,23 +255,21 @@ export function spellSection(game: Game, id: ArtifactId, view: RelicView): HTMLE
         el('span', {}, phase === 'Active' ? running : `Ready again in ${left}`)));
 }
 
-/** The spares a press takes, as a price inside its button (§6.4): Fragments
- *  are not a wallet currency, so the term reads `have / needed`. */
-const sparesTerm = (have: number, need: number) =>
-  ({ icon: 'shard' as const, amount: `${formatExact(have)} / ${formatExact(need)}`, short: have < need });
+/** Where a missing fragment comes from: the only doors there are. */
+const FRAGMENT_SOURCES = 'More fragments are won in battle — in lairs, on the world map and in the depths — '
+  + 'bought in the store, or traded with friends';
 
 /**
  * THE LEVEL SECTION (one `.k-section`): the relic's level, its six slots and
  * the press that moves it — Restore while it is in fragments, then Level up,
  * which takes one fragment of each slot and the level's Stardust, every
- * level. A missing piece is forged here too. ONE GREEN ACTION A SCREEN
- * (§2.2): while an asleep relic's Activate is on the page, Level up steps
+ * level. While a slot is empty it says where fragments come from. ONE GREEN
+ * ACTION A SCREEN (§2.2): while an asleep relic's Activate is on the page, Level up steps
  * down to wood.
  */
 function levelSection(game: Game, view: RelicView): HTMLElement {
   const head = el('div', { class: 'rl-level-head' },
-    el('b', {}, view.restored ? `Level ${formatExact(view.level)}` : 'Not restored'),
-    ...(view.restored ? [] : [el('span', {}, `${formatExact(view.spares)} spares`)]));
+    el('b', {}, view.restored ? `Level ${formatExact(view.level)}` : 'Not restored'));
   const press: HTMLElement[] = [];
   if (view.restored) {
     // The set a level takes is the slot row above, not a term in the price:
@@ -293,26 +285,8 @@ function levelSection(game: Game, view: RelicView): HTMLElement {
     }));
   } else if (view.canRestore) {
     press.push(btn({ label: 'Restore', kind: 'primary', onClick: () => game.doRestoreRelic(view.id) }));
-  } else if (view.forge !== null) {
-    const f = view.forge;
-    const what = f.slot === 5 ? 'the keystone' : 'a missing piece';
-    press.push(
-      el('p', { class: 'rl-note' }, `Forge ${what} as a replica`),
-      el('div', { class: 'rl-forge' },
-        btn({
-          label: 'Forge',
-          costExtra: [sparesTerm(view.spares, f.freeSpares)],
-          onClick: () => game.doForgeReplica(view.id, false),
-        }),
-        btn({
-          label: 'Forge',
-          kind: 'gem',
-          cost: { Gems: f.gems },
-          have: (c) => game.walletValue(c),
-          costExtra: [sparesTerm(view.spares, f.spares)],
-          onClick: () => game.doForgeReplica(view.id, true),
-        })));
   }
+  if (!view.hasSet && !view.canRestore) press.push(el('p', { class: 'rl-note' }, FRAGMENT_SOURCES));
   return el('div', { class: 'rl-level k-section' }, head, slotRow(view, true), ...press);
 }
 
@@ -340,6 +314,7 @@ export function renderRelicSheet(game: Game): HTMLElement {
       relicArt(view, 'rl-hero-art'),
       ...(view.status === 'awake' ? [el('span', { class: 'rl-awake-plate is-ribbon' }, 'Awake')] : []),
       ...(view.status === 'asleep' ? [restMarks()] : [])),
+    el('p', { class: 'rl-story' }, relicStory(id, Math.max(1, view.level))),
     statBand(view),
     ...(view.pending !== null ? [el('p', { class: 'rl-note' }, view.pending)] : []),
     levelSection(game, view),
