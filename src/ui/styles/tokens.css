@@ -13,7 +13,7 @@
  * url() for the /kingdom/ base and content-hashes it, while a hand-written
  * <link href="/src/..."> works in dev and 404s on Pages.
  *
- * ONE FACE, FOUR WEIGHTS. Nunito (Vernon Adams / Cyreal, OFL) is the face the
+ * Nunito at FOUR WEIGHTS for the text, Alegreya Black for titles. Nunito (Vernon Adams / Cyreal, OFL) is the face the
  * mockups are drawn in, and it replaced the PT Sans + Germania One pair on
  * 2026-09-11: a title and a caption out of one family read as one voice, and
  * the rounded terminals are the warmth the parchment chrome was reaching for.
@@ -50,7 +50,8 @@
   font-style: normal;
   font-display: swap;
 }
-/* The ornate face: a splash's painted titles only (m86b), never a sheet. */
+/* The ornate face: every title and heading — a window's title, a section's
+ * heading, a ribbon — and a splash's painted titles (m86b). */
 @font-face {
   font-family: 'Alegreya';
   src: url('../fonts/alegreya-900-latin.woff2') format('woff2');
@@ -160,16 +161,13 @@
   --quest-h: 0px;
 
   /* ---- type ----
-   * ONE FAMILY. `--font-display` and `--font-body` name the same face now;
-   * what separates a title from a caption is the WEIGHT, not the family. The
-   * two tokens stay because the split is real — a title is still titles only,
-   * still only at --text-title — and because a second display face can be
-   * dropped back in by changing one line.
+   * TWO FAMILIES. `--font-display` is Alegreya Black — a window's title,
+   * a section's heading, a ribbon; `--font-body` is Nunito, everything else.
    *
    * THE FOUR WEIGHTS ARE FOUR ROLES. A rule names the role, never the number,
    * so retuning the whole game's colour of text is four values here:
    *
-   *   --weight-title   800  a heading: Store, Heroes, Timber!
+   *   --weight-title   800  a name or a number that leads its row
    *   --weight-strong  700  a button, an amount, a name
    *   --weight-body    600  ordinary prose — the default on <body>
    *   --weight-small   400  the small description under it
@@ -182,11 +180,12 @@
   --weight-strong: 700;
   --weight-body: 600;
   --weight-small: 400;
-  /* The ornate face's one weight (--font-ornate): a splash's painted titles. */
+  /* The ornate face's one weight (--font-ornate): every title and heading. */
   --weight-ornate: 900;
 
-  --font-display: 'Nunito', system-ui, -apple-system, sans-serif;
-  --font-display-weight: var(--weight-title);
+  /* Titles and headings are set in the ornate face; everything else is Nunito. */
+  --font-display: var(--font-ornate);
+  --font-display-weight: var(--weight-ornate);
   --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
   /* A splash's painted titles — an offer's ribbon, its hero's name. */
   --font-ornate: 'Alegreya', Georgia, serif;

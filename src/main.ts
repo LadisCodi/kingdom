@@ -273,12 +273,13 @@ async function boot(): Promise<void> {
   await Promise.race([
     Promise.all([
       // All four weights: the roles of tokens.css (--weight-small · body ·
-      // strong · title). A weight left off this list is the one that swaps in
-      // after the first paint and reflows the row it is in.
+      // strong · title), and the title face. A face left off this list is the
+      // one that swaps in after the first paint and reflows the row it is in.
       document.fonts.load('400 16px "Nunito"'),
       document.fonts.load('600 16px "Nunito"'),
       document.fonts.load('700 16px "Nunito"'),
       document.fonts.load('800 22px "Nunito"'),
+      document.fonts.load('900 22px "Alegreya"'),
     ]),
     new Promise((resolve) => setTimeout(resolve, 1500)),
   ]);
