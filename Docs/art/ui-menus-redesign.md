@@ -858,9 +858,10 @@ also lives.
   seal, name in display type, one-line description. Variants by kind:
   discovery (gold), construction complete (leaf), research complete (sky),
   unlock (gold + sparkle).
-- **Toast** = a small parchment slip low on the screen (above the nav bar,
-  clear of the quest card), `clay` left border, one sentence, no icon,
-  fades in 2.6s. Failures must never overlap the celebratory channel.
+- **Toast** = one sentence of white text with a soft dark shadow, no slip
+  and no icon, in the middle of the screen. It floats up, holds 2s and
+  fades. A refusal plays the denial sound; a confirmation (`game.note`)
+  looks the same and plays none.
 - Both keep the existing queueing and tap-to-dismiss.
 
 ---
@@ -1863,16 +1864,13 @@ Two square transparent sheets. Run each twice — once normal, once locked.
 
 ### 7.5 Banner & toast
 
-> [style block] Same UI kit. One image, two elements on the same phone
+> [style block] Same UI kit. One image, one element on the phone
 > screen over the kingdom map. At the top, hanging from two gold ropes just
 > below the wooden resource plank, a cloth pennant banner with a wax seal
 > at its left holding a small pixel-art sawmill building; on the banner,
 > tiny uppercase gold lettering "CONSTRUCTION COMPLETE" above a larger
 > cream title "Sawmill" and one line of small text. The banner has a
-> notched swallowtail bottom edge. Near the bottom of the screen, just
-> above where a nav bar would be, a small narrow parchment slip with a
-> thick clay-red stripe down its left edge, reading "No free workers —
-> train villagers first" in one line of dark brown text. Nothing else.
+> notched swallowtail bottom edge. Nothing else.
 
 ### 7.6 Bottom navigation
 

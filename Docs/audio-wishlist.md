@@ -19,7 +19,7 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 
 | File | Plays when | Character |
 |---|---|---|
-| `error_denied` | Can't afford (currency shake), invalid action toasts | Soft double-buzz / dull "uh-uh", not harsh — it fires often early on |
+| `error_denied` | Can't afford (currency shake), every refusal toast (`game.toast`, never `game.note`); one at a time | Pixel/UI/Denied 01, cut to 0.62s — soft, not harsh: it fires often early on |
 | `tap_empty` | Tapping an exhausted cell (the 💤) | Muffled thud/whiff — "nothing here" |
 | `reveal_paid` | Each fog tap that pays gold toward a cell | Tiny coin tick / chisel tap (hearable 3–5× in a row) |
 | `reveal_done` | A fog cell fully REVEALS | Short shimmer/whoosh — a mini discovery, lighter than `discovery` |

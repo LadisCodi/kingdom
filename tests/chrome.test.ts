@@ -42,7 +42,7 @@ const PUBLISHED = [...watcher.matchAll(/publish\('(--[a-z-]+)'/g)].map((m) => m[
 
 describe('chrome metrics', () => {
   it('publishes the metrics the stylesheets position against', () => {
-    expect(PUBLISHED).toEqual(expect.arrayContaining(['--hud-h', '--nav-h', '--quest-h']));
+    expect(PUBLISHED).toEqual(expect.arrayContaining(['--hud-h', '--nav-h']));
   });
 
   // A published variable with no token is a variable that is undefined until

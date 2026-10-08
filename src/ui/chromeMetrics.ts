@@ -17,10 +17,6 @@
 // that changes height — the builders plaque appearing, a safe-area inset on a
 // notched phone, a font that loads late — moves every screen with it instead
 // of silently overlapping five of them.
-//
-// `--quest-h` is the same idea for a widget rather than a bar: the toast slip
-// and the quest scroll are both anchored above the nav, and stacking one over
-// the other is only avoidable if the toast knows how tall the scroll is.
 
 /** Measured to the nearest px — a fractional value makes `calc()` drift. */
 function publish(name: string, px: number): void {
@@ -28,31 +24,22 @@ function publish(name: string, px: number): void {
 }
 
 /**
- * Watch the two chrome bars and the quest scroll, publishing their real
+ * Watch the two chrome bars, publishing their real
  * heights as CSS custom properties on :root. Idempotent per element; the
  * returned function stops watching (tests and teardown).
  */
 export function watchChromeMetrics(els: {
   header: HTMLElement;
   navbar: HTMLElement;
-  quest: HTMLElement;
 }): () => void {
   const measure = () => {
     publish('--hud-h', els.header.offsetHeight);
     publish('--nav-h', els.navbar.offsetHeight);
-    // A hidden quest scroll must publish 0, not its last height — `hidden`
-    // leaves offsetHeight at 0 anyway, but the child is what actually carries
-    // the box, so measure the mount point.
-    publish('--quest-h', els.quest.offsetHeight);
   };
 
   // `ResizeObserver` fires once on observe, so the first measure is free.
   const ro = new ResizeObserver(measure);
-  for (const el of [els.header, els.navbar, els.quest]) ro.observe(el);
-  // The quest pill is swapped in and out rather than resized, and an element
-  // going `hidden` is a resize to 0x0 — which the observer does report. What
-  // it does NOT report is the mount point's child being replaced with one of
-  // the same size, which is fine: same size, same variable.
+  for (const el of [els.header, els.navbar]) ro.observe(el);
   measure();
   return () => ro.disconnect();
 }

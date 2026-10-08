@@ -317,7 +317,6 @@ async function boot(): Promise<void> {
   watchChromeMetrics({
     header: document.getElementById('header')!,
     navbar: document.getElementById('navbar')!,
-    quest: document.getElementById('quest')!,
   });
   const saveModeLabel = saveManager.cloudActive ? tr('☁️ cloud save') : tr('💾 local save only');
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
@@ -568,7 +567,7 @@ async function boot(): Promise<void> {
       restart: () => { t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; },
       remove: () => t.remove(),
     };
-  }, 2600);
+  }, 2400);
   game.onToast((msg) => toasts.show(msg));
 
   // Background music can only start on a user gesture; keep nudging it on

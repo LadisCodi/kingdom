@@ -564,7 +564,6 @@
 }
 
 /* ---- the things that float over the map (M12) ---- */
-.toast-msg { background: url('../assets/tex-parchment.jpg') 0 0 / calc(var(--px) * 384) calc(var(--px) * 384); }
 
 /* ---- welcome back (M13) ---- */
 .wel-rows,
