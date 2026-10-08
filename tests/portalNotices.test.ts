@@ -11,7 +11,7 @@ import { allNotices } from '../src/ui/notices/model';
 import type { Game } from '../src/game';
 import { freshGame, freshPresenter, map, T0 } from './helpers';
 
-vi.mock('../src/render/sprites', () => ({ spriteUrl: () => null, spriteImg: () => null, spriteImgAt: () => null }));
+vi.mock('../src/render/sprites', () => ({ spriteUrl: () => null, buildingArtUrl: () => null, spriteImg: () => null, spriteImgAt: () => null }));
 
 async function seated(): Promise<{ game: Game; clock: { t: number } }> {
   const game = freshPresenter(freshGame());

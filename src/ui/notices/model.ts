@@ -13,7 +13,7 @@ import { lairCreature } from '../../sim/lairs';
 import { NEWS_GROUPS, type News, type NewsGroup } from '../../sim/notices';
 import type { Coord, HeroId, LairId } from '../../sim/state';
 import { homeIndex } from '../../sim/world/explorers';
-import { spriteImg, spriteUrl } from '../../render/sprites';
+import { buildingArtUrl, spriteImg, spriteUrl } from '../../render/sprites';
 import { LAIR_AVATAR } from '../../render/lairMap';
 import { el, formatCount, formatExact } from '../format';
 import { iconEl, type IconName } from '../kit';
@@ -97,8 +97,7 @@ function imgOf(url: string): HTMLElement {
 /** A building at its level: the highest tier of art at or below it. */
 function buildingArt(definitionId: keyof typeof DISTRICTS, level: number): Art {
   const def = DISTRICTS[definitionId];
-  let url: string | null = null;
-  for (let l = Math.max(1, level); url === null && l >= 1; l--) url = spriteUrl(`${def.sprite}_l${l}`);
+  const url = buildingArtUrl(def.sprite, level);
   return {
     key: `building:${def.sprite}:${level}`,
     make: () => {

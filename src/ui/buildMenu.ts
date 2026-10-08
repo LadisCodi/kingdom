@@ -13,14 +13,16 @@
 // instead. Placement's close comes back here, on the same tab and at the
 // same scroll, so two buildings can be compared without navigating twice.
 
-import { BUILD_TABS, CITY_DEF, DISTRICTS, HARMONY, TECHNOLOGIES, type BuildTab } from '../sim/data/definitions';
+import {
+  BUILD_TABS, CITY_DEF, DISTRICTS, FEATURES, HARMONY, TECHNOLOGIES, type BuildTab,
+} from '../sim/data/definitions';
 import {
   buildCost, buildGoodsCost, districtCount, isNumbered, maxDistrictCount,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
 import { isTechComplete } from '../sim/research';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { costChips, ctaBadge, iconEl, sheet, type IconName } from './kit';
@@ -89,6 +91,12 @@ function followHint(game: Game): void {
   }
   followedHint = hint;
 }
+
+/** What a row shows: the art the map will draw for one just built. */
+export const cardArt = (id: DistrictId): string | null => {
+  const def = DISTRICTS[id];
+  return buildingArtUrl(def.sprite, 1, def.plants === null ? null : FEATURES[def.plants].sprite);
+};
 
 const inTab = (tab: BuildTab): DistrictId[] =>
   CITY_DEF.buildMenuOrder.filter((id) => DISTRICTS[id].buildTab === tab);
@@ -179,7 +187,7 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
   const def = DISTRICTS[id];
   const facts = cardFacts(game, id);
   const { count, max, blocked, numbered, cost, goods, affordable, hinted, duration, known } = facts;
-  const art = spriteUrl(`${def.sprite}_l1`);
+  const art = cardArt(id);
   const card = el('button', {
     class: `bld-card${blocked !== null ? ' is-locked' : ''}${!known ? ' is-unknown' : ''}${hinted ? ' hinted' : ''}`,
     type: 'button',
