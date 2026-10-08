@@ -86,6 +86,12 @@ export interface MarkerLayer {
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
+  /** A FEATURE on the move (a tree, a crop plot): its cell, drawn faint the
+   *  same way, and the ghost is its art on a feature's canvas. */
+  liftedFeatureKey?: string | null;
+  /** The ghost is a FEATURE's: its own drawing — the variant the cell it
+   *  stands on would show, grown — on a feature's canvas. */
+  previewFeature?: boolean;
   /** The building whose card is open: it pulses white, so the player can
    *  tell which one the card is about. */
   inspectedDistrictId: string | null;
@@ -971,11 +977,16 @@ export function drawMap(
             recoveryProgress(state, map, cell, HARVEST[def.source], now) ?? 0);
           if (stage !== null) keys.unshift(stage);
         }
+        // On the move: faint at the address it is leaving, as a building is.
+        const lifted = key === markers.liftedFeatureKey;
         later(cell, () => dimmed(dim, () => {
+          ctx.save();
+          if (lifted) ctx.globalAlpha *= 0.28;
           punched(key, plot, () => {
             stand(plot, keys,
               exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
           });
+          ctx.restore();
         }), { x: size, y: size }, { occludes: !NEVER_HIDES.has(feature) });
       }
     }
@@ -1593,7 +1604,10 @@ export function drawMap(
     const b = { ...ground, x: ground.x + pose.shake * ground.w, y: ground.y - pose.lift * ground.w };
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
-    const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    const keys = !sprite ? []
+      : markers.previewFeature === true ? [variantKey(sprite, markers.previewCell), sprite]
+        : [`${sprite}_l1`, sprite];
+    const plots = markers.previewFeature === true ? FEATURE_PLOTS : 1;
     const foot = base(b);
     ctx.save();
     ctx.translate(foot.x, foot.y);
@@ -1606,12 +1620,12 @@ export function drawMap(
     // Red, rim and body, where it may not stand — it still follows the
     // finger there, so the colour is the whole verdict.
     const rimColor = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
-    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, rimColor, rim));
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w * plots, rimColor, rim));
     ctx.globalAlpha = 0.6 * pose.alpha;
-    stand(b, keys, markers.previewGlyph);
+    stand(b, keys, markers.previewGlyph, undefined, plots);
     if (blocked) {
       ctx.globalAlpha = 0.45 * pose.alpha;
-      keys.some((k) => drawStandingTint(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostBlocked));
+      keys.some((k) => drawStandingTint(ctx, k, foot.x, foot.y, b.w * plots, PALETTE.ghostBlocked));
     }
     ctx.restore();
     ctx.globalAlpha = 1;

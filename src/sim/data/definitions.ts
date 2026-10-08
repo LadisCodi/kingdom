@@ -317,6 +317,9 @@ export interface HarvestSpec {
    *  reappears in a random tile adjacent to its ORIGINAL map cell
    *  (0 = never — removed for good). */
   respawnSeconds: number;
+  /** How long one PLANTED or MOVED grows before it can be tapped or worked
+   *  (Docs/features/27-plantables.md §2). */
+  growSeconds: number;
 }
 
 // Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,

@@ -261,7 +261,11 @@ What follows the building:
   disabled with the reason beside it.
 - **A long press on a building that may move** starts its move with the
   ghost already under the finger: the same press carries it. Not while a
-  tutorial line holds a lock, nor with a menu or another mode open.
+  tutorial line holds a lock, nor with a menu or another mode open. A tree
+  or a crop plot is picked up the same way ([`27-plantables.md`](27-plantables.md) §4).
+- **While a long press waits, a ring fills beside the finger** — up and to
+  the right, where the finger does not cover it — over anything it would pick
+  up, and only after a moment, so a tap never flashes one.
 - The building draws faint at its old address while its ghost is out.
 - **The ghost floats** a little above the plot it would land on, bobbing,
   over a wash of that plot (white, or red) and its shadow. A finger lifts it

@@ -143,7 +143,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | the friends list's caps and its reward path — milestones, Gems, items, the Townhall a friend must reach — at `?dev=data` › Friends (`social.json`) | what a friend's progress IS (Townhall + cells, `friendsClient.ts`), a new social command (`src/socialServer/serve.ts`) |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
-| **a plantable** = a building entry with `plants: <feature>` — listed, priced, capped and unlocked like a building, but it puts that feature on the ground (no district, no builder) and grows for its `buildDurationSeconds` (`Docs/features/27-plantables.md`) | a feature a plantable may plant (`plants`' options, a `FeatureId`) |
+| **a plantable** = a building entry with `plants: <feature>` — listed, priced, capped and unlocked like a building, but it puts that feature on the ground (no district, no builder) and grows for its source's `growSeconds` (`Docs/features/27-plantables.md`); **what may be moved** with a long press and how long it then grows = `harvest` › `growSeconds` | a feature a plantable may plant (`plants`' options, a `FeatureId`) |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
 | a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
@@ -250,7 +250,7 @@ than the build is rejected rather than downgraded.
   behind any sheet; a notice opens its card only when tapped.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the notices
   column (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
-  (10) · **the battle playback (90)** · the stage (95) · the offer splash (96) · the unlock splash (97) · the gacha reveal (100) · the rewarded
+  (10) · the hold ring (50, `.hold-ring`, only ever on the bare map) · **the battle playback (90)** · the stage (95) · the offer splash (96) · the unlock splash (97) · the gacha reveal (100) · the rewarded
   video (200) · the loading screen (1000, `#boot` in `index.html`, gone once
   the first screen's images are in — `ui/bootScreen.ts`). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header — **which is the design, not a

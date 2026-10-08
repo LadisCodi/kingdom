@@ -515,7 +515,8 @@ describe('quests fund the research tree', () => {
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
     // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
-    expect(tree).toBe(4_740_305); // the same sum tests/fog.test.ts freezes, and why
+    // 4,740,505: Transplanting (200) moves a tree.
+    expect(tree).toBe(4_740_505); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has
@@ -537,7 +538,8 @@ describe('quests fund the research tree', () => {
     // majors are Warrior and the Infirmary now, at 500 and 800.
     // 3,605 for chapters 1–2 of the one tree (2026-10-05), ranks included,
     // since a chapter's spine is required whatever kind of card it is.
-    expect(opening).toBe(3605);
+    // 3,805 with Transplanting (200) in chapter 2.
+    expect(opening).toBe(3805);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

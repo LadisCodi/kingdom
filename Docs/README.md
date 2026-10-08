@@ -92,7 +92,7 @@ One file per feature, in the order a player meets them.
 | 24 | [Dialogue](features/24-dialogue.md) | the **visual-novel stage** every tutorial speaks through: a character each side, a box that can sit anywhere, the pointer, the conditions, and the cast led by **Isolde, the Royal Advisor** | built |
 | 25 | [The Survey](features/25-the-survey.md) | **a ladder that pays for exploring** — 36 levels over the whole province, climbed by cells revealed, a free column and a paid one bought once; never resets | built, but for the seal that flies to the pill |
 | 26 | [Notices](features/26-notices.md) | **the bubbles in the corner** — news and standing states for what the player may not have seen, in the province and on the board, each a card with a way to go there | built |
-| 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots and trees planted from the Build menu as features, and trees uprooted for a seed | crop plot built; uprooting and the tree not built |
+| 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots planted from the Build menu as features, and trees and plots moved with a long press, growing again where they land | built, but for the tutorial scene |
 
 ## Reference
 

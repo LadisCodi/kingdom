@@ -135,6 +135,7 @@ import {
   surveyLength, surveyLevel, surveyOwned,
 } from './sim/survey';
 import { pickUpTreasure, treasureAt } from './sim/treasures';
+import { MOVABLE_FEATURES, pickUpBlock, transplant, transplantBlock, TRANSPLANTING } from './sim/plants';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
@@ -206,6 +207,9 @@ export type Mode =
    *  can put it back and so the ghost knows which footprint is its own. */
   | { kind: 'moving'; districtUniqueId: string; definitionId: DistrictId;
       selected: Coord | null; origin: Coord }
+  /** Moving a tree or a crop plot (Docs/features/27-plantables.md §4): the
+   *  same ghost as a building's move, for a feature lifted from `origin`. */
+  | { kind: 'transplanting'; feature: FeatureId; selected: Coord | null; origin: Coord }
   /** Casting reuses the placement machinery wholesale — select, highlight,
    *  tap to commit — rather than inventing a second targeting model. */
   | { kind: 'casting'; artifactId: ArtifactId; selected: Coord | null };
@@ -939,7 +943,7 @@ export class Game {
     this.tapChain.register({
       priority: 310,
       handle: (cell) => {
-        if (this.mode.kind !== 'moving') return false;
+        if (this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return false;
         // Any cell takes the ghost, legal or not: an illegal one turns it red.
         this.stepGhostTo(cell);
         return true; // move mode swallows all map taps
@@ -1375,7 +1379,8 @@ export class Game {
     if (this.openOverlay !== null || this.tapGate !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     const district = districtAt(this.state, cell);
-    if (!district || !canMoveDistrict(district)) return false;
+    if (!district) return this.holdFeatureAt(cell);
+    if (!canMoveDistrict(district)) return false;
     this.startMove(district.uniqueId, false);
     if ((this.mode as Mode).kind !== 'moving') return false;
     this.ghostGrip = { x: cell.x - district.location.x, y: cell.y - district.location.y };
@@ -1387,6 +1392,11 @@ export class Game {
 
   /** Why the ghost may not stand where it is, or null when it may. */
   ghostBlock(): PlacementBlock | null {
+    if (this.mode.kind === 'transplanting') {
+      const { selected, origin } = this.mode;
+      if (selected === null || (selected.x === origin.x && selected.y === origin.y)) return null;
+      return transplantBlock(this.state, this.map, origin, selected);
+    }
     if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return null;
     if (this.mode.selected === null) return null;
     return placementBlock(this.state, this.map, this.mode.definitionId, this.mode.selected,
@@ -1397,7 +1407,9 @@ export class Game {
    *  null when it may stand where it is. */
   ghostBlockWords(): string | null {
     const block = this.ghostBlock();
-    if (block === null || (this.mode.kind !== 'placing' && this.mode.kind !== 'moving')) return null;
+    if (block === null) return null;
+    if (this.mode.kind === 'transplanting') return GHOST_BLOCK_WORDS[block];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return null;
     return block === 'NeedsHarmony'
       ? this.refusalWords(block, this.mode.definitionId, 1)
       : GHOST_BLOCK_WORDS[block];
@@ -1430,6 +1442,94 @@ export class Game {
       this.inspectedDistrictId = districtUniqueId;
     } else {
       this.toast(result === 'InvalidCell' ? 'It will not fit there' : result);
+    }
+    this.notify();
+  }
+
+  // ------------------------------------------------------------ transplanting
+
+  /**
+   * A long press on a tree or a crop plot picks it up, as one on a building
+   * does (Docs/features/27-plantables.md §4). A tree before Transplanting is
+   * refused with a toast naming it, since a press that did nothing on the
+   * one thing that looks movable would read as a fault.
+   */
+  private holdFeatureAt(cell: Coord): boolean {
+    const feature = this.state.features[coordKey(cell)];
+    if (feature === undefined || !MOVABLE_FEATURES.has(feature)) return false;
+    const block = pickUpBlock(this.state, cell);
+    if (block === 'NeedsResearch') {
+      playSfx('error');
+      this.toast(`Research ${TECHNOLOGIES[TRANSPLANTING].name} before you can move trees`);
+      this.notify();
+      return false;
+    }
+    if (block !== null) return false;
+    this.mode = { kind: 'transplanting', feature, selected: cell, origin: cell };
+    this.inspectedDistrictId = null;
+    this.ghostGrip = { x: 0, y: 0 };
+    this.ghostHeld = true;
+    this.ghostFx.grab();
+    playSfx('ghostLift');
+    haptic(10);
+    this.notify();
+    return true;
+  }
+
+  /** Can a long press here pick something up? What the hold ring asks
+   *  before it shows (render/input.ts). */
+  canHoldAt(sx: number, sy: number): boolean {
+    if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
+    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    const cell = this.camera.screenToCell(sx, sy);
+    const district = districtAt(this.state, cell);
+    if (district) return canMoveDistrict(district);
+    const feature = this.state.features[coordKey(cell)];
+    return feature !== undefined && MOVABLE_FEATURES.has(feature)
+      && this.state.fog.revealed[coordKey(cell)] === true;
+  }
+
+  /** What a moved feature will be: its name, its art, and how long it
+   *  grows wherever it lands. */
+  transplantInfo(): {
+    feature: FeatureId; name: string; sprite: string; glyph: string;
+    growSeconds: number; unmoved: boolean; blocked: string | null;
+  } | null {
+    if (this.mode.kind !== 'transplanting') return null;
+    const { feature, selected, origin } = this.mode;
+    const def = FEATURES[feature];
+    return {
+      feature, name: def.name, sprite: def.sprite, glyph: def.glyph,
+      growSeconds: HARVEST[def.source].growSeconds,
+      unmoved: selected === null || (selected.x === origin.x && selected.y === origin.y),
+      blocked: this.ghostBlockWords(),
+    };
+  }
+
+  confirmTransplant(): void {
+    if (this.mode.kind !== 'transplanting' || !this.mode.selected) return;
+    const { selected, origin } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.refuseGhost(refusal);
+      return;
+    }
+    // Put back where it started: a cancel, and its growth or its Wood kept.
+    if (selected.x === origin.x && selected.y === origin.y) {
+      this.ghostFx.land(coordKey(selected), selected, { x: 1, y: 1 });
+      playSfx('ghostStep', { rate: 0.85 });
+      this.mode = { kind: 'normal' };
+      this.notify();
+      return;
+    }
+    const result = transplant(this.state, this.map, origin, selected, this.now());
+    if (result === 'Moved') {
+      this.ghostFx.land(coordKey(selected), selected, { x: 1, y: 1 });
+      playSfx('ghostPlant');
+      haptic(20);
+      this.mode = { kind: 'normal' };
+    } else {
+      this.toast(result in GHOST_BLOCK_WORDS ? GHOST_BLOCK_WORDS[result as PlacementBlock] : 'It cannot go there');
     }
     this.notify();
   }
@@ -5061,7 +5161,8 @@ export class Game {
       previewBlocked: this.ghostBlock() !== null,
       previewHeld: this.ghostHeld,
       previewId: this.mode.kind === 'placing' ? `build:${this.mode.definitionId}`
-        : this.mode.kind === 'moving' ? `move:${this.mode.districtUniqueId}` : '',
+        : this.mode.kind === 'moving' ? `move:${this.mode.districtUniqueId}`
+          : this.mode.kind === 'transplanting' ? `transplant:${coordKey(this.mode.origin)}` : '',
       previewScaleIn: this.mode.kind === 'placing',
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
@@ -5072,6 +5173,17 @@ export class Game {
       auraBadges: this.auraBadges(),
       relicBursts: [],
     };
+    if (this.mode.kind === 'transplanting') {
+      // A tree or a crop plot on the move: its own drawing — the one its
+      // origin shows, grown — on a feature's canvas, and its old cell faint.
+      const def = FEATURES[this.mode.feature];
+      layer.previewCell = this.mode.selected;
+      layer.previewGlyph = def.glyph;
+      layer.previewSprite = def.sprite;
+      layer.previewFeature = true;
+      layer.previewSize = { x: 1, y: 1 };
+      layer.liftedFeatureKey = coordKey(this.mode.origin);
+    }
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
       // Outline valid spots only for restricted buildings (Housing/Farm/
@@ -5357,6 +5469,9 @@ export class Game {
     if (this.mode.kind === 'moving' && this.mode.selected) {
       return { cell: this.mode.selected, size: DISTRICTS[this.mode.definitionId].size };
     }
+    if (this.mode.kind === 'transplanting' && this.mode.selected) {
+      return { cell: this.mode.selected, size: { x: 1, y: 1 } };
+    }
     return null;
   }
 
@@ -5392,7 +5507,7 @@ export class Game {
    * there, so the finger is never fighting a ghost that will not follow.
    */
   dragGhostTo(sx: number, sy: number): void {
-    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return;
     const finger = this.camera.screenToCell(sx, sy);
     const cell = { x: finger.x - this.ghostGrip.x, y: finger.y - this.ghostGrip.y };
     const current = this.mode.selected;
@@ -5404,7 +5519,7 @@ export class Game {
   /** The ghost takes a cell — a click for each, a duller one where it may
    *  not stand. */
   private stepGhostTo(cell: Coord): void {
-    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return;
     const was = this.mode.selected;
     this.mode.selected = cell;
     if (was === null || was.x !== cell.x || was.y !== cell.y) {
@@ -5454,7 +5569,7 @@ export class Game {
    */
   ghostSteps(): Coord[] {
     if (this.ghostHeld) return [];
-    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return [];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return [];
     const at = this.mode.selected;
     if (!at) return [];
     return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) =>
@@ -5475,6 +5590,9 @@ export class Game {
       this.inspectedDistrictId = mode.districtUniqueId;
       // Back where it stood: it settles onto its old plot.
       this.setGhostDown(mode.origin, mode.definitionId, true);
+    } else if (mode.kind === 'transplanting') {
+      this.ghostFx.land(coordKey(mode.origin), mode.origin, { x: 1, y: 1 });
+      playSfx('ghostStep', { rate: 0.85 });
     }
     this.notify();
   }

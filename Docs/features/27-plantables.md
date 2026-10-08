@@ -1,12 +1,11 @@
 # 27 · Plantables — editing the ground
 
 > **Scope.** The Build-menu entries that put a **feature** on the ground
-> instead of raising a building — the crop plot and the tree — and the
-> gesture that takes one up again, so the player can arrange the city
-> around them.
+> instead of raising a building — the crop plot — and moving a tree or a
+> crop plot to another cell, so the player can arrange the city around them.
 >
-> **Status:** §1–§3 built (the crop plot). §4–§6 — uprooting, the seed, the
-> tree, its technology and tutorial — not built.
+> **Status:** built, but for the tutorial scene that teaches moving a tree
+> (§5).
 
 ## 1. A plantable
 
@@ -25,8 +24,8 @@
 
 ## 2. Growing
 
-- A plantable lands **growing** for its `buildDurationSeconds`, flat — no
-  technology or builder bonus moves it.
+- A planted or moved feature lands **growing** for its source's
+  `growSeconds`, flat — no technology or builder bonus moves it.
 - A growing cell is an exhausted one: it cannot be tapped or worked. A tap on
   it shows a sprout.
 - When the wait ends it is an ordinary cell of its source, **full**.
@@ -44,40 +43,43 @@
   Townhall. Grows for 10 s.
 - Anything low enough to stand in (the crop plot) never hides a villager.
 
-## 4. Uprooting — not built
+## 4. Moving a tree or a crop plot
 
-- Pressing and holding **any tree**, spent or not, fills a circular bar. Once
-  full, dragging up pulls it out.
-- It costs no Mana. What Wood was left in it is lost.
-- An uprooted tree drops **one seed** into the Bag.
-- A crop plot can be uprooted the same way. It drops nothing; a new one is
-  bought from the Build menu.
-- The cell is bare afterwards: anything may be built on it.
+- The gesture is a building's move (`05-city-and-districts.md` §4.3):
+  **a long press picks it up**, the ghost follows the finger, red where it
+  may not stand, and **Move** puts it down.
+- While the press waits, a **ring fills beside the finger** — up and to the
+  right, so the finger does not cover it — over anything a long press would
+  pick up.
+- Movable: a **tree** once **Transplanting** is researched; a **crop plot**
+  always, as it was bought from the Build menu. Nothing else.
+- A long press on a tree before Transplanting toasts what to research.
+- It lands on any revealed land a building could stand on.
+- It lands **growing** for its whole `growSeconds` (§2) — a tree a day —
+  whatever it held, and however far through a growth or a recovery it was.
+  That wait is the whole price; the window says it before **Move**.
+- The cell it leaves is bare ground: anything may be built there.
+- Put back where it started, it is a cancel: nothing restarts.
+- A worker going to it or swinging at it finds it gone and walks home.
+- The number of trees in the province never changes.
 
-## 5. The tree — not built
+## 5. The tutorial — not built
 
-- A Build-menu entry that plants `Trees` for **one seed** and nothing else.
-- It grows for **24 hours** as a sapling, then is an ordinary forest.
-- No cap: the seed already keeps the number of trees in the province fixed.
-  Seeds come from uprooting only — never from a chest, a reward or the store.
+- When Transplanting is researched, a scene walks the player through moving
+  one tree.
 
-## 6. Unlock and tutorial — not built
-
-- Uprooting and the tree are opened by one technology.
-- When it is researched, a tutorial scene walks the player through uprooting
-  one tree and planting it elsewhere.
-
-## 7. Dials, in the order to reach for them
+## 6. Dials, in the order to reach for them
 
 | Dial | Now | Where |
 |---|---|---|
-| A plantable's growth | crop plot 10 s · tree 24 h | `buildings` › `buildDurationSeconds` |
-| Its price and how fast it climbs | crop plot 15 Gold + 10 Wood, ×(1 + 0.5n)·1.2ⁿ | `buildings` › `costPerLevel`, `instance*Growth` |
-| How many may stand | crop plot 6 / 6 / 12 / 16 … | `buildings` › `maxCountPerTownhallLevel` |
+| How long one grows, planted or moved | tree 24 h · crop plot 10 s | `harvest` › `growSeconds` |
+| A crop plot's price and how fast it climbs | 15 Gold + 10 Wood, ×(1 + 0.5n)·1.2ⁿ | `buildings` › `costPerLevel`, `instance*Growth` |
+| How many crop plots may stand | 6 / 6 / 12 / 16 … | `buildings` › `maxCountPerTownhallLevel` |
+| What opens moving a tree | Transplanting, 200 Gold, Kingdom chapter 2 | `?dev=data#tree` |
 
-## 8. Deliberately not in this design
+## 7. Deliberately not in this design
 
 - a plantable with levels
 - a builder or a speed-up on a growth
-- seeds from anywhere but an uprooted tree
-- uprooting a mountain, a bush, an animal or a shoal
+- removing a tree without putting it down elsewhere
+- moving a mountain, a bush, an animal or a shoal

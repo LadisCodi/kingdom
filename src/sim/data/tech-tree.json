@@ -126,6 +126,13 @@
       "gold": 100, "knowledge": 3,
       "unlocks": [{"district":"Quarry"}]
     },
+    "Transplanting": {
+      "name": "Transplanting", "icon": "Wood", "kind": "mechanic",
+      "description": "Hold a tree to pick it up and move it — it grows back in a day.",
+      "tome": "Kingdom", "era": 2, "row": 6, "col": 1,
+      "requires": ["UrbanPlanning"],
+      "gold": 200, "knowledge": 3
+    },
     "Hospitality": {
       "name": "Hospitality", "icon": "Tavern", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 6, "col": 2,
