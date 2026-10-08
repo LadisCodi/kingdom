@@ -1233,9 +1233,9 @@
     "repairDurationSeconds": 0
   },
   "Flowerbed": {
-    "name": "Flower bed",
-    "promise": "A splash of colour",
-    "description": "A raised bed of mixed flowers. Neighbours smile when they pass it.",
+    "name": "Flower patch",
+    "promise": "Beds of bright flowers",
+    "description": "A few raised beds of flowers and a watering can. Neighbours smile when they pass.",
     "glyph": "🌼",
     "sprite": "flowerbed",
     "buildable": true,
@@ -1283,9 +1283,9 @@
     "repairDurationSeconds": 0
   },
   "Bench": {
-    "name": "Bench",
-    "promise": "A seat in the sun",
-    "description": "A plain wooden bench where the street stops to talk.",
+    "name": "Resting nook",
+    "promise": "A seat in the shade",
+    "description": "A bench under a young tree, where the street stops to talk.",
     "glyph": "🪑",
     "sprite": "bench",
     "buildable": true,
@@ -1333,9 +1333,9 @@
     "repairDurationSeconds": 0
   },
   "Lantern": {
-    "name": "Lantern",
-    "promise": "Light on the corner",
-    "description": "An oil lantern on a post. The street feels safer after dark.",
+    "name": "Lantern corner",
+    "promise": "Light along the lane",
+    "description": "Oil lanterns along a short cobbled path. The street feels safer after dark.",
     "glyph": "🏮",
     "sprite": "lantern",
     "buildable": true,
@@ -1383,9 +1383,9 @@
     "repairDurationSeconds": 0
   },
   "Topiary": {
-    "name": "Topiary",
-    "promise": "A neatly clipped bush",
-    "description": "A round bush in a tub, clipped with great care by somebody small.",
+    "name": "Topiary garden",
+    "promise": "Neatly clipped bushes",
+    "description": "Three bushes in tubs, clipped with great care by somebody small.",
     "glyph": "🌳",
     "sprite": "topiary",
     "buildable": true,
@@ -1433,9 +1433,9 @@
     "repairDurationSeconds": 0
   },
   "Banner": {
-    "name": "Banner",
+    "name": "Banner green",
     "promise": "The kingdom’s colours",
-    "description": "A tall pole flying the royal banner. Oakville is home again.",
+    "description": "The royal banner on its little green, bunting and all. Oakville is home again.",
     "glyph": "🚩",
     "sprite": "banner",
     "buildable": true,
@@ -1483,9 +1483,9 @@
     "repairDurationSeconds": 0
   },
   "Birdbath": {
-    "name": "Birdbath",
+    "name": "Bird garden",
     "promise": "Songbirds on the doorstep",
-    "description": "A carved stone basin. The birds came back before the people did.",
+    "description": "A carved birdbath and a birdhouse. The birds came back before the people did.",
     "glyph": "🐦",
     "sprite": "birdbath",
     "buildable": true,

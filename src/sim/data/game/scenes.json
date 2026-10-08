@@ -3022,7 +3022,7 @@
       {
         "speaker": "florist",
         "side": "right",
-        "text": "Isolde has a book with flower beds in it. I’ve seen it! Read it!",
+        "text": "Isolde has a book with flower gardens in it. I’ve seen it! Read it!",
         "box": "auto",
         "point": "ui:nav:research",
         "lock": "target",
@@ -3035,7 +3035,7 @@
       {
         "speaker": "florist",
         "side": "right",
-        "text": "Village Pride. Benches, lanterns, flower beds — Isolde’s second favourite chapter.",
+        "text": "Village Pride. Flower patches, shady nooks, lanterns — Isolde’s second favourite chapter.",
         "box": "auto",
         "point": "ui:tech:VillagePride",
         "lock": "target",
@@ -3205,7 +3205,7 @@
       {
         "speaker": "florist",
         "side": "right",
-        "text": "A flower bed!",
+        "text": "A flower patch!",
         "box": "auto",
         "point": "ui:build:Flowerbed",
         "lock": "target",
@@ -4018,7 +4018,7 @@
       {
         "speaker": "florist",
         "side": "right",
-        "text": "Civic Pride: clipped bushes, banners and a birdbath. For the birds. Obviously.",
+        "text": "Civic Pride: topiary, a banner green and a bird garden. For the birds. Obviously.",
         "box": "auto",
         "point": "ui:tech:CivicPride",
         "lock": "target",

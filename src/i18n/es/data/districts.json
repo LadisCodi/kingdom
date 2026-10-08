@@ -72,28 +72,28 @@
     "es": "Tallador de runas"
   },
   "districts.Flowerbed.name": {
-    "en": "Flower bed",
-    "es": "Parterre"
+    "en": "Flower patch",
+    "es": "Rincón de flores"
   },
   "districts.Bench.name": {
-    "en": "Bench",
-    "es": "Banco"
+    "en": "Resting nook",
+    "es": "Rincón del descanso"
   },
   "districts.Lantern.name": {
-    "en": "Lantern",
-    "es": "Farol"
+    "en": "Lantern corner",
+    "es": "Callejón de faroles"
   },
   "districts.Topiary.name": {
-    "en": "Topiary",
-    "es": "Arbusto podado"
+    "en": "Topiary garden",
+    "es": "Jardín topiario"
   },
   "districts.Banner.name": {
-    "en": "Banner",
-    "es": "Estandarte real"
+    "en": "Banner green",
+    "es": "Prado del estandarte"
   },
   "districts.Birdbath.name": {
-    "en": "Birdbath",
-    "es": "Bebedero de pájaros"
+    "en": "Bird garden",
+    "es": "Jardín de los pájaros"
   },
   "districts.Garden.name": {
     "en": "Garden",
@@ -200,20 +200,20 @@
     "es": "Los aldeanos vierten Maná en piedra tallada"
   },
   "districts.Flowerbed.promise": {
-    "en": "A splash of colour",
-    "es": "Una pincelada de color"
+    "en": "Beds of bright flowers",
+    "es": "Arriates de flores vivas"
   },
   "districts.Bench.promise": {
-    "en": "A seat in the sun",
-    "es": "Un asiento al sol"
+    "en": "A seat in the shade",
+    "es": "Un asiento a la sombra"
   },
   "districts.Lantern.promise": {
-    "en": "Light on the corner",
-    "es": "Luz en la esquina"
+    "en": "Light along the lane",
+    "es": "Luz a lo largo del camino"
   },
   "districts.Topiary.promise": {
-    "en": "A neatly clipped bush",
-    "es": "Un arbusto bien recortado"
+    "en": "Neatly clipped bushes",
+    "es": "Arbustos bien recortados"
   },
   "districts.Banner.promise": {
     "en": "The kingdom’s colours",
@@ -328,28 +328,28 @@
     "es": "Los talladores atan la magia a la piedra, runa a runa."
   },
   "districts.Flowerbed.description": {
-    "en": "A raised bed of mixed flowers. Neighbours smile when they pass it.",
-    "es": "Un arriate elevado de flores variadas. Los vecinos sonríen al pasar."
+    "en": "A few raised beds of flowers and a watering can. Neighbours smile when they pass.",
+    "es": "Unos arriates elevados de flores y una regadera. Los vecinos sonríen al pasar."
   },
   "districts.Bench.description": {
-    "en": "A plain wooden bench where the street stops to talk.",
-    "es": "Un sencillo banco de madera donde la calle se para a charlar."
+    "en": "A bench under a young tree, where the street stops to talk.",
+    "es": "Un banco bajo un árbol joven, donde la calle se para a charlar."
   },
   "districts.Lantern.description": {
-    "en": "An oil lantern on a post. The street feels safer after dark.",
-    "es": "Un farol de aceite en un poste. La calle parece más segura de noche."
+    "en": "Oil lanterns along a short cobbled path. The street feels safer after dark.",
+    "es": "Faroles de aceite a lo largo de un caminito empedrado. La calle parece más segura de noche."
   },
   "districts.Topiary.description": {
-    "en": "A round bush in a tub, clipped with great care by somebody small.",
-    "es": "Un arbusto redondo en una tina, recortado con mucho mimo por alguien pequeñito."
+    "en": "Three bushes in tubs, clipped with great care by somebody small.",
+    "es": "Tres arbustos en tinas, recortados con mucho mimo por alguien pequeñito."
   },
   "districts.Banner.description": {
-    "en": "A tall pole flying the royal banner. Oakville is home again.",
-    "es": "Un mástil alto con el estandarte real. Oakville vuelve a ser un hogar."
+    "en": "The royal banner on its little green, bunting and all. Oakville is home again.",
+    "es": "El estandarte real en su pradito, con banderines y todo. Oakville vuelve a ser un hogar."
   },
   "districts.Birdbath.description": {
-    "en": "A carved stone basin. The birds came back before the people did.",
-    "es": "Una pila de piedra tallada. Los pájaros volvieron antes que la gente."
+    "en": "A carved birdbath and a birdhouse. The birds came back before the people did.",
+    "es": "Un bebedero tallado y una casita para pájaros. Los pájaros volvieron antes que la gente."
   },
   "districts.Garden.description": {
     "en": "Bright flowerbeds that make the whole street smile.",
