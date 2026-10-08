@@ -21,7 +21,9 @@ import { woundedCount } from '../../sim/army';
 import {
   buildQueueCapacity, busyBuilders, type DistrictId, type ItemId, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
-import { districtCount } from '../../sim/districts';
+import { districtCount, placementBlock } from '../../sim/districts';
+import { workableCountAt } from '../../sim/workers';
+import { reachSpot } from './targets';
 import { readyTrips } from '../../sim/world/explorers';
 import type { Game } from '../../game';
 
@@ -82,6 +84,27 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
         && (isTechComplete(state, c.target as TechId) || isTechFilled(state, c.target as TechId));
     case 'placing':
       return game.mode.kind === 'placing' && game.mode.definitionId === c.target;
+    // Picked up to be moved: its ghost is out (06-construction.md §1).
+    case 'moving':
+      return game.mode.kind === 'moving' && game.mode.definitionId === c.target;
+    // Its ghost — moved or placed — stands, legal, where its crew would work
+    // at least `amount` cells.
+    case 'ghostReaches': {
+      const mode = game.mode;
+      if ((mode.kind !== 'moving' && mode.kind !== 'placing') || mode.definitionId !== c.target
+        || mode.selected === null) return false;
+      const movingId = mode.kind === 'moving' ? mode.districtUniqueId : undefined;
+      if (placementBlock(state, game.map, mode.definitionId, mode.selected, movingId) !== null) return false;
+      const sample = state.city.districts.find((d) => d.uniqueId === movingId)
+        ?? { uniqueId: '', definitionId: mode.definitionId, ordinal: 0, level: 1, assignedWorkers: 0,
+          location: mode.selected, state: 'Built' as const, visualVariant: 1 };
+      return workableCountAt(state, sample, mode.selected) >= Math.max(1, c.amount);
+    }
+    // Clear ground stands where it would work at least `amount` cells: the
+    // fog over the spot `reach:<id>` points at is paid.
+    case 'reachCleared':
+      return c.target in DISTRICTS
+        && (reachSpot(game, c.target as DistrictId, true)?.works ?? 0) >= Math.max(1, c.amount);
     // At least `amount` of it (one when 0): the opening's second House must
     // not be met by the first, repaired from the fog.
     case 'placed':

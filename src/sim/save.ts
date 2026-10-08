@@ -990,7 +990,23 @@ const MIGRATIONS: readonly Migration[] = [
       for (const d of plots) features.Cells.push({ Coord: d.GridLocation, FeatureID: 'Crops' });
     },
   },
+  {
+    // v113: THE FARM IS CARRIED TO ITS PLOTS. `Fieldside` (move the Farm
+    // beside two crop plots) enters the chain in front of `ToWork`. A kingdom
+    // on `ToWork` or past it moves on by one: its Farm was repaired where it
+    // already reached the plots, so it never has to move it.
+    to: 113,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      if (index >= FIELDSIDE_AT_V113) Object.assign(quests, { Index: index + 1 });
+    },
+  },
 ];
+
+/** Where `Fieldside` entered the chain in v113, frozen as history. */
+const FIELDSIDE_AT_V113 = 12;
 
 /** Where `TheWatchtower` stood in the v109 chain, frozen as history. */
 const THE_WATCHTOWER_AT_V109 = 66;

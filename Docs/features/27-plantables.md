@@ -72,7 +72,7 @@
 
 | Dial | Now | Where |
 |---|---|---|
-| How long one grows, planted or moved | tree 24 h · crop plot 10 s | `harvest` › `growSeconds` |
+| How long one grows, planted or moved | tree 24 h · crop plot 5 s | `harvest` › `growSeconds` |
 | A crop plot's price and how fast it climbs | 15 Gold + 10 Wood, ×(1 + 0.5n)·1.2ⁿ | `buildings` › `costPerLevel`, `instance*Growth` |
 | How many crop plots may stand | 6 / 6 / 12 / 16 … | `buildings` › `maxCountPerTownhallLevel` |
 | What opens moving a tree | Transplanting, 200 Gold, Kingdom chapter 2 | `?dev=data#tree` |

@@ -380,11 +380,12 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // the footer's one-primary-action slot (§2.2): it is something you do TO
   // the building, and it is free, so it carries no price to show.
   const name = districtLabel(game.state, district);
+  const move = canMoveDistrict(district)
+    ? coach(moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`), 'card:move') : null;
+  if (move !== null && game.uiHint() === 'card:move') move.classList.add('hinted');
   // The level rides on the title, a size down: *Housing #3 Lv 2*.
   const header = windowHead(name, [
-    ...(canMoveDistrict(district)
-      ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
-      : []),
+    ...(move !== null ? [move] : []),
     coach(closeKnob(() => game.dismiss(), `Close ${name}`), 'card:close'),
   ], `Lv ${district.level}`);
 

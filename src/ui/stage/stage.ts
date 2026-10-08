@@ -112,6 +112,7 @@ const PROGRESS: ReadonlySet<string> = new Set([
   'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
   'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
   'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair', 'worldVisited',
+  'reachCleared',
 ]);
 
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {

@@ -125,6 +125,14 @@ export function questLine(quest: {
       return `Research ${count(n)} ${plural(n, 'technology')}.`;
     case 'AssignWorkers':
       return `Put ${count(n)} ${plural(n, 'villager')} to work.`;
+    case 'WorkInReach': {
+      // What its crew works, by the feature's own name: "crop plots".
+      const def = target === null ? undefined : DISTRICTS[target as DistrictId];
+      const source = def?.harvestSources[0];
+      const feature = Object.values(FEATURES).find((f) => f.source === source);
+      const what = (feature?.name ?? 'field').toLowerCase();
+      return `Move the ${districtName(target ?? 'building')} beside ${count(n)} ${plural(n, what)}.`;
+    }
     case 'TrainArmy':
       return `Train ${count(n)} ${plural(n, 'soldier')}.`;
     case 'CollectTaps':

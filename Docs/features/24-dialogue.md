@@ -104,6 +104,8 @@
 | `lair:<id>` · `landmark:<id>` | that site |
 | `lair:` | the first lair found that still stands |
 | `abandoned:<id>` | an abandoned building, wherever the fog has it — silhouette, ruin or revealed |
+| `abandoned:<id>Fog` | the way to it: the ruin once its fog can be paid for; until then the cell the player can pay for that is nearest it |
+| `reach:<building>` | where that building would work the most — its crew's cells in reach — of the ground it could stand on, cleared or still fogged; clear ground first, then the nearest the Townhall. The building being moved counts its own cell as free |
 | `treasure` | the nearest treasure still on the ground |
 | `hex:explore` | on the world board: the misty hex nearest the city that an explorer can reach and nobody is out to — one with a promise first |
 | `hex:ready` | on the world board: the hex an explorer waits at for the player's tap |
@@ -147,6 +149,8 @@ which one a line waits on is data.
 | `questReached` · `questComplete` · `questClaimed` · `questProgress` | that quest is active or past · done · claimed · its counter at `amount` |
 | `techDone` · `techFilled` | that technology is researched · holds all its Knowledge |
 | `placing` · `placed` · `built` | placing one · one is placed · `amount` finished (`AnyWorkshop` for any) |
+| `moving` · `ghostReaches` | that building is picked up to be moved · its ghost (moved or placed) stands, legal, where its crew works `amount` cells |
+| `reachCleared` | cleared ground stands where that building would work `amount` cells — the fog over the `reach:` spot is paid |
 | `revealed` · `population` · `heroes` | `amount` cells revealed · villagers · heroes |
 | `training` | a villager is in training, or `amount` villagers live |
 | `sighted` | a silhouette stands past the fog: anything, a `mountain` · `landmark` · `lair`, a kind of landmark, or one lair |

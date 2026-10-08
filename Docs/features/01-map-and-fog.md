@@ -446,10 +446,15 @@ them, to be found and repaired.
 - **Its card** says what the building is and what it does, and offers
   **Repair**.
 - **Repairing it is building it at level 1, where it stands**: the level-1
-  cost at the next ordinal, a builder and the level-1 time
+  cost at the next ordinal and a builder
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3,
   [`06-construction.md`](06-construction.md) §1). It is refused as a build is
   — no builder free, the count cap reached, a coin short.
+- **A repair has its own wait**, flat (`buildings` ›
+  `repairDurationSeconds`): **5 s** for the opening's House, Farm and
+  Sawmill, so a repair never stalls the tutorial. 0 is a build's wait — the
+  Watchtower and the Shrine. A plot grows instead, for the crop's
+  `growSeconds` (5 s).
 - **A ruin may be missing a piece** (`buildings` › `repairItem`): repairing
   it also asks for that item from the Bag, and spends it. **The Watchtower**
   (`NorthWatch`, 5 rings north) is the one: it needs **the Watchtower's
@@ -472,7 +477,7 @@ them, to be found and repaired.
 |---|---|
 | **the old House** | ring 3, past the first forest |
 | **two old plots** (FarmLands — repaired, each plants a crop plot) | by the berries |
-| **the old Farm** | beside the old plots, working both |
+| **the old Farm** | ring 3, past the berries, two steps from the plots — out of their reach until it is moved ([`23-tutorials.md`](23-tutorials.md) §3.1) |
 | **the old Sawmill** | ring 3, at the edge of a wood, clear of the Townhall |
 
 - **Every abandoned building can be repaired at the Townhall level whose reach
@@ -513,6 +518,7 @@ them, to be found and repaired.
 | Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
 | The first treasure | 20 Gold | `treasure.firstCoin`, `treasure.firstAmount` |
 | Where the abandoned buildings stand | §6.3 | the map editor |
+| How long a ruin's repair takes | 5 s (House, Farm, Sawmill) · a build's (0) | `buildings` › `repairDurationSeconds` |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |

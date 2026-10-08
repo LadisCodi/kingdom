@@ -159,6 +159,8 @@ function startBuild(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
   /** False when the price was paid another way — a premium Shrine's Gems. */
   charge = true,
+  /** The wait, when it is not a build's — a ruin's repair. */
+  seconds?: number,
 ): 'Started' | 'NotEnoughResources' | 'NotEnoughGoods' {
   const cost = charge ? nextBuildCost(state, definitionId) : {};
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
@@ -187,7 +189,7 @@ function startBuild(
     state: 'UnderConstruction',
     visualVariant: 1,
   };
-  const duration = buildDurationForCell(state, definitionId, cell, map);
+  const duration = seconds ?? buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);
   // A treasure under the new footprint is picked up, not buried
   // (Docs/features/01-map-and-fog.md §6.2).
@@ -299,7 +301,9 @@ export function repairAbandoned(state: GameState, map: MapData, id: string): Rep
   const refusal = repairRefusal(state, map, id);
   if (refusal !== null) return refusal;
   const site = ABANDONED.find((a) => a.id === id)!;
-  const started = startBuild(state, map, site.districtId, site.location);
+  // A ruin's repair has a wait of its own, flat: the walls are standing.
+  const seconds = DISTRICTS[site.districtId].repairDurationSeconds;
+  const started = startBuild(state, map, site.districtId, site.location, true, seconds > 0 ? seconds : undefined);
   if (started === 'Started') {
     state.abandoned.repaired[id] = true;
     // The piece the ruin was missing goes into it.

@@ -23,6 +23,7 @@ import {
 import { districtCount } from './districts';
 import type { ItemId } from './state';
 import { grantItem } from './bag';
+import { workableCountAt } from './workers';
 import type { SimEvent } from './events';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
@@ -90,6 +91,11 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.research.completed.length;
     case 'AssignWorkers':
       return state.city.districts.reduce((sum, d) => sum + d.assignedWorkers, 0);
+    // The most its crew could work, of every one of its kind standing: a
+    // Farm moved beside the plots it was too far from.
+    case 'WorkInReach':
+      return state.city.districts.filter((d) => d.definitionId === quest.goalTarget)
+        .reduce((best, d) => Math.max(best, workableCountAt(state, d, d.location)), 0);
     case 'TrainArmy':
       return state.army.length;
     case 'ClaimLandmarks':

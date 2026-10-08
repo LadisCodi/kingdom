@@ -143,7 +143,7 @@
           },
           "point": {
             "type": "text",
-            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, hex:explore (the hex the first explorer should go to), hex:ready (the hex an explorer waits at), quest — or empty."
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, abandoned:<id> (abandoned:<id>Fog is the way to it through the fog: the ruin once its fog can be paid, until then the next cell that can), reach:<building> (where it would work the most, cleared or not), lair:<id> (lair: alone is the first one found and standing), landmark:<id>, hex:explore (the hex the first explorer should go to), hex:ready (the hex an explorer waits at), quest — or empty."
           },
           "lock": {
             "type": "text",
@@ -163,6 +163,9 @@
               "techDone",
               "techFilled",
               "placing",
+              "moving",
+              "ghostReaches",
+              "reachCleared",
               "placed",
               "built",
               "overlay",
