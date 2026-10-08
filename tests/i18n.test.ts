@@ -40,7 +40,8 @@ function sources(): Array<{ file: string; src: string }> {
 }
 
 const STR = String.raw`(['"\x60])((?:\\.|(?!\1)[^\\])*?)\1`;
-const unescape = (s: string): string => s.replace(/\\(.)/g, (_, c: string) => (c === 'n' ? '\n' : c));
+const unescape = (s: string): string => s.replace(/\\(u\{[0-9a-fA-F]+\}|u[0-9a-fA-F]{4}|.)/g, (_, c: string) =>
+  (c === 'n' ? '\n' : c.length > 1 ? String.fromCodePoint(parseInt(c.replace(/[u{}]/g, ''), 16)) : c));
 
 /** The English every call names: `tr('…')` and `trn(n, '…', '…')` as `one|other`. */
 function calledKeys(): Map<string, string> {
