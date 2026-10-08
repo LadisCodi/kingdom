@@ -18,7 +18,7 @@ import { gemRushCost } from '../sim/commands';
 import { queueProgress, remainingSeconds } from '../sim/state';
 import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration, formatExact } from './format';
+import { capitalize, el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress } from './kit';
 import { timerButton } from './speedupSheet';
 import type { SpeedJob } from '../sim/speedups';
@@ -30,7 +30,6 @@ const nthBuilder = (i: number): string => [
   tr('A first builder'), tr('A second builder'), tr('A third builder'), tr('A fourth builder'),
   tr('A fifth builder'), tr('A sixth builder'), tr('A seventh builder'), tr('An eighth builder'),
 ][i] ?? tr('A {n}th builder', { n: formatExact(i + 1) });
-const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function renderBuilderSheet(game: Game): HTMLElement {
   const { builders, ceiling, cost: hireCost } = game.builderOffer();
@@ -132,7 +131,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
     ? (free === 1 ? tr('A builder is free') : tr('{n} builders are free', { n: formatExact(free) }))
     : builders === 1 ? tr('Your builder is busy') : tr('All {n} builders are busy', { n: formatExact(builders) });
   const note = free > 0
-    ? tr('{what} now, or keep it for later.', { what: cap(subject) })
+    ? tr('{what} now, or keep it for later.', { what: capitalize(subject) })
     : tr('Nothing waits in line — finish a job to free a builder.');
 
   return sheet({ title: tr('Builders'), onClose: close, centred: true },

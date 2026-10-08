@@ -24,7 +24,7 @@ import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '
 import { isTechComplete } from '../sim/research';
 import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { Game } from '../game';
-import { el, formatDuration, formatExact } from './format';
+import { capitalize, el, formatDuration, formatExact } from './format';
 import { costChips, ctaBadge, iconEl, sheet, type IconName } from './kit';
 import type { CurrencyId, DistrictId, GoodId } from '../sim/state';
 import { PROMISE } from './buildPromise';
@@ -211,7 +211,7 @@ function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
       // The ordinal it WOULD be: the price on this row is that instance's
       // (Docs/features/05-city-and-districts.md §3.1). A qualifier, so quieter.
       el('div', { class: 'bld-name' },
-        def.name,
+        capitalize(def.name),
         ...(blocked !== null || !numbered
           ? []
           : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),

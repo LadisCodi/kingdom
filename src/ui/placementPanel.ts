@@ -22,7 +22,7 @@ import type { GoodId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { cardArt } from './buildMenu';
 import type { Game } from '../game';
-import { coach, el, formatDuration, formatExact } from './format';
+import { capitalize, coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, windowHead } from './kit';
 import { PROMISE } from './buildPromise';
 import { tr, trn } from '../i18n/tr';
@@ -35,7 +35,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
 
   // The plank's title: the building by the name its card will use. A build
   // is the NEXT one of its kind, so it carries the ordinal it would get.
-  let title = def.name;
+  let title = capitalize(def.name);
   let sub: string | undefined;
   if (moving && game.mode.kind === 'moving') {
     const d = districtById(game.state, game.mode.districtUniqueId);
