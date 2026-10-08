@@ -8,7 +8,7 @@
 import { DISTRICTS, TROOPS, unitOf } from '../sim/data/definitions';
 import type { TroopId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
@@ -67,7 +67,7 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     const district = game.state.city.districts.find((d) => d.uniqueId === item.districtUniqueId);
     if (!district) continue;
     const def = DISTRICTS[district.definitionId];
-    const url = spriteUrl(`${def.sprite}_l${district.level}`);
+    const url = buildingArtUrl(def.sprite, district.level);
     finished.push(el('div', { class: 'wel-done' },
       url ? spriteImgAt(url) : iconEl(def.id, { size: 'lg' }),
       el('span', {}, `${def.name} #${district.ordinal} finished`),

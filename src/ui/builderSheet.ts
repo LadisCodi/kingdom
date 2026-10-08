@@ -16,7 +16,7 @@
 import { DISTRICTS, KINGDOM_DEF } from '../sim/data/definitions';
 import { gemRushCost } from '../sim/commands';
 import { queueProgress, remainingSeconds } from '../sim/state';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress } from './kit';
@@ -63,8 +63,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
   for (const { item, district, name, task } of jobs) {
     const def = DISTRICTS[district.definitionId];
     // The highest art tier at or below its level, walked down as the map does.
-    let art: string | null = null;
-    for (let l = Math.max(1, district.level); art === null && l >= 1; l--) art = spriteUrl(`${def.sprite}_l${l}`);
+    const art = buildingArtUrl(def.sprite, district.level);
     const bar = progress('blue');
     const left = remainingSeconds(item, t);
     bar.run(queueProgress(item, t), left * 1000, formatDuration(left));

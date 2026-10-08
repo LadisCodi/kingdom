@@ -12,7 +12,7 @@ import { trainUnit } from '../src/sim/army';
 import { addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0 } from './helpers';
 
 // The column's model draws art; under node there is no image to load.
-vi.mock('../src/render/sprites', () => ({ spriteUrl: () => null, spriteImg: () => null, spriteImgAt: () => null }));
+vi.mock('../src/render/sprites', () => ({ spriteUrl: () => null, buildingArtUrl: () => null, spriteImg: () => null, spriteImgAt: () => null }));
 
 const world = (key: string, at: number): News => ({ group: 'world', key, at, text: key, good: true });
 

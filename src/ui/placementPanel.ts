@@ -20,6 +20,7 @@ import { districtById } from '../sim/state';
 import { getGood } from '../sim/goods';
 import type { GoodId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { cardArt } from './buildMenu';
 import type { Game } from '../game';
 import { coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, windowHead } from './kit';
@@ -28,7 +29,7 @@ import { PROMISE } from './buildPromise';
 export function renderPlacementPanel(game: Game): HTMLElement {
   const info = game.placementInfo()!;
   const def = DISTRICTS[info.definitionId];
-  const art = spriteUrl(`${def.sprite}_l1`);
+  const art = cardArt(info.definitionId);
   const moving = info.kind === 'move';
 
   // The plank's title: the building by the name its card will use. A build
