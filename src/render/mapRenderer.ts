@@ -24,11 +24,17 @@ import {
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, districtById, districtCells,
+  queueProgress, remainingSeconds, coordKey, parseCoordKey, districtById, districtCells,
   type ArtifactId, type HarvestSourceId,
   type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
+
+/** Features a building puts on the ground — the crop plot's field. While one
+ *  grows it is worked like a construction (pass 2c), not like a stand
+ *  regrowing. */
+const SOWN: ReadonlySet<FeatureId> = new Set(
+  Object.values(DISTRICTS).map((d) => d.plants).filter((f): f is FeatureId => f !== null));
 import type { Floaters } from './floaters';
 import type { CollectBubbles } from './collectBubbles';
 import { drawAsleepBubble, drawAuraBadge, drawClaimBubble, drawCollectBubble, drawLairBubble } from './collectBubbleArt';
@@ -340,6 +346,8 @@ export function drawMap(
   // asked of the sim it is a scan of the district list per cell per frame.
   const drawResourceState = (cell: Coord, box: PlotBox, source: HarvestSourceId | null) => {
     if (source === null) return;
+    // A field still being sown wears a construction's bar instead (pass 2c).
+    if (SOWN.has(state.features[coordKey(cell)] as FeatureId) && isGrowing(state, map, cell, now)) return;
     const spec = HARVEST[source];
     const growing = recoveryProgress(state, map, cell, spec, now);
     if (growing !== null) {
@@ -1484,6 +1492,26 @@ export function drawMap(
     drawTraineeBadge(ctx, x, y + barH / 2, d, bust,
       line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true),
       trainee === 'Villager' ? 1 : rankOf(trainee));
+  }
+
+  // Pass 2c: A FIELD BEING SOWN — a crop plot repaired or planted, for the
+  // seconds before it can be reaped — is worked like a building: the hammer
+  // over it and the construction's blue bar with the time left, so a repair
+  // reads as the same five seconds as the House's.
+  for (const [key, feature] of Object.entries(state.features)) {
+    if (!SOWN.has(feature as FeatureId)) continue;
+    const cell = parseCoordKey(key);
+    if (!isGrowing(state, map, cell, now) || fogState(state, map, cell) !== 'Revealed') continue;
+    const b = camera.plotBox(cell, { x: 1, y: 1 });
+    const c = mid(b);
+    const hw = Math.min(b.w, size * 1.2);
+    drawWorkingHammer(ctx, `sow:${key}`, c.x - hw / 2, c.y - b.h * 0.85, hw, clockNow);
+    const barH = Math.max(20, Math.min(28, size * 0.22));
+    const barW = Math.max(barH * 4, b.w * 0.6);
+    const until = state.harvest[key]?.exhaustedUntil ?? now;
+    drawTroughBar(ctx, c.x - barW / 2, c.y - barH / 2, barW, barH,
+      recoveryProgress(state, map, cell, HARVEST[FEATURES[feature as FeatureId].source!], now) ?? 0,
+      formatDuration(Math.max(1, Math.ceil((until - now) / 1000))), labelFont(barH * 0.6, 12, true));
   }
 
   // Pass 3a: THE WHEELS of the zones that carry one, over what stands —

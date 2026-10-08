@@ -32,6 +32,9 @@
   each for an equal share of the wait; with none drawn, its exhausted art.
   A stage reads as something coming up — never as a felled cell.
 - The tree has three: seedlings in dug earth, staked saplings, young trees.
+- **A crop plot growing is worked like a construction**: the builder's hammer
+  over it and the construction's bar with the time left — so repairing an
+  old plot reads as the same five seconds as repairing the House.
 - Growth is the cell's ordinary lazy recovery, so it is no boundary of its own.
 
 ## 3. The crop plot
