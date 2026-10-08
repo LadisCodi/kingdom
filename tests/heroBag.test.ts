@@ -55,15 +55,19 @@ describe('the bag', () => {
     expect(bagOrder(a, 'Common')).not.toEqual(bagOrder(b, 'Common'));
   });
 
-  it('opens the ranked heroes first', () => {
+  it('opens the ranked heroes first, in rank order, then the shuffle', () => {
     const state = freshGame();
-    const order = bagOrder(state, 'Rare');
-    const last = order[order.length - 1]!;
-    const def = HEROES[last] as { bagRank: number | null };
-    restores.push(() => { def.bagRank = null; });
-    def.bagRank = 1;
-    expect(bagOrder(state, 'Rare')[0]).toBe(last);
-    expect(openHeroes(state, 'Rare')).toContain(last);
+    for (const r of RARITIES) {
+      const ranked = heroesOfRarity(r).filter((id) => HEROES[id].bagRank !== null)
+        .sort((a, b) => HEROES[a].bagRank! - HEROES[b].bagRank!);
+      expect(bagOrder(state, r).slice(0, ranked.length)).toEqual(ranked);
+    }
+    // A brand-new kingdom's open heroes are the first ranked ones.
+    state.heroes.owned = [];
+    state.heroes.fragments = {};
+    for (const r of RARITIES) {
+      expect(openHeroes(state, r)).toEqual(bagOrder(state, r).slice(0, HERO_LADDER.bagOpen[r]));
+    }
   });
 
   it('keeps open, over the count, a hero holding Fragments — none is stranded', () => {
