@@ -843,6 +843,9 @@ The fixed appointment is worth more than the surprise.
   enter regardless of where their territory is**.
 - A **maximum depth** of 40 floors (`worldPortal.floors`), tuned so nobody empties it in one event.
 - Floors are taken **one at a time, no skipping**.
+- **A floor's enemy is generated with every villain in its pool**, its squads
+  evolving as the budget outgrows the board, and its villains scaled past
+  what a board of rank V holds ([`combat.md`](combat.md) §9.4, §11).
 - **No daily cap.** **Every floor fought costs Mana** (§4), won or lost —
   Mana is what paces it, and more of it is bought or watched for.
 - Descending costs casualties, and **an army in the Portal is not on the board**:

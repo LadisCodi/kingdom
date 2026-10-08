@@ -113,6 +113,7 @@ the game is derived from that (`GATES`, `definitions.ts`):
 | `{ "districtLevel": { "id": "Housing", "level": 3 } }` | `DISTRICTS.Housing.requiredTechPerLevel[1]` |
 | `{ "districtCount": "Sanctum" }` | `DISTRICTS.Sanctum.extraCountTech` — one more may stand |
 | `{ "unit": "Archer" }` | `UNITS.Archer.requiredTech` |
+| `{ "evolution": { "unit": "Archer", "rank": 3 } }` | the gate on training Archers III (designed, not built — [`features/combat.md`](features/combat.md) §6) |
 | `{ "harvest": "Forest" }` | `HARVEST.Forest.requiredTech` |
 | `{ "terrain": "Water" }` | `terrainGate('Water')` — what `explorationGate` reads |
 | `{ "worldUpgrade": "Fortress" }` | `worldUpgradeGate('Fortress')` — a NEW Fortress (or Chapel) on the world board; the city sends the server which it has opened |

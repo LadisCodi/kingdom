@@ -11,6 +11,7 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| Does converting a unit type to a new tier cost anything? (**OQ-85**) | 2026-10-08 | **Moot: nothing converts.** Tiers became evolutions — each rank a troop of its own, trained new, never upgraded ([`features/combat.md`](features/combat.md) §6). |
 | Is one open Legendary the right number? (**OQ-135**) | 2026-10-08 | **Yes, one** ([`features/10-heroes.md`](features/10-heroes.md) §6.6). |
 | Does the season hero open in the bag? (**OQ-136**) | 2026-10-08 | **Yes, over the count, until recruited**, while a banner leans toward them (`banners.featuredHero`). |
 | Is a supply on every call too many? (**OQ-137**) | 2026-10-08 | **No — keep it.** Every call pays a speed-up or a chest in its supplies slot. |
