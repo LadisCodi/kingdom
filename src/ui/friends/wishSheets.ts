@@ -10,6 +10,7 @@
 
 import { fragmentArt } from '../relicSheet';
 import type { Game } from '../../game';
+import { tr } from '../../i18n/tr';
 import { ARTIFACT_ORDER, ARTIFACTS, TRADE } from '../../sim/data/definitions';
 import { KEYSTONE, SLOTS, isMet, isRestored, slotCount } from '../../sim/relics';
 import { canNeed, giveProblem, isKeystone, lotKey, pairs, type TradeLot } from '../../sim/trade';
@@ -37,10 +38,11 @@ export function renderWishNeed(game: Game): HTMLElement {
       const lot: TradeLot = { kind: 'fragment', relic, slot };
       const held = slotCount(s, relic, slot);
       const cls = `wb-slot${slot === KEYSTONE ? ' is-keystone' : ''}${held > 0 ? ' is-held' : ''}`;
-      if (held > 0) return el('span', { class: cls, 'aria-label': `${slot === KEYSTONE ? 'Keystone' : `Piece ${slot + 1}`}: held` }, fragmentArt(def.sprite, slot, 'wb-frag'));
+      if (held > 0) return el('span', { class: cls, 'aria-label': slot === KEYSTONE ? tr('Keystone: held') : tr('Piece {n}: held', { n: formatExact(slot + 1) }) }, fragmentArt(def.sprite, slot, 'wb-frag'));
       const b = el('button', {
         class: `${cls} is-missing`, type: 'button',
-        'aria-label': `Wish for ${def.name} ${slot === KEYSTONE ? 'keystone' : `piece ${slot + 1}`}`,
+        'aria-label': slot === KEYSTONE ? tr('Wish for {relic} keystone', { relic: def.name })
+          : tr('Wish for {relic} piece {n}', { relic: def.name, n: formatExact(slot + 1) }),
       }, fragmentArt(def.sprite, slot, 'wb-frag')) as HTMLButtonElement;
       if (pickable(lot)) b.addEventListener('click', () => f.pickNeed(lot));
       else b.disabled = true;
@@ -59,18 +61,18 @@ export function renderWishNeed(game: Game): HTMLElement {
     if (pickable(lot)) b.addEventListener('click', () => f.pickNeed(lot));
     else {
       b.disabled = true;
-      b.append(el('span', { class: 'wb-lot-note' }, 'Wished for already'));
+      b.append(el('span', { class: 'wb-lot-note' }, tr('Wished for already')));
     }
     return b;
   });
 
-  return sheet({ title: 'What do you need?', onClose: () => f.closeWish(), tall: true },
+  return sheet({ title: tr('What do you need?'), onClose: () => f.closeWish(), tall: true },
     el('div', { class: 'wb-sheet' },
-      el('p', { class: 'wb-step' }, 'Step 1 of 2'),
+      el('p', { class: 'wb-step' }, tr('Step 1 of 2')),
       ...(rows.length > 0
-        ? [sectionHead('Relics'), el('div', { class: 'wb-relics' }, ...rows)]
-        : [el('p', { class: 'fr-empty' }, 'No relic you have found is missing a fragment.')]),
-      sectionHead('Materials'),
+        ? [sectionHead(tr('Relics')), el('div', { class: 'wb-relics' }, ...rows)]
+        : [el('p', { class: 'fr-empty' }, tr('No relic you have found is missing a fragment.'))]),
+      sectionHead(tr('Materials')),
       el('div', { class: 'wb-grid is-three' }, ...materials)));
 }
 
@@ -86,8 +88,8 @@ export function renderWishGive(game: Game): HTMLElement {
   const choice = (lot: TradeLot, count?: number): HTMLElement => {
     const problem = giveProblem(s, lot);
     const why = !pairs(need, lot)
-      ? (isKeystone(lot) || isKeystone(need) ? 'Keystone only' : 'Not for itself')
-      : problem === 'OnlyOne' ? 'Only 1' : problem === 'Bound' ? 'Bought, not found' : problem === 'NotEnough' ? 'Not enough' : null;
+      ? (isKeystone(lot) || isKeystone(need) ? tr('Keystone only') : tr('Not for itself'))
+      : problem === 'OnlyOne' ? tr('Only 1') : problem === 'Bound' ? tr('Bought, not found') : problem === 'NotEnough' ? tr('Not enough') : null;
     const picked = f.wishGive !== null && lotKey(f.wishGive) === lotKey(lot);
     const b = el('button', {
       class: `wb-pick${picked ? ' is-picked' : ''}${why !== null ? ' is-out' : ''}`, type: 'button',
@@ -108,21 +110,21 @@ export function renderWishGive(game: Game): HTMLElement {
   held.sort((a, b) => Number(giveProblem(s, a.lot) !== null || !pairs(need, a.lot))
     - Number(giveProblem(s, b.lot) !== null || !pairs(need, b.lot)));
 
-  const change = btn({ label: 'Change', onClick: () => f.openWishNeed() });
+  const change = btn({ label: tr('Change'), onClick: () => f.openWishNeed() });
   const ready = f.wishGive !== null && pairs(need, f.wishGive) && giveProblem(s, f.wishGive) === null;
-  return sheet({ title: 'What will you give?', onClose: () => f.closeWish(), tall: true },
+  return sheet({ title: tr('What will you give?'), onClose: () => f.closeWish(), tall: true },
     el('div', { class: 'wb-sheet' },
-      el('p', { class: 'wb-step' }, 'Step 2 of 2'),
-      el('div', { class: 'wb-need' }, el('span', {}, 'You need:'), lotTile(need), change),
-      sectionHead('Your duplicates'),
+      el('p', { class: 'wb-step' }, tr('Step 2 of 2')),
+      el('div', { class: 'wb-need' }, el('span', {}, tr('You need:')), lotTile(need), change),
+      sectionHead(tr('Your duplicates')),
       el('div', { class: 'wb-grid' }, ...(held.length > 0
         ? held.map((h) => choice(h.lot, h.n))
-        : [el('p', { class: 'fr-empty' }, 'No relic fragments yet.')])),
-      sectionHead('Materials'),
+        : [el('p', { class: 'fr-empty' }, tr('No relic fragments yet.'))])),
+      sectionHead(tr('Materials')),
       el('div', { class: 'wb-grid is-three' }, ...PRECIOUS.map((id) => choice({ kind: 'material', id }))),
       el('p', { class: 'wb-held' }, iconEl('clock', { size: 'sm' }),
-        `Held until a friend fills it, or for ${formatExact(TRADE.wishHours)} hours.`),
-      btn({ label: 'Pin wish', kind: 'primary', onClick: () => void f.pinWish(), ...(ready ? {} : { disabledReason: 'Pick what you give' }) })));
+        tr('Held until a friend fills it, or for {n} hours.', { n: formatExact(TRADE.wishHours) })),
+      btn({ label: tr('Pin wish'), kind: 'primary', onClick: () => void f.pinWish(), ...(ready ? {} : { disabledReason: tr('Pick what you give') }) })));
 }
 
 // ------------------------------------------------------------ a fill
@@ -131,12 +133,12 @@ export function renderWishFilled(game: Game): HTMLElement {
   const f = game.friends;
   const done = f.justFilled;
   const close = (): void => f.closeFilled();
-  if (done === null) return sheet({ title: 'Wish filled!', onClose: close, centred: true }, el('div', {}));
-  return sheet({ title: 'Wish filled!', onClose: close, centred: true },
+  if (done === null) return sheet({ title: tr('Wish filled!'), onClose: close, centred: true }, el('div', {}));
+  return sheet({ title: tr('Wish filled!'), onClose: close, centred: true },
     el('div', { class: 'wb-filled' },
       crestEl(done.owner.nickname, done.owner.crest, 'lg'),
       el('div', { class: 'fr-name' }, done.owner.nickname),
-      el('div', { class: 'wb-filled-row' }, el('span', {}, 'You gave'), lotArt(done.gave), el('b', {}, lotWords(done.gave))),
-      el('div', { class: 'wb-filled-row is-got' }, el('span', {}, 'You got'), lotArt(done.got), el('b', {}, lotWords(done.got))),
-      btn({ label: 'Great', kind: 'primary', onClick: close })));
+      el('div', { class: 'wb-filled-row' }, el('span', {}, tr('You gave')), lotArt(done.gave), el('b', {}, lotWords(done.gave))),
+      el('div', { class: 'wb-filled-row is-got' }, el('span', {}, tr('You got')), lotArt(done.got), el('b', {}, lotWords(done.got))),
+      btn({ label: tr('Great'), kind: 'primary', onClick: close })));
 }

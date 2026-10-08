@@ -4,10 +4,22 @@
 // keeps it, and the X leaves it as it was. Every choice is free.
 
 import type { Game } from '../../game';
-import { CHARGES, CHARGE_NAMES, TINCTURES, TINCTURE_NAMES, type Crest } from '../../sim/crest';
+import { tr } from '../../i18n/tr';
+import { CHARGES, TINCTURES, type Charge, type Crest, type Tincture } from '../../sim/crest';
 import { el } from '../format';
 import { btn, sectionHead, sheet } from '../kit';
 import { crestOfEl } from './kingdomBits';
+
+/** What the player reads for each field and charge. Here, not in the sim:
+ *  the crest's rules ride in the server's bundle, which reads no language. */
+const TINCTURE_NAMES: Record<Tincture, string> = {
+  gules: tr('Red'), azure: tr('Blue'), vert: tr('Green'), purpure: tr('Purple'),
+  sable: tr('Black'), tenne: tr('Orange'), celeste: tr('Teal'), murrey: tr('Wine'),
+};
+const CHARGE_NAMES: Record<Charge, string> = {
+  lion: tr('Lion'), fleur: tr('Lily'), tree: tr('Oak'), crown: tr('Crown'), tower: tr('Tower'), star: tr('Star'),
+  eagle: tr('Eagle'), key: tr('Key'), swords: tr('Swords'), dragon: tr('Dragon'), stag: tr('Stag'), ship: tr('Ship'),
+};
 
 export function renderCrestEditor(game: Game): HTMLElement {
   const f = game.friends;
@@ -24,13 +36,13 @@ export function renderCrestEditor(game: Game): HTMLElement {
     crestOfEl({ tincture: t, charge: draft.charge }, 'sm'), { ...draft, tincture: t }));
   const charges = CHARGES.map((c) => choice(CHARGE_NAMES[c], c === draft.charge,
     crestOfEl({ tincture: draft.tincture, charge: c }, 'sm'), { ...draft, charge: c }));
-  return sheet({ title: 'Your crest', onClose: () => f.closeCrestEditor(), centred: true },
+  return sheet({ title: tr('Your crest'), onClose: () => f.closeCrestEditor(), centred: true },
     el('div', { class: 'fr-crest-ed' },
       el('div', { class: 'fr-crest-ed-preview' }, crestOfEl(draft, 'xl')),
       el('div', { class: 'fr-crest-ed-name' }, game.state.kingdom.profile.nickname ?? ''),
-      sectionHead('Field'),
+      sectionHead(tr('Field')),
       el('div', { class: 'fr-picks' }, ...fields),
-      sectionHead('Charge'),
+      sectionHead(tr('Charge')),
       el('div', { class: 'fr-picks is-charges' }, ...charges),
-      btn({ label: 'Save', kind: 'primary', onClick: () => f.saveCrest() })));
+      btn({ label: tr('Save'), kind: 'primary', onClick: () => f.saveCrest() })));
 }
