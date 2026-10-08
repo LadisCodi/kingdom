@@ -6,18 +6,17 @@
 // the line and fading most of a tile in, breathing slowly. Blue, because a
 // gold tint on the grass did not read. All of it is vector: no art.
 //
-// The Townhall's reach (mockup:
-// Docs/art/mockups/area-overlays/reach-simple-2-dots-shadow.png) is a line
-// of white dots, each ringed in a thin dark outline, with a soft shadow on
-// the far side only — the side past the limit.
+// The Townhall's reach is the player's border as the world board draws it:
+// a line in their blue over a soft glow of itself.
 //
-// Both are drawn in SCREEN space — a dot stays round and a line even
-// whatever the slope — and the renderer draws them after the floor and
-// before anything that stands, so trees and buildings stand in front.
+// Both are drawn in SCREEN space — a line stays even whatever the slope —
+// and the renderer draws them after the floor and before anything that
+// stands, so trees and buildings stand in front.
 
 import type { PlotBox } from './camera';
 import { corners as diamondCorners, edge } from './iso';
 import { coordKey, type Coord } from '../sim/state';
+import { PALETTE } from './palette';
 
 type Side = 'N' | 'E' | 'S' | 'W';
 type Point = [number, number];
@@ -83,13 +82,6 @@ function areaEdges(
   return out;
 }
 
-/** Every vertex the border passes through, once. */
-function vertices(edges: readonly BorderEdge[]): Point[] {
-  const at = new Map<string, Point>();
-  for (const e of edges) { at.set(e.va, e.a); at.set(e.vb, e.b); }
-  return [...at.values()];
-}
-
 /**
  * THE GLOW: along every outside edge, a band laid across its own tile — a
  * parallelogram on the ground's diagonal, so a straight run of edges gives
@@ -139,14 +131,10 @@ const GLOW_ALPHA = 0.7;
 const GLOW_DEPTH = 0.9;
 const BREATH_MS = 2600;
 const BREATH_LOW = 0.45;
-const DOT_PX = 0.075;    // the reach's dot, across, as a fraction of a cell
-const DOTS_PER_EDGE = 4; // one on the vertex, three between
-const DOT_RING = 'rgba(30, 24, 16, 0.75)';
-/** The shadow past the reach: this dark against the line, gone
- *  `SHADE_DEPTH` of a cell out. */
-const SHADE_RGB = '8, 12, 18';
-const SHADE_ALPHA = 0.4;
-const SHADE_DEPTH = 0.34;
+/** The reach's line and its glow past it, as fractions of a cell — the
+ *  world board's border at the city's scale. */
+const REACH_LINE_PX = 0.05;
+const REACH_BLUR_PX = 0.16;
 
 /** The border as closed loops. `areaEdges` walks every cell clockwise, so
  *  each edge ends where the next one along the border begins. */
@@ -240,57 +228,37 @@ export function drawAreaLine(
   ctx.restore();
 }
 
-/** The Townhall's reach: the shadow on the far side of every border edge,
- *  then a dot on every vertex and `DOTS_PER_EDGE - 1` between. */
+/** The Townhall's reach: the player's border on the world board, drawn the
+ *  same way — a line in their colour over a glow of itself, wider and
+ *  fainter each time. */
 export function drawReach(
   ctx: CanvasRenderingContext2D, border: ReadonlyArray<{ cell: Coord; sides: readonly Side[] }>,
   cellRect: (c: Coord) => PlotBox, unit: number,
 ): void {
   if (border.length === 0) return;
-  const edges: BorderEdge[] = [];
+  ctx.beginPath();
   for (const { cell, sides } of border) {
     const box = cellRect(cell);
-    for (const side of sides) edges.push(borderEdge(cell, side, box));
-  }
-  // The shadow is the glow turned outward: the cell on the border is inside
-  // the reach, so its band is laid across the neighbour past the edge.
-  ctx.save();
-  for (const e of edges) {
-    const v: Point = [-e.across[0] * SHADE_DEPTH, -e.across[1] * SHADE_DEPTH];
-    const dx = e.b[0] - e.a[0];
-    const dy = e.b[1] - e.a[1];
-    const len = Math.hypot(dx, dy) || 1;
-    let nx = -dy / len;
-    let ny = dx / len;
-    let depth = v[0] * nx + v[1] * ny;
-    if (depth < 0) { nx = -nx; ny = -ny; depth = -depth; }
-    const g = ctx.createLinearGradient(e.a[0], e.a[1], e.a[0] + nx * depth, e.a[1] + ny * depth);
-    g.addColorStop(0, `rgba(${SHADE_RGB}, ${SHADE_ALPHA})`);
-    g.addColorStop(1, `rgba(${SHADE_RGB}, 0)`);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(...e.a);
-    ctx.lineTo(...e.b);
-    ctx.lineTo(e.b[0] + v[0], e.b[1] + v[1]);
-    ctx.lineTo(e.a[0] + v[0], e.a[1] + v[1]);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  const r = Math.max(1.5, (unit * DOT_PX) / 2);
-  const dots: Point[] = vertices(edges);
-  for (const e of edges) {
-    for (let k = 1; k < DOTS_PER_EDGE; k++) {
-      const t = k / DOTS_PER_EDGE;
-      dots.push([e.a[0] + (e.b[0] - e.a[0]) * t, e.a[1] + (e.b[1] - e.a[1]) * t]);
+    for (const side of sides) {
+      const e = borderEdge(cell, side, box);
+      ctx.moveTo(...e.a);
+      ctx.lineTo(...e.b);
     }
   }
-  ctx.beginPath();
-  for (const [x, y] of dots) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2); }
-  ctx.fillStyle = '#ffffff';
-  ctx.fill();
-  ctx.strokeStyle = DOT_RING;
-  ctx.lineWidth = Math.max(1, r * 0.35);
-  ctx.stroke();
+  const line = Math.max(2, unit * REACH_LINE_PX);
+  const blur = Math.max(2, unit * REACH_BLUR_PX);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = PALETTE.yourBorder;
+  for (const s of [
+    { width: line + blur * 1.1, alpha: 0.08 },
+    { width: line + blur * 0.7, alpha: 0.12 },
+    { width: line + blur * 0.35, alpha: 0.2 },
+    { width: line, alpha: 1 },
+  ]) {
+    ctx.globalAlpha = s.alpha;
+    ctx.lineWidth = s.width;
+    ctx.stroke();
+  }
   ctx.restore();
 }

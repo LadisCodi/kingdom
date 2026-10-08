@@ -79,6 +79,9 @@ export const PALETTE = {
   sighted: '#9aa3d6',
   sightedAlpha: 0.82,
   selected: '#ffe27a',
+  /** The player's colour: their border on the world board and the
+   *  Townhall's reach in the city, one line in one blue. */
+  yourBorder: '#2f6fe0',
   /** The tutorial's pointer on a map plot: the stage's magic blue
    *  (tokens.css --magic-glow-*), a wide soft halo and a bright line. */
   tutorialGlowOuter: '#3c9dff',
