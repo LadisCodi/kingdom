@@ -13,7 +13,8 @@
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
 > (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
 > moving into the Tavern (§8.3). **Designed, not built:** the hero bag and
-> the hero chance that falls with the collection (§6.6).
+> the hero chance that falls with the collection (§6.6), and the three
+> prize slots (§6.4).
 
 ## 1. The collection substrate
 
@@ -339,7 +340,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
 | Rarity weights | 55 Common / 45 Rare | 75 Rare / 25 Legendary |
 | Pool | ~26 heroes | ~18 heroes |
 | A duplicate pays | 10 Fragments | 10 Fragments |
-| Every call draws | 2–3 prizes (§6.4) | 2–3 richer prizes (§6.4) |
+| Every call pays | 3 prizes, one per slot (§6.4) | 3 richer prizes, one per slot (§6.4) |
 | Free calls a day | **5**, one every 5 minutes | **1** |
 
 - **A banner's rarity weights are its pool.** A weight of zero excludes a
@@ -383,7 +384,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
   hard one, and resets on any hero.
 - **A Legendary pity** runs only on the golden banner, increments on **every**
   call, and resets only on a Legendary.
-- **No dead pulls.** Every call draws its loot (§6.4). A duplicate converts
+- **No dead pulls.** Every call pays its three slots (§6.4). A duplicate converts
   to Fragments.
 - **Rolls are a deterministic hash of `(seed, namespace, bannerId,
   pullNumber)`**, not a stream — one draw for hit/miss, one for rarity, one for
@@ -391,26 +392,37 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **A hit can only be a hero in the bag** (§6.6), and prefers one the player
   does not own, so breadth comes before a duplicate.
 
-### 6.4 The loot
+### 6.4 The three slots
 
-- **Every call draws 2 or 3 prizes** from its banner's loot table, hero or
-  not; each count is as likely and each prize is a weighted draw. A hero, when
-  the roll hits, comes on top.
-- **Most of a call is for the town and the levels.** About half the prizes
-  are fragments — about one a call — and the rest is Stardust, Hero XP,
-  speed-ups and resource chests.
+- **Every call pays exactly three prizes, one per slot**, always in this
+  order:
+
+  | Slot | Pays |
+  |---|---|
+  | **Hero** | the hero, on a hit (a duplicate's 10 Fragments, if owned); otherwise **1 Fragment** of a hero in the bag (§6.6) |
+  | **Hero goods** | Stardust or Hero XP |
+  | **Supplies** | a speed-up or a resource chest |
+
+- **The extra hero slot**: on **20%** of calls the hero-goods slot becomes a
+  second hero slot and pays 1 Fragment of a hero in the bag. It is never a
+  second hit: a call rolls for a hero once.
+- **Each slot is a weighted draw from its own table.** A Fragment's rarity is
+  drawn by the hero slot's weights; the hero within it from the bag.
 - **A fragment is of any hero of its rarity in the bag** (§6.6), owned or
   not: toward a recruit, or toward the next star.
-- The golden table holds the same kinds, each worth more: Legendary
+- The golden tables hold the same kinds, each worth more: Legendary
   fragments, more Stardust and Hero XP, 1 h speed-ups and chests.
 
-| Prize (% of the draws) | The common call | The golden call |
+| Slot (% of its draws) | The common call | The golden call |
 |---|---|---|
-| 1 Fragment | 25 Common · 20 Rare | 15 Legendary · 30 Rare |
-| Stardust | 10 × 10 · 9 × 25 · 2 × 100 | 3 × 10 · 8 × 25 · 10 × 100 |
-| Hero XP | 10 × 50 · 10 × 200 | 10 × 200 · 10 × 500 |
-| A speed-up — construction, training, workshop | 4, of 5 min | 4, of 1 h |
-| A resource chest — Food, Wood, Stone, Gold | 8, of 10 min | 8, of 1 h |
+| Hero — a Fragment's rarity | 55 Common · 45 Rare | 33 Legendary · 67 Rare |
+| Hero goods — Stardust | 24 × 10 · 22 × 25 · 5 × 100 | 7 × 10 · 20 × 25 · 24 × 100 |
+| Hero goods — Hero XP | 24 × 50 · 24 × 200 | 24 × 200 · 24 × 500 |
+| Supplies — a speed-up: construction, training, workshop | 11 each, of 5 min | 11 each, of 1 h |
+| Supplies — a resource chest: Food, Wood, Stone, Gold | 17 each, of 10 min | 17 each, of 1 h |
+
+- A call pays about **1.1 Fragments** (a miss's one, plus the extra slot),
+  **0.8** hero goods and **1** supply.
 
 ### 6.5 The ten-call
 
@@ -557,7 +569,9 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   war chest for spoils. Every reveal of RANDOM rewards uses it.
 - **The sequence**:
   1. the chest drops onto the carpet with a count of the cards inside and
-     opens on its own — the player already paid;
+     opens on its own — the player already paid. A call is **three cards,
+     in slot order** (§6.4) — hero, hero goods, supplies — and a ten-call
+     thirty;
   2. the first card rises face down — *Tap to reveal*;
   3. a tap flips it;
   4. the next tap sends it to its own place on the stage — smaller and
@@ -685,7 +699,8 @@ how many slots it wants (1…n) and what to do with the answer.
 | The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
 | What a duplicate pays | §6.1 | `banners.duplicateFragments` |
-| What a call draws | §6.4 | `banners.loot`, `lootDrawsMin`, `lootDrawsMax` |
+| What each slot draws | §6.4 | `banners.loot`, each row with its `slot` *(not built; replaces `lootDrawsMin`, `lootDrawsMax`)* |
+| How often hero goods become a second hero slot | 20% | `banners.extraHeroSlotChance` *(not built)* |
 | The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design
@@ -730,4 +745,4 @@ how many slots it wants (1…n) and what to do with the answer.
   exercises a scheduled one. The season hero
   ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-134, OQ-135, OQ-136.
+**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96, OQ-134, OQ-135, OQ-136, OQ-137.
