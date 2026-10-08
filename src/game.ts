@@ -888,7 +888,7 @@ export class Game {
   }
 
   shake(currencies: CurrencyId[]): void {
-    playSfx('error'); // every shake is a denial — one audible "no"
+    this.deny(); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
   }
   /** A tap on the fog that took: the cell flashes white — every cell of a
@@ -897,8 +897,20 @@ export class Game {
     for (const c of footprintCells(this.map, cell)) this.tapFx.add(`fog:${coordKey(c)}`);
   }
 
+  /** A refusal: the line floats up mid-screen, with the one "no". */
   toast(msg: string): void {
+    this.deny();
     for (const fn of this.toastListeners) fn(msg);
+  }
+  /** News that is not a refusal — copied, found, sent: the same floating
+   *  line, without the "no". */
+  note(msg: string): void {
+    for (const fn of this.toastListeners) fn(msg);
+  }
+  /** The denial sound. One at a time: a refusal that shakes the purse AND
+   *  says why is one "no", not two on top of each other. */
+  private deny(): void {
+    playSfx('error', { group: 'error', limit: 1 });
   }
   private reward(haul: Wallet, from?: { x: number; y: number }, tap = false): void {
     for (const fn of this.rewardListeners) fn(haul, from, tap);
@@ -1075,7 +1087,7 @@ export class Game {
         const box = this.camera.cellToScreen(cell);
         const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
         queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
-        if (picked.item !== null) this.toast(tr('Found a {item} — it is in the Bag', { item: itemWords(picked.item) }));
+        if (picked.item !== null) this.note(tr('Found a {item} — it is in the Bag', { item: itemWords(picked.item) }));
         this.notify();
         return true;
       },
@@ -1106,13 +1118,11 @@ export class Game {
         else if (result === 'NotReachable') {
           // Say the rule, not just "no". A player who has been told once that
           // the frontier moves outward stops trying to buy the far tile.
-          playSfx('error');
           this.toast(tr('Clear a path to it first — the fog lifts from the edges'));
           this.hintFrontierNear(cell);
         } else if (result === 'OutOfReach') {
           // The capital is the reach: say which level opens this ring, so
           // the refusal points at the building rather than at the fog.
-          playSfx('error');
           this.toast(tr('Raise the Townhall to level {n} to explore this far', { n: formatExact(reachLevelFor(this.map, cell)) }));
         } else if (result === 'TechLocked') {
           const gate = explorationGate(this.map, cell);
@@ -1296,7 +1306,7 @@ export class Game {
     // with whether the video stood ready to refill it.
     if (!this.manaEmptySent) this.track('mana_empty', { ad: this.adOffer() !== null });
     this.manaEmptySent = true;
-    playSfx('error');
+    this.deny();
     this.shake(['Mana']);
     this.floaters.add(cell, tr('empty'), 'Mana');
   }
@@ -1318,14 +1328,14 @@ export class Game {
       // yet" is the whole point of the gate, and it only teaches anything if
       // the player is told what would open it.
       const gate = HARVEST[source].requiredTech;
-      playSfx('error');
+      this.deny();
       if (gate) this.toast(tr('Research {tech} before you can work this', { tech: TECHNOLOGIES[gate].name }));
     } else if (result === 'LairHeld') {
       // Say WHO: the refusal is the lair's, and naming it is what sends the
       // player to clear it (Docs/proposals/lairs.md §6). Costs no Mana — the
       // tap is refused before anything is charged.
       const lairId = lairHolding(this.state, cell);
-      playSfx('error');
+      this.deny();
       if (lairId) this.toast(`${holdsThisGround(lairCreature(lairId))}`);
     } else if (result === 'NoMana') {
       this.outOfMana(cell);
@@ -1537,7 +1547,6 @@ export class Game {
     if (feature === undefined || !MOVABLE_FEATURES.has(feature)) return false;
     const block = pickUpBlock(this.state, cell);
     if (block === 'NeedsResearch') {
-      playSfx('error');
       this.toast(tr('Research {tech} before you can move trees', { tech: TECHNOLOGIES[TRANSPLANTING].name }));
       this.notify();
       return false;
@@ -2065,7 +2074,7 @@ export class Game {
   doRestoreRelic(id: ArtifactId): void {
     if (restoreRelic(this.state, id) === 'Restored') {
       playSfx('questComplete');
-      this.toast(tr('The {relic} is restored', { relic: ARTIFACTS[id].name }));
+      this.note(tr('The {relic} is restored', { relic: ARTIFACTS[id].name }));
     }
     this.notify();
   }
@@ -2336,7 +2345,7 @@ export class Game {
     playSfx('questComplete');
     this.reward({ ...(s.nextDayGems > 0 ? { Gems: s.nextDayGems } : {}), ...(s.nextDayHeroXp > 0 ? { HeroXp: s.nextDayHeroXp } : {}) });
     if (s.hero !== null && s.nextDayFragments > 0) {
-      this.toast(tr('{n} fragments of {hero}', { n: formatExact(s.nextDayFragments), hero: HEROES[s.hero].name }));
+      this.note(tr('{n} fragments of {hero}', { n: formatExact(s.nextDayFragments), hero: HEROES[s.hero].name }));
     }
     this.offerSplashForced = null;
     this.notify();
@@ -3128,7 +3137,7 @@ export class Game {
     const build = this.state.world.builds.find((b) => b.index === job.index);
     if (build !== undefined && r.finishesAt <= this.now()) {
       this.state.world.builds = this.state.world.builds.filter((b) => b !== build);
-      this.toast(worldBuildDone(build.what, build.level));
+      this.note(worldBuildDone(build.what, build.level));
     } else if (build !== undefined) build.finishesAt = r.finishesAt;
     this.applyWorldSnapshot(r.snapshot);
     return true;
@@ -3267,7 +3276,7 @@ export class Game {
    * them nothing they had already done.
    */
   offerBuilder(): void {
-    playSfx('error');
+    this.deny();
     offerTrigger(this.state, 'buildersBusy', this.now());
     this.setOverlay('builder');
   }
@@ -3490,11 +3499,11 @@ export class Game {
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
       // Only what the player cannot see from where they land is said.
-      if (isItemBundle(id)) this.toast(tr('{name} — it is in the Bag', { name: STORE[id].name }));
+      if (isItemBundle(id)) this.note(tr('{name} — it is in the Bag', { name: STORE[id].name }));
       // An offer bought out, or a Gem pack, goes back to the store; anything
       // bought from a sheet that is not the store goes back there.
       this.setOverlay(back);
-      if (id === 'Survey') this.toast(tr('The Royal Survey is yours — every level you have reached is open'));
+      if (id === 'Survey') this.note(tr('The Royal Survey is yours — every level you have reached is open'));
       if (result === 'Purchased' && STORE[id].gems > 0) this.reward({ Gems: STORE[id].gems });
       if (result === 'Purchased') {
         // A hero bought — in the pack, or as the first purchase's reward —
@@ -3819,7 +3828,7 @@ export class Game {
         const { tome, era } = TECHNOLOGIES[id];
         const n = ERA_REWARDS[tome][era];
         if (n) {
-          this.toast(trn(n, 'Chapter {era} complete — {n} relic fragment', 'Chapter {era} complete — {n} relic fragments',
+          this.note(trn(n, 'Chapter {era} complete — {n} relic fragment', 'Chapter {era} complete — {n} relic fragments',
             { era: formatExact(era), n: formatExact(n) }));
         }
       }
@@ -4191,7 +4200,7 @@ export class Game {
     } else if (result === 'LairHeld') {
       // The ground is a camp's: say whose, so the refusal points at the fight.
       const lair = lairHolding(this.state, cell);
-      playSfx('error');
+      this.deny();
       if (lair) this.toast(holdsThisGround(lairCreature(lair)));
     }
     this.notify();
@@ -4328,7 +4337,7 @@ export class Game {
     this.vanishingLairs.set(lairId, performance.now());
     playSfx('questComplete');
     const items = Object.keys(report.items) as ItemId[];
-    if (items.length > 0) this.toast(tr('In the Bag: {items}', { items: items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ') }));
+    if (items.length > 0) this.note(tr('In the Bag: {items}', { items: items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ') }));
     this.notify();
     queueMicrotask(() => this.reward(haul, from));
   }
@@ -4672,12 +4681,11 @@ export class Game {
       pick.slots[at] = null;
       playSfx('click');
     } else if (!heroCanFight(this.state, heroId, this.now())) {
-      playSfx('error');
       this.toast(tr('{hero} is exhausted — they rest until their HP is full', { hero: HEROES[heroId].name }));
     } else {
       const free = pick.slots.indexOf(null);
       if (free < 0) {
-        playSfx('error');
+        this.deny();
       } else {
         pick.slots[free] = heroId;
         playSfx('click');
@@ -5735,7 +5743,7 @@ export class Game {
   /** A confirm on a spot the ghost may not take: it shakes its head. */
   private refuseGhost(words: string): void {
     this.ghostFx.shake();
-    playSfx('error');
+    this.deny();
     haptic([12, 40, 12]);
     this.toast(words);
     this.notify();
@@ -6076,11 +6084,11 @@ export class Game {
           ...openRelicDoor(this.state, won),
           ...dropFragments(this.state, 'world', l.pack ? RELIC_RULES.perPackTier[l.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', l.seq ?? l.at]),
         ];
-        if (found.length > 0) this.toast(fragmentWords(found));
+        if (found.length > 0) this.note(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
         if (l.precious) {
           addGood(this.state.city.goods, l.precious.id, l.precious.amount);
-          this.toast(`+${formatCount(l.precious.amount)} ${l.precious.id}`);
+          this.note(`+${formatCount(l.precious.amount)} ${l.precious.id}`);
         }
         this.reward({ Gold: l.gold, ...made, Knowledge: l.knowledge, Stardust: l.stardust, HeroXp: l.heroXp, ...(l.gems ? { Gems: l.gems } : {}) });
       } else if (e.kind === 'portalClosed') {
@@ -6229,7 +6237,7 @@ export class Game {
     const done = this.state.world.builds.find((b) => b.index === index);
     this.state.world.builds = this.state.world.builds.filter((b) => b !== done);
     playSfx('gemSpend');
-    if (done !== undefined) this.toast(worldBuildDone(done.what, done.level));
+    if (done !== undefined) this.note(worldBuildDone(done.what, done.level));
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6411,7 +6419,7 @@ export class Game {
     if (back === null) this.dismiss();
     else { this.selectedHex = target; this.setOverlay(back); }
     playSfx('armyMarch');
-    this.toast(tr('Your army marches — there in {time}', { time: formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000) }));
+    this.note(tr('Your army marches — there in {time}', { time: formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000) }));
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6523,7 +6531,7 @@ export class Game {
     playSfx('revealDone');
     const n = formatCount(found.revealed);
     const paid = found.paid === null ? null : scoutWords(found.paid);
-    this.toast(found.revealed > 0
+    this.note(found.revealed > 0
       ? (paid === null ? tr('{n} new hexes on the map', { n }) : tr('{n} new hexes on the map — and {paid}', { n, paid }))
       : (paid === null ? tr('Nothing new out there') : tr('Nothing new out there — and {paid}', { paid })));
     if (found.paid !== null && Object.keys(found.paid.wallet).length > 0) this.reward(found.paid.wallet);
@@ -6590,7 +6598,7 @@ export class Game {
     }
     pay(this.state.city.wallet, cost);
     playSfx('tribute');
-    this.toast(tr('The camp of {creature} takes the tribute and leaves', { creature: CAMP_CREATURE[camp.creature] }));
+    this.note(tr('The camp of {creature} takes the tribute and leaves', { creature: CAMP_CREATURE[camp.creature] }));
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6612,7 +6620,7 @@ export class Game {
       // A rich district's precious store, to the city's goods (19 §7.4).
       if (r.precious !== null) {
         addGood(this.state.city.goods, r.precious.id, r.precious.amount);
-        this.toast(`+${formatCount(r.precious.amount)} ${r.precious.id}`);
+        this.note(`+${formatCount(r.precious.amount)} ${r.precious.id}`);
       }
     }
     this.applyWorldSnapshot(r.snapshot);

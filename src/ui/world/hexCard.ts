@@ -402,7 +402,7 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
     foot.push(btn({
       label: tr('Add friend'), kind: 'primary',
       disabledReason: asked ? tr('Request sent') : game.friends.busy.has(name) ? tr('Sending') : undefined,
-      onClick: () => void game.friends.request(name).then(() => game.toast(tr('A request is on its way to {name}', { name }))),
+      onClick: () => void game.friends.request(name).then(() => game.note(tr('A request is on its way to {name}', { name }))),
     }));
   }
   const root = sheet({ title: name, onClose: () => game.dismiss() },

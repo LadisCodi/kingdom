@@ -151,13 +151,9 @@
    * So src/ui/chromeMetrics.ts measures both bars and overwrites these on
    * :root. What is left here is the pre-paint FALLBACK — near enough that the
    * first frame is not visibly wrong — and the values below are the measured
-   * ones, so a build without the script still lands close.
-   *
-   * --quest-h is the same trick for a widget: the toast slip stacks above the
-   * quest scroll, which it can only do if it knows how tall the scroll is. */
+   * ones, so a build without the script still lands close. */
   --hud-h: 44px;
   --nav-h: 52px; /* measured, in real px: chromeMetrics.ts overwrites it */
-  --quest-h: 0px;
 
   /* ---- type ----
    * ONE FAMILY. `--font-display` and `--font-body` name the same face now;

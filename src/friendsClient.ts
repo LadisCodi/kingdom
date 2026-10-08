@@ -424,7 +424,7 @@ export class FriendsClient {
     }
     const banked = payHelper(this.game.state);
     this.game.track('friend_helped', { mana: banked });
-    this.game.toast(banked > 0 ? tr('Helped · +{n} Mana', { n: formatExact(banked) }) : tr('Helped · your Mana is full'));
+    this.game.note(banked > 0 ? tr('Helped · +{n} Mana', { n: formatExact(banked) }) : tr('Helped · your Mana is full'));
     this.game.persist?.();
     this.game.notify();
   }
@@ -476,9 +476,9 @@ export class FriendsClient {
     }
     try {
       await navigator.clipboard.writeText(`${text}: ${link}`);
-      this.game.toast(tr('Invitation copied — paste it to a friend'));
+      this.game.note(tr('Invitation copied — paste it to a friend'));
     } catch {
-      this.game.toast(tr('Your friend code is {code}', { code }));
+      this.game.note(tr('Your friend code is {code}', { code }));
     }
   }
 
@@ -488,9 +488,9 @@ export class FriendsClient {
     if (code === undefined) return;
     try {
       await navigator.clipboard.writeText(code);
-      this.game.toast(tr('Friend code copied'));
+      this.game.note(tr('Friend code copied'));
     } catch {
-      this.game.toast(tr('Your friend code is {code}', { code }));
+      this.game.note(tr('Your friend code is {code}', { code }));
     }
   }
 
@@ -504,7 +504,7 @@ export class FriendsClient {
     this.busy.delete(code);
     if (r !== null && !r.ok) this.game.toast(REFUSAL_WORDS[r.why]);
     else if (r !== null) {
-      if (okWords !== null) this.game.toast(okWords);
+      if (okWords !== null) this.game.note(okWords);
       this.game.track(`friend_${cmd.kind}`);
     }
     this.game.notify();
