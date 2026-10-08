@@ -76,8 +76,11 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     el('div', { class: 'plc-row' },
       el('div', { class: 'plc-art' }, art ? spriteImgAt(art) : iconEl(info.definitionId, { size: 'lg' })),
       el('div', { class: 'plc-body' },
-        el('div', { class: 'plc-promise' },
-          moving && info.unmoved ? 'Drag it, or tap where it should go' : PROMISE[info.definitionId]),
+        // A SHRINE ON THE MOVE says what its relic would reach here, against
+        // what it reaches where it stands — the number a spot is chosen by,
+        // in the place of the promise the player read when they built it.
+        ...(info.aura !== undefined && !info.unmoved ? auraLines(info.aura) : [el('div', { class: 'plc-promise' },
+          moving && info.unmoved ? 'Drag it, or tap where it should go' : PROMISE[info.definitionId])]),
         // A move is instant and free: neither a wait nor a price — the empty
         // space is the message.
         ...(moving
@@ -91,4 +94,16 @@ export function renderPlacementPanel(game: Game): HTMLElement {
           : [])),
       el('div', { class: 'plc-actions' }, confirm)),
   );
+}
+
+/** *Reaches 14 resources* (green up, red down), over *9 where it
+ *  stands*. */
+function auraLines(aura: { ground: boolean; here: number; now: number }): HTMLElement[] {
+  const noun = aura.ground ? 'resource' : 'building';
+  const tone = aura.here > aura.now ? ' is-up' : aura.here < aura.now ? ' is-down' : '';
+  return [
+    el('div', { class: `plc-aura${tone}` }, iconEl('Shrine', { size: 'sm' }),
+      el('span', {}, `Reaches ${formatExact(aura.here)} ${noun}${aura.here === 1 ? '' : 's'}`)),
+    el('div', { class: 'plc-promise' }, `${formatExact(aura.now)} where it stands`),
+  ];
 }
