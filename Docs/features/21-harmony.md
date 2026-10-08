@@ -105,10 +105,11 @@
 
 ## 7. The sheet and the cards
 
-- The build sheet carries a **Harmony header** — `supply / demand`, and either
-  the tier that pays or the next one to reach — from the moment a piece is
-  both discovered and permitted, and a **Decorations** section under the
-  buildings. A piece whose technology is unread is hidden, like any building.
+- The build sheet's Decoration tab carries a **Harmony header** — `supply /
+  demand`, and either the tier that pays or the next one to reach — once
+  something demands Harmony; before that, a tip that a house beside a
+  decoration earns more Gold, and no `+N Harmony` chip on the rows. A piece
+  whose technology is unread is listed last, locked, naming it.
 - Every place a build is priced — the card, the sheet, the placement bar —
   shows refined goods beside the currencies; the upgrade button shows Harmony
   with them, as a requirement quoted at the price.
