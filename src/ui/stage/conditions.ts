@@ -19,8 +19,9 @@ import { fogState } from '../../sim/fog';
 import { sightedThings } from '../../sim/sight';
 import { woundedCount } from '../../sim/army';
 import {
-  buildQueueCapacity, busyBuilders, type ItemId, type LairId, type TechId, type TomeId,
+  buildQueueCapacity, busyBuilders, type DistrictId, type ItemId, type LairId, type TechId, type TomeId,
 } from '../../sim/state';
+import { districtCount } from '../../sim/districts';
 import type { Game } from '../../game';
 
 export interface ConditionArgs {
@@ -88,7 +89,10 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'built': {
       const matches = (id: string): boolean => (c.target === 'AnyWorkshop'
         ? WORKSHOPS.includes(id) : id === c.target);
-      return state.city.districts.filter((d) => d.state === 'Built' && matches(d.definitionId)).length
+      // A plantable stands as its feature, never as a district.
+      const planted = c.target in DISTRICTS && DISTRICTS[c.target as DistrictId].plants !== null
+        ? districtCount(state, c.target as DistrictId) : 0;
+      return planted + state.city.districts.filter((d) => d.state === 'Built' && matches(d.definitionId)).length
         >= Math.max(1, c.amount);
     }
     case 'overlay': return game.openOverlay === c.target;

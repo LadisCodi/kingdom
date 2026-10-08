@@ -41,11 +41,10 @@ import type { SpeedJob } from '../sim/speedups';
 import {
   queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
-import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
 import { coach, el, formatDuration, formatExact, formatShort } from './format';
-import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, restMarks, sectionHead, windowHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, progress, restMarks, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -254,35 +253,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         return JSON.stringify([view, cast?.phase ?? null, cast === null ? 0 : Math.ceil(cast.leftMs / 1000),
           view.holds === null ? 0 : game.walletValue('Mana')]);
       }, shrine));
-    }
-
-    // A crop plot is a resource cell you tap, so show what is left in it.
-    if (district.definitionId === 'FarmLands') {
-      const plot = () => {
-        const t = game.now();
-        const spec = HARVEST.Crops;
-        const left = stockAt(game.state, game.map, district.location, t);
-        const readyAt = recoversAt(game.state, game.map, district.location, t);
-        return el('div', { class: 'dc-live' },
-          el('div', { class: 'dc-homes' },
-            iconEl('Food', { size: 'sm' }),
-            pips(left, spec.stock),
-            el('span', {}, readyAt === null
-              ? `${formatExact(left)} Food left in it`
-              : `regrowing — ${formatDuration((readyAt - t) / 1000)}`)),
-          el('div', { class: 'dc-tapline' },
-            iconEl('showme', { size: 'sm' }),
-            `Tap the plot for +${formatExact(tapYieldAt(game.state, game.map, district.location, t))} Food`));
-      };
-      body.append(sectionHead('Crops'), part(() => {
-        const t = game.now();
-        const readyAt = recoversAt(game.state, game.map, district.location, t);
-        return JSON.stringify([
-          stockAt(game.state, game.map, district.location, t),
-          readyAt === null ? null : formatDuration((readyAt - t) / 1000),
-          tapYieldAt(game.state, game.map, district.location, t),
-        ]);
-      }, plot));
     }
 
     // A house's residents and rent are its stat tiles (Beds 2/2, Gold +3.6k/h);

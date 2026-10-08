@@ -36,7 +36,7 @@
 |---|---|---|---|---|---|
 | **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; makes Gold of its own into its store (10 a minute at L1); the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
-| **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
+| **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | — | a plantable: plants a Food cell, no building ([`27-plantables.md`](27-plantables.md)) |
 | **Farm** | 1×1 | Farming | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
@@ -142,10 +142,11 @@
 
 ### 4.2 FarmLands — the crop plot
 
-- The plot **is** the resource: a Crops cell, 1 Food per 8 s strike, stock 10,
+- A **plantable**, not a building: it plants a `Crops` feature
+  ([`27-plantables.md`](27-plantables.md)). 1 Food per 8 s strike, stock 10,
   recovers in 60 s ([`04-harvest.md`](04-harvest.md) §2).
 - Tapped by hand, or worked by a Farm whose area of influence covers it.
-- One level. Build 15 Gold + 10 Wood, 10 s.
+- 15 Gold + 10 Wood, no builder; grows for 10 s.
 
 ### 4.3 Farm
 

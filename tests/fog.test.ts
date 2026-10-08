@@ -49,10 +49,10 @@ describe('map data', () => {
     const onMap = new Set(
       [...map.initialFeatures.values()].map((f) => FEATURES[f].source),
     );
-    // A crop plot IS its own Crops cell, so that source is built rather than
-    // authored and never shows up as a map feature.
+    // A plantable's source is planted rather than authored, and need not
+    // show up as a map feature.
     const built = new Set(Object.values(DISTRICTS)
-      .map((d) => d.providesHarvestSource).filter((s) => s !== null));
+      .flatMap((d) => (d.plants === null ? [] : [FEATURES[d.plants].source])));
     for (const def of Object.values(DISTRICTS)) {
       for (const source of def.harvestSources) {
         if (built.has(source)) continue;

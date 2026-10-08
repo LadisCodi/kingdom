@@ -104,7 +104,10 @@ describe('a player can actually play the onboarding', () => {
       clearTo(site.location);
       expect(repairAbandoned(state, map, id), `could not repair ${id}`).toBe('Started');
       tick(600);
-      expect(state.city.districts.some((d) => d.definitionId === site.districtId
+      // A plantable's ruin comes back as its feature, never as a district.
+      const plants = DISTRICTS[site.districtId].plants;
+      if (plants !== null) expect(state.features[coordKey(site.location)]).toBe(plants);
+      else expect(state.city.districts.some((d) => d.definitionId === site.districtId
         && d.location.x === site.location.x && d.location.y === site.location.y && d.state === 'Built')).toBe(true);
     };
     const research = (id: TechId) => {
