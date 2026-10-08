@@ -9,6 +9,7 @@
 // Relics. A veteran kingdom (a save from before the doors) has every door
 // open. The BOOKS are the sim's own doors, decided in `research.ts`.
 
+import { tr } from '../i18n/tr';
 import { track } from './analytics';
 import { ABANDONED, ARTIFACT_ORDER, QUESTS } from './data/definitions';
 import { isMet } from './relics';
@@ -72,17 +73,17 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
 /** What a padlocked door says when tapped: the one thing that opens it —
  *  and not what is behind it, which the padlock keeps a surprise. */
 export const DOOR_HINT: Record<DoorId, string> = {
-  research: 'Finish your first task to open this.',
-  knowledge: 'Finish your first task to open this.',
-  build: 'Settle a second villager to open this.',
-  heroes: 'Build a Tavern to open this.',
-  banner: 'Build a Tavern to open this.',
-  relics: 'Clear a lair to open this.',
-  store: 'Raise the Townhall to level 2 to open this.',
-  survey: 'Raise the Townhall to level 2 to open this.',
-  world: 'Repair the Watchtower to open this.',
-  bag: 'Find a chest to open this.',
-  friends: 'Choose your name on the world map to open this.',
+  research: tr('Finish your first task to open this.'),
+  knowledge: tr('Finish your first task to open this.'),
+  build: tr('Settle a second villager to open this.'),
+  heroes: tr('Build a Tavern to open this.'),
+  banner: tr('Build a Tavern to open this.'),
+  relics: tr('Clear a lair to open this.'),
+  store: tr('Raise the Townhall to level 2 to open this.'),
+  survey: tr('Raise the Townhall to level 2 to open this.'),
+  world: tr('Repair the Watchtower to open this.'),
+  bag: tr('Find a chest to open this.'),
+  friends: tr('Choose your name on the world map to open this.'),
 };
 
 /** The door's key in `tutorial.seen`. */

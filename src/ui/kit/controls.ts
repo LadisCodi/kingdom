@@ -15,6 +15,7 @@
 // therefore the whole affordability contract: pass both and the button gets
 // its price, its red, and its disabled state together, or none of them.
 
+import { tr } from '../../i18n/tr';
 import type { CurrencyId, Wallet } from '../../sim/state';
 import { playSfx } from '../../audio/sfx';
 import { el } from '../format';
@@ -145,7 +146,7 @@ export function knob(
  * screen reader hears. Marked data-own-close, so the host adds no knob of
  * its own.
  */
-export function closeKnob(onClick: () => void, label = 'Close'): HTMLButtonElement {
+export function closeKnob(onClick: () => void, label = tr('Close')): HTMLButtonElement {
   const b = el('button', { class: 'k-close', type: 'button', 'aria-label': label });
   b.setAttribute('data-own-close', '');
   return wire(b, onClick);
@@ -156,7 +157,7 @@ export function closeKnob(onClick: () => void, label = 'Close'): HTMLButtonEleme
  * (kit.css `.k-move`, sheets/ui-window4-move.png) — the close's twin in
  * wood, drawn to sit beside it in a window's header.
  */
-export function moveKnob(onClick: () => void, label = 'Move'): HTMLButtonElement {
+export function moveKnob(onClick: () => void, label = tr('Move')): HTMLButtonElement {
   const b = el('button', { class: 'k-move', type: 'button', 'aria-label': label });
   return wire(b, onClick);
 }

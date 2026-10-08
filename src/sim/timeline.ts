@@ -27,6 +27,7 @@
 // moment an effect can only be replayed by re-running the UI, the determinism
 // argument the whole sim rests on collapses.
 
+import { tr } from '../i18n/tr';
 import { EVENTS } from './data/definitions';
 import type { GameState, ScheduledEntry, SchedulePayload } from './state';
 
@@ -147,8 +148,8 @@ function open(state: GameState, entry: ScheduledEntry, t: number): ScheduleEvent
     entryId: entry.id,
     kind: 'banner',
     transition: 'opened',
-    title: 'A new banner',
-    detail: 'Someone new is willing to be found.',
+    title: tr('A new banner'),
+    detail: tr('Someone new is willing to be found.'),
   };
 }
 
@@ -161,8 +162,8 @@ function close(state: GameState, entry: ScheduledEntry): ScheduleEvent {
     entryId: entry.id,
     kind: entry.payload.kind,
     transition: 'closed',
-    title: 'A banner closed',
-    detail: 'It will come round again.',
+    title: tr('A banner closed'),
+    detail: tr('It will come round again.'),
   };
 }
 

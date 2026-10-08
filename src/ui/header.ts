@@ -33,6 +33,7 @@
 // The presenter decides all of it (visibleCurrencies, hudSlot) — this file
 // only draws.
 
+import { tr } from '../i18n/tr';
 import type { Game } from '../game';
 import type { CurrencyId } from '../sim/state';
 import { el, formatCount } from './format';
@@ -46,22 +47,22 @@ const SLOT_ICON = {
   population: 'population', workers: 'workers', builders: 'builders', army: 'army', explorers: 'compass',
 } as const;
 const SLOT_LABEL = {
-  population: 'Population', workers: 'Free villagers', builders: 'Builders free',
-  army: 'Army', explorers: 'Explorers free',
-} as const;
+  population: tr('Population'), workers: tr('Free villagers'), builders: tr('Builders free'),
+  army: tr('Army'), explorers: tr('Explorers free'),
+};
 
 export function mountHeader(game: Game, root: HTMLElement): void {
   root.classList.add('hud');
   const plank = el('div', { class: 'hud-plank' });
   const coins = el('div', { class: 'hud-coins' });
-  const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': 'Gems' });
+  const gems = el('button', { class: 'hud-slot hud-gems', type: 'button', 'aria-label': tr('Gems') });
   const plaque = el('button', { class: 'hud-plaque', type: 'button', 'data-coach': 'builders' });
 
   // THE KNOWLEDGE TAB (M33). Straight on the painted wood: the book, the
   // number, ten segments and a caption under them; the + opens the sheet,
   // and so does the rest of the tab.
   const knowTab = el('button', {
-    class: 'hud-know', type: 'button', 'aria-label': 'Knowledge', 'data-coach': 'knowledge',
+    class: 'hud-know', type: 'button', 'aria-label': tr('Knowledge'), 'data-coach': 'knowledge',
   });
   const knowValue = el('b', { class: 'hud-know-value' }, '0');
   const segments = el('span', { class: 'hud-know-segs', 'aria-hidden': 'true' });
@@ -81,7 +82,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // ONE gauge. Never "+6/h base −4/h upkeep = +2/h" — that
   // breakdown is the reliquary's job, on tap, where the player asked for it.
   const manaGauge = el('button', {
-    class: 'hud-slot hud-mana', type: 'button', 'aria-label': 'Mana', 'data-coach': 'mana',
+    class: 'hud-slot hud-mana', type: 'button', 'aria-label': tr('Mana'), 'data-coach': 'mana',
   });
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
@@ -98,7 +99,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // opened twice a month, so it is not on the nav bar; it is chrome, so it
   // hangs from the chrome rather than floating over the map on its own.
   const knob = el('button', {
-    class: 'hud-knob', type: 'button', 'aria-label': 'Settings',
+    class: 'hud-knob', type: 'button', 'aria-label': tr('Settings'),
   }, iconEl('settings', { size: 'md' }));
   knob.addEventListener('click', () => {
     game.setOverlay(game.openOverlay === 'settings' ? null : 'settings');
@@ -107,7 +108,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   // THE FRIENDS KNOB (Docs/features/15-social.md §2.1) hangs beside it on a
   // rope of its own, and wears the red orb while someone asks to be friends.
   const friendsKnob = el('button', {
-    class: 'hud-knob is-friends', type: 'button', 'aria-label': 'Friends', 'data-coach': 'friends',
+    class: 'hud-knob is-friends', type: 'button', 'aria-label': tr('Friends'), 'data-coach': 'friends',
   }, iconEl('friends', { size: 'md' }));
   friendsKnob.addEventListener('click', () => {
     if (game.openOverlay === 'friends') game.dismiss();
@@ -206,7 +207,9 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       keyValues.set(b, value);
       const slot = el('button', {
         class: 'hud-slot hud-coin hud-key', type: 'button', 'data-key': offer.key,
-        'aria-label': `${offer.key === 'GoldKey' ? 'Gold' : 'Silver'} keys — buy one for ${formatCount(offer.cost)} Gems`,
+        'aria-label': offer.key === 'GoldKey'
+          ? tr('Gold keys — buy one for {n} Gems', { n: formatCount(offer.cost) })
+          : tr('Silver keys — buy one for {n} Gems', { n: formatCount(offer.cost) }),
       }, iconEl(offer.key as IconName, { size: 'sm' }), value, el('span', { class: 'hud-plus', 'aria-hidden': 'true' }));
       slot.addEventListener('click', () => game.doBuyKeys(b));
       return slot;
@@ -245,8 +248,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       // read as a share of their ceiling.
       setText(plaqueValue, slot.kind === 'workers' ? formatCount(slot.value) : `${formatCount(slot.value)}/${formatCount(slot.max)}`);
       setAttr(plaque, 'aria-label', slot.kind === 'workers'
-        ? `${SLOT_LABEL[slot.kind]} ${slot.value}`
-        : `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);
+        ? tr('{label} {n}', { label: SLOT_LABEL[slot.kind], n: slot.value })
+        : tr('{label} {n} of {max}', { label: SLOT_LABEL[slot.kind], n: slot.value, max: slot.max }));
       plaque.disabled = true; // both remaining kinds are read-outs
     }
 
@@ -275,8 +278,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     manaBar.classList.toggle('is-full', m.value >= m.cap && !m.over);
     manaBar.classList.toggle('is-over', m.over);
     setAttr(manaGauge, 'aria-label', m.over
-      ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
-      : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
+      ? tr('Mana {n}, overcharged past a ceiling of {cap}', { n: m.value, cap: m.cap })
+      : tr('Mana {n} of {cap}, gaining {net} an hour', { n: m.value, cap: m.cap, net: m.net }));
     knob.classList.toggle('is-active', game.openOverlay === 'settings');
     // Absent until its door opens, like the Knowledge tab.
     friendsKnob.hidden = !game.doorOpen('friends');
@@ -303,13 +306,13 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // books (Docs/features/22-progression.md §3).
     knowTab.hidden = !game.doorOpen('knowledge');
     knowTab.classList.toggle('is-kept', game.keepsKnowledgeTab());
-    setText(knowNext, k.full ? 'Full' : (k.nextIn ?? ''));
+    setText(knowNext, k.full ? tr('Full') : (k.nextIn ?? ''));
     setText(knowFull, k.fullIn ?? '');
     knowTurning = !k.full && k.fullIn !== null && k.nextIn !== null;
     if (!knowTurning) knowCaption.classList.remove('is-full-turn');
     setAttr(knowTab, 'aria-label', k.full
-      ? `Knowledge ${held}, the bar is full`
-      : `Knowledge ${held} of ${k.cap}, ${k.nextIn ?? ''}, ${k.fullIn ?? ''}`);
+      ? tr('Knowledge {n}, the bar is full', { n: held })
+      : tr('Knowledge {n} of {cap}, {next}, {full}', { n: held, cap: k.cap, next: k.nextIn ?? '', full: k.fullIn ?? '' }));
   };
   game.onChange(refresh);
   onHoldChange(refresh);
