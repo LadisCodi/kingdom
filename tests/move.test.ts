@@ -363,11 +363,25 @@ describe('the two gestures', () => {
     reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
     const house = houseAt(state, HOUSE_CELL);
     const game = freshPresenter(state);
-    game.tapGate = () => true;
+    // A line locked to its target, or being read: the gate refuses a ghost.
+    game.tapGate = (_cell, how) => how !== 'ghost';
     expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(false);
     game.tapGate = null;
     game.startMove(house.uniqueId);
     expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(false);
+  });
+
+  it('a long press works with the stage mounted and no line holding the map', () => {
+    // The stage installs its gate once and keeps it (ui/stage/stage.ts): a
+    // gate that is THERE but lets everything through must not read as a lock.
+    const state = freshGame();
+    reveal(state, [HOUSE_CELL, NEIGHBOUR_CELL]);
+    houseAt(state, HOUSE_CELL);
+    const game = freshPresenter(state);
+    game.tapGate = () => true;
+    expect(game.canHoldAt(...screenAt(game, HOUSE_CELL))).toBe(true);
+    expect(game.holdAt(...screenAt(game, HOUSE_CELL))).toBe(true);
+    expect(game.mode.kind).toBe('moving');
   });
 
   it('the same drag works on a NEW building being placed', () => {

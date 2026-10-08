@@ -1443,7 +1443,7 @@ export class Game {
    */
   holdAt(sx: number, sy: number): boolean {
     if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
-    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    if (this.openOverlay !== null || this.holdLocked()) return false;
     const cell = this.camera.screenToCell(sx, sy);
     const district = districtAt(this.state, cell);
     if (!district) return this.holdFeatureAt(cell);
@@ -1545,9 +1545,19 @@ export class Game {
 
   /** Can a long press here pick something up? What the hold ring asks
    *  before it shows (render/input.ts). */
+  /**
+   * Does a tutorial line hold the map still? The stage's gate is installed
+   * once and stays (ui/stage/stage.ts), so it is ASKED, never tested for
+   * being there: a free map lets a ghost be dragged anywhere; a line locked
+   * to its target, or one being read, does not.
+   */
+  holdLocked(): boolean {
+    return this.tapGate !== null && !this.tapGate(null, 'ghost');
+  }
+
   canHoldAt(sx: number, sy: number): boolean {
     if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
-    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    if (this.openOverlay !== null || this.holdLocked()) return false;
     const cell = this.camera.screenToCell(sx, sy);
     const district = districtAt(this.state, cell);
     if (district) return canMoveDistrict(district);
