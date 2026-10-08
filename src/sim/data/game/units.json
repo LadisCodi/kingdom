@@ -8,6 +8,8 @@
     "squadSize": 100,
     "frontage": 15,
     "cooldown": 10,
+    "speed": 10,
+    "range": 90,
     "recruitCost": { "Gold": 100, "Wood": 5, "Food": 8 },
     "trainDurationSeconds": 15,
     "evolutions": [
@@ -62,6 +64,8 @@
     "squadSize": 100,
     "frontage": 15,
     "cooldown": 10,
+    "speed": 10,
+    "range": 120,
     "recruitCost": { "Gold": 200, "Wood": 12, "Food": 4 },
     "trainDurationSeconds": 20,
     "evolutions": [
@@ -116,6 +120,8 @@
     "squadSize": 80,
     "frontage": 20,
     "cooldown": 12,
+    "speed": 8,
+    "range": 1000,
     "recruitCost": { "Gold": 130, "Wood": 12 },
     "trainDurationSeconds": 12,
     "evolutions": [
@@ -170,6 +176,8 @@
     "squadSize": 60,
     "frontage": 8,
     "cooldown": 15,
+    "speed": 20,
+    "range": 90,
     "recruitCost": { "Gold": 300, "Food": 16, "Stone": 24 },
     "trainDurationSeconds": 30,
     "evolutions": [

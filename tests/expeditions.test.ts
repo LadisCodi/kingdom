@@ -76,7 +76,7 @@ describe('the type chart', () => {
     const swing = (against: UnitId): number => {
       const log = resolveBattle(
         buildBoard([{ unitId: 'Lancer', count: 4 }], []),
-        buildBoard([{ unitId: against, count: 40 }], []),
+        buildBoard([{ unitId: against, count: 4 }], []),
       );
       const first = log.events.find((e) => e.kind === 'attack' && e.from.side === 'ours');
       return first?.kind === 'attack' ? first.dealt : 0;

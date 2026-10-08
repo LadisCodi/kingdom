@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { DISTRICTS, WORLD_BOTS, WORLD_BUILD, WORLD_DUNGEON, WORLD_PORTAL } from '../src/sim/data/definitions';
 import { houseGoldPerMinute } from '../src/sim/population';
 import { addBuilt, freshGame } from './helpers';
-import { buildBoard, generateEnemy, villainFighter } from '../src/sim/battle';
+import { buildBoard, generateEnemy, scaleFighter, villainFighter } from '../src/sim/battle';
 import { VILLAINS, type VillainId } from '../src/sim/data/definitions';
 import { SEAT_INDICES, generateBoard, wedgeIndexOf } from '../src/sim/world/board';
 import { snapshotWorld } from '../src/sim/world/source';
@@ -469,7 +469,10 @@ describe('the Dark Portal', () => {
   const DAY = 24 * HOUR;
   const leader = (power: number, key: string) => {
     const plan = generateEnemy({ seed: 3, parts: ['diver', key], budget: power, affinity: 'Any' });
-    return buildBoard(plan.squads, [...plan.fighters, villainFighter(Object.keys(VILLAINS)[0] as VillainId)]);
+    // A leader sturdy enough that four floors in a row are about the Portal,
+    // not about whether one hero outlives the archers (combat.md §8).
+    const hero = villainFighter(Object.keys(VILLAINS)[0] as VillainId);
+    return buildBoard(plan.squads, [...plan.fighters, scaleFighter(hero, hero.power * 4)]);
   };
 
   it('opens on the same weekday for three days, and is shut the other four', () => {

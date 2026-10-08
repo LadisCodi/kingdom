@@ -34,6 +34,21 @@
           "doc": "The most a Defence lead can take off, per mille (750 = −75%)."
         },
         "timeoutTicks": { "type": "int" },
+        "fieldGap": {
+          "type": "int",
+          "min": 0,
+          "doc": "Field units between the two front rows when the fight opens (combat.md §3)."
+        },
+        "fieldRowPitch": {
+          "type": "int",
+          "min": 1,
+          "doc": "Field units between one row of a side and the next behind it (combat.md §3)."
+        },
+        "fieldColPitch": {
+          "type": "int",
+          "min": 1,
+          "doc": "Field units between two slots side by side in a row (combat.md §3)."
+        },
         "typeAdvantageNum": { "type": "int" },
         "typeAdvantageDen": { "type": "int" },
         "typeDisadvantageNum": { "type": "int" },
