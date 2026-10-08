@@ -8,6 +8,7 @@ import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
+import { PROGRESS } from '../src/ui/stage/director';
 import { grantItem, useItem } from '../src/sim/bag';
 import { handPlace, resolveTarget } from '../src/ui/stage/targets';
 import { dispatchExplorer, fogStateOf, homeIndex, readyAt, revealExplored } from '../src/sim/world/explorers';
@@ -110,6 +111,19 @@ describe('the scenes, against the game', () => {
     expect(wallet.Wood).toBe(cost.Wood);
   });
 
+  it('flies what a lesson hands over into the header, like a collect', async () => {
+    const game = freshPresenter(firstGame());
+    const cost = nextBuildCost(game.state, 'Sawmill');
+    game.state.city.wallet.Wood = 0;
+    game.state.city.wallet.Gold = 0;
+    const flown: object[] = [];
+    game.onReward((haul) => flown.push(haul));
+    game.stockBuild('Sawmill');
+    game.stockBuild('Sawmill'); // already met: nothing more, nothing flown
+    await Promise.resolve();
+    expect(flown).toEqual([cost]);
+  });
+
   it('steps back out to the map before it points at the nav bar', () => {
     // The nav bar steps aside for every sheet, card and placement bar, so a
     // line that points at it over one would point at nothing — and, locked
@@ -151,6 +165,20 @@ describe('the scenes, against the game', () => {
       for (const line of scene.lines) {
         if (line.lock === 'target') expect(line.point, `${scene.id}: "${line.text}"`).not.toBe('');
       }
+    }
+  });
+
+  // An upgrade started before its lesson takes the Upgrade button away: the
+  // lesson must have a PROGRESS line to jump to, or it waits for it forever.
+  it('never waits on an Upgrade button an upgrade under way has taken away', () => {
+    for (const scene of SCENES) {
+      scene.lines.forEach((line, i) => {
+        if (line.until !== 'ui' || !['card:upgrade', 'upgrade-go'].includes(line.untilTarget)) return;
+        const rest = scene.lines.slice(i + 1);
+        const talk = rest.findIndex((l) => l.until === 'tap');
+        const turn = talk < 0 ? rest : rest.slice(0, talk);
+        expect(turn.some((l) => PROGRESS.has(l.until)), `${scene.id} line ${i}`).toBe(true);
+      });
     }
   });
 });

@@ -31,7 +31,7 @@ import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, canPlaceAnywhere, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
-  requiredPopulation, type PlacementBlock,
+  requiredPopulation, buildShortfall, stockBuild, type PlacementBlock,
 } from './sim/districts';
 import {
   explorationGate, fogState, isPayable, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
@@ -2824,6 +2824,17 @@ export class Game {
   /** The boosts running, for the Boosts tab's ribbons. */
   bagBoosts(): Array<{ kind: BoostKind; value: number; endsAt: number }> {
     return runningBoosts(this.state);
+  }
+
+  /** A lesson makes up what the wallet lacks for a building (a line's
+   *  `stocks`): paid at once, and flown in from `from` like a collect, so
+   *  the player sees where it came from. */
+  stockBuild(id: DistrictId, from?: { x: number; y: number }): void {
+    const haul = buildShortfall(this.state, id);
+    if (Object.keys(haul).length === 0) return;
+    stockBuild(this.state, id);
+    this.notify();
+    queueMicrotask(() => this.reward(haul, from));
   }
 
   doUseItem(id: ItemId, n: number): void {

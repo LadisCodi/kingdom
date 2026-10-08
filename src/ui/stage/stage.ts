@@ -27,9 +27,9 @@ import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
-import { buildShortfall, stockBuild } from '../../sim/districts';
+import { buildShortfall } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { inPlace, pickScene, sceneKey, settleScene } from './director';
+import { inPlace, pickScene, PROGRESS, sceneKey, settleScene } from './director';
 import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
 import { hexAt } from '../../sim/world/hex';
 
@@ -109,17 +109,6 @@ const REFOCUS_MS = 1500;
 
 /** How far a press may travel and still be a tap rather than a pan. */
 const TAP_SLOP_PX = 10;
-
-/** Conditions that record how far the kingdom has got, and so can tell a
- *  scene where to resume. The rest (a sheet open, a control on screen, taps
- *  since the line began) are moments, not progress. */
-const PROGRESS: ReadonlySet<string> = new Set([
-  'questReached', 'questComplete', 'questClaimed', 'questProgress', 'techDone', 'techFilled',
-  'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
-  'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
-  'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair', 'worldVisited',
-  'reachCleared',
-]);
 
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
   // ------------------------------------------------------------ the pieces
@@ -257,8 +246,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  `stocks` a building makes up what the wallet lacks for it. */
   const hand = (l: SceneLine): void => {
     if (l.gives) giveBook(game.state, l.gives);
-    if (l.stocks) { stockBuild(game.state, l.stocks); game.notify(); }
+    if (l.stocks) game.stockBuild(l.stocks, speakerAt(l.side));
     if (l.restores && giveRelic(game.state, l.restores)) game.notify();
+  };
+
+  /** The middle of whoever stands on `side`, in the frame's pixels — where
+   *  what they hand over bursts from. */
+  const speakerAt = (side: 'left' | 'right'): { x: number; y: number } | undefined => {
+    const r = (side === 'left' ? left : right).getBoundingClientRect();
+    if (r.width === 0) return undefined;
+    const f = frame.getBoundingClientRect();
+    return { x: r.left - f.left + r.width / 2, y: r.top - f.top + r.height / 2 };
   };
 
   /** A line that `stocks` a building has nothing to say while the wallet can
@@ -379,15 +377,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // Only PROGRESS counts — a quest, a research, a building: a sheet being
     // shut or a control being on screen says nothing about how far along
     // the player is.
-    let resumeAt = 0;
-    scene.lines.forEach((l, i) => {
-      if (PROGRESS.has(l.until) && lineHolds(l)) resumeAt = i + 1;
-    });
     hinted = null;
     layer.classList.remove('is-hint');
     root.replaceChildren(layer);
     graced();
-    begin(resumeAt);
+    begin(progressedTo(0));
+  };
+
+  /** The line after the last one from `from` on whose PROGRESS condition
+   *  already holds — `from` when none does. */
+  const progressedTo = (from: number): number => {
+    let at = from;
+    playing!.scene.lines.forEach((l, i) => {
+      if (i >= from && PROGRESS.has(l.until) && lineHolds(l)) at = i + 1;
+    });
+    return at;
   };
 
   /** Who spoke the line before, so a run of lines voices only its first. */
@@ -763,9 +767,16 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     drawTarget(targetRect(game, hinted, frame));
   };
   let lastIdleHelp = 0;
+  /** Was a sheet open on the last frame? */
+  let sheetWasOpen = false;
   const frameTick = (now: number): void => {
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
+    // BACK ON THE MAP is where a scene expects the player: the last sheet
+    // closing ends the breath and looks for a scene at once.
+    const sheetOpen = game.hasOpenSheet();
+    if (sheetWasOpen && !sheetOpen) { gapUntil = 0; lastCheck = 0; }
+    sheetWasOpen = sheetOpen;
     if (playing === null) {
       pointHint();
       // Not while the page is hidden: a timer still fires there, and a
@@ -850,6 +861,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           if (!playing.acting) replace(l);
           fitCast();
           if (lineHolds(l)) { graced(); next(); }
+          // ALREADY DONE MID-SCENE: on the player's turn, a later line's
+          // progress already met — the upgrade started from elsewhere —
+          // jumps the scene past it, or it waits for a button that is gone.
+          else if (l.until !== 'tap') {
+            const ahead = progressedTo(playing.index + 1);
+            if (ahead > playing.index + 1) { graced(); begin(ahead); }
+          }
         }
       }
     }
