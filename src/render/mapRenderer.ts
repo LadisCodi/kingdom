@@ -42,7 +42,7 @@ import {
   drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, growthStage, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, drawStandingTint, edgePath, FEATURE_PLOTS,
+  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, drawStandingTint, edgePath, FEATURE_PLOTS, featurePlots,
   fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
@@ -984,7 +984,7 @@ export function drawMap(
           if (lifted) ctx.globalAlpha *= 0.28;
           punched(key, plot, () => {
             stand(plot, keys,
-              exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
+              exhausted ? def.exhaustedGlyph : def.glyph, undefined, featurePlots(def.sprite));
           });
           ctx.restore();
         }), { x: size, y: size }, { occludes: !NEVER_HIDES.has(feature) });
@@ -1608,7 +1608,7 @@ export function drawMap(
     const keys = !sprite ? []
       : markers.previewFeature === true ? [variantKey(sprite, markers.previewCell), sprite]
         : [`${sprite}_l1`, sprite];
-    const plots = markers.previewFeature === true ? FEATURE_PLOTS : 1;
+    const plots = markers.previewFeature === true && sprite ? featurePlots(sprite) : 1;
     const foot = base(b);
     ctx.save();
     ctx.translate(foot.x, foot.y);
