@@ -3531,6 +3531,7 @@ export class Game {
           this.state.kingdom.builders, this.state.world.explorersBought,
           BANNER_ORDER.map((b) => [this.freePull(b).left, this.freePull(b).ready, this.pullPrice(b).amount]),
           this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(), this.storeVisits,
+          this.builderOffer(), BANNER_ORDER.map((b) => this.keyOffer(b)),
         ]);
       }
       case 'heroes': return this.heroesSignature();
@@ -3581,12 +3582,6 @@ export class Game {
       case 'wishFilled': return JSON.stringify(this.friends.justFilled);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
-      case 'store':
-        return JSON.stringify([
-          this.builderOffer(),
-          BANNER_ORDER.map((b) => this.keyOffer(b)),
-          this.walletValue('Gems'),
-        ]);
       // Not signed: the Collection counts the season down and the rest draw
       // prices against a purse that moves every tick.
       default: return null;
