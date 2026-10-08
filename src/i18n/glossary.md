@@ -85,12 +85,12 @@ Hob*, *Master Kofi* → *maestro Kofi*. Oakville stays **Oakville**.
 | English | Spanish |
 |---|---|
 | Quest | Misión |
-| Survey | Reconocimiento |
+| Survey | Catastro (Royal Survey: Catastro real) |
 | Bag | Bolsa |
 | chest | cofre |
 | key (Silver / Gold) | llave (de plata / de oro) |
 | speed-up | acelerador |
-| boost | potenciador |
+| boost | impulso |
 | flask | frasco |
 | tome | tomo |
 | book (Kingdom / Sagas / Atlas) | libro (Reino / Sagas / Atlas) |

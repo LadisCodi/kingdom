@@ -25,7 +25,7 @@
   },
   "store.Survey.name": {
     "en": "The Royal Survey",
-    "es": "El Reconocimiento real"
+    "es": "El Catastro real"
   },
   "store.SpeedupSatchel.name": {
     "en": "A satchel of speed-ups",
@@ -53,7 +53,7 @@
   },
   "store.FirstPurchase.name": {
     "en": "First Purchase Reward",
-    "es": "Premio de primera compra"
+    "es": "Primera compra"
   },
   "store.NovicePack1.name": {
     "en": "The novice's pack",
@@ -137,7 +137,7 @@
   },
   "store.Survey.description": {
     "en": "The Survey’s second column, for the whole province.",
-    "es": "La segunda columna del Reconocimiento, para toda la provincia."
+    "es": "La segunda columna del Catastro, para toda la provincia."
   },
   "store.SpeedupSatchel.description": {
     "en": "A few hours off whatever you are waiting for.",

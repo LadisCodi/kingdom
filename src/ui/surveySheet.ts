@@ -62,7 +62,7 @@ export function renderSurveySheet(game: Game): HTMLElement {
   // price on its face (Docs/art/ui-menus-redesign.md §6.4, §6.9).
   const paidHead = el('div', { class: 'rs-plank is-gold' },
     iconEl(s.owned ? 'tick' : 'padlock', { size: 'sm' }),
-    el('span', { class: 'rs-plank-title' }, tr('Royal Survey')));
+    el('span', { class: 'rs-plank-title' }, tr('plank::Royal Survey')));
   if (!s.owned) {
     const buy = btn({ label: tr('Buy'), kind: 'primary', onClick: () => game.doBuySurvey() });
     buy.classList.add('rs-buy');

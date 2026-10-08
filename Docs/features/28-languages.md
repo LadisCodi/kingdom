@@ -3,9 +3,9 @@
 > **Scope.** The game in the player's language: which one, how the code's
 > text and the data's text are translated, and how numbers follow it.
 >
-> **Status: building.** Phase 1 (the choice, the code's text, the data's
-> short texts) in progress; phase 2 the tutorial dialogue; phase 3 the
-> generated prose (technology cards, bonus sentences).
+> **Status: building.** Built: the choice, the code's text, the data's short
+> texts. Next: the tutorial dialogue (`scenes`), then the generated prose
+> (technology cards, bonus sentences).
 
 ## 1. The choice
 

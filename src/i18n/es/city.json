@@ -147,7 +147,7 @@
   "Train": "Entrenar",
   "Train {n} at a time": "Entrenar {n} de una vez",
   "Train as many as you can at a time": "Entrenar todos los que puedas de una vez",
-  "Training": "Entrenamiento",
+  "Training": "Entrenando",
   "Training time": "Tiempo de entrenamiento",
   "Townhall level {n}": "Ayuntamiento nivel {n}",
   "Trees": "Árboles",
@@ -164,5 +164,6 @@
   "You have {n}": "Tienes {n}",
   "You have as many as the realm allows": "Ya tienes tantos como permite el reino",
   "Your builder is busy": "Tu constructor está ocupado",
-  "{n} {name}|{n} {names}": "{n} {name}|{n} {names}"
+  "{n} {name}|{n} {names}": "{n} {name}|{n} {names}",
+  "tile::Training": "Entreno"
 }

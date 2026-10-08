@@ -335,7 +335,9 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
     'data-coach': `tech:${id}`,
   },
-  el('span', { class: 'tech-card-name' }, def.name),
+  // A long name — Spanish runs longer — steps its type down rather than
+  // spilling a second line over the art.
+  el('span', { class: `tech-card-name${def.name.length > 18 ? ' is-longer' : def.name.length > 15 ? ' is-long' : ''}` }, def.name),
   el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, iconEl(def.icon as IconName, { size: 'lg' })),
   el('span', { class: 'tech-card-bar' },
     bar.root,

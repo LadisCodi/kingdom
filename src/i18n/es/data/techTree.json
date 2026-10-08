@@ -25,11 +25,11 @@
   },
   "technologies.SawpitsI.name": {
     "en": "Sawpits I",
-    "es": "Fosos de aserrar I"
+    "es": "Serrerías I"
   },
   "technologies.TradeRoutesI.name": {
     "en": "Trade Routes I",
-    "es": "Rutas comerciales I"
+    "es": "Comercio I"
   },
   "technologies.Warrior.name": {
     "en": "Warrior",
@@ -49,7 +49,7 @@
   },
   "technologies.CropRotationI.name": {
     "en": "Crop Rotation I",
-    "es": "Rotación de cultivos I"
+    "es": "Barbecho I"
   },
   "technologies.UrbanPlanning.name": {
     "en": "Urban Planning",
@@ -133,7 +133,7 @@
   },
   "technologies.TradeRoutesII.name": {
     "en": "Trade Routes II",
-    "es": "Rutas comerciales II"
+    "es": "Comercio II"
   },
   "technologies.TreasureHuntersI.name": {
     "en": "Treasure Hunters I",
@@ -173,7 +173,7 @@
   },
   "technologies.SawpitsII.name": {
     "en": "Sawpits II",
-    "es": "Fosos de aserrar II"
+    "es": "Serrerías II"
   },
   "technologies.WarbandII.name": {
     "en": "Warband II",
@@ -229,7 +229,7 @@
   },
   "technologies.TradeRoutesIII.name": {
     "en": "Trade Routes III",
-    "es": "Rutas comerciales III"
+    "es": "Comercio III"
   },
   "technologies.CavalryII.name": {
     "en": "Cavalry II",
@@ -345,7 +345,7 @@
   },
   "technologies.TradeRoutesIV.name": {
     "en": "Trade Routes IV",
-    "es": "Rutas comerciales IV"
+    "es": "Comercio IV"
   },
   "technologies.Windmills.name": {
     "en": "Windmills",
@@ -361,7 +361,7 @@
   },
   "technologies.SawpitsIII.name": {
     "en": "Sawpits III",
-    "es": "Fosos de aserrar III"
+    "es": "Serrerías III"
   },
   "technologies.WarhornsI.name": {
     "en": "Warhorns I",
@@ -433,7 +433,7 @@
   },
   "technologies.TradeRoutesV.name": {
     "en": "Trade Routes V",
-    "es": "Rutas comerciales V"
+    "es": "Comercio V"
   },
   "technologies.AttunementIV.name": {
     "en": "Attunement IV",
@@ -549,7 +549,7 @@
   },
   "technologies.FrontierBuildersI.name": {
     "en": "Frontier Builders I",
-    "es": "Constructores de frontera I"
+    "es": "Pioneros I"
   },
   "technologies.KeenEyesI.name": {
     "en": "Keen Eyes I",
@@ -569,7 +569,7 @@
   },
   "technologies.FieldNotesI.name": {
     "en": "Field Notes I",
-    "es": "Cuaderno de campo I"
+    "es": "Notas de campo I"
   },
   "technologies.RuralMarketsI.name": {
     "en": "Rural Markets I",
@@ -593,7 +593,7 @@
   },
   "technologies.HuntersLodgesI.name": {
     "en": "Hunters’ Lodges I",
-    "es": "Pabellones de caza I"
+    "es": "Cotos de caza I"
   },
   "technologies.HolyGround.name": {
     "en": "Holy Ground",
@@ -609,7 +609,7 @@
   },
   "technologies.GarrisonRightsI.name": {
     "en": "Garrison Rights I",
-    "es": "Derecho de guarnición I"
+    "es": "Guarniciones I"
   },
   "technologies.DelversI.name": {
     "en": "Delvers I",
@@ -621,7 +621,7 @@
   },
   "technologies.FrontierBuildersII.name": {
     "en": "Frontier Builders II",
-    "es": "Constructores de frontera II"
+    "es": "Pioneros II"
   },
   "technologies.BountyHuntersII.name": {
     "en": "Bounty Hunters II",
@@ -629,23 +629,23 @@
   },
   "technologies.WoodYardsI.name": {
     "en": "Wood Yards I",
-    "es": "Depósitos de madera I"
+    "es": "Leñeras I"
   },
   "technologies.PilgrimRoadsI.name": {
     "en": "Pilgrim Roads I",
-    "es": "Caminos de peregrinos I"
+    "es": "Peregrinaje I"
   },
   "technologies.StoneShedsI.name": {
     "en": "Stone Sheds I",
-    "es": "Cobertizos de piedra I"
+    "es": "Pilas de piedra I"
   },
   "technologies.FieldNotesII.name": {
     "en": "Field Notes II",
-    "es": "Cuaderno de campo II"
+    "es": "Notas de campo II"
   },
   "technologies.DeepDigsI.name": {
     "en": "Deep Digs I",
-    "es": "Excavaciones hondas I"
+    "es": "Minas hondas I"
   },
   "technologies.BattleLoreI.name": {
     "en": "Battle Lore I",
@@ -661,7 +661,7 @@
   },
   "technologies.PortalWardensI.name": {
     "en": "Portal Wardens I",
-    "es": "Guardianes del portal I"
+    "es": "Vigías del portal I"
   },
   "technologies.LoggingRoadsII.name": {
     "en": "Logging Roads II",
@@ -677,11 +677,11 @@
   },
   "technologies.HuntersLodgesII.name": {
     "en": "Hunters’ Lodges II",
-    "es": "Pabellones de caza II"
+    "es": "Cotos de caza II"
   },
   "technologies.GarrisonRightsII.name": {
     "en": "Garrison Rights II",
-    "es": "Derecho de guarnición II"
+    "es": "Guarniciones II"
   },
   "technologies.DelversII.name": {
     "en": "Delvers II",
@@ -693,7 +693,7 @@
   },
   "technologies.FrontierBuildersIII.name": {
     "en": "Frontier Builders III",
-    "es": "Constructores de frontera III"
+    "es": "Pioneros III"
   },
   "technologies.BountyHuntersIII.name": {
     "en": "Bounty Hunters III",
@@ -705,7 +705,7 @@
   },
   "technologies.DeepDigsII.name": {
     "en": "Deep Digs II",
-    "es": "Excavaciones hondas II"
+    "es": "Minas hondas II"
   },
   "technologies.KeenEyesII.name": {
     "en": "Keen Eyes II",
@@ -725,15 +725,15 @@
   },
   "technologies.FieldNotesIII.name": {
     "en": "Field Notes III",
-    "es": "Cuaderno de campo III"
+    "es": "Notas de campo III"
   },
   "technologies.PilgrimRoadsII.name": {
     "en": "Pilgrim Roads II",
-    "es": "Caminos de peregrinos II"
+    "es": "Peregrinaje II"
   },
   "technologies.PortalWardensII.name": {
     "en": "Portal Wardens II",
-    "es": "Guardianes del portal II"
+    "es": "Vigías del portal II"
   },
   "technologies.MendersII.name": {
     "en": "Menders II",

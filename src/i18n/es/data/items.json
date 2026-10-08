@@ -169,15 +169,15 @@
   },
   "items.RentBoost8h.name": {
     "en": "Rent boost",
-    "es": "Potenciador de renta"
+    "es": "Impulso de renta"
   },
   "items.HarvestBoost1h.name": {
     "en": "Harvest boost",
-    "es": "Potenciador de cosecha"
+    "es": "Impulso de cosecha"
   },
   "items.ManaBoost8h.name": {
     "en": "Mana boost",
-    "es": "Potenciador de Maná"
+    "es": "Impulso de Maná"
   },
   "items.ManaFlaskSmall.name": {
     "en": "Mana flask",

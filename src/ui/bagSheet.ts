@@ -39,8 +39,8 @@ const emptyLine = (tab: BagTab): string => {
 const tabLabel = (tab: BagTab): string => {
   switch (tab) {
     case 'Resources': return tr('Resources');
-    case 'Speed ups': return tr('Speed ups');
-    case 'Boosts': return tr('Boosts');
+    case 'Speed ups': return tr('tab::Speed ups');
+    case 'Boosts': return tr('tab::Boosts');
     case 'Relics': return tr('Relics');
     case 'Other': return tr('Other');
   }

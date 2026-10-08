@@ -168,7 +168,7 @@ export function statsAt(game: Game, district: District, level: number): Building
   if (def.trains.length > 0) {
     // At the rank the hall is set to: a Warrior III takes longer than a I.
     const secs = trainSecondsAt(game.state, district.uniqueId, game.traineeAt(district));
-    add('train-time', 'hourglass', tr('Training time'), tr('Training'), formatDuration(secs), secs,
+    add('train-time', 'hourglass', tr('Training time'), tr('tile::Training'), formatDuration(secs), secs,
       (d) => signed(d, formatDuration(Math.abs(d))));
     out[out.length - 1].lowerIsBetter = true;
   }
