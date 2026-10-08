@@ -38,7 +38,7 @@ import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
-  drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
+  drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, growthStage, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
   diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
@@ -950,9 +950,13 @@ export function drawMap(
         const keys = size === 1
           ? [variantKey(stem, cell)]
           : [`${stem}_${size}x${size}`, variantKey(stem, cell)];
-        // Planted and not grown: its growing art, else the exhausted one
-        // (Docs/features/27-plantables.md).
-        if (isGrowing(state, map, cell, now)) keys.unshift(`${def.sprite}_growing`);
+        // Planted and not grown: the growth stage its progress has reached,
+        // else the exhausted art (Docs/features/27-plantables.md §2).
+        if (isGrowing(state, map, cell, now)) {
+          const stage = growthStage(def.sprite,
+            recoveryProgress(state, map, cell, HARVEST[def.source], now) ?? 0);
+          if (stage !== null) keys.unshift(stage);
+        }
         later(cell, () => dimmed(dim, () => {
           punched(key, plot, () => {
             stand(plot, keys,
