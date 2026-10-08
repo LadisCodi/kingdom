@@ -14,7 +14,7 @@
 // WHEN (`Game.offerSplashOnScreen`): at the start of a session, once the map
 // is free.
 
-import { BANNERS, BANNER_ORDER, HEROES, ITEMS, STORE } from '../sim/data/definitions';
+import { BANNERS, BANNER_ORDER, HEROES, ITEMS, STORE, type HeroRarity } from '../sim/data/definitions';
 import { boonText } from '../sim/heroes';
 import type { CurrencyId, HeroId, ItemId, StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
@@ -26,6 +26,7 @@ import { el, formatCountdown, formatExact, formatUsd } from './format';
 import { heroFragmentIcon } from './heroFragment';
 import { btn, closeKnob, ctaBadge, currencyIcon, iconEl, withTooltip, type IconName } from './kit';
 import { itemLine, itemName } from './itemText';
+import { tr } from '../i18n/tr';
 
 /** A hero's round-cornered portrait, or its glyph while the art is missing. */
 function heroArt(id: HeroId, cls: string): HTMLElement {
@@ -34,6 +35,10 @@ function heroArt(id: HeroId, cls: string): HTMLElement {
   return url ? spriteImgAt(url, cls) : el('span', { class: cls }, def.glyph);
 }
 
+/** A hero's rarity, as the player reads it. */
+const rarityName = (r: HeroRarity): string =>
+  r === 'Common' ? tr('Common') : r === 'Rare' ? tr('Rare') : tr('Legendary');
+
 /** What a reward IS, for the tooltip a tap on its tile opens. */
 function tileTip(t: OfferTile): { title: string; text: string } {
   if (t.kind === 'hero' || t.kind === 'fragments') {
@@ -41,24 +46,31 @@ function tileTip(t: OfferTile): { title: string; text: string } {
     const name = def.name.replace(/^The /, '');
     if (t.kind === 'fragments') {
       return {
-        title: `${formatExact(t.count)} fragments of ${name}`,
-        text: `With Stardust, they raise ${name} a tier, and the level cap with it`,
+        title: tr('{n} fragments of {name}', { n: formatExact(t.count), name }),
+        text: tr('With Stardust, they raise {name} a tier, and the level cap with it', { name }),
       };
     }
     const boon = def.boon === null ? null : boonText(def.boon);
     return {
       title: def.name,
-      text: `A ${def.rarity.toLowerCase()} hero, yours for good${boon === null ? '' : `. Held, for the whole kingdom: ${boon}`}`,
+      text: boon === null
+        ? tr('A {rarity} hero, yours for good', { rarity: rarityName(def.rarity).toLowerCase() })
+        : tr('A {rarity} hero, yours for good. Held, for the whole kingdom: {boon}', { rarity: rarityName(def.rarity).toLowerCase(), boon }),
     };
   }
   if (t.kind === 'coin') {
     return t.id === 'HeroXp'
-      ? { title: `${formatExact(t.count)} Hero XP`, text: 'Levels up any hero, up to their tier\'s cap' }
-      : { title: `${formatExact(t.count)} Gems`, text: 'Keys, builders, time and more, in the store' };
+      ? { title: tr('{n} Hero XP', { n: formatExact(t.count) }), text: tr('Levels up any hero, up to their tier\'s cap') }
+      : { title: tr('{n} Gems', { n: formatExact(t.count) }), text: tr('Keys, builders, time and more, in the store') };
   }
   const def = ITEMS[t.id as ItemId];
   const banner = def.kind === 'key' ? BANNER_ORDER.find((b) => BANNERS[b].key === t.id) : undefined;
-  if (banner !== undefined) return { title: def.name, text: `One ${BANNERS[banner].name.replace(/^The /, '').toLowerCase()} for aid, in the store` };
+  if (banner !== undefined) {
+    return {
+      title: def.name,
+      text: banner === 'basic' ? tr('One common call for aid, in the store') : tr('One golden call for aid, in the store'),
+    };
+  }
   return { title: itemName(def), text: itemLine(def, t.worth ?? {}) };
 }
 
@@ -163,7 +175,7 @@ function nowPanel(title: string, tiles: OfferTile[], seal: number | null): HTMLE
       currencyIcon('Gems', { size: 'lg' }),
       el('b', {}, formatExact(gems!.count)))] : []),
     el('div', { class: 'ofs-tiles' }, ...rest.map(offerTile)),
-    ...(seal === null ? [] : [el('span', { class: 'ofs-seal', 'aria-label': `${formatExact(seal)}% value` }, `${formatExact(seal)}%`)]));
+    ...(seal === null ? [] : [el('span', { class: 'ofs-seal', 'aria-label': tr('{n}% value', { n: formatExact(seal) }) }, `${formatExact(seal)}%`)]));
 }
 
 export function mountOfferSplash(game: Game, root: HTMLElement): void {
@@ -190,14 +202,14 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     if (mode === 'buy') {
       action = btn({ label: formatUsd(Math.round(s.priceUsd * 100)), kind: 'gold', finish: 'gem', onClick: () => game.buyFromSplash(sku) });
     } else if (mode === 'claim') {
-      action = btn({ label: 'Claim', kind: 'gold', finish: 'gem', onClick: () => game.doClaimNextDay(sku) });
+      action = btn({ label: tr('Claim'), kind: 'gold', finish: 'gem', onClick: () => game.doClaimNextDay(sku) });
     } else {
-      action = el('div', { class: 'ofs-wait' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, 'Tomorrow in '), clock(sale.nextDayAt ?? 0));
+      action = el('div', { class: 'ofs-wait' }, iconEl('hourglass', { size: 'sm' }), el('span', {}, tr('Tomorrow in ')), clock(sale.nextDayAt ?? 0));
     }
     const notes = mode !== 'buy' ? [] : [
       ...(sale.closesAt === null ? [] : [el('span', { class: 'ofs-timer' }, iconEl('hourglass', { size: 'sm' }), clock(sale.closesAt))]),
-      ...(sale.once ? [el('span', {}, 'Once per kingdom.')]
-        : sale.left === null ? [] : [el('span', {}, `Left: ${formatExact(sale.left)}`)]),
+      ...(sale.once ? [el('span', {}, tr('Once per kingdom.'))]
+        : sale.left === null ? [] : [el('span', {}, tr('Left: {n}', { n: formatExact(sale.left) }))]),
     ];
 
     // The magic in the light: sparkles that come and go, each on its own
@@ -213,7 +225,7 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
     const aside = hero !== null
       ? el('div', { class: 'ofs-hero-name' },
         ornate(hero.name.replace(/^The /, ''), 'ofs-name-text'),
-        el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, hero.rarity))
+        el('span', { class: `ofs-rarity is-${hero.rarity.toLowerCase()}` }, rarityName(hero.rarity)))
       : el('div', { class: 'ofs-hero-name is-pitch' },
         ornate(s.description, 'ofs-pitch-text'),
         ...(sale.chain === null ? [] : [el('span', { class: 'ofs-chain' },
@@ -240,12 +252,12 @@ export function mountOfferSplash(game: Game, root: HTMLElement): void {
         el('div', { class: 'ofs-ribbon' }, ribbonTitle(s.name)),
         aside,
         el('div', { class: 'ofs-panels' },
-          nowPanel(mode === 'buy' ? 'Yours now' : 'Yours', tiles.now, hero === null && sale.valuePercent > 100 ? sale.valuePercent : null),
+          nowPanel(mode === 'buy' ? tr('Yours now') : tr('Yours'), tiles.now, hero === null && sale.valuePercent > 100 ? sale.valuePercent : null),
           ...sale.gifts.map((g) => el('section', { class: 'ofs-gift' },
-            el('span', { class: 'ofs-gift-tag', 'aria-label': 'Gift' }),
+            el('span', { class: 'ofs-gift-tag', 'aria-label': tr('Gift') }),
             el('span', { class: 'ofs-gift-art' }, iconEl(GIFT_ICON[g.icon], { size: 'lg' })),
-            el('div', {}, el('b', {}, `${g.title} — for good.`), el('span', {}, `${g.text}.`)))),
-          ...(tiles.nextDay.length === 0 ? [] : [panel('Tomorrow',
+            el('div', {}, el('b', {}, tr('{title} — for good.', { title: g.title })), el('span', {}, `${g.text}.`)))),
+          ...(tiles.nextDay.length === 0 ? [] : [panel(tr('Tomorrow'),
             mode === 'claim' ? null : el('span', { class: 'ofs-lock' }, iconEl('padlock', { size: 'lg' }), iconEl('hourglass', { size: 'lg' })),
             mode === 'claim' ? '' : 'is-locked',
             el('div', { class: 'ofs-tiles' }, ...tiles.nextDay.map(offerTile)))]),

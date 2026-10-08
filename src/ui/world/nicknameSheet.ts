@@ -11,6 +11,7 @@ import type { Game } from '../../game';
 import { NICKNAME_MAX, nicknameProblem } from '../../worldServer/nickname';
 import { el } from '../format';
 import { btn, iconEl, sheet } from '../kit';
+import { tr } from '../../i18n/tr';
 
 export function renderNicknameSheet(game: Game): HTMLElement {
   const input = el('input', {
@@ -20,15 +21,15 @@ export function renderNicknameSheet(game: Game): HTMLElement {
     autocomplete: 'off',
     autocapitalize: 'words',
     spellcheck: 'false',
-    placeholder: 'Your name',
-    'aria-label': 'Your name on the world map',
+    placeholder: tr('Your name'),
+    'aria-label': tr('Your name on the world map'),
   }) as HTMLInputElement;
   input.value = game.nicknameDraft;
   const hint = el('div', { class: 'nick-hint' });
   const showHint = (): void => {
     const problem = game.nicknameDraft === '' ? null : nicknameProblem(game.nicknameDraft);
     const line = game.nicknameRefused ?? problem;
-    hint.textContent = line ?? 'Three to sixteen letters, numbers or spaces';
+    hint.textContent = line ?? tr('Three to sixteen letters, numbers or spaces');
     hint.classList.toggle('is-refused', line !== null);
   };
   showHint();
@@ -45,22 +46,22 @@ export function renderNicknameSheet(game: Game): HTMLElement {
   // Ready to type the moment the sheet is up.
   globalThis.requestAnimationFrame?.(() => input.focus());
 
-  return sheet({ title: 'Your name', onClose: () => game.dismiss(), centred: true },
+  return sheet({ title: tr('Your name'), onClose: () => game.dismiss(), centred: true },
     el('div', { class: 'nick' },
       el('div', { class: 'nick-lede' },
         iconEl('compass', { size: 'lg' }),
         el('div', {},
-          el('p', {}, 'Out on the world map, other kingdoms will know you by this name.'),
-          el('p', {}, 'Your city takes its place on the board the moment you set out.'))),
+          el('p', {}, tr('Out on the world map, other kingdoms will know you by this name.')),
+          el('p', {}, tr('Your city takes its place on the board the moment you set out.')))),
       input,
       hint,
       btn({
-        label: game.joiningWorld ? 'Joining…' : 'Join',
+        label: game.joiningWorld ? tr('Joining…') : tr('Join'),
         kind: 'primary',
         onClick: join,
-        ...(game.joiningWorld ? { disabledReason: 'Joining' } : {}),
+        ...(game.joiningWorld ? { disabledReason: tr('Joining') } : {}),
       }),
       el('div', { class: 'nick-fine' },
         iconEl('padlock', { size: 'sm' }),
-        'The name is for good: it cannot be changed later.')));
+        tr('The name is for good: it cannot be changed later.'))));
 }

@@ -1,0 +1,226 @@
+{
+  "store.GemsPouch.name": {
+    "en": "Pouch of Gems",
+    "es": "Bolsita de Gemas"
+  },
+  "store.GemsPurse.name": {
+    "en": "Purse of Gems",
+    "es": "Monedero de Gemas"
+  },
+  "store.GemsChest.name": {
+    "en": "Chest of Gems",
+    "es": "Cofre de Gemas"
+  },
+  "store.GemsVault.name": {
+    "en": "Vault of Gems",
+    "es": "Cámara de Gemas"
+  },
+  "store.GemsHoard.name": {
+    "en": "Hoard of Gems",
+    "es": "Tesoro de Gemas"
+  },
+  "store.GemsTreasury.name": {
+    "en": "Treasury of Gems",
+    "es": "Erario de Gemas"
+  },
+  "store.Survey.name": {
+    "en": "The Royal Survey",
+    "es": "El Catastro real"
+  },
+  "store.SpeedupSatchel.name": {
+    "en": "A satchel of speed-ups",
+    "es": "Un zurrón de aceleradores"
+  },
+  "store.SpeedupCrate.name": {
+    "en": "A crate of speed-ups",
+    "es": "Una caja de aceleradores"
+  },
+  "store.SpeedupChest.name": {
+    "en": "A chest of speed-ups",
+    "es": "Un cofre de aceleradores"
+  },
+  "store.ResourceSack.name": {
+    "en": "A sack of chests",
+    "es": "Un saco de cofres"
+  },
+  "store.ResourceCart.name": {
+    "en": "A cart of chests",
+    "es": "Un carro de cofres"
+  },
+  "store.BuildersCrate.name": {
+    "en": "The builder's crate",
+    "es": "La caja del constructor"
+  },
+  "store.FirstPurchase.name": {
+    "en": "First Purchase Reward",
+    "es": "Primera compra"
+  },
+  "store.NovicePack1.name": {
+    "en": "The novice's pack",
+    "es": "El lote del novato"
+  },
+  "store.NovicePack2.name": {
+    "en": "The squire's pack",
+    "es": "El lote del escudero"
+  },
+  "store.NovicePack3.name": {
+    "en": "The knight's pack",
+    "es": "El lote del caballero"
+  },
+  "store.ExplorerPack.name": {
+    "en": "A second explorer",
+    "es": "Un segundo explorador"
+  },
+  "store.HeroSlotPack.name": {
+    "en": "A seat at the war table",
+    "es": "Un sitio en la mesa de guerra"
+  },
+  "store.ManaPack.name": {
+    "en": "A cask of Mana",
+    "es": "Un barril de Maná"
+  },
+  "store.BuildPack.name": {
+    "en": "Rush the works",
+    "es": "Aprieta las obras"
+  },
+  "store.TownhallPack.name": {
+    "en": "The new charter",
+    "es": "La nueva carta puebla"
+  },
+  "store.DailyKeys.name": {
+    "en": "A ring of keys",
+    "es": "Un manojo de llaves"
+  },
+  "store.DailySpeed.name": {
+    "en": "A morning saved",
+    "es": "Una mañana ganada"
+  },
+  "store.DailyChests.name": {
+    "en": "Two full carts",
+    "es": "Dos carros llenos"
+  },
+  "store.DailyMana.name": {
+    "en": "A pair of flasks",
+    "es": "Un par de frascos"
+  },
+  "store.DailyTomes.name": {
+    "en": "Two old tomes",
+    "es": "Dos tomos viejos"
+  },
+  "store.DailyGold.name": {
+    "en": "A golden key",
+    "es": "Una llave dorada"
+  },
+  "store.GemsPouch.description": {
+    "en": "A handful — a builder, or a pull.",
+    "es": "Un puñado: un constructor, o una tirada."
+  },
+  "store.GemsPurse.description": {
+    "en": "A few calls, or a couple of hires.",
+    "es": "Unas cuantas llamadas, o un par de contratos."
+  },
+  "store.GemsChest.description": {
+    "en": "A crew's worth, with change.",
+    "es": "Lo que vale una cuadrilla, y sobra."
+  },
+  "store.GemsVault.description": {
+    "en": "Every slot the kingdom has, and then some.",
+    "es": "Cada hueco del reino, y aún más."
+  },
+  "store.GemsHoard.description": {
+    "en": "A season of pulls.",
+    "es": "Una temporada de tiradas."
+  },
+  "store.GemsTreasury.description": {
+    "en": "The whole ladder, twice over.",
+    "es": "Toda la escalera, dos veces."
+  },
+  "store.Survey.description": {
+    "en": "The Survey’s second column, for the whole province.",
+    "es": "La segunda columna del Catastro, para toda la provincia."
+  },
+  "store.SpeedupSatchel.description": {
+    "en": "A few hours off whatever you are waiting for.",
+    "es": "Unas horas menos de lo que estés esperando."
+  },
+  "store.SpeedupCrate.description": {
+    "en": "Most of a day off your timers.",
+    "es": "Casi un día menos en tus temporizadores."
+  },
+  "store.SpeedupChest.description": {
+    "en": "A long build, done tonight.",
+    "es": "Una obra larga, lista esta noche."
+  },
+  "store.ResourceSack.description": {
+    "en": "Eight hours of the coin you pick.",
+    "es": "Ocho horas de la moneda que elijas."
+  },
+  "store.ResourceCart.description": {
+    "en": "A day of the coins you pick.",
+    "es": "Un día de las monedas que elijas."
+  },
+  "store.BuildersCrate.description": {
+    "en": "Construction speed-ups and a chest for the materials.",
+    "es": "Aceleradores de construcción y un cofre para los materiales."
+  },
+  "store.FirstPurchase.description": {
+    "en": "A Legendary hero to start with — and more tomorrow.",
+    "es": "Un héroe Legendario para empezar, y más mañana."
+  },
+  "store.NovicePack1.description": {
+    "en": "A strong start for a new lord.",
+    "es": "Un buen comienzo para un nuevo señor."
+  },
+  "store.NovicePack2.description": {
+    "en": "The second step: keys, chests and a day of speed-ups.",
+    "es": "El segundo paso: llaves, cofres y un día de aceleradores."
+  },
+  "store.NovicePack3.description": {
+    "en": "The last step: a war chest for a kingdom on the rise.",
+    "es": "El último paso: un cofre de guerra para un reino en auge."
+  },
+  "store.ExplorerPack.description": {
+    "en": "One more explorer on the world map, for good.",
+    "es": "Un explorador más en el mapa del mundo, para siempre."
+  },
+  "store.HeroSlotPack.description": {
+    "en": "One more hero in every party, for good.",
+    "es": "Un héroe más en cada grupo, para siempre."
+  },
+  "store.ManaPack.description": {
+    "en": "Every tap you were saving for.",
+    "es": "Todos los toques que estabas guardando."
+  },
+  "store.BuildPack.description": {
+    "en": "Your crew, faster than legend.",
+    "es": "Tu cuadrilla, más rápida que la leyenda."
+  },
+  "store.TownhallPack.description": {
+    "en": "A Townhall raised — the next one, sooner.",
+    "es": "Un Ayuntamiento mejorado, y el siguiente, antes."
+  },
+  "store.DailyKeys.description": {
+    "en": "Six calls at the Tavern.",
+    "es": "Seis llamadas en la Taberna."
+  },
+  "store.DailySpeed.description": {
+    "en": "Five hours off your timers.",
+    "es": "Cinco horas menos en tus temporizadores."
+  },
+  "store.DailyChests.description": {
+    "en": "A day of the coin you pick.",
+    "es": "Un día de la moneda que elijas."
+  },
+  "store.DailyMana.description": {
+    "en": "Four flasks, and the pool fills faster.",
+    "es": "Cuatro frascos, y la reserva se llena más rápido."
+  },
+  "store.DailyTomes.description": {
+    "en": "Knowledge for the next book.",
+    "es": "Conocimiento para el próximo libro."
+  },
+  "store.DailyGold.description": {
+    "en": "Five calls on the golden banner.",
+    "es": "Cinco llamadas en el estandarte dorado."
+  }
+}

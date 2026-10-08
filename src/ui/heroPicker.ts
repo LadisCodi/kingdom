@@ -17,6 +17,7 @@
 import { HEROES } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { el } from './format';
+import { tr } from '../i18n/tr';
 import { btn, headPanel, sectionHead, sheet } from './kit';
 import { emptyHeroSlot, heroCard, heroFilterBar } from './heroCard';
 
@@ -39,7 +40,7 @@ export function renderHeroPicker(game: Game): HTMLElement {
     : heroCard(game, h, {
       power: pick.fight,
       onClick: () => game.heroPickClearSlot(i),
-      label: `Take ${HEROES[h].name} out of the party`,
+      label: tr('Take {name} out of the party', { name: HEROES[h].name }),
     })));
 
   const body = el('div', { class: 'hp' },
@@ -50,12 +51,12 @@ export function renderHeroPicker(game: Game): HTMLElement {
       onSort: () => game.heroPickCycleSort(),
     }),
     el('div', { class: 'hp-list', 'data-keep-scroll': 'hero-picker' },
-      sectionHead('Heroes'),
-      list.length > 0 ? grid : el('p', { class: 'hp-none' }, 'No heroes of that type yet')),
-    headPanel({ tone: 'green', title: 'Party', trailing: [`${filled}/${pick.slots.length}`], cls: 'hp-party' },
+      sectionHead(tr('Heroes')),
+      list.length > 0 ? grid : el('p', { class: 'hp-none' }, tr('No heroes of that type yet'))),
+    headPanel({ tone: 'green', title: tr('Party'), trailing: [`${filled}/${pick.slots.length}`], cls: 'hp-party' },
       el('div', { class: 'hp-slots' }, ...slots)),
     el('div', { class: 'hp-go' },
-      btn({ label: 'Select', kind: 'primary', onClick: () => game.heroPickConfirm() })),
+      btn({ label: tr('Select'), kind: 'primary', onClick: () => game.heroPickConfirm() })),
   );
   const surface = sheet({ title: pick.title, onClose: () => game.heroPickCancel(), tall: true }, body);
   // The attack screen's frame (battle.css `is-board`): the whole height and,

@@ -11,6 +11,7 @@
 // drops the drag, so it writes the chosen count to the presenter without a
 // notify and only the Use button commits it.
 
+import { tr } from '../i18n/tr';
 import type { BagScreen, Game } from '../game';
 import { BAG_TABS, CHEST_COINS, type BagTab } from '../sim/bag';
 import { ITEMS } from '../sim/data/definitions';
@@ -19,17 +20,30 @@ import { el, formatDuration, formatExact } from './format';
 import { btn, ctaBadge, currencyIcon, iconEl, knob, sheet } from './kit';
 import { relicTab } from './relicSheet';
 import { BOOST_ICON, tileArt } from './itemArt';
-import { BOOST_WHAT, chestCoin, itemLine, itemName, sizeLabel } from './itemText';
+import { boostWhat, chestCoin, itemLine, itemName, sizeLabel } from './itemText';
 
 const COLUMNS = 4;
 
 /** What an empty tab says: where its items turn up. */
-const EMPTY_LINE: Record<BagTab, string> = {
-  Resources: 'Chests turn up in the fog and in quests',
-  'Speed ups': 'Speed-ups turn up in lairs and quests',
-  Boosts: 'Boosts turn up in quests, lairs and the Survey',
-  Relics: 'Relic fragments turn up in lairs and in the fog',
-  Other: 'Keys and flasks turn up as rewards',
+const emptyLine = (tab: BagTab): string => {
+  switch (tab) {
+    case 'Resources': return tr('Chests turn up in the fog and in quests');
+    case 'Speed ups': return tr('Speed-ups turn up in lairs and quests');
+    case 'Boosts': return tr('Boosts turn up in quests, lairs and the Survey');
+    case 'Relics': return tr('Relic fragments turn up in lairs and in the fog');
+    case 'Other': return tr('Keys and flasks turn up as rewards');
+  }
+};
+
+/** A tab's name as the player reads it; the tab's id stays English. */
+const tabLabel = (tab: BagTab): string => {
+  switch (tab) {
+    case 'Resources': return tr('Resources');
+    case 'Speed ups': return tr('tab::Speed ups');
+    case 'Boosts': return tr('tab::Boosts');
+    case 'Relics': return tr('Relics');
+    case 'Other': return tr('Other');
+  }
 };
 
 function tabRow(game: Game, view: BagScreen): HTMLElement {
@@ -42,7 +56,7 @@ function tabRow(game: Game, view: BagScreen): HTMLElement {
       role: 'tab',
       'aria-selected': open ? 'true' : 'false',
     },
-      el('span', { class: 'bld-tab-label' }, tab),
+      el('span', { class: 'bld-tab-label' }, tabLabel(tab)),
       ...(info.fresh ? [ctaBadge(1, `bag-tab:${tab}`)] : []),
     );
     b.addEventListener('click', () => game.openBagTab(tab));
@@ -54,7 +68,7 @@ function tile(game: Game, item: BagScreen['items'][number], picked: boolean): HT
   const b = el('button', {
     class: `bag-tile is-tier-${item.def.tier}${picked ? ' is-picked' : ''}`,
     type: 'button',
-    'aria-label': `${itemName(item.def)}, ${formatExact(item.count)}`,
+    'aria-label': tr('{name}, {n}', { name: itemName(item.def), n: formatExact(item.count) }),
     'aria-expanded': picked ? 'true' : 'false',
     'data-coach': `bag-item:${item.id}`,
   },
@@ -71,7 +85,7 @@ function quantity(game: Game, item: BagScreen['items'][number], onChange: (n: nu
   const max = item.count;
   const slider = el('input', {
     class: 'bag-slider', type: 'range', min: '1', max: String(max), step: '1',
-    value: String(Math.min(game.bagQty, max)), 'aria-label': 'How many',
+    value: String(Math.min(game.bagQty, max)), 'aria-label': tr('How many'),
   });
   const field = el('span', { class: 'bag-qty' }, formatExact(Number(slider.value)));
   const set = (n: number): void => {
@@ -82,11 +96,11 @@ function quantity(game: Game, item: BagScreen['items'][number], onChange: (n: nu
   };
   slider.addEventListener('input', () => set(Number(slider.value)));
   return el('div', { class: 'bag-qty-row' },
-    knob('−', () => set(Number(slider.value) - 1), { label: 'One fewer' }),
+    knob('−', () => set(Number(slider.value) - 1), { label: tr('One fewer') }),
     slider,
-    knob('+', () => set(Number(slider.value) + 1), { label: 'One more' }),
+    knob('+', () => set(Number(slider.value) + 1), { label: tr('One more') }),
     field,
-    btn({ label: 'Max', onClick: () => set(max) }),
+    btn({ label: tr('Max'), onClick: () => set(max) }),
   );
 }
 
@@ -96,7 +110,7 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
     return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
       el('div', { class: 'bag-pop-name' }, itemName(item.def)),
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
-      el('div', { class: 'bag-use' }, btn({ label: 'Use', kind: 'primary', onClick: () => game.openStore('supplies') })));
+      el('div', { class: 'bag-use' }, btn({ label: tr('Use'), kind: 'primary', onClick: () => game.openStore('supplies') })));
   }
   // A piece a ruin needs is spent by its repair, never from the Bag.
   if (item.def.kind === 'part') {
@@ -111,8 +125,8 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
       el('div', { class: 'bag-pop-name' }, itemName(item.def)),
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
       job === null
-        ? el('div', { class: 'bag-pop-line' }, 'Nothing of this kind is running')
-        : el('div', { class: 'bag-use' }, btn({ label: 'Speed up a timer', onClick: () => game.openSpeedup(job) })));
+        ? el('div', { class: 'bag-pop-line' }, tr('Nothing of this kind is running'))
+        : el('div', { class: 'bag-use' }, btn({ label: tr('Speed up a timer'), onClick: () => game.openSpeedup(job) })));
   }
   const isChoice = item.def.kind === 'choice';
   const worth = isChoice ? game.choiceWorth(item.id) : item.worth;
@@ -126,7 +140,9 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
         `×${formatExact(n)} → ${formatExact(coin[1] * n)} `, currencyIcon(coin[0], { size: 'sm' }));
     }
     use.replaceChildren(btn({
-      label: `${isChoice ? 'Open' : 'Use'}${n > 1 ? ` ×${formatExact(n)}` : ''}`,
+      label: n > 1
+        ? (isChoice ? tr('Open ×{n}', { n: formatExact(n) }) : tr('Use ×{n}', { n: formatExact(n) }))
+        : (isChoice ? tr('Open') : tr('Use')),
       kind: 'primary',
       onClick: () => game.doUseItem(item.id, n),
     }));
@@ -137,7 +153,7 @@ function popover(game: Game, item: BagScreen['items'][number], column: number): 
   const node = el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
     el('div', { class: 'bag-pop-name' }, itemName(item.def)),
     el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
-    ...(running ? [el('div', { class: 'bag-pop-line' }, 'Extends the running one')] : []),
+    ...(running ? [el('div', { class: 'bag-pop-line' }, tr('Extends the running one'))] : []),
     ...(isChoice ? [choicePlates(game, worth)] : []),
     ...(item.count > 1 ? [quantity(game, item, draw), total] : []),
     use,
@@ -164,7 +180,7 @@ function boostRibbons(game: Game): HTMLElement[] {
   const now = game.now();
   return game.bagBoosts().map((b) => el('div', { class: 'bag-ribbon' },
     iconEl(BOOST_ICON[b.kind], { size: 'sm' }),
-    el('span', {}, `${BOOST_WHAT[b.kind]} +${formatExact(b.value)}%`),
+    el('span', {}, boostWhat(b.kind, formatExact(b.value))),
     el('span', { class: 'bag-ribbon-left' }, formatDuration(Math.ceil((b.endsAt - now) / 1000)))));
 }
 
@@ -188,13 +204,13 @@ export function renderBagSheet(game: Game): HTMLElement {
   const view = game.bagScreen();
   // The Relics tab holds no items: the relics met, and their fragments.
   if (view.tab === 'Relics') {
-    return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+    return panes(sheet({ title: tr('Bag'), onClose: () => game.dismiss(), tall: true },
       tabRow(game, view), pane(...relicTab(game))));
   }
   const grid = el('div', { class: 'bag-grid' });
   if (view.items.length === 0) {
     grid.classList.add('is-empty');
-    grid.append(el('p', { class: 'bag-empty' }, EMPTY_LINE[view.tab]));
+    grid.append(el('p', { class: 'bag-empty' }, emptyLine(view.tab)));
   } else {
     const at = view.items.findIndex((i) => i.id === view.picked);
     // The popover goes after the LAST tile of the picked one's row.
@@ -204,7 +220,7 @@ export function renderBagSheet(game: Game): HTMLElement {
       if (i === rowEnd) grid.append(popover(game, view.items[at], (at % COLUMNS) + 1));
     });
   }
-  return panes(sheet({ title: 'Bag', onClose: () => game.dismiss(), tall: true },
+  return panes(sheet({ title: tr('Bag'), onClose: () => game.dismiss(), tall: true },
     tabRow(game, view), pane(...(view.tab === 'Boosts' ? boostRibbons(game) : []), grid)));
 }
 

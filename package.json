@@ -13,7 +13,8 @@
     "art:check": "node scripts/ui-atlas.mjs check",
     "art:buttons": "node scripts/ui-buttons.mjs",
     "art:characters": "node scripts/char-atlas.mjs build",
-    "server:bundle": "node scripts/server-bundle.mjs"
+    "server:bundle": "node scripts/server-bundle.mjs",
+    "i18n:sync": "I18N_SYNC=1 vitest run tests/i18n.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

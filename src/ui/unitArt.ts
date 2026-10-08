@@ -25,6 +25,7 @@ import { TROOPS, rankOf, unitOf } from '../sim/data/definitions';
 import { ROMAN_RANK } from '../sim/data/techTreeRules';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el } from './format';
+import { tr } from '../i18n/tr';
 import type { TrainableId, TroopId } from '../sim/state';
 import { iconEl } from './kit';
 import type { IconName } from './kit/icon';
@@ -139,5 +140,5 @@ export function rankBadge(troop: TroopId): HTMLElement | null {
     t.textContent = ROMAN_RANK[rank];
     svg.append(t);
   }
-  return el('b', { class: 'k-rank', role: 'img', 'aria-label': `Rank ${ROMAN_RANK[rank]}` }, svg as unknown as HTMLElement);
+  return el('b', { class: 'k-rank', role: 'img', 'aria-label': tr('Rank {rank}', { rank: ROMAN_RANK[rank] }) }, svg as unknown as HTMLElement);
 }

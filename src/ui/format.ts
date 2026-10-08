@@ -4,13 +4,17 @@
 // string concatenation was the thing blocking pixel icons; every caller now
 // uses costChips() from the kit, which returns nodes. Gone with the last one.
 
+import { tr } from '../i18n/tr';
 import { playSfx } from '../audio/sfx';
+import { currentLang, NUMBER_LOCALE } from '../i18n/lang';
+import { TROOPS } from '../sim/data/definitions';
+import type { CurrencyId, TroopId, UnitId } from '../sim/state';
 
 /** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
  *  two largest units, because a third is noise at every scale. */
 export function formatDuration(seconds: number): string {
-  if (seconds <= 0) return 'instant';
+  if (seconds <= 0) return tr('instant');
   if (seconds < 60) return `${Math.round(seconds)}s`;
   // THE REMAINDER IS ROUNDED, SO IT CAN ROUND UP INTO A FULL UNIT: 59m 45s is
   // "60s" left of the minute, and a fortnight's countdown spends its first
@@ -45,14 +49,15 @@ export function formatCountdown(seconds: number): string {
 }
 
 /**
- * THE VIEWER'S LOCALE decides how a number is written: *25,000* and *4.99* in
- * London, *25.000* and *4,99* in Madrid. Every number the UI prints goes
- * through the helpers below, which are the only place that asks — a bare
- * `n.toLocaleString()` anywhere else is refused by tests/numberFormat.test.ts.
+ * THE PLAYER'S LANGUAGE decides how a number is written: *25,000* and *4.99*
+ * in English, *25.000* and *4,99* in Spanish (src/i18n/lang.ts). Every number
+ * the UI prints goes through the helpers below, which are the only place that
+ * asks — a bare `n.toLocaleString()` anywhere else is refused by
+ * tests/numberFormat.test.ts.
  *
- * `undefined` is the browser's own locale. Tests pin it with `setNumberLocale`.
+ * Tests pin it with `setNumberLocale`.
  */
-let numberLocale: string | undefined;
+let numberLocale: string | undefined = NUMBER_LOCALE[currentLang()];
 const formatters = new Map<string, Intl.NumberFormat>();
 
 export function setNumberLocale(locale: string | undefined): void {
@@ -115,6 +120,40 @@ export function formatShort(n: number): string {
 /** A price: *$4.99*, *$2,000.00* — or *$4,99* where the comma is the decimal.
  *  The game prices in dollars, and this is the one place that says so. */
 export const formatUsd = (cents: number): string => `$${formatNumber(cents / 100, 2, 2)}`;
+
+/** A currency as the player reads it, in their language: *Gold*, *Oro*. */
+export function currencyName(c: CurrencyId): string {
+  switch (c) {
+    case 'Gold': return tr('Gold');
+    case 'Food': return tr('Food');
+    case 'Wood': return tr('Wood');
+    case 'Stone': return tr('Stone');
+    case 'Mana': return tr('Mana');
+    case 'Knowledge': return tr('Knowledge');
+    case 'Stardust': return tr('Stardust');
+    case 'HeroXp': return tr('Hero XP');
+    case 'Gems': return tr('Gems');
+    default: return c;
+  }
+}
+
+/** A kind of soldier, many of them, as the player reads it: *Warriors*,
+ *  *Guerreros*. Spanish plurals are not an English `s`. */
+export function unitsName(u: UnitId): string {
+  switch (u) {
+    case 'Warrior': return tr('Warriors');
+    case 'Lancer': return tr('Lancers');
+    case 'Archer': return tr('Archers');
+    case 'Cavalry': return tr('Cavalry');
+    default: return u;
+  }
+}
+
+/** A troop, many of them, with its rank: *Lancers III*. */
+export function troopsName(id: TroopId): string {
+  const t = TROOPS[id];
+  return t.rank > 1 ? `${unitsName(t.unit)} ${['', 'I', 'II', 'III', 'IV', 'V'][t.rank]}` : unitsName(t.unit);
+}
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,

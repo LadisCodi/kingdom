@@ -1,0 +1,210 @@
+{
+  "items.GoldChest10m.name": {
+    "en": "Gold chest",
+    "es": "Cofre de Oro"
+  },
+  "items.GoldChest1h.name": {
+    "en": "Gold chest",
+    "es": "Cofre de Oro"
+  },
+  "items.GoldChest8h.name": {
+    "en": "Gold chest",
+    "es": "Cofre de Oro"
+  },
+  "items.FoodChest10m.name": {
+    "en": "Food chest",
+    "es": "Cofre de Comida"
+  },
+  "items.FoodChest1h.name": {
+    "en": "Food chest",
+    "es": "Cofre de Comida"
+  },
+  "items.FoodChest8h.name": {
+    "en": "Food chest",
+    "es": "Cofre de Comida"
+  },
+  "items.WoodChest10m.name": {
+    "en": "Wood chest",
+    "es": "Cofre de Madera"
+  },
+  "items.WoodChest1h.name": {
+    "en": "Wood chest",
+    "es": "Cofre de Madera"
+  },
+  "items.WoodChest8h.name": {
+    "en": "Wood chest",
+    "es": "Cofre de Madera"
+  },
+  "items.StoneChest10m.name": {
+    "en": "Stone chest",
+    "es": "Cofre de Piedra"
+  },
+  "items.StoneChest1h.name": {
+    "en": "Stone chest",
+    "es": "Cofre de Piedra"
+  },
+  "items.StoneChest8h.name": {
+    "en": "Stone chest",
+    "es": "Cofre de Piedra"
+  },
+  "items.ChoiceChest1h.name": {
+    "en": "Choice chest",
+    "es": "Cofre a elegir"
+  },
+  "items.ChoiceChest8h.name": {
+    "en": "Choice chest",
+    "es": "Cofre a elegir"
+  },
+  "items.GeneralSpeedup1m.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup5m.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup15m.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup1h.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup3h.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup8h.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.GeneralSpeedup24h.name": {
+    "en": "Speed-up",
+    "es": "Acelerador"
+  },
+  "items.ConstructionSpeedup1m.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup5m.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup15m.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup1h.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup3h.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup8h.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.ConstructionSpeedup24h.name": {
+    "en": "Construction speed-up",
+    "es": "Acelerador de construcción"
+  },
+  "items.TrainingSpeedup1m.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup5m.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup15m.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup1h.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup3h.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup8h.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.TrainingSpeedup24h.name": {
+    "en": "Training speed-up",
+    "es": "Acelerador de entrenamiento"
+  },
+  "items.WorkshopSpeedup1m.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup5m.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup15m.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup1h.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup3h.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup8h.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.WorkshopSpeedup24h.name": {
+    "en": "Workshop speed-up",
+    "es": "Acelerador de taller"
+  },
+  "items.RentBoost8h.name": {
+    "en": "Rent boost",
+    "es": "Impulso de renta"
+  },
+  "items.HarvestBoost1h.name": {
+    "en": "Harvest boost",
+    "es": "Impulso de cosecha"
+  },
+  "items.ManaBoost8h.name": {
+    "en": "Mana boost",
+    "es": "Impulso de Maná"
+  },
+  "items.ManaFlaskSmall.name": {
+    "en": "Mana flask",
+    "es": "Frasco de Maná"
+  },
+  "items.ManaFlask.name": {
+    "en": "Mana flask",
+    "es": "Frasco de Maná"
+  },
+  "items.KnowledgeTomeSmall.name": {
+    "en": "Knowledge tome",
+    "es": "Tomo de Conocimiento"
+  },
+  "items.KnowledgeTome.name": {
+    "en": "Knowledge tome",
+    "es": "Tomo de Conocimiento"
+  },
+  "items.SilverKey.name": {
+    "en": "Silver key",
+    "es": "Llave de plata"
+  },
+  "items.GoldKey.name": {
+    "en": "Gold key",
+    "es": "Llave de oro"
+  },
+  "items.WatchtowerLens.name": {
+    "en": "The Watchtower's lens",
+    "es": "La lente de la Atalaya"
+  }
+}

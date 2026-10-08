@@ -11,11 +11,12 @@ import { el, formatCount } from '../format';
 import { iconEl } from '../kit';
 import { explorerCount } from './dispatchSheet';
 import { setHidden, setText } from '../domWrite';
+import { tr } from '../../i18n/tr';
 
 export function mountExplorerChip(game: Game, root: HTMLElement): void {
   const count = el('span', { class: 'world-chip-count' });
   const chip = el('button', {
-    class: 'hud-plaque world-chip', type: 'button', 'aria-label': 'Explorers',
+    class: 'hud-plaque world-chip', type: 'button', 'aria-label': tr('Explorers'),
   }, iconEl('compass', { size: 'md' }), count);
   chip.addEventListener('click', () => {
     const now = game.now();

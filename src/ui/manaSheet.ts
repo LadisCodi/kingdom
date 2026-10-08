@@ -29,6 +29,7 @@
 // only claiming does — so a mis-tap costs nothing and the tab is still on the
 // map afterwards.
 
+import { tr } from '../i18n/tr';
 import type { Game, RefillBlock } from '../game';
 import { el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, sheet } from './kit';
@@ -37,10 +38,10 @@ import { btn, iconEl, progress, sheet } from './kit';
 function refusal(block: RefillBlock, perDay: number): string | undefined {
   switch (block) {
     case 'Ready': return undefined;
-    case 'PoolFull': return 'Your pool is already full';
-    case 'AboveHalf': return 'The video is offered once you are below half a pool';
-    case 'Cooling': return 'The next video is on its way';
-    case 'NoneLeftToday': return `All ${perDay} taken today — back at midnight`;
+    case 'PoolFull': return tr('Your pool is already full');
+    case 'AboveHalf': return tr('The video is offered once you are below half a pool');
+    case 'Cooling': return tr('The next video is on its way');
+    case 'NoneLeftToday': return tr('All {n} taken today — back at midnight', { n: perDay });
   }
 }
 
@@ -57,7 +58,7 @@ const printedRefusal = (block: RefillBlock, perDay: number): string | undefined 
 /** The day's count, over the button it belongs to. */
 const leftToday = (left: number, perDay: number): HTMLElement =>
   el('div', { class: `mana-till-count${left <= 0 ? ' is-spent' : ''}` },
-    `Left today: ${left}/${perDay}`);
+    tr('Left today: {left}/{max}', { left, max: perDay }));
 
 /** One till: the count, then the button it counts for. */
 const till = (count: HTMLElement, button: HTMLElement): HTMLElement =>
@@ -83,23 +84,23 @@ export function renderManaSheet(game: Game): HTMLElement {
   const body = el('div', { class: 'mana-sheet' },
     el('div', { class: 'mana-head' },
       iconEl('Mana', { size: 'lg' }),
-      el('div', { class: 'mana-title' }, 'Mana'),
+      el('div', { class: 'mana-title' }, tr('Mana')),
       el('div', { class: 'mana-hint' }, m.over
-        ? `Overcharged — ${formatExact(m.value - m.cap)} past the ceiling`
+        ? tr('Overcharged — {n} past the ceiling', { n: formatExact(m.value - m.cap) })
         : m.value >= m.cap
-          ? 'Full — anything more is spilling'
-          : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
+          ? tr('Full — anything more is spilling')
+          : tr('Full in about {time}', { time: formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600) }))),
     bar.root,
     el('div', { class: 'mana-line' },
-      el('span', {}, 'Drawn from the land'),
+      el('span', {}, tr('Drawn from the land')),
       el('b', {}, `+${formatExact(m.production)}/h`)),
     el('div', { class: 'mana-note' },
-      'Every tap is paid from the pool.'),
+      tr('Every tap is paid from the pool.')),
 
     // The prize, once, above both tills.
     el('div', { class: 'mana-refills' },
       el('div', { class: 'mana-prize' },
-        el('span', { class: 'mana-prize-copy' }, 'Refill now — a whole pool, on top of what you have'),
+        el('span', { class: 'mana-prize-copy' }, tr('Refill now — a whole pool, on top of what you have')),
         el('span', { class: 'mana-prize-amount' },
           iconEl('Mana', { size: 'lg' }),
           el('b', {}, `+${formatExact(r.reward)}`))),
@@ -112,13 +113,13 @@ export function renderManaSheet(game: Game): HTMLElement {
         till(
           leftToday(r.boughtLeft, r.boughtPerDay),
           btn({
-            label: 'Refill',
+            label: tr('Refill'),
             kind: 'gem',
             onClick: () => game.doRefillMana(),
             // The rung, not a discount: the price rises with each refill
             // bought today, and the button says which one this is so the
             // number is never a surprise.
-            note: r.gemCost === null ? undefined : `the ${ordinal(r.rung)} today`,
+            note: r.gemCost === null ? undefined : tr('the {nth} today', { nth: ordinal(r.rung) }),
             cost: r.gemCost === null ? undefined : { Gems: r.gemCost },
             have: (c) => game.walletValue(c),
             disabledReason: refusal(r.gems, r.boughtPerDay),
@@ -127,10 +128,10 @@ export function renderManaSheet(game: Game): HTMLElement {
         till(
           leftToday(r.watchedLeft, r.watchedPerDay),
           btn({
-            label: 'Watch',
+            label: tr('Watch'),
             kind: 'primary',
             onClick: () => game.startAdWatch(),
-            note: 'a short ad',
+            note: tr('a short ad'),
             disabledReason: refusal(r.video, r.watchedPerDay),
           }),
         ),
@@ -144,13 +145,13 @@ export function renderManaSheet(game: Game): HTMLElement {
     ),
   );
 
-  return sheet({ title: 'Mana', onClose: () => game.dismiss(), centred: true }, body);
+  return sheet({ title: tr('Mana'), onClose: () => game.dismiss(), centred: true }, body);
 }
 
 /** 1st, 2nd, 3rd… — five rungs deep at most, so the small cases are enough. */
 const ordinal = (n: number): string => {
-  const suffix = n % 10 === 1 && n % 100 !== 11 ? 'st'
-    : n % 10 === 2 && n % 100 !== 12 ? 'nd'
-      : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th';
-  return `${n}${suffix}`;
+  if (n % 10 === 1 && n % 100 !== 11) return tr('{n}st', { n });
+  if (n % 10 === 2 && n % 100 !== 12) return tr('{n}nd', { n });
+  if (n % 10 === 3 && n % 100 !== 13) return tr('{n}rd', { n });
+  return tr('{n}th', { n });
 };

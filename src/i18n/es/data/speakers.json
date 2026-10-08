@@ -1,0 +1,90 @@
+{
+  "speakers.advisor.name": {
+    "en": "Isolde",
+    "es": "Isolde"
+  },
+  "speakers.warden.name": {
+    "en": "The Warden",
+    "es": "La guardiana"
+  },
+  "speakers.cook.name": {
+    "en": "Bess",
+    "es": "Bess"
+  },
+  "speakers.villager.name": {
+    "en": "Tom Miller",
+    "es": "Tom Miller"
+  },
+  "speakers.orcChief.name": {
+    "en": "Grukk",
+    "es": "Grukk"
+  },
+  "speakers.woodcutter.name": {
+    "en": "Old Hob",
+    "es": "El viejo Hob"
+  },
+  "speakers.scout.name": {
+    "en": "Wren",
+    "es": "Wren"
+  },
+  "speakers.mason.name": {
+    "en": "Master Kofi",
+    "es": "Maestro Kofi"
+  },
+  "speakers.florist.name": {
+    "en": "Priya",
+    "es": "Priya"
+  },
+  "speakers.merchant.name": {
+    "en": "Marisol",
+    "es": "Marisol"
+  },
+  "speakers.courier.name": {
+    "en": "Idris",
+    "es": "Idris"
+  },
+  "speakers.advisor.title": {
+    "en": "Royal Advisor",
+    "es": "Consejera real"
+  },
+  "speakers.warden.title": {
+    "en": "Captain of the Guard",
+    "es": "Capitana de la guardia"
+  },
+  "speakers.cook.title": {
+    "en": "Tavern keeper",
+    "es": "Tabernera"
+  },
+  "speakers.villager.title": {
+    "en": "The Millers’ son, home from the road",
+    "es": "El hijo de los Miller, de vuelta del camino"
+  },
+  "speakers.orcChief.title": {
+    "en": "Orc warchief",
+    "es": "Caudillo orco"
+  },
+  "speakers.woodcutter.title": {
+    "en": "The woodcutter who never left",
+    "es": "El leñador que nunca se fue"
+  },
+  "speakers.scout.title": {
+    "en": "Royal Scout",
+    "es": "Exploradora real"
+  },
+  "speakers.mason.title": {
+    "en": "Master of the Builders’ Guild",
+    "es": "Maestro del gremio de constructores"
+  },
+  "speakers.florist.title": {
+    "en": "Nine and three quarters; makes the town pretty",
+    "es": "Nueve años y tres cuartos; pone guapo el pueblo"
+  },
+  "speakers.merchant.title": {
+    "en": "Merchant of everywhere",
+    "es": "Mercader de todas partes"
+  },
+  "speakers.courier.title": {
+    "en": "Royal courier",
+    "es": "Correo real"
+  }
+}

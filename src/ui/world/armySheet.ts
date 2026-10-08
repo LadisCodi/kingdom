@@ -4,10 +4,11 @@
 
 import type { Game } from '../../game';
 import { WORLD_BUILD } from '../../sim/data/definitions';
-import { CAMP_CREATURE, campSquads } from '../../sim/world/camps';
+import { campSquads } from '../../sim/world/camps';
 import { creatureFace } from '../lairSheet';
 import { lootWidget, terrainWidget } from './hexCard';
-import { CAMP_TITLE } from './hexNames';
+import { CAMP_TITLE, CREATURE_NAME, seatGround } from './hexNames';
+import { tr, trn } from '../../i18n/tr';
 import { campLoot, sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
@@ -15,14 +16,13 @@ import type { TroopId } from '../../sim/state';
 import { el, formatCount, formatDuration } from '../format';
 import { renderBattleSheet, type BattleView } from '../battleSheet';
 import { unitBust } from '../unitArt';
-import { seatName } from './dispatchSheet';
 
-const VERB = { attack: 'Attack', claim: 'Claim', garrison: 'Garrison', delve: 'Delve', portal: 'Descend', clear: 'March' } as const;
+const VERB = { attack: tr('Attack'), claim: tr('Claim'), garrison: tr('Garrison'), delve: tr('Delve'), portal: tr('Descend'), clear: tr('March') } as const;
 
 /** Whose camp stands on a hex: its creature's lair's name. */
 const campName = (game: Game, index: number): string => {
   const camp = game.worldSource().board().hexes[index]?.camp;
-  return camp ? CAMP_CREATURE[camp.creature] : 'monsters';
+  return camp ? CREATURE_NAME[camp.creature] : tr('monsters');
 };
 
 export function renderArmySheet(game: Game): HTMLElement {
@@ -34,13 +34,13 @@ export function renderArmySheet(game: Game): HTMLElement {
   const steps = route === null ? hexDistance(hexAt(game.homeHex()), hexAt(target)) : route.path.length - 1;
   const preview = game.armyPreview();
   const camp = source.board().hexes[target]?.camp;
-  const march = route === null ? 'no way there' : formatDuration(outboundMs(route.stepMs) / 1000);
-  const where = game.armyPurpose === 'garrison' ? `Your ${WORLD_BUILD.upgrades.Fortress.name}`
-    : game.armyPurpose === 'claim' ? 'Ground nobody holds'
-      : game.armyPurpose === 'delve' ? 'A dungeon'
-        : game.armyPurpose === 'portal' ? 'The Dark Portal'
-          : game.armyPurpose === 'clear' ? (camp != null ? CAMP_TITLE[camp.creature] : `A camp of ${campName(game, target)}`)
-            : `${seatName(game, h?.owner ?? null)} ground`;
+  const march = route === null ? tr('no way there') : formatDuration(outboundMs(route.stepMs) / 1000);
+  const where = game.armyPurpose === 'garrison' ? tr('Your {name}', { name: WORLD_BUILD.upgrades.Fortress.name })
+    : game.armyPurpose === 'claim' ? tr('Ground nobody holds')
+      : game.armyPurpose === 'delve' ? tr('A dungeon')
+        : game.armyPurpose === 'portal' ? tr('The Dark Portal')
+          : game.armyPurpose === 'clear' ? (camp != null ? CAMP_TITLE[camp.creature] : tr('A camp of {who}', { who: campName(game, target) }))
+            : seatGround(game, h?.owner ?? null);
   // Under the boards: what the fight pays, and the ground it is fought on
   // with the march there (Docs/proposals/world-menus.md §3.5). A dungeon's
   // rooms and the Portal's floors are fought below ground: no terrain.
@@ -49,7 +49,7 @@ export function renderArmySheet(game: Game): HTMLElement {
   const loot = game.armyPurpose === 'clear' && camp != null ? lootWidget(campLoot(game.state, camp.power)) : null;
   const widgets = [
     ...(loot === null ? [] : [loot]),
-    ...(below || bh === undefined ? [] : [terrainWidget(bh, `${formatCount(steps)} ${steps === 1 ? 'hex' : 'hexes'} · ${march}`)]),
+    ...(below || bh === undefined ? [] : [terrainWidget(bh, `${trn(steps, '{n} hex', '{n} hexes', { n: formatCount(steps) })} · ${march}`)]),
   ];
   const view: BattleView = {
     // The target alone: the route is the terrain widget's.

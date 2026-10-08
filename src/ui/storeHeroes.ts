@@ -23,6 +23,7 @@ import { heroChanceAt, pullsToGuarantee, pullsToLegendary } from '../sim/heroes'
 import type { HeroId, ItemId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatExact } from './format';
+import { tr } from '../i18n/tr';
 import { btn, iconEl, withTooltip, type CostTerm, type IconName } from './kit';
 
 // ------------------------------------------------------------- the carousel
@@ -104,8 +105,14 @@ function oddsText(game: Game): string {
   return BANNER_ORDER.map((banner) => {
     const chance = heroChanceAt(game.state, banner);
     const legend = pullsToLegendary(game.state, banner);
-    return `${BANNERS[banner].name}: ${Math.round(chance * 100)}% a hero now, one within ${formatExact(pullsToGuarantee(game.state, banner))}`
-      + (legend === null ? '' : `, a legend within ${formatExact(legend)}`);
+    const x = {
+      banner: BANNERS[banner].name,
+      chance: Math.round(chance * 100),
+      calls: formatExact(pullsToGuarantee(game.state, banner)),
+    };
+    return legend === null
+      ? tr('{banner}: {chance}% a hero now, one within {calls}', x)
+      : tr('{banner}: {chance}% a hero now, one within {calls}, a legend within {legend}', { ...x, legend: formatExact(legend) });
   }).join('. ') + '.';
 }
 
@@ -123,12 +130,12 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
   const free = def.freePerDay > 0 ? game.freePull(banner) : null;
   let b: HTMLElement;
   if (price.amount === 0) {
-    b = btn({ label: 'Call', note: 'Free', kind: 'primary', onClick: () => game.doPull(banner) });
+    b = btn({ label: tr('Call'), note: tr('Free'), kind: 'primary', onClick: () => game.doPull(banner) });
   } else if (free !== null && free.ready) {
-    b = btn({ label: 'Call', note: 'Free', icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
+    b = btn({ label: tr('Call'), note: tr('Free'), icon: 'video', kind: 'primary', onClick: () => game.startFreePullWatch(banner) });
   } else {
     b = btn({
-      label: 'Call', kind: 'primary',
+      label: tr('Call'), kind: 'primary',
       onClick: () => game.doPull(banner),
       costExtra: [keyTerm(game, price.key, price.amount)],
     });
@@ -144,7 +151,7 @@ function tenCall(game: Game, banner: BannerId): HTMLElement {
   const price = game.pullPrice(banner);
   const total = price.amount === 0 ? 9 : price.amount * 10;
   return btn({
-    label: 'Call ×10', kind: 'gold', finish: 'gem',
+    label: tr('Call ×10'), kind: 'gold', finish: 'gem',
     onClick: () => game.doPullMany(banner, 10),
     costExtra: [keyTerm(game, price.key, total)],
   });
@@ -155,10 +162,12 @@ function freeLine(game: Game, banner: BannerId): HTMLElement {
   const def = BANNERS[banner];
   if (def.freePerDay === 0) return el('span', {}, '');
   const free = game.freePull(banner);
-  if (free.left === 0) return el('span', { class: 'sth-free' }, 'Free calls tomorrow');
-  if (free.ready) return el('span', { class: 'sth-free' }, `Free calls today: ${formatExact(free.left)}`);
-  return el('span', { class: 'sth-free' }, `Free calls today: ${formatExact(free.left)} · next in `,
-    el('b', { 'data-until': String(free.readyAt) }, ''));
+  if (free.left === 0) return el('span', { class: 'sth-free' }, tr('Free calls tomorrow'));
+  if (free.ready) return el('span', { class: 'sth-free' }, tr('Free calls today: {n}', { n: formatExact(free.left) }));
+  // The countdown is its own element, ticking; the sentence goes round it.
+  const [before, after] = tr('Free calls today: {n} · next in {time}', { n: formatExact(free.left) }).split('{time}');
+  return el('span', { class: 'sth-free' }, before ?? '',
+    el('b', { 'data-until': String(free.readyAt) }, ''), ...(after ? [after] : []));
 }
 
 function banner(game: Game, id: BannerId): HTMLElement {
@@ -178,14 +187,14 @@ function banner(game: Game, id: BannerId): HTMLElement {
 
 export function heroesTab(game: Game): HTMLElement {
   if (!game.doorOpen('banner')) {
-    return el('div', { class: 'stx-locked' }, iconEl('padlock', { size: 'lg' }), el('span', {}, 'Build a Tavern to call heroes.'));
+    return el('div', { class: 'stx-locked' }, iconEl('padlock', { size: 'lg' }), el('span', {}, tr('Build a Tavern to call heroes.')));
   }
-  const odds = withTooltip(el('button', { class: 'sth-odds', type: 'button', 'aria-label': 'Odds' },
-    iconEl('quest', { size: 'lg' }), el('span', {}, 'Odds')), oddsText(game), 'Odds');
+  const odds = withTooltip(el('button', { class: 'sth-odds', type: 'button', 'aria-label': tr('Odds') },
+    iconEl('quest', { size: 'lg' }), el('span', {}, tr('Odds'))), oddsText(game), tr('Odds'));
   return el('div', { class: 'sth' },
     el('div', { class: 'sth-top' },
       carousel(),
-      el('h2', { class: 'sth-title' }, 'Call for aid'),
+      el('h2', { class: 'sth-title' }, tr('Call for aid')),
       odds),
     ...BANNER_ORDER.map((b) => banner(game, b)));
 }

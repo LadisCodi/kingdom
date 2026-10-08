@@ -42,17 +42,19 @@ import {
 } from '../sim/state';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { coach, el, formatDuration, formatExact, formatShort } from './format';
+import { coach, currencyName as coinWord, el, formatDuration, formatExact, formatShort } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, progress, restMarks, sectionHead, windowHead } from './kit';
+import { tr } from '../i18n/tr';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
  *  the neighbours are moving. */
-const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
-  goldPerMinute: 'Neighbours',
-  workTime: 'Good neighbours — work time',
-  trainTime: 'A military quarter — training time',
-};
+const adjacencyWords = (stat: AdjacencyStat): string => ({
+  goldPerMinute: tr('Neighbours'),
+  workTime: tr('Good neighbours — work time'),
+  trainTime: tr('A military quarter — training time'),
+})[stat];
+
 
 
 
@@ -142,23 +144,23 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       // The block is headed by what it trains — one unit per building, at
       // the rank the hall is set to (combat.md §6.4).
       body.append(sectionHead(def.bedsPerLevel.length > 0 || def.trains.length === 0
-        ? 'Ward' : nameFor(game.traineeAt(district))), training);
+        ? tr('Ward') : nameFor(game.traineeAt(district))), training);
     }
 
     // A workshop turns things out too, so it gets the same kind of block.
     const workshop = workshopSection(game, district, live);
-    if (workshop) body.append(sectionHead('Workshop'), workshop);
+    if (workshop) body.append(sectionHead(tr('Workshop')), workshop);
 
     // THE TAVERN hosts the banner (Docs/features/22-progression.md §6): its
     // card is the way to the heroes and to a call.
     if (def.heroXpBonusPerLevel.length > 0) {
-      body.append(sectionHead('Heroes'), el('div', { class: 'dc-tavern' },
+      body.append(sectionHead(tr('Heroes')), el('div', { class: 'dc-tavern' },
         btn({
-          label: 'Heroes', kind: 'secondary', icon: 'helmet',
+          label: tr('Heroes'), kind: 'secondary', icon: 'helmet',
           onClick: () => game.setOverlay('heroes'),
         }),
         el('span', { 'data-coach': 'card:call' }, btn({
-          label: 'Call', kind: 'gem', icon: 'star',
+          label: tr('Call'), kind: 'gem', icon: 'star',
           onClick: () => game.openStore('heroes'),
         }))));
     }
@@ -166,10 +168,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // A decoration is ONE number, and this is it. It has no crew, no queue
     // and no tap, so without this line its card would be empty.
     if (isDecoration(def)) {
-      body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
+      body.append(sectionHead(tr('Harmony')), el('div', { class: 'dc-harmony' },
         iconEl('harmony', { size: 'sm' }),
-        el('span', {}, `Supplies ${formatExact(def.harmonySupply)} Harmony`),
-        el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
+        el('span', {}, tr('Supplies {n} Harmony', { n: formatExact(def.harmonySupply) })),
+        el('span', { class: 'dc-army-note' }, tr('and a house beside it collects more rent'))));
     }
 
     // The city's beauty, read where it is SPENT: the Townhall is where the
@@ -184,14 +186,17 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         const nextTier = HARMONY.surplusTiers.find(
           (t) => tier === null || t.at > tier.at);
         const note = tier !== null
-          ? `+${Math.round(tier.bonus * 100)}% taxes`
+          ? tr('+{pct}% taxes', { pct: formatExact(Math.round(tier.bonus * 100)) })
           : nextTier !== undefined && demand > 0
-            ? `${Math.round(nextTier.at * 100)}% of demand pays +${
-              Math.round(nextTier.bonus * 100)}% taxes`
-            : 'nothing demands it yet';
-        body.append(sectionHead('Harmony'), el('div', { class: 'dc-harmony' },
+            ? tr('{at}% of demand pays +{pct}% taxes', {
+              at: formatExact(Math.round(nextTier.at * 100)), pct: formatExact(Math.round(nextTier.bonus * 100)),
+            })
+            : tr('nothing demands it yet');
+        body.append(sectionHead(tr('Harmony')), el('div', { class: 'dc-harmony' },
           iconEl('harmony', { size: 'sm' }),
-          el('span', {}, `Harmony ${formatExact(supply)} supplied, ${formatExact(demand)} demanded`),
+          el('span', {}, tr('Harmony {supply} supplied, {demand} demanded', {
+            supply: formatExact(supply), demand: formatExact(demand),
+          })),
           el('span', { class: 'dc-army-note' }, note)));
       }
     }
@@ -213,7 +218,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         // its own presses, so they are siblings, not children, of it.
         const painting = el('button', {
           class: 'dc-chapel-press', type: 'button',
-          'aria-label': held === null ? 'Place a relic on the altar' : `Change ${held.name}`,
+          'aria-label': held === null ? tr('Place a relic on the altar') : tr('Change {name}', { name: held.name }),
           'data-coach': 'shrine-slot',
         });
         painting.addEventListener('click', () => game.openRelicPicker(district.uniqueId));
@@ -231,13 +236,13 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
             el('span', { class: 'dc-chapel-relic', 'aria-hidden': 'true' },
               relicArt(held, 'dc-chapel-relic-art'), ...(held.status === 'asleep' ? [restMarks()] : [])),
             el('div', { class: 'dc-chapel-head', 'aria-hidden': 'true' },
-              el('b', {}, `${held.name} · Lv ${formatExact(held.level)}`),
+              el('b', {}, tr('{name} · Lv {n}', { name: held.name, n: formatExact(held.level) })),
               el('span', {}, held.now)),
             ...[activationOverlay(game, held.id)].filter((x): x is HTMLElement => x !== null),
           ]),
         );
       };
-      body.append(sectionHead('Relic'), part(() => {
+      body.append(sectionHead(tr('Relic')), part(() => {
         const view = game.shrineView(district);
         const cast = view.holds === null ? null : game.castPhase(view.holds);
         return JSON.stringify([view, cast?.phase ?? null, cast === null ? 0 : Math.ceil(cast.leftMs / 1000),
@@ -253,8 +258,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       if (adjacency !== 0) {
         body.append(el('div', { class: `dc-badge ${adjacency < 0 ? 'is-bad' : 'is-good'}` },
           adjacency < 0
-            ? `Crowded ${formatAdjacency(adjacency * 60)}/h — houses too close together`
-            : `Cosy neighbourhood ${formatAdjacency(adjacency * 60)}/h`));
+            ? tr('Crowded {n}/h — houses too close together', { n: formatAdjacency(adjacency * 60) })
+            : tr('Cosy neighbourhood {n}/h', { n: formatAdjacency(adjacency * 60) })));
       }
     }
 
@@ -273,18 +278,18 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
       const crew = district.assignedWorkers;
 
       const minus = knob('−', () => game.doChangeWorkers(district.uniqueId, -1), {
-        label: 'Remove a worker', disabled: crew === 0, kind: 'destructive',
+        label: tr('Remove a worker'), disabled: crew === 0, kind: 'destructive',
       });
       const plus = knob('+', () => game.doChangeWorkers(district.uniqueId, 1), {
-        label: 'Add a worker', disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
+        label: tr('Add a worker'), disabled: crew >= limit || game.freeWorkers() === 0, kind: 'primary',
       });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
       plus.dataset.coach = 'card:workers';
-      body.append(sectionHead('Workers'), el('div', { class: 'dc-crew' },
+      body.append(sectionHead(tr('Workers')), el('div', { class: 'dc-crew' },
         minus,
         unitPortrait('Villager', 'dc-crew-face'),
-        el('div', { class: 'dc-crew-count', 'aria-label': `${crew} of ${limit} assigned` },
-          el('b', {}, String(crew)), el('span', {}, ` / ${limit}`)),
+        el('div', { class: 'dc-crew-count', 'aria-label': tr('{crew} of {limit} assigned', { crew: formatExact(crew), limit: formatExact(limit) }) },
+          el('b', {}, formatExact(crew)), el('span', {}, ` / ${formatExact(limit)}`)),
         plus));
     }
 
@@ -292,11 +297,11 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // already said in the house's own words above, so it is not repeated.
     const neighbours = adjacencyInEffect(game.state, district)
       .filter((e) => e.stat !== 'goldPerMinute');
-    if (neighbours.length > 0) body.append(sectionHead('Neighbours'));
+    if (neighbours.length > 0) body.append(sectionHead(tr('Neighbours')));
     for (const e of neighbours) {
       const { label, tone } = adjacencyReadout(e.stat, e.total);
       body.append(el('div', { class: `dc-badge is-${tone}` },
-        `${ADJACENCY_WORDS[e.stat]} ${label}`));
+        tr('{what} {label}', { what: adjacencyWords(e.stat), label })));
     }
   }
 
@@ -316,8 +321,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // the price move with the clock; the word has a part of its own, so the
     // clock does not restart its breath.
     const what = () => (queueItem.startedAt === null
-      ? 'Waiting'
-      : queueItem.kind === 'upgrade' ? 'Upgrading' : 'Building');
+      ? tr('Waiting')
+      : queueItem.kind === 'upgrade' ? tr('Upgrading') : tr('Building'));
     doing.push(part(what, () => el('div', { class: 'dc-build-what' }, what())));
     progressUnder.push(part(() => JSON.stringify([
       queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, game.now())),
@@ -339,7 +344,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         queueItem.startedAt !== null && game.hasSpeedups(job)]);
     }, () => {
       const finish = btn({
-        label: 'Finish',
+        label: tr('Finish'),
         kind: 'gem',
         onClick: () => game.doRush(queueItem.uniqueId),
         cost: { Gems: gemRushCost(queueItem, game.now()) },
@@ -354,7 +359,7 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // opening — the call to action rides on the button when every gate and
     // every cost is met, so the upgrade would start on the popup's first tap.
     const upgrade = btn({
-      label: 'Upgrade',
+      label: tr('Upgrade'),
       kind: 'primary',
       onClick: () => game.openUpgrade(district.uniqueId),
     });
@@ -372,13 +377,13 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // the building, and it is free, so it carries no price to show.
   const name = districtLabel(game.state, district);
   const move = canMoveDistrict(district)
-    ? coach(moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`), 'card:move') : null;
+    ? coach(moveKnob(() => game.startMove(district.uniqueId), tr('Move {name}', { name })), 'card:move') : null;
   if (move !== null && game.uiHint() === 'card:move') move.classList.add('hinted');
   // The level rides on the title, a size down: *Housing #3 Lv 2*.
   const header = windowHead(name, [
     ...(move !== null ? [move] : []),
-    coach(closeKnob(() => game.dismiss(), `Close ${name}`), 'card:close'),
-  ], `Lv ${district.level}`);
+    coach(closeKnob(() => game.dismiss(), tr('Close {name}', { name })), 'card:close'),
+  ], tr('Lv {n}', { n: formatExact(district.level) }));
 
   // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
   // reads, at this level alone (upgradeStats.ts). It used to be scattered
@@ -399,13 +404,13 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     ...(def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0 && built
       ? [
         ...crewOutput(game, district).map(([c, n]) => ({
-          icon: c as IconName, label: `${c} an hour`, short: c, value: `+${formatShort(n)}/h`,
+          icon: c as IconName, label: tr('{coin} an hour', { coin: coinWord(c) }), short: coinWord(c), value: `+${formatShort(n)}/h`,
         })),
       ]
       : []),
     ...(districtCapacity(game.state, district) > 0 && built
       ? [{
-        icon: 'Gold' as IconName, label: 'Gold an hour', short: 'Gold',
+        icon: 'Gold' as IconName, label: tr('Gold an hour'), short: tr('Gold'),
         value: `+${formatShort(houseGoldPerMinute(game.state, district) * 60)}/h`,
       }]
       : []),

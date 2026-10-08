@@ -7,15 +7,16 @@
 // second button. Nothing here changes the game but those buttons.
 
 import { siteBanner, type Game } from '../../game';
+import { tr } from '../../i18n/tr';
 import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE, TROOPS, WORLD_PORTAL } from '../../sim/data/definitions';
 import type { BannerId } from '../../sim/data/definitions';
 import { lairCreature } from '../../sim/lairs';
 import { NEWS_GROUPS, type News, type NewsGroup } from '../../sim/notices';
-import type { Coord, HeroId, LairId } from '../../sim/state';
+import type { Coord, CurrencyId, HeroId, LairId } from '../../sim/state';
 import { homeIndex } from '../../sim/world/explorers';
 import { buildingArtUrl, spriteImg, spriteUrl } from '../../render/sprites';
 import { LAIR_AVATAR } from '../../render/lairMap';
-import { el, formatCount, formatExact } from '../format';
+import { currencyName, el, formatCount, formatExact } from '../format';
 import { iconEl, type IconName } from '../kit';
 import { worldBuildDone } from '../world/worldActions';
 import { CAMP_TITLE } from '../world/hexNames';
@@ -122,6 +123,9 @@ const portalArt = (open: boolean): Art => spriteArt(open ? 'whex_portal_open' : 
 
 // ---------------------------------------------------------- the news
 
+/** What a raid took, by the coin's name. */
+const coinName = (c: string): string => currencyName(c as CurrencyId);
+
 /** Where a site stands in the province. */
 function siteCell(id: string): Coord | null {
   return LANDMARKS.find((l) => l.id === id)?.location
@@ -147,9 +151,9 @@ function newsLine(game: Game, n: News): NewsLine | null {
       return {
         art: buildingArt(d.definitionId, n.level),
         name: `${def.name} #${formatExact(d.ordinal)}`,
-        line: built ? 'Built' : `Now level ${formatExact(n.level)}`,
-        title: built ? 'Construction complete!' : 'Upgrade complete!',
-        body: built ? def.description : `${def.name} is now level ${formatExact(n.level)}.`,
+        line: built ? tr('Built') : tr('Now level {n}', { n: formatExact(n.level) }),
+        title: built ? tr('Construction complete!') : tr('Upgrade complete!'),
+        body: built ? def.description : tr('{name} is now level {n}.', { name: def.name, n: formatExact(n.level) }),
         go: () => game.focusDistrict(d.uniqueId),
         view: 'province',
       };
@@ -162,9 +166,9 @@ function newsLine(game: Game, n: News): NewsLine | null {
       return {
         art: buildingArt(d.definitionId, d.level),
         name,
-        line: 'Queue done',
-        title: 'Training complete',
-        body: `${name} has trained its last ${TROOPS[n.unit].name} and stands idle. Queue more to keep it busy.`,
+        line: tr('Queue done'),
+        title: tr('Training complete'),
+        body: tr('{name} has trained its last {unit} and stands idle. Queue more to keep it busy.', { name, unit: TROOPS[n.unit].name }),
         go: () => game.focusDistrict(d.uniqueId),
         view: 'province',
       };
@@ -176,20 +180,20 @@ function newsLine(game: Game, n: News): NewsLine | null {
         art: icon(n.good),
         name: good.name,
         line: `+${formatExact(n.count)}`,
-        title: 'Goods ready',
-        body: `${formatExact(n.count)} ${good.name} came off the workshop's bench.`,
+        title: tr('Goods ready'),
+        body: tr('{n} {good} came off the workshop\'s bench.', { n: formatExact(n.count), good: good.name }),
         go: d === undefined ? null : () => game.focusDistrict(d.uniqueId),
         view: 'province',
       };
     }
     case 'raided': {
-      const took = Object.entries(n.took).map(([c, amount]) => `${formatCount(amount ?? 0)} ${c}`).join(', ');
+      const took = Object.entries(n.took).map(([c, amount]) => `${formatCount(amount ?? 0)} ${coinName(c)}`).join(', ');
       return {
         art: lairArt(n.lair),
-        name: `${lairCreature(n.lair)} raided the city`,
+        name: tr('{creature} raided the city', { creature: lairCreature(n.lair) }),
         line: took,
-        title: 'The city was raided',
-        body: `${lairCreature(n.lair)} came down from ${LAIRS[n.lair].name} and took ${took}. Clear the lair to get it back.`,
+        title: tr('The city was raided'),
+        body: tr('{creature} came down from {lair} and took {took}. Clear the lair to get it back.', { creature: lairCreature(n.lair), lair: LAIRS[n.lair].name, took }),
         go: () => game.showLair(n.lair),
         view: 'province',
       };
@@ -212,8 +216,8 @@ function newsLine(game: Game, n: News): NewsLine | null {
       return {
         art: icon('hex'),
         name: worldBuildDone(n.what, n.level),
-        line: 'On the world map',
-        title: 'Built on the world map',
+        line: tr('On the world map'),
+        title: tr('Built on the world map'),
         body: `${worldBuildDone(n.what, n.level)}.`,
         go: () => game.goToHex(n.hex),
         view: 'world',
@@ -221,14 +225,14 @@ function newsLine(game: Game, n: News): NewsLine | null {
     case 'armyHome':
       return {
         art: icon('army'),
-        name: 'Your army is home',
+        name: tr('Your army is home'),
         line: n.fallen > 0
-          ? `${formatCount(n.troops)} back, ${formatCount(n.fallen)} fell`
-          : `${formatCount(n.troops)} back`,
-        title: 'Your army is home',
+          ? tr('{n} back, {fallen} fell', { n: formatCount(n.troops), fallen: formatCount(n.fallen) })
+          : tr('{n} back', { n: formatCount(n.troops) }),
+        title: tr('Your army is home'),
         body: n.fallen > 0
-          ? `${formatCount(n.troops)} soldiers came home; ${formatCount(n.fallen)} fell.`
-          : `${formatCount(n.troops)} soldiers came home.`,
+          ? tr('{n} soldiers came home; {fallen} fell.', { n: formatCount(n.troops), fallen: formatCount(n.fallen) })
+          : tr('{n} soldiers came home.', { n: formatCount(n.troops) }),
         go: () => game.goToHex(homeIndex(game.state)),
         view: 'world',
       };
@@ -236,8 +240,8 @@ function newsLine(game: Game, n: News): NewsLine | null {
       return {
         art: icon(n.good ? 'hex' : 'power'),
         name: n.text,
-        line: 'On the world map',
-        title: n.good ? 'From the world' : 'Trouble abroad',
+        line: tr('On the world map'),
+        title: n.good ? tr('From the world') : tr('Trouble abroad'),
         body: `${n.text}.`,
         go: n.hex === undefined ? null : () => game.goToHex(n.hex!),
         view: 'world',
@@ -246,19 +250,21 @@ function newsLine(game: Game, n: News): NewsLine | null {
       return n.open
         ? {
           art: portalArt(true),
-          name: 'The Dark Portal is open',
-          line: `For ${formatExact(WORLD_PORTAL.openDays)} days`,
-          title: 'The Dark Portal is open',
-          body: `For ${formatExact(WORLD_PORTAL.openDays)} days. Send an army down and clear its floors — the deepest divers win Gems when it closes.`,
+          name: tr('The Dark Portal is open'),
+          line: tr('For {n} days', { n: formatExact(WORLD_PORTAL.openDays) }),
+          title: tr('The Dark Portal is open'),
+          body: tr('For {n} days. Send an army down and clear its floors — the deepest divers win Gems when it closes.', { n: formatExact(WORLD_PORTAL.openDays) }),
           go: () => game.goToHex(game.nearestPortal()),
           view: 'world',
         }
         : {
           art: portalArt(false),
-          name: 'The Dark Portal closed',
-          line: `Placed ${formatExact(n.place)} of ${formatExact(n.of)}`,
-          title: 'The Dark Portal closed',
-          body: `You placed ${formatExact(n.place)} of ${formatExact(n.of)}, at floor ${formatExact(n.floor)}. It opens again in ${formatExact(7 - WORLD_PORTAL.openDays)} days.`,
+          name: tr('The Dark Portal closed'),
+          line: tr('Placed {place} of {of}', { place: formatExact(n.place), of: formatExact(n.of) }),
+          title: tr('The Dark Portal closed'),
+          body: tr('You placed {place} of {of}, at floor {floor}. It opens again in {days} days.', {
+            place: formatExact(n.place), of: formatExact(n.of), floor: formatExact(n.floor), days: formatExact(7 - WORLD_PORTAL.openDays),
+          }),
           go: () => game.goToHex(game.nearestPortal()),
           view: 'world',
         };
@@ -275,10 +281,10 @@ function newsLine(game: Game, n: News): NewsLine | null {
     case 'chainDone':
       return {
         art: icon('crest'),
-        name: 'Your kingdom stands on its own',
-        line: 'The chain is done',
-        title: 'The chain is done',
-        body: 'No more guidance — build whatever you like from here.',
+        name: tr('Your kingdom stands on its own'),
+        line: tr('The chain is done'),
+        title: tr('The chain is done'),
+        body: tr('No more guidance — build whatever you like from here.'),
         go: null,
         view: 'province',
       };
@@ -287,17 +293,17 @@ function newsLine(game: Game, n: News): NewsLine | null {
 
 /** A group's card title, for two or more. */
 const GROUP_TITLE: Record<NewsGroup, (n: number) => string> = {
-  built: (n) => `${formatExact(n)} buildings finished`,
-  trained: () => 'Training complete',
-  goods: () => 'Goods ready',
-  raided: (n) => `${formatExact(n)} raids on the city`,
-  sighted: (n) => `${formatExact(n)} new places`,
-  worldBuild: (n) => `${formatExact(n)} builds on the world map`,
-  armyHome: (n) => `${formatExact(n)} armies home`,
-  world: () => 'From the world',
-  portal: () => 'The Dark Portal',
-  event: () => 'Events',
-  chainDone: () => 'The chain is done',
+  built: (n) => tr('{n} buildings finished', { n: formatExact(n) }),
+  trained: () => tr('Training complete'),
+  goods: () => tr('Goods ready'),
+  raided: (n) => tr('{n} raids on the city', { n: formatExact(n) }),
+  sighted: (n) => tr('{n} new places', { n: formatExact(n) }),
+  worldBuild: (n) => tr('{n} builds on the world map', { n: formatExact(n) }),
+  armyHome: (n) => tr('{n} armies home', { n: formatExact(n) }),
+  world: () => tr('From the world'),
+  portal: () => tr('The Dark Portal'),
+  event: () => tr('Events'),
+  chainDone: () => tr('The chain is done'),
 };
 
 /** A group of news as a notice: one card, or one line each. */
@@ -346,10 +352,10 @@ function states(game: Game): Notice[] {
     out.push({
       ...base, id: 'state:raid', art: lairArt(g.id), count: gates.length > 1 ? gates.length : 0,
       until: g.at, view: 'province', tone: 'threat',
-      title: `${lairCreature(g.id)} are coming`,
+      title: tr('{creature} are coming', { creature: lairCreature(g.id) }),
       body: gates.length > 1
-        ? `${formatExact(gates.length)} lairs will raid the city's stores. Clear a lair to stop its raids.`
-        : `${lairCreature(g.id)} from ${LAIRS[g.id].name} will raid the city's stores. Clear the lair to stop them.`,
+        ? tr('{n} lairs will raid the city\'s stores. Clear a lair to stop its raids.', { n: formatExact(gates.length) })
+        : tr('{creature} from {lair} will raid the city\'s stores. Clear the lair to stop them.', { creature: lairCreature(g.id), lair: LAIRS[g.id].name }),
       picture: lairArt(g.id),
       go: () => game.showLair(g.id),
       action: null,
@@ -361,11 +367,11 @@ function states(game: Game): Notice[] {
   if (ad !== null && game.adWatch() === null) {
     out.push({
       ...base, id: 'state:mana', art: icon('flask'), glow: true, view: null,
-      title: 'A free refill',
-      body: `Watch a short video for ${formatExact(ad.reward)} Mana.`,
+      title: tr('A free refill'),
+      body: tr('Watch a short video for {n} Mana.', { n: formatExact(ad.reward) }),
       picture: icon('Mana'),
       go: null,
-      action: { label: 'Watch', run: () => game.startAdWatch() },
+      action: { label: tr('Watch'), run: () => game.startAdWatch() },
       // The Mana sheet already offers the video beside the Gem refills.
       tap: () => game.openMana(),
     });
@@ -378,10 +384,10 @@ function states(game: Game): Notice[] {
     const art = spriteArt(def.sprite, 'relics');
     out.push({
       ...base, id: 'state:relic', art, count: asleep.count > 1 ? asleep.count : 0, view: 'province',
-      title: asleep.count === 1 ? `${def.name} is asleep` : `${formatExact(asleep.count)} relics are asleep`,
+      title: asleep.count === 1 ? tr('{name} is asleep', { name: def.name }) : tr('{n} relics are asleep', { n: formatExact(asleep.count) }),
       body: asleep.count === 1
-        ? `Its window has closed. Wake it in its Shrine for ${formatExact(asleep.cost)} Mana.`
-        : 'Their windows have closed. Wake each in its Shrine with Mana.',
+        ? tr('Its window has closed. Wake it in its Shrine for {n} Mana.', { n: formatExact(asleep.cost) })
+        : tr('Their windows have closed. Wake each in its Shrine with Mana.'),
       picture: art,
       go: () => game.openAsleepNotice(),
       action: null,
@@ -393,11 +399,13 @@ function states(game: Game): Notice[] {
   if (next !== null) {
     out.push({
       ...base, id: 'state:nextDay', art: icon('chest'), until: next.ready ? null : next.at, glow: next.ready, view: null,
-      title: next.ready ? 'Tomorrow’s reward is here' : 'Tomorrow’s reward',
-      body: `The second part of ${STORE[next.sku].name}${next.ready ? ' is ready to claim.' : ' comes tomorrow.'}`,
+      title: next.ready ? tr('Tomorrow’s reward is here') : tr('Tomorrow’s reward'),
+      body: next.ready
+        ? tr('The second part of {name} is ready to claim.', { name: STORE[next.sku].name })
+        : tr('The second part of {name} comes tomorrow.', { name: STORE[next.sku].name }),
       picture: icon('chest'),
       go: null,
-      action: next.ready ? { label: 'Claim', run: () => game.openOfferSplash(next.sku) } : null,
+      action: next.ready ? { label: tr('Claim'), run: () => game.openOfferSplash(next.sku) } : null,
     });
   }
 
@@ -407,11 +415,13 @@ function states(game: Game): Notice[] {
     const lead = prizes[0];
     out.push({
       ...base, id: 'state:portalPrize', art: portalArt(false), count: prizes.length > 1 ? prizes.length : 0, glow: true, view: null,
-      title: 'Portal reward',
-      body: `The Dark Portal closed. You placed ${formatExact(lead.place)} of ${formatExact(lead.of)}, at floor ${formatExact(lead.floor)}: ${formatExact(lead.gems)} Gems.`,
+      title: tr('Portal reward'),
+      body: tr('The Dark Portal closed. You placed {place} of {of}, at floor {floor}: {gems} Gems.', {
+        place: formatExact(lead.place), of: formatExact(lead.of), floor: formatExact(lead.floor), gems: formatExact(lead.gems),
+      }),
       picture: icon('Gems'),
       go: null,
-      action: { label: 'Claim', run: () => game.claimPortalPrize(lead.event) },
+      action: { label: tr('Claim'), run: () => game.claimPortalPrize(lead.event) },
     });
   }
 
@@ -419,8 +429,8 @@ function states(game: Game): Notice[] {
   if (game.doorOpen('banner') && BANNER_IDS.some((b) => game.freePull(b).ready)) {
     out.push({
       ...base, id: 'state:freeCall', art: icon('SilverKey'), glow: true, view: null,
-      title: 'A free call',
-      body: 'A hero answers a free call today.',
+      title: tr('A free call'),
+      body: tr('A hero answers a free call today.'),
       picture: icon('SilverKey'),
       go: () => game.openStore('heroes'),
       action: null,
@@ -437,10 +447,10 @@ function states(game: Game): Notice[] {
     const art = creature === undefined ? icon('army') : spriteArt(`whex_camp_${creature.toLowerCase()}`, 'army');
     out.push({
       ...base, id: 'state:armyReady', art, count: ready.length > 1 ? ready.length : 0, glow: true, view: 'world',
-      title: ready.length === 1 ? 'Your army is ready' : `${formatExact(ready.length)} armies are ready`,
+      title: ready.length === 1 ? tr('Your army is ready') : tr('{n} armies are ready', { n: formatExact(ready.length) }),
       body: creature === undefined
-        ? 'It waits at the camp. Attack when you are ready.'
-        : `It waits at the ${CAMP_TITLE[creature].toLowerCase()}. Attack when you are ready.`,
+        ? tr('It waits at the camp. Attack when you are ready.')
+        : tr('It waits at the {camp}. Attack when you are ready.', { camp: CAMP_TITLE[creature].toLowerCase() }),
       picture: art,
       go: () => game.goToHex(lead.target),
       action: null,
@@ -457,8 +467,8 @@ function states(game: Game): Notice[] {
     out.push({
       ...base, id: 'state:explorerReady', art: icon('compass'), count: waiting.length > 1 ? waiting.length : 0, glow: true,
       view: 'world',
-      title: waiting.length === 1 ? 'Your explorer is waiting' : `${formatExact(waiting.length)} explorers are waiting`,
-      body: 'The hex is explored. Tap it on the map to see what your explorer found.',
+      title: waiting.length === 1 ? tr('Your explorer is waiting') : tr('{n} explorers are waiting', { n: formatExact(waiting.length) }),
+      body: tr('The hex is explored. Tap it on the map to see what your explorer found.'),
       picture: icon('compass'),
       go,
       action: null,
@@ -472,8 +482,8 @@ function states(game: Game): Notice[] {
     const lead = rested[0];
     out.push({
       ...base, id: 'state:heroRested', art: heroArt(lead), count: rested.length > 1 ? rested.length : 0, view: null,
-      title: rested.length === 1 ? `${HEROES[lead].name} is rested` : `${formatExact(rested.length)} heroes are rested`,
-      body: 'Whole again, and ready to fight.',
+      title: rested.length === 1 ? tr('{name} is rested', { name: HEROES[lead].name }) : tr('{n} heroes are rested', { n: formatExact(rested.length) }),
+      body: tr('Whole again, and ready to fight.'),
       picture: heroArt(lead),
       go: () => game.setOverlay('heroes'),
       action: null,
@@ -526,7 +536,7 @@ function moreNotice(all: readonly Notice[], more: number): Notice {
   return {
     id: 'more', kind: 'more', art: { key: `more:${more}`, make: () => el('b', { class: 'nt-more' }, `+${formatExact(more)}`) },
     count: 0, until: null, glow: false, view: null, tone: 'plain',
-    title: 'Notices', body: '', picture: null, go: null, action: null,
+    title: tr('Notices'), body: '', picture: null, go: null, action: null,
     rows: all.map((n) => ({ art: n.art, name: n.title, line: n.body, go: null, opens: n.id })),
   };
 }
@@ -546,11 +556,11 @@ export function noticeCardOf(game: Game): Notice | null {
     if (lead === undefined) return null;
     return {
       id: card.id, kind: 'state', art: heroArt(lead), count: 0, until: null, glow: false, view: null, tone: 'plain',
-      title: card.heroes.length === 1 ? `${HEROES[lead].name} is rested` : `${formatExact(card.heroes.length)} heroes are rested`,
-      body: 'Whole again, and ready to fight.',
+      title: card.heroes.length === 1 ? tr('{name} is rested', { name: HEROES[lead].name }) : tr('{n} heroes are rested', { n: formatExact(card.heroes.length) }),
+      body: tr('Whole again, and ready to fight.'),
       picture: card.heroes.length === 1 ? heroArt(lead) : null,
       rows: card.heroes.length === 1 ? [] : card.heroes.map((h) => ({
-        art: heroArt(h), name: HEROES[h].name, line: 'Rested', go: () => game.setOverlay('heroes'),
+        art: heroArt(h), name: HEROES[h].name, line: tr('Rested'), go: () => game.setOverlay('heroes'),
       })),
       go: () => game.setOverlay('heroes'),
       action: null,

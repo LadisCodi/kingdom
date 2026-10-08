@@ -25,7 +25,8 @@
 // a second made the grid blink, because a fresh `<img>` decodes before its
 // first paint.
 
-import { HERO_LADDER, HEROES } from '../sim/data/definitions';
+import { GOODS, HERO_LADDER, HEROES } from '../sim/data/definitions';
+import { tr } from '../i18n/tr';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, nextSkillRankLevel, rosterView,
@@ -45,7 +46,7 @@ import {
 } from './kit';
 import type { IconName } from './kit';
 import { ascensionStars } from './ascensionStars';
-import { heroCard, heroFilterBar } from './heroCard';
+import { heroCard, heroFilterBar, rarityLabel, unitTypeLabel } from './heroCard';
 
 const RARITY_CLASS: Record<HeroRarity, string> = {
   Common: 'is-common', Rare: 'is-rare', Legendary: 'is-legendary',
@@ -86,23 +87,19 @@ function grid(game: Game): HTMLElement {
       onFilter: (f) => game.heroesSetFilter(f),
       onSort: () => game.heroesCycleSort(),
     }),
-    el('div', { class: 'hp-found' }, `${formatExact(found)} of ${formatExact(roster.length)} found`),
+    el('div', { class: 'hp-found' }, tr('{found} of {total} found', { found: formatExact(found), total: formatExact(roster.length) })),
     el('div', { class: 'hp-list', 'data-keep-scroll': 'heroes' },
-      sectionHead('Heroes'),
-      list.length > 0 ? cards : el('p', { class: 'hp-none' }, 'No heroes of that type')),
+      sectionHead(tr('Heroes')),
+      list.length > 0 ? cards : el('p', { class: 'hp-none' }, tr('No heroes of that type'))),
     // The way to another hero. The banner lives in the store
     // (Docs/features/14-monetization.md §2.1), so the roster POINTS at it
     // rather than holding a copy of it.
     el('div', { class: 'hp-go' },
-      btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') })),
+      btn({ label: tr('Call for aid'), kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') })),
   );
 }
 
 // ---------------------------------------------------------------- the detail
-
-const RARITY_LABEL: Record<HeroRarity, string> = {
-  Common: 'Common', Rare: 'Rare', Legendary: 'Legendary',
-};
 
 /** Step to the hero before or after this one, wrapping. Comparing two of them
  *  is most of what this screen is for, and a trip back through the grid to do
@@ -139,10 +136,10 @@ function stats(game: Game, id: HeroId): HTMLElement {
       ...(gain > 0 ? [el('span', { class: 'hd-stat-gain', 'aria-hidden': 'true' }, `+${formatExact(gain)}`)] : []));
   };
   return el('div', { class: 'hd-stats' },
-    stat('atk', 'Attack'),
-    stat('dmg', 'Damage'),
-    stat('def', 'Defence'),
-    stat('hp', 'Health'));
+    stat('atk', tr('stat::Attack')),
+    stat('dmg', tr('Damage')),
+    stat('def', tr('Defence')),
+    stat('hp', tr('Health')));
 }
 
 /** The hero on its rarity's stage: an owned hero's ascension stars in its
@@ -161,10 +158,10 @@ function stage(game: Game, def: HeroDef, id: HeroId, view: RosterEntry): HTMLEle
 /** The rarity's ribbon and the type's badge ride the window's header: the
  *  ribbon at its left end, the badge before the close. */
 const rarityRibbon = (def: HeroDef): HTMLElement =>
-  el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, RARITY_LABEL[def.rarity]);
+  el('span', { class: `hd-rarity ${RARITY_CLASS[def.rarity]}` }, rarityLabel(def.rarity));
 const typeBadge = (def: HeroDef): HTMLElement =>
   el('span', { class: `hd-type is-${def.unitType}` },
-    iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), def.unitType);
+    iconEl(unitTypeIcon(def.unitType), { size: 'sm' }), unitTypeLabel(def.unitType));
 
 /** A section's two halves: what it reads on the left, its price and button
  *  on the right. */
@@ -178,9 +175,12 @@ const buy = (price: HTMLElement | null, button: HTMLElement): HTMLElement =>
 function reading(label: string, have: number, of: number): HTMLElement {
   const bar = progress('green');
   bar.set(of > 0 ? have / of : 0);
+  // The number is bold, so the sentence is split around it — whatever order
+  // the language puts it in.
+  const [before, after] = tr('{label} {have} of {of}', { label, of: formatExact(of) }).split('{have}');
   return el('div', { class: 'hd-read' },
     el('div', { class: 'hd-read-line' },
-      `${label} `, el('b', {}, formatExact(have)), ` of ${formatExact(of)}`),
+      before ?? '', el('b', {}, formatExact(have)), after ?? ''),
     bar.root);
 }
 
@@ -202,19 +202,19 @@ function ascension(game: Game, id: HeroId, view: RosterEntry): HTMLElement | nul
       { icon: 'fragment', art: heroFragmentIcon(id), amount: `${formatExact(view.entry.fragments)} / ${formatExact(need)}`, short: shortFrags },
     ]),
     btn({
-      label: 'Ascend',
+      label: tr('Ascend'),
       kind: 'primary',
       onClick: () => game.doAscendHero(id),
-      disabledReason: shortFrags ? 'Not enough fragments' : shortDust ? 'Not enough Stardust' : undefined,
+      disabledReason: shortFrags ? tr('Not enough fragments') : shortDust ? tr('Not enough Stardust') : undefined,
     }),
   ));
 }
 
 function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   const lv = view.entry.level;
-  const read = reading('Level', lv, view.levelCap);
+  const read = reading(tr('Level'), lv, view.levelCap);
   if (lv >= HERO_LADDER.heroMaxLevel) {
-    return tray('hd-level', read, el('div', { class: 'hd-note' }, 'At the ceiling'));
+    return tray('hd-level', read, el('div', { class: 'hd-note' }, tr('At the ceiling')));
   }
   // At the ascension's ceiling the button goes away and the tray says what to
   // do instead: a disabled button still offers a press, and the press is not
@@ -223,17 +223,17 @@ function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
     // What to reach: the stars with one more point — every point lifts the cap.
     const target = view.entry.ascension + 1;
     return tray('hd-level', read,
-      el('div', { class: 'hd-note hd-cap' }, 'Ascend to', ascensionStars(target, 'hd-cap-stars')));
+      el('div', { class: 'hd-note hd-cap' }, tr('Ascend to'), ascensionStars(target, 'hd-cap-stars')));
   }
   const cost = xpLevelCost(lv);
   const short = game.walletValue('HeroXp') < cost;
   return tray('hd-level', read, buy(
     priceLine([{ icon: 'HeroXp', amount: formatExact(cost), short }]),
     btn({
-      label: 'Level Up',
+      label: tr('Level Up'),
       kind: 'primary',
       onClick: () => game.doLevelHero(id),
-      disabledReason: short ? 'Not enough Hero XP' : undefined,
+      disabledReason: short ? tr('Not enough Hero XP') : undefined,
     }),
   ));
 }
@@ -244,11 +244,11 @@ function level(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
 function fragments(game: Game, id: HeroId, view: RosterEntry): HTMLElement {
   const need = heroUnlockCost(id);
   const enough = view.entry.fragments >= need;
-  return tray('hd-level', reading('Fragments', view.entry.fragments, need), buy(
+  return tray('hd-level', reading(tr('Fragments'), view.entry.fragments, need), buy(
     enough ? priceLine([{ icon: 'fragment', art: heroFragmentIcon(id), amount: formatExact(need) }]) : null,
     enough
-      ? btn({ label: 'Recruit', kind: 'primary', onClick: () => game.doUnlockHero(id) })
-      : btn({ label: 'Call for aid', kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') }),
+      ? btn({ label: tr('Recruit'), kind: 'primary', onClick: () => game.doUnlockHero(id) })
+      : btn({ label: tr('Call for aid'), kind: 'gem', icon: 'star', onClick: () => game.openStore('heroes') }),
   ));
 }
 
@@ -321,7 +321,9 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
     const cap = heroLevelCap(game.state.heroes.ascension[id] ?? 0);
     return card(el('div', { class: 'hd-skill-foot' },
       el('div', { class: 'hd-note' }, iconEl('padlock', { size: 'sm' }),
-        cap < unlock ? `Ascend, then reach level ${formatExact(unlock)}` : `Reach level ${formatExact(unlock)}`)));
+        cap < unlock
+          ? tr('Ascend, then reach level {level}', { level: formatExact(unlock) })
+          : tr('Reach level {level}', { level: formatExact(unlock) }))));
   }
   const price = skillRankPrice(game.state, id)!;
   const block = skillRankBlock(game.state, id);
@@ -332,11 +334,11 @@ function skill(game: Game, id: HeroId, owned: boolean): HTMLElement {
   return card(el('div', { class: 'hd-skill-foot' },
     priceLine(terms),
     btn({
-      label: 'Upgrade',
+      label: tr('Upgrade'),
       kind: 'primary',
       onClick: () => game.doBuySkillRank(id),
-      disabledReason: block === 'NotEnoughStardust' ? 'Not enough Stardust'
-        : block === 'NotEnoughMaterial' ? `Not enough ${info.material}` : undefined,
+      disabledReason: block === 'NotEnoughStardust' ? tr('Not enough Stardust')
+        : block === 'NotEnoughMaterial' ? tr('Not enough {material}', { material: GOODS[info.material].name }) : undefined,
     })));
 }
 
@@ -356,7 +358,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
     // numbers and what it does.
     stage(game, def, id, view),
     skill(game, id, owned),
-    ...(boon !== null ? [sectionHead('Kingdom boon'),
+    ...(boon !== null ? [sectionHead(tr('Kingdom boon')),
       el('div', { class: 'hd-passive k-section is-boon' }, iconEl('crest'), boon)] : []),
     owned ? level(game, id, view) : fragments(game, id, view),
   );
@@ -370,7 +372,7 @@ export function renderHeroesSheet(game: Game): HTMLElement {
   if (open === null) {
     // The picker's frame (heroPicker.css `is-picker`, battle.css `is-board`):
     // the whole height, so the grid scrolls on its own and the button stays.
-    const surface = sheet({ title: 'Heroes', onClose: () => game.dismiss(), tall: true }, grid(game));
+    const surface = sheet({ title: tr('Heroes'), onClose: () => game.dismiss(), tall: true }, grid(game));
     surface.classList.add('is-picker', 'is-board');
     return surface;
   }

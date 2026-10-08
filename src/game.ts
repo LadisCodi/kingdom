@@ -1,6 +1,7 @@
 // Game orchestrator: owns the sim state, UI modes (placement / inspection),
 // the tap-handler chain, and change notification.
 
+import { PAYER_LABEL } from './ui/payerSheet';
 import { recordEvent } from './sim/events';
 import { crestId, crestOf, type Crest } from './sim/crest';
 import type { ItemStock } from './sim/rewards';
@@ -24,8 +25,9 @@ import {
   AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, FEATURES, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, TROOPS, TROOP_ORDER, UNITS, levelIndexed, troopsOf, unitOf, type AdjacencyStat, BANNERS, type BannerId,
-  RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
+  RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, type HeroRarity, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
+import { tr, trn } from './i18n/tr';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -113,7 +115,7 @@ import {
 import {
 } from './sim/upgrades';
 import {
-  PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
+  budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents, priceCents,
 } from './sim/store';
 import { ascensionFragmentCost, isMaxAscension } from './sim/heroLadder';
@@ -191,17 +193,17 @@ import { CAMP_CREATURE, campTribute } from './sim/world/camps';
 
 /** Why a ghost may not stand where it is, as the placement window says it. */
 const GHOST_BLOCK_WORDS: Record<PlacementBlock, string> = {
-  HasFeature: 'Clear the ground first',
-  NotRevealed: 'Reveal the ground first',
-  Occupied: 'Something already stands here',
-  OffMap: 'It does not fit on the map here',
-  CountLimit: 'Every one allowed is built',
-  NeedsResearch: 'Research it first',
-  NeedsShoreline: 'It needs a shoreline',
-  NeedsLand: 'It cannot stand on water',
-  NeedsHarmony: 'Needs more Harmony',
-  HasSite: 'Something already stands here',
-  LairZone: 'A lair holds this ground',
+  HasFeature: tr('Clear the ground first'),
+  NotRevealed: tr('Reveal the ground first'),
+  Occupied: tr('Something already stands here'),
+  OffMap: tr('It does not fit on the map here'),
+  CountLimit: tr('Every one allowed is built'),
+  NeedsResearch: tr('Research it first'),
+  NeedsShoreline: tr('It needs a shoreline'),
+  NeedsLand: tr('It cannot stand on water'),
+  NeedsHarmony: tr('Needs more Harmony'),
+  HasSite: tr('Something already stands here'),
+  LairZone: tr('A lair holds this ground'),
 };
 
 export type Mode =
@@ -281,9 +283,11 @@ export type OverlayName =
 export function fragmentWords(drops: readonly FragmentDrop[]): string {
   if (drops.length === 1) {
     const d = drops[0];
-    return `${d.slot === 5 ? 'The keystone' : 'A piece'} of the ${ARTIFACTS[d.relic].name} — it is in the Bag`;
+    return d.slot === 5
+      ? tr('The keystone of the {relic} — it is in the Bag', { relic: ARTIFACTS[d.relic].name })
+      : tr('A piece of the {relic} — it is in the Bag', { relic: ARTIFACTS[d.relic].name });
   }
-  return `${formatExact(drops.length)} relic fragments — they are in the Bag`;
+  return tr('{n} relic fragments — they are in the Bag', { n: formatExact(drops.length) });
 }
 
 /** An item as a sentence says it: "1h Wood chest", "Gold key". */
@@ -1064,7 +1068,7 @@ export class Game {
         const box = this.camera.cellToScreen(cell);
         const from = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
         queueMicrotask(() => this.reward(Object.fromEntries(entries), from, true));
-        if (picked.item !== null) this.toast(`Found a ${itemWords(picked.item)} — it is in the Bag`);
+        if (picked.item !== null) this.toast(tr('Found a {item} — it is in the Bag', { item: itemWords(picked.item) }));
         this.notify();
         return true;
       },
@@ -1079,7 +1083,7 @@ export class Game {
           // A silhouette past the fog (01-map-and-fog.md §4.1) answers with
           // the way to it; the plain dark swallows the tap.
           if (sightedAt(this.state, this.map, cell) !== undefined) {
-            this.toast('Something stands in the dark — clear the fog towards it');
+            this.toast(tr('Something stands in the dark — clear the fog towards it'));
           }
           // Either way the hand shows where the fog can be cleared from.
           this.hintFrontierNear(cell);
@@ -1096,16 +1100,16 @@ export class Game {
           // Say the rule, not just "no". A player who has been told once that
           // the frontier moves outward stops trying to buy the far tile.
           playSfx('error');
-          this.toast('Clear a path to it first — the fog lifts from the edges');
+          this.toast(tr('Clear a path to it first — the fog lifts from the edges'));
           this.hintFrontierNear(cell);
         } else if (result === 'OutOfReach') {
           // The capital is the reach: say which level opens this ring, so
           // the refusal points at the building rather than at the fog.
           playSfx('error');
-          this.toast(`Raise the Townhall to level ${reachLevelFor(this.map, cell)} to explore this far`);
+          this.toast(tr('Raise the Townhall to level {n} to explore this far', { n: formatExact(reachLevelFor(this.map, cell)) }));
         } else if (result === 'TechLocked') {
           const gate = explorationGate(this.map, cell);
-          if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} to explore this terrain`);
+          if (gate) this.toast(tr('Research {tech} to explore this terrain', { tech: TECHNOLOGIES[gate].name }));
         } else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           playSfx('revealDone');
@@ -1287,7 +1291,7 @@ export class Game {
     this.manaEmptySent = true;
     playSfx('error');
     this.shake(['Mana']);
-    this.floaters.add(cell, 'empty', 'Mana');
+    this.floaters.add(cell, tr('empty'), 'Mana');
   }
 
   /** One collect on a resource cell, with feedback. */
@@ -1308,7 +1312,7 @@ export class Game {
       // the player is told what would open it.
       const gate = HARVEST[source].requiredTech;
       playSfx('error');
-      if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
+      if (gate) this.toast(tr('Research {tech} before you can work this', { tech: TECHNOLOGIES[gate].name }));
     } else if (result === 'LairHeld') {
       // Say WHO: the refusal is the lair's, and naming it is what sends the
       // player to clear it (Docs/proposals/lairs.md §6). Costs no Mana — the
@@ -1415,8 +1419,8 @@ export class Game {
     if (!district) return;
     if (!canMoveDistrict(district)) {
       this.toast(district.state === 'Built'
-        ? 'The Townhall is where everything is measured from — it stays put'
-        : 'Wait until it is finished, or cancel the build');
+        ? tr('The Townhall is where everything is measured from — it stays put')
+        : tr('Wait until it is finished, or cancel the build'));
       this.notify();
       return;
     }
@@ -1508,7 +1512,7 @@ export class Game {
       // likely to want the thing they just repositioned.
       this.inspectedDistrictId = districtUniqueId;
     } else {
-      this.toast(result === 'InvalidCell' ? 'It will not fit there' : result);
+      this.toast(result === 'InvalidCell' ? tr('It will not fit there') : result);
     }
     this.notify();
   }
@@ -1527,7 +1531,7 @@ export class Game {
     const block = pickUpBlock(this.state, cell);
     if (block === 'NeedsResearch') {
       playSfx('error');
-      this.toast(`Research ${TECHNOLOGIES[TRANSPLANTING].name} before you can move trees`);
+      this.toast(tr('Research {tech} before you can move trees', { tech: TECHNOLOGIES[TRANSPLANTING].name }));
       this.notify();
       return false;
     }
@@ -1606,7 +1610,7 @@ export class Game {
       haptic(20);
       this.mode = { kind: 'normal' };
     } else {
-      this.toast(result in GHOST_BLOCK_WORDS ? GHOST_BLOCK_WORDS[result as PlacementBlock] : 'It cannot go there');
+      this.toast(result in GHOST_BLOCK_WORDS ? GHOST_BLOCK_WORDS[result as PlacementBlock] : tr('It cannot go there'));
     }
     this.notify();
   }
@@ -1620,9 +1624,9 @@ export class Game {
     const block = castBlock(this.state, artifactId, this.now());
     if (block !== null) {
       if (block === 'NotEnoughMana') this.shake(['Mana']);
-      else if (block === 'NotOwned') this.toast('Finish its album first');
-      else if (block === 'Active') this.toast(`${active.name} is still running`);
-      else if (block === 'OnCooldown') this.toast(`${ARTIFACTS[artifactId].name} needs to rest`);
+      else if (block === 'NotOwned') this.toast(tr('Finish its album first'));
+      else if (block === 'Active') this.toast(tr('{spell} is still running', { spell: active.name }));
+      else if (block === 'OnCooldown') this.toast(tr('{relic} needs to rest', { relic: ARTIFACTS[artifactId].name }));
       this.notify();
       return;
     }
@@ -1632,7 +1636,7 @@ export class Game {
     }
     const valid = validCastCells(this.state, this.map, artifactId);
     if (valid.length === 0) {
-      this.toast(`Nowhere to cast ${active.name} right now`);
+      this.toast(tr('Nowhere to cast {spell} right now', { spell: active.name }));
       this.notify();
       return;
     }
@@ -1668,8 +1672,8 @@ export class Game {
     const target = picked;
     if (report.result !== 'Cast') {
       if (report.result === 'NotEnoughMana') this.shake(['Mana']);
-      else if (report.result === 'NotHosted') this.toast('Hold it in a Chapel first');
-      else this.toast('That cannot be cast there');
+      else if (report.result === 'NotHosted') this.toast(tr('Hold it in a Chapel first'));
+      else this.toast(tr('That cannot be cast there'));
       this.notify();
       return;
     }
@@ -1677,7 +1681,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${formatExact(report.goldSaved)}`, 'Gold');
+      this.floaters.add(target, tr('Saved {n}', { n: formatExact(report.goldSaved) }), 'Gold');
     }
     this.notify();
   }
@@ -1690,8 +1694,8 @@ export class Game {
     const result = activateRelic(this.state, id, this.now());
     if (result !== 'Activated') {
       if (result === 'NotEnoughMana') this.shake(['Mana']);
-      else if (result === 'NotHosted') this.toast('Host it in a Shrine first');
-      else if (result === 'Active') this.toast(`${ARTIFACTS[id].name} is already awake`);
+      else if (result === 'NotHosted') this.toast(tr('Host it in a Shrine first'));
+      else if (result === 'Active') this.toast(tr('{relic} is already awake', { relic: ARTIFACTS[id].name }));
       this.notify();
       return;
     }
@@ -1938,11 +1942,11 @@ export class Game {
       host: restored && relicKind(id) === 'world' ? {
         at: (() => {
           const c = this.myChapels().find((x) => x.relic === id);
-          return c === undefined ? null : `the Chapel of a ${c.name}`;
+          return c === undefined ? null : tr('the Chapel of a {district}', { district: c.name });
         })(),
         shrines: this.myChapels().filter((c) => c.relic !== id).map((c) => ({
           shrineId: String(c.index),
-          label: `Chapel · ${c.name}`,
+          label: tr('Chapel · {district}', { district: c.name }),
           holds: c.relic === null ? null : ARTIFACTS[c.relic].name,
         })),
       } : restored && relicKind(id) === 'city' ? {
@@ -2054,7 +2058,7 @@ export class Game {
   doRestoreRelic(id: ArtifactId): void {
     if (restoreRelic(this.state, id) === 'Restored') {
       playSfx('questComplete');
-      this.toast(`The ${ARTIFACTS[id].name} is restored`);
+      this.toast(tr('The {relic} is restored', { relic: ARTIFACTS[id].name }));
     }
     this.notify();
   }
@@ -2092,7 +2096,7 @@ export class Game {
       }
       // The keystones last, as heroes come last on a call: what the pack is for.
       prizes.sort((a, b) => Number(a.kind === 'relicFragment' && a.slot === 5) - Number(b.kind === 'relicFragment' && b.slot === 5));
-      this.gachaReveal = { prizes, caption: 'Relic fragments', chest: 'relic' };
+      this.gachaReveal = { prizes, caption: tr('Relic fragments'), chest: 'relic' };
     } else if (result.kind === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
@@ -2186,13 +2190,12 @@ export class Game {
    *  shelf's body and the confirmation's grant. The things for good first. */
   bundleLines(id: StoreSkuId): string[] {
     const s = STORE[id];
-    const forGood = (n: number, one: string, many: string): string[] =>
-      n <= 0 ? [] : [`${n === 1 ? `A ${one}` : `${formatExact(n)} ${many}`}, for good`];
+    const n = (count: number): { n: string } => ({ n: formatExact(count) });
     return [
-      ...(s.hero === null ? [] : [`${HEROES[s.hero].name}, ${HEROES[s.hero].rarity.toLowerCase()} hero`]),
-      ...forGood(s.builders, 'builder', 'builders'),
-      ...forGood(s.explorers, 'second explorer', 'explorers'),
-      ...forGood(s.heroSlots, 'hero slot', 'hero slots'),
+      ...(s.hero === null ? [] : [heroRarityLine(HEROES[s.hero].name, HEROES[s.hero].rarity)]),
+      ...(s.builders <= 0 ? [] : [trn(s.builders, 'A builder, for good', '{n} builders, for good', n(s.builders))]),
+      ...(s.explorers <= 0 ? [] : [trn(s.explorers, 'A second explorer, for good', '{n} explorers, for good', n(s.explorers))]),
+      ...(s.heroSlots <= 0 ? [] : [trn(s.heroSlots, 'A hero slot, for good', '{n} hero slots, for good', n(s.heroSlots))]),
       ...(Object.entries(s.items) as Array<[ItemId, number]>)
         .map(([item, n]) => `${formatExact(n)}× ${itemWords(item)}`),
     ];
@@ -2326,7 +2329,7 @@ export class Game {
     playSfx('questComplete');
     this.reward({ ...(s.nextDayGems > 0 ? { Gems: s.nextDayGems } : {}), ...(s.nextDayHeroXp > 0 ? { HeroXp: s.nextDayHeroXp } : {}) });
     if (s.hero !== null && s.nextDayFragments > 0) {
-      this.toast(`${formatExact(s.nextDayFragments)} fragments of ${HEROES[s.hero].name}`);
+      this.toast(tr('{n} fragments of {hero}', { n: formatExact(s.nextDayFragments), hero: HEROES[s.hero].name }));
     }
     this.offerSplashForced = null;
     this.notify();
@@ -2352,9 +2355,9 @@ export class Game {
       valuePercent: skuValuePercent(this.state, sku),
       chain: chain.length > 1 ? { at: chain.indexOf(sku) + 1, of: chain.length } : null,
       gifts: [
-        ...(s.builders > 0 ? [{ icon: 'builder' as const, title: s.builders === 1 ? 'A second builder' : `${formatExact(s.builders)} builders`, text: 'Build two things at once' }] : []),
-        ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: 'A second explorer', text: 'Explore the world with one more at once' }] : []),
-        ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: 'A hero slot', text: 'One more hero in every party' }] : []),
+        ...(s.builders > 0 ? [{ icon: 'builder' as const, title: trn(s.builders, 'A second builder', '{n} builders', { n: formatExact(s.builders) }), text: tr('Build two things at once') }] : []),
+        ...(s.explorers > 0 ? [{ icon: 'explorer' as const, title: tr('A second explorer'), text: tr('Explore the world with one more at once') }] : []),
+        ...(s.heroSlots > 0 ? [{ icon: 'heroSlot' as const, title: tr('A hero slot'), text: tr('One more hero in every party') }] : []),
       ],
       nextDayAt: nextDayWaiting(this.state, this.now()).find((d) => d.sku === sku)?.claimableAt ?? null,
     };
@@ -2402,7 +2405,7 @@ export class Game {
     const result = buyExplorer(this.state);
     if (result === 'Bought') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
-    else this.toast('Every explorer for sale is yours');
+    else this.toast(tr('Every explorer for sale is yours'));
     this.notify();
   }
 
@@ -2414,7 +2417,7 @@ export class Game {
       this.floaters.add(townhall(this.state).location, `+${formatExact(manaCap(this.state))}`, 'Mana');
     }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
-    if (result === 'NoneLeft') this.toast('No more Gem refills today');
+    if (result === 'NoneLeft') this.toast(tr('No more Gem refills today'));
     this.notify();
   }
 
@@ -2480,7 +2483,7 @@ export class Game {
       net: manaNetRegen(this.state),
       production: manaProduction(this.state),
       /** "+1 in 4m 12s" while the pool is filling; null when it is not. */
-      nextIn: nextMs === null ? null : `+1 in ${formatDuration(Math.ceil(nextMs / 1000))}`,
+      nextIn: nextMs === null ? null : tr('+1 in {time}', { time: formatDuration(Math.ceil(nextMs / 1000)) }),
       /** An ad reward can push the pool past its ceiling; the UI shows that
        *  differently from merely being full. */
       over: value > cap,
@@ -2509,10 +2512,10 @@ export class Game {
       full: value >= cap,
       over: value > cap,
       perHour: knowledgePerHour(),
-      nextIn: nextMs === null ? null : `+1 in ${formatCountdown(Math.ceil(nextMs / 1000))}`,
+      nextIn: nextMs === null ? null : tr('+1 in {time}', { time: formatCountdown(Math.ceil(nextMs / 1000)) }),
       nextFraction: nextMs === null ? 0 : Math.min(1, Math.max(0, 1 - nextMs / msPerPoint())),
       fullIn: fullMs === null || fullMs === 0 ? null
-        : `Full in ${formatCountdown(Math.ceil(fullMs / 1000))}`,
+        : tr('Full in {time}', { time: formatCountdown(Math.ceil(fullMs / 1000)) }),
     };
   }
 
@@ -2737,7 +2740,7 @@ export class Game {
         this.mode = { kind: 'normal' };
       } else if (result === 'NotEnoughGems') this.shake(['Gems']);
       else if (result === 'NoBuilderFree') this.offerBuilder();
-      else this.toast(result === 'NoneLeft' || result === 'CountLimit' ? 'Every Shrine is built' : result === 'NotForGems' ? 'Not for Gems yet' : 'Not here');
+      else this.toast(result === 'NoneLeft' || result === 'CountLimit' ? tr('Every Shrine is built') : result === 'NotForGems' ? tr('Not for Gems yet') : tr('Not here'));
       this.notify();
       return;
     }
@@ -2749,7 +2752,7 @@ export class Game {
       // Confirmed from a free builder's row: the sheet was only in the way.
       if (this.openOverlay === 'builder') this.openOverlay = null;
     } else if (result === 'NotEnoughResources') {
-      if (!this.offerShortfall(`Build the ${DISTRICTS[definitionId].name}`, cost, () => this.confirmBuild())) {
+      if (!this.offerShortfall(tr('Build the {building}', { building: DISTRICTS[definitionId].name }), cost, () => this.confirmBuild())) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
     } else if (result === 'NoBuilderFree') {
@@ -2996,7 +2999,8 @@ export class Game {
         ? [trip.revealedAt!, returnsAt(trip)] : [trip.departedAt, readyAt(trip)];
       const total = to - from;
       return {
-        title: `Explorer · ${phase === 'out' ? 'on the way' : phase === 'working' ? 'exploring' : phase === 'ready' ? 'waiting for you' : 'coming home'}`,
+        title: phase === 'out' ? tr('Explorer · on the way') : phase === 'working' ? tr('Explorer · exploring')
+          : phase === 'ready' ? tr('Explorer · waiting for you') : tr('Explorer · coming home'),
         icon: 'compass', progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
         gems: explorerRushCost(trip, now),
       };
@@ -3007,7 +3011,7 @@ export class Game {
       const from = a.phase === 'home' ? a.at - homeboundMs(a.stepMs) : a.departedAt;
       const total = a.at - from;
       return {
-        title: `Army · ${a.phase === 'home' ? 'coming home' : 'on the way'}`, icon: 'army',
+        title: a.phase === 'home' ? tr('Army · coming home') : tr('Army · on the way'), icon: 'army',
         progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
         gems: gemsToFinish((a.at - now) / 1000),
       };
@@ -3029,7 +3033,7 @@ export class Game {
       if (!item || !d) return null;
       const name = DISTRICTS[d.definitionId].name;
       return {
-        title: item.kind === 'upgrade' ? `${name} · level ${formatExact(item.targetLevel ?? d.level + 1)}` : name,
+        title: item.kind === 'upgrade' ? tr('{name} · level {n}', { name, n: formatExact(item.targetLevel ?? d.level + 1) }) : name,
         icon: d.definitionId, progress: queueProgress(item, now), gems: gemRushCost(item, now),
       };
     }
@@ -3039,7 +3043,7 @@ export class Game {
       if (!d || !head) return null;
       const n = lineFor(this.state, job.buildingId).reduce((s, i) => s + (i.count ?? 1), 0);
       return {
-        title: `${DISTRICTS[d.definitionId].name} · ${formatExact(n)} training`,
+        title: tr('{name} · {n} training', { name: DISTRICTS[d.definitionId].name, n: formatExact(n) }),
         icon: d.definitionId, progress: trainingProgress(this.state, job.buildingId, now),
         gems: lineRushCost(this.state, job.buildingId, now),
       };
@@ -3181,14 +3185,14 @@ export class Game {
       this.builderAsk = { kind: 'repair', id: site.id };
       this.offerBuilder();
     } else if (result === 'CountLimit') {
-      this.toast(`The Townhall can hold no more ${DISTRICTS[site.districtId].name} — raise it first`);
+      this.toast(tr('The Townhall can hold no more {building} — raise it first', { building: DISTRICTS[site.districtId].name }));
     } else if (result === 'NotRevealed') {
-      this.toast('Clear the fog off it first');
+      this.toast(tr('Clear the fog off it first'));
     } else if (result === 'LairHeld') {
-      this.toast('A lair holds its ground — clear it first');
+      this.toast(tr('A lair holds its ground — clear it first'));
     } else if (result === 'MissingItem') {
       const item = DISTRICTS[site.districtId].repairItem as ItemId;
-      this.toast(`It needs ${ITEMS[item]?.name ?? 'a missing piece'} — find it first`);
+      this.toast(tr('It needs {item} — find it first', { item: ITEMS[item]?.name ?? tr('a missing piece') }));
     } else {
       this.toast(this.refusalWords(result, site.districtId, 1));
     }
@@ -3204,18 +3208,19 @@ export class Game {
     result: string, definitionId: DistrictId, targetLevel: number, district?: District,
   ): string {
     if (result === 'NotEnoughGoods') {
-      return 'Not enough refined goods — queue some at a workshop';
+      return tr('Not enough refined goods — queue some at a workshop');
     }
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
-      return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
+      return tr('Needs {n} more Harmony — build a decoration', { n: formatExact(short?.shortBy ?? 0) });
     }
     if (result === 'NotForMaterials') {
-      return shrineBuild(this.state).kind === 'ruinFirst' ? 'Repair the old shrine first' : 'Every Shrine is built';
+      return shrineBuild(this.state).kind === 'ruinFirst' ? tr('Repair the old shrine first') : tr('Every Shrine is built');
     }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
-      return `Needs ${formatExact(need)} villagers — you have ${formatExact(this.state.city.population)}. Train more at the Townhall`;
+      return tr('Needs {need} villagers — you have {have}. Train more at the Townhall',
+        { need: formatExact(need), have: formatExact(this.state.city.population) });
     }
     return result;
   }
@@ -3277,8 +3282,8 @@ export class Game {
       const district = districtById(this.state, item.districtUniqueId);
       if (!district) return [];
       const task = item.kind === 'upgrade'
-        ? `Upgrading to Lv ${item.targetLevel ?? district.level + 1}`
-        : 'Building';
+        ? tr('Upgrading to Lv {n}', { n: formatExact(item.targetLevel ?? district.level + 1) })
+        : tr('Building');
       return [{ item, district, name: districtLabel(this.state, district), task }];
     });
   }
@@ -3292,9 +3297,9 @@ export class Game {
       return {
         index: b.index,
         name: worldBuildName(b.what),
-        task: b.what === 'Repair' ? 'Repairing on the world map'
-          : isUpgrade(b.what) && b.level > 1 ? `Upgrading to Lv ${formatCount(b.level)} on the world map`
-            : isUpgrade(b.what) ? 'Building on the world map' : 'Claiming on the world map',
+        task: b.what === 'Repair' ? tr('Repairing on the world map')
+          : isUpgrade(b.what) && b.level > 1 ? tr('Upgrading to Lv {n} on the world map', { n: formatCount(b.level) })
+            : isUpgrade(b.what) ? tr('Building on the world map') : tr('Claiming on the world map'),
         startedAt: b.finishesAt - seconds * 1000,
         durationMs: seconds * 1000,
       };
@@ -3312,7 +3317,7 @@ export class Game {
       if (this.mode.kind !== 'placing' || !this.mode.selected) return null;
       const def = DISTRICTS[this.mode.definitionId];
       return {
-        verb: 'Build', what: `Ready to build the ${def.name}`,
+        verb: tr('Build'), what: tr('Ready to build the {name}', { name: def.name }),
         cost: nextBuildCost(this.state, def.id), start: () => this.confirmBuild(),
       };
     }
@@ -3321,20 +3326,20 @@ export class Game {
       if (!site || this.state.abandoned.repaired[site.id] === true) return null;
       const def = DISTRICTS[site.districtId];
       return {
-        verb: 'Repair', what: `Ready to repair ${site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name}`,
+        verb: tr('Repair'), what: tr('Ready to repair {site}', { site: site.name.toLowerCase().startsWith('the ') ? site.name.charAt(0).toLowerCase() + site.name.slice(1) : site.name }),
         cost: nextBuildCost(this.state, def.id), start: () => this.doRepairAbandoned(site.location),
       };
     }
     if (ask.kind === 'world') {
       const { index, what, level, gold } = ask;
-      const name = `the ${worldBuildName(what)}`;
+      const name = worldBuildName(what);
       if (what === 'Repair') {
-        return { verb: 'Repair', what: 'Ready to repair the burnt district', cost: { Gold: gold }, start: () => void this.doRepairHex(index, gold) };
+        return { verb: tr('Repair'), what: tr('Ready to repair the burnt district'), cost: { Gold: gold }, start: () => void this.doRepairHex(index, gold) };
       }
       return {
-        verb: !isUpgrade(what) ? 'Claim' : level > 1 ? 'Upgrade' : 'Build',
-        what: !isUpgrade(what) ? `Ready to claim with ${name}`
-          : level > 1 ? `Ready to upgrade ${name}` : `Ready to build ${name}`,
+        verb: !isUpgrade(what) ? tr('Claim') : level > 1 ? tr('Upgrade') : tr('Build'),
+        what: !isUpgrade(what) ? tr('Ready to claim with the {name}', { name })
+          : level > 1 ? tr('Ready to upgrade the {name}', { name }) : tr('Ready to build the {name}', { name }),
         cost: { Gold: gold },
         start: () => void (isUpgrade(what) ? this.doUpgradeHex(index, what, level, gold) : this.doClaimHex(index, gold)),
       };
@@ -3342,7 +3347,7 @@ export class Game {
     const d = districtById(this.state, ask.districtUniqueId);
     if (!d || d.level >= DISTRICTS[d.definitionId].maxLevel) return null;
     return {
-      verb: 'Upgrade', what: `Ready to upgrade the ${DISTRICTS[d.definitionId].name}`,
+      verb: tr('Upgrade'), what: tr('Ready to upgrade the {name}', { name: DISTRICTS[d.definitionId].name }),
       cost: upgradeCost(d.definitionId, d.ordinal, d.level),
       start: () => { this.doUpgrade(d.uniqueId); },
     };
@@ -3374,7 +3379,7 @@ export class Game {
     const now = this.now();
     return {
       profile: payer.profile,
-      label: PROFILE_LABEL[payer.profile],
+      label: PAYER_LABEL[payer.profile],
       budgetCents: monthlyBudgetCents(payer.profile),
       remainingCents: budgetRemainingCents(this.state, now) ?? 0,
       resetsIn: describeWait(monthResetsAt(now) - now),
@@ -3467,7 +3472,7 @@ export class Game {
     if (result === 'Purchased') this.track('purchased', this.skuProps(id));
     if (result === 'NotOnSale') {
       // The window closed under the confirmation: nothing was charged.
-      this.toast('That offer has ended');
+      this.toast(tr('That offer has ended'));
       this.pendingSku = null;
       this.setOverlay('store');
       return;
@@ -3478,11 +3483,11 @@ export class Game {
       const back = this.pendingSkuFrom;
       this.pendingSku = null;
       // Only what the player cannot see from where they land is said.
-      if (isItemBundle(id)) this.toast(`${STORE[id].name} — it is in the Bag`);
+      if (isItemBundle(id)) this.toast(tr('{name} — it is in the Bag', { name: STORE[id].name }));
       // An offer bought out, or a Gem pack, goes back to the store; anything
       // bought from a sheet that is not the store goes back there.
       this.setOverlay(back);
-      if (id === 'Survey') this.toast('The Royal Survey is yours — every level you have reached is open');
+      if (id === 'Survey') this.toast(tr('The Royal Survey is yours — every level you have reached is open'));
       if (result === 'Purchased' && STORE[id].gems > 0) this.reward({ Gems: STORE[id].gems });
       if (result === 'Purchased') {
         // A hero bought — in the pack, or as the first purchase's reward —
@@ -3509,7 +3514,7 @@ export class Game {
     const result = trainUnit(this.state, 'Villager', this.now());
     if (result === 'NotEnoughResources') {
       const cost = trainCost(this.state, 'Villager') as Wallet;
-      if (!this.offerShortfall('Train a villager', cost, () => this.doQueueTraining())) this.shake(['Food']);
+      if (!this.offerShortfall(tr('Train a villager'), cost, () => this.doQueueTraining())) this.shake(['Food']);
     }
     else if (result === 'AtMax') this.toast(this.atMaxWords());
     this.notify();
@@ -3517,8 +3522,8 @@ export class Game {
 
   doChangeWorkers(districtId: string, delta: 1 | -1): AssignWorkerResult {
     const result = changeWorkers(this.state, this.map, districtId, delta, this.now());
-    if (result === 'AtCapacity') this.toast('Worker capacity reached — upgrade the building');
-    if (result === 'NoFreeWorkers') this.toast('No free workers — buy population');
+    if (result === 'AtCapacity') this.toast(tr('Worker capacity reached — upgrade the building'));
+    if (result === 'NoFreeWorkers') this.toast(tr('No free workers — buy population'));
     this.notify();
     return result;
   }
@@ -3528,7 +3533,7 @@ export class Game {
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
       const cost = upgradeCost(d.definitionId, d.ordinal, d.level);
-      if (!this.offerShortfall(`${DISTRICTS[d.definitionId].name} to level ${formatExact(d.level + 1)}`, cost,
+      if (!this.offerShortfall(tr('{building} to level {n}', { building: DISTRICTS[d.definitionId].name, n: formatExact(d.level + 1) }), cost,
         () => { this.doUpgrade(districtId); })) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
@@ -3770,15 +3775,15 @@ export class Game {
   private atMaxWords(): string {
     const rising = this.state.city.districts.some((d) => d.state !== 'Built'
       && DISTRICTS[d.definitionId].populationCapacityPerLevel.length > 0);
-    return rising ? 'The new House is still going up — wait for it to finish'
-      : 'Population at max — build more Housing';
+    return rising ? tr('The new House is still going up — wait for it to finish')
+      : tr('Population at max — build more Housing');
   }
 
   private researchRefusalToast(refusal: ResearchRefusal, id: TechId): void {
-    if (refusal === 'MissingRequirement') this.toast('Requires another technology first');
+    if (refusal === 'MissingRequirement') this.toast(tr('Requires another technology first'));
     else if (refusal === 'EraLocked') {
       const def = TECHNOLOGIES[id];
-      this.toast(`Reveal ${eraShortfall(this.state, def.tome, def.era)} more cells to read on`);
+      this.toast(tr('Reveal {n} more cells to read on', { n: formatExact(eraShortfall(this.state, def.tome, def.era)) }));
     }
   }
 
@@ -3806,12 +3811,15 @@ export class Game {
       if (this.state.research.rewarded.length > paid) {
         const { tome, era } = TECHNOLOGIES[id];
         const n = ERA_REWARDS[tome][era];
-        if (n) this.toast(`Chapter ${formatExact(era)} complete — ${formatExact(n)} relic fragment${n === 1 ? '' : 's'}`);
+        if (n) {
+          this.toast(trn(n, 'Chapter {era} complete — {n} relic fragment', 'Chapter {era} complete — {n} relic fragments',
+            { era: formatExact(era), n: formatExact(n) }));
+        }
       }
     } else if (result === 'NotEnoughGold') this.shake(['Gold']);
     else if (result === 'NotEnoughMaterials') {
       this.shake((Object.keys(techMaterialsCost(id)) as CurrencyId[]).filter((c) => this.walletValue(c) < getWallet(TECHNOLOGIES[id].cost, c)));
-    } else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
+    } else if (result === 'NotEnoughGoods') this.toast(tr('Not enough refined goods for that'));
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();
@@ -4246,7 +4254,7 @@ export class Game {
   /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
    *  it warns on the sheet and lets the player go anyway. */
   lairBlockText(): string | null {
-    if (this.lairId === null) return 'No lair chosen';
+    if (this.lairId === null) return tr('No lair chosen');
     const block = lairBlock(
       this.state, this.map, this.lairId, this.partyHeroes, this.expeditionParty, this.now());
     return block === null ? null : LAIR_BLOCK_TEXT[block];
@@ -4284,7 +4292,9 @@ export class Game {
     // last pays nothing until the reward is claimed from the lair's card.
     this.openBattle(report.log!, {
       title: LAIRS[lairId].name,
-      subtitle: `${lairView(this.state, lairId)?.creature ?? 'A warband'} · Fight ${formatExact(fight)} of ${formatExact(lairFights(lairId))}`,
+      subtitle: tr('{creature} · Fight {n} of {total}', {
+        creature: lairView(this.state, lairId)?.creature ?? tr('A warband'), n: formatExact(fight), total: formatExact(lairFights(lairId)),
+      }),
       prizes: report.heroXp > 0 ? [{ kind: 'currency', currency: 'HeroXp', amount: report.heroXp }] : [],
       enemyFaces: UNIT_CREATURE_AVATAR,
       backdrop: 'field',
@@ -4311,7 +4321,7 @@ export class Game {
     this.vanishingLairs.set(lairId, performance.now());
     playSfx('questComplete');
     const items = Object.keys(report.items) as ItemId[];
-    if (items.length > 0) this.toast(`In the Bag: ${items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ')}`);
+    if (items.length > 0) this.toast(tr('In the Bag: {items}', { items: items.map((id) => `${formatExact(report.items[id] ?? 1)}× ${itemWords(id)}`).join(', ') }));
     this.notify();
     queueMicrotask(() => this.reward(haul, from));
   }
@@ -4403,8 +4413,8 @@ export class Game {
   /** Why a tile would send nothing right now, in the words the toast uses —
    *  or null when a tap would place a squad. */
   troopRefusal(unitId: TroopId): string | null {
-    if (this.troopsAvailableFor(unitId) <= 0) return `No ${TROOPS[unitId].name}s left to send`;
-    if (this.expeditionParty.length >= this.troopSlotsOpen()) return 'Every troop slot is full';
+    if (this.troopsAvailableFor(unitId) <= 0) return tr('No {troop}s left to send', { troop: TROOPS[unitId].name });
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) return tr('Every troop slot is full');
     return null;
   }
 
@@ -4448,11 +4458,11 @@ export class Game {
   assignHero(heroId: HeroId): void {
     if (this.partyHeroes.includes(heroId)) return;
     if (!heroCanFight(this.state, heroId, this.now())) {
-      this.toast(`${HEROES[heroId].name} is exhausted — they rest until their HP is full`);
+      this.toast(tr('{hero} is exhausted — they rest until their HP is full', { hero: HEROES[heroId].name }));
       return;
     }
     if (this.partyHeroes.length >= this.heroSlotsOpen()) {
-      this.toast('Every hero slot is full — clear one first');
+      this.toast(tr('Every hero slot is full — clear one first'));
       return;
     }
     this.partyHeroes.push(heroId);
@@ -4592,7 +4602,7 @@ export class Game {
     const slots: Array<HeroId | null> = Array.from({ length: Math.max(1, opts.slots) },
       (_, i) => opts.selected?.[i] ?? null);
     this.heroPick = {
-      title: opts.title ?? 'Choose heroes',
+      title: opts.title ?? tr('Choose heroes'),
       slots,
       returnTo: this.openOverlay,
       onSelect: opts.onSelect,
@@ -4656,7 +4666,7 @@ export class Game {
       playSfx('click');
     } else if (!heroCanFight(this.state, heroId, this.now())) {
       playSfx('error');
-      this.toast(`${HEROES[heroId].name} is exhausted — they rest until their HP is full`);
+      this.toast(tr('{hero} is exhausted — they rest until their HP is full', { hero: HEROES[heroId].name }));
     } else {
       const free = pick.slots.indexOf(null);
       if (free < 0) {
@@ -4790,7 +4800,7 @@ export class Game {
     const result = buyHeroSlot(this.state);
     if (result === 'Purchased') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
-    else this.toast('Three heroes is the whole board');
+    else this.toast(tr('Three heroes is the whole board'));
     this.notify();
   }
 
@@ -4908,7 +4918,7 @@ export class Game {
         // place in the game that already knows how to hand things over one
         // at a time.
         b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
-        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils', chest: 'spoils' };
+        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: tr('Spoils'), chest: 'spoils' };
         moved = true;
         continue;
       }
@@ -4947,7 +4957,7 @@ export class Game {
   doUnlockHero(id: HeroId): void {
     const result = unlockHero(this.state, id);
     if (result === 'Unlocked') playSfx('chainFinished');
-    else if (result === 'NotEnoughFragments') this.toast('Not enough fragments yet');
+    else if (result === 'NotEnoughFragments') this.toast(tr('Not enough fragments yet'));
     this.notify();
   }
 
@@ -4955,7 +4965,7 @@ export class Game {
     const result = levelUpHero(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
     else if (result === 'NotEnoughXp') this.shake(['HeroXp']);
-    else if (result === 'AscensionCapped') this.toast('Their ascension holds them back');
+    else if (result === 'AscensionCapped') this.toast(tr('Their ascension holds them back'));
     this.notify();
   }
 
@@ -4963,15 +4973,15 @@ export class Game {
     const result = buySkillRank(this.state, id);
     if (result === 'Ranked') playSfx('upgradeBought');
     else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
-    else if (result === 'NotEnoughMaterial') this.toast('Not enough precious material yet');
-    else if (result === 'LevelTooLow') this.toast('Reach the level first');
+    else if (result === 'NotEnoughMaterial') this.toast(tr('Not enough precious material yet'));
+    else if (result === 'LevelTooLow') this.toast(tr('Reach the level first'));
     this.notify();
   }
 
   doAscendHero(id: HeroId): void {
     const result = ascendHero(this.state, id);
     if (result === 'Ascended') playSfx('upgradeBought');
-    else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    else if (result === 'NotEnoughFragments') this.toast(tr('Not enough Fragments yet'));
     else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     this.notify();
   }
@@ -4997,9 +5007,9 @@ export class Game {
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(healCost(this.state, unitId, count)) as CurrencyId[]);
     } else if (result === 'ArmyAtCapacity') {
-      this.toast('No room in the ranks — upgrade a military hall');
+      this.toast(tr('No room in the ranks — upgrade a military hall'));
     } else if (result === 'NoBuilding') {
-      this.toast('No hall here can look after them');
+      this.toast(tr('No hall here can look after them'));
     }
     this.notify();
   }
@@ -5071,8 +5081,8 @@ export class Game {
     const gate = rankGate(this.state, troop, district);
     if (gate !== null) {
       this.toast(gate === 'HallLevel'
-        ? `${TROOPS[troop].name} needs the hall at level ${formatExact(TROOPS[troop].minBuildingLevel)}`
-        : `${TROOPS[troop].name} is not researched yet`);
+        ? tr('{troop} needs the hall at level {n}', { troop: TROOPS[troop].name, n: formatExact(TROOPS[troop].minBuildingLevel) })
+        : tr('{troop} is not researched yet', { troop: TROOPS[troop].name }));
       return;
     }
     this.rankPicks.set(district.uniqueId, { troop, top });
@@ -5094,24 +5104,26 @@ export class Game {
     const result = trainBatch(this.state, unitId, plan.count, this.now(), at);
     if (result === 'NotEnoughResources') {
       const cost = plan.cost as Wallet;
-      const name = unitId === 'Villager'
-        ? (plan.count === 1 ? 'a villager' : `${formatExact(plan.count)} villagers`)
-        : (plan.count === 1 ? `a ${TROOPS[unitId].name}` : `${formatExact(plan.count)} ${TROOPS[unitId].name}s`);
-      if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
+      const n = formatExact(plan.count);
+      const title = unitId === 'Villager'
+        ? trn(plan.count, 'Train a villager', 'Train {n} villagers', { n })
+        : trn(plan.count, 'Train a {troop}', 'Train {n} {troop}s', { n, troop: TROOPS[unitId].name });
+      if (!this.offerShortfall(title, cost, () => this.doTrain(unitId, at))) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
     }
     if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
-        `Build the ${trainerName(unitOf(unitId))} first — it is where ${UNITS[unitOf(unitId)].name}s are trained`);
+        tr('Build the {hall} first — it is where {unit}s are trained', { hall: trainerName(unitOf(unitId)), unit: UNITS[unitOf(unitId)].name }));
     }
     if (result === 'HallLevel' && unitId !== 'Villager') {
-      this.toast(`${TROOPS[unitId].name} needs the hall at level ${formatExact(TROOPS[unitId].minBuildingLevel)}`);
+      this.toast(tr('{troop} needs the hall at level {n}', { troop: TROOPS[unitId].name, n: formatExact(TROOPS[unitId].minBuildingLevel) }));
     }
-    if (result === 'OtherRank') this.toast('Finish the current batch first — a hall trains one rank at a time');
+    if (result === 'OtherRank') this.toast(tr('Finish the current batch first — a hall trains one rank at a time'));
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
+      this.toast(tr('Army at capacity ({used}/{cap}) — build or upgrade a military building',
+        { used: formatExact(committedTroops(this.state)), cap: formatExact(armyCap(this.state)) }));
     }
     this.notify();
     return result;
@@ -5123,8 +5135,8 @@ export class Game {
     if (result === 'Queued') playSfx('click');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Stone']);
     if (result === 'NotEnoughMana') this.shake(['Mana']);
-    if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
-    if (result === 'QueueFull') this.toast('The queue is full — upgrade the workshop for a longer one');
+    if (result === 'NotEnoughGoods') this.toast(tr('Not enough refined goods for that'));
+    if (result === 'QueueFull') this.toast(tr('The queue is full — upgrade the workshop for a longer one'));
     this.notify();
   }
 
@@ -5975,7 +5987,7 @@ export class Game {
     const r = await this.worldServer.join(nickname);
     this.joiningWorld = false;
     if (!r.ok) {
-      this.nicknameRefused = r.why === 'NicknameTaken' ? 'Another kingdom has that name' : this.worldRefusal(r.why);
+      this.nicknameRefused = r.why === 'NicknameTaken' ? tr('Another kingdom has that name') : this.worldRefusal(r.why);
       this.notify();
       return;
     }
@@ -6145,33 +6157,33 @@ export class Game {
   /** The line a refused world command shows. */
   private worldRefusal(why: Refusal): string {
     const LINES: Record<Refusal, string> = {
-      NoSuchHex: 'There is no such place', NotAdjacent: 'Claim the ground beside it first',
-      Taken: 'Someone holds it already', NeverHeld: 'Nobody can hold this place',
-      NotYours: 'This is not your ground', NotStanding: 'The district is still being built',
-      Busy: 'A builder is already at work there', WrongGround: 'That cannot stand here',
-      MaxLevel: 'It is as high as it goes', Inactive: 'Cut off from your city — reconnect it first',
-      NoBoard: 'The roads to the world are closed',
-      NoArmy: 'That army is not yours to call', NotAFortress: 'Only a standing Fortress takes a garrison',
-      Garrisoned: 'That Fortress is manned already', NothingThere: 'There is nothing there to take',
-      OwnGround: 'That ground is yours already',
-      Shut: 'The Portal is shut',
-      NoRoute: 'No way there through explored ground',
-      NothingBuilding: 'Nothing is being built there',
-      Guarded: 'A camp holds it — beat it, or pay it off, first',
-      Marching: 'Your army is on the road — hurry it instead',
-      NotARival: 'Only a rival can be played', Offline: 'The world cannot be reached — try again',
-      BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
-      NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
-      NoSlot: 'Every slot of this district is taken',
-      Locked: 'Research it in the Atlas first', TooManyFortresses: 'Research the Atlas to hold another Fortress',
-      NotAWorldRelic: 'Only a restored world relic can be hosted there',
+      NoSuchHex: tr('There is no such place'), NotAdjacent: tr('Claim the ground beside it first'),
+      Taken: tr('Someone holds it already'), NeverHeld: tr('Nobody can hold this place'),
+      NotYours: tr('This is not your ground'), NotStanding: tr('The district is still being built'),
+      Busy: tr('A builder is already at work there'), WrongGround: tr('That cannot stand here'),
+      MaxLevel: tr('It is as high as it goes'), Inactive: tr('Cut off from your city — reconnect it first'),
+      NoBoard: tr('The roads to the world are closed'),
+      NoArmy: tr('That army is not yours to call'), NotAFortress: tr('Only a standing Fortress takes a garrison'),
+      Garrisoned: tr('That Fortress is manned already'), NothingThere: tr('There is nothing there to take'),
+      OwnGround: tr('That ground is yours already'),
+      Shut: tr('The Portal is shut'),
+      NoRoute: tr('No way there through explored ground'),
+      NothingBuilding: tr('Nothing is being built there'),
+      Guarded: tr('A camp holds it — beat it, or pay it off, first'),
+      Marching: tr('Your army is on the road — hurry it instead'),
+      NotARival: tr('Only a rival can be played'), Offline: tr('The world cannot be reached — try again'),
+      BadNickname: tr('That name cannot be used'), NicknameTaken: tr('Another kingdom has that name'),
+      NoChapel: tr('Build a Chapel there first'), TooManyChapels: tr('Hold more ground to build another Chapel'),
+      NoSlot: tr('Every slot of this district is taken'),
+      Locked: tr('Research it in the Atlas first'), TooManyFortresses: tr('Research the Atlas to hold another Fortress'),
+      NotAWorldRelic: tr('Only a restored world relic can be hosted there'),
     };
     return LINES[why];
   }
 
   /** The Gold for a world build, or the line that says why not. */
   private worldBuilderRefusal(gold: number): string | null {
-    if (getWallet(this.state.city.wallet, 'Gold') < gold) return 'Not enough Gold';
+    if (getWallet(this.state.city.wallet, 'Gold') < gold) return tr('Not enough Gold');
     return null;
   }
 
@@ -6267,7 +6279,7 @@ export class Game {
     const goods = isUpgrade(what) ? worldUpgradeGoods(this.state, what, level) : {};
     const short = Object.entries(goods).find(([g, n]) => getGood(this.state.city.goods, g as GoodId) < (n as number));
     if (refused !== null || short !== undefined) {
-      this.toast(refused ?? `Not enough ${short![0]}`);
+      this.toast(refused ?? tr('Not enough {good}', { good: short![0] }));
       this.notify();
       return;
     }
@@ -6339,12 +6351,12 @@ export class Game {
 
   /** Why the army cannot set out, in words, or null. */
   armyBlockText(): string | null {
-    if (this.armyTarget === null) return 'No destination chosen';
-    if (this.armyRoute(this.armyTarget) === null) return 'No way there through explored ground';
-    if (freeArmySlots(this.state) === 0) return 'Every army is out — the War Camp sends more';
-    if (this.partyHeroes.length === 0) return 'An army needs a hero to lead it';
-    if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return 'A hero in it cannot march';
-    if (this.armyPurpose !== 'claim' && !this.expeditionParty.some((s) => s.count > 0)) return 'An army needs soldiers';
+    if (this.armyTarget === null) return tr('No destination chosen');
+    if (this.armyRoute(this.armyTarget) === null) return tr('No way there through explored ground');
+    if (freeArmySlots(this.state) === 0) return tr('Every army is out — the War Camp sends more');
+    if (this.partyHeroes.length === 0) return tr('An army needs a hero to lead it');
+    if (this.partyHeroes.some((h) => !heroCanFight(this.state, h, this.now()))) return tr('A hero in it cannot march');
+    if (this.armyPurpose !== 'claim' && !this.expeditionParty.some((s) => s.count > 0)) return tr('An army needs soldiers');
     if (sendFights(this.armyPurpose)) return this.fightManaBlock();
     return null;
   }
@@ -6357,7 +6369,7 @@ export class Game {
   /** Why the city cannot pay for a fight on the board, or null. */
   fightManaBlock(): string | null {
     const cost = fightMana(this.state);
-    return canPayMana(this.state, cost) ? null : `Not enough Mana — a fight costs ${formatExact(cost)}`;
+    return canPayMana(this.state, cost) ? null : tr('Not enough Mana — a fight costs {n}', { n: formatExact(cost) });
   }
 
   /** Set the army out. Its troops leave the roster and its heroes are busy
@@ -6392,7 +6404,7 @@ export class Game {
     if (back === null) this.dismiss();
     else { this.selectedHex = target; this.setOverlay(back); }
     playSfx('armyMarch');
-    this.toast(`Your army marches — there in ${formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000)}`);
+    this.toast(tr('Your army marches — there in {time}', { time: formatCountdown(Math.max(0, r.arrivesAt - this.now()) / 1000) }));
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6412,7 +6424,7 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, {
       title: CAMP_TITLE[r.creature],
-      subtitle: r.won ? 'Beaten — the loot comes home with the army' : 'Beaten back',
+      subtitle: r.won ? tr('Beaten — the loot comes home with the army') : tr('Beaten back'),
       prizes: [],
       enemyFaces: UNIT_CREATURE_AVATAR,
       backdrop: 'field',
@@ -6443,8 +6455,8 @@ export class Game {
     this.delveDepth = null;
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, {
-      title: `Depth ${formatCount(r.depth + 1)} · Room ${formatCount(r.room)}`,
-      subtitle: r.boss ? 'The depth’s boss' : 'A dungeon room',
+      title: tr('Depth {depth} · Room {room}', { depth: formatCount(r.depth + 1), room: formatCount(r.room) }),
+      subtitle: r.boss ? tr('The depth’s boss') : tr('A dungeon room'),
       prizes: [],
       // A dungeon's squads are creatures, as the delve screen draws them.
       enemyFaces: UNIT_CREATURE_AVATAR,
@@ -6476,8 +6488,8 @@ export class Game {
     payMana(this.state, cost);
     this.applyWorldSnapshot(r.snapshot);
     this.openBattle(r.log, {
-      title: `The Dark Portal · floor ${formatCount(r.room)}`,
-      subtitle: 'The depths below',
+      title: tr('The Dark Portal · floor {n}', { n: formatCount(r.room) }),
+      subtitle: tr('The depths below'),
       prizes: [],
       enemyFaces: UNIT_CREATURE_AVATAR,
       backdrop: 'portal',
@@ -6502,10 +6514,11 @@ export class Game {
    *  target paid, flown into the header. */
   private explorerFound(found: ExplorerFound): void {
     playSfx('revealDone');
-    const paid = found.paid === null ? '' : ` — and ${scoutWords(found.paid)}`;
+    const n = formatCount(found.revealed);
+    const paid = found.paid === null ? null : scoutWords(found.paid);
     this.toast(found.revealed > 0
-      ? `${formatCount(found.revealed)} new hexes on the map${paid}`
-      : `Nothing new out there${paid}`);
+      ? (paid === null ? tr('{n} new hexes on the map', { n }) : tr('{n} new hexes on the map — and {paid}', { n, paid }))
+      : (paid === null ? tr('Nothing new out there') : tr('Nothing new out there — and {paid}', { paid })));
     if (found.paid !== null && Object.keys(found.paid.wallet).length > 0) this.reward(found.paid.wallet);
   }
 
@@ -6570,7 +6583,7 @@ export class Game {
     }
     pay(this.state.city.wallet, cost);
     playSfx('tribute');
-    this.toast(`The camp of ${CAMP_CREATURE[camp.creature]} takes the tribute and leaves`);
+    this.toast(tr('The camp of {creature} takes the tribute and leaves', { creature: CAMP_CREATURE[camp.creature] }));
     this.applyWorldSnapshot(r.snapshot);
   }
 
@@ -6880,13 +6893,13 @@ export class Game {
     if (result.kind === 'NoExplorerFree') {
       this.toast(explorersOutLine(this.state, result.nextFreeAt, this.now()));
     } else if (result.kind === 'NoRoute') {
-      this.toast('No way there through explored ground');
+      this.toast(tr('No way there through explored ground'));
     } else if (result.kind === 'Explored') {
-      this.toast('Already explored');
+      this.toast(tr('Already explored'));
     } else if (result.kind === 'BeingExplored') {
-      this.toast('An explorer is already on the way');
+      this.toast(tr('An explorer is already on the way'));
     } else if (result.kind === 'NotEnoughGold') {
-      this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
+      this.toast(tr('Not enough Gold — exploring there costs {n}', { n: formatExact(result.gold) }));
     }
     this.notify();
   }
@@ -7192,11 +7205,11 @@ export function siteBanner(id: string): Banner | null {
   if (landmark) {
     const art = LANDMARK_ART[landmark.kind];
     return {
-      title: 'A place of power!',
+      title: tr('A place of power!'),
       icon: art.glyph,
       name: art.name,
       // What it is FOR, in one line — the site card carries the detail.
-      desc: 'Clear a path to it and claim it.',
+      desc: tr('Clear a path to it and claim it.'),
       sprite: art.sprite,
       tone: 'sky',
     };
@@ -7204,7 +7217,7 @@ export function siteBanner(id: string): Banner | null {
   const lair = Object.values(LAIRS).find((r) => r.id === id);
   if (lair) {
     return {
-      title: 'Lair sighted!',
+      title: tr('Lair sighted!'),
       icon: lair.glyph,
       name: lair.name,
       desc: lair.description,
@@ -7218,10 +7231,10 @@ export function siteBanner(id: string): Banner | null {
   if (ruin) {
     const def = DISTRICTS[ruin.districtId];
     return {
-      title: 'An abandoned building!',
+      title: tr('An abandoned building!'),
       icon: def.glyph,
       name: ruin.name,
-      desc: 'Clear the fog off it, then repair it.',
+      desc: tr('Clear the fog off it, then repair it.'),
       sprite: `${def.sprite}_ruin`,
       tone: 'gold',
     };
@@ -7298,7 +7311,7 @@ export function icon(c: CurrencyId): string {
 /** The building that trains a unit type, by name — for the blocker text. */
 function trainerName(unitId: UnitId): string {
   const def = Object.values(DISTRICTS).find((d) => d.trains.includes(unitId));
-  return def?.name ?? 'right building';
+  return def?.name ?? tr('right building');
 }
 
 
@@ -7320,7 +7333,7 @@ function relicEffectText(id: ArtifactId, value: number): string {
   // A SPEED is a multiplier the call site DIVIDES by, so it reads as "faster"
   // rather than as "more": `recover +280%` is true and says nothing.
   return stat.endsWith('Speed')
-    ? `${RELIC_SUBJECT[id]} ${pct} faster`
+    ? tr('{subject} {pct} faster', { subject: RELIC_SUBJECT[id], pct })
     : `${RELIC_SUBJECT[id]} +${pct}`;
 }
 
@@ -7335,42 +7348,42 @@ function relicShortEffect(id: ArtifactId, value: number): string {
 }
 
 const RELIC_SHORT: Record<ArtifactId, string> = {
-  DowsingRod: 'resources',
-  VerdantSeal: 'per swing',
-  ForemansSigil: 'work speed',
-  GildedLedger: 'tax',
-  WanderersCompass: 'Stardust',
-  DelversLantern: 'room haul',
-  MusterHorn: 'army',
-  BailiffsTally: 'district yield',
+  DowsingRod: tr('resources'),
+  VerdantSeal: tr('per swing'),
+  ForemansSigil: tr('work speed'),
+  GildedLedger: tr('tax'),
+  WanderersCompass: tr('Stardust'),
+  DelversLantern: tr('room haul'),
+  MusterHorn: tr('army'),
+  BailiffsTally: tr('district yield'),
 };
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
-  DowsingRod: 'Forests, fields and rocks hold',
-  VerdantSeal: 'Every swing and tap takes',
-  ForemansSigil: 'Your crews work and halls train',
-  GildedLedger: 'Your villagers pay',
-  WanderersCompass: 'Rooms pay Stardust',
-  DelversLantern: 'A room pays gold and stone',
-  MusterHorn: 'Your halls field',
-  BailiffsTally: 'Every district you hold pays',
+  DowsingRod: tr('Forests, fields and rocks hold'),
+  VerdantSeal: tr('Every swing and tap takes'),
+  ForemansSigil: tr('Your crews work and halls train'),
+  GildedLedger: tr('Your villagers pay'),
+  WanderersCompass: tr('Rooms pay Stardust'),
+  DelversLantern: tr('A room pays gold and stone'),
+  MusterHorn: tr('Your halls field'),
+  BailiffsTally: tr('Every district you hold pays'),
 };
 
 /** Why a lair attack is refused. A power shortfall is NOT one of these: it
  *  warns on the sheet and the player may go anyway. */
 const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
-  LairNotFound: 'Clear a path to the lair first',
-  AlreadyCleared: 'That lair is already cleared',
-  AlreadyDefeated: 'They are beaten — claim what they left behind',
-  EmptyParty: 'Pick who goes in',
-  NoSoldiers: 'A lair wants soldiers — a hero cannot go in alone',
-  NoHero: 'Pick a hero to lead them',
-  TooManyHeroes: 'More heroes than you have slots for',
-  TooManySlots: 'Too many kinds of unit — buy another party slot',
-  NotEnoughUnits: 'You do not have that many at home',
-  NotEnoughSupplies: 'Not enough Mana to attack',
-  HeroDown: 'A hero in the party is exhausted — they rest until their HP is full',
+  LairNotFound: tr('Clear a path to the lair first'),
+  AlreadyCleared: tr('That lair is already cleared'),
+  AlreadyDefeated: tr('They are beaten — claim what they left behind'),
+  EmptyParty: tr('Pick who goes in'),
+  NoSoldiers: tr('A lair wants soldiers — a hero cannot go in alone'),
+  NoHero: tr('Pick a hero to lead them'),
+  TooManyHeroes: tr('More heroes than you have slots for'),
+  TooManySlots: tr('Too many kinds of unit — buy another party slot'),
+  NotEnoughUnits: tr('You do not have that many at home'),
+  NotEnoughSupplies: tr('Not enough Mana to attack'),
+  HeroDown: tr('A hero in the party is exhausted — they rest until their HP is full'),
 };
 
 /** How well a unit type answers a lair's threat — used only to pre-fill a
@@ -7382,17 +7395,24 @@ const scoreAgainst = (troop: TroopId, affinity: UnitId | 'Any'): number =>
  *  budget refills on the first of the month, not on a stopwatch. */
 function describeWait(ms: number): string {
   const minutes = Math.max(1, Math.round(ms / 60_000));
-  if (minutes < 60) return `in ${minutes} minute${minutes === 1 ? '' : 's'}`;
+  if (minutes < 60) return trn(minutes, 'in {n} minute', 'in {n} minutes', { n: formatExact(minutes) });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `in ${hours} hour${hours === 1 ? '' : 's'}`;
+  if (hours < 24) return trn(hours, 'in {n} hour', 'in {n} hours', { n: formatExact(hours) });
   const days = Math.round(hours / 24);
-  return `in ${days} day${days === 1 ? '' : 's'}`;
+  return trn(days, 'in {n} day', 'in {n} days', { n: formatExact(days) });
 }
 
 /** "Orcs hold this ground", "A drake holds this ground": the creature's own
  *  noun decides the verb. */
-const holdsThisGround = (creature: string): string =>
-  `${creature} ${creature.startsWith('A ') ? 'holds' : 'hold'} this ground`;
+const holdsThisGround = (creature: string): string => (creature.startsWith('A ')
+  ? tr('{creature} holds this ground', { creature })
+  : tr('{creature} hold this ground', { creature }));
+
+/** A hero a product hands over, with its rarity: "Isolde, legendary hero". */
+const heroRarityLine = (name: string, rarity: HeroRarity): string => (
+  rarity === 'Legendary' ? tr('{name}, legendary hero', { name })
+    : rarity === 'Rare' ? tr('{name}, rare hero', { name })
+      : tr('{name}, common hero', { name }));
 
 /** An offer as the store draws it (`Game.offerCards`, `Game.dailyCards`). */
 export interface OfferCard {

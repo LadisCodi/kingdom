@@ -17,6 +17,7 @@ import type { Game, RelicView } from '../game';
 import { el, formatExact } from './format';
 import { btn, headPanel, iconEl, sectionHead, sheet } from './kit';
 import { relicArt } from './relicSheet';
+import { tr } from '../i18n/tr';
 
 /** A relic's card in the picker: its art, level, name and what it does —
  *  the thing the choice is about — and the Shrine mark when it already
@@ -32,10 +33,10 @@ function pickCard(
     ...(opts.inList ? { 'data-coach': `relic-pick:${view.id}` } : {}),
   },
     el('span', { class: 'rl-card-art' }, relicArt(view, 'rl-art')),
-    el('span', { class: 'rl-seal' }, `Lv ${formatExact(view.level)}`),
+    el('span', { class: 'rl-seal' }, tr('Lv {level}', { level: formatExact(view.level) })),
     el('span', { class: 'rl-card-name' }, view.name),
     el('span', { class: 'rl-card-effect' }, view.effect),
-    ...(hosted ? [el('span', { class: 'rl-pick-host', role: 'img', 'aria-label': 'In a Shrine' }, iconEl('Shrine'))] : []),
+    ...(hosted ? [el('span', { class: 'rl-pick-host', role: 'img', 'aria-label': tr('In a Shrine') }, iconEl('Shrine'))] : []),
     ...(opts.picked ? [el('span', { class: 'hc-check', 'aria-hidden': 'true' })] : []));
   card.addEventListener('click', opts.onClick);
   return card;
@@ -44,7 +45,7 @@ function pickCard(
 /** An empty relic slot: the hero slot's dashed gold well, square. */
 export const emptyRelicSlot = (opts: { onClick?: () => void; label?: string } = {}): HTMLElement => {
   const slot = el(opts.onClick ? 'button' : 'span', {
-    class: 'rl-empty', ...(opts.onClick ? { type: 'button' } : {}), 'aria-label': opts.label ?? 'Empty relic slot',
+    class: 'rl-empty', ...(opts.onClick ? { type: 'button' } : {}), 'aria-label': opts.label ?? tr('Empty relic slot'),
   }, el('span', { class: 'hc-plus', 'aria-hidden': 'true' }, '+'));
   if (opts.onClick) slot.addEventListener('click', opts.onClick);
   return slot;
@@ -56,25 +57,28 @@ export function renderRelicPicker(game: Game): HTMLElement {
   const list = game.relicPickList();
   const chosen = list.find((v) => v.id === pick.slot) ?? null;
   // Over a world district's Chapel it chooses among the world relics.
-  const host = pick.chapel === undefined ? 'Shrine' : 'Chapel';
+  const shrine = pick.chapel === undefined;
+  const host = shrine ? tr('Shrine') : tr('Chapel');
   const body = el('div', { class: 'hp' },
     el('div', { class: 'hp-list', 'data-keep-scroll': 'relic-picker' },
-      sectionHead('Relics'),
+      sectionHead(tr('Relics')),
       list.length > 0
         ? el('div', { class: 'hp-grid' }, ...list.map((v) => pickCard(game, v, {
           picked: v.id === pick.slot,
           onClick: () => game.relicPickToggle(v.id),
           inList: true,
         })))
-        : el('p', { class: 'hp-none' }, `No ${host === 'Shrine' ? 'city' : 'world'} relic is restored yet`)),
+        : el('p', { class: 'hp-none' }, shrine ? tr('No city relic is restored yet') : tr('No world relic is restored yet'))),
     headPanel({ tone: 'green', title: host, trailing: [`${chosen === null ? 0 : 1}/1`], cls: 'hp-party' },
       el('div', { class: 'hp-slots' }, chosen === null
         ? emptyRelicSlot()
-        : pickCard(game, chosen, { onClick: () => game.relicPickClear(), label: `Take ${chosen.name} out of the ${host}` }))),
+        : pickCard(game, chosen, { onClick: () => game.relicPickClear(), label: shrine
+          ? tr('Take {name} out of the Shrine', { name: chosen.name })
+          : tr('Take {name} out of the Chapel', { name: chosen.name }) }))),
     el('div', { class: 'hp-go', 'data-coach': 'relic-pick-select' },
-      btn({ label: 'Select', kind: 'primary', onClick: () => game.relicPickConfirm() })),
+      btn({ label: tr('Select'), kind: 'primary', onClick: () => game.relicPickConfirm() })),
   );
-  const surface = sheet({ title: 'Choose a relic', onClose: () => game.relicPickCancel(), tall: true }, body);
+  const surface = sheet({ title: tr('Choose a relic'), onClose: () => game.relicPickCancel(), tall: true }, body);
   // The hero picker's frame: the whole height, the list paying for it.
   surface.classList.add('is-picker', 'is-board');
   return surface;
@@ -86,13 +90,13 @@ export function renderRelicMoveConfirm(game: Game): HTMLElement {
   const id = game.relicMoveSubject();
   const back = () => game.relicMoveCancel();
   const view = id === null ? null : game.relicPickList().find((v) => v.id === id) ?? null;
-  if (view === null) return sheet({ title: 'Move relic', onClose: back, centred: true });
-  return sheet({ title: 'Move relic', onClose: back, centred: true },
+  if (view === null) return sheet({ title: tr('Move relic'), onClose: back, centred: true });
+  return sheet({ title: tr('Move relic'), onClose: back, centred: true },
     el('div', { class: 'rl-move' },
       el('span', { class: 'rl-move-art' }, relicArt(view, 'rl-art')),
-      el('p', {}, `${view.name} is already in another Shrine. Move it to this one?`),
-      ...(view.status === 'awake' ? [el('p', { class: 'rl-note' }, 'It is awake there: moving it ends its window.')] : []),
+      el('p', {}, tr('{name} is already in another Shrine. Move it to this one?', { name: view.name })),
+      ...(view.status === 'awake' ? [el('p', { class: 'rl-note' }, tr('It is awake there: moving it ends its window.'))] : []),
       el('div', { class: 'iap-actions' },
-        btn({ label: 'Cancel', kind: 'secondary', onClick: back }),
-        btn({ label: 'Move', kind: 'primary', onClick: () => game.relicMoveAccept() }))));
+        btn({ label: tr('Cancel'), kind: 'secondary', onClick: back }),
+        btn({ label: tr('Move'), kind: 'primary', onClick: () => game.relicMoveAccept() }))));
 }

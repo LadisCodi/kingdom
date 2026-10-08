@@ -10,6 +10,7 @@
 // Three tabs also makes each one wider, which is the right direction for
 // thumb reach.
 
+import { tr } from '../i18n/tr';
 import type { Game, OverlayName } from '../game';
 import type { DoorId } from '../sim/doors';
 import { el } from './format';
@@ -42,13 +43,13 @@ import { setAttr } from './domWrite';
 // close the page that levels one. Naming the tab after the currency rather
 // than after the thing it buys made the relics a screen behind a screen.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName; door: DoorId }> = [
-  { name: 'store', label: 'Store', icon: 'shop', door: 'store' },
+  { name: 'store', label: tr('Store'), icon: 'shop', door: 'store' },
   // The Bag (Docs/art/ui-inventory.md §3.1), in the place the Relics tab
   // held: relics are found and restored there now.
-  { name: 'bag', label: 'Bag', icon: 'bag', door: 'bag' },
-  { name: 'heroes', label: 'Heroes', icon: 'helmet', door: 'heroes' },
-  { name: 'research', label: 'Research', icon: 'research', door: 'research' },
-  { name: 'build', label: 'Build', icon: 'build', door: 'build' },
+  { name: 'bag', label: tr('Bag'), icon: 'bag', door: 'bag' },
+  { name: 'heroes', label: tr('Heroes'), icon: 'helmet', door: 'heroes' },
+  { name: 'research', label: tr('Research'), icon: 'research', door: 'research' },
+  { name: 'build', label: tr('Build'), icon: 'build', door: 'build' },
 ];
 
 export function mountNavbar(game: Game, root: HTMLElement): void {
@@ -89,7 +90,7 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
       button.classList.toggle('is-locked', locked);
       setAttr(button, 'aria-disabled', locked ? 'true' : 'false');
       // Its name is hidden with its mark, so a reader hears only that it is shut.
-      setAttr(button, 'aria-label', locked ? 'Locked' : def.label);
+      setAttr(button, 'aria-label', locked ? tr('Locked') : def.label);
       // The orb shows when the screen behind the tab has
       // something the player can press right now: a district that is both
       // affordable and placeable, or a tech/upgrade that can be started

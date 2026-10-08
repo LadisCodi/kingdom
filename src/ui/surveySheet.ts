@@ -8,6 +8,7 @@
 // the paid tile right — and the grand prize pinned at the foot. Only the
 // ladder scrolls. There is no clock: the Survey never resets.
 
+import { tr } from '../i18n/tr';
 import type { Game } from '../game';
 import type { CurrencyId, ItemId, Wallet } from '../sim/state';
 import type { ItemStock } from '../sim/rewards';
@@ -55,22 +56,22 @@ export function renderSurveySheet(game: Game): HTMLElement {
       surveySeal('active', s.level, true),
       bar.root,
       s.nextAt === null ? surveySeal('done', top, true) : surveySeal('ahead', s.level + 1, true)),
-    el('p', { class: 'rs-band-line' }, `${formatCount(s.revealed)} of ${formatCount(s.total)} cells won back`));
+    el('p', { class: 'rs-band-line' }, tr('{n} of {total} cells won back', { n: formatCount(s.revealed), total: formatCount(s.total) })));
 
   // ---- the column heads. The paid one carries the purchase: one verb, the
   // price on its face (Docs/art/ui-menus-redesign.md §6.4, §6.9).
   const paidHead = el('div', { class: 'rs-plank is-gold' },
     iconEl(s.owned ? 'tick' : 'padlock', { size: 'sm' }),
-    el('span', { class: 'rs-plank-title' }, 'Royal Survey'));
+    el('span', { class: 'rs-plank-title' }, tr('plank::Royal Survey')));
   if (!s.owned) {
-    const buy = btn({ label: 'Buy', kind: 'primary', onClick: () => game.doBuySurvey() });
+    const buy = btn({ label: tr('Buy'), kind: 'primary', onClick: () => game.doBuySurvey() });
     buy.classList.add('rs-buy');
-    buy.setAttribute('aria-label', `Unlock the Royal Survey for ${price}`);
+    buy.setAttribute('aria-label', tr('Unlock the Royal Survey for {price}', { price }));
     buy.append(el('span', { class: 'rs-price' }, price));
     paidHead.append(buy);
   }
   const heads = el('div', { class: 'rs-heads' },
-    el('div', { class: 'rs-plank' }, el('span', { class: 'rs-plank-title' }, 'Free')),
+    el('div', { class: 'rs-plank' }, el('span', { class: 'rs-plank-title' }, tr('Free'))),
     paidHead);
 
   // A tile is a <button> exactly when it can be taken.
@@ -83,7 +84,7 @@ export function renderSurveySheet(game: Game): HTMLElement {
       : c.locked ? [el('span', { class: 'rs-mark' }, iconEl('padlock', { size: 'sm' }))] : [];
     const face = el('span', { class: 'rs-tile-face' }, ...prizes(c.reward, c.fragments, c.items));
     if (!c.claimable) return el('div', { class: classes }, face, ...marks);
-    const b = el('button', { class: classes, type: 'button', 'aria-label': `Claim level ${level}` },
+    const b = el('button', { class: classes, type: 'button', 'aria-label': tr('Claim level {n}', { n: level }) },
       face, ctaBadge(1, `survey:${track}:${level}`));
     b.addEventListener('click', () => game.doClaimSurveyCell(level, track));
     return b;
@@ -107,13 +108,13 @@ export function renderSurveySheet(game: Game): HTMLElement {
   // ---- the grand prize, pinned under the ladder: the province bought out.
   const g = s.ladder[top - 1];
   const grand = el('div', { class: `rs-grand${g.reached ? ' is-reached' : ''}` },
-    el('div', { class: 'rs-grand-ribbon' }, `Level ${formatCount(top)}`),
+    el('div', { class: 'rs-grand-ribbon' }, tr('Level {n}', { n: formatCount(top) })),
     el('div', { class: 'rs-grand-chest', 'aria-hidden': 'true' }),
     tile('free', top, g.free, g.reached),
     tile('paid', top, g.paid, g.reached));
 
   const body = el('div', { class: 'rs' }, band, heads, ladder, grand);
-  const surface = sheet({ title: 'The Royal Survey', onClose: close, tall: true }, body);
+  const surface = sheet({ title: tr('The Royal Survey'), onClose: close, tall: true }, body);
   surface.classList.add('is-survey');
   // The compass is set into the title band's left end.
   surface.querySelector('.k-head')?.prepend(el('div', { class: 'rs-compass', 'aria-hidden': 'true' }));

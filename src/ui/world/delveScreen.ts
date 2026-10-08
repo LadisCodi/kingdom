@@ -24,7 +24,8 @@ import { homeboundMs } from '../../sim/world/travel';
 import { gemsToFinish } from '../../sim/rush';
 import { crestEl } from '../friends/kingdomBits';
 import { creatureFace } from '../lairSheet';
-import { CAMP_CREATURE } from '../../sim/world/camps';
+import { CREATURE_NAME, withTag } from './hexNames';
+import { tr, trn } from '../../i18n/tr';
 
 /** What a room pays, as chips: the coins, then its precious lump. */
 function payChips(pay: { gold: number; heroXp: number; stardust: number; knowledge: number }, precious: { id: PreciousId; amount: number } | null): HTMLElement {
@@ -55,9 +56,9 @@ type Standing = { seat: number; at: number; you: boolean };
 function shieldOn(game: Game, s: Standing): HTMLElement {
   const seat = game.worldSource().seats()[s.seat];
   const name = seat?.owner.name ?? '?';
-  return el('span', { class: `dv-flag${s.you ? ' is-you' : ''}`, title: s.you ? 'You' : name },
+  return el('span', { class: `dv-flag${s.you ? ' is-you' : ''}`, title: s.you ? tr('You') : name },
     crestEl(name, seat?.owner.crest ?? null, s.you ? 'md' : 'md'),
-    el('span', { class: 'dv-flag-name' }, s.you ? 'You' : name));
+    el('span', { class: 'dv-flag-name' }, s.you ? tr('You') : name));
 }
 
 /** One room of the depth shown: its disc, the shields of the kingdoms that
@@ -82,14 +83,14 @@ function roomNode(
     ...(flags.length === 0 ? [] : [el('span', { class: 'dv-flags' }, ...flags.map((s) => shieldOn(game, s)))]),
     disc)];
   if (boss) {
-    parts.push(el('div', { class: 'dv-boss-name' }, capital(info?.bosses[depth] ?? 'the boss')));
+    parts.push(el('div', { class: 'dv-boss-name' }, capital(info?.bosses[depth] ?? tr('the boss'))));
   }
   if (state === 'is-frontier' && !boss) {
     const pay = roomReward(depth, room);
     const material = info === undefined ? null
       : lumpMaterial(game.worldSource().board(), game.worldSeat(), 'room', info.key, depth, room);
     parts.push(el('div', { class: 'dv-plaque' },
-      el('p', { class: 'dv-plaque-title' }, `Room ${formatCount(room)} · `, powerTag(power)),
+      el('p', { class: 'dv-plaque-title' }, withTag(tr('Room {n} · {power}', { n: formatCount(room) }), { power: powerTag(power) })),
       payChips(pay, material === null ? null : { id: material, amount: pay.precious })));
   } else if (state === 'is-ahead' && !boss) {
     parts.push(el('div', { class: 'dv-tag' }, el('span', { class: 'dv-tag-power' }, powerTag(power))));
@@ -123,7 +124,7 @@ export function marchingDock(game: Game, army: ArmyView, what: string): HTMLElem
   const left = Math.max(0, (at - game.now()) / 1000);
   return el('div', { class: 'dv-dock' },
     armyBoard(game, army),
-    waitRow(game, army.phase === 'home' ? 'Coming home' : what, from, at, gemsToFinish(left),
+    waitRow(game, army.phase === 'home' ? tr('Coming home') : what, from, at, gemsToFinish(left),
       () => void game.doFinishArmyMarch(army.id), { kind: 'army', armyId: army.id, at }));
 }
 
@@ -133,11 +134,11 @@ export function marchingDock(game: Game, army: ArmyView, what: string): HTMLElem
 function dock(game: Game, index: number, army: ArmyView | undefined, cleared: number): HTMLElement {
   if (army === undefined) {
     return el('div', { class: 'dv-dock' },
-      el('p', { class: 'wd-line' }, 'No army is camped here.'),
+      el('p', { class: 'wd-line' }, tr('No army is camped here.')),
       el('div', { class: 'dv-calls is-one' },
-        btn({ label: 'Send', kind: 'primary', onClick: () => game.openArmy(index, 'delve') })));
+        btn({ label: tr('Send'), kind: 'primary', onClick: () => game.openArmy(index, 'delve') })));
   }
-  if (army.phase !== 'camp') return marchingDock(game, army, 'On the way');
+  if (army.phase !== 'camp') return marchingDock(game, army, tr('On the way'));
   const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
   const slots = army.slots ?? [];
   const panel = fieldArmyPanel(game, {
@@ -151,10 +152,10 @@ function dock(game: Game, index: number, army: ArmyView | undefined, cleared: nu
   return el('div', { class: 'dv-dock' },
     panel,
     el('div', { class: 'dv-calls' },
-      btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
+      btn({ label: tr('Withdraw'), kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
       btn({
-        label: 'Attack', kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
-        disabledReason: next === null ? 'Cleared to the bottom' : undefined,
+        label: tr('Attack'), kind: 'destructive', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
+        disabledReason: next === null ? tr('Cleared to the bottom') : undefined,
         onClick: () => void game.doDelveRoom(army.id),
       })));
 }
@@ -164,21 +165,21 @@ function spoils(game: Game, army: ArmyView | undefined, cleared: number): HTMLEl
   const s = game.delveSpoils;
   if (s === null) return null;
   const canFight = army?.phase === 'camp' && nextRoom(cleared) !== null;
-  const title = s.won ? `${s.boss ? 'The boss' : `Room ${formatCount(s.room)}`} cleared!` : 'Beaten back';
-  const lost = s.lost > 0 ? `Your army lost ${formatCount(s.lost)} ${s.lost === 1 ? 'soldier' : 'soldiers'}` : 'Your army lost nobody';
+  const title = !s.won ? tr('Beaten back') : s.boss ? tr('The boss cleared!') : tr('Room {n} cleared!', { n: formatCount(s.room) });
+  const lost = s.lost > 0 ? trn(s.lost, 'Your army lost {n} soldier', 'Your army lost {n} soldiers', { n: formatCount(s.lost) }) : tr('Your army lost nobody');
   return el('div', { class: 'dv-spoils' },
     el('div', { class: 'dv-spoils-panel' },
       el('p', { class: 'dv-spoils-title' }, title),
       s.won && s.loot !== null ? payChips(s.loot, s.loot.precious ?? null)
-        : el('p', { class: 'wd-line' }, 'The room still stands. Reinforce the army, or try again.'),
+        : el('p', { class: 'wd-line' }, tr('The room still stands. Reinforce the army, or try again.')),
       el('p', { class: 'wd-line' }, lost),
       el('div', { class: 'dv-calls' },
         canFight ? action({
-          label: s.won ? 'Fight next' : 'Fight again', kind: 'primary',
+          label: s.won ? tr('Fight next') : tr('Fight again'), kind: 'primary',
           cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
           onClick: () => { game.delveSpoils = null; void game.doDelveRoom(army!.id); },
         }) : '',
-        action({ label: 'Back', kind: 'secondary', onClick: () => game.dismissSpoils() }))));
+        action({ label: tr('Back'), kind: 'secondary', onClick: () => game.dismissSpoils() }))));
 }
 
 export function renderDelveScreen(game: Game): HTMLElement {
@@ -200,10 +201,10 @@ export function renderDelveScreen(game: Game): HTMLElement {
   const here: Standing[] = race.map((r) => ({ seat: r.seat, at: Math.min(total, r.cleared + 1), you: r.seat === me }));
   if (!here.some((s) => s.you)) here.push({ seat: me, at: Math.min(total, cleared + 1), you: true });
 
-  const where = room === null ? 'Cleared to the bottom'
-    : `Depth ${formatCount(room.depth + 1)} · Room ${formatCount(room.room)} of ${formatCount(per)}`;
-  const creature = info === undefined ? '' : ` · held by ${CAMP_CREATURE[info.creature]}`;
-  const last = info?.bosses[WORLD_DUNGEON.depths - 1] ?? 'its last boss';
+  const where = room === null ? tr('Cleared to the bottom')
+    : tr('Depth {depth} · Room {room} of {rooms}', { depth: formatCount(room.depth + 1), room: formatCount(room.room), rooms: formatCount(per) });
+  const creature = info === undefined ? '' : ` · ${tr('held by {who}', { who: CREATURE_NAME[info.creature] })}`;
+  const last = info?.bosses[WORLD_DUNGEON.depths - 1] ?? tr('its last boss');
 
   // The depths, down the right edge: cleared, shown, or locked, and how many
   // kingdoms stand in each.
@@ -214,7 +215,7 @@ export function renderDelveScreen(game: Game): HTMLElement {
       const count = here.filter((s) => Math.floor((s.at - 1) / per) === d).length;
       const tab = el('button', {
         class: `dv-depth${d === depth ? ' is-on' : ''}${locked ? ' is-locked' : ''}`, type: 'button', role: 'tab',
-        'aria-label': `Depth ${formatCount(d + 1)}${locked ? ', locked' : ''}`,
+        'aria-label': locked ? tr('Depth {n}, locked', { n: formatCount(d + 1) }) : tr('Depth {n}', { n: formatCount(d + 1) }),
       },
       el('b', {}, formatCount(d + 1)),
       locked ? iconEl('padlock', { size: 'sm' }) : done ? iconEl('tick', { size: 'sm' }) : '',
@@ -231,10 +232,10 @@ export function renderDelveScreen(game: Game): HTMLElement {
   const body = el('div', { class: 'dv-body' },
     el('div', { class: 'dv-band' },
       el('p', { class: 'dv-where' }, `${where}${creature}`),
-      el('p', { class: 'dv-race-line' }, `First to beat ${last} closes it for everyone, and is paid his chest ×${formatCount(WORLD_DUNGEON.closeRewardMultiplier)}`)),
+      el('p', { class: 'dv-race-line' }, tr('First to beat {boss} closes it for everyone, and is paid his chest ×{n}', { boss: last, n: formatCount(WORLD_DUNGEON.closeRewardMultiplier) }))),
     el('div', { class: 'dv-stage' }, el('div', { class: 'dv-descent' }, ...rooms), tabs),
     dock(game, index, army, cleared));
-  const root = sheet({ title: info?.name ?? 'A dungeon', tall: true, onClose: () => game.dismiss() }, body);
+  const root = sheet({ title: info?.name ?? tr('A dungeon'), tall: true, onClose: () => game.dismiss() }, body);
   // The spoils lie over the whole sheet, not the descent that scrolls under
   // them, so they are in view wherever the stair was scrolled to.
   const over = spoils(game, army, cleared);

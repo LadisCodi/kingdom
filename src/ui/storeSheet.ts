@@ -21,6 +21,7 @@
 // never torn down by the clock.
 
 import type { Game, OfferCard, StoreTab } from '../game';
+import { tr } from '../i18n/tr';
 import { GEM_PACK_ORDER, HEROES, KINGDOM_DEF, STORE } from '../sim/data/definitions';
 import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
@@ -59,10 +60,10 @@ const countdown = (until: number): HTMLElement => el('b', { 'data-until': String
 // ------------------------------------------------------------------- tabs
 
 const TAB: Record<StoreTab, { label: string; icon: IconName }> = {
-  offers: { label: 'Offers', icon: 'chest' },
-  heroes: { label: 'Heroes', icon: 'helmet' },
-  supplies: { label: 'Supplies', icon: 'bag' },
-  gems: { label: 'Gems', icon: 'Gems' as IconName },
+  offers: { label: tr('Offers'), icon: 'chest' },
+  heroes: { label: tr('Heroes'), icon: 'helmet' },
+  supplies: { label: tr('Supplies'), icon: 'bag' },
+  gems: { label: tr('Gems'), icon: 'Gems' as IconName },
 };
 
 function tabStrip(game: Game, tabs: StoreTab[], open: StoreTab): HTMLElement {
@@ -129,10 +130,10 @@ function dailyCard(game: Game, card: OfferCard): HTMLElement {
     el('b', { class: 'stx-daily-name' }, card.name),
     el('div', { class: 'stx-daily-tiles' }, ...tiles.map(offerTile)),
     btn({
-      label: card.left === 0 ? 'Sold out' : formatUsd(card.priceCents),
+      label: card.left === 0 ? tr('Sold out') : formatUsd(card.priceCents),
       kind: 'gold', finish: 'gem',
       onClick: () => game.openIap(card.id, 'store'),
-      disabledReason: card.left === 0 ? 'Back tomorrow' : undefined,
+      disabledReason: card.left === 0 ? tr('Back tomorrow') : undefined,
     }));
 }
 
@@ -142,7 +143,7 @@ function offersTab(game: Game): HTMLElement {
   return el('div', { class: 'stx-list' },
     ...offers.map((c) => offerBanner(game, c)),
     ...(daily.cards.length === 0 ? [] : [
-      ribbon('Today', el('span', { class: 'stx-timer' }, iconEl('hourglass', { size: 'sm' }), countdown(daily.resetsAt))),
+      ribbon(tr('Today'), el('span', { class: 'stx-timer' }, iconEl('hourglass', { size: 'sm' }), countdown(daily.resetsAt))),
       el('div', { class: 'stx-dailies' }, ...daily.cards.map((c) => dailyCard(game, c))),
     ]));
 }
@@ -167,8 +168,8 @@ function crewCard(
     el('span', { class: 'stx-wide-art is-icon' }, art),
     el('div', {}, el('b', {}, name), el('span', {}, line)),
     full
-      ? el('span', { class: 'stx-owned' }, iconEl('tick', { size: 'sm' }), 'All open')
-      : btn({ label: 'Hire', kind: 'gem', onClick: buy, cost: { Gems: cost }, have: (c) => game.walletValue(c) }));
+      ? el('span', { class: 'stx-owned' }, iconEl('tick', { size: 'sm' }), tr('All open'))
+      : btn({ label: tr('Hire'), kind: 'gem', onClick: buy, cost: { Gems: cost }, have: (c) => game.walletValue(c) }));
 }
 
 function suppliesTab(game: Game): HTMLElement {
@@ -178,25 +179,25 @@ function suppliesTab(game: Game): HTMLElement {
   const explorer = game.explorerOffer();
   const slot = game.heroSlotOffer();
   return el('div', { class: 'stx-list' },
-    ...(bundles.length === 0 ? [] : [ribbon('For the Bag'), el('div', { class: 'stx-grid' }, ...bundles.map((b) => bundleCard(game, b)))]),
+    ...(bundles.length === 0 ? [] : [ribbon(tr('For the Bag')), el('div', { class: 'stx-grid' }, ...bundles.map((b) => bundleCard(game, b)))]),
     ...(!frag.available ? [] : [
-      ribbon('Relics'),
+      ribbon(tr('Relics')),
       el('article', { class: 'stx-wide', 'data-coach': 'store-fragments' },
-        el('span', { class: 'store-art is-fragments stx-wide-art', role: 'img', 'aria-label': 'relic fragments' }),
-        el('div', {}, el('b', {}, `Relic fragments ×${formatExact(frag.size)}`),
-          el('span', {}, 'Of the relics you have found, at random.')),
-        btn({ label: 'Buy', kind: 'gem', onClick: () => game.doBuyFragmentPack(), cost: { Gems: frag.gems }, have: (c) => game.walletValue(c) })),
+        el('span', { class: 'store-art is-fragments stx-wide-art', role: 'img', 'aria-label': tr('relic fragments') }),
+        el('div', {}, el('b', {}, tr('Relic fragments ×{n}', { n: formatExact(frag.size) })),
+          el('span', {}, tr('Of the relics you have found, at random.'))),
+        btn({ label: tr('Buy'), kind: 'gem', onClick: () => game.doBuyFragmentPack(), cost: { Gems: frag.gems }, have: (c) => game.walletValue(c) })),
     ]),
-    ribbon('Crew'),
+    ribbon(tr('Crew')),
     el('div', { class: 'stx-list is-tight' },
-      crewCard(game, 'Another builder', iconEl('build', { size: 'lg' }),
-        `${formatExact(builder.builders)} of ${formatExact(KINGDOM_DEF.maxBuilders)} hired`,
+      crewCard(game, tr('Another builder'), iconEl('build', { size: 'lg' }),
+        tr('{n} of {max} hired', { n: formatExact(builder.builders), max: formatExact(KINGDOM_DEF.maxBuilders) }),
         builder.builders >= builder.ceiling, builder.cost, () => game.doBuyBuilder({ closeSheet: false })),
-      ...(!game.doorOpen('world') ? [] : [crewCard(game, 'Another explorer', iconEl('compass', { size: 'lg' }),
-        `${formatExact(explorer.bought)} of ${formatExact(explorer.forSale)} bought`,
+      ...(!game.doorOpen('world') ? [] : [crewCard(game, tr('Another explorer'), iconEl('compass', { size: 'lg' }),
+        tr('{n} of {max} bought', { n: formatExact(explorer.bought), max: formatExact(explorer.forSale) }),
         explorer.bought >= explorer.forSale, explorer.cost, () => game.doBuyExplorer())]),
-      ...(!game.doorOpen('heroes') ? [] : [crewCard(game, 'Another hero slot', iconEl('helmet', { size: 'lg' }),
-        `${formatExact(slot.slots)} of ${formatExact(slot.ceiling)} open`,
+      ...(!game.doorOpen('heroes') ? [] : [crewCard(game, tr('Another hero slot'), iconEl('helmet', { size: 'lg' }),
+        tr('{n} of {max} open', { n: formatExact(slot.slots), max: formatExact(slot.ceiling) }),
         slot.slots >= slot.ceiling, slot.cost, () => game.doBuyHeroSlot())])));
 }
 
@@ -204,7 +205,7 @@ function suppliesTab(game: Game): HTMLElement {
 
 function gemsTab(game: Game): HTMLElement {
   return el('div', { class: 'stx-list' },
-    ribbon('Gem packs'),
+    ribbon(tr('Gem packs')),
     el('div', { class: 'stx-grid is-three' }, ...GEM_PACK_ORDER.map((id) => {
       const sku = STORE[id];
       const url = spriteUrl(sku.sprite);
@@ -228,12 +229,12 @@ export function renderStoreSheet(game: Game): HTMLElement {
     : open === 'heroes' ? heroesTab(game)
       : open === 'supplies' ? suppliesTab(game)
         : gemsTab(game);
-  const close = closeKnob(() => game.dismiss(), 'Close the store');
+  const close = closeKnob(() => game.dismiss(), tr('Close the store'));
   const body = el('div', { class: 'stx' },
     el('header', { class: 'stx-head' }, tabStrip(game, tabs, open), close),
     el('div', { class: 'stx-page', 'data-keep-scroll': `store-${open}` }, page));
   tickCountdowns(game);
-  const screen = sheet({ title: 'Store', onClose: () => game.dismiss(), tall: true, bare: true }, body);
+  const screen = sheet({ title: tr('Store'), onClose: () => game.dismiss(), tall: true, bare: true }, body);
   screen.classList.add('is-store');
   return screen;
 }

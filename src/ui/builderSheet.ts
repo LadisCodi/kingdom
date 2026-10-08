@@ -23,9 +23,13 @@ import { btn, iconEl, progress } from './kit';
 import { timerButton } from './speedupSheet';
 import type { SpeedJob } from '../sim/speedups';
 import { sheet } from './kit/surface';
+import { tr } from '../i18n/tr';
 
-const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
-const nth = (i: number): string => ORDINAL[i] ?? `${i + 1}th`;
+/** The `i`th place in the crew still to hire, zero-based: *A second builder*. */
+const nthBuilder = (i: number): string => [
+  tr('A first builder'), tr('A second builder'), tr('A third builder'), tr('A fourth builder'),
+  tr('A fifth builder'), tr('A sixth builder'), tr('A seventh builder'), tr('An eighth builder'),
+][i] ?? tr('A {n}th builder', { n: formatExact(i + 1) });
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function renderBuilderSheet(game: Game): HTMLElement {
@@ -45,9 +49,9 @@ export function renderBuilderSheet(game: Game): HTMLElement {
     rows.push(el('div', { class: 'crew-row k-section is-free' },
       el('span', { class: 'crew-medal' }, iconEl('builders', { size: 'lg' })),
       el('div', { class: 'crew-mid' },
-        el('div', { class: 'crew-free' }, 'Free'),
+        el('div', { class: 'crew-free' }, tr('builder::Free')),
         // Only the first free builder is offered the job; one job, one button.
-        el('div', { class: 'crew-task' }, i === 0 && ask !== null ? ask.what : 'Ready for the next job')),
+        el('div', { class: 'crew-task' }, i === 0 && ask !== null ? ask.what : tr('Ready for the next job'))),
       ...(ask !== null && i === 0
         ? [btn({
             label: ask.verb,
@@ -74,7 +78,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
         el('div', { class: 'crew-task' }, task),
         bar.root),
       timerButton(game, { kind: 'queue', itemId: item.uniqueId }, btn({
-        label: 'Finish',
+        label: tr('Finish'),
         kind: 'gem',
         onClick: () => game.doRush(item.uniqueId),
         cost: { Gems: gemRushCost(item, t) },
@@ -97,7 +101,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
         el('div', { class: 'crew-task' }, job.task),
         bar.root),
       ...(game.hasSpeedups(speed)
-        ? [btn({ label: 'Speed up', kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(speed) })]
+        ? [btn({ label: tr('Speed up'), kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(speed) })]
         : [])));
   }
 
@@ -107,10 +111,10 @@ export function renderBuilderSheet(game: Game): HTMLElement {
     const next = i === builders;
     rows.push(el('div', { class: `crew-row k-section is-empty${next ? '' : ' is-far'}` },
       el('span', { class: 'crew-socket' }, iconEl('builders', { size: 'lg' })),
-      el('div', { class: 'crew-mid' }, el('div', { class: 'crew-task' }, `A ${nth(i)} builder`)),
+      el('div', { class: 'crew-mid' }, el('div', { class: 'crew-task' }, nthBuilder(i))),
       ...(next
         ? [btn({
-            label: 'Hire',
+            label: tr('Hire'),
             kind: 'gem',
             // The sheet stays: the new builder's row turns Free with the job.
             onClick: () => game.doBuyBuilder({ closeSheet: false }),
@@ -121,23 +125,25 @@ export function renderBuilderSheet(game: Game): HTMLElement {
   }
 
   // --------------------------------------------------------- the headline
-  const subject = ask?.what.replace(/^Ready to /, '') ?? 'it';
+  // The job's own words without their lead-in, in either language: *build
+  // the Sawmill*, *construir el Aserradero*.
+  const subject = ask?.what.replace(/^(Ready to|Listo para) /, '') ?? tr('it');
   const head = free > 0
-    ? (free === 1 ? 'A builder is free' : `${formatExact(free)} builders are free`)
-    : builders === 1 ? 'Your builder is busy' : `All ${formatExact(builders)} builders are busy`;
+    ? (free === 1 ? tr('A builder is free') : tr('{n} builders are free', { n: formatExact(free) }))
+    : builders === 1 ? tr('Your builder is busy') : tr('All {n} builders are busy', { n: formatExact(builders) });
   const note = free > 0
-    ? `${cap(subject)} now, or keep it for later.`
-    : 'Nothing waits in line — finish a job to free a builder.';
+    ? tr('{what} now, or keep it for later.', { what: cap(subject) })
+    : tr('Nothing waits in line — finish a job to free a builder.');
 
-  return sheet({ title: 'Builders', onClose: close, centred: true },
+  return sheet({ title: tr('Builders'), onClose: close, centred: true },
     el('div', { class: 'crew' },
       el('div', { class: 'crew-top' },
-        el('div', { class: 'crew-illus', role: 'img', 'aria-label': 'Two builders' }),
+        el('div', { class: 'crew-illus', role: 'img', 'aria-label': tr('Two builders') }),
         el('div', { class: 'crew-copy' },
           el('div', { class: 'crew-head' }, head),
           el('div', { class: 'crew-note' }, note))),
       el('div', { class: 'crew-rows' }, ...rows),
       ...(builders >= ceiling
-        ? [el('div', { class: 'crew-ceiling' }, `${formatExact(KINGDOM_DEF.maxBuilders)} is as large as a crew gets.`)]
+        ? [el('div', { class: 'crew-ceiling' }, tr('{n} is as large as a crew gets.', { n: formatExact(KINGDOM_DEF.maxBuilders) }))]
         : [])));
 }
