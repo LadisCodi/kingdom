@@ -156,7 +156,7 @@ which one a line waits on is data.
 | `moving` · `ghostReaches` | that building is picked up to be moved · its ghost (moved or placed) stands, legal, where its crew works `amount` cells |
 | `reachCleared` | cleared ground stands where that building would work `amount` cells — the fog over the `reach:` spot is paid |
 | `revealed` · `population` · `heroes` | `amount` cells revealed · villagers · heroes |
-| `training` | a villager is in training, or `amount` villagers live |
+| `training` | `amount` villagers (at least one) live or are in training |
 | `sighted` | a silhouette stands past the fog: anything, a `mountain` · `landmark` · `lair`, a kind of landmark, or one lair |
 | `overlay` · `noOverlay` · `ui` | that sheet is open · none is · that control (`data-coach`) is on screen — drawn, not merely in the page |
 | `mainScreen` | back on the map: no sheet, no card, no placing |
