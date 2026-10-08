@@ -11,14 +11,8 @@
   },
   "fragments": {
     "keystoneOneIn": 8,
-    "keystoneWorth": 3,
     "levelStardustBase": 100,
     "levelStardustGrowth": 1.5,
-    "replicaFreeSparesPiece": 6,
-    "replicaFreeSparesKeystone": 12,
-    "replicaSpares": 3,
-    "replicaGemsPiece": 1000,
-    "replicaGemsKeystone": 3000,
     "fragmentPackGems": 900,
     "fragmentPackSize": 5,
     "treasureEvery": 6,
@@ -26,6 +20,7 @@
     "perPackTier": { "Green": 1, "Yellow": 1, "Rose": 2, "Blue": 2, "Purple": 3, "Golden": 4 }
   },
   "shrines": {
-    "premiumGems": [1500, 3000, 5000, 8000]
+    "materialBuilds": 1,
+    "premiumGems": [3000, 5000, 8000]
   }
 }

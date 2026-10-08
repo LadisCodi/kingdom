@@ -296,6 +296,13 @@
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Farm","level":4}}, {"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":4}}, {"districtLevel":{"id":"Docks","level":4}}]
     },
+    "SacredMasonry": {
+      "name": "Sacred Masonry", "icon": "Shrine", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 16, "col": 2,
+      "requires": ["Spears"],
+      "gold": 8000, "knowledge": 5,
+      "unlocks": [{"district":"Shrine"}]
+    },
     "Joinery": {
       "name": "Joinery", "icon": "Carpenter", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 17, "col": 0,

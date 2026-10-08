@@ -268,7 +268,7 @@ nothing if it already is). Its lines are beats, like the first lair's.
 |---|---|---|---|
 | *The shrine stands again! And look what the Orcs left behind — the Staff of Renewal, whole. It wants an altar. Tap the shrine.* | the Shrine | the Shrine | its card is open |
 | *A relic set on this altar lends the kingdom its power. Tap the altar.* | the altar | the altar | the relic picker is open |
-| *There's the Staff. Its power trains soldiers and villagers faster in the buildings round the shrine. Choose it.* | the Staff's card | the card | the Staff is in the slot |
+| *There's the Staff. It renews the land round the shrine: woods, fields and stone hold more and grow back faster. Choose it.* | the Staff's card | the card | the Staff is in the slot |
 | *Now Select, and it takes its place.* | Select | Select | a Shrine holds the Staff |
 | *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine. It grows longer, wider and stronger.* | Activate | none | tap |
 

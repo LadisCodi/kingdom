@@ -315,7 +315,7 @@ export function trainSecondsAt(
   const speed = (trainee === 'Villager'
     ? techMultiplier(state, 'villagerTrainingSpeed')
     : techMultiplier(state, 'recruitSpeed', { unit: trainee }))
-    // An awake Staff of Renewal round the building (09-relics.md §2): read
+    // An awake Winged Hammer round the building (09-relics.md §2): read
     // here, when the clock starts, so a window closing later never reprices
     // a wait already running.
     * (building === undefined ? 1 : Math.max(1, resolveAt(state, 'trainingSpeed', 1, building.location)));

@@ -201,7 +201,9 @@ describe('save versions', () => {
 
     const restored = deserialize(save, map, T0)!;
     expect(restored).not.toBeNull();
-    const moved = restored.city.districts.find((d) => d.location.x === 4 && d.location.y === -1)!;
+    // Found by its id, not its cell: (4, -1) is a ruin's ground now, so the
+    // load settles it onto the nearest legal cell.
+    const moved = restored.city.districts.find((d) => d.uniqueId === standing.UniqueID)!;
     expect(moved.definitionId).toBe('Quarry');
     // The crew came with the building; nobody was sent home.
     expect(moved.assignedWorkers).toBe(2);

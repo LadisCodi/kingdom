@@ -61,8 +61,8 @@
     ([`08-magic.md`](08-magic.md) §6);
   - **Knowledge** — a point at a fixed price, alone or all a technology
     still misses ([`07-research.md`](07-research.md) §3.2);
-  - **relics** — the store's fragment pack, a forged replica, a premium
-    Shrine ([`09-relics.md`](09-relics.md)).
+  - **relics** — the store's fragment pack, and the third Shrine onward
+    ([`09-relics.md`](09-relics.md) §2.3).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends ([`10-heroes.md`](10-heroes.md) §6.1).
 - Faucet: **500 to start**, **750 across the quest chain**

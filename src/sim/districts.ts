@@ -129,7 +129,9 @@ export function placementBlock(
   ) {
     return 'CountLimit';
   }
-  if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
+  // A MOVE IS NOT A BUILD: a repaired ruin moves before its technology is
+  // researched, as the Shrine in the province does.
+  if (movingId === undefined && def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
   // Harmony, like the count cap above it, is about the BUILDING rather than
   // the cell — every cell on the map answers the same way, which is why the
   // build menu refuses the card before the player ever enters placement

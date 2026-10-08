@@ -128,7 +128,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
  *  for (`Docs/features/06-construction.md`). */
 export type EnqueueBuildResult =
   | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods'
-  | 'NeedsHarmony' | 'InvalidCell';
+  | 'NeedsHarmony' | 'InvalidCell' | 'NotForMaterials';
 
 export function enqueueBuild(
   state: GameState,
@@ -136,6 +136,8 @@ export function enqueueBuild(
   definitionId: DistrictId,
   cell: Coord,
 ): EnqueueBuildResult {
+  // A Shrine is sold for its materials only while `shrineBuild` says so.
+  if (DISTRICTS[definitionId].hostsRelic && shrineBuild(state).kind !== 'materials') return 'NotForMaterials';
   if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   // Harmony and the goods are told apart from the cell before it is, because
   // the answer to each is a different errand — build a decoration, queue at a
@@ -195,21 +197,42 @@ function startBuild(
 // ------------------------------------------------------------- repairing
 
 /** The Gems the next premium Shrine costs, or null when all are built
- *  (Docs/proposals/relic-restoration.md §5.1, §9). */
+ *  (Docs/features/09-relics.md). */
 export const premiumShrinePrice = (state: GameState): number | null =>
   SHRINE_RULES.premiumGems[state.relics.premiumShrines] ?? null;
 
-export type PremiumShrineResult =
-  | 'Started' | 'NoneLeft' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+/** How the next Shrine is built from the Build menu. */
+export type ShrineBuild =
+  | { kind: 'ruinFirst' } | { kind: 'materials' } | { kind: 'gems'; gems: number } | { kind: 'none' };
 
 /**
- * BUILD A SHRINE ANYWHERE, FOR GEMS: breadth, like a builder — one more
- * host, never a relic. The ruin in the fog is the Shrine play finds; these
- * are the rest, each dearer than the last, and the ladder ends.
+ * THE SHRINE LADDER: the ruin in the province is repaired first; then
+ * `materialBuilds` Shrines are built for their materials (the level-1 cost
+ * at their ordinal, dear by design); every one after that asks Gems, one
+ * price each from `premiumGems`, until the ladder ends.
+ */
+export function shrineBuild(state: GameState): ShrineBuild {
+  const ruins = ABANDONED.filter((a) => DISTRICTS[a.districtId].hostsRelic);
+  if (ruins.some((a) => state.abandoned.repaired[a.id] !== true)) return { kind: 'ruinFirst' };
+  const forMaterials = districtCount(state, 'Shrine') - ruins.length - state.relics.premiumShrines;
+  if (forMaterials < SHRINE_RULES.materialBuilds) return { kind: 'materials' };
+  const gems = premiumShrinePrice(state);
+  return gems === null ? { kind: 'none' } : { kind: 'gems', gems };
+}
+
+export type PremiumShrineResult =
+  | 'Started' | 'NoneLeft' | 'NotForGems' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+
+/**
+ * BUILD A SHRINE FOR GEMS: breadth, like a builder — one more host, never a
+ * relic. Only once the ruin and the material Shrines stand (`shrineBuild`),
+ * each dearer than the last, and the ladder ends.
  */
 export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord): PremiumShrineResult {
-  const price = premiumShrinePrice(state);
-  if (price === null) return 'NoneLeft';
+  const offer = shrineBuild(state);
+  if (offer.kind === 'none') return 'NoneLeft';
+  if (offer.kind !== 'gems') return 'NotForGems';
+  const price = offer.gems;
   if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, 'Shrine') >= maxDistrictCount(state, DISTRICTS.Shrine)) return 'CountLimit';
   if (placementBlock(state, map, 'Shrine', cell) !== null) return 'InvalidCell';

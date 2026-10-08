@@ -17,7 +17,6 @@ import {
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
-import { canAfford } from '../sim/commands';
 import { isTechComplete } from '../sim/research';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
@@ -120,6 +119,12 @@ function harmonyLine(game: Game): HTMLElement {
 function blockedBy(game: Game, id: DistrictId): string | null {
   const def = DISTRICTS[id];
   const count = districtCount(game.state, id);
+  // The Shrine ladder: the ruin first, and an end (sim `shrineBuild`).
+  if (def.hostsRelic) {
+    const offer = game.shrineBuild().kind;
+    if (offer === 'ruinFirst') return 'Repair the old shrine first';
+    if (offer === 'none') return 'You have as many as the realm allows';
+  }
   if (count >= maxDistrictCount(game.state, def)) {
     // Say what lifts the cap. A count cap is the harder wall of the two: no
     // amount of decoration lifts it, so it is said first.
@@ -136,8 +141,10 @@ function blockedBy(game: Game, id: DistrictId): string | null {
 function cardFacts(game: Game, id: DistrictId) {
   const def = DISTRICTS[id];
   const count = districtCount(game.state, id);
-  const cost = buildCost(id, count + 1);
-  const goods = Object.entries(buildGoodsCost(game.state, id)) as Array<[GoodId, number]>;
+  // Past its material builds, a Shrine is priced in Gems alone.
+  const shrine = def.hostsRelic ? game.shrineBuild() : null;
+  const cost: Partial<Record<CurrencyId, number>> = shrine?.kind === 'gems' ? { Gems: shrine.gems } : buildCost(id, count + 1);
+  const goods = shrine?.kind === 'gems' ? [] : Object.entries(buildGoodsCost(game.state, id)) as Array<[GoodId, number]>;
   const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
   return {
     count,
@@ -146,7 +153,8 @@ function cardFacts(game: Game, id: DistrictId) {
     numbered: isNumbered(game.state, def),
     cost,
     goods,
-    affordable: canAfford(game.state.city.wallet, cost) && !shortGoods,
+    affordable: (Object.entries(cost) as Array<[CurrencyId, number]>).every(([c, n]) => game.walletValue(c) >= n)
+      && !shortGoods,
     hinted: game.uiHint() === `build:${id}`,
     duration: game.buildCardDuration(id),
   };
