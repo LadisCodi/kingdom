@@ -1,5 +1,5 @@
-/* The Build menu (§5.5, M47–M48): three tabs over one sideways row of tall
- * cards, in a drawer that leaves the map above it. */
+/* The Build menu (§5.5, M106): three tabs over a list of full-width rows,
+ * the whole height under the header. */
 
 /* THE TABS: the nav's own wooden plates. The open one is the plate PRESSED
    INTO the wood (nav-tab-down.png), not lit or gilded. */
@@ -42,36 +42,39 @@
 .bld-tab.is-open:hover { filter: none; }
 .bld-tab > .k-cta { top: calc(var(--px) * -8); right: calc(var(--px) * -6); }
 
-/* THE ROW: one line of cards that scrolls sideways, about 2.3 of them wide,
-   so the cut-off card says there is more. */
-.bld-row {
-  display: flex;
-  gap: calc(var(--px) * 8);
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Room for the quest ring and the New seal, which sit proud of a card. */
-  padding: calc(var(--px) * 12) calc(var(--px) * 2) calc(var(--px) * 6);
-  margin-top: calc(var(--px) * -8);
-  scroll-padding-inline: calc(var(--px) * 2);
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
-}
-.bld-row::-webkit-scrollbar { display: none; }
-/* Held by a mouse (kit/scroll.ts): the card under the hand is not pressed. */
-.bld-row.is-dragging .bld-card:active { transform: none; }
+/* THE SHEET takes the whole height under the header (`is-tall is-panes`):
+   the tabs stay put, and only the list under them scrolls. */
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bld-tabs,
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bld-harmony,
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bld-tip { flex: none; }
+.k-sheet.is-panes > .k-panel > .k-sheet-body > .bld-list { flex: 1 1 0; }
 
-/* THE CARD, tall: the art, the name, the promise, the price, and a foot. */
-.bld-card {
-  position: relative;
-  flex: 0 0 calc(var(--px) * 132);
+/* THE LIST: full-width rows, top to bottom (M106). */
+.bld-list {
   display: flex;
   flex-direction: column;
+  gap: calc(var(--px) * 8);
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  /* Room for the quest ring and the New seal, which sit proud of a row. */
+  padding: calc(var(--px) * 6) calc(var(--px) * 4) calc(var(--px) * 12);
+  overscroll-behavior-y: contain;
+}
+
+/* THE ROW: the art in its frame, the name, the promise and the price, and at
+   the right the wait and the count in a column of their own. */
+.bld-card {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: calc(var(--px) * 84) minmax(0, 1fr) auto;
   align-items: center;
-  gap: calc(var(--px) * 3);
-  padding: calc(var(--px) * 6) calc(var(--px) * 6) 0;
-  scroll-snap-align: start;
-  text-align: center;
+  gap: calc(var(--px) * 10);
+  width: 100%;
+  min-height: calc(var(--px) * 96);
+  padding: calc(var(--px) * 6) calc(var(--px) * 8) calc(var(--px) * 6) calc(var(--px) * 6);
+  text-align: left;
   font-family: var(--font-body);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
@@ -80,43 +83,55 @@
   border: calc(var(--px) * 2) solid var(--wood-dark);
   border-radius: var(--radius-sm);
   box-shadow: inset 0 calc(var(--px) * 2) 0 rgba(255, 255, 255, 0.3), 0 calc(var(--px) * 3) 0 rgba(60, 36, 18, 0.25);
-  overflow: hidden;
   cursor: pointer;
 }
 .bld-card:hover { filter: brightness(1.05); }
 .bld-card:active { transform: translateY(calc(var(--px) * 2)); }
-/* The quest ring needs the card's overflow open to show. */
-.bld-card.hinted { overflow: visible; }
-/* Capped, not greyed: warm drained parchment, full-colour art, a ribbon. */
+/* Capped or not yet opened: warm drained parchment, the art in sepia, a
+   brass padlock over it. */
 .bld-card.is-locked { background: var(--locked); cursor: default; }
 .bld-card.is-locked:hover { filter: none; }
 .bld-card.is-locked:active { transform: none; }
+.bld-card.is-locked .bld-art img { filter: sepia(0.85) saturate(0.6) brightness(1.02); opacity: 0.8; }
 
+/* The art: a frame of darker paper the building stands in, its roof allowed
+   a little past the top so it reads as the building, not as an icon. */
 .bld-art {
   position: relative;
+  align-self: stretch;
+  min-height: calc(var(--px) * 84);
+  background: var(--section-fill);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 6);
+}
+/* The sprites are 128×192 with the building in their lower 60% and air
+   above it for the map: the building takes the frame's width, feet on its
+   floor, and the air runs out of the top unseen. */
+.bld-art img {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--px) * 2);
+  width: 112%;
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.bld-art > .icon { --icon-size: calc(var(--px) * 56); position: absolute; inset: 0; margin: auto; }
+.bld-lock {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  width: 100%;
-  height: calc(var(--px) * 88);
+  z-index: 1;
 }
-/* Absolute, because a percentage height inside an auto grid row would not
-   resolve and the picture would grow to its own aspect. */
-.bld-art img {
-  /* The sprites are 128×192 with the building in their lower 60% and air
-     above it for the map. On a card the building takes the card's width,
-     feet on the art's floor, and the air runs out of the top unseen. */
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: auto;
-}
-.bld-art > .icon { --icon-size: calc(var(--px) * 56); }
+.bld-lock .icon { --icon-size: calc(var(--px) * 34); filter: drop-shadow(0 calc(var(--px) * 2) 0 rgba(60, 36, 18, 0.45)); }
+
+.bld-mid { display: flex; flex-direction: column; gap: calc(var(--px) * 3); min-width: 0; }
 
 .bld-name {
   font-family: var(--font-body);
   font-weight: var(--weight-strong);
-  font-size: calc(var(--px) * 16);
+  font-size: calc(var(--px) * 17);
   line-height: 1.1;
 }
 .bld-ordinal {
@@ -126,7 +141,6 @@
   color: var(--ink-muted);
 }
 .bld-promise {
-  min-height: calc(2 * 1.2em);
   color: var(--ink-muted);
   line-height: 1.2;
   display: -webkit-box;
@@ -134,6 +148,8 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* What opens a locked row, where its promise and price would be. */
+.bld-why { color: var(--clay); font-weight: var(--weight-strong); line-height: 1.2; }
 
 /* The price: currencies, refined goods and a decoration's Harmony — one
  * price, told apart by their marks. */
@@ -141,10 +157,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 3);
-  margin-top: auto;
-  padding-top: calc(var(--px) * 3);
+  justify-content: flex-start;
+  gap: calc(var(--px) * 4);
+  padding-top: calc(var(--px) * 2);
 }
 .bld-cost .k-chips { display: contents; }
 .bld-cost .k-chip,
@@ -161,47 +176,40 @@
 .bld-cost .k-chip .icon { --icon-size: calc(var(--px) * 18); }
 .bld-cost .k-chip.is-gain { border-color: var(--leaf-dark); }
 
-/* THE FOOT: the wait, and how many of how many — a strip of darker paper
-   across the card's bottom. */
-.bld-foot {
+/* THE SIDE: the wait over how many of how many, a small plaque of darker
+   paper at the right of the row, the same width all the way down. */
+.bld-side {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: calc(var(--px) * 4);
+  flex-direction: column;
+  align-items: stretch;
   align-self: stretch;
-  margin: calc(var(--px) * 6) calc(var(--px) * -6) 0;
-  padding: calc(var(--px) * 4) calc(var(--px) * 7);
+  justify-content: center;
+  width: calc(var(--px) * 72);
   font-size: calc(var(--px) * 12);
   white-space: nowrap;
   color: var(--ink);
   background: var(--section-fill);
-  border-top: calc(var(--px) * 2) solid var(--section-line);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 6);
+  overflow: hidden;
 }
-.bld-card.is-locked .bld-foot { margin-top: auto; }
-.bld-foot-time { display: inline-flex; align-items: center; gap: calc(var(--px) * 3); }
-.bld-foot-time .icon { --icon-size: calc(var(--px) * 16); }
+.bld-side > span { display: flex; align-items: center; justify-content: center; gap: calc(var(--px) * 3); padding: calc(var(--px) * 5) calc(var(--px) * 3); }
+.bld-side > span + span { border-top: calc(var(--px) * 2) solid var(--section-line); }
+.bld-foot-time { font-weight: var(--weight-strong); font-size: calc(var(--px) * 13); }
+.bld-foot-time .icon { --icon-size: calc(var(--px) * 18); }
 .bld-foot-built { color: var(--ink-muted); }
 
-/* The plain-language reason, across the foot of the art of a capped card. */
-.bld-ribbon {
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--px) * -6);
-  right: calc(var(--px) * -6);
-  bottom: calc(var(--px) * 2);
+/* What a decoration pays before Harmony is asked for: its place. */
+.bld-tip {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: calc(var(--px) * 4);
-  padding: calc(var(--px) * 3) calc(var(--px) * 6);
-  background: var(--clay);
-  color: var(--ink-inverse);
-  font-size: calc(var(--px) * 12);
+  gap: calc(var(--px) * 6);
+  margin-bottom: calc(var(--px) * 6);
+  padding: calc(var(--px) * 5) calc(var(--px) * 10);
+  font-size: var(--text-helper);
   font-weight: var(--weight-strong);
-  line-height: 1.15;
-  box-shadow: 0 calc(var(--px) * 2) 0 rgba(60, 20, 10, 0.35);
+  color: var(--ink);
 }
-.bld-ribbon .icon { flex: none; }
 
 /* NEW: the red wax seal stamped on the corner, until the tab is seen once. */
 .bld-new {
@@ -246,7 +254,7 @@
   display: flex;
   align-items: center;
   gap: calc(var(--px) * 6);
-  margin-bottom: calc(var(--px) * 10);
+  margin-bottom: calc(var(--px) * 6);
   padding: calc(var(--px) * 5) calc(var(--px) * 10);
   font-size: var(--text-helper);
   font-weight: var(--weight-small);
