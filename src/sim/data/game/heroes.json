@@ -1,6 +1,7 @@
 {
   "Warden": {
     "rarity": "Common",
+    "bagRank": 1,
     "unitType": "Warrior",
     "skill": "Shield",
     "skillValue": 15,
@@ -116,6 +117,7 @@
   },
   "Bard": {
     "rarity": "Common",
+    "bagRank": 5,
     "unitType": "Archer",
     "skill": "WarCry",
     "skillValue": 5,
@@ -154,6 +156,7 @@
   },
   "Cleric": {
     "rarity": "Common",
+    "bagRank": 3,
     "unitType": "Warrior",
     "skill": "Mend",
     "skillValue": 10,
@@ -287,6 +290,7 @@
   },
   "ThreeMice": {
     "rarity": "Common",
+    "bagRank": 4,
     "unitType": "Archer",
     "skill": "Volley",
     "skillValue": 25,
@@ -306,6 +310,7 @@
   },
   "Sellsword": {
     "rarity": "Common",
+    "bagRank": 2,
     "unitType": "Warrior",
     "skill": "Cleave",
     "skillValue": 60,
@@ -325,6 +330,7 @@
   },
   "DarkKnight": {
     "rarity": "Rare",
+    "bagRank": 1,
     "unitType": "Warrior",
     "skill": "Crush",
     "skillValue": 120,
@@ -344,6 +350,7 @@
   },
   "Paladin": {
     "rarity": "Rare",
+    "bagRank": 4,
     "unitType": "Warrior",
     "skill": "Shield",
     "skillValue": 25,
@@ -363,6 +370,7 @@
   },
   "Wizard": {
     "rarity": "Rare",
+    "bagRank": 2,
     "unitType": "Archer",
     "skill": "Volley",
     "skillValue": 40,
@@ -382,6 +390,7 @@
   },
   "Witch": {
     "rarity": "Rare",
+    "bagRank": 3,
     "unitType": "Archer",
     "skill": "Mend",
     "skillValue": 15,
@@ -515,6 +524,7 @@
   },
   "GoldenDragon": {
     "rarity": "Legendary",
+    "bagRank": 3,
     "unitType": "Cavalry",
     "skill": "Cleave",
     "skillValue": 120,
@@ -555,6 +565,7 @@
   },
   "Necromancer": {
     "rarity": "Legendary",
+    "bagRank": 1,
     "unitType": "Archer",
     "skill": "Volley",
     "skillValue": 60,
@@ -575,6 +586,7 @@
   },
   "Pharao": {
     "rarity": "Legendary",
+    "bagRank": 2,
     "unitType": "Warrior",
     "skill": "WarCry",
     "skillValue": 15,
