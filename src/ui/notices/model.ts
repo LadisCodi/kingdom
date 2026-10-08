@@ -12,11 +12,11 @@ import { ABANDONED, ARTIFACTS, DISTRICTS, GOODS, HEROES, LAIRS, LANDMARKS, STORE
 import type { BannerId } from '../../sim/data/definitions';
 import { lairCreature } from '../../sim/lairs';
 import { NEWS_GROUPS, type News, type NewsGroup } from '../../sim/notices';
-import type { Coord, HeroId, LairId } from '../../sim/state';
+import type { Coord, CurrencyId, HeroId, LairId } from '../../sim/state';
 import { homeIndex } from '../../sim/world/explorers';
 import { buildingArtUrl, spriteImg, spriteUrl } from '../../render/sprites';
 import { LAIR_AVATAR } from '../../render/lairMap';
-import { el, formatCount, formatExact } from '../format';
+import { currencyName, el, formatCount, formatExact } from '../format';
 import { iconEl, type IconName } from '../kit';
 import { worldBuildDone } from '../world/worldActions';
 import { CAMP_TITLE } from '../world/hexNames';
@@ -124,8 +124,7 @@ const portalArt = (open: boolean): Art => spriteArt(open ? 'whex_portal_open' : 
 // ---------------------------------------------------------- the news
 
 /** What a raid took, by the coin's name. */
-const coinName = (c: string): string =>
-  c === 'Gold' ? tr('Gold') : c === 'Food' ? tr('Food') : c === 'Wood' ? tr('Wood') : c === 'Stone' ? tr('Stone') : c;
+const coinName = (c: string): string => currencyName(c as CurrencyId);
 
 /** Where a site stands in the province. */
 function siteCell(id: string): Coord | null {

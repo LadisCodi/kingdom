@@ -43,7 +43,7 @@ import {
 } from '../sim/state';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
-import { coach, el, formatDuration, formatExact, formatShort } from './format';
+import { coach, currencyName as coinWord, el, formatDuration, formatExact, formatShort } from './format';
 import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, progress, restMarks, sectionHead, windowHead } from './kit';
 import { tr } from '../i18n/tr';
 
@@ -56,10 +56,6 @@ const adjacencyWords = (stat: AdjacencyStat): string => ({
   trainTime: tr('A military quarter — training time'),
 })[stat];
 
-/** A coin's name, as a stat tile says it. */
-const coinWord = (c: CurrencyId): string => ({
-  Gold: tr('Gold'), Food: tr('Food'), Wood: tr('Wood'), Stone: tr('Stone'),
-} as Partial<Record<CurrencyId, string>>)[c] ?? c;
 
 
 

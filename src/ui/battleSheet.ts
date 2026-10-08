@@ -31,7 +31,7 @@ import { HEROES, TROOP_ORDER, TROOPS, rankOf } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
 import type { HeroId, TroopId, Wallet } from '../sim/state';
 import type { Game } from '../game';
-import { coach, el, formatExact } from './format';
+import { coach, el, formatExact, troopsName } from './format';
 import { btn, headPanel, hpBar, iconEl, sectionHead, sheet } from './kit';
 import { portraitFrame, unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
@@ -161,7 +161,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     .map((slot, index) => {
       const cell = el('button', {
         class: 'bt-cell is-filled is-mine', type: 'button',
-        'aria-label': tr('Send {count} {troops} home', { count: slot.count, troops: `${TROOPS[slot.unitId].name}s` }),
+        'aria-label': tr('Send {count} {troops} home', { count: slot.count, troops: troopsName(slot.unitId) }),
       },
       portraitFrame(unitBust(slot.unitId, 'k-portrait-art'), slot.unitId),
       el('span', { class: 'bt-count' }, `×${formatExact(slot.count)}`));
@@ -215,7 +215,7 @@ function troopTile(game: Game, unitId: TroopId): HTMLElement {
   const tile = el('button', {
     class: `bt-troop${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
     type: 'button',
-    'aria-label': refusal ?? tr('Send a squad of {troops}', { troops: `${TROOPS[unitId].name}s` }),
+    'aria-label': refusal ?? tr('Send a squad of {troops}', { troops: troopsName(unitId) }),
   },
   el('span', { class: 'bt-cell is-filled' },
     portraitFrame(unitBust(unitId, 'k-portrait-art'), unitId),

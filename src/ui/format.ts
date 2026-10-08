@@ -7,7 +7,8 @@
 import { tr } from '../i18n/tr';
 import { playSfx } from '../audio/sfx';
 import { currentLang, NUMBER_LOCALE } from '../i18n/lang';
-import type { CurrencyId } from '../sim/state';
+import { TROOPS } from '../sim/data/definitions';
+import type { CurrencyId, TroopId, UnitId } from '../sim/state';
 
 /** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
@@ -134,6 +135,24 @@ export function currencyName(c: CurrencyId): string {
     case 'Gems': return tr('Gems');
     default: return c;
   }
+}
+
+/** A kind of soldier, many of them, as the player reads it: *Warriors*,
+ *  *Guerreros*. Spanish plurals are not an English `s`. */
+export function unitsName(u: UnitId): string {
+  switch (u) {
+    case 'Warrior': return tr('Warriors');
+    case 'Lancer': return tr('Lancers');
+    case 'Archer': return tr('Archers');
+    case 'Cavalry': return tr('Cavalry');
+    default: return u;
+  }
+}
+
+/** A troop, many of them, with its rank: *Lancers III*. */
+export function troopsName(id: TroopId): string {
+  const t = TROOPS[id];
+  return t.rank > 1 ? `${unitsName(t.unit)} ${['', 'I', 'II', 'III', 'IV', 'V'][t.rank]}` : unitsName(t.unit);
 }
 
 export function el<K extends keyof HTMLElementTagNameMap>(

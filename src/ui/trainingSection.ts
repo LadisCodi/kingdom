@@ -27,7 +27,7 @@ import {
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
 import type { District, TrainableId, TroopId, UnitId } from '../sim/state';
-import { el, formatDuration, formatExact, coach } from './format';
+import { el, formatDuration, formatExact, coach, troopsName, unitsName } from './format';
 import { action, btn, holdToRepeat, iconEl, isShort, knob, progress, withTooltip, type LiveParts } from './kit';
 import { timerButton } from './speedupSheet';
 import type { IconName } from './kit/icon';
@@ -60,12 +60,11 @@ function typeTag(unitId: UnitId): HTMLElement {
   const unit = UNITS[unitId];
   const type = unit.tags.includes('Distance') ? tr('Ranged')
     : unit.tags.includes('Mounted') ? tr('Mounted') : tr('Melee');
-  const plural = (id: UnitId) => tr('{name}s', { name: UNITS[id].name });
   const beats = BEATS[unitId];
   const beatenBy = (Object.keys(BEATS) as UnitId[]).find((k) => BEATS[k] === unitId);
   const tip = beatenBy === undefined
-    ? tr('Strong vs {strong}.', { strong: plural(beats) })
-    : tr('Strong vs {strong}, weak vs {weak}.', { strong: plural(beats), weak: plural(beatenBy) });
+    ? tr('Strong vs {strong}.', { strong: unitsName(beats) })
+    : tr('Strong vs {strong}, weak vs {weak}.', { strong: unitsName(beats), weak: unitsName(beatenBy) });
   return tag(type, tip, 'type');
 }
 
@@ -132,8 +131,8 @@ export function trainingSection(
       root.append(el('div', { class: 'tr-info is-ward k-section' },
         unitPortrait(unitId, 'tr-portrait'),
         el('div', { class: 'tr-body' },
-          el('div', { class: 'tr-name' }, trn(count, '{n} {name}', '{n} {name}s', {
-            n: formatExact(count), name: TROOPS[unitId].name,
+          el('div', { class: 'tr-name' }, trn(count, '{n} {name}', '{n} {names}', {
+            n: formatExact(count), name: TROOPS[unitId].name, names: troopsName(unitId),
           })),
           el('div', { class: 'tr-desc' },
             tr('Off the roster until they are back on their feet. Cheaper to mend than to replace.'))),

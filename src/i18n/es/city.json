@@ -6,7 +6,6 @@
   "{creature} are beaten": "Derrotados: {creature}",
   "{creature} is beaten": "Derrotado: {creature}",
   "{crew} of {limit} assigned": "{crew} de {limit} asignados",
-  "{n} {name}|{n} {name}s": "{n} {name}|{n} {name}s",
   "{n} builders are free": "{n} constructores libres",
   "{n} Harmony": "{n} de Armonía",
   "{n} is as large as a crew gets.": "Una cuadrilla no pasa de {n}.",
@@ -17,7 +16,6 @@
   "{name} — choose a rank": "{name}: elige un rango",
   "{name} · Lv {n}": "{name} · Nv {n}",
   "{name} level {n}": "{name} nivel {n}",
-  "{name}s": "{name}s",
   "{used} of {cap} beds taken": "{used} de {cap} camas ocupadas",
   "{what} {label}": "{what} {label}",
   "{what} in range": "{what} al alcance",
@@ -165,5 +163,6 @@
   "Workshop": "Taller",
   "You have {n}": "Tienes {n}",
   "You have as many as the realm allows": "Ya tienes tantos como permite el reino",
-  "Your builder is busy": "Tu constructor está ocupado"
+  "Your builder is busy": "Tu constructor está ocupado",
+  "{n} {name}|{n} {names}": "{n} {name}|{n} {names}"
 }

@@ -5,17 +5,11 @@
 // and what was asked for starts.
 
 import type { Game } from '../game';
-import { el, formatDuration, formatExact } from './format';
+import { currencyName as coinWord, el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, sheet } from './kit';
 import { tileArt } from './itemArt';
 import { tr } from '../i18n/tr';
-import type { CurrencyId } from '../sim/state';
 
-/** A coin's name, as the sheet says it. */
-const coinWord = (c: CurrencyId): string => ({
-  Gold: tr('Gold'), Food: tr('Food'), Wood: tr('Wood'), Stone: tr('Stone'),
-  Mana: tr('Mana'), Gems: tr('Gems'), Knowledge: tr('Knowledge'),
-} as Partial<Record<CurrencyId, string>>)[c] ?? c;
 
 export function renderShortfallSheet(game: Game): HTMLElement {
   const view = game.shortfallScreen();

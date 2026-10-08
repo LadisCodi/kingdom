@@ -10,7 +10,7 @@ import { GOODS, WORLD_BUILD, type PackTier } from '../../sim/data/definitions';
 import type { WorldFeature, WorldTerrain } from '../../sim/world/types';
 import type { CurrencyId, GoodId, LairId } from '../../sim/state';
 import { tr } from '../../i18n/tr';
-import { el } from '../format';
+import { currencyName, el } from '../format';
 
 /** What a camp is called, on its card's plank and over its fight. */
 export const CAMP_TITLE: Record<LairId, string> = {
@@ -47,18 +47,7 @@ export const FOG_NAME: Record<FogState, string> = { Revealed: tr('Revealed'), Se
 
 /** A coin's or a good's name, as a line reads it. */
 export function coinName(c: CurrencyId | GoodId): string {
-  switch (c) {
-    case 'Gold': return tr('Gold');
-    case 'Food': return tr('Food');
-    case 'Wood': return tr('Wood');
-    case 'Stone': return tr('Stone');
-    case 'Mana': return tr('Mana');
-    case 'Knowledge': return tr('Knowledge');
-    case 'Stardust': return tr('Stardust');
-    case 'HeroXp': return tr('Hero XP');
-    case 'Gems': return tr('Gems');
-    default: return GOODS[c]?.name ?? c;
-  }
+  return c in GOODS ? GOODS[c as GoodId].name : currencyName(c as CurrencyId);
 }
 
 /** A pack's name on a chip: "Green pack". */

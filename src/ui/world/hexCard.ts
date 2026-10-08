@@ -31,7 +31,7 @@ import { portalPortrait } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
-import { coach, el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
+import { coach, el, formatCount, formatCountdown, formatDuration, formatExact, formatShort, unitsName } from '../format';
 import { action, btn, chip, costChips, currencyIcon, iconEl, powerTag, sectionHead, sheet, withTooltip, type IconName } from '../kit';
 import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
@@ -415,11 +415,10 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
 // ------------------------------------------------------------ the deployment's widgets
 
 /** What a troop type is called on a modifier's line. */
-const TYPE_WORD: Partial<Record<UnitId, string>> = { Warrior: tr('Warriors'), Lancer: tr('Lancers'), Archer: tr('Archers'), Cavalry: tr('Cavalry') };
 
 /** "Archers +20% attack": what the ground does to one troop type. */
 const edgeLine = (e: ReturnType<typeof groundEdges>[number]): string => tr('{type} {sign}{pct}% attack', {
-  type: TYPE_WORD[e.unit] ?? e.unit, sign: e.attack > 0 ? '+' : '−', pct: formatExact(Math.round(Math.abs(e.attack) * 100)),
+  type: unitsName(e.unit), sign: e.attack > 0 ? '+' : '−', pct: formatExact(Math.round(Math.abs(e.attack) * 100)),
 });
 const TYPE_ICON: Partial<Record<UnitId, IconName>> = { Warrior: 'typeWarrior', Lancer: 'typeLancer', Archer: 'typeArcher', Cavalry: 'typeCavalry' };
 
