@@ -260,12 +260,26 @@
 - **Every hex adds its time when the marcher leaves it**: out, the city and
   every hex before the destination; home, the destination and every hex
   before the city.
-- A hex's time is the marcher's **pace** times the hex's **ground**:
+- A hex's time is the marcher's **pace** times the hex's **ground** times its
+  **distance** from the marcher's own city:
 
-| Pace on open ground | Seconds a hex |
+| Pace on open ground, leaving the city | Seconds |
 |---|---|
-| Explorer (`explorerSecondsPerHex`) | 60 |
-| Army (`armySecondsPerHex`) | 120 |
+| Explorer (`explorerSecondsPerHex`) | 15 |
+| Army (`armySecondsPerHex`) | 30 |
+
+- **Far ground is slower**: a hex `d` hexes from the marcher's city takes
+  `marchGrowthPerHex` (×1.5) to the power `d`, `d` counted up to
+  `marchGrowthHexes` (6); past that every hex takes what the sixth did. The
+  ground round a city is crossed quickly; a march on a rival takes its time.
+  Distance is always from the city that sent the march, so a rival marching
+  on the player's ground is slow too.
+- An army over open ground, out:
+
+| Hexes | 1 | 2 | 3 | 4 | 6 | 8 | 10 | 13 |
+|---|---|---|---|---|---|---|---|---|
+| Time | 30 s | 1 min 15 s | 2 min 22 s | 4 min 4 s | 10 min 23 s | 21 min 47 s | 33 min 10 s | 50 min 15 s |
+
 
 | Ground (`worldTravel`) | Factor |
 |---|---|
@@ -276,8 +290,8 @@
 | Every other feature, the Portal | ×1 |
 
 - Factors multiply: a mountain on desert is ×4.5.
-- *Example, an explorer*: leaving open plain 1 min, a plain with forest
-  1 min 30 s, a mountain on grassland 3 min.
+- *Example, an explorer*, two hexes from its city: leaving open plain 34 s,
+  a plain with forest 51 s, a mountain on grassland 1 min 41 s.
 - **A speed divides one hex's time** and never lengthens it — the hook for a
   hero or technology that is quicker over some ground. The tree's
   `explorerSpeed` and `armyMarchSpeed` are two; an army's is priced by the
@@ -912,8 +926,9 @@ it is there to compare.
 |---|---|---|
 | **Army slots** (1, +1 per War Camp level) | everything — conflict, the Portal | the board feels too quiet or too violent |
 | **Casualty replacement time** | how often a player can act at all | attacks are too cheap to repeat |
-| **Army seconds per hex** (120) | the tempo of conquest | the board resolves too fast or feels like waiting |
-| **Explorer seconds per hex** (60) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
+| **Army seconds per hex** (30, leaving the city) | the tempo of conquest | the board resolves too fast or feels like waiting |
+| **March growth** (×1.5 a hex, for 6 hexes) | how much slower far ground is than near | the city's surroundings feel slow, or rivals are next door |
+| **Explorer seconds per hex** (15, leaving the city) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
 | **Explorer slots** (one from the start, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
 | **Precious prices** — levels 4–5 by name, levels 8–10 each (§7.6) | how much the city needs the world and trade | the late city stalls, or ignores the world |

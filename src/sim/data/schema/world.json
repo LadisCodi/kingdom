@@ -8,12 +8,22 @@
         "explorerSecondsPerHex": {
           "type": "int",
           "min": 1,
-          "doc": "Seconds an explorer takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel), and worldRevealSpeed divides it."
+          "doc": "Seconds an explorer takes to leave its own city on open ground; every hex further out multiplies it by marchGrowthPerHex, its terrain and features multiply it (worldTravel), and worldRevealSpeed divides it."
         },
         "armySecondsPerHex": {
           "type": "int",
           "min": 1,
-          "doc": "Seconds an army takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel)."
+          "doc": "Seconds an army takes to leave its own city on open ground; every hex further out multiplies it by marchGrowthPerHex, and its terrain and features multiply it (worldTravel)."
+        },
+        "marchGrowthPerHex": {
+          "type": "float",
+          "min": 1,
+          "doc": "How much longer a hex takes to cross for every hex it lies from the marcher's own city: near ground is quick, far ground slow."
+        },
+        "marchGrowthHexes": {
+          "type": "int",
+          "min": 0,
+          "doc": "How many hexes out the growth runs: past it, every hex takes what the last one did."
         },
         "exploreWorkSeconds": {
           "type": "int",

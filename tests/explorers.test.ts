@@ -211,7 +211,9 @@ describe('sending an explorer', () => {
     const quick = explorerRoute(state, rim(state))!;
     const v = HEROES.Scout.boon!.value;
     expect(quick.path).toEqual(slow.path);
-    expect(quick.stepMs).toEqual(slow.stepMs.map((ms) => Math.round(ms / v)));
+    // Each hex's time divided by the boon — to the millisecond either way,
+    // since both are rounded from the unrounded time.
+    quick.stepMs.forEach((ms, k) => expect(Math.abs(ms - slow.stepMs[k] / v)).toBeLessThanOrEqual(1));
   });
 });
 
