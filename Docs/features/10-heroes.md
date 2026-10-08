@@ -13,8 +13,8 @@
 > opens the Heroes tab and the banner. **Not built:** the rarity multipliers
 > (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
 > moving into the Tavern (§8.3). **Designed, not built:** the hero bag and
-> the hero chance that falls with the collection (§6.6), and the three
-> prize slots (§6.4).
+> the hero chance that falls with the collection (§6.6), the three prize
+> slots (§6.4), and the ten-call's grouped reveal (§8.3).
 
 ## 1. The collection substrate
 
@@ -569,9 +569,8 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   war chest for spoils. Every reveal of RANDOM rewards uses it.
 - **The sequence**:
   1. the chest drops onto the carpet with a count of the cards inside and
-     opens on its own — the player already paid. A call is **three cards,
-     in slot order** (§6.4) — hero, hero goods, supplies — and a ten-call
-     thirty;
+     opens on its own — the player already paid. A single call is **three
+     cards**, one per slot (§6.4); a ten-call is grouped (below);
   2. the first card rises face down — *Tap to reveal*;
   3. a tap flips it;
   4. the next tap sends it to its own place on the stage — smaller and
@@ -594,9 +593,23 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - **The places are the summary.** When the last card lands the chest sinks
   away, every card lights up, a *Rewards* plaque and **Collect** appear. No
   separate receipt is drawn.
-- **A ten-call condenses.** Same thing, one card with a count: three draws
-  of 25 Stardust are one 75, two Food chests one card of two, and four
-  fragments of one hero one stack of four.
+- **A ten-call is grouped into a handful of cards**, never one per prize:
+  - **one card per currency**, the sum of every draw: all the Stardust is
+    one card, all the Hero XP another;
+  - **one card per supply family** — *Speed-ups* and *Chests* — with the
+    total count, and its contents listed on the card in small rows
+    (*3 × construction 5 min · 1 × training 5 min*);
+  - **one bag card** for every Fragment: each hero of the bag that got any,
+    a row with its portrait (a silhouette if not recruited), *+n* and its
+    bar;
+  - **one card per new hero**.
+- **A ten-call is dealt in three beats**, not a tap per card:
+  1. **the goods**: the currency and supply cards rise together, face up,
+     and settle in one tap;
+  2. **the bag**: its card flips, every bar fills at once, and a bar that
+     reaches the recruiting price flares and seals its hero;
+  3. **each new hero**, one at a time, with its celebration.
+- The summary of a ten-call is then at most five cards plus its new heroes.
 - **The order:** currencies, then items, then fragments. **Heroes come last**, so the sequence arrives at what the player called for.
 - **A whole new hero is the rarest thing in a chest, and is celebrated.**
   Before the flip its card back glows and trembles in its rarity over a drum
