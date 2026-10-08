@@ -15,6 +15,7 @@ import { setMusterMusic, startMusic } from './audio/music';
 import { warmBattleSfx } from './audio/sfx';
 import { Game, type OverlayName } from './game';
 import { currentLang } from './i18n/lang';
+import { tr } from './i18n/tr';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
@@ -317,7 +318,7 @@ async function boot(): Promise<void> {
     navbar: document.getElementById('navbar')!,
     quest: document.getElementById('quest')!,
   });
-  const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
+  const saveModeLabel = saveManager.cloudActive ? tr('☁️ cloud save') : tr('💾 local save only');
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => {
     // The local world server's board goes with the save it was played from.
