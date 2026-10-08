@@ -393,7 +393,7 @@ export function renderCity(game: Game, bh: BoardHex): HTMLElement {
       parts.push(sectionHead(tr('Deposits')), tiles((['strong', 'middle', 'weak'] as const).map((rank) => ({
         icon: deal[rank] as IconName, label: coinName(deal[rank]), value: `×${formatExact(WORLD_GEN.deposits[rank].length)}`,
       }))));
-      foot.push(btn({ label: tr('Trade'), kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
+      foot.push(btn({ label: tr('button::Trade'), kind: 'secondary', onClick: () => { game.friends.open(); game.friends.setTab('trade'); } }));
     }
   } else if (friendView !== undefined) {
     foot.push(btn({ label: tr('Profile'), kind: 'secondary', onClick: () => game.friends.openProfile(friendView.code) }));
