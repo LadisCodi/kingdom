@@ -20,7 +20,7 @@ import { depositMaterial, type WorldDistrict, type WorldFeature, type WorldUpgra
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { hexTravelMs, homeboundMs, outboundMs } from '../../sim/world/travel';
 import {
-  exploreGold, exploreWorkMs, explorerRoute, explorerSlots, freeExplorers, returnsAt, type FogState,
+  exploreGold, exploreWorkMs, explorerRoute, firstTripFree, freeExplorers, nextFreeAt, type FogState,
 } from '../../sim/world/explorers';
 import { scoutPay } from '../../sim/world/scouting';
 import { worldImprovementBoost } from '../../sim/world/boost';
@@ -32,12 +32,12 @@ import { portalPortrait } from '../../render/world/boardRenderer';
 import type { HexControl } from '../../sim/world/source';
 import { COMBO_SPRITE, DISTRICT_SPRITE, PLATE_SPRITE, comboOf, fortressSprite } from '../../render/world/hexArt';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
-import { el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
+import { coach, el, formatCount, formatCountdown, formatDuration, formatExact, formatShort } from '../format';
 import { action, btn, chip, costChips, currencyIcon, iconEl, powerTag, sectionHead, sheet, withTooltip, type IconName } from '../kit';
 import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
-import { chapelRoom, hexActions, hexWork } from './worldActions';
+import { chapelRoom, explorersOutLine, hexActions, hexWork } from './worldActions';
 import { armyBoard, marchingDock } from './delveScreen';
 import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
@@ -173,28 +173,24 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
         ? 'Shapes in the mist. Send an explorer to see it.'
         : 'Nobody has been this way.')));
 
-  const slots = explorerSlots(state);
-  const free = freeExplorers(state);
-  const route = explorerRoute(state, index, now);
+  const route = explorerRoute(state, index);
   const work = exploreWorkMs(state, index) / 1000;
   const there = route === null ? 0 : (outboundMs(route.stepMs) + homeboundMs(route.stepMs)) / 1000 + work;
   let reason: string | undefined;
-  if (slots === 0) reason = 'Research Cartography in the Atlas';
-  else if (route === null) reason = 'No way there through explored ground';
-  else if (free === 0) {
-    const back = Math.min(...state.world.explorers.map(returnsAt));
-    reason = `Every explorer is out — one is back in ${formatCountdown(Math.max(0, back - now) / 1000)}`;
-  }
-  const explore = trip !== null ? null : btn({
+  if (route === null) reason = 'No way there through explored ground';
+  else if (freeExplorers(state) === 0) reason = explorersOutLine(state, nextFreeAt(state), now);
+  // The first trip is the tutorial's: no Gold, and the button says so.
+  const explore = trip !== null ? null : coach(btn({
     label: 'Explore', kind: 'primary', cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => game.walletValue(c),
+    ...(firstTripFree(state) ? { note: 'Free' } : {}),
     disabledReason: reason,
     onClick: () => game.doSendExplorer(),
-  });
+  }), 'explore');
   const exploreHead = el('div', { class: 'dc-head' },
     portrait('whex_explorer', 'compass'),
     el('div', { class: 'dc-what-col' },
       el('p', { class: 'wd-name' }, 'Send an explorer'),
-      el('div', { class: 'dc-what' }, 'There and back, then the hex is revealed.')),
+      el('div', { class: 'dc-what' }, 'It explores the hex, then waits there for you.')),
     ...(explore === null ? [] : [el('div', { class: 'dc-upgrade' }, explore)]));
   const blocked = reason === undefined || trip !== null ? [] : [blockedLine(reason)];
   const journey = route === null ? [] : [tiles([

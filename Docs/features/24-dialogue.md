@@ -28,7 +28,7 @@
   brass rivets — and a soft shadow that lifts it off the map behind.
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
-  Warden green, Bess red, Tom and Hob brown, Grukk crimson.
+  Warden green, Bess red, Tom and Hob brown, Grukk crimson, Wren purple.
 - **Places**: `bottom`, `top`, `middle`, or `auto`. Every authored line is
   `auto`.
 - **`auto` keeps the speaker and what the line is about both in sight.** It
@@ -105,6 +105,8 @@
 | `lair:` | the first lair found that still stands |
 | `abandoned:<id>` | an abandoned building, wherever the fog has it — silhouette, ruin or revealed |
 | `treasure` | the nearest treasure still on the ground |
+| `hex:explore` | on the world board: the misty hex nearest the city that an explorer can reach and nobody is out to — one with a promise first |
+| `hex:ready` | on the world board: the hex an explorer waits at for the player's tap |
 | `quest` | the quest pill |
 | `back` | the close of whatever is open on top — a menu or sheet before a card or the placement bar |
 
@@ -126,7 +128,8 @@
 - The quest pill's hint wears the same hand and glow, so a player never learns
   two signs for one thing.
 - **The camera glides to a map target** (0.2 s, easing out, no overshoot)
-  before the line appears; `auto` judges the target where the glide ends.
+  before the line appears; `auto` judges the target where the glide ends. A
+  hex target centres the world board's camera on it.
 - A target that moves (a scrolling list, a card rebuilt) is re-found every
   frame.
 - **A line that points at the nav bar is always preceded by one that walks
@@ -156,6 +159,7 @@ which one a line waits on is data.
 | `featureSeen` | a cell with that feature is out of the dark |
 | `treasureRevealed` · `treasurePicked` | a treasure stands on revealed ground · `amount` picked up |
 | `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
+| `explorerSent` · `explorerReady` · `explorerRevealed` | `amount` explorers sent, ever · one waits at its hex for the tap · `amount` hexes revealed by that tap, ever |
 | `holdsItem` · `itemUsed` | the Bag holds `amount` (at least one) of that item or kind of item · holds none of it any more |
 | `manaEmpty` · `buildersBusy` · `raided` · `wounded` | the pool is dry · every builder is busy · a lair holds a hoard · someone is in the Infirmary |
 | `always` | at once |
@@ -170,6 +174,7 @@ which one a line waits on is data.
 | `woodcutter` | **Old Hob** | the woodcutter who never left the fog: gruff, superstitious, distrusts books, secretly proud of Isolde. Her foil | `portrait_hob` | full figure |
 | `villager` | **Tom Miller** | the Millers' son, the first villager home | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
+| `scout` | **Wren** | the Royal Scout, the kingdom's explorer on the world board: eager, quick, always first out of the gate. Speaks when she is sent out and when she has found something | `hero_scout` (until she has her own) | full figure |
 
 - **Isolde has five faces** — at rest, happy (eyes closed, a wide smile, the
   ledger hugged), worried (a hand at her chin), surprised (leaning back, a

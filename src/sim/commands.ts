@@ -56,7 +56,7 @@ import { collectStore } from './storage';
 import { applyRentRush, nextRentRush, stampRentRush } from './quests';
 import { gemsToFinish } from './rush';
 import {
-  finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
+  finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers,
 } from './world/explorers';
 
 // ------------------------------------------------------------------ building
@@ -719,8 +719,9 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** Explorers that came home from the world board, and what they revealed. */
-  explorersHome: ExplorerHome[];
+  /** Explorers that came home from the world board, by trip id. What they
+   *  found was revealed when the player tapped their hex. */
+  explorersHome: string[];
   /** World builds whose builder came home: the district or upgrade stands. */
   worldBuildsDone: WorldBuild[];
 }
@@ -793,8 +794,9 @@ function applyDueAt(
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
     out.goodsMade.push(...completeWorkshopItems(state, t));
-    // An explorer home is a TIMER: its march resolves at its absolute time,
-    // and its whole reveal folds into the fog here (sim/world/explorers.ts).
+    // An explorer home is a TIMER: its march home resolves at its absolute
+    // time and frees its slot. Its reveal was the player's tap
+    // (sim/world/explorers.ts).
     out.explorersHome.push(...returnExplorers(state, t));
     // A builder out on the world board comes home when its build stands.
     out.worldBuildsDone.push(...finishWorldBuilds(state, t));

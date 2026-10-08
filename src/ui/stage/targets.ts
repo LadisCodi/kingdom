@@ -12,12 +12,17 @@ import { explorationGate, fogState, isPayable } from '../../sim/fog';
 import { townhallDistance } from '../../sim/grid';
 import { harvestSourceAt, isExhausted } from '../../sim/harvest';
 import { coordKey, type Coord, type FeatureId, type LairId } from '../../sim/state';
+import { hexAt, hexDistance } from '../../sim/world/hex';
+import { explorerRoute, fogStatesOf, homeIndex, readyTrips, tripRevealing, worldFog } from '../../sim/world/explorers';
+import { boardOf } from '../../sim/world/source';
 import type { Game } from '../../game';
 
 /** A resolved target: a DOM node, or a plot of map cells. */
 export type Target =
   | { kind: 'ui'; key: string }
-  | { kind: 'cell'; cell: Coord; span: { x: number; y: number } };
+  | { kind: 'cell'; cell: Coord; span: { x: number; y: number } }
+  /** A hex of the world board, by index. */
+  | { kind: 'hex'; index: number };
 
 /** The screen rect a target occupies right now, in #app's coordinates. */
 export interface Rect { x: number; y: number; w: number; h: number }
@@ -98,6 +103,15 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
   if (previous?.kind === 'cell' && stillGood(game, point, previous.cell)) return previous;
   const [kind, id = ''] = point.split(':');
   switch (kind) {
+    // A hex of the world board (19-world-map.md §3.1): `hex:explore` the one
+    // a first explorer should go to, `hex:ready` the one an explorer waits
+    // at, or a board index.
+    case 'hex': {
+      const index = id === 'explore' ? firstExploreHex(game)
+        : id === 'ready' ? readyTrips(game.state, game.now())[0]?.target ?? null
+          : id !== '' && Number.isInteger(Number(id)) ? Number(id) : null;
+      return index === null ? null : { kind: 'hex', index };
+    }
     case 'cell': {
       const [x, y] = id.split(',').map(Number);
       return { kind: 'cell', cell: { x, y }, span: ONE };
@@ -136,6 +150,24 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
     }
     default: return null;
   }
+}
+
+/**
+ * The hex a first explorer is shown to: misty ground it can reach and nobody
+ * is out to, the nearest the city — one with a promise over it before one
+ * without, then the lowest index, so it is the same hex every frame.
+ */
+function firstExploreHex(game: Game): number | null {
+  const state = game.state;
+  const home = homeIndex(state);
+  const hexes = boardOf(state.world.board).hexes;
+  const states = fogStatesOf(worldFog(state));
+  const open = hexes.filter((h) => states[h.index] === 'Sensed' && tripRevealing(state, h.index) === null
+    && explorerRoute(state, h.index) !== null);
+  const away = (i: number): number => hexDistance(hexAt(home), hexAt(i));
+  open.sort((a, b) => away(a.index) - away(b.index)
+    || (a.scout === null ? 1 : 0) - (b.scout === null ? 1 : 0) || a.index - b.index);
+  return open[0]?.index ?? null;
 }
 
 /** The lair found first, of those not cleared — by when its clock started. */
@@ -194,6 +226,16 @@ export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect
     const r = node.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) return null;
     return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
+  }
+  if (target.kind === 'hex') {
+    // Only on the board: a hex is nowhere on the province.
+    const camera = game.worldCamera;
+    if (game.scene !== 'world' || camera === null) return null;
+    const c = camera.hexToScreen(hexAt(target.index));
+    const canvas = frame.querySelector<HTMLCanvasElement>('canvas#world')?.getBoundingClientRect() ?? origin;
+    const w = camera.hexWidth * 0.8;
+    const h = camera.hexRadius;
+    return { x: c.x - w / 2 + canvas.left - origin.left, y: c.y - h / 2 + canvas.top - origin.top, w, h };
   }
   const box = game.camera.plotBox(target.cell, target.span);
   // The map's own canvas: the floor and the cloud bank are canvases too,

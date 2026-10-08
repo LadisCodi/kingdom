@@ -114,8 +114,9 @@
   ([`23-tutorials.md`](23-tutorials.md) §4.3).
 - **The world door opens the world board**
   ([`19-world-map.md`](19-world-map.md)): the knob takes the player out to
-  the board and, wearing the castle, back home. Cartography, in the Atlas the
-  same claim opens, sends the first explorer.
+  the board and, wearing the castle, back home. The kingdom's own explorer is
+  ready the moment the board opens, and Wren sends it on its first trip, free
+  ([`19-world-map.md`](19-world-map.md) §3.3).
 
 ## 6. The Tavern and the heroes
 

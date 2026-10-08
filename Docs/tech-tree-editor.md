@@ -163,8 +163,8 @@ technology moves it yet — so a stat added in code is pickable immediately.
 read by something in `src/sim`, and the file may only name a stat the registry
 declares.
 
-**`mechanic` — the code reads it by id.** `Tactics` softening a bad matchup,
-`Cartography` sending the first explorer. The editor can label these;
+**`mechanic` — the code reads it by id.** `Tactics` softening a bad matchup.
+The editor can label these;
 it cannot write them. What is left in this kind is what genuinely is code: a
 `planned` node, and the few mechanics whose arithmetic does not fit
 `(base + Σflat) × (1 + Σpct)`.

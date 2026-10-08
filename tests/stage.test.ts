@@ -9,8 +9,10 @@ import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts'
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
 import { grantItem, useItem } from '../src/sim/bag';
-import { handPlace } from '../src/ui/stage/targets';
-import { addBuilt, firstGame, freshPresenter, reveal, WATCHTOWER } from './helpers';
+import { handPlace, resolveTarget } from '../src/ui/stage/targets';
+import { dispatchExplorer, fogStateOf, homeIndex, readyAt, revealExplored } from '../src/sim/world/explorers';
+import { PORTAL_INDEX, boardNeighbors } from '../src/sim/world/hex';
+import { addBuilt, firstGame, freshPresenter, reveal, T0, WATCHTOWER } from './helpers';
 import { LAIRS, LANDMARKS } from '../src/sim/data/definitions';
 
 /** Every `data-coach` key the UI source writes: literals, and the prefix of
@@ -270,5 +272,51 @@ describe('the hand and the line box', () => {
 
   it('stands as it always did with no box on screen', () => {
     expect(handPlace(target, hand, null, frameH)).toEqual({ above: true, moveBox: false });
+  });
+});
+
+// The explorer's two scenes (Docs/features/19-world-map.md §3.3): what they
+// wait on, and the hexes they point at.
+describe('the explorer scenes', () => {
+  const holds = (game: ReturnType<typeof freshPresenter>, kind: 'explorerSent' | 'explorerReady' | 'explorerRevealed') =>
+    conditionHolds(game, { kind, target: '', amount: 0, tapsAtStart: 0 });
+
+  it('wait on a trip sent, an explorer waiting, and a hex revealed', () => {
+    const game = freshPresenter();
+    game.now = () => T0;
+    expect(holds(game, 'explorerSent')).toBe(false);
+    const target = boardNeighbors(homeIndex(game.state)).find((n) => n !== PORTAL_INDEX)!;
+    const r = dispatchExplorer(game.state, target, T0);
+    if (r.kind !== 'Sent') throw new Error(r.kind);
+    expect(holds(game, 'explorerSent')).toBe(true);
+    expect(holds(game, 'explorerReady')).toBe(false);
+    game.now = () => readyAt(r.trip);
+    expect(holds(game, 'explorerReady')).toBe(true);
+    expect(holds(game, 'explorerRevealed')).toBe(false);
+    expect(resolveTarget(game, 'hex:ready', null)).toEqual({ kind: 'hex', index: target });
+    revealExplored(game.state, target, readyAt(r.trip));
+    expect(holds(game, 'explorerReady')).toBe(false);
+    expect(holds(game, 'explorerRevealed')).toBe(true);
+  });
+
+  it('point a first explorer at misty ground next to the city', () => {
+    const game = freshPresenter();
+    game.now = () => T0;
+    const t = resolveTarget(game, 'hex:explore', null);
+    expect(t?.kind).toBe('hex');
+    const index = (t as { index: number }).index;
+    expect(fogStateOf(game.state, index)).toBe('Sensed');
+    expect(boardNeighbors(homeIndex(game.state))).toContain(index);
+  });
+
+  it('send the first trip free, and teach it on the board and the reveal anywhere', () => {
+    const explorer = SCENES.find((s) => s.id === 'explorer')!;
+    const ready = SCENES.find((s) => s.id === 'explorerReady')!;
+    expect(explorer).toMatchObject({ trigger: 'worldOpen', where: 'world', doneWhen: 'explorerSent' });
+    expect(ready).toMatchObject({ trigger: 'explorerReady', where: 'any', doneWhen: 'explorerRevealed' });
+    expect(explorer.lines.some((l) => l.point === 'hex:explore' && l.lock === 'target')).toBe(true);
+    expect(ready.lines.some((l) => l.point === 'hex:ready' && l.lock === 'target' && l.until === 'explorerRevealed')).toBe(true);
+    // The world's own scene goes first.
+    expect(SCENES.indexOf(explorer)).toBe(SCENES.findIndex((s) => s.id === 'world') + 1);
   });
 });

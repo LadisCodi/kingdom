@@ -9,7 +9,7 @@ import type { Game } from '../../game';
 import { SEAT_COLORS, withFriends } from '../../render/world/boardRenderer';
 import { hexToPlane, planeToHex } from '../../render/world/hexLayout';
 import { BOARD_HEXES, PORTAL_INDICES, WORLD_RADIUS } from '../../sim/world/hex';
-import { fogStatesOf, worldFogAt } from '../../sim/world/explorers';
+import { fogStatesOf, worldFog } from '../../sim/world/explorers';
 import type { WorldTerrain } from '../../sim/world/types';
 import { el } from '../format';
 import { setHidden } from '../domWrite';
@@ -65,11 +65,10 @@ export function mountMinimap(game: Game, root: HTMLElement): void {
     if (ctx === null) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const now = game.now();
     const state = game.state;
     const source = game.worldSource();
     const board = source.board();
-    const fog = worldFogAt(state, now);
+    const fog = worldFog(state);
     const seats = source.seats();
     const states = withFriends(source, fogStatesOf(fog));
     const colourOf = (owner: number | null): string | null => {

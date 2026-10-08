@@ -944,11 +944,13 @@
       "unlocks": [{"districtLevel":{"id":"Tavern","level":5}}]
     },
     "Cartography": {
-      "name": "Cartography", "icon": "dowserMap", "kind": "mechanic",
-      "description": "The first explorer — send it out to reveal the world map.",
+      "name": "Cartography", "icon": "dowserMap", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 2000, "knowledge": 4
+      "gold": 2000, "knowledge": 4,
+      "effects": [
+        {"stat":"exploreSpeed","op":"percent","value":50}
+      ]
     },
     "FarsightI": {
       "name": "Farsight I", "icon": "spyglass", "kind": "bonus",

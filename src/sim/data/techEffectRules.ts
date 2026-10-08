@@ -381,9 +381,9 @@ export const TECH_STATS = {
     reads: 'explorers.ts#explorerSlots',
   },
   worldRevealRadius: {
-    what: 'hexes an explorer reveals round each hex of its path — whole hexes, so flat, and capped',
+    what: 'hexes an explorer reveals round its target — whole hexes, so flat, and capped',
     ops: ['flat'], targets: ['global'], unit: 'hexes',
-    says: { flat: '{v} to how far an explorer sees round its path' },
+    says: { flat: '{v} to how far an explorer sees round the hex it explores' },
     reads: 'explorers.ts#revealRadius',
   },
   explorerSpeed: {
@@ -391,6 +391,12 @@ export const TECH_STATS = {
     ops: ['percent'], targets: ['global'], unit: '×',
     says: { percent: '{v} explorer speed on the world board' },
     reads: 'explorers.ts#explorerSpeed',
+  },
+  exploreSpeed: {
+    what: 'how fast an explorer works the hex it was sent to — the work is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} exploring speed on the world board' },
+    reads: 'explorers.ts#exploreSpeed',
   },
   armyMarchSpeed: {
     what: 'how fast an army marches over every hex — each hex’s time is divided by it',

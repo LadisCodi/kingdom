@@ -137,7 +137,7 @@ describe('the column', () => {
       world('w', T0 + 1),
       { group: 'chainDone', key: 'chainDone', at: T0 + 2 },
       { group: 'armyHome', key: 'army', at: T0 + 3, troops: 3, fallen: 0 },
-      { group: 'explorer', key: 'ex', at: T0 + 4, hex: 0, revealed: 2 },
+      { group: 'worldBuild', key: 'wb', at: T0 + 4, hex: 0, what: 'Fortress', level: 1 },
       { group: 'sighted', key: 'sighted:Goblins', at: T0 + 5, site: 'Goblins' },
     ];
     for (const n of groups) {

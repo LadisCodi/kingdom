@@ -221,7 +221,7 @@
 
 | Card | Opens / moves | Price |
 |---|---|---|
-| **Cartography** | The first explorer — send it out to reveal the world map. | 2,000 G · 4 K |
+| **Cartography** | +50% exploreSpeed | 2,000 G · 4 K |
 | **Farsight I** | +1 discoverRadius | 800 G · 4 K |
 | **Scouts I** | +1 explorerSlots | 2,500 G · 4 K |
 | **Farsight II** | +1 discoverRadius | 1,500 G · 4 K |
@@ -244,7 +244,8 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 | `crewYield` | multiplies a worker delivery; the fraction carries | 0 |
 | `decorationHarmony` | added to, or multiplying, a decoration's Harmony; whole points, rounded down | 1 |
 | `discoverRadius` | whole rings, added | 2 |
-| `explorerSlots` | whole explorers, added to Cartography's | 2 |
+| `exploreSpeed` | an explorer's work at the hex it was sent to is divided by it | 1 |
+| `explorerSlots` | whole explorers, added to the kingdom's own | 2 |
 | `explorerSpeed` | an explorer's time per hex is divided by it, before the Scout's boon | 1 |
 | `harvestYield` | multiplies the chunk a tap and a strike take; the fraction carries | 8 |
 | `healSpeed` | a ward's mending time is divided by it, priced when it starts | 1 |

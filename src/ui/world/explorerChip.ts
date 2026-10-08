@@ -1,12 +1,12 @@
 // The explorers chip — top left on the world board, under the header: a
 // compass and how many explorers are out of how many (mockups m55, m56).
-// A tap glides to the one due home soonest. Absent until Cartography gives
-// the first, and absent on the province.
+// A tap glides to one waiting for the player, else to the one whose wait ends
+// soonest. Absent on the province.
 //
 // Built once and mutated, like the world knob.
 
 import type { Game } from '../../game';
-import { arrivesAt, returnsAt } from '../../sim/world/explorers';
+import { readyAt, readyTrips, returnsAt, tripPhase } from '../../sim/world/explorers';
 import { el, formatCount } from '../format';
 import { iconEl } from '../kit';
 import { explorerCount } from './dispatchSheet';
@@ -19,17 +19,23 @@ export function mountExplorerChip(game: Game, root: HTMLElement): void {
   }, iconEl('compass', { size: 'md' }), count);
   chip.addEventListener('click', () => {
     const now = game.now();
-    const trips = [...game.state.world.explorers].sort((a, b) => returnsAt(a) - returnsAt(b));
-    const trip = trips[0];
+    const waiting = readyTrips(game.state, now)[0];
+    if (waiting !== undefined) {
+      game.showHex(waiting.target);
+      return;
+    }
+    const ends = (t: (typeof game.state.world.explorers)[number]): number =>
+      (tripPhase(t, now) === 'home' ? returnsAt(t) : readyAt(t));
+    const trip = [...game.state.world.explorers].sort((a, b) => ends(a) - ends(b))[0];
     if (trip === undefined) return;
-    // Where it is headed, or the city it is walking back to.
-    game.showHex(now < arrivesAt(trip) ? trip.target : trip.path[0]);
+    // The hex it is headed for or working, or the city it is walking back to.
+    game.showHex(tripPhase(trip, now) === 'home' ? trip.path[0] : trip.target);
   });
   root.replaceChildren(chip);
 
   const refresh = (): void => {
     const { out, slots } = explorerCount(game);
-    setHidden(root, game.scene !== 'world' || slots === 0 || game.hasOpenSheet());
+    setHidden(root, game.scene !== 'world' || game.hasOpenSheet());
     setText(count, `${formatCount(slots - out)}/${formatCount(slots)}`);
   };
   game.onChange(refresh);

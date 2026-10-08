@@ -35,7 +35,6 @@
 | Goods | a workshop finishes goods | the good, with how many | the workshop | — |
 | Raided | a lair raids the city: what it took | the creature | the lair | — |
 | Sighted | a landmark, lair or abandoned building is sighted, unless a scene introduces it | the site | the site | — |
-| Explorer home | an explorer comes home: hexes revealed | the compass | the hex it went to, on the board | — |
 | World build | a world building finishes | the building | its hex | — |
 | Army home | an army comes home: how many came back, how many fell | the army | the home hex | — |
 | World report | a world report effect: ground won or lost, a garrison held or fell, a camp raided a hex, a relic lost, a dungeon closed, an exchange returned | the hex's art; good or bad tone | its hex | — |
@@ -60,6 +59,7 @@
 | Tomorrow's part | a bought pack's next-day part is waiting — countdown, then ready | the chest | — | **Claim** when ready: the offer's splash |
 | Portal reward | a closed Portal opening placed the player where it pays Gems ([`19-world-map.md`](19-world-map.md) §10.4) — the place, the floor, the Gems | the Portal, shut; it glows | — | **Claim**: the Gems |
 | Free call | a free gacha pull is waiting | the key | the store's Heroes | — |
+| Explorer ready | an explorer's work is done and it waits at its hex for the player's tap ([`19-world-map.md`](19-world-map.md) §3.1); a count when several | the compass; it glows | a tap on the bubble flies to the hex, card shut — the tap on the hex reveals it | — |
 | Army ready | an army of the player's waits at a camp for the word to attack ([`19-world-map.md`](19-world-map.md) §5.4) | the camp; it glows | the camp's sheet | — |
 | Hero rested | a hero who came back exhausted is whole again | the hero's bust | the heroes sheet | — |
 
@@ -133,7 +133,7 @@
 - **Gone:**
   - the banner (`#notice`);
   - the three right-edge tabs (Mana refill, relic asleep, tomorrow's part);
-  - the toasts for raids, world reports, explorers home and world builds.
+  - the toasts for raids, world reports and world builds.
 - **The raid widget** of [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §7 is the
   *Raid coming* state and the *Raided* news.
 - **Stays as it is:**

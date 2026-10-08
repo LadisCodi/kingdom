@@ -145,12 +145,13 @@ import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type Qu
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
-  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, fogStateOf, freeExplorers, homeIndex, returnsAt, revealsAt,
-  worldFogAt, type ExplorerHome,
+  buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems,
+  fogStateOf, freeExplorers, homeIndex, readyAt, readyTrips, revealExplored, returnsAt, tripPhase, worldFog,
+  type ExplorerFound, type TripFinished,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
 import { CAMP_TITLE } from './ui/world/hexNames';
-import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
+import { explorersOutLine, hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, homeboundMs, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
@@ -718,6 +719,8 @@ export class Game {
    * drag asks it first. Absent = everything goes through.
    */
   tapGate: ((cell: Coord | null, how: 'tap' | 'ghost') => boolean) | null = null;
+  /** The same gate on the world board: which hex a tap may reach. */
+  hexGate: ((index: number | null) => boolean) | null = null;
   /** Inside an automatic claim — so the claim's own notify does not start another. */
   private autoClaiming = false;
 
@@ -877,10 +880,11 @@ export class Game {
     for (const r of result.relicsAsleep) {
       if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
-    // An explorer home is a news (sim/notices.ts); the target's promise, if
-    // it kept one, is paid here (19 §3.2).
-    for (const home of result.explorersHome) this.payExplorer(home);
-    if (result.explorersHome.length > 0) playSfx('explorerHome');
+    // An explorer whose work is done waits at its hex for the player's tap:
+    // it calls out once, and stands in the notices until it is answered.
+    const ready = readyTrips(this.state, this.now()).map((t) => t.id);
+    if (ready.some((id) => !this.readyHeard.has(id))) playSfx('explorerHome');
+    this.readyHeard = new Set(ready);
     // A garrison come down on the city: a far horn, whatever it took.
     if (result.raids.length > 0) playSfx('raidAlarm');
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
@@ -2802,10 +2806,14 @@ export class Game {
     if (job.kind === 'explorer') {
       const trip = this.state.world.explorers.find((t) => t.id === job.tripId);
       if (!trip) return null;
-      const total = returnsAt(trip) - trip.departedAt;
+      const phase = tripPhase(trip, now);
+      // Out and at work, then the road home: each wait its own bar.
+      const [from, to] = phase === 'home'
+        ? [trip.revealedAt!, returnsAt(trip)] : [trip.departedAt, readyAt(trip)];
+      const total = to - from;
       return {
-        title: `Explorer · ${now < arrivesAt(trip) ? 'on the way' : now < revealsAt(trip) ? 'exploring' : 'coming home'}`,
-        icon: 'compass', progress: total > 0 ? Math.min(1, (now - trip.departedAt) / total) : 1,
+        title: `Explorer · ${phase === 'out' ? 'on the way' : phase === 'working' ? 'exploring' : phase === 'ready' ? 'waiting for you' : 'coming home'}`,
+        icon: 'compass', progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
         gems: explorerRushCost(trip, now),
       };
     }
@@ -2894,15 +2902,15 @@ export class Game {
   }
 
   /**
-   * Take `seconds` off a job that is not the city's own: an explorer, whose
-   * return is told as it always is, or a world build, which the server moves
+   * Take `seconds` off a job that is not the city's own: an explorer, which
+   * reveals its hex if its work is done by it, or a world build, which the server moves
    * (`hurry`) before anything is spent. True when the time was taken.
    */
   private async speedAway(job: SpeedJob, seconds: number): Promise<boolean> {
     const now = this.now();
     if (job.kind === 'explorer') {
-      const { home } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
-      if (home !== null) this.explorerHomeToast(home);
+      const { finished } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
+      if (finished !== null) this.tripFinished(finished);
       return true;
     }
     if (job.kind === 'army') {
@@ -5836,7 +5844,7 @@ export class Game {
   private reportSeenCamps(snap: WorldSnapshot): void {
     if (this.worldServer === null || this.actingSeat !== null || this.seenPending) return;
     const told = new Set(snap.seenCamps ?? []);
-    const fog = worldFogAt(this.state, this.now());
+    const fog = worldFog(this.state);
     const fresh = snapshotWorld(snap).board().hexes
       .filter((h) => h.camp?.lurking === true && !told.has(h.index) && hasBit(fog, h.index))
       .map((h) => h.index);
@@ -6037,7 +6045,7 @@ export class Game {
   /** The quickest way an army can take to a hex: through Revealed ground
    *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
   armyRoute(target: number): Route | null {
-    const fog = worldFogAt(this.state, this.now());
+    const fog = worldFog(this.state);
     const speed = armyMarchSpeed(this.state);
     return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i), () => speed);
   }
@@ -6202,19 +6210,25 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
   }
 
-  /** What an explorer home says: what it revealed, and what its target paid. */
-  private explorerHomeToast(home: ExplorerHome): void {
-    const found = home.paid === null ? '' : `, and ${scoutWords(home.paid)}`;
-    this.toast(home.revealed > 0
-      ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
-      : `Your explorer is home — nothing new out there${found}`);
-    this.payExplorer(home);
+  /** What revealing an explorer's hex says: what it uncovered, and what its
+   *  target paid, flown into the header. */
+  private explorerFound(found: ExplorerFound): void {
+    playSfx('revealDone');
+    const paid = found.paid === null ? '' : ` — and ${scoutWords(found.paid)}`;
+    this.toast(found.revealed > 0
+      ? `${formatCount(found.revealed)} new hexes on the map${paid}`
+      : `Nothing new out there${paid}`);
+    if (found.paid !== null && Object.keys(found.paid.wallet).length > 0) this.reward(found.paid.wallet);
   }
 
-  /** What an explorer's promise paid, flown into the header. */
-  private payExplorer(home: ExplorerHome): void {
-    if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  /** A trip's wait bought off: the hex it explored, revealed — or the
+   *  explorer home. */
+  private tripFinished(finished: TripFinished): void {
+    if (finished.found !== null) this.explorerFound(finished.found);
   }
+
+  /** The trips the player has already been told are waiting at their hex. */
+  private readyHeard = new Set<string>();
 
   /** The dungeon the delve screen is about, the depth it shows (null: the
    *  player's current one), and what the last room fought there paid. */
@@ -6331,16 +6345,19 @@ export class Game {
     const arrival = this.worldArrival;
     this.worldArrival = null;
     this.worldCamera?.focusHex(hexAt(arrival ?? homeIndex(this.state)));
-    if (arrival !== null) {
+    if (arrival !== null && this.worldArrivalCard) {
       this.selectedHex = arrival;
       this.openOverlay = 'world';
     }
+    this.worldArrivalCard = true;
     void this.refreshWorld();
     this.notify();
   }
 
-  /** The hex the next trip out lands on, instead of home. */
+  /** The hex the next trip out lands on, instead of home — and whether its
+   *  card opens there. */
   private worldArrival: number | null = null;
+  private worldArrivalCard = true;
 
   // ------------------------------------------------------------- notices
 
@@ -6451,10 +6468,13 @@ export class Game {
   handleWorldTap(sx: number, sy: number): void {
     if (this.worldCamera === null) return;
     const index = hexIndex(this.worldCamera.screenToHex(sx, sy));
+    if (this.hexGate !== null && !this.hexGate(index < 0 ? null : index)) return;
     if (index < 0) {
       this.dismiss();
       return;
     }
+    // An explorer waiting there: the tap is the reveal.
+    if (this.actingSeat === null && this.doRevealHex(index)) return;
     // A ready store of the player's own is collected, as a city building's
     // is: the hex opens its card only when there is nothing to take.
     const held = this.actingSeat === null ? this.worldSource().hexOf(index) : null;
@@ -6513,16 +6533,50 @@ export class Game {
     this.notify();
   }
 
-  /** Bring an explorer home now, with Gems: its hexes are revealed at once. */
+  /** Finish what an explorer is doing, with Gems: its work, its hex
+   *  revealed at once — or its road home. */
   doFinishExplorer(tripId: string): void {
     const result = finishExplorerWithGems(this.state, tripId, this.now());
     if (result.kind === 'Finished') {
       playSfx('gemSpend');
-      this.explorerHomeToast(result.home);
+      this.tripFinished(result.finished);
     } else if (result.kind === 'NotEnoughGems') {
       this.shake(['Gems']);
     }
     this.notify();
+  }
+
+  /**
+   * THE TAP THAT REVEALS: an explorer waits at this hex, its work done — the
+   * hex and the ones round it are uncovered now, and what it found is paid
+   * now (19 §3.1). False when nobody waits there.
+   */
+  doRevealHex(index: number): boolean {
+    const result = revealExplored(this.state, index, this.now());
+    if (result.kind !== 'Revealed') return false;
+    this.dismiss();
+    this.explorerFound(result.found);
+    this.notify();
+    return true;
+  }
+
+  /** Out to a hex an explorer waits at, its card shut: the tap on the hex is
+   *  the player's to make. From a notice. */
+  lookAtHex(index: number): void {
+    if (this.scene !== 'world') {
+      this.worldArrival = index;
+      this.worldArrivalCard = false;
+      this.enterWorld();
+      return;
+    }
+    this.dismiss();
+    this.worldCamera?.focusHex(hexAt(index));
+    this.notify();
+  }
+
+  /** The explorers waiting at their hex for the player, the longest first. */
+  explorersReady(): Array<{ id: string; target: number }> {
+    return readyTrips(this.state, this.now()).map((t) => ({ id: t.id, target: t.target }));
   }
 
   /** Send an explorer to the hex the sheet is about. */
@@ -6536,9 +6590,7 @@ export class Game {
       return;
     }
     if (result.kind === 'NoExplorerFree') {
-      this.toast(`Every explorer is out — one is back in ${formatCountdown((result.nextFreeAt - this.now()) / 1000)}`);
-    } else if (result.kind === 'NoCartography') {
-      this.toast('Research Cartography in the Atlas to send an explorer');
+      this.toast(explorersOutLine(this.state, result.nextFreeAt, this.now()));
     } else if (result.kind === 'NoRoute') {
       this.toast('No way there through explored ground');
     } else if (result.kind === 'Explored') {
@@ -6712,7 +6764,7 @@ export class Game {
   } {
     // Looking at ground in the mist → the explorers free to send there.
     if (this.scene === 'world' && this.openOverlay === 'world' && this.selectedHex !== null
-      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex, this.now()) !== 'Revealed') {
+      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex) !== 'Revealed') {
       const max = explorerSlots(this.state);
       return { kind: 'explorers', value: freeExplorers(this.state), max };
     }

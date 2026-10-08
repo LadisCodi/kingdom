@@ -8,7 +8,7 @@
     "exploreGoldGrowth": 1.5,
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
-    "cartographyExplorers": 1,
+    "startingExplorers": 1,
     "explorersForSale": 2,
     "explorerGemCostBase": 2500,
     "explorerGemCostGrowth": 2,

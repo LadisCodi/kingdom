@@ -565,6 +565,7 @@ export type SceneCondition =
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
   | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen' | 'worldVisited'
+  | 'explorerSent' | 'explorerReady' | 'explorerRevealed'
   | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
 
 export interface SceneLine {
@@ -2057,7 +2058,8 @@ export interface WorldDef {
   exploreGoldGrowth: number;
   explorerRevealRadius: number;
   revealRadiusMax: number;
-  cartographyExplorers: number;
+  /** Explorers every kingdom has from the start; the Atlas adds more. */
+  startingExplorers: number;
   /** Explorers a kingdom may buy — with Gems or in a pack — and their price. */
   explorersForSale: number;
   explorerGemCostBase: number;
@@ -2519,4 +2521,6 @@ export const GAME_VERSION: string = pkg.version;
 // claimed one stands repaired, and the chain closes up (a migrator).
 // v111: a crop plot is a feature, not a district — every FarmLands district
 // becomes a `Crops` cell (a migrator); a growing cell's `Growing`, additive.
-export const SAVE_VERSION = 111;
+// v112: an explorer waits at its hex for the player's tap — `RevealedAtUtc` on
+// a trip, and the trips ever sent (`TripsSent` on the world), additive.
+export const SAVE_VERSION = 112;
