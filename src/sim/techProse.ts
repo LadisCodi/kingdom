@@ -20,6 +20,7 @@
 
 import { DISTRICTS, HARVEST, TECHNOLOGIES, UNITS, WORLD_BUILD } from './data/definitions';
 import { tr } from '../i18n/tr';
+import { decimal } from '../i18n/lang';
 import type { WorldDistrict, WorldUpgrade } from './world/types';
 import {
   TECH_STATS, targetId, targetKind,
@@ -168,14 +169,14 @@ function unlockClauses(unlocks: readonly TechUnlock[]): string[] {
 const amount = (value: number, op: TechEffectOp): string => {
   const sign = value < 0 ? '−' : '+';
   const size = Math.abs(value);
-  return op === 'percent' ? `${sign}${size}%` : `${sign}${size}`;
+  return op === 'percent' ? `${sign}${decimal(size)}%` : `${sign}${decimal(size)}`;
 };
 
 /** A value authored as a FRACTION, read as a percentage: `0.05` → `+5%`.
  *  Rounded, because `0.05 * 100` is 5.000000000000001. */
 const asPercent = (value: number): string => {
   const sign = value < 0 ? '−' : '+';
-  return `${sign}${Math.round(Math.abs(value) * 1000) / 10}%`;
+  return `${sign}${decimal(Math.round(Math.abs(value) * 1000) / 10)}%`;
 };
 
 /** The target of an effect, as a complete noun phrase. */

@@ -26,3 +26,7 @@ export const currentLang = (): Lang => lang;
 /** Set once, by the browser's boot (src/i18n/browser.ts) before any data is
  *  read — and by tests. Data already loaded keeps the language it loaded in. */
 export function setLang(l: Lang): void { lang = l; }
+
+/** A decimal as the language writes it, for text the sim builds without
+ *  `src/ui/format.ts`: *2.5* / *2,5*. No grouping — these are small. */
+export const decimal = (n: number): string => (lang === 'es' ? String(n).replace('.', ',') : String(n));
