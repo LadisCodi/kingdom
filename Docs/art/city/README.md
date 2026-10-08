@@ -27,6 +27,10 @@ widest point, a windmill whose sails are — use `norm_foot.sh master W H fill o
 instead: it scales the drawing to `fill` of the canvas width and stands its
 lowest pixel on the canvas's bottom edge.
 
+**A 2×1 plot runs down-RIGHT on screen** — one step in +x is right and down
+(Docks, Tavern, Orchard). Ask for the long side that way; a master drawn
+running down-left is mirrored before it is normalised.
+
 `norm_iso.py` finds the ground diamond from the master's opaque extents, scales
 it so the diamond is `128 × footprint` wide, and anchors it on the diamond's
 centre. **It prints the projection ratio and warns below 1.85:1** — the error a
