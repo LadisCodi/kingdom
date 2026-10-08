@@ -98,7 +98,7 @@ const BURNT = 'rgba(38, 22, 14, 0.55)';
 
 /** The player's colour, then the five rivals', in seat order after it. */
 export const SEAT_COLORS = {
-  you: '#2f6fe0',
+  you: PALETTE.yourBorder,
   // Ten, so the 41 rivals of a world of seven boards seldom meet their own
   // colour across a seam; none near the player's blue.
   rivals: ['#c8312b', '#2e9e57', '#e0a020', '#7b4fc9', '#1c9a9a', '#d2691e', '#c2185b', '#6b8e23', '#795548', '#9e9d24'],

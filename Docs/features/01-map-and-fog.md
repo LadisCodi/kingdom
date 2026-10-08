@@ -214,13 +214,11 @@ Respawn:
   refused tap costs nothing.
 - A Discovered cell past the reach stays visible under the mist and draws like
   a cell the frontier has not reached.
-- **The reach is drawn**: a line of white dots, each ringed in a thin dark
-  outline, along the last ring the player may pay for, with a soft shadow on
-  the far side only, over the fog and across undiscovered ground, so the border
-  is read off the map before a tap is refused. It is UI laid over the view,
-  under what stands on the ground (mockup
-  `../art/mockups/area-overlays/reach-simple-2-dots-shadow.png`). It
-  disappears once the reach holds the whole province.
+- **The reach is drawn** as the player's border on the world map: a line in
+  their blue with a soft glow, along the last ring the player may pay for,
+  over the fog and across undiscovered ground, so the border is read off the
+  map before a tap is refused. It is UI laid over the view, under what stands
+  on the ground. It disappears once the reach holds the whole province.
 
 ### 4.1 Sighting
 
