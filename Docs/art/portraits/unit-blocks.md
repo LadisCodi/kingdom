@@ -49,6 +49,11 @@ python3 Docs/art/portraits/units/evolutions/norm_bust.py SHEET 3 2 OUT_PREFIX 51
 It keeps the scale the sheet drew (which is what holds the face size steady),
 puts the flat cut on the bottom edge and centres the shoulders.
 
+**In the round frame** (`.k-portrait`) each bust is then placed by eye:
+`src/ui/bustFraming.json` gives it a scale about its bottom centre and a
+shift, in pixels of the 256px file. Only the frame reads it; every other
+widget shows the file as it is.
+
 ## 3. The blocks
 
 Weapon and silhouette come from `unitType`'s own row: `balance.units` for the
