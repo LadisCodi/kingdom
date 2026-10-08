@@ -86,6 +86,23 @@
    "evenGrid": true
   },
   {
+   "file": "sheets/ui-v1-village.png",
+   "grid": {
+    "rows": 2,
+    "cols": 3
+   },
+   "fill": 0.86,
+   "names": [
+    "Flowerbed",
+    "Bench",
+    "Lantern",
+    "Topiary",
+    "Banner",
+    "Birdbath"
+   ],
+   "evenGrid": true
+  },
+  {
    "file": "sheets/ui-d2-symbols.png",
    "grid": {
     "rows": 4,

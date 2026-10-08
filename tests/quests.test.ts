@@ -169,6 +169,22 @@ describe('the quest chain', () => {
     expect(isQuestComplete(state, tower)).toBe(true);
   });
 
+  it('counts a group of buildings across its kinds', () => {
+    // `AnyDecoration` leaves the choice of piece to the player.
+    const state = freshGame();
+    const corner = QUESTS.find((q) => q.id === 'PrettyCorner')!;
+    expect(corner.goalTarget).toBe('AnyDecoration');
+    expect(questValue(state, corner)).toBe(0);
+    addBuilt(state, 'Flowerbed', { x: 4, y: 0 });
+    addBuilt(state, 'Bench', { x: 5, y: 0 });
+    expect(questValue(state, corner)).toBe(2);
+    // A level bar over a group counts each building at it.
+    const producers = { ...corner, goalType: 'UpgradeDistrict' as const, goalTarget: 'AnyProducer', goalLevel: 1 };
+    const before = questValue(state, producers);
+    addBuilt(state, 'Sawmill', { x: 6, y: 0 });
+    expect(questValue(state, producers)).toBe(before + 1);
+  });
+
   it('gem rewards land in the PLAYER wallet', () => {
     const state = freshGame();
     const quest = QUESTS.find((q) => q.id === 'GrandCapital')!;
@@ -454,9 +470,10 @@ describe('quests fund the research tree', () => {
       held += q.rewardKnowledge;
       if (q.id === OPENING_ENDS_AT) break;
     }
-    // The opening asks for nine cards, and the guarantee is worth nothing if a
-    // re-scoped chain quietly stops covering most of them.
-    expect(asked).toBe(9);
+    // The opening asks for ten cards — Village Pride the tenth — and the
+    // guarantee is worth nothing if a re-scoped chain quietly stops covering
+    // most of them.
+    expect(asked).toBe(10);
   });
 
   it('pays the Knowledge for Pickaxes in the quest before it — its lesson comes later', () => {
@@ -511,7 +528,9 @@ describe('quests fund the research tree', () => {
     // had time to answer — the kingdom starts with none.
     // 15,465: `TheWatchtower` takes `OldStones`' place and its 170.
     // 15,505: `Fieldside` at 40 — the old Farm carried beside its plots.
-    expect(chain).toBe(15_505);
+    // 21,495: the city grows in the chain (v115) — houses, plots, levels, a
+    // second and third Sawmill, the village's decorations.
+    expect(chain).toBe(21_495);
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
@@ -520,7 +539,8 @@ describe('quests fund the research tree', () => {
     // 4,740,505: Transplanting (200) moves a tree.
     // 12,153,405: the Atlas grew to 53 optional cards on the world board.
     // 13,313,405: sixteen troop-evolution cards, all dead ends (2026-10-08).
-    expect(tree).toBe(13_313_405); // the same sum tests/fog.test.ts freezes, and why
+    // 13,314,945: Village Pride and Civic Pride, the village's decorations.
+    expect(tree).toBe(13_314_945); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has
@@ -543,7 +563,8 @@ describe('quests fund the research tree', () => {
     // 3,605 for chapters 1–2 of the one tree (2026-10-05), ranks included,
     // since a chapter's spine is required whatever kind of card it is.
     // 3,805 with Transplanting (200) in chapter 2.
-    expect(opening).toBe(3805);
+    // 3,845 with Village Pride (40), the village's first decorations.
+    expect(opening).toBe(3845);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

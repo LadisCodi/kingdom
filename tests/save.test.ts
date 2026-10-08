@@ -777,8 +777,8 @@ describe('v110 makes the Watchtower a ruin to repair', () => {
   it('closes the chain up behind the old tower quest', () => {
     const at = (index: number) => at109((m) => { m['kingdom.quests'].Index = index; }).quests.index;
     expect(QUESTS[at(32)].id).toBe('TheWatchtower');
-    // …and v113 put `Fieldside` in front of it: one on.
-    expect(QUESTS[at(40)].id).toBe(QUESTS[41].id);
+    // …and v113 put `Fieldside` in front of it: one on (v114's 41st, `Rubble`).
+    expect(QUESTS[at(40)].id).toBe('Rubble');
     expect(QUESTS[at(66)].id).toBe('DeeperStill');
     expect(QUESTS[at(67)].id).toBe('DeeperStill');
   });

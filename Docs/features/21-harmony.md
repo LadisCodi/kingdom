@@ -24,7 +24,26 @@
 - Supply only grows and demand only grows, since nothing is demolished, so a
   city is never pushed into deficit by anything but its own next purchase.
 
-## 2. Supply — the six pieces
+## 2. Supply — the pieces
+
+### 2.1 The village's pieces
+
+| Piece | Supply | Build cost (first) | Stands from | Discovered by |
+|---|---|---|---|---|
+| **Flower bed** | 1 | 20 Gold · 10 Wood | TH2, up to 3 → 10 | Village Pride |
+| **Bench** | 1 | 25 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
+| **Lantern** | 1 | 30 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
+| **Topiary** | 1 | 35 Gold · 15 Food | TH3, up to 2 → 9 | Civic Pride |
+| **Banner** | 1 | 40 Gold · 20 Wood | TH3, up to 1 → 8 | Civic Pride |
+| **Birdbath** | 2 | 60 Gold · 15 Stone | TH3, up to 2 → 9 | Civic Pride |
+
+- 1×1, built in seconds, no refined good. A later one of a kind costs more
+  (×(1 + 0.5n)·1.1ⁿ).
+- **Personalisation first**: nothing demands Harmony before level 8 and an
+  undemanding city pays no surplus (§5), so what a piece pays early is the
+  adjacency of §6 — a house beside it collects more Gold.
+
+### 2.2 The late pieces
 
 | Piece | Size | Supply | Build cost | Stands from | Discovered by |
 |---|---|---|---|---|---|
@@ -42,8 +61,8 @@
   grows with the Townhall. Meeting a demand therefore takes **several kinds**
   of piece, each priced in a different good: that is what prices Harmony now
   the plot is unbounded, in place of the ground.
-- Most supply a Townhall level allows: TH5 **16**, TH6 **48**, TH7 **90**,
-  TH8 **162**, TH9 **274**, TH10 **386**.
+- Most supply a Townhall level allows, every piece counted: TH5 **47**, TH6
+  **86**, TH7 **135**, TH8 **214**, TH9 **293**, TH10 **371**.
 
 ## 3. Demand — the levels from 8
 

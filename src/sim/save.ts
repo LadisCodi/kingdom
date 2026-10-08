@@ -1003,7 +1003,56 @@ const MIGRATIONS: readonly Migration[] = [
       if (index >= FIELDSIDE_AT_V113) Object.assign(quests, { Index: index + 1 });
     },
   },
+  {
+    // v115: THE CITY GROWS IN THE CHAIN. Houses, plots, a second Sawmill,
+    // levels and the village's decorations join it, and `FullHouse` moves up
+    // to the second Townhall. A kingdom keeps the quest it is on, found by id
+    // in the new order; the new ones it has passed are not asked again.
+    to: 115,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number; Progress?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      const id = CHAIN_V114[index];
+      if (id === undefined) { quests.Index = CHAIN_V115.length; return; }
+      const to = CHAIN_V115.indexOf(id);
+      // A quest moved EARLIER (`FullHouse`) is passed by a kingdom already
+      // beyond its new place: it stays on the one it was on.
+      quests.Index = to;
+    },
+  },
 ];
+
+/** The chain before and after v115 put the city's growth into it, frozen as
+ *  history: a kingdom's place is carried across by quest id. */
+const CHAIN_V114: readonly string[] = [
+  'FirstSteps', 'Woodcraft', 'Timber', 'ARoof', 'Rations', 'FirstVillager', 'TaxDay',
+  'Explorer', 'FirstPlot', 'ByHand', 'Lumber', 'Farmhand', 'Fieldside', 'ToWork',
+  'SecondVillager', 'GrowingTown', 'Neighbors', 'TheSawmill', 'Crewed', 'ProperCapital',
+  'Fields', 'Tillage', 'SawTeeth', 'Levies', 'Sawpits', 'Regrowth', 'FurtherAfield', 'WarDrums',
+  'ArmedMen', 'Mustered', 'FirstSoldier', 'MusterCompany', 'DriveThemOut', 'TheWatchtower',
+  'Attuned', 'Mapmakers', 'Surveyors', 'Watered', 'Fallow', 'MoreRoom', 'Picks', 'Rubble',
+  'SecondStory', 'Chisels', 'Stoneworks', 'Crafts', 'Knack', 'Hearth', 'OpenDoors',
+  'FirstSummon', 'FullHouse', 'IronRoad', 'Deft', 'Fellowship', 'Architect', 'GrandCapital',
+  'DeepSeams', 'TheSanctum', 'AWarband', 'TheBarrowsPrize', 'PutToSea', 'Cartographers',
+  'Magistrate', 'Township', 'Borough', 'Leylines', 'SecondLair', 'DeeperStill',
+];
+const CHAIN_V115: readonly string[] = [
+  'FirstSteps', 'Woodcraft', 'Timber', 'ARoof', 'Rations', 'FirstVillager', 'TaxDay',
+  'Explorer', 'FirstPlot', 'ByHand', 'Lumber', 'Farmhand', 'Fieldside', 'ToWork',
+  'SecondVillager', 'GrowingTown', 'Neighbors', 'TheSawmill', 'Crewed', 'ProperCapital',
+  'MoreRoofs', 'Fields', 'FreshFurrows', 'NewFaces', 'Tillage', 'BiggerBarn', 'SawTeeth',
+  'TwoSaws', 'ManyHands', 'Pride', 'PrettyCorner', 'Levies', 'Sawpits', 'FourRoofs', 'Regrowth',
+  'FurtherAfield', 'WarDrums', 'ArmedMen', 'Mustered', 'SharperSaws', 'FirstSoldier',
+  'FullHouse', 'MusterCompany', 'DriveThemOut', 'TheWatchtower', 'Attuned', 'Mapmakers',
+  'Surveyors', 'Watered', 'Fallow', 'Lamplight', 'MoreRoom', 'Picks', 'Rubble', 'SecondStory',
+  'UpperFloors', 'Chisels', 'Stoneworks', 'Crafts', 'Knack', 'DeeperCuts', 'Hearth',
+  'OpenDoors', 'FirstSummon', 'IronRoad', 'Deft', 'Fellowship', 'Architect', 'GrandCapital',
+  'SixRoofs', 'SecondFarm', 'DeepSeams', 'Civic', 'Finery', 'TheSanctum', 'ThirdSaw',
+  'AWarband', 'TheBarrowsPrize', 'PutToSea', 'StoriedStreet', 'Cartographers', 'SecondQuarry',
+  'Magistrate', 'Township', 'Borough', 'NineRoofs', 'Leylines', 'SecondLair', 'DeeperStill',
+];
+
 
 /** Where `Fieldside` entered the chain in v113, frozen as history. */
 const FIELDSIDE_AT_V113 = 12;

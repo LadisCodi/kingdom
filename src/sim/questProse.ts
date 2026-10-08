@@ -31,7 +31,12 @@ import type { CurrencyId, DistrictId, FeatureId, LandmarkKind, TechId } from './
 /** An id the DATA holds as a bare string, in the words a player reads. The
  *  fallback is the id itself: a quest naming something that no longer exists
  *  is a content fault for `tests/quests.test.ts` to report, not a crash. */
-const districtName = (id: string): string => DISTRICTS[id as DistrictId]?.name ?? id;
+/** What a group of buildings is called in a goal (`AnyDecoration`). */
+const GROUP_NAMES: Readonly<Record<string, string>> = {
+  AnyDecoration: 'decoration', AnyProducer: 'production building', AnyHall: 'military hall',
+  AnyWorkshop: 'workshop',
+};
+const districtName = (id: string): string => GROUP_NAMES[id] ?? DISTRICTS[id as DistrictId]?.name ?? id;
 const featureName = (id: string): string => FEATURES[id as FeatureId]?.name ?? id;
 const techName = (id: string): string => TECHNOLOGIES[id as TechId]?.name ?? id;
 // A currency has no display name because its id IS one: Gold, Food, Wood,
