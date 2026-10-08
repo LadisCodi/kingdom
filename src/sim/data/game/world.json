@@ -1,7 +1,9 @@
 {
   "world": {
-    "explorerSecondsPerHex": 60,
-    "armySecondsPerHex": 120,
+    "explorerSecondsPerHex": 15,
+    "armySecondsPerHex": 30,
+    "marchGrowthPerHex": 1.5,
+    "marchGrowthHexes": 6,
     "exploreWorkSeconds": 30,
     "exploreWorkSecondsPerHex": 30,
     "exploreGoldBase": 2500,

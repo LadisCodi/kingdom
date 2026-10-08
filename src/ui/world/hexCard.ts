@@ -101,13 +101,14 @@ function distanceLine(game: Game, index: number): HTMLElement {
     `${formatCount(n)} ${n === 1 ? 'hex' : 'hexes'} from your city`);
 }
 
-/** The ground's own tiles: terrain, feature, the march across it. */
-function groundTiles(bh: BoardHex): Tile[] {
+/** The ground's own tiles: terrain, feature, the march across it — at its
+ *  distance from the player's city, where far ground is slower (19 §4.1). */
+function groundTiles(game: Game, bh: BoardHex): Tile[] {
   const feature = bh.features[0];
   return [
     { icon: 'tile', label: 'Terrain', value: TERRAIN_NAME[bh.terrain ?? 'Grassland'] },
     ...(feature === undefined ? [] : [{ icon: FEATURE_ICON[feature] ?? 'tile', label: 'Feature', value: FEATURE_NAME[feature] }]),
-    { icon: 'boot', label: 'March', value: `${formatDuration(Math.round(hexTravelMs(bh, 'army') / 1000))} / hex` },
+    { icon: 'boot', label: 'March', value: `${formatDuration(Math.round(hexTravelMs(bh, 'army', hexDistance(hexAt(game.homeHex()), bh.hex)) / 1000))} / hex` },
   ];
 }
 
@@ -221,13 +222,13 @@ export function renderFog(game: Game, bh: BoardHex, fog: FogState, title: string
 
 /** The ground in one line — terrain, feature, the march across it — and,
  *  on a tap, what it does to each troop type in a fight (19 §4.2). */
-function groundStrip(bh: BoardHex): HTMLElement {
+function groundStrip(game: Game, bh: BoardHex): HTMLElement {
   const feature = bh.features[0];
   const name = feature !== undefined ? FEATURE_NAME[feature] : TERRAIN_NAME[bh.terrain ?? 'Grassland'];
   const edges = groundEdges(bh).map((e) =>
     `${TYPE_WORD[e.unit] ?? e.unit} ${e.attack > 0 ? '+' : '−'}${formatExact(Math.round(Math.abs(e.attack) * 100))}% attack`);
   const strip = el('button', { class: 'wd-ground k-section', type: 'button' },
-    ...groundTiles(bh).map((t) => el('span', { class: 'wd-ground-fact', 'aria-label': `${t.label} ${t.value}` },
+    ...groundTiles(game, bh).map((t) => el('span', { class: 'wd-ground-fact', 'aria-label': `${t.label} ${t.value}` },
       iconEl(t.icon, { size: 'md' }), el('span', { class: 'wd-ground-value', 'aria-hidden': 'true' }, t.value))));
   return withTooltip(strip, edges.length === 0 ? 'No effect on the fight' : edges.join(' · '), name);
 }
@@ -280,7 +281,7 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
       btn({ label: 'Attack', kind: 'destructive', onClick: () => game.openArmy(index, 'clear') }));
   return sheet({ title: CAMP_TITLE[camp.creature], onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
-      groundStrip(bh), enemy,
+      groundStrip(game, bh), enemy,
       // On its way, the fight is chosen: the army's board takes the pay's room.
       ...(loot.length === 0 || marching !== undefined ? [] : [sectionHead('Beaten, it pays'), el('div', { class: 'wd-loot' }, ...loot)]),
       answers));
@@ -551,7 +552,7 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
     el('div', { class: 'dc-upgrade' }, build));
   return sheet({ title, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
-      sectionHead('The hex'), hex, tiles(groundTiles(bh)),
+      sectionHead('The hex'), hex, tiles(groundTiles(game, bh)),
       sectionHead('District'), districtHead, ...(reason === undefined ? [] : [blockedLine(reason)]),
       tiles([...yieldTiles(game, bh, null),
         { icon: 'hourglass', label: 'Build', value: formatDuration(worldBuildSeconds(district, 1, game.worldBoost())) }])));
@@ -621,7 +622,7 @@ export function renderOwnDistrict(game: Game, bh: BoardHex, h: HexControl, extra
   return withShield(game, sheet({ title: def.name, onClose: () => game.dismiss() },
     el('div', { class: 'wd-card' },
       head,
-      tiles([...yieldTiles(game, bh, h), ...groundTiles(bh).filter((t) => t.label !== 'Feature')]),
+      tiles([...yieldTiles(game, bh, h), ...groundTiles(game, bh).filter((t) => t.label !== 'Feature')]),
       ...extra,
       ...(slots.length === 0 ? [] : [
         sectionHead('Buildings'),

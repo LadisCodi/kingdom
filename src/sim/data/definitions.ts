@@ -2057,6 +2057,10 @@ export interface WorldDef {
    *  army — each hex multiplies its own (worldTravel). */
   explorerSecondsPerHex: number;
   armySecondsPerHex: number;
+  /** A hex `d` from the marcher's own city takes `marchGrowthPerHex^d` times
+   *  as long, `d` capped at `marchGrowthHexes`. */
+  marchGrowthPerHex: number;
+  marchGrowthHexes: number;
   /** An explorer's work at its target before the hex is revealed: a base,
    *  and more for every hex it lies from the city. */
   exploreWorkSeconds: number;

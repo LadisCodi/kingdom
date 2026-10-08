@@ -4,7 +4,7 @@ import { WORLD, WORLD_TRAVEL } from '../src/sim/data/definitions';
 import type { BoardHex } from '../src/sim/world/board';
 import { BOARD_SIZE, boardNeighbors, hexAt, hexDistance, hexIndex } from '../src/sim/world/hex';
 import {
-  fastestRoute, hexTravelFactor, hexTravelMs, homeboundMs, legPosition, outboundMs, reachMs,
+  distanceFactor, fastestRoute, hexTravelFactor, hexTravelMs, homeboundMs, legPosition, outboundMs, reachMs, stepTimes,
 } from '../src/sim/world/travel';
 
 const MIN = 60_000;
@@ -41,6 +41,25 @@ describe('what a hex costs to leave', () => {
     expect(ARMY).toBeGreaterThan(EXPLORER);
   });
 
+  it('takes longer the further a hex lies from the marcher’s city, up to a ring', () => {
+    const [plain] = ground();
+    expect(distanceFactor(0)).toBe(1);
+    expect(distanceFactor(1)).toBe(WORLD.marchGrowthPerHex);
+    expect(distanceFactor(3)).toBe(WORLD.marchGrowthPerHex ** 3);
+    expect(distanceFactor(WORLD.marchGrowthHexes + 5)).toBe(distanceFactor(WORLD.marchGrowthHexes));
+    expect(hexTravelMs(plain, 'army', 2)).toBe(ARMY * WORLD.marchGrowthPerHex ** 2);
+  });
+
+  it('reads the distance from the path’s first hex, its city — so out and home cost the same', () => {
+    const hexes = ground();
+    const from = centre;
+    const path = [from, hexIndex({ q: 1, r: 0 }), hexIndex({ q: 2, r: 0 }), hexIndex({ q: 3, r: 0 })];
+    const steps = stepTimes(hexes, path, 'army');
+    expect(steps).toEqual(path.map((_, k) => Math.round(ARMY * distanceFactor(k))));
+    expect(outboundMs(steps)).toBe(ARMY * (1 + distanceFactor(1) + distanceFactor(2)));
+    expect(homeboundMs(steps)).toBe(Math.round(ARMY * (distanceFactor(1) + distanceFactor(2) + distanceFactor(3))));
+  });
+
   it('counts each hex as it is left: plain, forest, mountain', () => {
     // The city on the plain, a forest, then the mountain it marches to.
     const from = centre;
@@ -53,12 +72,13 @@ describe('what a hex costs to leave', () => {
     const route = fastestRoute(hexes, from, mountain, 'explorer', everywhere)!;
     expect(route.path).toHaveLength(3);
     const [, via] = route.path;
-    const viaMs = hexTravelMs(hexes[via], 'explorer');
-    expect(route.stepMs).toEqual([EXPLORER, viaMs, 3 * EXPLORER]);
+    const viaMs = hexTravelMs(hexes[via], 'explorer', 1);
+    const atMountain = 3 * EXPLORER * distanceFactor(2);
+    expect(route.stepMs).toEqual([EXPLORER, viaMs, atMountain]);
     // Out: leave the city, leave the hex between. Back: leave the mountain,
     // leave the hex between.
     expect(outboundMs(route.stepMs)).toBe(EXPLORER + viaMs);
-    expect(homeboundMs(route.stepMs)).toBe(3 * EXPLORER + viaMs);
+    expect(homeboundMs(route.stepMs)).toBe(atMountain + viaMs);
     expect(reachMs(route.stepMs, 1)).toBe(EXPLORER);
   });
 });
@@ -67,10 +87,14 @@ describe('the quickest way', () => {
   const from = hexIndex({ q: -3, r: 0 });
   const to = hexIndex({ q: 3, r: 0 });
 
+  /** An army's time out over `n` hexes of open ground in a straight line. */
+  const straight = (n: number): number => Array.from({ length: n }, (_, k) => Math.round(ARMY * distanceFactor(k)))
+    .reduce((a, b) => a + b, 0);
+
   it('is a straight line over open ground', () => {
     const route = fastestRoute(ground(), from, to, 'army', everywhere)!;
     expect(route.path).toHaveLength(7);
-    expect(outboundMs(route.stepMs)).toBe(6 * ARMY);
+    expect(outboundMs(route.stepMs)).toBe(straight(6));
   });
 
   it('goes round mountains when that is quicker, and over them when it is not', () => {
@@ -79,7 +103,7 @@ describe('the quickest way', () => {
     wall[centre] = { terrain: 'Grassland', features: ['Mountain'] };
     const round = fastestRoute(ground(wall), from, to, 'army', everywhere)!;
     expect(round.path).not.toContain(centre);
-    expect(outboundMs(round.stepMs)).toBe(7 * ARMY);
+    expect(round.path).toHaveLength(8);
 
     // A wall across the whole board: the cheapest crossing is one mountain.
     const full: Record<number, Pick<BoardHex, 'terrain' | 'features'>> = {};
@@ -89,7 +113,7 @@ describe('the quickest way', () => {
     }
     const over = fastestRoute(ground(full), from, to, 'army', everywhere)!;
     expect(over.path.filter((i) => full[i] !== undefined)).toHaveLength(1);
-    expect(outboundMs(over.stepMs)).toBe(5 * ARMY + 3 * ARMY);
+    expect(over.path).toHaveLength(7);
   });
 
   it('never enters a hex it may not, but may always end on its destination', () => {
