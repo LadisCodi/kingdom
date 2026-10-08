@@ -258,6 +258,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Woodcraft",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Woodcraft",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -328,7 +354,7 @@
       {
         "speaker": "advisor",
         "side": "left",
-        "text": "Wood for Oakville! The Townhall folk sent their thanks — accept it, and the well gets a little magic back.",
+        "text": "",
         "box": "auto",
         "point": "quest",
         "lock": "target",
@@ -336,7 +362,7 @@
         "untilTarget": "Timber",
         "untilAmount": 0,
         "exit": false,
-        "expression": "happy"
+        "expression": ""
       }
     ]
   },
@@ -416,6 +442,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "ARoof",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "ARoof",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -443,6 +495,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Rations",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Rations",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -548,6 +626,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "FirstVillager",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "FirstVillager",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -601,6 +705,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "TaxDay",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "TaxDay",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -786,6 +916,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "FirstPlot",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "FirstPlot",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -866,6 +1022,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Farmhand",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Farmhand",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1010,6 +1192,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Fieldside",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Fieldside",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1076,6 +1284,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "ToWork",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "ToWork",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1261,6 +1495,32 @@
         "untilAmount": 2,
         "exit": false,
         "expression": "worried"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "GrowingTown",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "GrowingTown",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1315,6 +1575,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "idea"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "TheSawmill",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "TheSawmill",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1394,6 +1680,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": "happy"
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Crewed",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Crewed",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1486,6 +1798,32 @@
         "untilAmount": 0,
         "exit": false,
         "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Picks",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
+        "untilTarget": "Picks",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
       }
     ]
   },
@@ -1509,6 +1847,32 @@
         "point": "feature:Mountain",
         "lock": "none",
         "until": "questComplete",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "",
+        "lock": "none",
+        "until": "questComplete",
+        "untilTarget": "Rubble",
+        "untilAmount": 0,
+        "exit": false,
+        "expression": ""
+      },
+      {
+        "speaker": "advisor",
+        "side": "left",
+        "text": "",
+        "box": "auto",
+        "point": "quest",
+        "lock": "target",
+        "until": "questClaimed",
         "untilTarget": "Rubble",
         "untilAmount": 0,
         "exit": false,

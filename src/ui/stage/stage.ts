@@ -293,6 +293,15 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
     }
     glideToHex(game, playing.target);
+    // A LINE WITH NOTHING TO SAY is the hand alone (23-tutorials.md §3): no
+    // box, nobody on stage — what it points at is the player's to tap.
+    if (l.text === '') {
+      leave('left');
+      leave('right');
+      voiced = null;
+      act();
+      return;
+    }
     // A speaker taking their turn says so — a little vocal emote in the
     // line's mood — once, not on every line they speak in a row.
     if (l.speaker !== voiced) playVoice(l.speaker, l.expression);

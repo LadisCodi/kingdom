@@ -122,6 +122,30 @@ describe('the scenes, against the game', () => {
     }
   });
 
+  it('chains the opening by its gifts: each lesson ends on its quest claimed, Isolde asking only the first time', () => {
+    // A lesson rides on its quest being reached, so the one before must be
+    // claimed for the next to start: the hand leads the player to the pill.
+    const until = QUESTS.findIndex((q) => q.id === 'Rubble');
+    const opening = SCENES.filter((s) => s.trigger === 'questReached'
+      && QUESTS.findIndex((q) => q.id === s.triggerTarget) <= until);
+    const claims = opening.map((scene) => {
+      const last = scene.lines[scene.lines.length - 1];
+      expect(last, scene.id).toMatchObject({ point: 'quest', lock: 'target', until: 'questClaimed', untilTarget: scene.triggerTarget });
+      return last;
+    });
+    expect(claims.filter((l) => l.text !== '').length).toBe(1);
+    expect(claims[0].text).not.toBe('');
+  });
+
+  it('lets a line with nothing to say only point: never a tap, never at nothing', () => {
+    for (const scene of SCENES) {
+      for (const line of scene.lines.filter((l) => l.text === '')) {
+        expect(line.until, scene.id).not.toBe('tap');
+        if (line.lock !== 'none') expect(line.point, scene.id).not.toBe('');
+      }
+    }
+  });
+
   it('never locks a line to a target it does not point at', () => {
     for (const scene of SCENES) {
       for (const line of scene.lines) {

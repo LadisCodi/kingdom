@@ -67,7 +67,7 @@
 |---|---|
 | `speaker` | who says it — a `speakers` id |
 | `side` | `left` or `right` |
-| `text` | what is said; `{player}` is the monarch's title |
+| `text` | what is said; `{player}` is the monarch's title. Empty: **the hand alone** — no box, nobody on stage, the hand on `point` until the line's condition holds (never `tap`) |
 | `box` | `bottom` · `top` · `middle` · `auto` |
 | `point` | what the pointer shows (§4), or nothing |
 | `lock` | `none` · `target` · `map` · `all` ([`23-tutorials.md`](23-tutorials.md) §6) |
