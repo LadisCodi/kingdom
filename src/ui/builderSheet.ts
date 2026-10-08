@@ -49,7 +49,7 @@ export function renderBuilderSheet(game: Game): HTMLElement {
     rows.push(el('div', { class: 'crew-row k-section is-free' },
       el('span', { class: 'crew-medal' }, iconEl('builders', { size: 'lg' })),
       el('div', { class: 'crew-mid' },
-        el('div', { class: 'crew-free' }, tr('Free')),
+        el('div', { class: 'crew-free' }, tr('builder::Free')),
         // Only the first free builder is offered the job; one job, one button.
         el('div', { class: 'crew-task' }, i === 0 && ask !== null ? ask.what : tr('Ready for the next job'))),
       ...(ask !== null && i === 0

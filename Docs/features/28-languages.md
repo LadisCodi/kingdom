@@ -24,6 +24,8 @@
 - Every text the code shows is `tr('English')`, or `trn(count, 'one', 'other')`
   for a plural. The English is the key; Spanish lives in
   `src/i18n/es/<area>.json`.
+- One English word that is two in Spanish carries a context: `tr('builder::Free')`
+  shows *Free* in English, *Libre* in Spanish (*Gratis* elsewhere).
 - Placeholders are `{name}`, filled with numbers already formatted
   (`src/ui/format.ts`).
 - What the catalog lacks shows in English.

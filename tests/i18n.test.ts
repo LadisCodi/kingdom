@@ -100,6 +100,9 @@ describe('the code, in Spanish', () => {
       expect(tr('Nothing here {who}', { who: 'yet' })).toBe('Nothing here yet');
       expect(trn(1, '{n} thing', '{n} things', { n: '1' })).toBe('1 thing');
       expect(trn(3, '{n} thing', '{n} things', { n: '3' })).toBe('3 things');
+      expect(tr('builder::Free')).toBe('Libre');
+      expect(tr('Free')).toBe('Gratis');
+      expect(tr('nowhere::Untranslated')).toBe('Untranslated');
     } finally {
       setLang('en');
     }

@@ -20,7 +20,15 @@ export type Vars = Record<string, string | number>;
 const fill = (s: string, vars?: Vars): string => (vars === undefined ? s
   : s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m)));
 
-const translate = (en: string): string => (currentLang() === 'es' ? ES[en] || en : en);
+/** A key may carry a CONTEXT before `::` — `tr('builder::Free')` — when one
+ *  English word is two in Spanish (*Libre* / *Gratis*). The English shown is
+ *  what follows it. */
+const english = (key: string): string => {
+  const at = key.lastIndexOf('::');
+  return at < 0 ? key : key.slice(at + 2);
+};
+
+const translate = (key: string): string => (currentLang() === 'es' ? ES[key] || english(key) : english(key));
 
 /** `en` in the player's language, its `{placeholders}` filled. */
 export function tr(en: string, vars?: Vars): string {
@@ -38,6 +46,6 @@ const pluralOf = (n: number): 'one' | 'other' => {
 /** One of two forms, by `count`: `trn(n, '{n} villager', '{n} villagers', { n: formatCount(n) })`. */
 export function trn(count: number, one: string, other: string, vars?: Vars): string {
   const [es1, esN] = (currentLang() === 'es' ? ES[`${one}|${other}`] ?? '' : '').split('|');
-  const form = pluralOf(count) === 'one' ? (es1 || one) : (esN || other);
+  const form = pluralOf(count) === 'one' ? (es1 || english(one)) : (esN || english(other));
   return fill(form, vars);
 }
