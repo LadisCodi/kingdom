@@ -29,6 +29,7 @@
 // a claim that hands over the next quest plays both, half a second apart.
 // Built on the Web Animations API so each phase can be awaited in order.
 
+import { tr } from '../i18n/tr';
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId, ItemId } from '../sim/state';
@@ -106,7 +107,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   // takes the reward.
   const slot = el('div', { class: 'q-slot' });
   // Done, the scroll says only what it pays and the verb that takes it.
-  const claim = el('span', { class: 'q-cta' }, 'Claim');
+  const claim = el('span', { class: 'q-cta' }, tr('Claim'));
 
   // The parchment is its own layer so it can unroll under words that do not
   // reflow: it is nine-sliced, so its rollers stay whole at any width.
@@ -169,7 +170,7 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     // told which, because the styling is all a sighted player gets.
     scroll.setAttribute(
       'aria-label',
-      complete ? `Claim the reward for ${quest.name}` : `Show me where: ${quest.name}`,
+      complete ? tr('Claim the reward for {name}', { name: quest.name }) : tr('Show me where: {name}', { name: quest.name }),
     );
   };
 

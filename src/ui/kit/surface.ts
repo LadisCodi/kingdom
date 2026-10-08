@@ -1,5 +1,6 @@
 // Things other things sit on: panels, sheets, planks, cards, grids.
 
+import { tr } from '../../i18n/tr';
 import { el } from '../format';
 import { closeKnob } from './controls';
 import { iconEl, type IconName } from './icon';
@@ -80,7 +81,7 @@ export function sheet(
   ...children: Array<Node | string>
 ): HTMLElement {
   // The close is the last button on the header's band.
-  const close = closeKnob(opts.onClose, `Close ${opts.title}`);
+  const close = closeKnob(opts.onClose, tr('Close {title}', { title: opts.title }));
   return el(
     'div',
     {

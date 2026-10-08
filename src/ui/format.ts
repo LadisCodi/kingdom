@@ -4,14 +4,16 @@
 // string concatenation was the thing blocking pixel icons; every caller now
 // uses costChips() from the kit, which returns nodes. Gone with the last one.
 
+import { tr } from '../i18n/tr';
 import { playSfx } from '../audio/sfx';
 import { currentLang, NUMBER_LOCALE } from '../i18n/lang';
+import type { CurrencyId } from '../sim/state';
 
 /** Durations now span "instant" to "a day and a half" — a Tier V lair is a
  *  multi-day project — so this rolls up rather than reporting 2280m. Only the
  *  two largest units, because a third is noise at every scale. */
 export function formatDuration(seconds: number): string {
-  if (seconds <= 0) return 'instant';
+  if (seconds <= 0) return tr('instant');
   if (seconds < 60) return `${Math.round(seconds)}s`;
   // THE REMAINDER IS ROUNDED, SO IT CAN ROUND UP INTO A FULL UNIT: 59m 45s is
   // "60s" left of the minute, and a fortnight's countdown spends its first
@@ -117,6 +119,22 @@ export function formatShort(n: number): string {
 /** A price: *$4.99*, *$2,000.00* — or *$4,99* where the comma is the decimal.
  *  The game prices in dollars, and this is the one place that says so. */
 export const formatUsd = (cents: number): string => `$${formatNumber(cents / 100, 2, 2)}`;
+
+/** A currency as the player reads it, in their language: *Gold*, *Oro*. */
+export function currencyName(c: CurrencyId): string {
+  switch (c) {
+    case 'Gold': return tr('Gold');
+    case 'Food': return tr('Food');
+    case 'Wood': return tr('Wood');
+    case 'Stone': return tr('Stone');
+    case 'Mana': return tr('Mana');
+    case 'Knowledge': return tr('Knowledge');
+    case 'Stardust': return tr('Stardust');
+    case 'HeroXp': return tr('Hero XP');
+    case 'Gems': return tr('Gems');
+    default: return c;
+  }
+}
 
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
