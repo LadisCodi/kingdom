@@ -473,7 +473,19 @@ export type GachaPrize =
   // Into the Bag: a call's speed-up or chest.
   | { kind: 'item'; item: ItemId; amount: number }
   // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
-  | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
+  | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number }
+  // A ten-call's supplies of one family — every speed-up, or every chest —
+  // as one card listing what is in it (Docs/features/10-heroes.md §8.3).
+  | { kind: 'supplies'; family: SupplyFamily; items: Array<{ item: ItemId; amount: number }>; amount: number }
+  // A ten-call's Fragments, every hero of the bag that got any on one card.
+  | { kind: 'bag'; rows: BagRow[] };
+
+/** The two kinds of supply a call pays (10-heroes.md §6.4). */
+export type SupplyFamily = 'speedup' | 'chest';
+
+/** One hero's line on the bag card: what the batch paid them and where it
+ *  left their bar. */
+export interface BagRow { heroId: HeroId; amount: number; progress?: FragmentProgress }
 
 /**
  * Where a call's fragments of one hero leave them: toward RECRUITING a hero
@@ -522,6 +534,48 @@ export interface GachaReveal {
  * with them and then spend nine tiles winding down. Before them: the
  * currencies, then the Bag's items, then the fragments.
  */
+/**
+ * A ten-call's prizes, GROUPED into a handful of cards
+ * (Docs/features/10-heroes.md §8.3): a card per currency (already summed),
+ * a card per supply family with its contents listed, ONE bag card for every
+ * Fragment, and a hero card per new hero — a recruit on the bag card gets one
+ * too, so it is celebrated as a hero rather than as a line.
+ *
+ * Takes the prizes `gachaPrizes` made, after `openReveal` has read each
+ * fragment stack's progress, so the bag's bars carry it.
+ */
+export function groupPrizes(prizes: readonly GachaPrize[]): GachaPrize[] {
+  const currencies: GachaPrize[] = [];
+  const families = new Map<SupplyFamily, Array<{ item: ItemId; amount: number }>>();
+  const rows: BagRow[] = [];
+  const heroes: GachaPrize[] = [];
+  const rest: GachaPrize[] = [];
+  for (const p of prizes) {
+    if (p.kind === 'currency') currencies.push(p);
+    else if (p.kind === 'item' && (ITEMS[p.item].kind === 'speedup' || ITEMS[p.item].kind === 'chest')) {
+      const family = ITEMS[p.item].kind as SupplyFamily;
+      families.set(family, [...(families.get(family) ?? []), { item: p.item, amount: p.amount }]);
+    } else if (p.kind === 'fragments') {
+      rows.push({ heroId: p.heroId, amount: p.amount, ...(p.progress ? { progress: p.progress } : {}) });
+      if (p.progress?.recruited === true) heroes.push({ kind: 'hero', heroId: p.heroId });
+    } else if (p.kind === 'hero') heroes.push(p);
+    else rest.push(p);
+  }
+  const supplies = (['speedup', 'chest'] as const)
+    .filter((f) => families.has(f))
+    .map((family): GachaPrize => {
+      const items = families.get(family)!;
+      return { kind: 'supplies', family, items, amount: items.reduce((n, i) => n + i.amount, 0) };
+    });
+  // The bag's recruits last, so its rows read toward the heroes after it.
+  rows.sort((a, b) => Number(a.progress?.recruited === true) - Number(b.progress?.recruited === true));
+  return [
+    ...currencies, ...supplies, ...rest,
+    ...(rows.length > 0 ? [{ kind: 'bag', rows } as GachaPrize] : []),
+    ...heroes,
+  ];
+}
+
 export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
   const heroes: GachaPrize[] = [];
   const fragments = new Map<HeroId, number>();
@@ -3491,7 +3545,7 @@ export class Game {
       const held = this.state.heroes.fragments[p.heroId] ?? 0;
       if (!ownsHeroId(this.state, p.heroId)) {
         const recruited = unlockHero(this.state, p.heroId) === 'Unlocked';
-        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(), recruited };
+        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(p.heroId), recruited };
       } else {
         const entry = heroEntry(this.state, p.heroId);
         if (!isMaxAscension(entry)) {
@@ -3503,7 +3557,12 @@ export class Game {
     // fragments, just before the heroes.
     const rank = (p: GachaPrize): number => (p.kind === 'hero' ? 2 : p.kind === 'fragments' && p.progress?.recruited ? 1 : 0);
     prizes.sort((a, b) => rank(a) - rank(b));
-    this.gachaReveal = { banner, calls: pulls.length, prizes, chest: banner === 'advanced' ? 'golden' : 'common' };
+    // A batch is a handful of cards, dealt in beats; a single call, its three.
+    this.gachaReveal = {
+      banner, calls: pulls.length,
+      prizes: pulls.length > 1 ? groupPrizes(prizes) : prizes,
+      chest: banner === 'advanced' ? 'golden' : 'common',
+    };
   }
 
   /**

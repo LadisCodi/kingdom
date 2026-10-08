@@ -740,12 +740,29 @@ export const RULES: Readonly<Record<string, Rule>> = {
     for (const [id, b] of records(doc.banners)) {
       const w = (b.weights ?? {}) as Record<string, unknown>;
       if (Object.values(w).every((x) => num(x) <= 0)) push(id, ['weights'], 'every rarity at 0 — the banner can roll nothing');
-      if (!(num(b.heroChance) > 0 && num(b.heroChance) <= 1)) push(id, ['heroChance'], 'is a fraction, above 0 and at most 1');
+      const ladder = list(b.heroChanceByOwned);
+      if (ladder.length === 0) push(id, ['heroChanceByOwned'], 'needs a chance for a player with no hero');
+      ladder.forEach((x, i) => {
+        if (!(num(x) > 0 && num(x) <= 1)) push(id, ['heroChanceByOwned', i], 'is a fraction, above 0 and at most 1');
+      });
       if (num(b.softPityAt) >= num(b.hardPityAt)) push(id, ['softPityAt'], `soft pity (${b.softPityAt}) must come before hard pity (${b.hardPityAt})`);
       if ((num(b.legendaryPityAt) > 0) !== (num(w.Legendary) > 0)) push(id, ['legendaryPityAt'], 'a legendary guarantee and a legendary weight go together');
-      if (num(b.lootDrawsMin) > num(b.lootDrawsMax)) push(id, ['lootDrawsMin'], `at most lootDrawsMax (${b.lootDrawsMax})`);
       const loot = list(b.loot) as Array<Record<string, unknown>>;
-      if (num(b.lootDrawsMax) > 0 && !loot.some((e) => num(e.weight) > 0)) push(id, ['loot'], 'a call that draws prizes needs one with a weight');
+      // Every call pays three slots (10-heroes.md §6.4): each needs a row
+      // with a weight, or a call would pay nothing there.
+      const slots: Array<[string, (e: Record<string, unknown>) => boolean]> = [
+        ['a Fragments row (the hero slot)', (e) => e.reward === 'Fragments'],
+        ['a Stardust or HeroXp row (the hero-goods slot)', (e) => e.reward === 'Stardust' || e.reward === 'HeroXp'],
+        ['an Item row (the supplies slot)', (e) => e.reward === 'Item'],
+      ];
+      for (const [what, is] of slots) {
+        if (!loot.some((e) => is(e) && num(e.weight) > 0)) push(id, ['loot'], `needs ${what} with a weight`);
+      }
+      const featured = String(b.featuredHero ?? '');
+      const heroes = (doc.heroes ?? {}) as Record<string, Record<string, unknown>>;
+      if (featured !== '' && heroes[featured] !== undefined && !(num(w[String(heroes[featured].rarity)]) > 0)) {
+        push(id, ['featuredHero'], 'a hero of a rarity this banner calls');
+      }
       loot.forEach((e, i) => {
         const fragments = e.reward === 'Fragments';
         if (fragments && !(num(w[String(e.rarity)]) > 0)) push(id, ['loot', i, 'rarity'], 'fragments of a rarity this banner calls');

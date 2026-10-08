@@ -2,7 +2,8 @@
   "heroLadder": {
     "ascensionStars": 5,
     "ascensionStepsPerStar": 6,
-    "recruitFragments": 10,
+    "recruitFragments": { "Common": 15, "Rare": 25, "Legendary": 40 },
+    "bagOpen": { "Common": 3, "Rare": 2, "Legendary": 1 },
     "fragmentsPerStepBase": 1,
     "fragmentsPerStepGrowth": 2,
     "ascensionStardustBase": 4,

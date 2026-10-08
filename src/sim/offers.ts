@@ -302,13 +302,13 @@ export function heroGemWorth(id: HeroId): number {
 }
 
 /** Everything a product hands over, in Gems — the next day's part too. A
- *  fragment is a tenth of its hero, since ten recruit one; Hero XP has no
- *  Gem price and counts nothing. */
+ *  fragment is its share of its hero, since its rarity's recruit price
+ *  recruits one; Hero XP has no Gem price and counts nothing. */
 export function skuGemWorth(state: GameState, sku: StoreSkuId): number {
   const s = STORE[sku];
   const worth = (items: Partial<Record<ItemId, number>>): number =>
     (Object.entries(items) as Array<[ItemId, number]>).reduce((sum, [id, n]) => sum + itemGemWorth(id) * n, 0);
-  const fragment = s.hero === null ? 0 : heroGemWorth(s.hero) / HERO_LADDER.recruitFragments;
+  const fragment = s.hero === null ? 0 : heroGemWorth(s.hero) / HERO_LADDER.recruitFragments[HEROES[s.hero].rarity];
   return s.gems + worth(s.items) + s.nextDayGems + worth(s.nextDayItems)
     + Math.round(fragment * s.nextDayFragments)
     + (s.hero === null ? 0 : heroGemWorth(s.hero))

@@ -17,7 +17,7 @@ import {
   BANNERS, EVENTS, HERO_ORDER, HEROES,
 } from '../src/sim/data/definitions';
 import {
-  claimFreePull, freePullAvailable, freePullsLeft, heroChanceAt, legendaryPityCount,
+  baseHeroChance, claimFreePull, freePullAvailable, freePullsLeft, heroChanceAt, legendaryPityCount,
   pityCount, pull, pullMany, pullPrice, pullsToGuarantee, pullsToLegendary,
   STANDARD_BANNER,
 } from '../src/sim/heroes';
@@ -213,17 +213,16 @@ describe('the gacha', () => {
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
   });
 
-  // CLAIM: every pull draws its banner's loot — hero, duplicate or miss —
-  // so no call is dead even when the roster is full.
-  it('every pull draws its loot, between the two counts of its banner', () => {
+  // CLAIM: every pull pays its three slots — hero, duplicate or miss — so no
+  // call is dead even when the roster is full (10-heroes.md §6.4).
+  it('every pull pays three prizes: a hit fills the hero slot with the hero', () => {
     const state = rich();
     // Past hard pity, so the run covers a miss AND a hero rather than one
     // long unlucky streak.
     const seen = new Set<string>();
     for (let i = 1; i <= BANNERS.basic.hardPityAt + 10; i++) {
       const result = pull(state);
-      expect(result.loot.length).toBeGreaterThanOrEqual(BANNERS.basic.lootDrawsMin);
-      expect(result.loot.length).toBeLessThanOrEqual(BANNERS.basic.lootDrawsMax);
+      expect(result.loot.length).toBe(result.heroId === null ? 3 : 2);
       seen.add(result.heroId === null ? 'miss' : result.duplicate ? 'dupe' : 'hero');
     }
     // …and it really did pay across more than one kind of outcome.
@@ -273,11 +272,13 @@ describe('the gacha', () => {
   });
 
   it('soft pity ramps before the guarantee rather than staying flat', () => {
-    expect(heroChanceAt(0)).toBe(BANNERS.basic.heroChance);
-    expect(heroChanceAt(BANNERS.basic.softPityAt)).toBeGreaterThanOrEqual(BANNERS.basic.heroChance);
-    expect(heroChanceAt(BANNERS.basic.softPityAt + 5))
-      .toBeGreaterThan(heroChanceAt(BANNERS.basic.softPityAt));
-    expect(heroChanceAt(BANNERS.basic.hardPityAt - 1)).toBe(1);
+    const state = freshGame();
+    const base = baseHeroChance(state, 'basic');
+    const at = (pity: number): number => heroChanceAt(state, 'basic', pity);
+    expect(at(0)).toBe(base);
+    expect(at(BANNERS.basic.softPityAt)).toBeGreaterThanOrEqual(base);
+    expect(at(BANNERS.basic.softPityAt + 5)).toBeGreaterThan(at(BANNERS.basic.softPityAt));
+    expect(at(BANNERS.basic.hardPityAt - 1)).toBe(1);
   });
 
   it('duplicates convert to that hero’s Fragments', () => {

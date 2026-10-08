@@ -11,6 +11,9 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| Is one open Legendary the right number? (**OQ-135**) | 2026-10-08 | **Yes, one** ([`features/10-heroes.md`](features/10-heroes.md) §6.6). |
+| Does the season hero open in the bag? (**OQ-136**) | 2026-10-08 | **Yes, over the count, until recruited**, while a banner leans toward them (`banners.featuredHero`). |
+| Is a supply on every call too many? (**OQ-137**) | 2026-10-08 | **No — keep it.** Every call pays a speed-up or a chest in its supplies slot. |
 | How many heroes should a free player own on day 7 and on day 30? (**OQ-134**) | 2026-10-08 | **7–8 on day 7, about 12 on day 30** ([`features/10-heroes.md`](features/10-heroes.md) §6.6). Met by a hero chance of 30% → 2% over the first eight heroes and a recruit priced 15 · 25 · 40 Fragments by rarity; the ladder alone could not slow the month without starving the first week. |
 | Fourteen heroes carry a trait the game never reads (**OQ-95**) | 2026-10-07 | **The traits are gone.** Every hero has a skill that acts in its fights, no skill twice within a rarity; `KnowledgeBonus` and `FragmentBonus` became the **Lore** and **Plunder** spoils ([`features/10-heroes.md`](features/10-heroes.md) §2.5). |
 | Does helping touch the other player's state, or only your own? (**OQ-34**) | 2026-10-06 | **Only your own, plus a gift they claim**: a help pays the helper Mana and leaves a speed-up in the friend's Bag as a delivery ([`features/15-social.md`](features/15-social.md) §3). |
