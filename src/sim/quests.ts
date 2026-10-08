@@ -18,8 +18,9 @@ import { refund } from './wallet';
 import { revealedCellCount } from './research';
 import {
   addToWallet, getWallet,
-  type CurrencyId, type GameState,
+  type CurrencyId, type DistrictId, type GameState,
 } from './state';
+import { districtCount } from './districts';
 import type { ItemId } from './state';
 import { grantItem } from './bag';
 import type { SimEvent } from './events';
@@ -74,7 +75,7 @@ export function questValue(state: GameState, quest: QuestDef): number {
     // (Docs/features/01-map-and-fog.md §6.3).
     case 'BuildDistrict':
     case 'RepairDistrict':
-      return state.city.districts.filter((d) => d.definitionId === quest.goalTarget).length;
+      return districtCount(state, quest.goalTarget as DistrictId);
     case 'UpgradeDistrict':
       return state.city.districts.filter(
         (d) => d.definitionId === quest.goalTarget && d.state === 'Built' &&

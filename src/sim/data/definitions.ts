@@ -705,8 +705,9 @@ export interface DistrictDef {
    *  iron pays Stone and gold pays Gold, so they cannot share a spec — and
    *  the same reason `trains` is a list for the military halls. */
   harvestSources: readonly HarvestSourceId[];
-  /** This district's own cell IS a resource cell of this type (FarmLands → Crops). */
-  providesHarvestSource: HarvestSourceId | null;
+  /** A PLANTABLE: placing it puts this feature on the ground and raises no
+   *  building (Docs/features/27-plantables.md). Null for every building. */
+  plants: FeatureId | null;
   maxLevel: number;
   /** What every level costs the FIRST instance of this building, one entry
    *  per level: index 0 is the BUILD, index 1 what reaching level 2 costs.
@@ -907,10 +908,12 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
     id: 'FishShoal', name: 'Fish shoal', glyph: '🐟', exhaustedGlyph: '🫧',
     sprite: 'fish_shoal', source: 'Fish', respawnTerrain: 'Water',
   },
+  // Planted from the Build menu (the crop plots), never painted on the map.
+  Crops: {
+    id: 'Crops', name: 'Crop plot', glyph: '🌾', exhaustedGlyph: '🥀',
+    sprite: 'farmlands', source: 'Crops', respawnTerrain: 'Grassland',
+  },
 };
-
-/** Exhausted-crops visual (FarmLands districts have no feature). */
-export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // -------------------------------------------------------------- fog settings
 
@@ -2514,4 +2517,6 @@ export const GAME_VERSION: string = pkg.version;
 // v109: a lair is a path of fights — `Won` on a lair, additive.
 // v110: the Watchtower is a ruin to repair, not a landmark to claim; a
 // claimed one stands repaired, and the chain closes up (a migrator).
-export const SAVE_VERSION = 110;
+// v111: a crop plot is a feature, not a district — every FarmLands district
+// becomes a `Crops` cell (a migrator); a growing cell's `Growing`, additive.
+export const SAVE_VERSION = 111;

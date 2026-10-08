@@ -19,9 +19,14 @@ import {
 
 // ------------------------------------------------------------------ counting
 
-/** Count of a category, Built OR UnderConstruction (both count toward the cap). */
-export const districtCount = (state: GameState, definitionId: DistrictId): number =>
-  state.city.districts.filter((d) => d.definitionId === definitionId).length;
+/** Count of a category, Built OR UnderConstruction (both count toward the cap).
+ *  A PLANTABLE counts what of its feature stands on the ground, growing or
+ *  grown (Docs/features/27-plantables.md). */
+export const districtCount = (state: GameState, definitionId: DistrictId): number => {
+  const plants = DISTRICTS[definitionId].plants;
+  if (plants !== null) return Object.values(state.features).filter((f) => f === plants).length;
+  return state.city.districts.filter((d) => d.definitionId === definitionId).length;
+};
 
 /**
  * The ordinal the next one of this kind will be stamped with — *Housing #3*.
@@ -335,8 +340,12 @@ export function stockBuild(state: GameState, definitionId: DistrictId): void {
   }
 }
 
+/** A plantable's wait is its GROWTH: `buildDurationSeconds`, flat — no
+ *  builder works it, so nothing that speeds a builder speeds it. */
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
-  buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
+  DISTRICTS[definitionId].plants !== null
+    ? DISTRICTS[definitionId].buildDurationSeconds
+    : buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
 
 // -------------------------------------------------------- upgrade requirement
 

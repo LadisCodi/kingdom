@@ -6,7 +6,7 @@
 // and the map canvas, which holds everything that stands.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
+  DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingAbandonedAt, standingLairAt } from '../sim/sites';
@@ -19,7 +19,7 @@ import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTrain
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
-  recoveryProgress, recoversForSpec, stockFraction,
+  isGrowing, recoveryProgress, recoversForSpec, stockFraction,
 } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
@@ -487,14 +487,6 @@ export function drawMap(
     const c = mid(box);
     const foot = base(box);
     if (lifted) ctx.globalAlpha = 0.28;
-    // Its harvest source, as `harvestSourceAt` would say for its own cell.
-    const source = district.state === 'Built' ? def.providesHarvestSource : null;
-    const exhausted = source !== null
-      && recoversForSpec(state, map, district.location, HARVEST[source], now) !== null;
-    // Exhausted crop plot gets its own base sprite when available;
-    // otherwise the normal sprite (or glyph) plus the withered overlay.
-    const exhaustedPlot = district.definitionId === 'FarmLands' &&
-      exhausted && district.state !== 'UnderConstruction';
     // Docks art faces water-right; mirror it when the wet half is on the left
     // (the anchor cell is the Water one). Sprites only — glyphs never flip.
     const mirrored = district.definitionId === 'Docks' &&
@@ -515,10 +507,8 @@ export function drawMap(
     // what stops a level with no art of its own from falling past the base
     // sprite to the emoji.
     const keys: string[] = [];
-    if (exhaustedPlot) keys.push(`${def.sprite}_exhausted`);
     for (let l = district.level; l >= 1; l--) keys.push(`${def.sprite}_l${l}`);
     keys.push(def.sprite);
-    let drewExhaustedPlot = false;
     let tall = 0;
     // Its card is open: a small white pulse — the art a touch brighter and a
     // soft white glow around its edge — breathing while the card stays up.
@@ -536,12 +526,7 @@ export function drawMap(
     };
     punched(coordKey(district.location), box, () => {
       brightened(0.18 * pulse, () => {
-        tall = stand(box, keys, def.glyph, (draw) => {
-          const drew = flip(() => { glow(); return draw(); });
-          drewExhaustedPlot = drew > 0 && exhaustedPlot &&
-            spriteAspect(`${def.sprite}_exhausted`) !== null;
-          return drew;
-        });
+        tall = stand(box, keys, def.glyph, (draw) => flip(() => { glow(); return draw(); }));
       });
     });
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
@@ -559,13 +544,6 @@ export function drawMap(
       fillDiamond(ctx, box);
     } else {
       if (district.level > 1) drawLevelPlaque(ctx, district.level, box.x + box.w - 3, roof, size);
-      // Exhausted crop plot: withered overlay (unless its sprite covers it).
-      if (exhaustedPlot && !drewExhaustedPlot) {
-        drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, box.x, c.y - box.h * 0.5, box.w, size * 0.3, box.h);
-      }
-      // A district that is itself a resource cell (FarmLands → Crops,
-      // lived-in Housing → Taxes): wear/recovery bar.
-      if (def.providesHarvestSource !== null) drawResourceState(district.location, box, source);
       // Townhall: villager-training progress bar, and the population count.
       //
       // Population is drawn HERE rather than in the header because the
@@ -972,12 +950,15 @@ export function drawMap(
         const keys = size === 1
           ? [variantKey(stem, cell)]
           : [`${stem}_${size}x${size}`, variantKey(stem, cell)];
+        // Planted and not grown: its growing art, else the exhausted one
+        // (Docs/features/27-plantables.md).
+        if (isGrowing(state, map, cell, now)) keys.unshift(`${def.sprite}_growing`);
         later(cell, () => dimmed(dim, () => {
           punched(key, plot, () => {
             stand(plot, keys,
               exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
           });
-        }), { x: size, y: size });
+        }), { x: size, y: size }, { occludes: !NEVER_HIDES.has(feature) });
       }
     }
 
@@ -1338,8 +1319,7 @@ export function drawMap(
         const art = artRect(box, drawDistrict(district, box), 1);
         artOf.set(district.uniqueId, art);
         mark(art);
-      }, def.size,
-      { occludes: !NEVER_HIDES.has(district.definitionId) });
+      }, def.size);
   }
 
   // THE LAIRS, once FOUND and until cleared (Docs/proposals/lairs.md §2.1,

@@ -27,11 +27,11 @@
       "of": { "type": "text", "ref": "harvest" },
       "doc": "What its workers go out and harvest in its reach."
     },
-    "providesHarvestSource": {
+    "plants": {
       "type": "text",
-      "ref": "harvest",
+      "options": ["Trees", "Crops"],
       "nullable": true,
-      "doc": "The building IS a source of this (the crop plots are Crops)."
+      "doc": "A PLANTABLE: placing it puts this feature on the ground instead of raising a building (Docs/features/27-plantables.md)."
     },
     "trains": {
       "type": "list",

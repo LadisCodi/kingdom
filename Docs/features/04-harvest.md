@@ -5,7 +5,7 @@
 > What a tap *costs* is [`08-magic.md`](08-magic.md); where the coins go is
 > [`03-economy.md`](03-economy.md).
 >
-> **Status: built.** Not built: a separate FarmLands harvest row (§2.1), the
+> **Status: built.** Not built: the
 > map-editor production census (§2.3, OQ-50), the over-hire onboarding beat
 > (§6).
 
@@ -96,9 +96,8 @@ Every resource cell carries:
   peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
   shows in the first `TapPower` levels.
 - A metal peak's richness is in the crew: five units a swing against one.
-- **FarmLands shares the `Crops` row.** A built plot behaves exactly like wild
-  crops. Its own rhythm needs a new harvest source id (code, not data) — not
-  built.
+- **A crop plot is the `Crops` row**: a feature planted from the Build menu
+  ([`27-plantables.md`](27-plantables.md)).
 
 ### 2.2 The ground under the cell
 

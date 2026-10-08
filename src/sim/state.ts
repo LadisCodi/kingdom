@@ -63,7 +63,8 @@ export type TerrainId =
 // research that opens one to a pick and differ only in what they pay.
 export type FeatureId =
   | 'Trees' | 'BerryBush' | 'WildAnimals' | 'FishShoal'
-  | 'Mountain' | 'MountainIron' | 'MountainGold';
+  | 'Mountain' | 'MountainIron' | 'MountainGold'
+  | 'Crops';
 export type HarvestSourceId =
   | 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Fish'
   | 'Stone' | 'MountainIron' | 'MountainGold';
@@ -266,6 +267,9 @@ export interface CellHarvestState {
    * 90 seconds to 21, and a bar spanning 90 opens at 77%.
    */
   recoveryMs: number | null;
+  /** PLANTED and not grown yet: the wait is its growth, not a recovery
+   *  (Docs/features/27-plantables.md). Cleared with the wait. */
+  growing?: true;
 }
 
 export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';

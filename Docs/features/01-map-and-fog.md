@@ -66,7 +66,7 @@ Buildability:
 | Feature | Pays | Per tap | Taps to exhaust | Recovery | Tech |
 |---|---|---|---|---|---|
 | **Forest** | Wood | 1 | 10 | 90 s | Forestry |
-| **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
+| **Crops** (a planted crop plot) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
 | **Mountain** | Stone | 1 | never | — | Pickaxes |
@@ -471,7 +471,7 @@ them, to be found and repaired.
 | Building | Where |
 |---|---|
 | **the old House** | ring 3, past the first forest |
-| **two old plots** (FarmLands) | by the berries |
+| **two old plots** (FarmLands — repaired, each plants a crop plot) | by the berries |
 | **the old Farm** | beside the old plots, working both |
 | **the old Sawmill** | ring 3, at the edge of a wood, clear of the Townhall |
 

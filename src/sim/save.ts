@@ -965,6 +965,30 @@ const MIGRATIONS: readonly Migration[] = [
       if (quests !== undefined && (quests.Index ?? 0) > THE_WATCHTOWER_AT_V109) quests.Index = (quests.Index ?? 0) - 1;
       else if (quests !== undefined && quests.Index === THE_WATCHTOWER_AT_V109) quests.Progress = 0;
     },
+  }, {
+    // v111: A CROP PLOT IS A FEATURE (27-plantables.md). Every FarmLands
+    // district leaves the list and its cell carries a grown `Crops` feature;
+    // one still being built is planted grown, and its job leaves the queue.
+    // The depot a built plot kept is its cell's already, so it carries on.
+    to: 111,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })?.Cities?.[0];
+      if (city === undefined) return;
+      const plots = ((city.Districts ?? []) as Array<{ UniqueID: string; DefinitionID: string; GridLocation: Coord }>)
+        .filter((d) => d.DefinitionID === 'FarmLands');
+      if (plots.length === 0) return;
+      const gone = new Set(plots.map((d) => d.UniqueID));
+      city.Districts = (city.Districts as Array<{ UniqueID: string }>).filter((d) => !gone.has(d.UniqueID));
+      // `QueueKinds` is a parallel array: both sides are filtered together.
+      const items = (city.QueueItems ?? []) as Array<{ DistrictID: string }>;
+      const kinds = (city.QueueKinds ?? []) as string[];
+      const keep = items.map((q) => !gone.has(q.DistrictID));
+      city.QueueItems = items.filter((_, i) => keep[i]);
+      if (city.QueueKinds !== undefined) city.QueueKinds = kinds.filter((_, i) => keep[i]);
+      const features = (modules['kingdom.features'] ??= { Cells: [], Respawns: [] }) as { Cells?: Array<Record<string, unknown>> };
+      features.Cells ??= [];
+      for (const d of plots) features.Cells.push({ Coord: d.GridLocation, FeatureID: 'Crops' });
+    },
   },
 ];
 
@@ -1135,6 +1159,7 @@ export function serialize(state: GameState, now: number): SaveFile {
             Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
             RecoveryMs: s.recoveryMs,
+            ...(s.growing === true ? { Growing: true } : {}),
           })),
       },
       'kingdom.workers': {
@@ -1568,6 +1593,7 @@ export function deserialize(
         // wait for that one cell, exactly as it did before, and the next
         // exhaustion stamps a real one.
         recoveryMs: c.RecoveryMs ?? null,
+        ...(c.Growing === true ? { growing: true as const } : {}),
       };
     }
   }

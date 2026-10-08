@@ -21,7 +21,7 @@ import {
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, FEATURES, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
   ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
   RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
@@ -46,7 +46,7 @@ import {
   isAwake, relicWindowMs, shrines, unhostRelic,
 } from './sim/hosts';
 import { shrineBubbleAt } from './render/shrineBubbles';
-import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { effectiveStock, harvestSourceAt, isExhausted, isGrowing, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
@@ -1216,7 +1216,7 @@ export class Game {
       this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
-      this.floaters.add(cell, '💤');
+      this.floaters.add(cell, isGrowing(this.state, this.map, cell, this.now()) ? '🌱' : '💤');
     } else if (result === 'TechLocked' && source !== null) {
       // Say WHICH research, by name. "You can see it and you cannot have it
       // yet" is the whole point of the gate, and it only teaches anything if
@@ -6686,9 +6686,9 @@ export class Game {
 function providedYieldLabel(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
 ): YieldLabel | null {
-  const provides = DISTRICTS[definitionId].providesHarvestSource;
-  if (provides === null) return null;
-  const spec = HARVEST[provides];
+  const plants = DISTRICTS[definitionId].plants;
+  if (plants === null) return null;
+  const spec = HARVEST[FEATURES[plants].source];
   const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
   return { label: formatCount(held), icon: spec.currencyId, tone };

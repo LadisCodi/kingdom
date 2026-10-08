@@ -3,7 +3,7 @@
 
 import { lairHolding } from './lairZone';
 import {
-  DISTRICTS, FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
+  FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
@@ -21,14 +21,8 @@ import {
 
 /** What (if anything) this cell yields when tapped/worked. */
 export function harvestSourceAt(state: GameState, cell: Coord): HarvestSourceId | null {
-  const district = districtAt(state, cell);
-  if (district) {
-    // Some districts ARE resource cells (a built FarmLands is a Crops cell);
-    // every other district blocks. Buildings with timers (Townhall, Housing)
-    // are NOT harvest sources — tapping them boosts their timers instead.
-    const provides = DISTRICTS[district.definitionId].providesHarvestSource;
-    return district.state === 'Built' ? provides : null;
-  }
+  // A building is never a resource cell; a crop plot is a feature.
+  if (districtAt(state, cell)) return null;
   const feature = state.features[coordKey(cell)];
   if (feature) return FEATURES[feature].source;
   return null;
@@ -179,6 +173,7 @@ function recoverIfDue(
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
     s.recoveryMs = null;
+    delete s.growing;
     s.units = depotStock(state, map, cell, spec);
   }
 }
@@ -192,6 +187,15 @@ export function stockAt(state: GameState, map: MapData, cell: Coord, now: number
   if (!s) return depotStock(state, map, cell, spec);
   recoverIfDue(state, s, map, cell, spec, now);
   return s.units;
+}
+
+/** Planted and not grown yet (Docs/features/27-plantables.md): exhausted,
+ *  and drawn as growing rather than spent. */
+export function isGrowing(
+  state: GameState, map: MapData, cell: Coord, now: number,
+): boolean {
+  const s = state.harvest[depotKey(map, cell)];
+  return s?.growing === true && s.exhaustedUntil !== null && s.exhaustedUntil > now;
 }
 
 export function isExhausted(

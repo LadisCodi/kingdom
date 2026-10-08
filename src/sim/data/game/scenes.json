@@ -621,7 +621,7 @@
         "side": "left",
         "text": "Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.",
         "box": "auto",
-        "point": "district:FarmLands",
+        "point": "feature:Crops",
         "lock": "all",
         "until": "tap",
         "untilTarget": "",

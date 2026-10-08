@@ -306,28 +306,22 @@ describe('Forestry is the only door out of the opening', () => {
   });
 });
 
-// A crop plot is a district that trains nothing AND a resource cell you tap.
-// Those two facts collided when `DistrictDef.trains` became an array: the
-// tap handler tested it for truthiness, an empty array is truthy, and every
-// non-trainer fell into the "hurry the unit in training" branch, which
-// consumed the tap and did nothing. Houses and trees were unaffected —
-// Housing has its own branch above it, and a forest cell is not a district
-// at all — so the plot was the one thing in the game you could no longer tap.
 describe('tapping a crop plot', () => {
   const plot: Coord = { x: 2, y: 0 };
 
+  // A crop plot is a feature now (Docs/features/27-plantables.md): grown, it
+  // is an ordinary Crops cell and answers a tap like any tree.
   const withPlot = () => {
     const state = freshGame();
     reveal(state, [plot]);
-    addBuilt(state, 'FarmLands', plot);
+    state.features[coordKey(plot)] = 'Crops';
     const game = freshPresenter(state);
     return { state, game };
   };
 
-  it('collects Food, and does not vanish into the training branch', () => {
+  it('collects Food', () => {
     const { state, game } = withPlot();
-    expect(DISTRICTS.FarmLands.trains).toEqual([]); // trains nothing…
-    expect(harvestSourceAt(state, plot)).toBe('Crops'); // …but IS a resource cell
+    expect(harvestSourceAt(state, plot)).toBe('Crops');
 
     const before = getWallet(state.city.wallet, 'Food');
     game.handleTap(...screenAt(game, plot));
@@ -340,27 +334,15 @@ describe('tapping a crop plot', () => {
     expect(game.inspectedDistrictId).toBeNull();
   });
 
-  it('opens the card once it is empty, so it can be moved', () => {
-    const { state, game } = withPlot();
-    while (!isExhausted(state, map, plot, game.now())) {
-      expect(tapCell(state, map, plot, game.now())).toBe('Harvested');
-    }
-    const food = getWallet(state.city.wallet, 'Food');
-    const before = mana(state);
-    game.handleTap(...screenAt(game, plot));
-    const district = state.city.districts.find((d) => d.definitionId === 'FarmLands')!;
-    expect(game.inspectedDistrictId).toBe(district.uniqueId);
-    expect(getWallet(state.city.wallet, 'Food')).toBe(food);
-    expect(mana(state)).toBe(before);
-  });
-
   it('spends Mana like every other collect tap', () => {
     const { state, game } = withPlot();
     const before = mana(state);
     game.handleTap(...screenAt(game, plot));
     expect(mana(state)).toBe(before - TAP.manaCost);
   });
+});
 
+describe('a building that trains', () => {
   // The other half of the same slip: a building that DOES train still gets
   // the training branch, and the floater names the unit rather than the
   // building's whole offer list.

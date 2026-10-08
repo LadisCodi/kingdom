@@ -18,6 +18,7 @@ import { closeRelicWindows, nextRelicWindowEnd } from './hosts';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
+import { isPlantable, plantAt } from './plants';
 import { recordEvent } from './events';
 import { grantItem, itemCount, takeItem } from './bag';
 import {
@@ -138,7 +139,8 @@ export function enqueueBuild(
 ): EnqueueBuildResult {
   // A Shrine is sold for its materials only while `shrineBuild` says so.
   if (DISTRICTS[definitionId].hostsRelic && shrineBuild(state).kind !== 'materials') return 'NotForMaterials';
-  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  // A plantable takes no builder: it grows by itself.
+  if (!isPlantable(definitionId) && busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   // Harmony and the goods are told apart from the cell before it is, because
   // the answer to each is a different errand — build a decoration, queue at a
   // workshop, or pick another spot — and `InvalidCell` would name none of
@@ -167,6 +169,12 @@ function startBuild(
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
+  if (isPlantable(definitionId)) {
+    // A command carries no time: the sim's own now is where it last advanced.
+    plantAt(state, map, definitionId, cell, state.lastAdvance);
+    wakeIdleWorkersAt(state, state.lastAdvance); // a new cell to wait on
+    return 'Started';
+  }
   const district: District = {
     uniqueId: newId(state, `district_${definitionId}`),
     definitionId,
@@ -273,7 +281,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
   // Not on ground a lair still holds — the Thorned Shrine waits on the Orcs.
   if (cells.some((c) => lairHolding(state, c) !== null)) return 'LairHeld';
-  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (!isPlantable(site.districtId) && busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';

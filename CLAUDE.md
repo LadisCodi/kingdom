@@ -11,7 +11,7 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`21` | **the live source of truth, one file per feature** |
+| `Docs/features/01`–`27` | **the live source of truth, one file per feature** |
 | [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`); the taken ones are in [`Docs/open-questions-closed.md`](Docs/open-questions-closed.md) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 
@@ -143,6 +143,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | the friends list's caps and its reward path — milestones, Gems, items, the Townhall a friend must reach — at `?dev=data` › Friends (`social.json`) | what a friend's progress IS (Townhall + cells, `friendsClient.ts`), a new social command (`src/socialServer/serve.ts`) |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
+| **a plantable** = a building entry with `plants: <feature>` — listed, priced, capped and unlocked like a building, but it puts that feature on the ground (no district, no builder) and grows for its `buildDurationSeconds` (`Docs/features/27-plantables.md`) | a feature a plantable may plant (`plants`' options, a `FeatureId`) |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
 | a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
@@ -185,7 +186,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 107; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 111; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 107) — the boot
 discards any older save and starts a fresh kingdom. To restart every tester
 again, bump `SAVE_VERSION` and raise it to match. **It must go before

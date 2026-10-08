@@ -5,11 +5,12 @@ import regionMap from '../src/sim/data/region-map.json';
 import { repairAbandoned, repairRefusal } from '../src/sim/commands';
 import { nextBuildCost } from '../src/sim/districts';
 import { fogState, recordVisibleSites } from '../src/sim/fog';
+import { isGrowing } from '../src/sim/harvest';
 import { placementBlock } from '../src/sim/districts';
 import { deserialize, serialize } from '../src/sim/save';
 import { sightedThings } from '../src/sim/sight';
 import { cellHasSite, standingAbandonedAt } from '../src/sim/sites';
-import { getWallet, type GameState } from '../src/sim/state';
+import { coordKey, getWallet, type GameState } from '../src/sim/state';
 import { firstGame, fund, map, reveal, T0 } from './helpers';
 
 const site = (id: string) => ABANDONED.find((a) => a.id === id)!;
@@ -44,7 +45,7 @@ describe('the abandoned buildings', () => {
     expect(placementBlock(state, map, 'Housing', at)).toBe('HasSite');
   });
 
-  it('is repaired as a build at level 1, without its technology, at the next ordinal', () => {
+  it('is repaired as a build, without its technology, at the next price', () => {
     const state = firstGame();
     const plot = site('OldPlotNorth');
     reveal(state, [plot.location]);
@@ -54,10 +55,10 @@ describe('the abandoned buildings', () => {
     const cost = nextBuildCost(state, 'FarmLands');
     const wood = getWallet(state.city.wallet, 'Wood');
     expect(repairAbandoned(state, map, plot.id)).toBe('Started');
-    const d = state.city.districts.find((x) => x.location.x === plot.location.x && x.location.y === plot.location.y)!;
-    expect(d.definitionId).toBe('FarmLands');
-    expect(d.state).toBe('UnderConstruction');
-    expect(d.ordinal).toBe(1);
+    // A crop plot is a plantable: it comes back as its feature, growing.
+    expect(state.city.districts.some((x) => x.location.x === plot.location.x && x.location.y === plot.location.y)).toBe(false);
+    expect(state.features[coordKey(plot.location)]).toBe('Crops');
+    expect(isGrowing(state, map, plot.location, state.lastAdvance)).toBe(true);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wood - (cost.Wood ?? 0));
     expect(standingAbandonedAt(state, plot.location)).toBeUndefined();
     expect(repairAbandoned(state, map, plot.id)).toBe('NotFound');
