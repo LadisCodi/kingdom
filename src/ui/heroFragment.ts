@@ -9,12 +9,13 @@ import { HEROES } from '../sim/data/definitions';
 import type { HeroId } from '../sim/state';
 import { spriteUrl } from '../render/sprites';
 import { el } from './format';
+import { tr } from '../i18n/tr';
 import { iconEl, type IconOpts } from './kit';
 
 export function heroFragmentIcon(id: HeroId, opts: IconOpts = {}): HTMLElement {
   const def = HEROES[id];
   const url = spriteUrl(`${def.sprite}_fragment`);
-  const label = opts.label ?? `${def.name}'s fragment`;
+  const label = opts.label ?? tr("{name}'s fragment", { name: def.name });
   if (url === null) return iconEl('fragment', { ...opts, label });
   const size = opts.size === 'sm' ? ' icon--sm' : opts.size === 'lg' ? ' icon--lg' : '';
   return el('img', {

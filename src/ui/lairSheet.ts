@@ -13,6 +13,7 @@ import { unitOf } from '../sim/data/definitions';
 import type { TroopId } from '../sim/state';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { unitBust } from './unitArt';
+import { tr } from '../i18n/tr';
 
 /** An enemy squad's face: the creature its UNIT is, whatever its rank — the
  *  rank rides on the coin the frame wears (unitArt.ts `portraitFrame`). */
@@ -31,7 +32,7 @@ export function renderLairSheet(game: Game): HTMLElement {
     enough: preview.enough,
     supplies: preview.supplies,
     fallen: preview.fallen,
-    actionLabel: 'Attack',
+    actionLabel: tr('Attack'),
     onFight: () => game.doAttackLair(),
     blocked: game.lairBlockText(),
   };

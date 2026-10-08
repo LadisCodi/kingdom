@@ -47,6 +47,8 @@ import type { BagRow, FragmentProgress, Game, GachaPrize, GachaReveal, SupplyFam
 import type { CurrencyId, HeroId } from '../sim/state';
 import { el, formatExact } from './format';
 import { heroFragmentIcon } from './heroFragment';
+import { rarityLabel } from './heroCard';
+import { tr } from '../i18n/tr';
 import { btn, iconEl, progress, type Progress } from './kit';
 import { particleLayer, type ParticleLayer } from './particles';
 
@@ -63,9 +65,20 @@ const CONFETTI = ['#f2b233', '#ffd36b', '#d4553e', '#4fa3c7', '#6fbf4a', '#fff6e
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-/** The id, made readable — `SilverKey` → "Silver key" (as purseSheet.ts). */
-const currencyName = (c: CurrencyId): string =>
-  c.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/ (\w)/g, (_, ch: string) => ` ${ch.toLowerCase()}`);
+/** A currency, as a card names it. */
+const currencyName = (c: CurrencyId): string => {
+  switch (c) {
+    case 'Gold': return tr('Gold');
+    case 'Food': return tr('Food');
+    case 'Wood': return tr('Wood');
+    case 'Stone': return tr('Stone');
+    case 'Mana': return tr('Mana');
+    case 'Knowledge': return tr('Knowledge');
+    case 'Stardust': return tr('Stardust');
+    case 'HeroXp': return tr('Hero xp');
+    case 'Gems': return tr('Gems');
+  }
+};
 
 /** A hero portrait, contained rather than cropped: the sheet is mixed. */
 function portrait(id: HeroId, cls: string): HTMLElement {
@@ -82,7 +95,7 @@ const newHero = (p: GachaPrize): HeroId | null =>
 
 /** A fragments bar's reading: "8 / 10", or what filling it did. */
 const barText = (p: FragmentProgress, n: number): string =>
-  p.recruited && n >= p.goal ? 'Recruited!'
+  p.recruited && n >= p.goal ? tr('Recruited!')
     : `${formatExact(p.toward === 'recruit' ? Math.min(n, p.goal) : n)} / ${formatExact(p.goal)}`;
 
 const RARITY_RANK = { Common: 1, Rare: 2, Legendary: 3 } as const;
@@ -100,7 +113,7 @@ function rarityOf(p: GachaPrize): keyof typeof RARITY_LIGHT | null {
   return null;
 }
 
-const FAMILY_NAME: Record<SupplyFamily, string> = { speedup: 'Speed-ups', chest: 'Chests' };
+const FAMILY_NAME: Record<SupplyFamily, string> = { speedup: tr('Speed-ups'), chest: tr('Chests') };
 
 /** One line of the bag card: the hero (a silhouette until recruited), what
  *  the batch paid them, and their bar. */
@@ -118,7 +131,7 @@ function bagRow(row: BagRow, bars: Map<HTMLElement, Progress>): HTMLElement {
     bar.set(p.from / p.goal, barText(p, p.from));
     bars.set(line, bar);
     line.querySelector('.gr-bag-body')!.append(el('div', { class: 'gr-bag-bar' }, bar.root));
-    if (p.recruited) line.append(el('div', { class: 'gr-stamp' }, 'New'));
+    if (p.recruited) line.append(el('div', { class: 'gr-stamp' }, tr('New')));
   }
   return line;
 }
@@ -156,7 +169,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
   } else if (prize.kind === 'bag') {
     cls = 'is-bag';
     face = [
-      el('div', { class: 'gr-card-name' }, 'Fragments'),
+      el('div', { class: 'gr-card-name' }, tr('Fragments')),
       el('div', { class: 'gr-bag' }, ...prize.rows.map((r) => bagRow(r, bars))),
     ];
   } else if (prize.kind === 'relicFragment') {
@@ -173,7 +186,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
       cls = `is-hero ${RARITY_CLASS[def.rarity]}`;
       face = [
         el('div', { class: 'gr-card-art' }, portrait(prize.heroId, 'gr-card-img')),
-        el('div', { class: 'gr-card-new' }, 'New'),
+        el('div', { class: 'gr-card-new' }, tr('New')),
         el('div', { class: 'gr-card-name' }, def.name.replace(/^The /, '')),
       ];
     } else {
@@ -203,7 +216,7 @@ function prizeCard(prize: GachaPrize, bars: Map<HTMLElement, Progress>): HTMLEle
     bar.set(p.from / p.goal, barText(p, p.from));
     bars.set(card, bar);
     card.append(el('div', { class: 'gr-card-bar' }, bar.root));
-    if (p.recruited) card.append(el('div', { class: 'gr-stamp' }, 'New'));
+    if (p.recruited) card.append(el('div', { class: 'gr-stamp' }, tr('New')));
   }
   return card;
 }
@@ -265,12 +278,12 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     const heroLine = el('div', { class: 'gr-heroline' });
     const prompt = el('div', { class: 'gr-prompt' });
     const title = el('div', { class: 'gr-title' },
-      el('div', { class: 'gr-plaque' }, 'Rewards'),
+      el('div', { class: 'gr-plaque' }, tr('Rewards')),
       el('div', { class: 'gr-calls' }, reveal.caption
-        ?? (reveal.calls === 1 ? 'One call' : `${formatExact(reveal.calls ?? 0)} calls`)));
-    const collect = btn({ label: 'Collect', kind: 'primary', onClick: () => game.dismissGachaReveal() });
+        ?? (reveal.calls === 1 ? tr('One call') : tr('{n} calls', { n: formatExact(reveal.calls ?? 0) }))));
+    const collect = btn({ label: tr('Collect'), kind: 'primary', onClick: () => game.dismissGachaReveal() });
     const foot = el('div', { class: 'gr-foot' }, collect);
-    const skip = el('button', { class: 'gr-skip', type: 'button' }, 'Skip');
+    const skip = el('button', { class: 'gr-skip', type: 'button' }, tr('Skip'));
     const veil = el('div', { class: 'gr-veil' });
     const flash = el('div', { class: 'gr-flash' });
 
@@ -459,7 +472,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         layer?.burst(x, y, { kind: 'spark', count: 8, colors: GOLD, speed: 200, size: 7, life: 650 });
       }
       phase = 'up';
-      say('Tap to continue');
+      say(tr('Tap to continue'));
       syncSkip();
       if (skipping) await settle();
     };
@@ -497,7 +510,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       // A drum roll under a hero still face down; a Legendary's is the long one.
       if (newHero(prize) !== null) playSfx(rarity === 'Legendary' ? 'heroRiser' : 'heroRiserShort');
       phase = 'down';
-      say('Tap to reveal');
+      say(tr('Tap to reveal'));
       syncSkip();
       if (skipping && !charged) await flip();
     };
@@ -593,12 +606,12 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
       const light = RARITY_LIGHT[def.rarity];
       screen.classList.add('is-party');
       rays.className = `gr-rays is-on ${RARITY_CLASS[def.rarity]}`;
-      kicker.textContent = legend ? 'A legend answers' : 'A new hero answers';
+      kicker.textContent = legend ? tr('A legend answers') : tr('A new hero answers');
       kicker.classList.add('is-on');
       heroLine.replaceChildren(
         el('div', { class: 'gr-heroline-name' }, def.name),
         el('div', { class: 'gr-heroline-title' }, def.title),
-        el('div', { class: `gr-heroline-rarity ${RARITY_CLASS[def.rarity]}` }, def.rarity));
+        el('div', { class: `gr-heroline-rarity ${RARITY_CLASS[def.rarity]}` }, rarityLabel(def.rarity)));
       heroLine.classList.add('is-on');
       duckFeast(legend ? 6500 : 5200);
       playSfx(legend ? 'heroLegend' : 'heroNew');
@@ -639,7 +652,7 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
         { transform: `${currentAt} scale(0.85)` }, { transform: `${currentAt} scale(1.18)`, offset: 0.55 }, { transform: currentAt },
       ], 520, 'cubic-bezier(.34,1.56,.64,1)');
       phase = 'up';
-      say('Tap to continue');
+      say(tr('Tap to continue'));
       syncSkip();
     };
 

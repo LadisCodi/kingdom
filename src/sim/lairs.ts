@@ -37,6 +37,7 @@
 
 import { DELVE, GARRISONS, RAID, LAIRS, LAIR_ORDER, garrisonForTier } from './data/definitions';
 import type { EnemySquad } from './combat';
+import { tr } from '../i18n/tr';
 import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
 import { recordSiteDiscovery } from './discovery';
 import { lairIsFound } from './lairZone';
@@ -443,16 +444,17 @@ export const clearedLairCount = (state: GameState): number =>
 
 /** The creature the threat reads as. Derived, never a second authored list:
  *  a lair says what TYPE holds it and the fiction follows. */
-const CREATURES: Record<string, string> = {
-  Warrior: 'Orcs',
-  Lancer: 'Goblins',
-  Archer: 'Harpies',
-  Cavalry: 'Wolf riders',
-  Any: 'A drake',
+const CREATURES: Record<string, () => string> = {
+  Warrior: () => tr('Orcs'),
+  Lancer: () => tr('Goblins'),
+  Archer: () => tr('Harpies'),
+  Cavalry: () => tr('Wolf riders'),
+  Any: () => tr('A drake'),
 };
 
+/** In the player's language: only ever shown, never compared or saved. */
 export const lairCreature = (lairId: LairId): string =>
-  CREATURES[LAIRS[lairId].guard.threat] ?? 'A warband';
+  CREATURES[LAIRS[lairId].guard.threat]?.() ?? tr('A warband');
 
 /** Everything the widget and the lair sheet need about one lair. */
 export interface LairView {

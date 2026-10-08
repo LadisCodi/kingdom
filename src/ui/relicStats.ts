@@ -25,6 +25,7 @@ import { formatDuration, formatExact, formatNumber } from './format';
 import type { ModifierStat } from '../sim/modifiers';
 import type { ArtifactId } from '../sim/state';
 import type { IconName } from './kit/icon';
+import { tr, trn } from '../i18n/tr';
 
 /** One number a relic is judged on, at one level. */
 export interface RelicStat {
@@ -54,17 +55,17 @@ export interface RelicStatChange extends RelicStat {
  * wait — never a percentage of a number that is falling.
  */
 const STAT_FACE: Partial<Record<ModifierStat, { icon: IconName; label: string }>> = {
-  recoverySpeed: { icon: 'hourglass', label: 'Recovery speed' },
-  harvestStock: { icon: 'Wood', label: 'Natural resources' },
-  harvestUnitsPerStrike: { icon: 'plus', label: 'Per swing and tap' },
-  trainingSpeed: { icon: 'army', label: 'Training speed' },
-  workerStrikeSpeed: { icon: 'clock', label: 'Crew swing' },
-  workerSpeed: { icon: 'workers', label: 'Crew walk' },
-  taxRate: { icon: 'Gold', label: 'Tax rate' },
-  stardustYield: { icon: 'Stardust', label: 'Stardust from rooms' },
-  roomHaul: { icon: 'dungeon', label: 'A room’s gold and stone' },
-  armyCap: { icon: 'army', label: 'Army the halls field' },
-  worldImprovementYield: { icon: 'build', label: 'District yield' },
+  recoverySpeed: { icon: 'hourglass', label: tr('Recovery speed') },
+  harvestStock: { icon: 'Wood', label: tr('Natural resources') },
+  harvestUnitsPerStrike: { icon: 'plus', label: tr('Per swing and tap') },
+  trainingSpeed: { icon: 'army', label: tr('Training speed') },
+  workerStrikeSpeed: { icon: 'clock', label: tr('Crew swing') },
+  workerSpeed: { icon: 'workers', label: tr('Crew walk') },
+  taxRate: { icon: 'Gold', label: tr('Tax rate') },
+  stardustYield: { icon: 'Stardust', label: tr('Stardust from rooms') },
+  roomHaul: { icon: 'dungeon', label: tr('A room’s gold and stone') },
+  armyCap: { icon: 'army', label: tr('Army the halls field') },
+  worldImprovementYield: { icon: 'build', label: tr('District yield') },
 };
 
 /**
@@ -105,8 +106,8 @@ export function relicStatsAt(id: ArtifactId, level: number): RelicStat[] {
   // greys the two a level leaves alone.
   if (ARTIFACTS[id].activation !== null) {
     const radius = auraRadiusAt(id, level);
-    out.push({ key: 'aura', icon: 'compass', label: 'Aura', value: `${formatExact((2 * radius + 1) ** 2)} cells` });
-    out.push({ key: 'window', icon: 'hourglass', label: 'Awake for', value: formatDuration(relicWindowMsAt(id, level) / 1000) });
+    out.push({ key: 'aura', icon: 'compass', label: tr('Aura'), value: tr('{n} cells', { n: formatExact((2 * radius + 1) ** 2) }) });
+    out.push({ key: 'window', icon: 'hourglass', label: tr('Awake for'), value: formatDuration(relicWindowMsAt(id, level) / 1000) });
   }
   return out;
 }
@@ -125,22 +126,22 @@ export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
   const active = ARTIFACTS[id].active;
   if (active === null) return [];
   const out: RelicStat[] = [
-    { key: 'mana', icon: 'Mana', label: 'Mana', value: formatExact(active.manaCost) },
+    { key: 'mana', icon: 'Mana', label: tr('Mana'), value: formatExact(active.manaCost) },
   ];
   const window = activeDurationMsAt(id, level) / 1000;
   if (window > 0) {
-    out.push({ key: 'window', icon: 'hourglass', label: 'Window', value: formatDuration(window) });
+    out.push({ key: 'window', icon: 'hourglass', label: tr('Window'), value: formatDuration(window) });
   }
   // An ability counted in EVENTS shows its uses where a timed one shows its
   // window: they are the same fact, measured in what that spell is about.
   const charges = activeChargesAt(id, level);
   if (charges > 0) {
-    out.push({ key: 'charges', icon: 'dungeon', label: 'Rooms', value: String(charges) });
+    out.push({ key: 'charges', icon: 'dungeon', label: tr('Rooms'), value: String(charges) });
   }
   // POWER, when the ability has one — how hard the zone hits while it stands.
   const power = activePowerAt(id, level);
   if (power > 1) {
-    out.push({ key: 'power', icon: 'sparkle', label: 'Power', value: `\u00d7${power.toFixed(2)}` });
+    out.push({ key: 'power', icon: 'sparkle', label: tr('Power'), value: `\u00d7${power.toFixed(2)}` });
   }
   const radius = activeRadiusAt(id, level);
   if (radius > 0) {
@@ -149,14 +150,14 @@ export function spellStatsAt(id: ArtifactId, level: number): RelicStat[] {
     out.push({
       key: 'radius',
       icon: 'compass',
-      label: 'Reach',
-      value: `${radius} \u00b7 ${(2 * radius + 1) ** 2} cells`,
+      label: tr('Reach'),
+      value: `${radius} \u00b7 ${tr('{n} cells', { n: (2 * radius + 1) ** 2 })}`,
     });
   }
   out.push({
     key: 'cooldown',
     icon: 'clock',
-    label: 'Cooldown',
+    label: tr('Cooldown'),
     value: formatDuration(ARTIFACT_COOLDOWN_SECONDS),
   });
   return out;
@@ -190,26 +191,27 @@ export const spellStatChanges = (id: ArtifactId, level: number): RelicStatChange
  */
 export function relicStory(id: ArtifactId, level: number): string {
   const pct = relicPercent(passiveValueAtLevel(id, level));
-  const window = ARTIFACTS[id].activation === null
-    ? '' : `, for ${spokenWindow(relicWindowMsAt(id, level))}`;
-  return STORY[id](pct) + window + '.';
+  const story = STORY[id](pct);
+  return ARTIFACTS[id].activation === null
+    ? tr('{story}.', { story })
+    : tr('{story}, for {time}.', { story, time: spokenWindow(relicWindowMsAt(id, level)) });
 }
 
 /** A window as a sentence says it: *30 minutes*, *1 hour*, *8 hours*. */
 function spokenWindow(ms: number): string {
   const minutes = Math.round(ms / 60_000);
-  if (minutes < 60 || minutes % 60 !== 0) return `${formatExact(minutes)} minute${minutes === 1 ? '' : 's'}`;
+  if (minutes < 60 || minutes % 60 !== 0) return trn(minutes, '{n} minute', '{n} minutes', { n: formatExact(minutes) });
   const hours = minutes / 60;
-  return `${formatExact(hours)} hour${hours === 1 ? '' : 's'}`;
+  return trn(hours, '{n} hour', '{n} hours', { n: formatExact(hours) });
 }
 
-const STORY: Record<ArtifactId, (pct: string) => string> = {
-  DowsingRod: (p) => `Renews the land round its Shrine: forests, fields, rocks and shoals there hold ${p} more and grow back ${p} faster`,
-  VerdantSeal: (p) => `Blesses every blade and every hand round its Shrine: each swing of a crew and each tap of yours there brings in ${p} more`,
-  ForemansSigil: (p) => `Lends wings to every working hand round its Shrine: crews there swing and walk ${p} faster, and soldiers and villagers train ${p} faster`,
-  GildedLedger: (p) => `Reminds every household round its Shrine what it owes the crown: villagers there pay ${p} more tax`,
-  WanderersCompass: (p) => `Draws starlight out of the dark: every room you clear in the depths pays ${p} more Stardust`,
-  DelversLantern: (p) => `Its wisps find what the dark hides: every room in the depths pays ${p} more gold and stone`,
-  MusterHorn: (p) => `Its call brings more to your banner: your halls field an army ${p} larger`,
-  BailiffsTally: (p) => `Your stewards collect what is owed: every district you hold on the world map pays ${p} more an hour`,
+const STORY: Record<ArtifactId, (p: string) => string> = {
+  DowsingRod: (p) => tr('Renews the land round its Shrine: forests, fields, rocks and shoals there hold {p} more and grow back {p} faster', { p }),
+  VerdantSeal: (p) => tr('Blesses every blade and every hand round its Shrine: each swing of a crew and each tap of yours there brings in {p} more', { p }),
+  ForemansSigil: (p) => tr('Lends wings to every working hand round its Shrine: crews there swing and walk {p} faster, and soldiers and villagers train {p} faster', { p }),
+  GildedLedger: (p) => tr('Reminds every household round its Shrine what it owes the crown: villagers there pay {p} more tax', { p }),
+  WanderersCompass: (p) => tr('Draws starlight out of the dark: every room you clear in the depths pays {p} more Stardust', { p }),
+  DelversLantern: (p) => tr('Its wisps find what the dark hides: every room in the depths pays {p} more gold and stone', { p }),
+  MusterHorn: (p) => tr('Its call brings more to your banner: your halls field an army {p} larger', { p }),
+  BailiffsTally: (p) => tr('Your stewards collect what is owed: every district you hold on the world map pays {p} more an hour', { p }),
 };

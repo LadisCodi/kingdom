@@ -27,6 +27,7 @@
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
 import { track } from './analytics';
+import { tr } from '../i18n/tr';
 import { roundPrice } from './roundPrice';
 import { addModifier, resolve, type ModifierStat } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
@@ -120,23 +121,23 @@ export function syncHeroBoons(state: GameState): void {
  * One line per stat a boon may carry. A stat with no line here is a boon the
  * player cannot read, which `tests/heroBoons.test.ts` refuses to let ship.
  */
-const BOON_SAYS: Partial<Record<ModifierStat, (pct: string) => string>> = {
-  buildSpeed: (v) => `The builders work ${v} faster`,
-  worldRevealSpeed: (v) => `Explorers march ${v} faster`,
-  manaRegen: (v) => `Your kingdom makes ${v} more Mana`,
-  knowledgeYield: (v) => `Every lump of Knowledge is ${v} bigger`,
-  heroXp: (v) => `Every room teaches your heroes ${v} more`,
-  unitHp: (v) => `Every unit you field has ${v} more health`,
-  unitAtk: (v) => `Every unit you field hits ${v} harder`,
-  unitDef: (v) => `Every unit you field takes ${v} less`,
-  armyCap: (v) => `Your halls field ${v} more power`,
-  discoverRadius: (v) => `Your buildings see ${v} further`,
-  tapYield: (v) => `Every tap is worth ${v} more`,
-  stardustYield: (v) => `Rooms pay ${v} more Stardust`,
-  workerSpeed: (v) => `Your workers walk ${v} faster`,
-  manaCap: (v) => `Your Mana pool holds ${v} more`,
-  taxRate: (v) => `Your villagers pay ${v} more tax`,
-  workerYield: (v) => `Every worker carries ${v} more`,
+const BOON_SAYS: Partial<Record<ModifierStat, (v: string) => string>> = {
+  buildSpeed: (v) => tr('The builders work {v} faster', { v }),
+  worldRevealSpeed: (v) => tr('Explorers march {v} faster', { v }),
+  manaRegen: (v) => tr('Your kingdom makes {v} more Mana', { v }),
+  knowledgeYield: (v) => tr('Every lump of Knowledge is {v} bigger', { v }),
+  heroXp: (v) => tr('Every room teaches your heroes {v} more', { v }),
+  unitHp: (v) => tr('Every unit you field has {v} more health', { v }),
+  unitAtk: (v) => tr('Every unit you field hits {v} harder', { v }),
+  unitDef: (v) => tr('Every unit you field takes {v} less', { v }),
+  armyCap: (v) => tr('Your halls field {v} more power', { v }),
+  discoverRadius: (v) => tr('Your buildings see {v} further', { v }),
+  tapYield: (v) => tr('Every tap is worth {v} more', { v }),
+  stardustYield: (v) => tr('Rooms pay {v} more Stardust', { v }),
+  workerSpeed: (v) => tr('Your workers walk {v} faster', { v }),
+  manaCap: (v) => tr('Your Mana pool holds {v} more', { v }),
+  taxRate: (v) => tr('Your villagers pay {v} more tax', { v }),
+  workerYield: (v) => tr('Every worker carries {v} more', { v }),
 };
 
 /** The sentence a hero's card prints under its trait, or null if it has no
