@@ -12,6 +12,7 @@
 import type { Game } from '../game';
 import { el, formatExact } from './format';
 import { btn, currencyIcon, iconEl, progress, sheet } from './kit';
+import { tr } from '../i18n/tr';
 
 /** One offer: the amount over the button that buys it, priced on its face. */
 const offer = (count: number, button: HTMLElement): HTMLElement =>
@@ -36,16 +37,16 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
       onClick: () => game.doBuyKnowledge(count, till),
       // The price is the label, so a till the player cannot pay is said by
       // the button going dark, and the reason is its screen-reader label.
-      disabledReason: short ? `Not enough ${till}` : undefined,
+      disabledReason: short ? (till === 'Gold' ? tr('Not enough Gold') : tr('Not enough Gems')) : undefined,
     }));
   };
 
   const body = el('div', { class: 'mana-sheet knowledge-sheet' },
     el('div', { class: 'mana-head' },
       iconEl('Knowledge', { size: 'lg' }),
-      el('div', { class: 'mana-title' }, 'Knowledge'),
+      el('div', { class: 'mana-title' }, tr('Knowledge')),
       el('div', { class: 'mana-hint' },
-        k.full ? (k.over ? `${formatExact(k.value - k.cap)} past the bar — nothing is dripping` : 'Full — nothing is dripping')
+        k.full ? (k.over ? tr('{n} past the bar — nothing is dripping', { n: formatExact(k.value - k.cap) }) : tr('Full — nothing is dripping'))
           : k.fullIn ?? '')),
     bar.root,
     // When the next point drips in. A full bar drips nothing, and the line
@@ -58,5 +59,5 @@ export function renderKnowledgeSheet(game: Game): HTMLElement {
       buy(10, 'Gems')),
   );
 
-  return sheet({ title: 'Knowledge', onClose: () => game.dismiss(), centred: true }, body);
+  return sheet({ title: tr('Knowledge'), onClose: () => game.dismiss(), centred: true }, body);
 }
