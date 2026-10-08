@@ -1,386 +1,386 @@
 {
   "districts.Townhall.name": {
     "en": "Townhall",
-    "es": ""
+    "es": "Ayuntamiento"
   },
   "districts.Housing.name": {
     "en": "Housing",
-    "es": ""
+    "es": "Casa"
   },
   "districts.Farm.name": {
     "en": "Farm",
-    "es": ""
+    "es": "Granja"
   },
   "districts.FarmLands.name": {
     "en": "crop plots",
-    "es": ""
+    "es": "huertos"
   },
   "districts.Sawmill.name": {
     "en": "Sawmill",
-    "es": ""
+    "es": "Aserradero"
   },
   "districts.Quarry.name": {
     "en": "Quarry",
-    "es": ""
+    "es": "Cantera"
   },
   "districts.Docks.name": {
     "en": "Docks",
-    "es": ""
+    "es": "Muelle"
   },
   "districts.Sanctum.name": {
     "en": "Sanctum",
-    "es": ""
+    "es": "Santuario arcano"
   },
   "districts.Tavern.name": {
     "en": "Tavern",
-    "es": ""
+    "es": "Taberna"
   },
   "districts.Barracks.name": {
     "en": "Barracks",
-    "es": ""
+    "es": "Cuartel"
   },
   "districts.SpearHall.name": {
     "en": "Spear Hall",
-    "es": ""
+    "es": "Sala de lanzas"
   },
   "districts.ShootingGrounds.name": {
     "en": "Shooting Grounds",
-    "es": ""
+    "es": "Campo de tiro"
   },
   "districts.Stables.name": {
     "en": "Stables",
-    "es": ""
+    "es": "Establos"
   },
   "districts.Infirmary.name": {
     "en": "Infirmary",
-    "es": ""
+    "es": "Enfermería"
   },
   "districts.Carpenter.name": {
     "en": "Carpenter",
-    "es": ""
+    "es": "Carpintería"
   },
   "districts.MasonsYard.name": {
     "en": "Mason's Yard",
-    "es": ""
+    "es": "Taller del cantero"
   },
   "districts.Smelter.name": {
     "en": "Smelter",
-    "es": ""
+    "es": "Fundición"
   },
   "districts.RuneCarver.name": {
     "en": "Rune Carver",
-    "es": ""
+    "es": "Tallador de runas"
   },
   "districts.Flowerbed.name": {
     "en": "Flower bed",
-    "es": ""
+    "es": "Parterre"
   },
   "districts.Bench.name": {
     "en": "Bench",
-    "es": ""
+    "es": "Banco"
   },
   "districts.Lantern.name": {
     "en": "Lantern",
-    "es": ""
+    "es": "Farol"
   },
   "districts.Topiary.name": {
     "en": "Topiary",
-    "es": ""
+    "es": "Arbusto podado"
   },
   "districts.Banner.name": {
     "en": "Banner",
-    "es": ""
+    "es": "Estandarte real"
   },
   "districts.Birdbath.name": {
     "en": "Birdbath",
-    "es": ""
+    "es": "Bebedero de pájaros"
   },
   "districts.Garden.name": {
     "en": "Garden",
-    "es": ""
+    "es": "Jardín"
   },
   "districts.Well.name": {
     "en": "Well",
-    "es": ""
+    "es": "Pozo"
   },
   "districts.Orchard.name": {
     "en": "Orchard",
-    "es": ""
+    "es": "Huerto frutal"
   },
   "districts.Statue.name": {
     "en": "Statue",
-    "es": ""
+    "es": "Estatua"
   },
   "districts.Plaza.name": {
     "en": "Plaza",
-    "es": ""
+    "es": "Plaza"
   },
   "districts.Shrine.name": {
     "en": "Shrine",
-    "es": ""
+    "es": "Altar"
   },
   "districts.WarCamp.name": {
     "en": "War Camp",
-    "es": ""
+    "es": "Campamento de guerra"
   },
   "districts.Watchtower.name": {
     "en": "Watchtower",
-    "es": ""
+    "es": "Atalaya"
   },
   "districts.Townhall.promise": {
     "en": "Trains new villagers",
-    "es": ""
+    "es": "Forma nuevos aldeanos"
   },
   "districts.Housing.promise": {
     "en": "Villagers live here and pay taxes",
-    "es": ""
+    "es": "Aquí viven aldeanos que pagan impuestos"
   },
   "districts.Farm.promise": {
     "en": "Workers harvest crops nearby",
-    "es": ""
+    "es": "Sus trabajadores cosechan los campos cercanos"
   },
   "districts.FarmLands.promise": {
     "en": "A crop plot you can tap for food",
-    "es": ""
+    "es": "Un huerto que puedes tocar para obtener comida"
   },
   "districts.Sawmill.promise": {
     "en": "Workers fell the forest around it",
-    "es": ""
+    "es": "Sus trabajadores talan el bosque de alrededor"
   },
   "districts.Quarry.promise": {
     "en": "Workers cut stone from nearby rock",
-    "es": ""
+    "es": "Sus trabajadores sacan piedra de las rocas cercanas"
   },
   "districts.Docks.promise": {
     "en": "Boats bring in fish",
-    "es": ""
+    "es": "Las barcas traen pescado"
   },
   "districts.Sanctum.promise": {
     "en": "Holds more Mana while you are away",
-    "es": ""
+    "es": "Guarda más Maná mientras estás fuera"
   },
   "districts.Tavern.promise": {
     "en": "Heroes gather here, and learn faster",
-    "es": ""
+    "es": "Aquí se reúnen los héroes, y aprenden más rápido"
   },
   "districts.Barracks.promise": {
     "en": "Trains soldiers and raises the army cap",
-    "es": ""
+    "es": "Entrena soldados y amplía el límite del ejército"
   },
   "districts.SpearHall.promise": {
     "en": "Trains Lancers, who stop a charge",
-    "es": ""
+    "es": "Entrena Lanceros, que frenan una carga"
   },
   "districts.ShootingGrounds.promise": {
     "en": "Trains Archers, all attack and no armour",
-    "es": ""
+    "es": "Entrena Arqueros: todo ataque y nada de armadura"
   },
   "districts.Stables.promise": {
     "en": "Trains Cavalry, fast and expensive",
-    "es": ""
+    "es": "Entrena Caballería, rápida y cara"
   },
   "districts.Infirmary.promise": {
     "en": "Mends wounded soldiers cheaply",
-    "es": ""
+    "es": "Cura a los soldados heridos por poco"
   },
   "districts.Carpenter.promise": {
     "en": "Villagers work Wood into Planks",
-    "es": ""
+    "es": "Los aldeanos convierten Madera en Tablones"
   },
   "districts.MasonsYard.promise": {
     "en": "Villagers dress Stone into blocks",
-    "es": ""
+    "es": "Los aldeanos tallan la Piedra en sillares"
   },
   "districts.Smelter.promise": {
     "en": "Villagers smelt ore into Iron",
-    "es": ""
+    "es": "Los aldeanos funden mineral en Hierro"
   },
   "districts.RuneCarver.promise": {
     "en": "Villagers pour Mana into cut stone",
-    "es": ""
+    "es": "Los aldeanos vierten Maná en piedra tallada"
   },
   "districts.Flowerbed.promise": {
     "en": "A splash of colour",
-    "es": ""
+    "es": "Una pincelada de color"
   },
   "districts.Bench.promise": {
     "en": "A seat in the sun",
-    "es": ""
+    "es": "Un asiento al sol"
   },
   "districts.Lantern.promise": {
     "en": "Light on the corner",
-    "es": ""
+    "es": "Luz en la esquina"
   },
   "districts.Topiary.promise": {
     "en": "A neatly clipped bush",
-    "es": ""
+    "es": "Un arbusto bien recortado"
   },
   "districts.Banner.promise": {
     "en": "The kingdom’s colours",
-    "es": ""
+    "es": "Los colores del reino"
   },
   "districts.Birdbath.promise": {
     "en": "Songbirds on the doorstep",
-    "es": ""
+    "es": "Pájaros cantores en la puerta"
   },
   "districts.Garden.promise": {
     "en": "Beds of flowers",
-    "es": ""
+    "es": "Arriates de flores"
   },
   "districts.Well.promise": {
     "en": "Cobbled stone and a bucket",
-    "es": ""
+    "es": "Piedra, adoquines y un cubo"
   },
   "districts.Orchard.promise": {
     "en": "Two rows of fruit trees",
-    "es": ""
+    "es": "Dos hileras de frutales"
   },
   "districts.Statue.promise": {
     "en": "A crowned figure in pale stone",
-    "es": ""
+    "es": "Una figura coronada en piedra clara"
   },
   "districts.Plaza.promise": {
     "en": "A paved square for market day",
-    "es": ""
+    "es": "Una plaza empedrada para el día de mercado"
   },
   "districts.Shrine.promise": {
     "en": "A temple of runes that holds a relic",
-    "es": ""
+    "es": "Un templo de runas que guarda una reliquia"
   },
   "districts.WarCamp.promise": {
     "en": "Sends more armies out at once",
-    "es": ""
+    "es": "Envía más ejércitos a la vez"
   },
   "districts.Watchtower.promise": {
     "en": "Sees past the province, to the world",
-    "es": ""
+    "es": "Ve más allá de la provincia, hasta el mundo"
   },
   "districts.Townhall.description": {
     "en": "The heart of the city, where new villagers begin their lives.",
-    "es": ""
+    "es": "El corazón de la ciudad, donde los nuevos aldeanos empiezan su vida."
   },
   "districts.Housing.description": {
     "en": "A snug home for villagers, who pay their rent in gold.",
-    "es": ""
+    "es": "Un hogar acogedor para los aldeanos, que pagan la renta en oro."
   },
   "districts.Farm.description": {
     "en": "Its farmhands reap the fields nearby and fill the granary.",
-    "es": ""
+    "es": "Sus jornaleros siegan los campos cercanos y llenan el granero."
   },
   "districts.FarmLands.description": {
     "en": "A field of golden wheat, ripe for the reaping.",
-    "es": ""
+    "es": "Un campo de trigo dorado, listo para la siega."
   },
   "districts.Sawmill.description": {
     "en": "Woodcutters fell the forest nearby and stack the timber.",
-    "es": ""
+    "es": "Los leñadores talan el bosque cercano y apilan los troncos."
   },
   "districts.Quarry.description": {
     "en": "Its workers cut stone and iron from the hills nearby.",
-    "es": ""
+    "es": "Sus trabajadores sacan piedra y hierro de las colinas cercanas."
   },
   "districts.Docks.description": {
     "en": "Fishing boats set out from here and come home full.",
-    "es": ""
+    "es": "De aquí zarpan las barcas de pesca, y vuelven llenas."
   },
   "districts.Sanctum.description": {
     "en": "Stores Mana within its enchanted walls.",
-    "es": ""
+    "es": "Guarda Maná entre sus muros encantados."
   },
   "districts.Tavern.description": {
     "en": "Where heroes come for a hot meal and a hard job. The banner hangs by the fire.",
-    "es": ""
+    "es": "Adonde vienen los héroes a por un plato caliente y un trabajo duro. El estandarte cuelga junto al fuego."
   },
   "districts.Barracks.description": {
     "en": "Trains sturdy foot soldiers.",
-    "es": ""
+    "es": "Entrena a recios soldados de a pie."
   },
   "districts.SpearHall.description": {
     "en": "Trains lancers, who hold the line against a charge.",
-    "es": ""
+    "es": "Entrena lanceros, que aguantan la línea ante una carga."
   },
   "districts.ShootingGrounds.description": {
     "en": "Trains archers, deadly at range but fragile up close.",
-    "es": ""
+    "es": "Entrena arqueros, letales a distancia pero frágiles de cerca."
   },
   "districts.Stables.description": {
     "en": "Trains riders, swift and fierce but costly to keep.",
-    "es": ""
+    "es": "Entrena jinetes, veloces y fieros pero caros de mantener."
   },
   "districts.Infirmary.description": {
     "en": "Heals wounded soldiers so they can fight again.",
-    "es": ""
+    "es": "Cura a los soldados heridos para que vuelvan a combatir."
   },
   "districts.Carpenter.description": {
     "en": "Rough logs go in, and smooth planks come out.",
-    "es": ""
+    "es": "Entran troncos en bruto y salen tablones lisos."
   },
   "districts.MasonsYard.description": {
     "en": "Masons shape raw stone into fine building blocks.",
-    "es": ""
+    "es": "Los canteros labran la piedra en bruto en buenos sillares."
   },
   "districts.Smelter.description": {
     "en": "Ore goes into the furnace and comes out as iron.",
-    "es": ""
+    "es": "El mineral entra en el horno y sale convertido en hierro."
   },
   "districts.RuneCarver.description": {
     "en": "Carvers bind magic into stone, rune by rune.",
-    "es": ""
+    "es": "Los talladores atan la magia a la piedra, runa a runa."
   },
   "districts.Flowerbed.description": {
     "en": "A raised bed of mixed flowers. Neighbours smile when they pass it.",
-    "es": ""
+    "es": "Un arriate elevado de flores variadas. Los vecinos sonríen al pasar."
   },
   "districts.Bench.description": {
     "en": "A plain wooden bench where the street stops to talk.",
-    "es": ""
+    "es": "Un sencillo banco de madera donde la calle se para a charlar."
   },
   "districts.Lantern.description": {
     "en": "An oil lantern on a post. The street feels safer after dark.",
-    "es": ""
+    "es": "Un farol de aceite en un poste. La calle parece más segura de noche."
   },
   "districts.Topiary.description": {
     "en": "A round bush in a tub, clipped with great care by somebody small.",
-    "es": ""
+    "es": "Un arbusto redondo en una tina, recortado con mucho mimo por alguien pequeñito."
   },
   "districts.Banner.description": {
     "en": "A tall pole flying the royal banner. Oakville is home again.",
-    "es": ""
+    "es": "Un mástil alto con el estandarte real. Oakville vuelve a ser un hogar."
   },
   "districts.Birdbath.description": {
     "en": "A carved stone basin. The birds came back before the people did.",
-    "es": ""
+    "es": "Una pila de piedra tallada. Los pájaros volvieron antes que la gente."
   },
   "districts.Garden.description": {
     "en": "Bright flowerbeds that make the whole street smile.",
-    "es": ""
+    "es": "Arriates alegres que hacen sonreír a toda la calle."
   },
   "districts.Well.description": {
     "en": "Fresh water, and a spot where neighbours stop to chat.",
-    "es": ""
+    "es": "Agua fresca, y un rincón donde los vecinos se paran a charlar."
   },
   "districts.Orchard.description": {
     "en": "Rows of fruit trees that sweeten the air of the town.",
-    "es": ""
+    "es": "Hileras de frutales que endulzan el aire del pueblo."
   },
   "districts.Statue.description": {
     "en": "A proud monument the townsfolk love to show off.",
-    "es": ""
+    "es": "Un orgulloso monumento que a los vecinos les encanta presumir."
   },
   "districts.Plaza.description": {
     "en": "A paved square where the town comes alive on market day.",
-    "es": ""
+    "es": "Una plaza empedrada donde el pueblo cobra vida el día de mercado."
   },
   "districts.Shrine.description": {
     "en": "An old temple of runes. Repaired, it holds one city relic, whose power reaches every building in its aura.",
-    "es": ""
+    "es": "Un viejo templo de runas. Reparado, guarda una reliquia de la ciudad, cuyo poder alcanza a todos los edificios de su aura."
   },
   "districts.WarCamp.description": {
     "en": "Where armies muster for the world beyond. Each level sends one more out at once.",
-    "es": ""
+    "es": "Donde se reúnen los ejércitos para salir al mundo. Cada nivel envía uno más a la vez."
   },
   "districts.Watchtower.description": {
     "en": "The old tower on the northern hills. Repaired, its lens looks past the mountains — to the world and the kingdoms in it.",
-    "es": ""
+    "es": "La vieja torre de las colinas del norte. Reparada, su lente mira más allá de las montañas: al mundo y a sus reinos."
   }
 }
