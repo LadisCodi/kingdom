@@ -135,7 +135,7 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | a seasonal hero = one `heroes` entry + one `banners` entry; **how many bands a book has and what each asks for** — the tree editor creates and drops them per book; **a whole new BOOK** — general or found — since `TomeId` is the books authored in `tech-tree.json` | what makes a found book *found*: the drop that grants it |
 | **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, slot, requirements (prose only for a `mechanic`) — at `?dev=data#tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
-| **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
+| **which technology unlocks a building, a building level, one more of a building, a unit, a unit's rank, a harvest source or a terrain** — it is a dropdown on the technology; **a unit's ranks II–V** — every stat, cost, time and hall level — are its `evolutions` in `units` (`Docs/features/combat.md` §6) | a gate on something that has no `TechUnlock` yet |
 | **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | **a Bag item** — a chest, speed-up, boost, flask, tome or key — = an `items` entry; an item bundle = a `store` row with `items`; which source pays which item = its `rewardItems`, `freeItems`/`paidItems` or `treasure.items` | a new item `kind` (what using it does: `sim/bag.ts`, `sim/speedups.ts`) |
@@ -186,7 +186,7 @@ PR, merged with a merge commit.
 
 ## Saves
 
-`SAVE_VERSION` is 113; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 114; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 **Prototype only:** `PROTOTYPE_FRESH_START` (`save.ts`, 107) — the boot
 discards any older save and starts a fresh kingdom. To restart every tester
 again, bump `SAVE_VERSION` and raise it to match. **It must go before

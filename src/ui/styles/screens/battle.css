@@ -231,3 +231,8 @@ button.bt-card { cursor: pointer; }
 /* A world fight's widgets, over the price row: its loot and its ground
  * (Docs/proposals/world-menus.md §3.5). */
 .bt-widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--px) * 8); }
+
+/* A ranked squad's coin sits at the portrait's bottom-right (unitArt.ts
+   `portraitFrame`), so its count steps left to leave the coin clear. */
+.bt-cell:has(.k-rank) > .bt-count { left: 4%; translate: 0 0; }
+.bt-cell .k-rank { right: -12%; bottom: -10%; z-index: 2; }

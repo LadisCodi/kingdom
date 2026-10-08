@@ -69,6 +69,18 @@ export type HarvestSourceId =
   | 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Fish'
   | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
+/** A troop's rank, I to V (Docs/features/combat.md §6). */
+export type UnitRank = 1 | 2 | 3 | 4 | 5;
+/**
+ * ONE TROOP: a unit at one rank. Rank I is the unit's own id, so every save
+ * written before evolutions already names troops; ranks II–V carry the
+ * suffix the art files carry (`Warrior_e3`, `unit_warrior_e3.png`).
+ *
+ * Every rank is a troop of its own — its own count, squads and wounded — and
+ * ranks never mix (combat.md §6.1). What fights on the type chart is the
+ * UNIT (`unitOf`, definitions.ts); what a troop is worth is its rank's row.
+ */
+export type TroopId = UnitId | `${UnitId}_e${2 | 3 | 4 | 5}`;
 /** A landmark's kind decides its art and name — and, for the Watchtower, a
  *  door: claiming it opens the world (Docs/features/22-progression.md §5). */
 export type LandmarkKind = 'StandingStones' | 'Leyspring' | 'Watchtower';
@@ -243,7 +255,7 @@ export interface City {
    * same soldier would, which is the whole point of the pool: a bad fight is
    * a bill rather than a loss.
    */
-  wounded: Partial<Record<UnitId, number>>;
+  wounded: Partial<Record<TroopId, number>>;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
    *  shape as a house's `rentAnchor` so both replay deterministically. */
   lastManaAt: number;
@@ -320,7 +332,7 @@ export interface ScheduledEntry {
 
 export interface ArmyUnit {
   uniqueId: string;
-  definitionId: UnitId;
+  definitionId: TroopId;
 }
 
 /**
@@ -329,7 +341,7 @@ export interface ArmyUnit {
  * not in the UNITS table. But they QUEUE identically, so the queue carries the
  * union rather than two parallel systems that drift apart.
  */
-export type TrainableId = UnitId | 'Villager';
+export type TrainableId = TroopId | 'Villager';
 
 /** One trainee waiting. Paid for up front; `startedAt` is stamped when it
  *  reaches the front of its BUILDING's line. */
@@ -364,7 +376,7 @@ export interface TrainingItem {
  *  which is what makes the type chart interesting and what "coverage" means
  *  when a second hero arrives. */
 export interface PartySlotState {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
@@ -484,7 +496,7 @@ export interface PortalPrize {
 export interface WorldArmyOut {
   id: string;
   heroes: HeroId[];
-  troops: Array<{ unitId: UnitId; count: number }>;
+  troops: Array<{ unitId: TroopId; count: number }>;
   target: number;
   purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
 }

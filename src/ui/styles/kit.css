@@ -138,15 +138,50 @@
   overflow: hidden;
   border-radius: 50%;
 }
+/* The bust is cut out, no base of its own (Docs/art/portraits/unit-blocks.md
+   §2): it fills the frame with its flat chest cut sitting just below the
+   frame's foot, so the round clips it and the face reads centred. */
 .k-portrait-art {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 128%;
-  height: 128%;
-  translate: -50% -50%;
-  object-fit: cover;
+  left: 0;
+  top: 8%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
+
+/* THE RANK COIN (combat.md §6.5): brass, struck with the numeral, over the
+   portrait's bottom-right and a little past its edge. The numeral is pressed
+   INTO the metal — dark, with the light catching the lip under it. */
+.k-rank {
+  position: absolute;
+  right: -8%;
+  bottom: -8%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 42%;
+  height: 42%;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: max(1px, calc(var(--px) * 1.5)) solid var(--wood-dark);
+  background: radial-gradient(circle at 35% 30%, #ffe9a3 0, #e2b14f 45%, #a8761f 100%);
+  box-shadow:
+    inset 0 -2px 0 rgba(90, 59, 28, 0.45),
+    inset 0 2px 0 rgba(255, 250, 220, 0.7),
+    0 2px 2px rgba(60, 35, 10, 0.35);
+  pointer-events: none;
+}
+.k-rank > svg { width: 100%; height: 100%; overflow: visible; }
+.k-rank text {
+  font-family: var(--font-ornate);
+  font-weight: var(--weight-ornate);
+  letter-spacing: -0.06em;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.k-rank-lip { fill: rgba(255, 240, 190, 0.85); }
+.k-rank-cut { fill: #5a3412; }
 .k-portrait-mask > .icon { position: absolute; inset: 0; margin: auto; --icon-size: calc(var(--portrait-size) * 0.6); }
 
 /* THE TOOLTIP (kit/tooltip.ts): a parchment bubble under its anchor, its

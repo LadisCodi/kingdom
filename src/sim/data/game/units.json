@@ -9,7 +9,49 @@
     "frontage": 15,
     "cooldown": 10,
     "recruitCost": { "Gold": 100, "Wood": 5, "Food": 8 },
-    "trainDurationSeconds": 15
+    "trainDurationSeconds": 15,
+    "evolutions": [
+      {
+        "atk": 6,
+        "dmg": 8,
+        "def": 8,
+        "hp": 96,
+        "power": 5,
+        "recruitCost": { "Gold": 200, "Wood": 10, "Food": 16 },
+        "trainDurationSeconds": 23,
+        "minBuildingLevel": 3
+      },
+      {
+        "atk": 8,
+        "dmg": 13,
+        "def": 10,
+        "hp": 156,
+        "power": 8,
+        "recruitCost": { "Gold": 400, "Wood": 20, "Food": 32 },
+        "trainDurationSeconds": 34,
+        "minBuildingLevel": 5
+      },
+      {
+        "atk": 10,
+        "dmg": 21,
+        "def": 12,
+        "hp": 252,
+        "power": 13,
+        "recruitCost": { "Gold": 800, "Wood": 40, "Food": 64 },
+        "trainDurationSeconds": 51,
+        "minBuildingLevel": 7
+      },
+      {
+        "atk": 12,
+        "dmg": 34,
+        "def": 14,
+        "hp": 408,
+        "power": 20,
+        "recruitCost": { "Gold": 1600, "Wood": 80, "Food": 128 },
+        "trainDurationSeconds": 75,
+        "minBuildingLevel": 9
+      }
+    ]
   },
   "Lancer": {
     "power": 4,
@@ -21,7 +63,49 @@
     "frontage": 15,
     "cooldown": 10,
     "recruitCost": { "Gold": 200, "Wood": 12, "Food": 4 },
-    "trainDurationSeconds": 20
+    "trainDurationSeconds": 20,
+    "evolutions": [
+      {
+        "atk": 8,
+        "dmg": 13,
+        "def": 6,
+        "hp": 77,
+        "power": 6,
+        "recruitCost": { "Gold": 400, "Wood": 24, "Food": 8 },
+        "trainDurationSeconds": 30,
+        "minBuildingLevel": 3
+      },
+      {
+        "atk": 10,
+        "dmg": 21,
+        "def": 8,
+        "hp": 125,
+        "power": 10,
+        "recruitCost": { "Gold": 800, "Wood": 48, "Food": 16 },
+        "trainDurationSeconds": 45,
+        "minBuildingLevel": 5
+      },
+      {
+        "atk": 12,
+        "dmg": 34,
+        "def": 10,
+        "hp": 202,
+        "power": 17,
+        "recruitCost": { "Gold": 1600, "Wood": 96, "Food": 32 },
+        "trainDurationSeconds": 68,
+        "minBuildingLevel": 7
+      },
+      {
+        "atk": 14,
+        "dmg": 54,
+        "def": 12,
+        "hp": 326,
+        "power": 27,
+        "recruitCost": { "Gold": 3200, "Wood": 192, "Food": 64 },
+        "trainDurationSeconds": 100,
+        "minBuildingLevel": 9
+      }
+    ]
   },
   "Archer": {
     "power": 4,
@@ -33,7 +117,49 @@
     "frontage": 20,
     "cooldown": 12,
     "recruitCost": { "Gold": 130, "Wood": 12 },
-    "trainDurationSeconds": 12
+    "trainDurationSeconds": 12,
+    "evolutions": [
+      {
+        "atk": 8,
+        "dmg": 10,
+        "def": 4,
+        "hp": 48,
+        "power": 6,
+        "recruitCost": { "Gold": 260, "Wood": 24 },
+        "trainDurationSeconds": 18,
+        "minBuildingLevel": 3
+      },
+      {
+        "atk": 10,
+        "dmg": 16,
+        "def": 6,
+        "hp": 78,
+        "power": 10,
+        "recruitCost": { "Gold": 520, "Wood": 48 },
+        "trainDurationSeconds": 27,
+        "minBuildingLevel": 5
+      },
+      {
+        "atk": 12,
+        "dmg": 25,
+        "def": 8,
+        "hp": 126,
+        "power": 17,
+        "recruitCost": { "Gold": 1040, "Wood": 96 },
+        "trainDurationSeconds": 41,
+        "minBuildingLevel": 7
+      },
+      {
+        "atk": 14,
+        "dmg": 41,
+        "def": 10,
+        "hp": 204,
+        "power": 27,
+        "recruitCost": { "Gold": 2080, "Wood": 192 },
+        "trainDurationSeconds": 60,
+        "minBuildingLevel": 9
+      }
+    ]
   },
   "Cavalry": {
     "power": 7,
@@ -45,6 +171,48 @@
     "frontage": 8,
     "cooldown": 15,
     "recruitCost": { "Gold": 300, "Food": 16, "Stone": 24 },
-    "trainDurationSeconds": 30
+    "trainDurationSeconds": 30,
+    "evolutions": [
+      {
+        "atk": 10,
+        "dmg": 32,
+        "def": 5,
+        "hp": 115,
+        "power": 11,
+        "recruitCost": { "Gold": 600, "Food": 32, "Stone": 48 },
+        "trainDurationSeconds": 45,
+        "minBuildingLevel": 3
+      },
+      {
+        "atk": 12,
+        "dmg": 52,
+        "def": 7,
+        "hp": 187,
+        "power": 18,
+        "recruitCost": { "Gold": 1200, "Food": 64, "Stone": 96 },
+        "trainDurationSeconds": 68,
+        "minBuildingLevel": 5
+      },
+      {
+        "atk": 14,
+        "dmg": 84,
+        "def": 9,
+        "hp": 302,
+        "power": 29,
+        "recruitCost": { "Gold": 2400, "Food": 128, "Stone": 192 },
+        "trainDurationSeconds": 102,
+        "minBuildingLevel": 7
+      },
+      {
+        "atk": 16,
+        "dmg": 136,
+        "def": 11,
+        "hp": 490,
+        "power": 48,
+        "recruitCost": { "Gold": 4800, "Food": 256, "Stone": 384 },
+        "trainDurationSeconds": 150,
+        "minBuildingLevel": 9
+      }
+    ]
   }
 }

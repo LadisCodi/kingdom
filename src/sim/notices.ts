@@ -12,7 +12,7 @@
 import { NOTICES } from './data/definitions';
 import type { AdvanceResult } from './commands';
 import { completesAt } from './state';
-import type { GameState, GoodId, LairId, UnitId, Wallet, WorldBuildWhat } from './state';
+import type { GameState, GoodId, LairId, TroopId, Wallet, WorldBuildWhat } from './state';
 
 /** What a news is about; one bubble per group. */
 export type NewsGroup =
@@ -26,7 +26,7 @@ export type News = NewsBase & (
   | { group: 'built'; district: string; level: number }
   /** A military building's training queue ran dry: it stands idle.
    *  `unit` is the last one it trained. */
-  | { group: 'trained'; district: string; unit: UnitId }
+  | { group: 'trained'; district: string; unit: TroopId }
   | { group: 'goods'; district: string; good: GoodId; count: number }
   | { group: 'raided'; lair: LairId; took: Wallet }
   /** A landmark, lair or abandoned building sighted, by id. */

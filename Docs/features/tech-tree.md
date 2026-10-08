@@ -7,7 +7,7 @@
 > [`../tech-tree-editor.md`](../tech-tree-editor.md); the design is
 > [`../plans/tech-tree-rework.md`](../plans/tech-tree-rework.md).
 >
-> **Status.** Built: **170 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **186 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=data#tree`. The tables below are generated from that file.
 
 ## 1. The shape
@@ -100,6 +100,7 @@
 | **Townhouses** | Housing L4 | 8,000 G · 5 K |  |
 | **Stone Dressing** | the Mason's Yard | 8,000 G · 5 K |  |
 | **Spears** | the Spear Hall · the Lancer | 8,000 G · 5 K |  |
+| **Warriors II** | the Warrior II | 8,000 G · 6 K | *dead end* |
 | **Architecture** | the producers L4 | 8,000 G · 5 K |  |
 | **Joinery** | the Carpenter | 8,000 G · 5 K |  |
 | **Sawpits II** | +15% harvestYield — Wood | 8,000 G · 5 K |  |
@@ -108,6 +109,7 @@
 | **Lumberjacks I** | +15% crewStrikeSpeed — Sawmill | 8,000 G · 5 K |  |
 | **Shield Wall I** | +10% unitDef — Melee | 8,000 G · 9 K | *dead end* |
 | **Carpentry II** | +15% buildSpeed | 8,000 G · 5 K |  |
+| **Archers II** | the Archer II | 8,000 G · 6 K | *dead end* |
 | **Woodsheds I** | +25% storageCapacity — Sawmill | 8,000 G · 9 K | *dead end* |
 | **Charter** | Townhall L5 | 12,000 G · 4 K | **finale** |
 
@@ -115,11 +117,13 @@
 
 | Card | Opens / moves | Price | |
 |---|---|---|---|
+| **Lancers II** | the Lancer II | 9,000 G · 8 K | *dead end* |
 | **Ironmongery** | the producers L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
 | **Terraces** | Housing L5 | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
 | **Farmhands I** | +15% crewStrikeSpeed — Farm | 9,000 G · 7 K |  |
 | **Cavalry** | the Stables · the Cavalry | 9,000 G · 7 K · 2 Planks · 2 CutStone |  |
 | **Trade Routes III** | +10% taxRate | 9,000 G · 7 K |  |
+| **Cavalry II** | the Cavalry II | 9,000 G · 8 K | *dead end* |
 | **Warband III** | the four halls L5 | 9,000 G · 7 K |  |
 | **Gardening** | the Garden · the Orchard | 9,000 G · 7 K |  |
 | **Deep Mining** | +25% harvestYield — MountainGold | 9,000 G · 7 K |  |
@@ -137,11 +141,14 @@
 | **Waterwheels** | the producers L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
 | **Fortifications** | the four halls L6 | 20,000 G · 9 K · 3 Planks · 3 CutStone · 1 Iron |  |
 | **Sculpture** | the Well · the Statue | 20,000 G · 9 K |  |
+| **Warriors III** | the Warrior III | 20,000 G · 10 K · 1 Iron | *dead end* |
 | **Tactics** | Reading the ground — a bad matchup costs a tenth less. | 20,000 G · 9 K |  |
 | **Apprentices I** | +1 workshopQueueSlots | 20,000 G · 9 K |  |
 | **Irrigation II** | +15% harvestYield — crop-plot Food | 20,000 G · 9 K |  |
 | **Vigour I** | +10% unitHp | 20,000 G · 14 K | *dead end* |
+| **Archers III** | the Archer III | 20,000 G · 10 K · 1 Iron | *dead end* |
 | **Attunement III** | Sanctum L5 | 20,000 G · 9 K |  |
+| **Lancers III** | the Lancer III | 20,000 G · 10 K · 1 Iron | *dead end* |
 | **Carpentry III** | +15% buildSpeed | 20,000 G · 9 K |  |
 | **Poultices I** | +25% healSpeed | 20,000 G · 9 K |  |
 | **Gamekeeping I** | +25% respawnSpeed | 20,000 G · 14 K | *dead end* |
@@ -152,6 +159,7 @@
 | Card | Opens / moves | Price | |
 |---|---|---|---|
 | **Mansions** | Housing L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
+| **Cavalry III** | the Cavalry III | 42,000 G · 12 K · 1 Iron | *dead end* |
 | **Bastions** | the four halls L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
 | **Trade Routes IV** | +10% taxRate | 42,000 G · 14 K |  |
 | **Windmills** | the producers L7 | 42,000 G · 14 K · 4 Planks · 4 CutStone · 2 Iron |  |
@@ -159,7 +167,9 @@
 | **Civic Treasury I** | +25% ownGold | 42,000 G · 14 K |  |
 | **Sawpits III** | +15% harvestYield — Wood | 42,000 G · 14 K |  |
 | **Warhorns I** | +10% unitAtk | 42,000 G · 20 K | *dead end* |
+| **Lancers IV** | the Lancer IV | 42,000 G · 12 K · 2 Iron | *dead end* |
 | **Miners I** | +15% crewStrikeSpeed — Quarry | 42,000 G · 14 K |  |
+| **Warriors IV** | the Warrior IV | 42,000 G · 12 K · 2 Iron | *dead end* |
 | **Old Growth I** | +25% cellStock — Wood | 42,000 G · 14 K |  |
 | **Bunkhouse I** | +1 crewSlots | 42,000 G · 14 K |  |
 | **Frontier Works I** | +15% improvementYield | 42,000 G · 20 K | *dead end* |
@@ -175,7 +185,9 @@
 | **Paving** | the Plaza | 90,000 G · 9 K |  |
 | **Stonecutting II** | +15% harvestYield — Stone | 90,000 G · 9 K |  |
 | **Colours I** | +10% armyCap | 90,000 G · 9 K |  |
+| **Cavalry IV** | the Cavalry IV | 90,000 G · 12 K · 2 Iron | *dead end* |
 | **Surveying I** | +1 influenceRadius | 90,000 G · 9 K |  |
+| **Archers IV** | the Archer IV | 90,000 G · 12 K · 2 Iron | *dead end* |
 | **Trade Routes V** | +10% taxRate | 90,000 G · 9 K |  |
 | **Attunement IV** | Sanctum L6 · Sanctum L7 · Sanctum L8 · Sanctum L9 · Sanctum L10 | 90,000 G · 9 K |  |
 | **Shield Wall II** | +10% unitDef — Melee | 90,000 G · 14 K | *dead end* |
@@ -190,13 +202,17 @@
 | **Grand Avenues** | Housing L9 · Housing L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Mechanics** | the producers L9 · the producers L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
 | **Warlords** | the four halls L9 · the four halls L10 | 190,000 G · 14 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone |  |
+| **Lancers V** | the Lancer V | 190,000 G · 14 K · 3 Iron · 1 Runestone | *dead end* |
 | **Iron Picks I** | +15% harvestYield — iron-mountain Stone | 190,000 G · 14 K |  |
+| **Warriors V** | the Warrior V | 190,000 G · 14 K · 3 Iron · 1 Runestone | *dead end* |
 | **Fishers I** | +15% crewStrikeSpeed — Docks | 190,000 G · 14 K |  |
 | **Warhorns II** | +10% unitAtk | 190,000 G · 14 K |  |
 | **Flowerbeds I** | +25% decorationHarmony | 190,000 G · 14 K |  |
+| **Archers V** | the Archer V | 190,000 G · 14 K · 3 Iron · 1 Runestone | *dead end* |
 | **Supply Depots I** | +25% improvementStore | 190,000 G · 20 K | *dead end* |
 | **Strongroom I** | +25% storageCapacity — Townhall; +25% storageCapacity — Housing | 190,000 G · 14 K |  |
 | **Granaries II** | +25% storageCapacity — Farm | 190,000 G · 14 K |  |
+| **Cavalry V** | the Cavalry V | 190,000 G · 14 K · 3 Iron · 1 Runestone | *dead end* |
 | **Forced March I** | +15% armyMarchSpeed | 190,000 G · 20 K | *dead end* |
 | **Golden Age** | Townhall L10 | 285,000 G · 9 K · 6 Planks · 6 CutStone · 4 Iron · 2 Runestone | **finale** |
 

@@ -6,7 +6,7 @@
 // and the map canvas, which holds everything that stands.
 
 import {
-  DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
+  DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, TROOPS, rankOf,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingAbandonedAt, standingLairAt } from '../sim/sites';
@@ -26,7 +26,7 @@ import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtCells,
   type ArtifactId, type HarvestSourceId,
-  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
+  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -1480,9 +1480,10 @@ export function drawMap(
       labelFont(barH * 0.6, 12, true), 'green');
     const line = lineFor(state, district.uniqueId);
     const trainee = line[0].trainee;
-    const bust = `${trainee === 'Villager' ? 'unit_villager' : UNITS[trainee as UnitId].sprite}_avatar`;
+    const bust = `${trainee === 'Villager' ? 'unit_villager' : TROOPS[trainee].sprite}_avatar`;
     drawTraineeBadge(ctx, x, y + barH / 2, d, bust,
-      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true));
+      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true),
+      trainee === 'Villager' ? 1 : rankOf(trainee));
   }
 
   // Pass 3a: THE WHEELS of the zones that carry one, over what stands —

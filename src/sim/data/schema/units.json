@@ -22,6 +22,40 @@
     "frontage": { "type": "int" },
     "cooldown": { "type": "int" },
     "recruitCost": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "currency" },
-    "trainDurationSeconds": { "type": "int" }
+    "trainDurationSeconds": { "type": "int" },
+    "evolutions": {
+      "type": "list",
+      "of": {
+        "type": "object",
+        "fields": {
+          "atk": {
+            "type": "int",
+            "min": 0,
+            "doc": "Attack: each point over the target's Defence adds 5% to its damage, up to +150%."
+          },
+          "dmg": {
+            "type": "int",
+            "min": 1,
+            "doc": "Damage: what one troop takes off a target at an even Attack and Defence (combat.md §7)."
+          },
+          "def": {
+            "type": "int",
+            "min": 0,
+            "doc": "Defence: each point over the attacker's Attack takes 2.5% off the damage, down to −75%."
+          },
+          "hp": { "type": "int", "min": 1 },
+          "power": { "type": "int" },
+          "recruitCost": { "type": "map", "of": { "type": "int", "min": 0 }, "keysRef": "currency" },
+          "trainDurationSeconds": { "type": "int" },
+          "minBuildingLevel": {
+            "type": "int",
+            "min": 1,
+            "doc": "The level its hall must stand at before this rank can be trained (combat.md §6.1)."
+          }
+        }
+      },
+      "length": { "exact": 4 },
+      "doc": "Ranks II to V, in order: every number authored whole. The ladder (×1.6 dmg·hp·power, +2 atk·def, ×2 cost, ×1.5 time a rank) is a balancing rule, not a formula (combat.md §6.2)."
+    }
   }
 }

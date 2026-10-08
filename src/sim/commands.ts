@@ -50,7 +50,7 @@ import {
   districtOccupies, getWallet,
   districtCells, newId, remainingSeconds, townhall,
   type ItemId, type ArtifactId, type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
+  type QueueItem, type TechId, type TroopId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
 import { applyRentRush, nextRentRush, stampRentRush } from './quests';
@@ -711,7 +711,7 @@ export interface AdvanceResult {
   manaEarned: number;
   knowledgeEarned: number;
   /** Units that finished training in this window. */
-  trainedUnits: UnitId[];
+  trainedUnits: TroopId[];
   /** Military buildings whose training line ran dry in this window: the
    *  last soldier out, and when. What the 'trained' news is about — a hall
    *  standing idle, not every soldier it hands over. */
@@ -731,7 +731,7 @@ export interface AdvanceResult {
 }
 
 /** A military building's training line that ran dry (`AdvanceResult.linesDone`). */
-export interface LineDone { buildingId: string; unit: UnitId; at: number }
+export interface LineDone { buildingId: string; unit: TroopId; at: number }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
@@ -777,7 +777,7 @@ function applyDueAt(
     // stepped one agree on.
     for (const [buildingId, d] of last) {
       if (lineFor(state, buildingId).length === 0) {
-        out.linesDone.push({ buildingId, unit: d.trainee as UnitId, at: d.at });
+        out.linesDone.push({ buildingId, unit: d.trainee as TroopId, at: d.at });
       }
     }
     // NOTHING FOR THE LAIRS. A room resolves the instant the player enters

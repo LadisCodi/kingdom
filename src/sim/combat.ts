@@ -17,9 +17,9 @@
 // the resolver plays out what that choice was worth.
 
 import type { HeroDef, UnitTag } from './data/definitions';
-import { ARMY, COMBAT, HEROES, UNITS } from './data/definitions';
+import { ARMY, COMBAT, HEROES, TROOPS } from './data/definitions';
 import { heroBody } from './heroLadder';
-import type { HeroId, UnitId } from './state';
+import type { HeroId, TroopId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
 export const BEATS: Record<UnitId, UnitId> = {
@@ -47,7 +47,7 @@ export function typeMultiplier(
  *  is what makes the type chart interesting and what "coverage" means when a
  *  second hero arrives. */
 export interface PartySlot {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
@@ -129,7 +129,7 @@ export function partyStats(party: Party): PartyStats {
   let hp = 0;
   const drill = party.drill ?? NO_DRILL;
   for (const slot of party.slots) {
-    const u = UNITS[slot.unitId];
+    const u = TROOPS[slot.unitId];
     atk += (u.dmg * (1 + drillFor(drill.atkPct ?? {}, u.tags)) + drillFor(drill.atk, u.tags))
       * slot.count;
     def += (u.def * (1 + drillFor(drill.defPct ?? {}, u.tags)) + drillFor(drill.def, u.tags))
@@ -163,7 +163,7 @@ export const heroPower = (def: HeroDef, level: number, ascension: number): numbe
 
 export function partyPower(party: Party): number {
   let power = 0;
-  for (const slot of party.slots) power += UNITS[slot.unitId].power * slot.count;
+  for (const slot of party.slots) power += TROOPS[slot.unitId].power * slot.count;
   for (const hero of party.heroes) {
     power += heroBody(HEROES[hero.id], hero.level, hero.ascension).dmg * COMBAT.heroPowerPerDmg;
   }
@@ -174,10 +174,10 @@ export function partyPower(party: Party): number {
 
 /** One enemy stack, the same shape as a party slot. */
 export interface EnemySquad {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
 /** What a formation is worth — and therefore what a party has to beat. */
 export const formationPower = (squads: readonly EnemySquad[]): number =>
-  squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
+  squads.reduce((sum, s) => sum + TROOPS[s.unitId].power * s.count, 0);

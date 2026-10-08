@@ -19,10 +19,10 @@
 // rather than a snapshot that drifts.
 
 import { BEATS } from './combat';
-import { COMBAT, UNITS, VILLAINS, type SkillId, type VillainId } from './data/definitions';
+import { COMBAT, TROOPS, UNITS, VILLAINS, troopId, type SkillId, type VillainId } from './data/definitions';
 import { randInt, type RngPart } from './rng';
 import { SKILLS, slotSkill, type SlotSkill } from './skills';
-import type { UnitId } from './state';
+import type { TroopId, UnitId, UnitRank } from './state';
 
 export type Side = 'ours' | 'theirs';
 export type Row = 'front' | 'back';
@@ -49,8 +49,8 @@ export interface BoardSlot {
   row: Row;
   /** What it fights as on the type chart. A hero carries one too (§7). */
   type: UnitId;
-  /** For the screen: which portrait to draw. */
-  unitId: UnitId | null;
+  /** For the screen: which portrait to draw — the troop, so its rank. */
+  unitId: TroopId | null;
   fighterId: string | null;
   name: string;
   /** Troops in the squad; 1 for a hero. */
@@ -142,20 +142,20 @@ export interface FighterSpec {
 }
 
 export interface SquadSpec {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
 /** Flat bonuses the kingdom's research hands its own troops. Resolved
  *  upstream (`expeditions.ts#drillOf`) so this file stays free of state. */
 export interface TroopBonus {
-  dmg: (unitId: UnitId) => number;
-  def: (unitId: UnitId) => number;
+  dmg: (troop: TroopId) => number;
+  def: (troop: TroopId) => number;
   /** A MULTIPLIER, unlike the two above: 1 is the identity. It stacks on top
    *  of the fighters' own `troopHpMult`, so a legendary's boon and a hero's
    *  type passive both reach the same number without either replacing the
    *  other. */
-  hpMult: (unitId: UnitId) => number;
+  hpMult: (troop: TroopId) => number;
 }
 
 const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0, hpMult: () => 1 };
@@ -197,14 +197,17 @@ export function buildBoard(
   const slots: BoardSlot[] = [];
   for (const squad of squads) {
     if (squad.count <= 0) continue;
-    const u = UNITS[squad.unitId];
+    // The RANK sets the numbers; the UNIT is what the chart, the row and a
+    // hero's passive read (combat.md §6.1).
+    const u = TROOPS[squad.unitId];
+    const type = u.unit;
     const hpUnit = Math.max(1, Math.round(
-      u.hp * ((hpMult.get(squad.unitId) ?? 1) + rallyHp) * bonus.hpMult(squad.unitId)));
+      u.hp * ((hpMult.get(type) ?? 1) + rallyHp) * bonus.hpMult(squad.unitId)));
     slots.push({
       id: slots.length,
       kind: 'troop',
-      row: rowFor(squad.unitId),
-      type: squad.unitId,
+      row: rowFor(type),
+      type,
       unitId: squad.unitId,
       fighterId: null,
       name: u.name,
@@ -212,8 +215,8 @@ export function buildBoard(
       frontage: u.frontage,
       atk: u.atk,
       dmg: Math.max(1, Math.round(
-        (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(squad.unitId) ?? 1) + rallyDmg))),
-      def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0) + rallyDef,
+        (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(type) ?? 1) + rallyDmg))),
+      def: u.def + bonus.def(squad.unitId) + (defFlat.get(type) ?? 0) + rallyDef,
       hpUnit,
       hpPool: squad.count * hpUnit,
       cooldown: u.cooldown,
@@ -568,6 +571,25 @@ export const villainFighter = (id: VillainId): FighterSpec => {
 };
 
 /**
+ * A villain grown by `extra` budget (§9.4): `k = (power + extra) / power`;
+ * `hp`, `dmg` and `power` times `k`, `atk` and `def` +2 for every ×1.6 in it,
+ * as a troop's rank climbs. Its skill, passive and cooldown stay its own.
+ */
+export function scaleFighter(f: FighterSpec, extra: number): FighterSpec {
+  if (extra <= 0) return f;
+  const k = (f.power + extra) / f.power;
+  const steps = Math.floor(Math.log(k) / Math.log(1.6) + 1e-9);
+  return {
+    ...f,
+    hp: Math.round(f.hp * k),
+    dmg: Math.round(f.dmg * k),
+    power: Math.round(f.power * k),
+    atk: f.atk + 2 * steps,
+    def: f.def + 2 * steps,
+  };
+}
+
+/**
  * WHAT A ROOM FIELDS, from its power budget (§11).
  *
  * Seeded by the room's own address, so the same room is the same fight every
@@ -654,28 +676,67 @@ export function generateEnemy(opts: {
     for (const t of order.slice(1)) share.set(t, (budget - lion) / (order.length - 1));
   }
 
-  const squads: SquadSpec[] = [];
-  let left = budget;
-  const add = (unitId: UnitId, troops: number): void => {
-    let want = troops;
-    while (want > 0 && squads.length < wanted) {
-      const count = Math.min(UNITS[unitId].squadSize, want);
-      squads.push({ unitId, count });
-      want -= count;
-      left -= count * UNITS[unitId].power;
-    }
-  };
-  for (const t of order) {
-    add(t, Math.floor(Math.min(share.get(t) ?? 0, Math.max(0, left)) / UNITS[t].power));
-  }
-  // Whatever the shares left on the table goes to the affinity, while there
-  // is a slot to put it in. Budget a board cannot hold is budget a room
-  // cannot field — which is the ceiling the authored ladder lives under.
+  // THE SQUADS, at a rank (§11 step 6). `rankAt(i)` is the rank of the i-th
+  // squad pushed: all I while the board can hold the budget, then the board
+  // in R−1 and R, the first squads — the affinity's, spent first — promoted.
+  // Spending is in budget, not in troops, so a promoted squad costs its own
+  // rank's `power` and holds fewer of them.
   const filler = mixed.length > 0 ? mixed[0]! : affinity === 'Any' ? order[0]! : affinity;
-  while (squads.length < wanted && left >= UNITS[filler].power) {
-    add(filler, Math.floor(left / UNITS[filler].power));
+  const plan = (rankAt: (i: number) => UnitRank): { squads: SquadSpec[]; left: number } => {
+    const squads: SquadSpec[] = [];
+    let left = budget;
+    const add = (unit: UnitId, purse: number): void => {
+      let want = purse;
+      while (want > 0 && squads.length < wanted) {
+        const troop = troopId(unit, rankAt(squads.length));
+        const { power, squadSize } = TROOPS[troop];
+        const count = Math.min(squadSize, Math.floor(want / power));
+        if (count <= 0) break;
+        squads.push({ unitId: troop, count });
+        want -= count * power;
+        left -= count * power;
+      }
+    };
+    for (const t of order) add(t, Math.min(share.get(t) ?? 0, Math.max(0, left)));
+    // Whatever the shares left on the table goes to the affinity, while there
+    // is a slot to put it in.
+    while (squads.length < wanted && left >= TROOPS[troopId(filler, rankAt(squads.length))].power) {
+      add(filler, left);
+    }
+    return { squads, left };
+  };
+  // The board holds the budget when what is left is rounding — a tenth of it
+  // at most, or less than one more of the filler — not an army the board had
+  // no room for.
+  const holds = (p: { left: number }, low: UnitRank): boolean =>
+    p.left <= Math.max(budget * 0.1, TROOPS[troopId(filler, low)].power - 1);
+  let best = plan(() => 1);
+  // Only a FULL board evolves: below six squads, what a thin roll cannot
+  // field stays unfielded, as it always has (the board is the ceiling, §11).
+  if (!holds(best, 1) && wanted >= COMBAT.genSlotsMax) {
+    search: for (let r = 2; r <= 5; r++) {
+      for (let k = 1; k <= wanted; k++) {
+        const top = r as UnitRank;
+        const low = (r - 1) as UnitRank;
+        best = plan((i) => (i < k ? top : low));
+        if (holds(best, low)) break search;
+      }
+    }
   }
+  const squads = best.squads;
   // A room always fields something, even at a budget of one.
   if (squads.length === 0) squads.push({ unitId: filler, count: 1 });
+
+  // SCALED VILLAINS (§9.4): what a board of rank-V squads could not hold goes
+  // to the villains, drawn now if none were, and spread evenly across them.
+  // Without a pool it is simply not fielded.
+  const over = best.left;
+  if (over > 0 && !holds(best, 5) && pool.length > 0) {
+    for (let i = fighters.length; i < COMBAT.genVillainSlots; i++) {
+      fighters.push(villainFighter(pool[randInt(seed, pool.length, ...parts, 'scaled', i)]!));
+    }
+    const each = over / fighters.length;
+    for (let i = 0; i < fighters.length; i++) fighters[i] = scaleFighter(fighters[i]!, each);
+  }
   return { squads, fighters };
 }

@@ -17,7 +17,7 @@
 // event would restart every animation on the board and re-decode every
 // portrait (the fault `battlePicker.ts` documents).
 
-import { COMBAT, HEROES, UNITS, VILLAINS, type SkillId } from '../sim/data/definitions';
+import { COMBAT, HEROES, TROOPS, VILLAINS, unitOf, type SkillId } from '../sim/data/definitions';
 import { SKILLS, type SkillKind } from '../sim/skills';
 import { setBattleMusic } from '../audio/music';
 import { playSfx, warmBattleSfx, type BattleSfx } from '../audio/sfx';
@@ -34,6 +34,7 @@ import bossGround from './assets/battle-ground-boss.jpg?url';
 import portalGround from './assets/battle-ground-portal.jpg?url';
 import { el, formatExact, formatShort } from './format';
 import { btn, iconEl } from './kit';
+import { rankBadge } from './unitArt';
 
 /** How long the white flash sits on a slot that was hit. Two frames of a
  *  stepped animation — a pixel-art screen snaps, it does not glow. */
@@ -43,13 +44,13 @@ const FLASH_MS = 180;
  *  creature's (`enemyFaces`) — a hero's portrait, a villain's. */
 function face(slot: BoardSlot, faces?: Partial<Record<UnitId, string>>): HTMLElement {
   if (slot.unitId !== null) {
-    const { sprite } = UNITS[slot.unitId];
-    const creature = faces?.[slot.unitId];
+    const { sprite } = TROOPS[slot.unitId];
+    const creature = faces?.[unitOf(slot.unitId)];
     const url = (creature ? spriteUrl(creature) : null)
       ?? spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
     return url
       ? spriteImgAt(url, 'bs-portrait')
-      : iconEl(slot.unitId, { size: 'lg' });
+      : iconEl(unitOf(slot.unitId), { size: 'lg' });
   }
   const def = slot.fighterId !== null && slot.fighterId in HEROES
     ? HEROES[slot.fighterId as keyof typeof HEROES]
@@ -97,6 +98,7 @@ function slotView(slot: BoardSlot, side: Side, faces?: Partial<Record<UnitId, st
     aura,
     life,
     face(slot, faces),
+    ...(slot.unitId === null ? [] : [rankBadge(slot.unitId)].filter((b): b is HTMLElement => b !== null)),
     count,
     el('span', { class: 'bs-skull' }, iconEl('skull', { size: 'lg' })));
   const max = Math.max(1, slot.hpUnit * slot.count);

@@ -24,7 +24,7 @@ import {
   TECH_STATS, targetId, targetKind,
   type StatDef, type TechEffect, type TechEffectOp,
 } from './data/techEffectRules';
-import type { TechKind, TechUnlock } from './data/techTreeRules';
+import { ROMAN_RANK, type TechKind, type TechUnlock } from './data/techTreeRules';
 import type { DistrictId, HarvestSourceId, TechId, TerrainId, UnitId } from './state';
 
 /** A display name for an id the DATA holds as a bare string. An unlock names
@@ -108,6 +108,7 @@ export function unlockPhrase(unlock: TechUnlock): string {
     return `one more ${districtName(unlock.districtCount)}`;
   }
   if ('unit' in unlock) return `the ${unitName(unlock.unit)}`;
+  if ('evolution' in unlock) return `${unitName(unlock.evolution.unit)} ${ROMAN_RANK[unlock.evolution.rank] ?? unlock.evolution.rank}`;
   if ('harvest' in unlock) {
     return HARVEST_SAYS[unlock.harvest as HarvestSourceId]?.many ?? unlock.harvest;
   }

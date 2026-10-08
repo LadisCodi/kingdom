@@ -150,9 +150,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
     if (training) {
-      // The block is headed by what it trains — one unit per building.
+      // The block is headed by what it trains — one unit per building, at
+      // the rank the hall is set to (combat.md §6.4).
       body.append(sectionHead(def.bedsPerLevel.length > 0 || def.trains.length === 0
-        ? 'Ward' : nameFor(def.trains[0])), training);
+        ? 'Ward' : nameFor(game.traineeAt(district))), training);
     }
 
     // A workshop turns things out too, so it gets the same kind of block.

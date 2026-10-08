@@ -265,7 +265,9 @@ describe('exploring pays in ground, not in currency', () => {
     // 12,153,405: the Atlas grew to 53 optional cards on the world board
     // (2026-10-08) — Scouts I–II left, Pathfinding became its 1,500,000-Gold
     // finale.
-    expect(tree).toBe(12_153_405);
+    // 13,313,405: troop evolutions — sixteen cards, Warriors II to Cavalry V
+    // (2026-10-08), dead ends in chapters 4–9.
+    expect(tree).toBe(13_313_405);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Raw
     // materials only on the Atlas's first cards, which open before the world

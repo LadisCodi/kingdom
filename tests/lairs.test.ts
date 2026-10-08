@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import {
-  COMBAT, PARTY, RAID, LAIRS, LAIR_ORDER, UNITS, garrisonForTier,
+  COMBAT, PARTY, RAID, LAIRS, LAIR_ORDER, TROOPS, garrisonForTier,
 } from '../src/sim/data/definitions';
 import {
   advanceRaids, armLairs, cityRatePerSecond, clearedLairCount, hoardCap, lairBoard, lairFightPower,
@@ -624,7 +624,7 @@ describe('the formation in the doorway', () => {
       }
       for (const squad of squads) {
         expect(squad.count).toBeGreaterThan(0);
-        expect(squad.count).toBeLessThanOrEqual(UNITS[squad.unitId].squadSize);
+        expect(squad.count).toBeLessThanOrEqual(TROOPS[squad.unitId].squadSize);
       }
     }
   });

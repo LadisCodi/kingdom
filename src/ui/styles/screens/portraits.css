@@ -24,6 +24,7 @@ img[src*='unit_warrior'],
 img[src*='unit_lancer'],
 img[src*='unit_archer'],
 img[src*='unit_cavalry'],
-img[src*='unit_villager'] {
+img[src*='unit_villager'],
+img[src*='creature_'] {
   image-rendering: auto;
 }

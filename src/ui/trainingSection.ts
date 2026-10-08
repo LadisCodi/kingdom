@@ -19,14 +19,14 @@
 // authored twice.
 
 import type { Game } from '../game';
-import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
+import { DISTRICTS, TECHNOLOGIES, TROOPS, UNITS, troopsOf, unitOf } from '../sim/data/definitions';
 import {
-  itemCount, lineFor, lineRemainingSeconds, lineRushCost, trainPlan, trainRoom, trainSecondsAt,
-  trainingCompletesAt, trainingProgress, type TrainAmount,
+  itemCount, lineFor, lineRemainingSeconds, lineRushCost, rankGate, rankInLine, trainPlan,
+  trainRoom, trainSecondsAt, trainingCompletesAt, trainingProgress, type TrainAmount,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
-import type { District, TrainableId, UnitId } from '../sim/state';
+import type { District, TrainableId, TroopId, UnitId } from '../sim/state';
 import { el, formatDuration, formatExact, coach } from './format';
 import { action, btn, holdToRepeat, iconEl, isShort, knob, progress, withTooltip, type LiveParts } from './kit';
 import { timerButton } from './speedupSheet';
@@ -43,7 +43,7 @@ const VILLAGER = {
 
 /** A trainee's name — the district card heads the training block with it. */
 export const nameFor = (trainee: TrainableId) =>
-  (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
+  (trainee === 'Villager' ? VILLAGER.name : TROOPS[trainee].name);
 
 /** A TAG: a short chip for what the unit IS or does, which says a line more
  *  when tapped — the kit's tooltip (kit/tooltip.ts). */
@@ -128,7 +128,7 @@ export function trainingSection(
       root.append(el('div', { class: 'tr-info is-ward k-section' },
         unitPortrait(unitId, 'tr-portrait'),
         el('div', { class: 'tr-body' },
-          el('div', { class: 'tr-name' }, `${formatExact(count)} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
+          el('div', { class: 'tr-name' }, `${formatExact(count)} ${TROOPS[unitId].name}${count === 1 ? '' : 's'}`),
           el('div', { class: 'tr-desc' },
             'Off the roster until they are back on their feet. Cheaper to mend '
             + 'than to replace.')),
@@ -153,8 +153,9 @@ export function trainingSection(
   if (offers.length === 0) return root;
 
   // ---------------------------------------------------- the panel, the queue
-  // One trainee per building (dataRules.ts): the first is the only one.
-  const selected = offers[0];
+  // One unit per building (dataRules.ts); a hall shows the RANK it is set to
+  // train — its pick, or the best one open (game.ts `traineeAt`).
+  const selected = game.traineeAt(district);
   root.append(detail(game, district, selected, batch()));
   return root;
 }
@@ -163,7 +164,7 @@ export function trainingSection(
 function queueLeft(game: Game, district: District, head: ReturnType<typeof lineFor>[number]): number {
   return head.startedAt === null
     ? (head.kind === 'heal'
-      ? game.healWait(head.trainee as UnitId, itemCount(head))
+      ? game.healWait(head.trainee as TroopId, itemCount(head))
       : trainSecondsAt(game.state, district.uniqueId, head.trainee, head))
     : Math.max(0, (trainingCompletesAt(head) - game.now()) / 1000);
 }
@@ -195,7 +196,7 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
   const total = isWard
     ? line.reduce((n, item, i) => n + (i === 0
       ? queueLeft(game, district, item)
-      : game.healWait(item.trainee as UnitId, itemCount(item))), 0)
+      : game.healWait(item.trainee as TroopId, itemCount(item))), 0)
     : lineRemainingSeconds(game.state, district.uniqueId, now);
   return el('div', { class: 'tr-batch' },
     el('div', { class: 'tr-batch-row' },
@@ -216,12 +217,29 @@ function batchStrip(game: Game, district: District, isWard: boolean): HTMLElemen
       }), 'card:finish-training'))));
 }
 
+/** What keeps a RANK from this hall, in a few words — the technology it
+ *  waits on or the level the hall needs; undefined when it is open. */
+function rankReason(game: Game, district: District, troop: TroopId): string | undefined {
+  const gate = rankGate(game.state, troop, district);
+  if (gate === null) return undefined;
+  if (gate === 'HallLevel') {
+    return `${DISTRICTS[district.definitionId].name} level ${formatExact(TROOPS[troop].minBuildingLevel)}`;
+  }
+  const tech = [TROOPS[unitOf(troop)].requiredTech, TROOPS[troop].requiredTech]
+    .find((t) => t !== null && !isTechComplete(game.state, t));
+  return tech === undefined || tech === null ? 'Not researched' : `Needs ${TECHNOLOGIES[tech].name}`;
+}
+
 /** Why Train is dead right now for an order of `count`, in a few words;
  *  undefined when it is not. Being short of coin is not a gate (§6.4). */
-function gateOf(game: Game, trainee: TrainableId, count: number): string | undefined {
-  const unit = trainee === 'Villager' ? null : UNITS[trainee];
-  if (unit !== null && unit.requiredTech !== null && !isTechComplete(game.state, unit.requiredTech)) {
-    return `Needs ${TECHNOLOGIES[unit.requiredTech].name}`;
+function gateOf(game: Game, district: District, trainee: TrainableId, count: number): string | undefined {
+  const unit = trainee === 'Villager' ? null : TROOPS[trainee];
+  if (trainee !== 'Villager') {
+    const reason = rankReason(game, district, trainee);
+    if (reason !== undefined) return reason;
+    // One rank in a line at a time (combat.md §6.4).
+    const inLine = rankInLine(game.state, district.uniqueId);
+    if (inLine !== null && inLine !== trainee) return 'Finish the current batch';
   }
   const room = trainRoom(game.state, trainee);
   if (room === 0) return unit === null ? 'No house to live in' : 'Max army reached';
@@ -237,12 +255,12 @@ const amountLabel = (a: TrainAmount): string => (a === 'all' ? 'All' : `x${forma
 function detail(game: Game, district: District, trainee: TrainableId, batch: HTMLElement): HTMLElement {
   // What one press orders: the amount picked on the selector, priced whole.
   const { count, cost } = trainPlan(game.state, trainee, game.trainAmount);
-  const unit = trainee === 'Villager' ? null : UNITS[trainee];
+  const unit = trainee === 'Villager' ? null : TROOPS[trainee];
 
   // A GATE keeps the button and disables it: where the price would be, the
   // priced frame says in a few words why it cannot be pressed. Being short of
   // coin is not a gate: the price stays, and its red term says so (§6.4).
-  const gate = gateOf(game, trainee, count);
+  const gate = gateOf(game, district, trainee, count);
   const buy = btn({
     label: 'Train',
     kind: 'primary',
@@ -258,7 +276,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
   holdToRepeat(buy, `train:${district.uniqueId}:${trainee}`, () => {
     const here = game.state.city.districts.find((d) => d.uniqueId === district.uniqueId);
     const plan = trainPlan(game.state, trainee, game.trainAmount);
-    if (here === undefined || gateOf(game, trainee, plan.count) !== undefined) return false;
+    if (here === undefined || gateOf(game, here, trainee, plan.count) !== undefined) return false;
     if (isShort(plan.cost, (c) => game.walletValue(c))) return false;
     return game.doTrain(trainee, here) === 'Queued';
   });
@@ -274,7 +292,7 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
 
   const tags = unit === null
     ? [tag('Worker', 'Lives in a house, pays rent and works the buildings.', 'type')]
-    : [typeTag(trainee as UnitId)];
+    : [typeTag(unitOf(trainee as TroopId))];
 
   // How many the player already HAS: the army's soldiers of this unit (the
   // wounded are the ward's), or the villagers who live in the city.
@@ -290,11 +308,29 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
     stat('def', 'Defence', unit.def),
     stat('hp', 'Health', unit.hp),
   ];
+  // A HALL'S PORTRAIT IS A BUTTON (combat.md §6.4): it drops the list of
+  // the unit's ranks, and the one picked is what this panel shows and Train
+  // trains. A villager has no ranks, so the Townhall's stays a picture.
+  const ranked = trainee !== 'Villager';
+  const who = el(ranked ? 'button' : 'div', {
+    class: `tr-who${ranked ? ' is-picker' : ''}`,
+    title: `You have ${owned}`,
+    ...(ranked ? {
+      type: 'button',
+      'aria-haspopup': 'listbox',
+      'aria-expanded': String(game.rankMenuFor === district.uniqueId),
+      'aria-label': `${nameFor(trainee)} — choose a rank`,
+    } : {}),
+  },
+  unitPortrait(trainee, 'tr-portrait'),
+  el('span', { class: 'tr-count' }, `x${formatExact(owned)}`),
+  ...(ranked ? [el('span', { class: 'tr-who-caret', 'aria-hidden': 'true' }, iconEl('arrowUp', { size: 'sm' }))] : []));
+  if (ranked) who.addEventListener('click', () => game.toggleRankMenu(district));
+  const menu = ranked && game.rankMenuFor === district.uniqueId
+    ? rankMenu(game, district, trainee as TroopId) : null;
   return el('div', { class: `tr-info k-section${figures.length > 0 ? ' has-stats' : ''}` },
     amount,
-    el('div', { class: 'tr-who', title: `You have ${owned}` },
-      unitPortrait(trainee, 'tr-portrait'),
-      el('span', { class: 'tr-count' }, `x${formatExact(owned)}`)),
+    who,
     // No name here: it heads the whole block, on the section's rule.
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-tags' }, ...tags),
@@ -302,6 +338,43 @@ function detail(game: Game, district: District, trainee: TrainableId, batch: HTM
     el('div', { class: 'tr-buy' }, buy),
     ...(figures.length === 0 ? [] : [el('div', { class: 'tr-stats' }, ...figures.slice(0, 4))]),
     ...(figures.length <= 4 ? [] : [el('div', { class: 'tr-stats is-more' }, ...figures.slice(4))]),
+    // The rank list opens IN the panel, under the numbers, so a long card
+    // scrolls to it rather than clipping it.
+    ...(menu === null ? [] : [menu]),
     batch,
   );
 }
+
+/**
+ * THE RANK LIST — what the hall's portrait drops (combat.md §6.4): one row a
+ * rank, its portrait with the coin, its name and its four numbers as VALUES
+ * (two ranks are compared by reading them, never by a multiplier); a rank
+ * still shut adds the padlock and what opens it. Its price is the Train
+ * button's once it is picked.
+ */
+function rankMenu(game: Game, district: District, picked: TroopId): HTMLElement {
+  const rows = troopsOf(unitOf(picked)).map((troop) => {
+    const def = TROOPS[troop];
+    const reason = rankReason(game, district, troop);
+    const row = el('button', {
+      class: `tr-rank${troop === picked ? ' is-picked' : ''}${reason !== undefined ? ' is-locked' : ''}`,
+      type: 'button', role: 'option', 'aria-selected': String(troop === picked),
+    },
+    unitPortrait(troop, 'tr-rank-face'),
+    el('span', { class: 'tr-rank-body' },
+      el('span', { class: 'tr-rank-head' },
+        el('span', { class: 'tr-rank-name' }, def.name),
+        ...(reason === undefined ? []
+          : [el('span', { class: 'tr-rank-lock' }, iconEl('padlock', { size: 'sm' }), reason)])),
+      el('span', { class: 'tr-rank-stats' },
+        miniStat('atk', def.atk), miniStat('dmg', def.dmg), miniStat('def', def.def), miniStat('hp', def.hp))));
+    row.addEventListener('click', (e) => { e.stopPropagation(); game.pickRank(district, troop); });
+    return row;
+  });
+  return el('div', { class: 'tr-ranks', role: 'listbox', 'aria-label': 'Ranks' }, ...rows);
+}
+
+/** One number in a rank row: its mark and its value, small. */
+const miniStat = (icon: IconName, value: number): HTMLElement =>
+  el('span', { class: 'tr-rank-stat' }, iconEl(icon, { size: 'sm' }), formatExact(value));
+

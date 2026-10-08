@@ -53,11 +53,12 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 const TARGET_KINDS = Object.keys(TARGET_IDS) as TargetKind[];
 
 /** The kinds of thing an unlock can name, and where each list comes from. */
-const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true }> = {
+const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true; rank?: true }> = {
   district: { ids: DISTRICT_IDS },
   districtLevel: { ids: DISTRICT_IDS, level: true },
   districtCount: { ids: DISTRICT_IDS },
   unit: { ids: UNIT_IDS },
+  evolution: { ids: UNIT_IDS, rank: true },
   harvest: { ids: HARVEST_IDS },
   terrain: { ids: TERRAIN_IDS },
   worldUpgrade: { ids: WORLD_UPGRADE_IDS },
@@ -954,7 +955,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     const sync = (): void => {
       const spec = UNLOCK_TARGETS[what.value];
       target.replaceChildren(...spec.ids.map((v) => el('option', { value: v }, v)));
-      level.hidden = spec.level !== true;
+      level.hidden = spec.level !== true && spec.rank !== true;
+      level.title = spec.rank === true ? 'rank (2–5)' : 'level';
     };
     what.addEventListener('change', sync);
     sync();
@@ -962,7 +964,9 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     add.addEventListener('click', () => {
       const unlock: TechUnlock = what.value === 'districtLevel'
         ? { districtLevel: { id: target.value, level: Math.round(Number(level.value)) } }
-        : ({ [what.value]: target.value } as unknown as TechUnlock);
+        : what.value === 'evolution'
+          ? { evolution: { unit: target.value, rank: Math.round(Number(level.value)) } }
+          : ({ [what.value]: target.value } as unknown as TechUnlock);
       const had = sayProse(id);
       doc.addUnlock(id, unlock);
       saidGoodbye(id, had);
