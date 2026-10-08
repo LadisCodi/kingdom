@@ -48,7 +48,7 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   const mine = h.owner === game.worldSeat();
   const lines: HTMLElement[] = [];
   const whose = `${seatName(game, h.owner)} ground`;
-  const work = hexWork(h);
+  const work = hexWork(h, game.worldBoost());
   if (!h.held) {
     lines.push(el('p', { class: 'wd-line' }, mine && work !== null && game.actingSeat === null
       ? `${whose}, being claimed`
@@ -165,7 +165,7 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
   // Playing a rival's part, the player's own fog does not bind that seat.
   const revealed = asRival || fogStateOf(game.state, bh.index) === 'Revealed';
   const relics = asRival ? [] : game.worldRelicsRestored();
-  return hexActions(game.worldSource(), seat, bh, { revealed }, relics).map((a: HexAction) => {
+  return hexActions(game.worldSource(), seat, bh, { revealed }, relics, game.worldBoost()).map((a: HexAction) => {
     switch (a.kind) {
       case 'claim':
         return action({
@@ -289,7 +289,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     // A camp that stands between the player and the ground (§3.4).
     if (held === null && !unguarded && fog === 'Revealed') return renderCamp(game, bh);
     if (held === null && fog === 'Revealed' && unguarded && districtOf(bh) !== null) {
-      const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }).find((a) => a.kind === 'claim');
+      const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }, [], game.worldBoost()).find((a) => a.kind === 'claim');
       return renderFreeGround(game, bh, hexTitle(game, bh, fog), claim === undefined ? 'Build beside ground you hold' : undefined);
     }
   }
@@ -424,7 +424,7 @@ function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<type
  *  cut off, burnt and its repair, a builder at work. */
 function ownStatus(game: Game, index: number, h: NonNullable<ReturnType<ReturnType<Game['worldSource']>['hexOf']>>): HTMLElement[] {
   const out: HTMLElement[] = [];
-  const work = hexWork(h);
+  const work = hexWork(h, game.worldBoost());
   if (!h.held) {
     out.push(el('p', { class: 'wd-line' }, 'Being claimed'));
   } else if (!h.active) {
@@ -432,7 +432,7 @@ function ownStatus(game: Game, index: number, h: NonNullable<ReturnType<ReturnTy
   }
   if (h.burnt) {
     out.push(el('p', { class: 'wd-line is-cut' }, 'Burnt by raiders — it makes nothing until it is repaired'));
-    const repair = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[index], { revealed: true })
+    const repair = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[index], { revealed: true }, [], game.worldBoost())
       .find((a) => a.kind === 'repair');
     if (repair !== undefined && repair.kind === 'repair') {
       out.push(action({

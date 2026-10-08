@@ -516,7 +516,8 @@ describe('quests fund the research tree', () => {
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
     // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
     // 4,740,505: Transplanting (200) moves a tree.
-    expect(tree).toBe(4_740_505); // the same sum tests/fog.test.ts freezes, and why
+    // 12,153,405: the Atlas grew to 53 optional cards on the world board.
+    expect(tree).toBe(12_153_405); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has

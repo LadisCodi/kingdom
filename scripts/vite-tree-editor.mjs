@@ -75,6 +75,7 @@ const nodeBlock = (id, n) => {
     `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
     `      "gold": ${n.gold ?? 0}`
       + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
+      + (Object.keys(n.materials ?? {}).length > 0 ? `, "materials": ${json(n.materials)}` : '')
       + (Object.keys(n.goods ?? {}).length > 0 ? `, "goods": ${json(n.goods)}` : '')
       + (n.anyPrecious > 0 ? `, "anyPrecious": ${n.anyPrecious}` : ''),
   );

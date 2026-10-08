@@ -101,7 +101,15 @@ export function districtRate(
   const def = d === null ? null : WORLD_BUILD.districts[d];
   if (def === null || def.produces === '') return { currency: null, perHour: 0, cap: 0 };
   const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
-  return { currency: def.produces, perHour: def.perHour * mult * boost.produce, cap: def.store * mult * boost.store };
+  const own = districtBoost(boost, d);
+  return { currency: def.produces, perHour: def.perHour * mult * own.produce, cap: def.store * mult * own.store };
+}
+
+/** A seat's multipliers on one kind of district: its every-district boost
+ *  times its boost for that kind. */
+function districtBoost(boost: SeatBoost, d: WorldDistrict | null): { produce: number; store: number } {
+  const own = d === null ? undefined : boost.districts?.[d];
+  return { produce: boost.produce * (own?.produce ?? 1), store: boost.store * (own?.store ?? 1) };
 }
 
 const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
@@ -117,10 +125,11 @@ export function preciousRate(
   const id = districtOf(bh) !== null ? depositMaterial(bh.features) : null;
   if (id === null) return { id: null, perHour: 0, cap: 0 };
   const mult = bh.role === 'inner' ? WORLD_BUILD.innerRingMultiplier : 1;
+  const own = districtBoost(boost, districtOf(bh));
   return {
     id,
-    perHour: (WORLD_PRECIOUS.perDay / 24) * mult * boost.produce,
-    cap: WORLD_PRECIOUS.perDay * WORLD_PRECIOUS.storeDays * mult * boost.store,
+    perHour: (WORLD_PRECIOUS.perDay / 24) * mult * own.produce,
+    cap: WORLD_PRECIOUS.perDay * WORLD_PRECIOUS.storeDays * mult * own.store,
   };
 }
 
@@ -154,12 +163,29 @@ export function setTownhall(b: ServerBoard, seat: number, level: number): void {
 export function setBoost(b: ServerBoard, seat: number, boost: SeatBoost, t: number): void {
   const s = b.seats[seat];
   if (s === null || s === undefined) return;
-  const next = { produce: Math.max(1, boost.produce), store: Math.max(1, boost.store) };
-  const now = s.boost ?? NO_BOOST;
-  if (now.produce === next.produce && now.store === next.store) return;
+  const next = cleanBoost(boost);
+  if (JSON.stringify(s.boost ?? NO_BOOST) === JSON.stringify(next)) return;
   resolveTo(b, t);
   settleStores(b, t);
   s.boost = next;
+}
+
+/** A boost as the server keeps it: every multiplier and speed at least 1,
+ *  every count a whole number, nothing it does not know. */
+function cleanBoost(boost: SeatBoost): SeatBoost {
+  const atLeast1 = (n: unknown): number => (typeof n === 'number' && Number.isFinite(n) ? Math.max(1, n) : 1);
+  const out: SeatBoost = { produce: atLeast1(boost.produce), store: atLeast1(boost.store) };
+  const districts = Object.entries(boost.districts ?? {})
+    .filter(([d]) => (WORLD_DISTRICTS as readonly string[]).includes(d))
+    .map(([d, m]) => [d, { produce: atLeast1(m?.produce), store: atLeast1(m?.store) }] as const)
+    .filter(([, m]) => m.produce > 1 || m.store > 1);
+  if (districts.length > 0) out.districts = Object.fromEntries(districts);
+  if (boost.build !== undefined && atLeast1(boost.build) > 1) out.build = atLeast1(boost.build);
+  if (boost.repair !== undefined && atLeast1(boost.repair) > 1) out.repair = atLeast1(boost.repair);
+  if (Number.isInteger(boost.fortresses) && boost.fortresses! >= 0) out.fortresses = boost.fortresses;
+  if (Number.isInteger(boost.chapels) && boost.chapels! > 0) out.chapels = boost.chapels;
+  if (Array.isArray(boost.upgrades)) out.upgrades = WORLD_UPGRADES.filter((u) => boost.upgrades!.includes(u));
+  return out;
 }
 
 /** What the next claim costs a seat that already holds or claims `held`
@@ -254,7 +280,7 @@ export function reportSeen(b: ServerBoard, seat: number, indices: readonly numbe
 /** What repairing a burnt district costs `seat` now, and how long it takes. */
 export const repairPrice = (b: ServerBoard, seat: number): { gold: number; seconds: number } => ({
   gold: roundPrice(claimGold(Math.max(0, hexesOf(b, seat) - 1)) * WORLD_CAMPS.repairCostShare),
-  seconds: Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare),
+  seconds: Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare / (boostOf(b, seat).repair ?? 1)),
 });
 
 /** Start repairing a burnt district. The client pays the Gold and sends the
@@ -428,6 +454,13 @@ export function upgradeRefusal(b: ServerBoard, seat: number, index: number, upgr
   if (h.work !== null) return 'Busy';
   if (!h.active) return 'Inactive';
   if (upgradeLevel(h, upgrade) >= WORLD_BUILD.upgrades[upgrade].levels.length) return 'MaxLevel';
+  // A NEW building is the research's to open, and a Fortress counts against
+  // the cap; one already standing keeps its levels.
+  const boost = boostOf(b, seat);
+  if (upgradeLevel(h, upgrade) === 0) {
+    if (boost.upgrades !== undefined && !boost.upgrades.includes(upgrade) && !(upgrade === 'Chapel' && hasChapel(b, index))) return 'Locked';
+    if (upgrade === 'Fortress' && boost.fortresses !== undefined && fortressesOf(b, seat) >= boost.fortresses) return 'TooManyFortresses';
+  }
   if (upgrade === 'Chapel') {
     // A Shrine district has a Chapel of its own; the rest are counted.
     if (hasChapel(b, index)) return 'MaxLevel';
@@ -480,7 +513,11 @@ export const chapelsOf = (b: ServerBoard, seat: number): number => Object.values
 /** How many Chapels a seat may build: one, and one more per
  *  `chapelsPerHexes` hexes it holds. */
 export const chapelsAllowed = (b: ServerBoard, seat: number): number =>
-  1 + Math.floor(hexesOf(b, seat) / Math.max(1, WORLD_BUILD.chapelsPerHexes));
+  1 + Math.floor(hexesOf(b, seat) / Math.max(1, WORLD_BUILD.chapelsPerHexes)) + (boostOf(b, seat).chapels ?? 0);
+
+/** The Fortresses a seat holds or is building. */
+export const fortressesOf = (b: ServerBoard, seat: number): number => Object.values(b.hexes)
+  .filter((h) => h.owner === seat && (h.fortress > 0 || h.work?.upgrade === 'Fortress')).length;
 
 /**
  * HOST A WORLD RELIC in the Chapel on `seat`'s hex, at the level the client
@@ -653,7 +690,7 @@ export function resolveTo(b: ServerBoard, t: number): void {
 // ------------------------------------------------------------- commands
 
 function startClaim(b: ServerBoard, seat: number, index: number, t: number): number {
-  const at = t + WORLD_BUILD.claim.buildSeconds * 1000;
+  const at = t + Math.round(WORLD_BUILD.claim.buildSeconds * 1000 / (boostOf(b, seat).build ?? 1));
   b.hexes[index] = {
     owner: seat, standsAt: at, fortress: 0, work: null, active: false, stored: 0, storeAt: t, garrison: null,
   };
@@ -663,7 +700,7 @@ function startClaim(b: ServerBoard, seat: number, index: number, t: number): num
 function startUpgrade(b: ServerBoard, index: number, upgrade: WorldUpgrade, t: number): number {
   const h = b.hexes[index];
   const toLevel = upgradeLevel(h, upgrade) + 1;
-  const at = t + WORLD_BUILD.upgrades[upgrade].levels[toLevel - 1].buildSeconds * 1000;
+  const at = t + Math.round(WORLD_BUILD.upgrades[upgrade].levels[toLevel - 1].buildSeconds * 1000 / (boostOf(b, h.owner).build ?? 1));
   h.work = { upgrade, toLevel, at };
   return at;
 }

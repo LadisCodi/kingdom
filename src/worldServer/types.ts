@@ -155,8 +155,29 @@ export interface ServerSeat {
   relics?: Partial<Record<ArtifactId, number>>;
 }
 
-/** A seat's multipliers on its improvements' output and stores. */
-export interface SeatBoost { produce: number; store: number }
+/**
+ * What a seat's research does on the world board, as its client sends it
+ * (`setBoost`). Everything past `produce` and `store` is optional, so an
+ * older client and a stand-in rival — which send none of it — keep the board
+ * as it was: no Fortress cap, no building locked.
+ */
+export interface SeatBoost {
+  /** Multipliers (≥ 1) on what every district makes an hour and holds. */
+  produce: number;
+  store: number;
+  /** The same, for one kind of district, on top of the two above. */
+  districts?: Record<string, { produce: number; store: number }>;
+  /** Speeds (≥ 1) a world build's and a repair's time is divided by. */
+  build?: number;
+  repair?: number;
+  /** How many Fortresses the seat may hold; absent = no cap. */
+  fortresses?: number;
+  /** Chapels on top of what the ground it holds allows. */
+  chapels?: number;
+  /** The buildings it may raise anew in a district; absent = every one.
+   *  One already standing keeps its levels. */
+  upgrades?: WorldUpgrade[];
+}
 
 export interface ServerBoard {
   id: string;
@@ -374,6 +395,9 @@ export type Refusal =
 
   /** A world relic's host (relic-restoration.md §5.2). */
   | 'NoChapel' | 'TooManyChapels' | 'NoSlot' | 'NotAWorldRelic'
+  /** A building its research has not opened yet, and a Fortress past its
+   *  cap (Docs/features/19-world-map.md §7.2). */
+  | 'Locked' | 'TooManyFortresses'
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */

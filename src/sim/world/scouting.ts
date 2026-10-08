@@ -16,27 +16,31 @@ import { addHeroXp } from '../heroes';
 import { payKnowledge } from '../knowledge';
 import { addGood } from '../goods';
 import { addToWallet, type GameState, type GoodsStock, type Wallet } from '../state';
+import { techMultiplier } from '../techEffects';
 import { lumpMaterial, type BoardHex } from './board';
 import { boardOf } from './source';
 
 /** What a hex's promise pays at this moment: a wallet, goods, or a pack. */
 export type ScoutPay = { wallet: Wallet; goods: GoodsStock; pack: PackTier | null };
 
-/** What `scout` on hex `index` of `role` would pay if the explorer came home
- *  now. A precious lump is mostly the player's own material (19 §7.4). */
+/** What `scout` on hex `index` of `role` would pay if its hex were revealed
+ *  now. A precious lump is mostly the player's own material (19 §7.4). The
+ *  Atlas's `scoutReward` adds its share to every amount — never to a pack. */
 export function scoutPay(state: GameState, scout: ScoutRewardDef, role: BoardHex['role'], index = -1): ScoutPay {
   if (scout.reward === 'Pack') return { wallet: {}, goods: {}, pack: scout.pack };
+  const k = Math.max(1, techMultiplier(state, 'scoutReward'));
+  const more = (n: number): number => (k > 1 ? roundPrice(n * k) : n);
   if (scout.reward === 'Precious') {
     const board = boardOf(state.world.board);
     const id = lumpMaterial(board, state.world.board.seat, 'scout', index, state.world.board.seat);
-    return { wallet: {}, goods: { [id]: scout.amount }, pack: null };
+    return { wallet: {}, goods: { [id]: more(scout.amount) }, pack: null };
   }
   if (scout.reward === 'Gold' || scout.reward === 'Wood' || scout.reward === 'Food' || scout.reward === 'Stone') {
     const hours = role === 'portal' ? 0 : WORLD_SCOUTING.hoursByRole[role];
     const rate = cityMakesPerSecond(state, scout.reward);
-    return { wallet: { [scout.reward]: roundPrice(Math.max(scout.amount, rate * hours * 3600)) }, goods: {}, pack: null };
+    return { wallet: { [scout.reward]: roundPrice(Math.max(scout.amount, rate * hours * 3600) * k) }, goods: {}, pack: null };
   }
-  return { wallet: { [scout.reward]: scout.amount }, goods: {}, pack: null };
+  return { wallet: { [scout.reward]: more(scout.amount) }, goods: {}, pack: null };
 }
 
 /** Pay a hex's promise into the purses it belongs to; returns what it paid. */

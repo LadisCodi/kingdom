@@ -39,7 +39,9 @@ export type TechUnlock =
   | { districtCount: string }
   | { unit: string }
   | { harvest: string }
-  | { terrain: string };
+  | { terrain: string }
+  /** A building raised in a district on the world board: Fortress, Chapel. */
+  | { worldUpgrade: string };
 
 /**
  * What a technology IS, in one word.
@@ -87,6 +89,9 @@ export interface TechNodeDoc {
   /** City Gold and kingdom Knowledge. A technology takes no time. */
   gold: number;
   knowledge?: number;
+  /** City Wood, Stone and Food paid with the Gold, when it is completed.
+   *  Absent = none. */
+  materials?: Record<string, number>;
   /** Refined goods paid with the Gold, when it is completed. Absent = none. */
   goods?: Record<string, number>;
   /** Precious material of any kind, paid from what the player holds most of
@@ -221,6 +226,9 @@ export const UNIT_IDS = Object.keys(balance.units);
 export const HARVEST_IDS = Object.keys(balance.harvest);
 export const TERRAIN_IDS = Object.keys(balance.terrain);
 export const GOOD_IDS = Object.keys(balance.goods);
+export const WORLD_UPGRADE_IDS = Object.keys(balance.worldBuild.upgrades);
+/** The city's raw materials a technology may ask for beside its Gold. */
+export const MATERIAL_IDS = ['Wood', 'Stone', 'Food'] as const;
 const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxLevel: number }>;
 
 /** A technology that HAS a slot — the same object, with the four fields known
@@ -283,6 +291,7 @@ export function unlockKey(unlock: TechUnlock): string {
   if ('unit' in unlock) return `unit:${unlock.unit}`;
   if ('harvest' in unlock) return `harvest:${unlock.harvest}`;
   if ('terrain' in unlock) return `terrain:${unlock.terrain}`;
+  if ('worldUpgrade' in unlock) return `worldUpgrade:${unlock.worldUpgrade}`;
   return 'unknown';
 }
 
@@ -296,6 +305,7 @@ export function unlockLabel(unlock: TechUnlock): string {
   if ('unit' in unlock) return `the ${unlock.unit}`;
   if ('harvest' in unlock) return `${unlock.harvest} cells`;
   if ('terrain' in unlock) return `${unlock.terrain} cells`;
+  if ('worldUpgrade' in unlock) return `the ${unlock.worldUpgrade} on the world board`;
   return 'nothing';
 }
 
@@ -325,6 +335,10 @@ function unlockProblem(unlock: TechUnlock): string | null {
   if ('harvest' in unlock) {
     return HARVEST_IDS.includes(unlock.harvest) ? null
       : `works "${unlock.harvest}", which is not a harvest source`;
+  }
+  if ('worldUpgrade' in unlock) {
+    return WORLD_UPGRADE_IDS.includes(unlock.worldUpgrade) ? null
+      : `builds "${unlock.worldUpgrade}", which is not a building on the world board`;
   }
   if ('terrain' in unlock) {
     return TERRAIN_IDS.includes(unlock.terrain) ? null
@@ -649,6 +663,13 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
     if (node.anyPrecious !== undefined && (!Number.isInteger(node.anyPrecious) || node.anyPrecious < 0)) {
       errors.push({ message: `${id} asks for ${node.anyPrecious} of any precious material — a whole number`, tech: id });
+    }
+    for (const [material, n] of Object.entries(node.materials ?? {})) {
+      if (!(MATERIAL_IDS as readonly string[]).includes(material)) {
+        errors.push({ message: `${id} asks for ${material}, which is not Wood, Stone or Food`, tech: id });
+      } else if (!Number.isInteger(n) || n <= 0) {
+        errors.push({ message: `${id} asks for ${n} ${material} — a whole number above 0`, tech: id });
+      }
     }
     for (const [good, n] of Object.entries(node.goods ?? {})) {
       if (!GOOD_IDS.includes(good)) {

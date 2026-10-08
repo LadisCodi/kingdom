@@ -328,6 +328,10 @@ export class TreeDoc {
       if (node.kind !== 'bonus') delete node.effects;
       if (node.knowledge === 0) delete node.knowledge;
       if (!(node.anyPrecious! > 0)) delete node.anyPrecious;
+      if (node.materials !== undefined) {
+        for (const [m, n] of Object.entries(node.materials)) if (!(n > 0)) delete node.materials[m];
+        if (Object.keys(node.materials).length === 0) delete node.materials;
+      }
       if (node.goods !== undefined) {
         for (const [g, n] of Object.entries(node.goods)) if (!(n > 0)) delete node.goods[g];
         if (Object.keys(node.goods).length === 0) delete node.goods;

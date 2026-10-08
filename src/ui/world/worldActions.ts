@@ -3,7 +3,8 @@
 // buttons from this; the server's answer to the command is what counts, so
 // nothing here has to be the final word — only the right offer.
 
-import { WORLD_BUILD, WORLD_CAMPS } from '../../sim/data/definitions';
+import { TECHNOLOGIES, WORLD_BUILD, WORLD_CAMPS, worldUpgradeGate } from '../../sim/data/definitions';
+import type { SeatBoost } from '../../worldServer/types';
 import type { ArtifactId, GameState, Wallet, WorldBuildWhat } from '../../sim/state';
 import { SEAT_INDICES, type BoardHex } from '../../sim/world/board';
 import { boardNeighbors } from '../../sim/world/hex';
@@ -47,11 +48,16 @@ export const isUpgrade = (what: WorldBuildWhat): what is WorldUpgrade => (WORLD_
 export const worldBuildName = (what: WorldBuildWhat): string =>
   what === 'Repair' ? 'Repair' : isUpgrade(what) ? WORLD_BUILD.upgrades[what].name : WORLD_BUILD.districts[what].name;
 
+/** The board as it is without any research: nothing faster, nothing capped. */
+const NO_BOOST: SeatBoost = { produce: 1, store: 1 };
+
 /** Seconds a builder spends on a world build: a district, an upgrade's
- *  level, or a repair — a share of a district's build (19 §5.5). */
-export const worldBuildSeconds = (what: WorldBuildWhat, level: number): number =>
-  what === 'Repair' ? Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare)
-    : isUpgrade(what) ? WORLD_BUILD.upgrades[what].levels[level - 1]?.buildSeconds ?? 0 : WORLD_BUILD.claim.buildSeconds;
+ *  level, or a repair — a share of a district's build (19 §5.5) — at the
+ *  speeds the player's research sends the server (sim/world/boost.ts). */
+export const worldBuildSeconds = (what: WorldBuildWhat, level: number, boost: SeatBoost = NO_BOOST): number =>
+  what === 'Repair' ? Math.round(WORLD_BUILD.claim.buildSeconds * WORLD_CAMPS.repairTimeShare / (boost.repair ?? 1))
+    : Math.round((isUpgrade(what) ? WORLD_BUILD.upgrades[what].levels[level - 1]?.buildSeconds ?? 0 : WORLD_BUILD.claim.buildSeconds)
+      / (boost.build ?? 1));
 
 /** What the player is told when a world build stands. */
 export const worldBuildDone = (what: WorldBuildWhat, level: number): string =>
@@ -98,20 +104,20 @@ function touches(source: WorldSource, seat: number, index: number): boolean {
  *  district going up, or an upgrade's level. Every job takes exactly its
  *  data's time, so when it began is when it ends less that. Null when
  *  nothing is building. */
-export function hexWork(h: HexControl): { what: string; startedAt: number; endsAt: number } | null {
+export function hexWork(h: HexControl, boost: SeatBoost = NO_BOOST): { what: string; startedAt: number; endsAt: number } | null {
   if (!h.held) {
-    const ms = WORLD_BUILD.claim.buildSeconds * 1000;
+    const ms = worldBuildSeconds(h.district, 1, boost) * 1000;
     return { what: `Building the ${WORLD_BUILD.districts[h.district].name}`, startedAt: h.standsAt - ms, endsAt: h.standsAt };
   }
   if ((h.repairAt ?? null) !== null) {
-    const ms = worldBuildSeconds('Repair', 1) * 1000;
+    const ms = worldBuildSeconds('Repair', 1, boost) * 1000;
     return { what: 'Repairing the district', startedAt: h.repairAt! - ms, endsAt: h.repairAt! };
   }
   if (h.work === null) return null;
   const def = WORLD_BUILD.upgrades[h.work.upgrade];
   return {
     what: h.work.toLevel === 1 ? `Building the ${def.name}` : `${def.name} to level ${formatCount(h.work.toLevel)}`,
-    startedAt: h.work.at - (def.levels[h.work.toLevel - 1]?.buildSeconds ?? 0) * 1000,
+    startedAt: h.work.at - worldBuildSeconds(h.work.upgrade, h.work.toLevel, boost) * 1000,
     endsAt: h.work.at,
   };
 }
@@ -119,12 +125,40 @@ export function hexWork(h: HexControl): { what: string; startedAt: number; endsA
 /** The Chapels `seat` has built or is building, and how many it may: one,
  *  and one more per `chapelsPerHexes` hexes held — a Shrine district's own
  *  is not counted (worldServer/core.ts `chapelsAllowed`). */
-export function chapelRoom(source: WorldSource, seat: number): { built: number; allowed: number } {
+export function chapelRoom(source: WorldSource, seat: number, boost: SeatBoost = NO_BOOST): { built: number; allowed: number } {
   const board = source.board();
   const mine = board.hexes.map((h) => ({ bh: h, h: source.hexOf(h.index) }))
     .filter(({ h }) => h !== null && h.owner === seat);
   const built = mine.filter(({ bh, h }) => districtOf(bh) !== 'Shrine' && (h!.chapel === true || h!.work?.upgrade === 'Chapel')).length;
-  return { built, allowed: 1 + Math.floor(mine.length / Math.max(1, WORLD_BUILD.chapelsPerHexes)) };
+  return { built, allowed: 1 + Math.floor(mine.length / Math.max(1, WORLD_BUILD.chapelsPerHexes)) + (boost.chapels ?? 0) };
+}
+
+/** The Fortresses `seat` holds or is building, and how many it may — no cap
+ *  until its research says one (worldServer/core.ts `fortressesOf`). */
+export function fortressRoom(source: WorldSource, seat: number, boost: SeatBoost = NO_BOOST): { built: number; allowed: number | null } {
+  const built = source.board().hexes.map((bh) => source.hexOf(bh.index))
+    .filter((h) => h !== null && h.owner === seat && (h.fortress > 0 || h.work?.upgrade === 'Fortress')).length;
+  return { built, allowed: boost.fortresses ?? null };
+}
+
+/** Why a NEW building of this kind cannot go up in a district, or null:
+ *  its card in the Atlas not researched, or the kingdom's count of it
+ *  reached. One already standing keeps its levels. */
+export function upgradeBlocked(source: WorldSource, seat: number, upgrade: WorldUpgrade, boost: SeatBoost = NO_BOOST): string | null {
+  if (boost.upgrades !== undefined && !boost.upgrades.includes(upgrade)) {
+    const gate = worldUpgradeGate(upgrade);
+    return gate === null ? null : `Research ${TECHNOLOGIES[gate].name} in the Atlas`;
+  }
+  if (upgrade === 'Fortress') {
+    const room = fortressRoom(source, seat, boost);
+    if (room.allowed !== null && room.built >= room.allowed) return 'Research the Atlas to hold another Fortress';
+  } else {
+    const room = chapelRoom(source, seat, boost);
+    if (room.built >= room.allowed) {
+      return `Hold ${formatCount((room.allowed - (boost.chapels ?? 0)) * WORLD_BUILD.chapelsPerHexes)} hexes to build another Chapel`;
+    }
+  }
+  return null;
 }
 
 /** What `seat` can do on this hex now, in the order the sheet shows it.
@@ -133,6 +167,7 @@ export function chapelRoom(source: WorldSource, seat: number): { built: number; 
  *  player's restored world relics, which a Chapel here could host. */
 export function hexActions(
   source: WorldSource, seat: number, bh: BoardHex, seen: { revealed: boolean }, relics: readonly ArtifactId[] = [],
+  boost: SeatBoost = NO_BOOST,
 ): HexAction[] {
   if (!seen.revealed) return [];
   const h = source.hexOf(bh.index);
@@ -159,7 +194,7 @@ export function hexActions(
   if (h === null) {
     const district = districtOf(bh);
     if (district === null || !touches(source, seat, bh.index)) return [];
-    return [{ kind: 'claim', district, gold: claimGold(hexesHeldBy(source, seat)), seconds: WORLD_BUILD.claim.buildSeconds }];
+    return [{ kind: 'claim', district, gold: claimGold(hexesHeldBy(source, seat)), seconds: worldBuildSeconds(district, 1, boost) }];
   }
   if (h.owner !== seat || !h.held) return [];
   const out: HexAction[] = [];
@@ -177,7 +212,7 @@ export function hexActions(
   // Burnt by raiders: repaired before anything is built into it (19 §5.5).
   if (h.burnt) {
     if ((h.repairAt ?? null) === null) {
-      out.push({ kind: 'repair', gold: repairGold(source, seat), seconds: worldBuildSeconds('Repair', 1) });
+      out.push({ kind: 'repair', gold: repairGold(source, seat), seconds: worldBuildSeconds('Repair', 1, boost) });
     }
     return out;
   }
@@ -193,11 +228,10 @@ export function hexActions(
     if (upgrade === 'Chapel' && h.chapel === true) continue;
     const level = upgradeLevel({ fortress: h.fortress, chapel: h.chapel ? 1 : 0 }, upgrade) + 1;
     if (level > levels.length) continue;
-    const room = upgrade === 'Chapel' ? chapelRoom(source, seat) : null;
+    const blocked = level === 1 ? upgradeBlocked(source, seat, upgrade, boost) : null;
     out.push({
-      kind: 'upgrade', upgrade, level, gold: levels[level - 1].gold, seconds: levels[level - 1].buildSeconds,
-      ...(room !== null && room.built >= room.allowed
-        ? { blocked: `Hold ${formatCount(room.allowed * WORLD_BUILD.chapelsPerHexes)} hexes to build another Chapel` } : {}),
+      kind: 'upgrade', upgrade, level, gold: levels[level - 1].gold, seconds: worldBuildSeconds(upgrade, level, boost),
+      ...(blocked !== null ? { blocked } : {}),
     });
   }
   return out;
