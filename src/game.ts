@@ -766,6 +766,8 @@ export class Game {
   /** The placement ghost's float, glide and landing (render/ghostFx.ts). */
   readonly ghostFx = new GhostFx();
   private questWasComplete = false;
+  /** The quest the last notify saw, so one that ARRIVES done is told apart. */
+  private questSeenIndex = -1;
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
@@ -873,10 +875,15 @@ export class Game {
       try { this.doClaimQuest(); } finally { this.autoClaiming = false; }
       return;
     }
-    // The moment the active quest's goal is met, ding — before any claim.
-    const questDone = this.questInfo()?.complete ?? false;
-    if (questDone && !this.questWasComplete) playSfx('questComplete');
+    // The moment the active quest's goal is met, ding — before any claim. A
+    // quest that arrives already met dings when its scroll has filled
+    // (questPill.ts), not as it appears.
+    const info = this.questInfo();
+    const questDone = info?.complete ?? false;
+    const arrived = info !== null && this.questSeenIndex >= 0 && info.index !== this.questSeenIndex;
+    if (questDone && !this.questWasComplete && !arrived) playSfx('questComplete');
     this.questWasComplete = questDone;
+    this.questSeenIndex = info?.index ?? -1;
     for (const fn of this.changeListeners) fn();
   }
 

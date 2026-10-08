@@ -11,6 +11,9 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
+- **A quest that arrives already done** unrolls on its running face, empty;
+  its bar and count fill to the goal (~1 s), then it turns to Claim with the
+  completion sound. Before that, a tap points at the goal rather than claiming.
 - **68 quests**, paying 15,505 Gold, 210 Stone, 180 Food, 130 Mana,
   750 Gems, 120 Stardust, **21 Knowledge across thirteen of them** (§2.1) and
   **one card pack**.
