@@ -24,3 +24,20 @@ Cut by the sheet's real gutters (the sack spills past the midline), specks
 under 2% of the largest blob dropped, fitted to 256×256:
 `src/render/assets/gems_{pouch,purse,chest,vault,hoard,treasury}.png` and
 `src/ui/assets/offer-gem-sack.png`.
+
+## The illustrations
+
+Five pictures held purple gems; each was regenerated whole (not recoloured)
+with the blue gem attached as THE gem and the old picture as a composition
+reference, using the original prompts in
+`../offer-kit/novice/prompt.md` and `../mockups/royal-survey-prompts.md`:
+
+| Master (`illustrations/`) | Ships as |
+|---|---|
+| `novice_card.master.png` | `src/render/assets/offer_novice_art.png` (16:10, 1280×800) |
+| `novice_cutout.master.png` | `src/render/assets/offer_novice_cutout.png` (923×1024) |
+| `novice_icon.master.png` | `src/render/assets/offer_novice_1.png` (512, 92%) |
+| `first_purchase.master.png` | `src/render/assets/offer_first_purchase.png` (512, 92%) |
+| `survey_chest.master.png` | `src/ui/assets/survey-chest.png` (320) |
+
+`illustrations/place.py` fits every master to its size.
