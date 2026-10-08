@@ -241,6 +241,9 @@ regeneration +20, +25, +30, +36, +42 an hour.
 - **One unit, one hall:** every hall trains exactly one unit and every unit
   has exactly one hall (checked by `dataRules.ts`); the technology that
   unlocks a unit unlocks its hall.
+- **A hall trains every rank of its unit its level allows**: II at level 3,
+  III at 5, IV at 7, V at 9, each also behind its own technology
+  ([`combat.md`](combat.md) §6).
 
 | Hall | Trains | Unlock | Build | Level 2 |
 |---|---|---|---|---|

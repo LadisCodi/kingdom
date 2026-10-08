@@ -9,9 +9,10 @@
 >
 > **Status: built.** The resolver is `src/sim/battle.ts` and the
 > screen that replays its stream is `src/ui/battleScreen.ts`. Still ahead:
-> unit tiers T2–T5 (§6, no technology opens one yet), villains in a room
-> (§11 — the generator takes a pool and a boss villain, and no caller passes
-> one) and authored boss formations.
+> **troop evolutions** (§6 — designed, not built), the generator's evolved
+> squads and scaled villains (§11, §9.4 — designed, not built), villains in a
+> room (§11 — the generator takes a pool and a boss villain, and no caller
+> passes one) and authored boss formations.
 
 ## 1. Model
 
@@ -48,7 +49,8 @@ and the army cap; hero slots one free, the rest Gems
 
 ## 4. Squads
 
-- A squad is one **unit type** at one **tier**, plus a troop **count**.
+- A squad is one **troop** — a unit type at one **evolution** (§6) — plus a
+  troop **count**.
 - `count` is capped by the type's `squadSize`, and **a partial squad is
   legal**: a slot takes as many of the type as there are, up to that cap. A
   full squad is the ceiling, never the entry price — a player with eleven
@@ -94,7 +96,7 @@ and the army cap; hero slots one free, the rest Gems
   its Mana on the way in ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
   the player has banked is ever taken.
 
-## 5. Unit stats — Tier 1
+## 5. Unit stats — rank I
 
 | Unit | `squadSize` | `frontage` | `atk` | `dmg` | `def` | `hp` | `cooldown` | `power` | Targeting |
 |---|---|---|---|---|---|---|---|---|---|
@@ -107,8 +109,8 @@ and the army cap; hero slots one free, the rest Gems
   is what one troop takes off at an even pair (§7).
 - The four are what a unit's and a hero's card shows, in that order.
 
-`cooldown` is in ticks. `squadSize` and `frontage` are fixed constants at every
-tier.
+`cooldown` is in ticks. `squadSize`, `frontage` and `cooldown` are the same
+at every rank (§6).
 
 - **A fight lasts at least ten seconds**, a fair one fifteen to thirty, a
   dungeon's boss room up to a minute and a half. Two dials hold it there:
@@ -130,21 +132,125 @@ Gold is what an army is mostly paid in:
 | **Archer** | 130 Gold · 12 Wood |
 | **Cavalry** | 300 Gold · 16 Food · 24 Stone |
 
-## 6. Unit tiers
+## 6. Evolutions
 
-| Tier | Multiplier | Unlock |
-|---|---|---|
-| T1 | ×1.0 | Start |
-| T2 | ×1.6 | Research |
-| T3 | ×2.6 | Research |
-| T4 | ×4.2 | Research |
-| T5 | ×6.8 | Research |
+**Status: designed, not built.**
 
-- The multiplier applies to `dmg`, `hp` and `power`. `squadSize`,
-  `frontage`, `atk`, `def` and `cooldown` are unaffected.
-- **Each unit type tiers independently.**
-- Unlocking a tier switches training output to it and **converts existing troops
-  of that type**. Only one tier of a type exists at a time.
+### 6.1 The rules
+
+- Every unit has **five evolutions, I to V**. Rank I is the unit as §5 has
+  it; II–V are the same unit, stronger and dearer.
+- **An evolution is a troop of its own.** It has its own count in the roster,
+  its own squads, its own wounded. Ranks never mix in a squad.
+- **A trained troop never evolves.** The roster keeps every rank the player
+  trained; a better rank is trained new.
+- **Same unit, same type**: row, targeting, the type chart (§7) and a hero's
+  passive (§9.2) read the unit type, never the rank. `squadSize`, `frontage`
+  and `cooldown` are the unit's at every rank.
+- **One place in a hall**, whatever the rank (§14).
+- **Two gates to train a rank:**
+  - **its technology** — one per unit and rank: *Warriors II … V*,
+    *Lancers II … V*, *Archers II … V*, *Cavalry II … V* (16);
+  - **its hall at a minimum level**: II at 3, III at 5, IV at 7, V at 9.
+  - A rank's technology sits in the chapter that opens its hall level, or
+    later.
+- **Every number is authored whole, per rank** — `atk`, `dmg`, `def`, `hp`,
+  `power`, the recruit cost and the training time — in `units`, beside the
+  unit.
+
+### 6.2 How the numbers are set (a balancing rule, not a formula)
+
+| Rank | `dmg` · `hp` · `power` | `atk` · `def` | Recruit cost | Training time | Hall level |
+|---|---|---|---|---|---|
+| I | ×1.0 | +0 | ×1 | ×1 | 1 |
+| II | ×1.6 | +2 | ×2 | ×1.5 | 3 |
+| III | ×2.6 | +4 | ×4 | ×2.25 | 5 |
+| IV | ×4.2 | +6 | ×8 | ×3.4 | 7 |
+| V | ×6.8 | +8 | ×16 | ×5 | 9 |
+
+- Against rank I, rounded to whole numbers. `power` is an integer.
+- `atk` and `def` climb by a flat step, so two troops of one rank meet the
+  type chart exactly as two of rank I do.
+- Gold per point of `power` climbs 1 · 1.25 · 1.54 · 1.9 · 2.35: a rank is
+  dearer for what it is worth and cheaper for the place it takes.
+- What is rare about a high rank is its gate: the hall levels it needs are
+  priced in goods and precious materials ([`buildings.md`](buildings.md)
+  §4.8).
+
+### 6.3 The numbers
+
+`atk` · `dmg` · `def` · `hp` · `power` · recruit cost · training time:
+
+**Warrior**
+
+| Rank | `atk` | `dmg` | `def` | `hp` | `power` | Recruit cost | Time |
+|---|---|---|---|---|---|---|---|
+| I | 4 | 5 | 6 | 60 | 3 | 100 G · 5 W · 8 F | 15 s |
+| II | 6 | 8 | 8 | 96 | 5 | 200 G · 10 W · 16 F | 23 s |
+| III | 8 | 13 | 10 | 156 | 8 | 400 G · 20 W · 32 F | 34 s |
+| IV | 10 | 21 | 12 | 252 | 13 | 800 G · 40 W · 64 F | 51 s |
+| V | 12 | 34 | 14 | 408 | 20 | 1,600 G · 80 W · 128 F | 75 s |
+
+**Lancer**
+
+| Rank | `atk` | `dmg` | `def` | `hp` | `power` | Recruit cost | Time |
+|---|---|---|---|---|---|---|---|
+| I | 6 | 8 | 4 | 48 | 4 | 200 G · 12 W · 4 F | 20 s |
+| II | 8 | 13 | 6 | 77 | 6 | 400 G · 24 W · 8 F | 30 s |
+| III | 10 | 21 | 8 | 125 | 10 | 800 G · 48 W · 16 F | 45 s |
+| IV | 12 | 34 | 10 | 202 | 17 | 1,600 G · 96 W · 32 F | 68 s |
+| V | 14 | 54 | 12 | 326 | 27 | 3,200 G · 192 W · 64 F | 100 s |
+
+**Archer**
+
+| Rank | `atk` | `dmg` | `def` | `hp` | `power` | Recruit cost | Time |
+|---|---|---|---|---|---|---|---|
+| I | 6 | 6 | 2 | 30 | 4 | 130 G · 12 W | 12 s |
+| II | 8 | 10 | 4 | 48 | 6 | 260 G · 24 W | 18 s |
+| III | 10 | 16 | 6 | 78 | 10 | 520 G · 48 W | 27 s |
+| IV | 12 | 25 | 8 | 126 | 17 | 1,040 G · 96 W | 41 s |
+| V | 14 | 41 | 10 | 204 | 27 | 2,080 G · 192 W | 60 s |
+
+**Cavalry**
+
+| Rank | `atk` | `dmg` | `def` | `hp` | `power` | Recruit cost | Time |
+|---|---|---|---|---|---|---|---|
+| I | 8 | 20 | 3 | 72 | 7 | 300 G · 16 F · 24 S | 30 s |
+| II | 10 | 32 | 5 | 115 | 11 | 600 G · 32 F · 48 S | 45 s |
+| III | 12 | 52 | 7 | 187 | 18 | 1,200 G · 64 F · 96 S | 68 s |
+| IV | 14 | 84 | 9 | 302 | 29 | 2,400 G · 128 F · 192 S | 102 s |
+| V | 16 | 136 | 11 | 490 | 48 | 4,800 G · 256 F · 384 S | 150 s |
+
+- A full board of one rank (six squads of `squadSize`), in `power`:
+
+  | | I | II | III | IV | V |
+  |---|---|---|---|---|---|
+  | Warrior | 1,800 | 3,000 | 4,800 | 7,800 | 12,000 |
+  | Cavalry | 2,520 | 3,960 | 6,480 | 10,440 | 17,280 |
+
+### 6.4 Training a rank
+
+The hall's training widget ([`../art/ui-menus-redesign.md`](../art/ui-menus-redesign.md)):
+
+- **The portrait is a button.** It opens a drop-down, one row per rank:
+  portrait, name, the four stats as values (never multipliers), the recruit
+  cost. A locked rank shows its padlock and its reason — *Needs Warriors III*,
+  *Barracks level 5*.
+- **The selected rank is what the panel shows** — its stats, price and time —
+  and what Train trains.
+- **A newly unlocked rank becomes the selected one** in its hall. Training a
+  lower rank is a choice the player makes.
+- **One rank in a hall's line at a time.** While a batch of one rank is in
+  the line, Train on another rank is gated: *Finish the current batch*.
+- The owned-count pill counts the selected rank.
+
+### 6.5 Everywhere else a troop is shown
+
+- **The party picker** lists every rank owned as its own troop.
+- **A squad on the board** wears its rank (the battle screen, the room
+  sheet, an army on the world map), its own and the enemy's alike.
+- **The Infirmary** holds and mends each rank apart, at
+  `army.healCostShare` of that rank's own recruit cost (§4).
 
 ## 7. Damage
 
@@ -168,7 +274,7 @@ dealt = raw × type_num / type_den          (integer division, floor)
 `hp_pool(B) −= dealt`, then `alive(B)` recomputes. Troops are removed whole; the
 remainder stays in the pool.
 
-`dmg(A)` already includes the tier multiplier (§6) and the hero troop bonus
+`dmg(A)` is its rank's own (§6) and already includes the hero troop bonus
 (§9).
 
 **Type fractions**
@@ -264,6 +370,18 @@ as ticks.
 - **Villains** hold the world dungeons' boss rooms: a boss room's enemy is
   generated with every villain in its pool (§11).
 
+### 9.4 A scaled villain
+
+**Status: designed, not built.**
+
+- A villain's authored block is its **floor**. Only the generator raises it,
+  with budget a full board of rank-V squads cannot hold (§11).
+- Its scale is `k = (authored power + the budget it takes) / authored power`:
+  - `hp`, `dmg` and `power` × `k`;
+  - `atk` and `def` +2 for every ×1.6 in `k`, as a troop's rank climbs (§6.2);
+  - its skill, passive, type and `cooldown` are its own, unscaled.
+- No ceiling: a villain takes whatever budget is left.
+
 ## 10. Ticks and victory
 
 - One tick = **100 ms logical**, unrelated to frame rate.
@@ -285,7 +403,8 @@ them:
 2. **Villains first**, because what is left is what the squads may cost. Above
    `combat.genVillainThreshold`, up to `combat.genVillainSlots` of them
    (three, the same hero slots the player fields) are drawn from the depth's
-   `villainPool`, each costing its authored `power`.
+   `villainPool` (the Portal's: every villain), each costing its authored
+   `power`.
 3. Pick a slot count of 2–6, whichever is larger: the roll, or the number of
    squads the budget actually needs.
 4. Split the budget across types, **the ruin's affinity first** and taking the
@@ -293,13 +412,26 @@ them:
 5. Per type: `count = floor(share / power)`, clamped to `squadSize`;
    overflow spills into a second squad of the same type, and whatever the
    shares leave on the table goes to the affinity while a slot remains.
-6. Rows are the unit's own: melee and flankers front, ranged back (§8).
+6. **Evolved squads** (designed, not built). When six squads of rank I
+   cannot hold the budget, the generator finds the lowest rank R at which
+   they can and fields the board in **R−1 and R**, promoting as few squads to
+   R as it needs — the affinity's (or the mix's heaviest) first. Each squad
+   is one rank; counts are recomputed at its rank's `power`.
+7. **Scaled villains** (designed, not built). Budget a board of rank-V squads
+   cannot hold is split evenly across the villains on the board, drawn from
+   the pool now if none were, and each is scaled (§9.4). Without a pool it is
+   not fielded.
+8. Rows are the unit's own: melee and flankers front, ranged back (§8).
 
-**The board is the ceiling.** Six troop slots of `squadSize` is all a side
-can field, so past roughly two thousand points another thousand buys nothing
-— which is why a deep room spends on villains instead. Budget that cannot be
-fielded is simply not fielded, and the authored ladder lives under that
-ceiling.
+**What fields what**, at today's budgets:
+
+| Caller | Budget | Enemy |
+|---|---|---|
+| Province lairs | 60–1,000 | rank I |
+| World camps | up to ~2,760 (inner ring) | rank II in the inner ring |
+| World dungeon, depth 2 · its boss | 900–2,160 · ~3,460 | ranks I–II |
+| World dungeon, depth 3 · its boss | 2,400–5,340 · ~8,540 | ranks II–IV, with villains |
+| Dark Portal, floors 1–40 | 400 → ~16,400 | villains from floor 1; rank II from ~18, III ~24, IV ~29, V ~34; scaled villains past it |
 
 **Overrides:** **a boss room always fields its authored villain**, never a
 rolled one. A world dungeon's boss room fields a bigger budget instead
@@ -315,7 +447,7 @@ as its own output, because it is authored rather than derived.
 Shown against `power_req` in the room sheet:
 
 ```
-squad_power = count × power(tier)
+squad_power = count × power(rank)
 party_power = Σ squad_power + Σ hero_power
 hero_power  = dmg(hero at its level) × combat.heroPowerPerDmg
 ```
@@ -333,7 +465,7 @@ fast-forward or restart.
 
 | Event | Payload |
 |---|---|
-| `start` | Both boards, slot types, tiers, rows, applied bonuses, seed |
+| `start` | Both boards, slot types, ranks, rows, applied bonuses, seed |
 | `attack` | tick, source slot, target slot, `hits`, `dealt` (after a shield), and `skill` and `absorbed` when a skill struck or a shield soaked; `edge` (`adv` · `dis`) when the type chart was not even (§7) |
 | `troops_lost` | tick, slot, new `alive`, new `hp_pool` |
 | `skill` | tick (0 for a Rally), the fighter, the skill — the screen shows its name |
@@ -368,8 +500,8 @@ The cap limits **total troops owned**, not party size.
 - **A soldier is one place in a hall, whatever it is worth in a fight.**
   `power` decides what a troop DOES and never what it costs to keep,
   so a Cavalry and a Warrior take the same room.
-- Caps sum across buildings. Each unit type is behind its own technology, as is
-  each tier.
+- Caps sum across buildings. Each unit type is behind its own technology, and
+  each of its ranks behind one more and a hall level (§6).
 - **What bounds a PARTY is the board** — six slots of `squadSize` (§3, §4) —
   and what bounds the board is what the city owns. The cap is the city's
   number; the board is the fight's.
@@ -404,7 +536,8 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 |---|---|
 | Unit stats, `frontage`, `squadSize`, `power` | `units` |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
-| Tier multipliers | `units` |
+| Every rank's stats, recruit cost, training time and hall level | `units` (§6) |
+| A rank's technology | `?dev=data#tree` |
 | Attack/Defence step and caps, per mille | `combat.attackStepPerMille`, `attackCapPerMille`, `defenceStepPerMille`, `defenceCapPerMille` |
 | Type fractions, as integer pairs | `combat.typeAdvantageNum/Den`, `combat.typeDisadvantageNum/Den` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `heroes`, `heroes.rarity*` ([`10-heroes.md`](10-heroes.md) §9) |
@@ -427,9 +560,11 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
   or a skill that rolls
 - A hero-only battle mode — a hero arena is a possible future
 - Upgradeable `frontage` or `squadSize`
-- Mixed tiers of one type in a squad
+- Mixed ranks in a squad; two ranks in one hall's line
+- Evolving a troop already trained
 - Heroes inside troop slots, or bonuses to non-matching types
-- Villains with levels or ascension — their stats are authored
+- Villains with levels or ascension — their stats are authored, and only the
+  generator scales them (§9.4)
 - Villain buffs crossing sides
 - **A whole authored formation** — named villains in named slots beside chosen
   squads. A boss's villain is authored; the squads around it are still rolled
@@ -437,5 +572,5 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - RNG in resolution
 - Draws
 
-**Pending:** tier conversion cost, if any (**OQ-85**) · `powerStart`
-re-authoring against the full T1–T5 power range once tiers exist (**OQ-86**).
+**Pending:** `powerStart` re-authoring against the rank I–V power range
+(**OQ-86**) · whether `power` reads a rank fairly (**OQ-138**).
