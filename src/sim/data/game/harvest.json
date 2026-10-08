@@ -3,7 +3,7 @@
     "unitsPerStrike": 1,
     "secondsPerStrike": 10,
     "stock": 10,
-    "recoverySeconds": 90,
+    "recoverySeconds": 180,
     "respawnSeconds": 0
   },
   "Crops": {

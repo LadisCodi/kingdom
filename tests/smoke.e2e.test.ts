@@ -90,8 +90,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     while (tapCell(state, map, FOREST, now) === 'Harvested') { /* drain */ }
     expect(isExhausted(state, map, FOREST, now)).toBe(true);
 
-    // --- The cell recovers on its own after 90s; the worker resumes after.
-    now += 91_000;
+    // --- The cell recovers on its own after 180s; the worker resumes after.
+    now += 181_000;
     tickAt(state, now);
     expect(isExhausted(state, map, FOREST, now)).toBe(false);
 

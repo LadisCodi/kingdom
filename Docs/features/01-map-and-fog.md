@@ -65,7 +65,7 @@ Buildability:
 
 | Feature | Pays | Per tap | Taps to exhaust | Recovery | Tech |
 |---|---|---|---|---|---|
-| **Forest** | Wood | 1 | 10 | 90 s | Forestry |
+| **Forest** | Wood | 1 | 10 | 180 s | Forestry |
 | **Crops** (a planted crop plot) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
