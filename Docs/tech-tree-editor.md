@@ -63,6 +63,7 @@ technology says is generated from what it does (§3.1).
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
 | `requires` | one to three technologies, all on the **row immediately above** — none needed by anything on the page's first row |
 | `gold` · `knowledge` | what it costs — a technology takes no time; `knowledge` omitted when 0 |
+| `materials` · `goods` · `anyPrecious` | paid with the Gold: the city's Wood, Stone and Food; refined goods and precious materials by name; precious material of any kind — each omitted when empty |
 | `unlocks` | `kind: unlock` only (§3) |
 | `effects` | `kind: bonus` only — one line each, so a rebalance diffs as the values that changed (§3) |
 | `planned` | on the tree for its shape, does nothing yet |
@@ -114,6 +115,7 @@ the game is derived from that (`GATES`, `definitions.ts`):
 | `{ "unit": "Archer" }` | `UNITS.Archer.requiredTech` |
 | `{ "harvest": "Forest" }` | `HARVEST.Forest.requiredTech` |
 | `{ "terrain": "Water" }` | `terrainGate('Water')` — what `explorationGate` reads |
+| `{ "worldUpgrade": "Fortress" }` | `worldUpgradeGate('Fortress')` — a NEW Fortress (or Chapel) on the world board; the city sends the server which it has opened |
 
 One technology per gate: two claiming the same door is an error, because the
 derivation would otherwise answer with whichever it read last.
@@ -129,7 +131,7 @@ wherever it is placed.
 | `stat` | the registry — every number the game can be told to move |
 | `op` | `percent` or `flat`, narrowed to the ops that stat accepts |
 | `value` | **signed**, in whole points for a percent. `-22` is −22% |
-| `target` | narrowed to the target kinds that stat accepts: a district, a unit, a unit tag, a harvest source, a tome — or `global` for every subject |
+| `target` | narrowed to the target kinds that stat accepts: a district, a unit, a unit tag, a harvest source, a tome, a kind of world district (`worldDistrict`) — or `global` for every subject |
 
 The three selects narrow each other, so the row can only produce an effect the
 rules accept: `unitAtk` offers `flat` and no `percent`, and only `global` or a
@@ -216,8 +218,10 @@ ungated until it is placed again.
 - a kind that disagrees with what the technology carries — an `unlock` that
   unlocks nothing (unless `planned`), a `bonus` that moves no number, an
   `unlock` or `mechanic` that carries effects
-- an unlock naming a district, level, unit, harvest source or terrain that
-  does not exist; two technologies unlocking one thing
+- an unlock naming a district, level, unit, harvest source, terrain or world
+  building that does not exist; two technologies unlocking one thing
+- a price in `materials` naming anything but Wood, Stone or Food, or a
+  number that is not a whole one above 0
 - an effect naming a stat the registry does not have, an op that stat does not
   accept, a target of a kind it does not accept, or a target id that does not
   exist

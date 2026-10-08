@@ -275,6 +275,11 @@
           "type": "int",
           "min": 1,
           "doc": "One Chapel per this many hexes held, plus one: how many world relics act. A Shrine district has a Chapel of its own that does not count."
+        },
+        "fortresses": {
+          "type": "int",
+          "min": 1,
+          "doc": "Fortresses a kingdom may hold before the Atlas adds more (fortressSlots)."
         }
       }
     },

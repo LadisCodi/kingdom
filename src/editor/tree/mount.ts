@@ -17,12 +17,12 @@
 import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
-  DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
+  DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS, WORLD_UPGRADE_IDS,
   isDrawnEdge, isPlaced, saysItself, unlockLabel,
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
-import { ERA_CEILING, GOOD_IDS } from '../../sim/data/techTreeRules';
+import { ERA_CEILING, GOOD_IDS, MATERIAL_IDS } from '../../sim/data/techTreeRules';
 import {
   TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
   type TargetKind, type TechEffect, type TechEffectOp, type TechStat, type TechTarget,
@@ -60,6 +60,7 @@ const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true }> = {
   unit: { ids: UNIT_IDS },
   harvest: { ids: HARVEST_IDS },
   terrain: { ids: TERRAIN_IDS },
+  worldUpgrade: { ids: WORLD_UPGRADE_IDS },
 };
 
 /** What `?dev=data` holds of a hosted tree editor — see the map editor's
@@ -843,6 +844,11 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     card.append(field('gold', number(node.gold, (v) => doc.update(id, { gold: v }))));
     card.append(field('knowledge',
       number(node.knowledge ?? 0, (v) => doc.update(id, { knowledge: v }))));
+    // The city's Wood, Stone and Food paid with the Gold — 0 = none.
+    for (const material of MATERIAL_IDS) {
+      card.append(field(material, number(node.materials?.[material] ?? 0,
+        (v) => doc.update(id, { materials: { ...(doc.node(id)?.materials ?? {}), [material]: v } }))));
+    }
     // The refined goods paid with the Gold — one box per good, 0 = none.
     for (const good of GOOD_IDS) {
       card.append(field(good, number(node.goods?.[good] ?? 0,

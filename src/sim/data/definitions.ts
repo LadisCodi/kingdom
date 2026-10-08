@@ -70,7 +70,7 @@ export interface TechnologyDef {
    *  derived from these (`GATES` below), so this is the ONE statement of
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
-  cost: Wallet; // city Gold and kingdom Knowledge
+  cost: Wallet; // city Gold, Wood, Stone and Food, and kingdom Knowledge
   /** Refined goods paid with the Gold when it is completed; empty = none. */
   goods: GoodsStock;
   /** Precious material of any kind it costs (19 §7.6); 0 = none. */
@@ -136,7 +136,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       col: slot.col,
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
-      cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
+      cost: { Gold: node.gold, ...(knowledge > 0 ? { Knowledge: knowledge } : {}), ...(node.materials ?? {}) },
       goods: (node.goods ?? {}) as GoodsStock,
       anyPrecious: node.anyPrecious ?? 0,
       effects: node.effects ?? [],
@@ -169,6 +169,7 @@ const GATES = (() => {
   const unit = new Map<string, TechId>();
   const harvest = new Map<string, TechId>();
   const terrain = new Map<string, TechId>();
+  const worldUpgrade = new Map<string, TechId>();
   for (const id of TECH_ORDER) {
     if (!TECHNOLOGIES[id].placed) continue;
     for (const unlock of TECHNOLOGIES[id].unlocks) {
@@ -179,10 +180,15 @@ const GATES = (() => {
       else if ('unit' in unlock) unit.set(unlock.unit, id);
       else if ('harvest' in unlock) harvest.set(unlock.harvest, id);
       else if ('terrain' in unlock) terrain.set(unlock.terrain, id);
+      else if ('worldUpgrade' in unlock) worldUpgrade.set(unlock.worldUpgrade, id);
     }
   }
-  return { district, districtLevel, districtCount, unit, harvest, terrain };
+  return { district, districtLevel, districtCount, unit, harvest, terrain, worldUpgrade };
 })();
+
+/** The technology a new building of this kind on the world board waits on
+ *  (Fortress, Chapel), or null when nothing gates it. */
+export const worldUpgradeGate = (id: string): TechId | null => GATES.worldUpgrade.get(id) ?? null;
 
 /** The technology a cell of this terrain waits on, or null. One gate today:
  *  Water waits on Sailing (`src/sim/fog.ts` reads this). */
@@ -2131,6 +2137,8 @@ export interface WorldBuildDef {
   sanctuaryManaCap: number;
   /** One Chapel per this many hexes held, plus one (relic-restoration.md §5.2). */
   chapelsPerHexes: number;
+  /** Fortresses a kingdom may hold before the Atlas adds more. */
+  fortresses: number;
 }
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;

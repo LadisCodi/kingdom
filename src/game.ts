@@ -108,7 +108,7 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
-  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal, revealedCellCount,
+  markBookSeen, pourKnowledge, techKnowledgeMissing, techMaterialsCost, type ResearchRefusal, revealedCellCount,
 } from './sim/research';
 import {
 } from './sim/upgrades';
@@ -164,6 +164,8 @@ import { nicknameProblem } from './worldServer/nickname';
 import { FriendsClient } from './friendsClient';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
+import type { SeatBoost } from './worldServer/types';
+import { boostLoot } from './sim/world/loot';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
@@ -2930,7 +2932,7 @@ export class Game {
     }
     if (job.kind === 'hex') {
       const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
-      const work = h === null ? null : hexWork(h);
+      const work = h === null ? null : hexWork(h, this.worldBoost());
       if (work === null) return null;
       const total = work.endsAt - work.startedAt;
       return {
@@ -3204,7 +3206,7 @@ export class Game {
    *  carries no Finish. Its start is its finish less its authored time. */
   builderWorldJobs(): Array<{ index: number; name: string; task: string; startedAt: number; durationMs: number }> {
     return this.state.world.builds.map((b) => {
-      const seconds = worldBuildSeconds(b.what, b.level);
+      const seconds = worldBuildSeconds(b.what, b.level, this.worldBoost());
       return {
         index: b.index,
         name: worldBuildName(b.what),
@@ -3708,7 +3710,7 @@ export class Game {
   doResearchTech(id: TechId): void {
     const paid = this.state.research.rewarded.length;
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id].effects)) {
+    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id])) {
       void this.worldServer.setBoost(worldImprovementBoost(this.state));
     }
     if (result === 'Researched') {
@@ -3720,7 +3722,9 @@ export class Game {
         if (n) this.toast(`Chapter ${formatExact(era)} complete — ${formatExact(n)} relic fragment${n === 1 ? '' : 's'}`);
       }
     } else if (result === 'NotEnoughGold') this.shake(['Gold']);
-    else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
+    else if (result === 'NotEnoughMaterials') {
+      this.shake((Object.keys(techMaterialsCost(id)) as CurrencyId[]).filter((c) => this.walletValue(c) < getWallet(TECHNOLOGIES[id].cost, c)));
+    } else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();
@@ -5866,31 +5870,33 @@ export class Game {
         });
       }
       else if (e.kind === 'loot') {
+        // The Atlas's share on top of what the server priced (sim/world/loot.ts).
+        const l = boostLoot(this.state, e);
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
         // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
-        addToWallet(this.state.city.wallet, 'Gold', e.gold);
-        addToWallet(this.state.kingdom.wallet, 'Knowledge', e.knowledge);
-        addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
-        addHeroXp(this.state, e.heroXp);
-        if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
+        addToWallet(this.state.city.wallet, 'Gold', l.gold);
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', l.knowledge);
+        addToWallet(this.state.kingdom.wallet, 'Stardust', l.stardust);
+        addHeroXp(this.state, l.heroXp);
+        if (l.gems) addToWallet(this.state.player.wallet, 'Gems', l.gems);
         // A camp's Wood, Food and Stone, in hours of the city's own
         // production, priced now (19 §5.4).
-        const made = campPay(this.state, e.hours ?? 0);
+        const made = campPay(this.state, l.hours ?? 0);
         for (const [c, n] of Object.entries(made) as Array<[CurrencyId, number]>) addToWallet(this.state.city.wallet, c, n);
         // A world relic's door, then its fragments: a boss's one, a Portal
         // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
-        const won = e.from ?? (e.pack ? 'portal' : 'room');
+        const won = l.from ?? (l.pack ? 'portal' : 'room');
         const found = [
           ...openRelicDoor(this.state, won),
-          ...dropFragments(this.state, 'world', e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', e.seq ?? e.at]),
+          ...dropFragments(this.state, 'world', l.pack ? RELIC_RULES.perPackTier[l.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', l.seq ?? l.at]),
         ];
         if (found.length > 0) this.toast(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
-        if (e.precious) {
-          addGood(this.state.city.goods, e.precious.id, e.precious.amount);
-          this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
+        if (l.precious) {
+          addGood(this.state.city.goods, l.precious.id, l.precious.amount);
+          this.toast(`+${formatCount(l.precious.amount)} ${l.precious.id}`);
         }
-        this.reward({ Gold: e.gold, ...made, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+        this.reward({ Gold: l.gold, ...made, Knowledge: l.knowledge, Stardust: l.stardust, HeroXp: l.heroXp, ...(l.gems ? { Gems: l.gems } : {}) });
       } else if (e.kind === 'portalClosed') {
         // A Portal opening closed with the player in its ranking: a place
         // that pays waits to be claimed, any other is news (26 §2).
@@ -5990,6 +5996,7 @@ export class Game {
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
       NoSlot: 'Every slot of this district is taken',
+      Locked: 'Research it in the Atlas first', TooManyFortresses: 'Research the Atlas to hold another Fortress',
       NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
@@ -6018,7 +6025,7 @@ export class Game {
   async doFinishHexWork(index: number): Promise<void> {
     if (this.worldServer === null) return;
     const h = this.worldSource().hexOf(index);
-    const work = h === null ? null : hexWork(h);
+    const work = h === null ? null : hexWork(h, this.worldBoost());
     if (work === null) return;
     const gems = gemsToFinish((work.endsAt - this.now()) / 1000);
     if (getWallet(this.state.player.wallet, 'Gems') < gems) {
@@ -6260,10 +6267,11 @@ export class Game {
     // What the room paid, for the spoils the delve screen shows after the
     // fight (19 §8.2) — the newest loot owed, read before the snapshot's
     // effects are spent.
-    const loot = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
+    const owed = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
+    const loot = owed?.kind === 'loot' ? boostLoot(this.state, owed) : null;
     this.delveSpoils = {
       won: r.won, depth: r.depth, room: r.room, boss: r.boss, lost: r.lost,
-      loot: loot?.kind === 'loot' ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
+      loot: loot !== null ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
     };
     this.delveDepth = null;
     this.applyWorldSnapshot(r.snapshot);
@@ -6714,6 +6722,12 @@ export class Game {
       this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
     }
     this.notify();
+  }
+
+  /** What the player's research does on the world board, as the server
+   *  takes it (sim/world/boost.ts). */
+  worldBoost(): SeatBoost {
+    return worldImprovementBoost(this.state);
   }
 
   /** The player's own city on the board. */

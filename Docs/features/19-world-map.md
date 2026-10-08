@@ -150,8 +150,8 @@
   works there, **waits there for you**, and marches home. There is no button
   that buys fog.
 - **Explorers are slots, like builders.** Every kingdom starts with
-  `startingExplorers` (1); *Scouts I* and *Scouts II* (Atlas) add one each.
-  No training.
+  `startingExplorers` (1). No training, and no research adds one: more are
+  only bought.
 - **Up to `explorersForSale` (2) more are bought**, for Gems
   (`explorerGemCostBase` 2,500, ×`explorerGemCostGrowth` 2 each) or in the
   Explorer pack ([`14-monetization.md`](14-monetization.md) §2.4).
@@ -208,6 +208,8 @@
 - **Gold, Wood, Food and Stone are priced in production** when paid:
   `hoursByRole` hours of the city's own production of it, floored at the
   reward's `amount`. Every other reward pays its `amount`.
+- **The Atlas adds `scoutReward`** (*Keen Eyes I–II*) to every amount — never
+  to a pack.
 
 ### 3.3 The first trip
 
@@ -400,6 +402,11 @@ accident.**
     - Wood, Food and Stone: `productionHoursPer1000Power` (1) hours of the
       city's own production per 1,000 power;
     - a lump of precious material (§7.4).
+  - The Atlas adds its share when the loot lands: `campLoot` (*Bounty
+    Hunters*) here, `dungeonLoot` (*Delvers*) on a dungeon room,
+    `portalLoot` (*Portal Wardens*) on a Portal floor — to everything but
+    Gems and packs — and `worldHeroXp` (*Battle Lore*) to the Hero XP of
+    every one.
   - The camp's sheet shows what it pays before the army is sent.
   - On its way, the camp's sheet docks the army as a dungeon's: its board,
     its bar to arrival and **Finish**. A march to a camp is not called
@@ -540,6 +547,21 @@ gates them.
 - **The Fortress fits any district**: three levels, garrisoned by an army,
   covering its hex and the six around it (§6.1).
 - **The Chapel** hosts one world relic ([`../proposals/relic-restoration.md`](../proposals/relic-restoration.md) §5.2).
+- **Both are opened by the Atlas** ([`tech-tree.md`](tech-tree.md) §11.2):
+  *Fortification* the Fortress, *Holy Ground* the Chapel. Locked, its card in
+  the slot picker names the card to research. One already standing keeps its
+  levels; a Shrine district's own Chapel needs nothing.
+- **How many**:
+  - Fortresses: `worldBuild.fortresses` (1), +1 per `fortressSlots` (*Garrison
+    Rights I–II*);
+  - Chapels: one, one more per `chapelsPerHexes` (6) hexes held, +1 per
+    `chapelSlots` (*Pilgrim Roads I–II*).
+- **The Atlas speeds the builders**: a district's and a building's build
+  time is divided by `worldBuildSpeed`, a repair's by `worldRepairSpeed`.
+- **What research does here is the city's to say**: it sends the server its
+  boost — every multiplier and speed, the two caps and the buildings it has
+  opened — when it joins and after a research that moves one. A seat that
+  sends none of it (a stand-in rival) has no cap and nothing locked.
 - **On the district's card**: each slot, empty (a tap opens the buildings
   that fit it, and a tap on one builds it) or holding its building (a tap
   opens what it does and its next level; a Chapel's relic socket opens the
@@ -553,7 +575,8 @@ gates them.
   once it is a quarter full or holds a precious lump; otherwise the tap
   opens the district's card.
 - **Yield and store size are authored amounts per district**, times what the
-  owner's research adds (`improvementYield`, `improvementStore`). The city
+  owner's research adds (`improvementYield`, `improvementStore`) to every
+  district, times what it adds to that kind (`worldDistrict` targets). The city
   sends that boost when it joins and after a research that moves it; the
   server settles every store at that moment, so nothing already made is
   repriced.
@@ -606,8 +629,8 @@ gates them.
   price asks for precious material: its terms are left off.
 - **Early: a few, by name.** A building's level 4 asks 2 of one material
   and its level 5 asks 3 of another (the Townhall 5), the three asked for
-  alike across the buildings; Farsight II, Scouts II and Pathfinding (the
-  Atlas) ask 2 of one each. Fortress level 2 asks 10 of *any* — paid from
+  alike across the buildings; the Atlas asks for them from its third row
+  ([`tech-tree.md`](tech-tree.md) §11.2). Fortress level 2 asks 10 of *any* — paid from
   what the player holds most of, after the named terms, the price showing
   the materials it will take.
 - **Late: each of the three, named.** Levels 8–10 of every building but

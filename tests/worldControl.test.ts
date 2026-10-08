@@ -168,6 +168,9 @@ describe('finishing a world build with Gems', () => {
   it('raises a Fortress level at once, and refuses with nothing building', async () => {
     const { game, clock, toasts } = await connected();
     fund(game.state, { Gold: 100_000 });
+    // The Atlas's Fortification opens the Fortress, and the server is told.
+    game.state.research.completed.push('Fortification');
+    await game.worldServer!.setBoost(game.worldBoost());
     const at = claimable(game);
     await game.doClaimHex(at, claimGold(0));
     clock.t += CLAIM_MS;

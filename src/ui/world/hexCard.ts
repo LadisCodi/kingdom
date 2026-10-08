@@ -23,7 +23,6 @@ import {
   exploreGold, exploreWorkMs, explorerRoute, firstTripFree, freeExplorers, nextFreeAt, type FogState,
 } from '../../sim/world/explorers';
 import { scoutPay } from '../../sim/world/scouting';
-import { worldImprovementBoost } from '../../sim/world/boost';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
 import type { CurrencyId, GoodId, UnitId } from '../../sim/state';
@@ -37,7 +36,7 @@ import { action, btn, chip, costChips, currencyIcon, iconEl, powerTag, sectionHe
 import { groundEdges } from '../../sim/world/terrainCombat';
 import { emptyRelicSlot } from '../relicPicker';
 import { relicArt } from '../relicSheet';
-import { chapelRoom, explorersOutLine, hexActions, hexWork } from './worldActions';
+import { chapelRoom, explorersOutLine, fortressRoom, hexActions, hexWork, upgradeBlocked, worldBuildSeconds } from './worldActions';
 import { armyBoard, marchingDock } from './delveScreen';
 import { CAMP_CREATURE, campDifficulty, campSquads, campTribute, strongestParty } from '../../sim/world/camps';
 import { campLoot } from '../../sim/world/fights';
@@ -114,7 +113,7 @@ function groundTiles(bh: BoardHex): Tile[] {
 
 /** What a district on this hex makes and holds, as the city card says it. */
 function yieldTiles(game: Game, bh: BoardHex, h: HexControl | null): Tile[] {
-  const rate = districtRate(bh, worldImprovementBoost(game.state));
+  const rate = districtRate(bh, game.worldBoost());
   const out: Tile[] = [];
   if (rate.currency !== null) {
     const coin = rate.currency as IconName;
@@ -257,7 +256,7 @@ export function renderCamp(game: Game, bh: BoardHex): HTMLElement {
   // An army of the player's on its way: its board, its bar and Finish, as at
   // a dungeon. A march is not called back halfway, only hurried.
   const marching = game.worldView?.armies.find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'clear' && a.phase !== 'home');
-  const reach = hexActions(source, game.worldSeat(), bh, { revealed: true });
+  const reach = hexActions(source, game.worldSeat(), bh, { revealed: true }, [], game.worldBoost());
   const tribute = reach.find((a) => a.kind === 'tribute');
   const answers = marching?.phase === 'camp'
     // There and waiting: its board, then Withdraw and the Attack that fights.
@@ -555,7 +554,7 @@ export function renderFreeGround(game: Game, bh: BoardHex, title: string, reason
       sectionHead('The hex'), hex, tiles(groundTiles(bh)),
       sectionHead('District'), districtHead, ...(reason === undefined ? [] : [blockedLine(reason)]),
       tiles([...yieldTiles(game, bh, null),
-        { icon: 'hourglass', label: 'Build', value: formatDuration(WORLD_BUILD.claim.buildSeconds) }])));
+        { icon: 'hourglass', label: 'Build', value: formatDuration(worldBuildSeconds(district, 1, game.worldBoost())) }])));
 }
 
 // ------------------------------------------------------------ your district
@@ -637,11 +636,8 @@ function slotRefusal(game: Game, h: HexControl, b: WorldUpgrade): string | undef
   if (h.burnt) return 'Repair it first';
   if (!h.active) return 'Cut off from your city';
   if (h.work !== null) return 'A builder is at work here';
-  if (b === 'Chapel') {
-    const room = chapelRoom(game.worldSource(), game.worldSeat());
-    if (room.built >= room.allowed) return `Hold ${formatCount(room.allowed * WORLD_BUILD.chapelsPerHexes)} hexes for another`;
-  }
-  return undefined;
+  // Its card in the Atlas, and how many the kingdom may hold.
+  return upgradeBlocked(game.worldSource(), game.worldSeat(), b, game.worldBoost()) ?? undefined;
 }
 
 /** A building's card in the slot picker: the city's Build drawer card. A
@@ -653,7 +649,8 @@ function slotCard(game: Game, index: number, h: HexControl, b: WorldUpgrade): HT
   const shortGold = game.walletValue('Gold') < level.gold;
   const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
   const art = spriteUrl(buildingSprite(b, 1));
-  const room = b === 'Chapel' ? chapelRoom(game.worldSource(), game.worldSeat()) : null;
+  const room = b === 'Chapel' ? chapelRoom(game.worldSource(), game.worldSeat(), game.worldBoost())
+    : fortressRoom(game.worldSource(), game.worldSeat(), game.worldBoost());
   const card = el('button', { class: `bld-card${blocked !== undefined ? ' is-locked' : ''}`, type: 'button' },
     el('div', { class: 'bld-art' }, art ? spriteImgAt(art) : iconEl('build', { size: 'lg' })),
     el('div', { class: 'bld-name' }, WORLD_BUILD.upgrades[b].name),
@@ -663,8 +660,8 @@ function slotCard(game: Game, index: number, h: HexControl, b: WorldUpgrade): HT
       ...goods.map(([g, n]) => el('span', { class: `k-chip${getGood(game.state.city.goods, g) < n ? ' is-short' : ''}` },
         iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))))]),
     el('div', { class: 'bld-foot' },
-      el('span', { class: 'bld-foot-time' }, iconEl('hourglass', { size: 'sm' }), formatDuration(level.buildSeconds)),
-      ...(room === null ? [] : [el('span', { class: 'bld-foot-built' }, `Built ${formatExact(room.built)}/${formatExact(room.allowed)}`)])));
+      el('span', { class: 'bld-foot-time' }, iconEl('hourglass', { size: 'sm' }), formatDuration(worldBuildSeconds(b, 1, game.worldBoost()))),
+      ...(room.allowed === null ? [] : [el('span', { class: 'bld-foot-built' }, `Built ${formatExact(room.built)}/${formatExact(room.allowed)}`)])));
   if (blocked !== undefined) {
     card.disabled = true;
     card.querySelector('.bld-art')!.append(el('div', { class: 'bld-ribbon' }, iconEl('padlock', { size: 'sm' }), el('span', {}, blocked)));
@@ -708,7 +705,7 @@ export function renderWorldBuilding(game: Game): HTMLElement {
   const back = () => game.backToHex();
   const parts: HTMLElement[] = [];
   const next = def.levels[level];
-  const work = hexWork(h);
+  const work = hexWork(h, game.worldBoost());
   const goingUp = h.work?.upgrade === b;
   // The next level, priced inside its button (the shipped cost style).
   let upgrade: HTMLElement[] = [];
@@ -725,7 +722,7 @@ export function renderWorldBuilding(game: Game): HTMLElement {
     portrait(buildingSprite(b, Math.max(1, level)), 'build'),
     el('div', { class: 'dc-what-col' },
       el('div', { class: 'dc-what' }, `${BUILDING_LINE[b]}.`),
-      ...(next !== undefined && !goingUp && level > 0 ? [el('p', { class: 'wd-far' }, `Level ${formatExact(level + 1)} takes ${formatDuration(next.buildSeconds)}`)] : [])),
+      ...(next !== undefined && !goingUp && level > 0 ? [el('p', { class: 'wd-far' }, `Level ${formatExact(level + 1)} takes ${formatDuration(worldBuildSeconds(b, level + 1, game.worldBoost()))}`)] : [])),
     ...upgrade));
   if (goingUp && work !== null) parts.push(el('p', { class: 'wd-line' }, `${work.what} — ${formatDuration(Math.max(0, Math.ceil((work.endsAt - game.now()) / 1000)))} left`));
   if (b === 'Fortress' && level > 0) {

@@ -280,7 +280,8 @@
     },
     "innerRingMultiplier": 3,
     "sanctuaryManaCap": 10,
-    "chapelsPerHexes": 6
+    "chapelsPerHexes": 6,
+    "fortresses": 1
   },
   "worldBots": {
     "actEveryHours": 6,

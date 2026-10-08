@@ -262,15 +262,21 @@ describe('exploring pays in ground, not in currency', () => {
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
     // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
     // 4,740,505: Transplanting (200) moves a tree.
-    expect(tree).toBe(4_740_505);
+    // 12,153,405: the Atlas grew to 53 optional cards on the world board
+    // (2026-10-08) — Scouts I–II left, Pathfinding became its 1,500,000-Gold
+    // finale.
+    expect(tree).toBe(12_153_405);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
-    // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
-    // raw materials: a full quarry buys no research, which is what keeps the
-    // tree in the same contest as fog and buildings. (Refined GOODS ride
-    // beside the price, in `goods`, from chapter 5 — not in `cost`.)
+    // a base rate (2026-09-08) — the research clock, 07-research.md §3. Raw
+    // materials only on the Atlas's first cards, which open before the world
+    // pays in precious materials (tech-tree.md §11.2): elsewhere a full
+    // quarry buys no research, which is what keeps the tree in the same
+    // contest as fog and buildings. (Refined GOODS ride beside the price, in
+    // `goods` — not in `cost`.)
     for (const id of TECH_ORDER) {
       const keys = Object.keys(TECHNOLOGIES[id].cost);
-      expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
+      const allowed = TECHNOLOGIES[id].tome === 'Atlas' ? ['Gold', 'Knowledge', 'Wood', 'Stone', 'Food'] : ['Gold', 'Knowledge'];
+      expect(keys.every((k) => allowed.includes(k)), `${id} costs ${keys}`).toBe(true);
       // Every book is priced in the clock, a found book's cards too.
       expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
     }

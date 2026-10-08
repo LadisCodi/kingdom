@@ -203,11 +203,12 @@ describe('the world', () => {
   });
 
   it('the improvement boost lifts output and store from the moment it is taken, never before', () => {
-    expect(worldImprovementBoost(freshGame())).toEqual({ produce: 1, store: 1 });
+    expect(worldImprovementBoost(freshGame())).toMatchObject({ produce: 1, store: 1 });
+    expect(worldImprovementBoost(freshGame()).districts).toBeUndefined();
     expect(withEffects([
       { stat: 'improvementYield', op: 'percent', value: 50 },
       { stat: 'improvementStore', op: 'percent', value: 100 },
-    ], worldImprovementBoost)).toEqual({ produce: 1.5, store: 2 });
+    ], worldImprovementBoost)).toMatchObject({ produce: 1.5, store: 2 });
 
     const data = generateBoard('test', 0x5eed);
     const w = emptyWorld();

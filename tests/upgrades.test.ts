@@ -493,7 +493,7 @@ describe('the combat lines reach the fight', () => {
 describe('Farsight reaches the fog', () => {
   const ready = () => {
     const s = freshGame();
-    fund(s, { Gold: 99_999, Knowledge: 10 });
+    fund(s, { Gold: 99_999, Knowledge: 10, Wood: 99_999, Stone: 99_999, Food: 99_999 });
     completeRequirements(s, 'FarsightI');
     openEveryEra(s);
     return s;
