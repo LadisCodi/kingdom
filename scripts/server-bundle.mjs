@@ -33,6 +33,20 @@ export async function bundleWorldServer({ write = false } = {}) {
     minifyWhitespace: true,
     minifySyntax: true,
     banner: { js: '// Built by scripts/server-bundle.mjs from src/worldServer/serve.ts. Do not edit.' },
+    // The server reads English (Docs/features/28-languages.md §1): the sim's
+    // `tr()` finds no Spanish, so the catalogs stay out of the bundle — their
+    // prose would only weigh it down, and trip the browser check on a word.
+    plugins: [{
+      name: 'english-only',
+      setup(b) {
+        b.onResolve({ filter: /\/catalog$/ }, (args) => (
+          path.resolve(args.resolveDir, args.path) === path.join(root, 'src/i18n/catalog')
+            ? { path: 'english-catalog', namespace: 'english-only' } : undefined));
+        b.onLoad({ filter: /.*/, namespace: 'english-only' }, () => ({
+          contents: 'export const ES_FILES = {}; export const ES = {};', loader: 'js',
+        }));
+      },
+    }],
   });
   const code = result.outputFiles[0].text;
   if (write) {
