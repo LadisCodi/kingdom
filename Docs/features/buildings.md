@@ -53,6 +53,12 @@
 | **Mason's Yard** | 2×2 | Stone Dressing | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
 | **Rune Carver** | 2×2 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Flower bed** | 1×1 | Village Pride | 3 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Bench** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Lantern** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Topiary** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 1 Harmony |
+| **Banner** | 1×1 | Civic Pride | 1 at TH3 → 8 | **1** | supplies 1 Harmony |
+| **Birdbath** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 2 Harmony |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
 | **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
@@ -344,11 +350,17 @@ written once. The Townhall's own ladder is §3.
 - **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
   the decorations supply ([`21-harmony.md`](21-harmony.md)).
 
-### 4.12 The six decorations
+### 4.12 The decorations
 
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
-does nothing else, and every piece past the Garden is priced in a refined
-good, paid when the build is queued. The count cap per piece is its Townhall
+does nothing else.
+
+- **The village's six small pieces** — Flower bed, Bench, Lantern, Topiary,
+  Banner, Birdbath — open at Townhall 2 and 3 and cost Gold and a raw
+  currency. Early on nothing demands Harmony, so what they pay is their
+  place: a house beside one collects more Gold ([`21-harmony.md`](21-harmony.md) §6).
+- **The late five** — Garden to Plaza — open from Townhall 5, and every piece
+  past the Garden is priced in a refined good, paid when the build is queued. The count cap per piece is its Townhall
 gate and its ceiling in one; the piece is discovered by a card in the tree.
 The table is [`21-harmony.md`](21-harmony.md) §2.
 

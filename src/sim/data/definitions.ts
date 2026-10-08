@@ -2631,4 +2631,4 @@ export const GAME_VERSION: string = pkg.version;
 // v113→v114: troop evolutions — an army unit, a wounded entry, a training
 // item or a world army may name a troop at a rank (`Warrior_e3`); additive,
 // rank I keeps the unit's own id. Bumped so an older build refuses the save.
-export const SAVE_VERSION = 114;
+export const SAVE_VERSION = 115;

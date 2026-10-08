@@ -105,7 +105,7 @@ import { lairHolding, lairZoneCells } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
-import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
+import { activeQuest, claimQuest, goalNames, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
   markBookSeen, pourKnowledge, techKnowledgeMissing, techMaterialsCost, type ResearchRefusal, revealedCellCount,
@@ -142,7 +142,9 @@ import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { worldRanking, type RankedSeat } from './sim/world/ranking';
-import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type QuestDef } from './sim/data/definitions';
+import {
+  ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, isAdjacencyGroup, type QuestDef,
+} from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
@@ -3887,12 +3889,20 @@ export class Game {
           centerCell(ruin.location);
           break;
         }
-        this.setUiHint(`build:${quest.goalTarget}`);
+        // A group (`AnyDecoration`) lights the first of its kinds the menu offers.
+        const card = isAdjacencyGroup(quest.goalTarget ?? '')
+          ? (Object.keys(DISTRICTS) as DistrictId[]).find((id) => goalNames(quest.goalTarget, id)
+            && DISTRICTS[id].buildable
+            && (DISTRICTS[id].requiredTech === null || isTechComplete(this.state, DISTRICTS[id].requiredTech)))
+          : quest.goalTarget;
+        this.setUiHint(`build:${card}`);
         overlay('build');
         break;
       }
       case 'UpgradeDistrict': {
-        const target = built((d) => d.definitionId === quest.goalTarget);
+        // One still under the bar, so the hint never opens a house already there.
+        const named = (d: District) => goalNames(quest.goalTarget, d.definitionId);
+        const target = built((d) => named(d) && d.level < (quest.goalLevel ?? 1)) ?? built(named);
         this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
         inspect(target);
         break;

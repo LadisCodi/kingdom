@@ -25,6 +25,13 @@
       "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"FarmLands"}]
     },
+    "VillagePride": {
+      "name": "Village Pride", "icon": "Garden", "kind": "unlock",
+      "tome": "Kingdom", "era": 2, "row": 1, "col": 2,
+      "requires": ["Forestry"],
+      "gold": 40, "knowledge": 2,
+      "unlocks": [{"district":"Flowerbed"}, {"district":"Bench"}, {"district":"Lantern"}]
+    },
     "Farming": {
       "name": "Farming", "icon": "Farm", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 2, "col": 0,
@@ -180,6 +187,13 @@
       "requires": ["Bureaucracy"],
       "gold": 2000, "knowledge": 3,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}, {"harvest":"MountainGold"}]
+    },
+    "CivicPride": {
+      "name": "Civic Pride", "icon": "Garden", "kind": "unlock",
+      "tome": "Kingdom", "era": 3, "row": 9, "col": 1,
+      "requires": ["Bureaucracy"],
+      "gold": 1500, "knowledge": 3,
+      "unlocks": [{"district":"Topiary"}, {"district":"Banner"}, {"district":"Birdbath"}]
     },
     "Infirmary": {
       "name": "Infirmary", "icon": "Infirmary", "kind": "unlock",

@@ -99,15 +99,21 @@
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge |
 | **8–14** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `Fieldside` · `ToWork` | 30 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, **the Farm moved beside both plots**, a worker | |
 | **15–20** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build**; the Store and the Survey |
-| **21–26** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
-| **27–33** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 80 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 30, **the first fight** | the first pack and **Relics** |
-| **34–37** · past the hills | `TheWatchtower` · `Attuned` · `Mapmakers` · `Surveyors` | **the Watchtower repaired** with the lens the Orcs carried — a scene forces it — Consecration, 90 and 120 cells cleared | **the world door**, **the Atlas**, **Magic** |
-| **38–45** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
-| **46–50** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
-| **51–58** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, two heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **59–65** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
-| **66–68** · the world | `Leylines` · `SecondLair` · `DeeperStill` | three landmarks, the Harpies, a hundred soldiers | |
+| **21–31** · the second Townhall's town | `MoreRoofs` · `Fields` · `FreshFurrows` · `NewFaces` · `Tillage` · `BiggerBarn` · `SawTeeth` · `TwoSaws` · `ManyHands` · `Pride` · `PrettyCorner` | a third House, Agriculture, four crop plots, five villagers, Farming, **the Farm to level 2**, Saws, **a second Sawmill**, five workers, Village Pride, **two decorations** | the village's decorations |
+| **32–36** · tending the land | `Levies` · `Sawpits` · `FourRoofs` · `Regrowth` · `FurtherAfield` | Trade Routes I, Sawpits I, a fourth House, Reforesting I, 80 cells cleared — the Townhall 2 ring clears 64 | |
+| **37–44** · the Orcs | `WarDrums` · `ArmedMen` · `Mustered` · `SharperSaws` · `FirstSoldier` · `FullHouse` · `MusterCompany` · `DriveThemOut` | **a lair found**; Warrior, the Barracks (built of Wood), **the Sawmill to level 2**, a soldier, eight villagers (four full Houses), a company of 30, **the first fight** | the first pack and **Relics** |
+| **45–48** · past the hills | `TheWatchtower` · `Attuned` · `Mapmakers` · `Surveyors` | **the Watchtower repaired** with the lens the Orcs carried — a scene forces it — Consecration, 90 and 120 cells cleared | **the world door**, **the Atlas**, **Magic** |
+| **49–58** · stone | `Watered` · `Fallow` · `Lamplight` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `UpperFloors` · `Chisels` · `Stoneworks` | the rows above Urban Planning, four decorations; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2, then **every House at level 2**; Masonry, the Quarry | |
+| **59–64** · the Tavern | `Crafts` · `Knack` · `DeeperCuts` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, **the Quarry to level 2**, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
+| **65–69** · the town | `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` | Stone, Quick Hands I, two heroes, Bureaucracy, **Townhall 3** | |
+| **70–85** · the borough | `SixRoofs` · `SecondFarm` · `DeepSeams` · `Civic` · `Finery` · `TheSanctum` · `ThirdSaw` · `AWarband` · `TheBarrowsPrize` · `PutToSea` · `StoriedStreet` · `Cartographers` · `SecondQuarry` · `Magistrate` · `Township` · `Borough` | six Houses, **a second Farm**, Mining, Civic Pride, six decorations, the Sanctum, **a third Sawmill**, sixty soldiers, a second landmark, Sailing, **six Houses at level 2**, 160 cells cleared, **a second Quarry**, Magistracy, twelve villagers, **Townhall 4** | |
+| **86–89** · the world | `NineRoofs` · `Leylines` · `SecondLair` · `DeeperStill` | nine Houses, three landmarks, the Harpies, a hundred soldiers | |
 
+- **The city grows in the chain.** Each Townhall level is followed by its
+  city: the Houses it allows, the people they hold, one more level on each
+  producer, more of what it opens — never more than two quests of research
+  or of the frontier in a row before the city asks again.
+- **A goal may name a group** (`AnyDecoration`): the player picks the piece.
 - **The fog's buildings come first, the player's own after.** The House, the
   plots, the Farm and the Sawmill of the opening are abandoned ones, found
   and repaired ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3); the

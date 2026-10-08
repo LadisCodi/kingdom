@@ -7,7 +7,7 @@
 import { track } from './analytics';
 import { ownedArtifacts } from './artifacts';
 import {
-  DISTRICTS, LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
+  ADJACENCY_GROUPS, DISTRICTS, LANDMARKS, QUESTS, RELATIVE_QUEST_TYPES, isAdjacencyGroup, type QuestDef,
 } from './data/definitions';
 import { collectThreshold, storageCapacity, storageSpace, storedOf, storeInto } from './storage';
 import { recordResourceDiscovery } from './discovery';
@@ -25,6 +25,12 @@ import type { ItemId } from './state';
 import { grantItem } from './bag';
 import { workableCountAt } from './workers';
 import type { SimEvent } from './events';
+
+/** Does a building goal name this kind? A goal names one kind, or a group of
+ *  kinds by the adjacency tokens — `AnyDecoration`, `AnyProducer` — so "put
+ *  up two decorations" leaves the choice of which to the player. */
+export const goalNames = (target: string | null, id: DistrictId): boolean =>
+  target !== null && (isAdjacencyGroup(target) ? ADJACENCY_GROUPS[target](DISTRICTS[id]) : id === target);
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
@@ -76,10 +82,12 @@ export function questValue(state: GameState, quest: QuestDef): number {
     // (Docs/features/01-map-and-fog.md §6.3).
     case 'BuildDistrict':
     case 'RepairDistrict':
-      return districtCount(state, quest.goalTarget as DistrictId);
+      return (Object.keys(DISTRICTS) as DistrictId[])
+        .filter((id) => goalNames(quest.goalTarget, id))
+        .reduce((n, id) => n + districtCount(state, id), 0);
     case 'UpgradeDistrict':
       return state.city.districts.filter(
-        (d) => d.definitionId === quest.goalTarget && d.state === 'Built' &&
+        (d) => goalNames(quest.goalTarget, d.definitionId) && d.state === 'Built' &&
           d.level >= (quest.goalLevel ?? 1)).length;
     case 'HoldResource':
       return getWallet(state.city.wallet, quest.goalTarget as CurrencyId);

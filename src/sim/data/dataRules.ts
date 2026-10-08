@@ -196,6 +196,9 @@ export const QUEST_GOALS: Record<string, RefKind | null> = {
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
 };
 
+/** Goal types whose target may be a GROUP of buildings (`AnyDecoration`). */
+export const QUEST_GROUP_TARGET: ReadonlySet<string> = new Set(['BuildDistrict', 'UpgradeDistrict']);
+
 /** Goal types whose target may be left empty, meaning "any". */
 export const QUEST_OPTIONAL_TARGET: ReadonlySet<string> = new Set(['ClaimLandmarks']);
 
@@ -431,7 +434,9 @@ function checkQuests(doc: DataDoc, push: Push): void {
     if (kind === null && target !== null) push(id, ['goalTarget'], `${q.goalType} takes no target`);
     // A target the goal may go without: "claim a landmark" reads as any.
     const optional = QUEST_OPTIONAL_TARGET.has(String(q.goalType));
-    if (kind !== null && (target === null ? !optional : !refIds(doc, kind).includes(String(target)))) {
+    const group = QUEST_GROUP_TARGET.has(String(q.goalType))
+      && (ADJACENCY_GROUPS as readonly string[]).includes(String(target));
+    if (kind !== null && !group && (target === null ? !optional : !refIds(doc, kind).includes(String(target)))) {
       push(id, ['goalTarget'], `"${target}" is not a ${kind}`);
     }
     if (q.goalType === 'UpgradeDistrict' && typeof q.goalLevel !== 'number') push(id, ['goalLevel'], 'UpgradeDistrict needs a level');

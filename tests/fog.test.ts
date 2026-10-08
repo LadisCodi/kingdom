@@ -267,7 +267,9 @@ describe('exploring pays in ground, not in currency', () => {
     // finale.
     // 13,313,405: troop evolutions — sixteen cards, Warriors II to Cavalry V
     // (2026-10-08), dead ends in chapters 4–9.
-    expect(tree).toBe(13_313_405);
+    // 13,314,945: Village Pride (40) and Civic Pride (1,500) open the
+    // village's small decorations.
+    expect(tree).toBe(13_314_945);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Raw
     // materials only on the Atlas's first cards, which open before the world
