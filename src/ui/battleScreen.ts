@@ -33,6 +33,7 @@ import dungeonGround from './assets/battle-ground-dungeon.jpg?url';
 import bossGround from './assets/battle-ground-boss.jpg?url';
 import portalGround from './assets/battle-ground-portal.jpg?url';
 import { el, formatExact, formatShort } from './format';
+import { tr } from '../i18n/tr';
 import { btn, iconEl } from './kit';
 import { rankBadge } from './unitArt';
 
@@ -373,7 +374,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     // THE CLOCK'S TWO KNOBS: the speed — ×1, ×2, ×4 in turn, kept for the
     // next fight — and straight to the end. A fight lasts tens of seconds, a
     // dungeon has many. The knob says the speed it is playing at.
-    const speed = el('button', { class: 'bs-knob', type: 'button', 'aria-label': 'Playback speed' });
+    const speed = el('button', { class: 'bs-knob', type: 'button', 'aria-label': tr('Playback speed') });
     const paintSpeed = (): void => {
       const now = game.battle?.speed ?? 1;
       speed.textContent = `×${formatExact(now)}`;
@@ -385,13 +386,13 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       paintSpeed();
     });
     paintSpeed();
-    const skip = el('button', { class: 'bs-knob', type: 'button' }, 'Skip');
+    const skip = el('button', { class: 'bs-knob', type: 'button' }, tr('Skip'));
     skip.addEventListener('click', () => game.skipBattle());
     const knobs = el('div', { class: 'bs-knobs' }, speed, skip);
 
     const plaque = el('div', { class: 'bs-plaque is-hidden' });
     const exit = el('div', { class: 'bs-exit is-hidden' },
-      btn({ label: 'Leave the field', kind: 'primary', onClick: () => game.dismissBattle() }));
+      btn({ label: tr('Leave the field'), kind: 'primary', onClick: () => game.dismissBattle() }));
     // What moves between slots is drawn on one canvas over the board; the
     // numbers float in a layer of their own beside it, so a slot that greys
     // out on its death does not grey its last number with it.
@@ -1057,7 +1058,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
         plaque.classList.remove('is-hidden');
         plaque.classList.add(won ? 'is-won' : 'is-lost');
         // The word sits over the cracks: carved on, after the wood split.
-        plaque.replaceChildren(el('span', { class: 'bs-plaque-word' }, won ? 'Victory' : 'Defeat'));
+        plaque.replaceChildren(el('span', { class: 'bs-plaque-word' }, won ? tr('Victory') : tr('Defeat')));
         // The fight's tune gives way to the verdict's.
         setBattleMusic(false);
         playSfx(won ? 'victory' : 'defeat');

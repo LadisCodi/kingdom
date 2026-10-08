@@ -2,6 +2,7 @@
 // says how far it has come, and the round buttons of a request.
 
 import { crestOf, type Crest } from '../../sim/crest';
+import { tr } from '../../i18n/tr';
 import { chargeUrl, fieldUrl } from '../crestArt';
 import { el, formatExact } from '../format';
 import { iconEl } from '../kit';
@@ -30,14 +31,14 @@ export const townhallBand = (level: number): number => Math.min(4, Math.max(0, M
 export function townhallTag(level: number): HTMLElement {
   return el('span', { class: `fr-th is-band-${townhallBand(level)}` },
     iconEl('Townhall', { size: 'sm' }),
-    `Townhall ${formatExact(level)}`);
+    tr('Townhall {n}', { n: formatExact(level) }));
 }
 
 /** A place on a podium: a hanging ribbon, gold, silver and bronze, plain
  *  wood past the third. */
 export function rankRibbon(rank: number | null): HTMLElement {
   const tone = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'plain';
-  return el('span', { class: `fr-rank is-${tone}`, ...(rank === null ? { 'aria-hidden': 'true' } : { 'aria-label': `Place ${formatExact(rank)}` }) },
+  return el('span', { class: `fr-rank is-${tone}`, ...(rank === null ? { 'aria-hidden': 'true' } : { 'aria-label': tr('Place {n}', { n: formatExact(rank) }) }) },
     rank === null ? '' : formatExact(rank));
 }
 

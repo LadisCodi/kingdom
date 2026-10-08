@@ -4,7 +4,8 @@
 
 import { DISTRICTS, ITEMS, type BoostKind, type ItemDef } from '../sim/data/definitions';
 import type { CurrencyId, DistrictId, ItemId, Wallet } from '../sim/state';
-import { formatDuration, formatExact } from './format';
+import { currencyName, formatDuration, formatExact } from './format';
+import { tr } from '../i18n/tr';
 
 /** The size printed at the top of a tile: "10m", "1h", "8h" — or, for what
  *  has no duration, its value: "25%", "5"; a key, nothing. */
@@ -20,40 +21,60 @@ export const chestCoin = (worth: Wallet): [CurrencyId, number] | null => {
   return entry ?? null;
 };
 
-/** What a boost's popover says it raises. */
-export const BOOST_WHAT: Record<BoostKind, string> = { Rent: 'Houses pay', Harvest: 'A tap takes', Mana: 'Mana fills' };
+/** What a running boost raises, and by how much: "Houses pay +25%". */
+export const boostWhat = (kind: BoostKind, pct: string): string => {
+  switch (kind) {
+    case 'Rent': return tr('Houses pay +{n}%', { n: pct });
+    case 'Harvest': return tr('A tap takes +{n}%', { n: pct });
+    case 'Mana': return tr('Mana fills +{n}%', { n: pct });
+  }
+};
 
-/** What a speed-up's popover says it shortens. */
-export const SPEEDS_WHAT: Record<NonNullable<ItemDef['speeds']>, string> = {
-  General: 'any build, training or workshop',
-  Construction: 'a build or an upgrade',
-  Training: 'a training line',
-  Workshop: 'the item a workshop is making',
+/** A boost's popover line: what it raises, by how much, for how long. */
+const boostFor = (kind: BoostKind, pct: string, time: string): string => {
+  switch (kind) {
+    case 'Rent': return tr('Houses pay +{n}% for {time}', { n: pct, time });
+    case 'Harvest': return tr('A tap takes +{n}% for {time}', { n: pct, time });
+    case 'Mana': return tr('Mana fills +{n}% for {time}', { n: pct, time });
+  }
+};
+
+/** A speed-up's popover line: how much it takes off, and off what. */
+const speedsLine = (speeds: NonNullable<ItemDef['speeds']>, time: string): string => {
+  switch (speeds) {
+    case 'General': return tr('Takes {time} off any build, training or workshop', { time });
+    case 'Construction': return tr('Takes {time} off a build or an upgrade', { time });
+    case 'Training': return tr('Takes {time} off a training line', { time });
+    case 'Workshop': return tr('Takes {time} off the item a workshop is making', { time });
+  }
 };
 
 /** What the Bag calls an item in its popover: "1h Wood chest". */
-export const itemName = (def: ItemDef): string => `${sizeLabel(def)} ${def.name}`.trim();
+export const itemName = (def: ItemDef): string =>
+  tr('{size} {name}', { size: sizeLabel(def), name: def.name }).trim();
 
 /** The popover's one line: what one is worth now. */
 export const itemLine = (def: ItemDef, worth: Wallet): string => {
   const coin = chestCoin(worth);
   if (def.kind === 'chest' && coin !== null) {
-    return `${formatDuration(def.seconds)} of ${coin[0]} — ${formatExact(coin[1])} now`;
+    return tr('{time} of {coin} — {n} now',
+      { time: formatDuration(def.seconds), coin: currencyName(coin[0]), n: formatExact(coin[1]) });
   }
   if (def.kind === 'speedup' && def.speeds !== null) {
-    return `Takes ${formatDuration(def.seconds)} off ${SPEEDS_WHAT[def.speeds]}`;
+    return speedsLine(def.speeds, formatDuration(def.seconds));
   }
-  if (def.kind === 'choice') return `${formatDuration(def.seconds)} of the coin you pick`;
+  if (def.kind === 'choice') return tr('{time} of the coin you pick', { time: formatDuration(def.seconds) });
   if (def.kind === 'boost' && def.boost !== null) {
-    return `${BOOST_WHAT[def.boost]} +${formatExact(def.value)}% for ${formatDuration(def.seconds)}`;
+    return boostFor(def.boost, formatExact(def.value), formatDuration(def.seconds));
   }
-  if (def.kind === 'flask') return `Fills ${formatExact(def.value)}% of the Mana pool`;
-  if (def.kind === 'tome') return `${formatExact(def.value)} Knowledge, past the bar's cap`;
-  if (def.kind === 'key') return 'One call on its banner, in the store';
+  if (def.kind === 'flask') return tr('Fills {n}% of the Mana pool', { n: formatExact(def.value) });
+  if (def.kind === 'tome') return tr("{n} Knowledge, past the bar's cap", { n: formatExact(def.value) });
+  if (def.kind === 'key') return tr('One call on its banner, in the store');
   if (def.kind === 'part') {
     const ruin = (Object.keys(DISTRICTS) as DistrictId[])
       .find((id) => ITEMS[DISTRICTS[id].repairItem as ItemId] === def);
-    return ruin === undefined ? 'A piece of something ruined' : `Repairs the ${DISTRICTS[ruin].name}`;
+    return ruin === undefined ? tr('A piece of something ruined')
+      : tr('Repairs the {name}', { name: DISTRICTS[ruin].name });
   }
   return '';
 };

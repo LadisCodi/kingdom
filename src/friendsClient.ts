@@ -17,6 +17,7 @@ import type { KingdomView, SocialCommand, SocialRefusal, SocialSnapshot, WishVie
 import { nicknameProblem } from './worldServer/nickname';
 import { normalCode } from './socialServer/serve';
 import { formatExact } from './ui/format';
+import { tr, trn } from './i18n/tr';
 
 /** The friends screen's three tabs. */
 export type FriendsTab = 'list' | 'trade' | 'inbox';
@@ -33,33 +34,33 @@ export interface RankedKingdom extends KingdomView {
 
 /** What a refusal says to the player. */
 export const REFUSAL_WORDS: Record<SocialRefusal, string> = {
-  NoName: 'Choose your name first',
-  BadNickname: 'That name cannot be used',
-  NicknameTaken: 'Another kingdom has that name',
-  NotFound: 'There is no kingdom with that name or code',
-  Self: 'That is your own kingdom',
-  AlreadyFriends: 'You are friends already',
-  Full: 'Your friends list is full',
-  TheirFull: 'Their friends list is full',
-  TooManySent: 'Too many requests are waiting for an answer',
-  Offline: 'The messengers could not get through. Try again soon',
-  BadWish: 'Those two cannot be traded for each other',
-  TooManyWishes: 'You have as many wishes pinned as you may',
-  SameWish: 'You already wish for that',
-  WishGone: 'That wish is gone',
-  OwnWish: 'That wish is your own',
-  NotFriends: 'Only friends can fill each other\'s wishes',
-  NoFillsLeft: 'No fills left today',
-  AlreadyHelped: 'You have helped them today',
-  NoHelpsLeft: 'No helps left today',
+  NoName: tr('Choose your name first'),
+  BadNickname: tr('That name cannot be used'),
+  NicknameTaken: tr('Another kingdom has that name'),
+  NotFound: tr('There is no kingdom with that name or code'),
+  Self: tr('That is your own kingdom'),
+  AlreadyFriends: tr('You are friends already'),
+  Full: tr('Your friends list is full'),
+  TheirFull: tr('Their friends list is full'),
+  TooManySent: tr('Too many requests are waiting for an answer'),
+  Offline: tr('The messengers could not get through. Try again soon'),
+  BadWish: tr('Those two cannot be traded for each other'),
+  TooManyWishes: tr('You have as many wishes pinned as you may'),
+  SameWish: tr('You already wish for that'),
+  WishGone: tr('That wish is gone'),
+  OwnWish: tr('That wish is your own'),
+  NotFriends: tr('Only friends can fill each other\'s wishes'),
+  NoFillsLeft: tr('No fills left today'),
+  AlreadyHelped: tr('You have helped them today'),
+  NoHelpsLeft: tr('No helps left today'),
 };
 
 /** Why the player cannot fill a wish, in words (sim/trade.ts `fillProblem`). */
 export const FILL_WORDS = {
-  NotEnough: 'You don\'t have it',
-  OnlyOne: 'You have only one',
-  Bound: 'Only found fragments can be given',
-  Unmet: 'You have not found this relic yet',
+  NotEnough: tr('You don\'t have it'),
+  OnlyOne: tr('You have only one'),
+  Bound: tr('Only found fragments can be given'),
+  Unmet: tr('You have not found this relic yet'),
 } as const;
 
 /** How often the client says hello: on the screen, and anywhere else. */
@@ -423,7 +424,7 @@ export class FriendsClient {
     }
     const banked = payHelper(this.game.state);
     this.game.track('friend_helped', { mana: banked });
-    this.game.toast(banked > 0 ? `Helped · +${formatExact(banked)} Mana` : 'Helped · your Mana is full');
+    this.game.note(banked > 0 ? tr('Helped · +{n} Mana', { n: formatExact(banked) }) : tr('Helped · your Mana is full'));
     this.game.persist?.();
     this.game.notify();
   }
@@ -463,7 +464,7 @@ export class FriendsClient {
     const code = this.snap?.me?.code;
     if (code === undefined) return;
     const link = `${location.origin}${location.pathname}?friend=${encodeURIComponent(code)}`;
-    const text = `Rule beside me in Kingdom! Add me as a friend with my code ${code}`;
+    const text = tr('Rule beside me in Kingdom! Add me as a friend with my code {code}', { code });
     this.game.track('friends_invited');
     try {
       if (typeof navigator.share === 'function') {
@@ -475,9 +476,9 @@ export class FriendsClient {
     }
     try {
       await navigator.clipboard.writeText(`${text}: ${link}`);
-      this.game.toast('Invitation copied — paste it to a friend');
+      this.game.note(tr('Invitation copied — paste it to a friend'));
     } catch {
-      this.game.toast(`Your friend code is ${code}`);
+      this.game.note(tr('Your friend code is {code}', { code }));
     }
   }
 
@@ -487,9 +488,9 @@ export class FriendsClient {
     if (code === undefined) return;
     try {
       await navigator.clipboard.writeText(code);
-      this.game.toast('Friend code copied');
+      this.game.note(tr('Friend code copied'));
     } catch {
-      this.game.toast(`Your friend code is ${code}`);
+      this.game.note(tr('Your friend code is {code}', { code }));
     }
   }
 
@@ -503,7 +504,7 @@ export class FriendsClient {
     this.busy.delete(code);
     if (r !== null && !r.ok) this.game.toast(REFUSAL_WORDS[r.why]);
     else if (r !== null) {
-      if (okWords !== null) this.game.toast(okWords);
+      if (okWords !== null) this.game.note(okWords);
       this.game.track(`friend_${cmd.kind}`);
     }
     this.game.notify();
@@ -524,20 +525,20 @@ export class FriendsClient {
 
 /** When a kingdom was last in the game, as a friend reads it: roughly. */
 export function lastSeenWords(seenAt: number | null, now: number): string {
-  if (seenAt === null) return 'Not seen yet';
+  if (seenAt === null) return tr('Not seen yet');
   const ms = Math.max(0, now - seenAt);
   const min = 60_000;
   const day = 24 * 60 * min;
-  if (ms < 5 * min) return 'Online now';
+  if (ms < 5 * min) return tr('Online now');
   const then = new Date(seenAt);
   const today = new Date(now);
   const sameDay = then.toDateString() === today.toDateString();
-  if (sameDay) return 'Today';
+  if (sameDay) return tr('Today');
   const yesterday = new Date(now - day);
-  if (then.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  if (ms < 7 * day) return 'This week';
-  if (ms < 14 * day) return '1 week ago';
-  if (ms < 30 * day) return `${formatExact(Math.floor(ms / (7 * day)))} weeks ago`;
+  if (then.toDateString() === yesterday.toDateString()) return tr('Yesterday');
+  if (ms < 7 * day) return tr('This week');
+  if (ms < 14 * day) return tr('1 week ago');
+  if (ms < 30 * day) return tr('{n} weeks ago', { n: formatExact(Math.floor(ms / (7 * day))) });
   const months = Math.floor(ms / (30 * day));
-  return months === 1 ? '1 month ago' : `${formatExact(months)} months ago`;
+  return trn(months, '{n} month ago', '{n} months ago', { n: formatExact(months) });
 }

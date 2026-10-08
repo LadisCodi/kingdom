@@ -16,6 +16,7 @@ import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatExact } from './format';
 import { btn, iconEl } from './kit';
+import { tr } from '../i18n/tr';
 
 export function renderCastPanel(game: Game): HTMLElement {
   const info = game.castInfo()!;
@@ -26,14 +27,14 @@ export function renderCastPanel(game: Game): HTMLElement {
   // What this cast buys, right here, in a number the player can compare.
   let verdict: HTMLElement;
   if (active.targeted && info.cell === null) {
-    verdict = el('span', { class: 'plc-verdict is-bad' }, 'Nowhere to cast it yet');
+    verdict = el('span', { class: 'plc-verdict is-bad' }, tr('Nowhere to cast it yet'));
   } else if (active.id === 'Survey') {
     verdict = info.saving === 0
-      ? el('span', { class: 'plc-verdict is-bad' }, 'No fog within reach here')
+      ? el('span', { class: 'plc-verdict is-bad' }, tr('No fog within reach here'))
       : el('span', { class: 'plc-verdict is-good' },
         iconEl('Gold', { size: 'sm' }),
         el('b', {}, formatExact(info.saving)),
-        el('span', {}, 'Gold saved — the same Mana at any distance'));
+        el('span', {}, tr('Gold saved — the same Mana at any distance')));
   } else {
     verdict = el('span', { class: 'plc-verdict' }, active.text);
   }
@@ -41,18 +42,18 @@ export function renderCastPanel(game: Game): HTMLElement {
   // Not affording the Mana is no longer a sentence — the price is in the
   // button and turns clay (§6.4).
   const blockedBy = active.targeted && info.cell === null
-    ? 'Nowhere legal to cast it'
+    ? tr('Nowhere legal to cast it')
     : undefined;
 
   const confirm = btn({
-    label: 'Cast',
+    label: tr('Cast'),
     kind: 'primary',
     finish: 'gem',
     onClick: () => game.confirmCast(),
     costExtra: [{ icon: 'Mana', amount: formatExact(info.manaCost), short: !info.affordable }],
     disabledReason: blockedBy,
   });
-  const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });
+  const cancel = btn({ label: tr('Cancel'), onClick: () => game.dismiss() });
   cancel.setAttribute('data-own-close', '');
 
   return el('div', { class: 'plc-bar is-cast' },

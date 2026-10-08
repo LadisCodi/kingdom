@@ -13,6 +13,7 @@
 // this a different screen?" (tear down, build, mount). Nothing about the
 // rebuild gets cleverer — only the container becomes stable.
 
+import { tr } from '../../i18n/tr';
 import { releaseSprites } from '../../render/spritePool';
 
 /** A mounted screen. `root` must be stable for the screen's whole lifetime. */
@@ -69,7 +70,7 @@ export function legacy(
     const b = document.createElement('button');
     b.className = 'legacy-close';
     b.type = 'button';
-    b.setAttribute('aria-label', 'Close');
+    b.setAttribute('aria-label', tr('Close'));
     b.textContent = '✕';
     b.addEventListener('click', onClose);
     knob = b;

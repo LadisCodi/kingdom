@@ -19,16 +19,6 @@ export type Charge = (typeof CHARGES)[number];
 
 export interface Crest { tincture: Tincture; charge: Charge }
 
-/** What the player reads for each. */
-export const TINCTURE_NAMES: Record<Tincture, string> = {
-  gules: 'Red', azure: 'Blue', vert: 'Green', purpure: 'Purple',
-  sable: 'Black', tenne: 'Orange', celeste: 'Teal', murrey: 'Wine',
-};
-export const CHARGE_NAMES: Record<Charge, string> = {
-  lion: 'Lion', fleur: 'Lily', tree: 'Oak', crown: 'Crown', tower: 'Tower', star: 'Star',
-  eagle: 'Eagle', key: 'Key', swords: 'Swords', dragon: 'Dragon', stag: 'Stag', ship: 'Ship',
-};
-
 export const crestId = (c: Crest): string => `${c.tincture}.${c.charge}`;
 
 /** A crest as written, or null if it is not one. */

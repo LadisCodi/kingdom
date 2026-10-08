@@ -10,7 +10,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
-import { CURRENCIES, DISTRICTS, ITEMS, TECH_ORDER, TECHNOLOGIES } from '../src/sim/data/definitions';
+import { CURRENCIES, DISTRICTS, ITEMS, QUESTS, TECH_ORDER, TECHNOLOGIES } from '../src/sim/data/definitions';
+import { goalIcon } from '../src/ui/questIcon';
 
 
 const cells = new Set(Object.keys(ICON_INDEX));
@@ -149,5 +150,15 @@ describe('a technology\'s icon', () => {
   it('is a drawn cell of the atlas, never an emoji', () => {
     const undrawn = TECH_ORDER.filter((id) => !cells.has(TECHNOLOGIES[id].icon));
     expect(undrawn.map((id) => `${id} → ${TECHNOLOGIES[id].icon}`)).toEqual([]);
+  });
+});
+
+describe('the quest scroll', () => {
+  it('marks every quest in the chain with a drawn cell', () => {
+    // A goal whose mark has no cell renders blank, or as an emoji next to
+    // the scroll's pixel art (AnyDecoration once named no icon at all).
+    const missing = QUESTS.map((q) => `${q.id}: ${goalIcon(q)}`)
+      .filter((line) => !cells.has(line.slice(line.indexOf(': ') + 2)));
+    expect(missing).toEqual([]);
   });
 });

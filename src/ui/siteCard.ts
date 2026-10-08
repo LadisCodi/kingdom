@@ -22,6 +22,7 @@ import { itemIcon } from './itemArt';
 import { coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, sectionHead, windowHead, type IconName } from './kit';
 import type { Screen } from './kit/host';
+import { tr } from '../i18n/tr';
 
 /**
  * THE LANDMARK'S CARD — the lair card's frame (`.dc`), and four things in
@@ -46,7 +47,7 @@ export function landmarkCardScreen(game: Game, def: LandmarkDef): Screen {
     const url = spriteUrl(look.sprite);
     const figure = el('div', { class: 'lm-art k-section' },
       url ? spriteImgAt(url, 'lm-art-img') : el('div', { class: 'lc-art-glyph' }, look.glyph),
-      el('p', { class: 'lm-status' }, claimed ? 'Claimed' : 'Unclaimed'));
+      el('p', { class: 'lm-status' }, claimed ? tr('Claimed') : tr('Unclaimed')));
 
     // The promise, stated as the two things it actually buys: a bigger pool
     // (which is also a bigger reward every time an ad refills it), and a
@@ -54,17 +55,19 @@ export function landmarkCardScreen(game: Game, def: LandmarkDef): Screen {
     // there" glyph the quest pill already uses, and looking is exactly what
     // a claim buys here — not owning.
     const gift = el('div', { class: 'lc-reward' },
-      giftChip('Mana', `+${formatExact(MANA.landmarkCap)}`, 'Mana, for good'),
-      giftChip('showme', `${side}×${side}`, 'of map uncovered'));
+      giftChip('Mana', `+${formatExact(MANA.landmarkCap)}`, tr('Mana, for good')),
+      giftChip('showme', `${formatExact(side)}×${formatExact(side)}`, tr('of map uncovered')));
 
     const go = claimed
       // Spelled out against the running total, because the value of a claim
       // is what it made the ceiling, not the number on the tin.
       ? el('p', { class: 'lm-note is-claimed' },
         iconEl('tick', { size: 'sm' }),
-        `Holding ${formatExact(MANA.landmarkCap)} more Mana. Your pool: ${formatExact(manaCap(game.state))}.`)
+        tr('Holding {n} more Mana. Your pool: {pool}.', {
+          n: formatExact(MANA.landmarkCap), pool: formatExact(manaCap(game.state)),
+        }))
       : el('div', { class: 'lc-go' }, btn({
-        label: 'Claim',
+        label: tr('Claim'),
         kind: 'primary',
         onClick: () => game.doClaimLandmark(def.location),
         cost: { Gold: cost },
@@ -72,17 +75,17 @@ export function landmarkCardScreen(game: Game, def: LandmarkDef): Screen {
       }));
 
     root.replaceChildren(frame,
-      windowHead(look.name, [closeKnob(() => game.dismiss(), `Close ${look.name}`)]),
+      windowHead(look.name, [closeKnob(() => game.dismiss(), tr('Close {name}', { name: look.name }))]),
       figure,
-      sectionHead(claimed ? 'Gives' : 'Claim it for'),
+      sectionHead(claimed ? tr('Gives') : tr('Claim it for')),
       gift,
       // What the claim actually buys, in the player's terms: a deeper pool
       // means a longer session AND a larger refill, because a refill fills
       // the whole thing.
       ...(claimed ? [] : [el('p', { class: 'lm-note' },
-        `A longer run of taps, and more from every refill. The fog lifts for `
-        + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
-        + 'though clearing it is still yours to pay for.')]),
+        tr('A longer run of taps, and more from every refill. The fog lifts for {n} cells around: you will see what is out there, though clearing it is still yours to pay for.', {
+          n: formatExact(FOG.claimDiscoverRadius),
+        }))]),
       go);
   };
 
@@ -119,25 +122,26 @@ export function renderAbandonedCard(game: Game, site: AbandonedDef): HTMLElement
   const url = spriteUrl(`${def.sprite}_ruin`);
   return el('div', { class: 'dc lc lm' },
     el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
-    windowHead(site.name, [closeKnob(() => game.dismiss(), `Close ${site.name}`)]),
+    windowHead(site.name, [closeKnob(() => game.dismiss(), tr('Close {name}', { name: site.name }))]),
     el('div', { class: 'lm-art k-section' },
       url ? spriteImgAt(url, 'lm-art-img is-ruin') : el('div', { class: 'lc-art-glyph' }, def.glyph),
-      el('p', { class: 'lm-status' }, 'Abandoned')),
+      el('p', { class: 'lm-status' }, tr('Abandoned'))),
     el('p', { class: 'lm-note' }, def.promise),
     el('p', { class: 'lm-note' },
-      'Left to the fog when its people fled. Repair it and it is yours, '
-      + 'exactly as if you had built it.'),
+      tr('Left to the fog when its people fled. Repair it and it is yours, exactly as if you had built it.')),
     // A ruin missing a piece — the Watchtower's lens — says which, and
     // whether the Bag holds it.
     ...(def.repairItem === '' ? [] : [(() => {
       const item = def.repairItem as ItemId;
       const held = game.itemHeld(item) > 0;
       return el('p', { class: `lm-note lm-need${held ? ' is-held' : ''}` },
-        iconEl(itemIcon(item)), `Needs ${ITEMS[item].name} — ${held ? 'in the Bag' : 'not found yet'}`);
+        iconEl(itemIcon(item)), held
+          ? tr('Needs {item} — in the Bag', { item: ITEMS[item].name })
+          : tr('Needs {item} — not found yet', { item: ITEMS[item].name }));
     })()]),
     // `repair` is what a scene points at (Docs/features/23-tutorials.md §3).
     el('div', { class: 'lc-go', 'data-coach': 'repair' }, btn({
-      label: 'Repair',
+      label: tr('Repair'),
       kind: 'primary',
       onClick: () => game.doRepairAbandoned(site.location),
       cost: nextBuildCost(game.state, site.districtId),
@@ -179,13 +183,14 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
       ? el('div', { class: 'lc-clock k-section is-beaten' },
         iconEl('tick', { size: 'lg' }),
         el('div', { class: 'lc-clock-body' },
-          el('div', { class: 'lc-clock-label' },
-            `${lair.creature} ${lair.creature.startsWith('A ') ? 'is' : 'are'} beaten`),
-          el('b', { class: 'lc-clock-value' }, 'Claim what they left behind')))
+          el('div', { class: 'lc-clock-label' }, lair.creature.startsWith('A ')
+            ? tr('{creature} is beaten', { creature: lair.creature })
+            : tr('{creature} are beaten', { creature: lair.creature })),
+          el('b', { class: 'lc-clock-value' }, tr('Claim what they left behind'))))
       : el('div', { class: 'lc-clock k-section' },
         iconEl('hourglass', { size: 'lg' }),
         el('div', { class: 'lc-clock-body' },
-          el('div', { class: 'lc-clock-label' }, 'They will attack your city in'),
+          el('div', { class: 'lc-clock-label' }, tr('They will attack your city in')),
           clock));
 
     // The hoard first: it is what the raids took, and clearing the lair is
@@ -193,23 +198,23 @@ export function lairCardScreen(game: Game, lairId: LairId): Screen {
     const chips: HTMLElement[] = [];
     for (const [c, n] of Object.entries(lair.hoard) as Array<[RaidableId, number]>) {
       if (n <= 0) continue;
-      chips.push(rewardChip(c, formatExact(n), lair.hoardFull[c] === true ? 'full' : undefined));
+      chips.push(rewardChip(c, formatExact(n), lair.hoardFull[c] === true ? tr('full') : undefined));
     }
     const reward = game.lairReward(lairId);
     if (reward.heroXp > 0) chips.push(rewardChip('HeroXp', formatExact(reward.heroXp)));
     if (reward.knowledge > 0) chips.push(rewardChip('Knowledge', formatExact(reward.knowledge)));
 
     root.replaceChildren(frame,
-      windowHead(def.name, [closeKnob(() => game.dismiss(), `Close ${def.name}`)]),
+      windowHead(def.name, [closeKnob(() => game.dismiss(), tr('Close {name}', { name: def.name }))]),
       figure,
       timer,
-      sectionHead('Progress'),
+      sectionHead(tr('Progress')),
       fightPath(lair),
-      sectionHead('Reward'),
+      sectionHead(tr('Reward')),
       el('div', { class: 'lc-reward' }, ...chips),
       el('div', { class: 'lc-go' }, lair.defeated
-        ? btn({ label: 'Claim', kind: 'primary', onClick: () => game.doClaimLair(lairId) })
-        : coach(btn({ label: 'Attack', kind: 'primary', onClick: () => game.openLair(lairId) }), 'lair-attack')));
+        ? btn({ label: tr('Claim'), kind: 'primary', onClick: () => game.doClaimLair(lairId) })
+        : coach(btn({ label: tr('Attack'), kind: 'primary', onClick: () => game.openLair(lairId) }), 'lair-attack')));
   };
 
   return {
@@ -252,8 +257,8 @@ function fightPath(lair: LairView): HTMLElement {
     steps.push(el('span', { class: `lc-stone ${state}${boss}`, 'aria-hidden': 'true' }));
   }
   const label = lair.defeated
-    ? `All ${formatExact(lair.fights)} fights won`
-    : `Fight ${formatExact(lair.won + 1)} of ${formatExact(lair.fights)}`;
+    ? tr('All {n} fights won', { n: formatExact(lair.fights) })
+    : tr('Fight {n} of {total}', { n: formatExact(lair.won + 1), total: formatExact(lair.fights) });
   return el('div', { class: 'lc-progress k-section', role: 'img', 'aria-label': label },
     el('div', { class: 'lc-path', style: `--fights: ${lair.fights}` }, ...steps),
     el('div', { class: 'lc-path-label' }, label));

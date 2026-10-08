@@ -19,7 +19,9 @@
 // arranging the page reads the sentence the player will read.
 
 import { DISTRICTS, HARVEST, TECHNOLOGIES, UNITS, WORLD_BUILD } from './data/definitions';
-import type { WorldDistrict } from './world/types';
+import { tr } from '../i18n/tr';
+import { decimal } from '../i18n/lang';
+import type { WorldDistrict, WorldUpgrade } from './world/types';
 import {
   TECH_STATS, targetId, targetKind,
   type StatDef, type TechEffect, type TechEffectOp,
@@ -58,31 +60,39 @@ export interface TechSaying {
  * provide it), and "Wild animals" / "Fish shoal" only fit the sentence by
  * accident. Eight strings authored once beat a derivation that is wrong twice.
  */
-const HARVEST_SAYS: Record<HarvestSourceId, { one: string; many: string }> = {
-  Forest: { one: 'a forest', many: 'the forests' },
-  Crops: { one: 'a farm plot', many: 'crop plots' },
-  Berries: { one: 'a berry bush', many: 'the berry bushes' },
-  Meat: { one: 'wild game', many: 'the wild game' },
-  Fish: { one: 'a shoal', many: 'the fish shoals' },
-  Stone: { one: 'a mountain', many: 'the mountains' },
-  MountainIron: { one: 'an iron mountain', many: 'the iron mountains' },
-  MountainGold: { one: 'a gold mountain', many: 'the gold mountains' },
-};
+const HARVEST_SAYS = (): Record<HarvestSourceId, { one: string; many: string }> => ({
+  Forest: { one: tr('a forest'), many: tr('the forests') },
+  Crops: { one: tr('a farm plot'), many: tr('crop plots') },
+  Berries: { one: tr('a berry bush'), many: tr('the berry bushes') },
+  Meat: { one: tr('wild game'), many: tr('the wild game') },
+  Fish: { one: tr('a shoal'), many: tr('the fish shoals') },
+  Stone: { one: tr('a mountain'), many: tr('the mountains') },
+  MountainIron: { one: tr('an iron mountain'), many: tr('the iron mountains') },
+  MountainGold: { one: tr('a gold mountain'), many: tr('the gold mountains') },
+});
 
 /** A terrain as the thing a player crosses. */
-const TERRAIN_SAYS: Record<TerrainId, string> = {
-  Grassland: 'the grasslands',
-  Plains: 'the plains',
-  Desert: 'the desert',
-  Snow: 'the snows',
-  Tundra: 'the tundra',
-  Water: 'the open water',
-};
+const TERRAIN_SAYS = (): Record<TerrainId, string> => ({
+  Grassland: tr('the grasslands'),
+  Plains: tr('the plains'),
+  Desert: tr('the desert'),
+  Snow: tr('the snows'),
+  Tundra: tr('the tundra'),
+  Water: tr('the open water'),
+});
+
+/** A unit tag as the word on a card. */
+const TAG_SAYS = (): Record<string, string> => ({ Melee: tr('tag::Melee'), Distance: tr('tag::Distance'), Mounted: tr('tag::Mounted') });
+
+/** A coin as a sentence names it. */
+const RESOURCE_SAYS = (): Record<string, string> => ({
+  Gold: tr('Gold'), Food: tr('Food'), Wood: tr('Wood'), Stone: tr('Stone'),
+});
 
 /** A serial list: `A`, `A and B`, `A, B and C`. */
 const serial = (parts: string[]): string =>
   parts.length < 2 ? (parts[0] ?? '')
-    : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+    : tr('{list} and {last}', { list: parts.slice(0, -1).join(', '), last: parts[parts.length - 1] });
 
 // ---------------------------------------------------------------- unlocks
 
@@ -97,24 +107,26 @@ const serial = (parts: string[]): string =>
  * technology that opens a building and a unit still reads as one sentence.
  */
 export function unlockPhrase(unlock: TechUnlock): string {
-  if ('district' in unlock) return `the ${districtName(unlock.district)}`;
+  if ('district' in unlock) return tr('the {name}', { name: districtName(unlock.district) });
   if ('districtLevel' in unlock) {
     const { id, level } = unlock.districtLevel;
-    return `${districtName(id)} level ${level}`;
+    return tr('{name} level {n}', { name: districtName(id), n: level });
   }
   if ('districtCount' in unlock) {
     // "one more", never "a second": the gate means one more may stand, which
     // stays true however many the Townhall already allows.
-    return `one more ${districtName(unlock.districtCount)}`;
+    return tr('one more {name}', { name: districtName(unlock.districtCount) });
   }
-  if ('unit' in unlock) return `the ${unitName(unlock.unit)}`;
+  if ('unit' in unlock) return tr('the {name}', { name: unitName(unlock.unit) });
   if ('evolution' in unlock) return `${unitName(unlock.evolution.unit)} ${ROMAN_RANK[unlock.evolution.rank] ?? unlock.evolution.rank}`;
   if ('harvest' in unlock) {
-    return HARVEST_SAYS[unlock.harvest as HarvestSourceId]?.many ?? unlock.harvest;
+    return HARVEST_SAYS()[unlock.harvest as HarvestSourceId]?.many ?? unlock.harvest;
   }
-  if ('terrain' in unlock) return TERRAIN_SAYS[unlock.terrain as TerrainId] ?? unlock.terrain;
-  if ('worldUpgrade' in unlock) return `the ${unlock.worldUpgrade} on the world board`;
-  return 'nothing';
+  if ('terrain' in unlock) return TERRAIN_SAYS()[unlock.terrain as TerrainId] ?? unlock.terrain;
+  if ('worldUpgrade' in unlock) {
+    return tr('the {name} on the world board', { name: WORLD_BUILD.upgrades[unlock.worldUpgrade as WorldUpgrade]?.name ?? unlock.worldUpgrade });
+  }
+  return tr('nothing');
 }
 
 /**
@@ -145,8 +157,8 @@ function unlockClauses(unlocks: readonly TechUnlock[]): string[] {
     bySet.set(key, group);
   }
   const levels = [...bySet.values()].map(({ names, levels: at }) => {
-    const which = at.length === 1 ? `level ${at[0]}` : `levels ${serial(at.map(String))}`;
-    return names.length === 1 ? `${names[0]} ${which}` : `${serial(names)} at ${which}`;
+    const which = at.length === 1 ? tr('level {n}', { n: at[0] }) : tr('levels {list}', { list: serial(at.map(String)) });
+    return names.length === 1 ? tr('{name} {which}', { name: names[0], which }) : tr('{names} at {which}', { names: serial(names), which });
   });
   return [...levels, ...rest];
 }
@@ -157,14 +169,14 @@ function unlockClauses(unlocks: readonly TechUnlock[]): string[] {
 const amount = (value: number, op: TechEffectOp): string => {
   const sign = value < 0 ? '−' : '+';
   const size = Math.abs(value);
-  return op === 'percent' ? `${sign}${size}%` : `${sign}${size}`;
+  return op === 'percent' ? `${sign}${decimal(size)}%` : `${sign}${decimal(size)}`;
 };
 
 /** A value authored as a FRACTION, read as a percentage: `0.05` → `+5%`.
  *  Rounded, because `0.05 * 100` is 5.000000000000001. */
 const asPercent = (value: number): string => {
   const sign = value < 0 ? '−' : '+';
-  return `${sign}${Math.round(Math.abs(value) * 1000) / 10}%`;
+  return `${sign}${decimal(Math.round(Math.abs(value) * 1000) / 10)}%`;
 };
 
 /** The target of an effect, as a complete noun phrase. */
@@ -174,9 +186,10 @@ function targetPhrase(effect: TechEffect): string {
   if (id === null) return '';
   if (kind === 'district') return districtName(id);
   if (kind === 'unit') return unitName(id);
-  if (kind === 'harvest') return HARVEST_SAYS[id as HarvestSourceId]?.one ?? id;
+  if (kind === 'harvest') return HARVEST_SAYS()[id as HarvestSourceId]?.one ?? id;
   if (kind === 'worldDistrict') return WORLD_BUILD.districts[id as WorldDistrict]?.name ?? id;
-  return id; // a unit tag is already the word; a tome is its own name
+  if (kind === 'unitTag') return TAG_SAYS()[id] ?? id;
+  return id; // a tome is its own name
 }
 
 /**
@@ -196,13 +209,14 @@ export function effectSentence(effect: TechEffect, targets?: string): string {
   const where = targets ?? targetPhrase(effect);
   const source = targetKind(effect.target) === 'harvest'
     ? HARVEST[targetId(effect.target) as HarvestSourceId]?.currencyId ?? '' : '';
+  const coin = RESOURCE_SAYS()[source] ?? source;
   return template
     // A bracketed segment belongs to the aim: no aim, no segment.
     .replace(/\[([^\]]*)\]/g, (_, inner: string) => (aimed ? inner : ''))
     .replace(/\{v\}/g, amount(effect.value, effect.op))
     .replace(/\{pct\}/g, asPercent(effect.value))
     .replace(/\{target\}/g, where)
-    .replace(/\{resource\}/g, source)
+    .replace(/\{resource\}/g, coin)
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -223,7 +237,7 @@ export function effectSentence(effect: TechEffect, targets?: string): string {
  */
 export function techSentences(node: TechSaying): string[] {
   const unlocks = node.unlocks ?? [];
-  if (unlocks.length > 0) return unlockClauses(unlocks).map((c) => `Unlocks ${c}`);
+  if (unlocks.length > 0) return unlockClauses(unlocks).map((c) => tr('Unlocks {what}', { what: c }));
   const effects = node.effects ?? [];
   if (effects.length > 0) return effectGroups(effects).filter((s) => s !== '');
   const prose = (node.description ?? '').trim();
@@ -251,7 +265,7 @@ function effectGroups(effects: readonly TechEffect[]): string[] {
  *  sentences. */
 export function describeTech(node: TechSaying): string {
   const unlocks = node.unlocks ?? [];
-  if (unlocks.length > 0) return `Unlocks ${serial(unlockClauses(unlocks))}`;
+  if (unlocks.length > 0) return tr('Unlocks {what}', { what: serial(unlockClauses(unlocks)) });
   return techSentences(node).join(' · ');
 }
 

@@ -462,6 +462,19 @@
    "evenGrid": true
   },
   {
+   "file": "sheets/ui-q1-quests.png",
+   "grid": {
+    "rows": 1,
+    "cols": 2
+   },
+   "fill": 0.9,
+   "names": [
+    "tree",
+    "landmark"
+   ],
+   "evenGrid": true
+  },
+  {
    "file": "sheets/ui-i5-lens.png",
    "grid": {
     "rows": 1,

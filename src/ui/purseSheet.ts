@@ -7,10 +7,11 @@
 // letting the HUD show three coins without hiding anything, and giving the
 // off-plank currencies somewhere to be read outside their own screens.
 
+import { tr } from '../i18n/tr';
 import type { Game } from '../game';
 import { CURRENCIES } from '../sim/data/definitions';
 import { type CurrencyId } from '../sim/state';
-import { el, formatExact } from './format';
+import { currencyName, el, formatExact } from './format';
 import { currencyIcon, sheet } from './kit';
 
 /** Currencies worth a row: the city's goods, the kingdom's Stardust, the
@@ -21,13 +22,6 @@ import { currencyIcon, sheet } from './kit';
  *  worth knowing about it (the ceiling, the production) lives in the
  *  Reliquary, which is one tap from the same gauge. */
 const PURSE_ORDER = (Object.keys(CURRENCIES) as CurrencyId[]).filter((c) => c !== 'Mana');
-
-/** The id, made readable. Every currency until the two gacha keys was a
- *  single word, so the row could print its own id and nobody noticed —
- *  `SilverKey` is where that stopped being true. Splitting on the camel hump
- *  needs no table to keep in step with `CurrencyId`. */
-const currencyName = (c: CurrencyId): string =>
-  c.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/ (\w)/g, (_, ch) => ` ${ch.toLowerCase()}`);
 
 export function renderPurseSheet(game: Game): HTMLElement {
   const rows = el('div', { class: 'purse' });
@@ -48,5 +42,5 @@ export function renderPurseSheet(game: Game): HTMLElement {
     ));
   }
 
-  return sheet({ title: 'Your purse', onClose: () => game.dismiss() }, rows);
+  return sheet({ title: tr('Your purse'), onClose: () => game.dismiss() }, rows);
 }

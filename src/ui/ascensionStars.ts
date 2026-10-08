@@ -8,6 +8,7 @@
 import { HERO_LADDER } from '../sim/data/definitions';
 import { fullStars, maxAscension } from '../sim/heroLadder';
 import { el, formatExact } from './format';
+import { tr, trn } from '../i18n/tr';
 
 export function ascensionStars(ascension: number, cls = ''): HTMLElement {
   const per = HERO_LADDER.ascensionStepsPerStar;
@@ -30,9 +31,10 @@ export function ascensionStars(ascension: number, cls = ''): HTMLElement {
 
 /** "2 stars and 3 points" — what a screen reader hears for the row. */
 export function ascensionLabel(ascension: number): string {
-  if (ascension >= maxAscension()) return 'Fully ascended';
+  if (ascension >= maxAscension()) return tr('Fully ascended');
   const stars = fullStars(ascension);
   const points = ascension - stars * HERO_LADDER.ascensionStepsPerStar;
-  const s = `${formatExact(stars)} ${stars === 1 ? 'star' : 'stars'}`;
-  return points === 0 ? s : `${s} and ${formatExact(points)} ${points === 1 ? 'point' : 'points'}`;
+  const s = trn(stars, '{n} star', '{n} stars', { n: formatExact(stars) });
+  return points === 0 ? s
+    : tr('{stars} and {points}', { stars: s, points: trn(points, '{n} point', '{n} points', { n: formatExact(points) }) });
 }

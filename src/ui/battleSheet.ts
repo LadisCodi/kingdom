@@ -31,10 +31,11 @@ import { HEROES, TROOP_ORDER, TROOPS, rankOf } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
 import type { HeroId, TroopId, Wallet } from '../sim/state';
 import type { Game } from '../game';
-import { coach, el, formatExact } from './format';
+import { coach, el, formatExact, troopsName } from './format';
 import { btn, headPanel, hpBar, iconEl, sectionHead, sheet } from './kit';
 import { portraitFrame, unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
+import { tr, trn } from '../i18n/tr';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
@@ -97,7 +98,7 @@ const armyBox = (label: string, power: number, cls: string, groups: HTMLElement[
  *  a screen that shows what a fight is against before it is composed (a
  *  world camp's card). */
 export const enemyPanel = (squads: readonly EnemySquad[], power: number, portrait: (u: TroopId) => HTMLElement): HTMLElement =>
-  armyBox('Enemy', power, 'is-enemy', [slotGroup('Troops', squads.map((s) => squadCell(portrait(s.unitId), s.count, s.unitId)), 0, 'is-troops')]);
+  armyBox(tr('Enemy'), power, 'is-enemy', [slotGroup(tr('Troops'), squads.map((s) => squadCell(portrait(s.unitId), s.count, s.unitId)), 0, 'is-troops')]);
 
 /** An army already in the field — camped at a dungeon or in the Portal —
  *  as the deployment draws the player's own: troops above, heroes below,
@@ -121,9 +122,9 @@ export function fieldArmyPanel(
   });
   const heroes = army.heroes.map((h) => el('span', { class: 'bt-field-hero' },
     heroCard(game, h.heroId, { small: true }), hpBar(Math.round(h.hp), Math.round(h.hpMax))));
-  return armyBox('Your army', army.power, 'is-mine', [
-    slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
-    ...(heroes.length > 0 ? [slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
+  return armyBox(tr('Your army'), army.power, 'is-mine', [
+    slotGroup(tr('Troops'), troops, game.troopSlotsOpen(), 'is-troops'),
+    ...(heroes.length > 0 ? [slotGroup(tr('Heroes'), heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
   ]);
 }
 
@@ -140,9 +141,9 @@ const cardSlot = (cls: string, ...children: HTMLElement[]): HTMLElement =>
 function enemyBoard(view: BattleView): HTMLElement {
   const troops = view.enemy.squads.map((s) => squadCell(view.enemy.portrait(s.unitId), s.count, s.unitId));
   const heroes = (view.enemy.heroes ?? []).map((face) => squadlessCell(face));
-  return armyBox('Enemy', view.enemy.power, 'is-enemy', [
-    slotGroup('Troops', troops, 0, 'is-troops'),
-    ...(heroes.length > 0 ? [slotGroup('Villains', heroes, 0, 'is-heroes')] : []),
+  return armyBox(tr('Enemy'), view.enemy.power, 'is-enemy', [
+    slotGroup(tr('Troops'), troops, 0, 'is-troops'),
+    ...(heroes.length > 0 ? [slotGroup(tr('Villains'), heroes, 0, 'is-heroes')] : []),
   ]);
 }
 
@@ -160,7 +161,7 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     .map((slot, index) => {
       const cell = el('button', {
         class: 'bt-cell is-filled is-mine', type: 'button',
-        'aria-label': `Send ${slot.count} ${TROOPS[slot.unitId].name}s home`,
+        'aria-label': tr('Send {count} {troops} home', { count: slot.count, troops: troopsName(slot.unitId) }),
       },
       portraitFrame(unitBust(slot.unitId, 'k-portrait-art'), slot.unitId),
       el('span', { class: 'bt-count' }, `×${formatExact(slot.count)}`));
@@ -176,16 +177,16 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
     if (heroId !== undefined) {
       heroes.push(heroCard(game, heroId, {
         small: true, onClick: () => game.pickPartyHeroes(),
-        label: `Choose heroes — ${HEROES[heroId].name} leads`,
+        label: tr('Choose heroes — {name} leads', { name: HEROES[heroId].name }),
       }));
     } else if (i < open) {
-      heroes.push(emptyHeroSlot({ small: true, onClick: () => game.pickPartyHeroes(), label: 'Choose heroes' }));
+      heroes.push(emptyHeroSlot({ small: true, onClick: () => game.pickPartyHeroes(), label: tr('Choose heroes') }));
     } else {
       // Only the NEXT slot carries a price: the ladder climbs, so printing
       // this one's Gems on every locked slot would quote the wrong number.
       const next = i === open;
       const cell = el('button', {
-        class: 'bt-card is-locked', type: 'button', 'aria-label': 'Buy another hero slot',
+        class: 'bt-card is-locked', type: 'button', 'aria-label': tr('Buy another hero slot'),
       },
       iconEl('padlock', { size: 'md' }),
       ...(next ? [el('span', { class: 'bt-price' },
@@ -197,10 +198,10 @@ function partyBoard(game: Game, view: BattleView): HTMLElement {
 
   // No hero yet — the first comes from the Tavern's banner — and the line of
   // hero slots would offer nothing to pick.
-  return armyBox('Your army', view.attack, `is-mine${view.enough ? '' : ' is-short'}`, [
-    slotGroup('Troops', troops, game.troopSlotsOpen(), 'is-troops'),
+  return armyBox(tr('Your army'), view.attack, `is-mine${view.enough ? '' : ' is-short'}`, [
+    slotGroup(tr('Troops'), troops, game.troopSlotsOpen(), 'is-troops'),
     ...(game.state.heroes.owned.length > 0
-      ? [slotGroup('Heroes', heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
+      ? [slotGroup(tr('Heroes'), heroes, game.heroSlotCeiling(), 'is-heroes')] : []),
   ]);
 }
 
@@ -214,7 +215,7 @@ function troopTile(game: Game, unitId: TroopId): HTMLElement {
   const tile = el('button', {
     class: `bt-troop${left <= 0 ? ' is-out' : ''}${refusal !== null && left > 0 ? ' is-full' : ''}`,
     type: 'button',
-    'aria-label': refusal ?? `Send a squad of ${TROOPS[unitId].name}s`,
+    'aria-label': refusal ?? tr('Send a squad of {troops}', { troops: troopsName(unitId) }),
   },
   el('span', { class: 'bt-cell is-filled' },
     portraitFrame(unitBust(unitId, 'k-portrait-art'), unitId),
@@ -233,10 +234,11 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
       el('span', { class: `bt-go-chip${game.walletValue(c as never) < (n as number) ? ' is-short' : ''}` },
         iconEl(c as never), el('b', {}, formatExact(n as number)))));
   const hint = view.blocked
-    ?? (view.fallen === 0 ? 'No soldiers lost' : `Expected losses: ~${view.fallen} soldier${view.fallen === 1 ? '' : 's'}`);
+    ?? (view.fallen === 0 ? tr('No soldiers lost')
+      : trn(view.fallen, 'Expected losses: ~{n} soldier', 'Expected losses: ~{n} soldiers', { n: view.fallen }));
   return el('div', { class: 'bt-go k-section' },
     el('div', { class: 'bt-go-row' },
-      coach(btn({ label: 'Quick deploy', kind: 'blue', onClick: () => game.quickDeploy() }), 'battle-deploy'),
+      coach(btn({ label: tr('Quick deploy'), kind: 'blue', onClick: () => game.quickDeploy() }), 'battle-deploy'),
       el('div', { class: 'bt-go-buy' },
         price,
         coach(btn({
@@ -258,7 +260,7 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   const body = el('div', { class: 'bt' },
     enemyBoard(view),
     partyBoard(game, view),
-    sectionHead('Troops'),
+    sectionHead(tr('Troops')),
     el('div', { class: 'bt-roster' }, ...troops.map((u) => troopTile(game, u))),
     ...(view.widgets === undefined || view.widgets.length === 0 ? [] : [el('div', { class: 'bt-widgets' }, ...view.widgets)]),
     actionBox(game, view),

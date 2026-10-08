@@ -24,6 +24,7 @@ import { CAMERA_GLIDE_MS } from '../../render/camera';
 import type { Coord, ItemId } from '../../sim/state';
 import { bagTabOf } from '../../sim/bag';
 import type { Game } from '../../game';
+import { tr } from '../../i18n/tr';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
@@ -141,7 +142,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   const box = el('div', { class: 'stg-box', role: 'dialog', 'aria-live': 'polite' },
     el('div', { class: 'stg-frame', 'aria-hidden': 'true' }), left, right, name, text, more);
   const peek = el('button', { class: 'stg-peek', type: 'button' },
-    el('span', { class: 'stg-peek-face' }), el('span', { class: 'stg-peek-say' }, 'Need a hand?'));
+    el('span', { class: 'stg-peek-face' }), el('span', { class: 'stg-peek-say' }, tr('Need a hand?')));
   // The cast stands ON the box (24-dialogue.md §1), so they are its
   // children and rise and fall with it wherever it sits.
   // Magic motes drifting out from the highlighted target, slowly, the glow's

@@ -53,12 +53,12 @@
 | **Mason's Yard** | 2×2 | Stone Dressing | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
 | **Rune Carver** | 2×2 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
-| **Flower bed** | 1×1 | Village Pride | 3 at TH2 → 10 | **1** | supplies 1 Harmony |
-| **Bench** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
-| **Lantern** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
-| **Topiary** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 1 Harmony |
-| **Banner** | 1×1 | Civic Pride | 1 at TH3 → 8 | **1** | supplies 1 Harmony |
-| **Birdbath** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 2 Harmony |
+| **Flower patch** | 1×1 | Village Pride | 3 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Resting nook** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Lantern corner** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Topiary garden** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 1 Harmony |
+| **Banner green** | 1×1 | Civic Pride | 1 at TH3 → 8 | **1** | supplies 1 Harmony |
+| **Bird garden** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 2 Harmony |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
 | **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
@@ -161,7 +161,7 @@
 - Build 45 Gold + 30 Wood, 20 s. Level 2: 83 Gold + 55 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH2 |
@@ -178,7 +178,7 @@
 - Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH1 |
@@ -196,7 +196,7 @@
 - Build 45 Gold + 30 Wood, 120 s. Level 2: 66 Gold + 44 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | TH2 · `Quarry Hoists` |
@@ -212,7 +212,7 @@
 - Build 38 Gold + 25 Wood, 20 s. Level 2: 59 Gold + 39 Wood, 30 s; time ×1.5
   per level.
 
-| Level | Swing | Gate |
+| Level | Work speed | Gate |
 |---|---|---|
 | 1 | ×1 | — |
 | 2 | ×1.25 | `Shipbuilding` |
@@ -355,8 +355,9 @@ written once. The Townhall's own ladder is §3.
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
 does nothing else.
 
-- **The village's six small pieces** — Flower bed, Bench, Lantern, Topiary,
-  Banner, Birdbath — open at Townhall 2 and 3 and cost Gold and a raw
+- **The village's six small pieces** — Flower patch, Resting nook, Lantern
+  corner, Topiary garden, Banner green, Bird garden, each a little scene that
+  fills its plot — open at Townhall 2 and 3 and cost Gold and a raw
   currency. Early on nothing demands Harmony, so what they pay is their
   place: a house beside one collects more Gold ([`21-harmony.md`](21-harmony.md) §6).
 - **The late five** — Garden to Plaza — open from Townhall 5, and every piece

@@ -1,0 +1,30 @@
+{
+  "goods.Planks.name": {
+    "en": "Planks",
+    "es": "Tablones"
+  },
+  "goods.CutStone.name": {
+    "en": "Cut Stone",
+    "es": "Piedra tallada"
+  },
+  "goods.Iron.name": {
+    "en": "Iron",
+    "es": "Hierro"
+  },
+  "goods.Runestone.name": {
+    "en": "Runestone",
+    "es": "Piedra rúnica"
+  },
+  "goods.Starmetal.name": {
+    "en": "Starmetal",
+    "es": "Metal estelar"
+  },
+  "goods.Heartwood.name": {
+    "en": "Heartwood",
+    "es": "Duramen"
+  },
+  "goods.Moonglass.name": {
+    "en": "Moonglass",
+    "es": "Cristal lunar"
+  }
+}

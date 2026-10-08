@@ -5,13 +5,14 @@
 // finishes — and the player saw none of it. The game's strongest retention
 // beat was invisible, and its AdvanceResult was dropped on the floor.
 
+import { tr } from '../i18n/tr';
 import { DISTRICTS, TROOPS, unitOf } from '../sim/data/definitions';
 import type { TroopId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
-import { spriteImgAt, spriteUrl } from '../render/sprites';
+import { buildingArtUrl, spriteImgAt } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatDuration, formatExact } from './format';
+import { currencyName, el, formatDuration, formatExact } from './format';
 import { btn, currencyIcon, iconEl, sheet } from './kit';
 
 /** Gaps shorter than this are not worth interrupting anyone for. */
@@ -45,13 +46,13 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     .sort((a, b) => b[1] - a[1])
     .map(([c, n]) => el('div', { class: 'wel-row' },
       currencyIcon(c),
-      el('span', { class: 'wel-name' }, c),
+      el('span', { class: 'wel-name' }, currencyName(c)),
       el('span', { class: 'wel-gain' }, gain(n))));
 
   if (report.result.trainedPopulation > 0) {
     rows.push(el('div', { class: 'wel-row' },
       iconEl('population'),
-      el('span', { class: 'wel-name' }, 'Villagers'),
+      el('span', { class: 'wel-name' }, tr('Villagers')),
       el('span', { class: 'wel-gain' }, gain(report.result.trainedPopulation))));
   }
   for (const [unitId, n] of countBy(report.result.trainedUnits)) {
@@ -67,10 +68,10 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     const district = game.state.city.districts.find((d) => d.uniqueId === item.districtUniqueId);
     if (!district) continue;
     const def = DISTRICTS[district.definitionId];
-    const url = spriteUrl(`${def.sprite}_l${district.level}`);
+    const url = buildingArtUrl(def.sprite, district.level);
     finished.push(el('div', { class: 'wel-done' },
       url ? spriteImgAt(url) : iconEl(def.id, { size: 'lg' }),
-      el('span', {}, `${def.name} #${district.ordinal} finished`),
+      el('span', {}, tr('{name} #{n} finished', { name: def.name, n: district.ordinal })),
       iconEl('tick', { size: 'sm' })));
   }
 
@@ -87,32 +88,32 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     if (m.source !== 'artifact') continue;
     finished.push(el('div', { class: 'wel-done' },
       iconEl('hourglass', { size: 'lg' }),
-      el('span', {}, 'A spell you cast ran its course')));
+      el('span', {}, tr('A spell you cast ran its course'))));
   }
 
   const nothing = rows.length === 0 && finished.length === 0;
 
   const body = el('div', { class: 'wel' },
     el('div', { class: 'wel-lede' },
-      `Your kingdom worked for ${formatDuration(report.elapsedMs / 1000)}.`),
+      tr('Your kingdom worked for {time}.', { time: formatDuration(report.elapsedMs / 1000) })),
     ...(report.storesFull
       ? [el('div', { class: 'wel-capped' },
           iconEl('hourglass', { size: 'sm' }),
-          'Some stores filled up before you got back — tap them to collect.')]
+          tr('Some stores filled up before you got back — tap them to collect.'))]
       : []),
     ...(nothing
-      ? [el('div', { class: 'wel-lede' }, 'Nothing to collect — it was a quiet spell.')]
+      ? [el('div', { class: 'wel-lede' }, tr('Nothing to collect — it was a quiet spell.'))]
       : []),
     ...(rows.length > 0 ? [el('div', { class: 'wel-rows' }, ...rows)] : []),
     ...(finished.length > 0
-      ? [el('div', { class: 'wel-section' }, 'While you were away'),
+      ? [el('div', { class: 'wel-section' }, tr('While you were away')),
          el('div', { class: 'wel-dones' }, ...finished)]
       : []),
     el('div', { class: 'wel-collect' },
-      btn({ label: 'Continue', kind: 'primary', onClick: () => game.dismiss() })),
+      btn({ label: tr('Continue'), kind: 'primary', onClick: () => game.dismiss() })),
   );
 
-  return sheet({ title: 'Welcome back', onClose: () => game.dismiss() }, body);
+  return sheet({ title: tr('Welcome back'), onClose: () => game.dismiss() }, body);
 }
 
 

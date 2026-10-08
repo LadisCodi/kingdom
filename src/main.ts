@@ -2,6 +2,9 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
+// FIRST: the language is set before any module reads the data, which is
+// localized as it loads (src/i18n/browser.ts).
+import './i18n/browser';
 import { portalEvent, portalOpen, portalOpensAt } from './worldServer/core';
 import { renderHeroPicker } from './ui/heroPicker';
 import { renderRelicMoveConfirm, renderRelicPicker } from './ui/relicPicker';
@@ -11,6 +14,8 @@ import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { setMusterMusic, startMusic } from './audio/music';
 import { warmBattleSfx } from './audio/sfx';
 import { Game, type OverlayName } from './game';
+import { currentLang } from './i18n/lang';
+import { tr } from './i18n/tr';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
@@ -140,6 +145,9 @@ const ANALYTICS_FLUSH_TICKS = 30;
 const NEW_SESSION_AFTER_MS = 5 * 60_000;
 
 async function boot(): Promise<void> {
+  // The page speaks the player's language (src/i18n/lang.ts): screen
+  // readers, hyphenation and the browser's own translate offer read it.
+  document.documentElement.lang = currentLang();
   // ?dev=data — every piece of game data in one tool (Docs/plans/data-editor.md),
   // INSTEAD of the game. Checked before anything else boots: it needs no
   // save, no tick and no supabase, and the game's chrome is in the way of a
@@ -265,12 +273,13 @@ async function boot(): Promise<void> {
   await Promise.race([
     Promise.all([
       // All four weights: the roles of tokens.css (--weight-small · body ·
-      // strong · title). A weight left off this list is the one that swaps in
-      // after the first paint and reflows the row it is in.
+      // strong · title), and the title face. A face left off this list is the
+      // one that swaps in after the first paint and reflows the row it is in.
       document.fonts.load('400 16px "Nunito"'),
       document.fonts.load('600 16px "Nunito"'),
       document.fonts.load('700 16px "Nunito"'),
       document.fonts.load('800 22px "Nunito"'),
+      document.fonts.load('900 22px "Alegreya"'),
     ]),
     new Promise((resolve) => setTimeout(resolve, 1500)),
   ]);
@@ -308,9 +317,8 @@ async function boot(): Promise<void> {
   watchChromeMetrics({
     header: document.getElementById('header')!,
     navbar: document.getElementById('navbar')!,
-    quest: document.getElementById('quest')!,
   });
-  const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
+  const saveModeLabel = saveManager.cloudActive ? tr('☁️ cloud save') : tr('💾 local save only');
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => {
     // The local world server's board goes with the save it was played from.
@@ -559,7 +567,7 @@ async function boot(): Promise<void> {
       restart: () => { t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; },
       remove: () => t.remove(),
     };
-  }, 2600);
+  }, 2400);
   game.onToast((msg) => toasts.show(msg));
 
   // Background music can only start on a user gesture; keep nudging it on

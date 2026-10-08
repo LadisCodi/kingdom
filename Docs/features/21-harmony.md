@@ -30,12 +30,12 @@
 
 | Piece | Supply | Build cost (first) | Stands from | Discovered by |
 |---|---|---|---|---|
-| **Flower bed** | 1 | 20 Gold · 10 Wood | TH2, up to 3 → 10 | Village Pride |
-| **Bench** | 1 | 25 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
-| **Lantern** | 1 | 30 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
-| **Topiary** | 1 | 35 Gold · 15 Food | TH3, up to 2 → 9 | Civic Pride |
-| **Banner** | 1 | 40 Gold · 20 Wood | TH3, up to 1 → 8 | Civic Pride |
-| **Birdbath** | 2 | 60 Gold · 15 Stone | TH3, up to 2 → 9 | Civic Pride |
+| **Flower patch** | 1 | 20 Gold · 10 Wood | TH2, up to 3 → 10 | Village Pride |
+| **Resting nook** | 1 | 25 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
+| **Lantern corner** | 1 | 30 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
+| **Topiary garden** | 1 | 35 Gold · 15 Food | TH3, up to 2 → 9 | Civic Pride |
+| **Banner green** | 1 | 40 Gold · 20 Wood | TH3, up to 1 → 8 | Civic Pride |
+| **Bird garden** | 2 | 60 Gold · 15 Stone | TH3, up to 2 → 9 | Civic Pride |
 
 - 1×1, built in seconds, no refined good. A later one of a kind costs more
   (×(1 + 0.5n)·1.1ⁿ).

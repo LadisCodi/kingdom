@@ -181,6 +181,8 @@
   font-weight: var(--weight-strong);
   line-height: 1.15;
 }
+.tech-card-name.is-long { font-size: 12px; }
+.tech-card-name.is-longer { font-size: 11px; letter-spacing: -0.01em; }
 .tech-card-bar { display: flex; align-items: center; gap: 3px; width: 100%; }
 .tech-card-bar > .k-trough { --bar-h: 18px; flex: 1; min-width: 0; }
 .tech-card-bar > .k-trough .k-trough-label { font-size: 11px; }

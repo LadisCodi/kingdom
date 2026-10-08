@@ -15,7 +15,8 @@
 // the way out.
 
 import type { Game } from '../game';
-import { el } from './format';
+import { tr } from '../i18n/tr';
+import { el, formatExact } from './format';
 import { btn } from './kit';
 
 export function mountAdScreen(game: Game, root: HTMLElement): void {
@@ -31,18 +32,18 @@ export function mountAdScreen(game: Game, root: HTMLElement): void {
 
   const countdown = el('div', { class: 'ad-countdown' }, '');
   const claim = btn({
-    label: 'Claim your reward',
+    label: tr('Claim your reward'),
     kind: 'primary',
     onClick: () => game.doClaimAdReward(),
   });
   const screen = el('div', { class: 'ad-screen' },
-    el('div', { class: 'ad-screen-tag' }, 'Advertisement'),
+    el('div', { class: 'ad-screen-tag' }, tr('Advertisement')),
     // Unmistakably a placeholder: nobody should ever ship this thinking an
     // SDK is wired up behind it.
     el('div', { class: 'ad-screen-fake' },
       el('div', { class: 'ad-screen-fake-mark' }, '▶'),
-      el('div', { class: 'ad-screen-fake-title' }, 'Your ad here'),
-      el('div', { class: 'ad-screen-fake-sub' }, 'A real rewarded video goes in this slot')),
+      el('div', { class: 'ad-screen-fake-title' }, tr('Your ad here')),
+      el('div', { class: 'ad-screen-fake-sub' }, tr('A real rewarded video goes in this slot'))),
     countdown,
     claim,
   );
@@ -61,7 +62,7 @@ export function mountAdScreen(game: Game, root: HTMLElement): void {
       root.replaceChildren(screen);
       showing = true;
     }
-    countdown.textContent = watch.ready ? '' : `${watch.secondsLeft}`;
+    countdown.textContent = watch.ready ? '' : formatExact(watch.secondsLeft);
     countdown.hidden = watch.ready;
     claim.hidden = !watch.ready;
     if (!watch.ready && armed === null) {

@@ -19,6 +19,8 @@ import { btn, chip, iconEl, powerTag, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
 import { marchingDock } from './delveScreen';
 import { crestEl } from '../friends/kingdomBits';
+import { PACK_NAME, withTag } from './hexNames';
+import { tr } from '../../i18n/tr';
 
 /** The floor the descent was last opened on, and when it was last drawn:
  *  an opening scrolls to the player's frontier once, then the shaft stays
@@ -35,8 +37,8 @@ function floorPay(floor: number): HTMLElement {
   const coins: Array<[CurrencyId, number]> = [['Knowledge', pay.knowledge], ['HeroXp', pay.heroXp], ['Stardust', pay.stardust]];
   return el('div', { class: 'dv-pay' },
     ...coins.filter(([, n]) => n > 0).map(([c, n]) => chip(c, n)),
-    ...(pay.pack === undefined ? [] : [el('span', { class: 'k-chip' }, iconEl('pack', { size: 'sm' }), `${pay.pack} pack`)]),
-    ...(pay.precious > 0 ? [el('span', { class: 'k-chip' }, iconEl('sparkle', { size: 'sm' }), `${formatCount(pay.precious)} precious`)] : []));
+    ...(pay.pack === undefined ? [] : [el('span', { class: 'k-chip' }, iconEl('pack', { size: 'sm' }), PACK_NAME[pay.pack])]),
+    ...(pay.precious > 0 ? [el('span', { class: 'k-chip' }, iconEl('sparkle', { size: 'sm' }), tr('{n} precious', { n: formatCount(pay.precious) }))] : []));
 }
 
 /** One floor of the shaft. */
@@ -52,22 +54,22 @@ function floorNode(
   const shields = flags.map((f) => {
     const s = seats[f.seat];
     const name = s?.owner.name ?? '?';
-    return el('span', { class: `dv-flag${f.you ? ' is-you' : ''}${f.leader ? ' is-leader' : ''}`, title: f.you ? 'You' : name },
+    return el('span', { class: `dv-flag${f.you ? ' is-you' : ''}${f.leader ? ' is-leader' : ''}`, title: f.you ? tr('You') : name },
       crestEl(name, s?.owner.crest ?? null, 'md'),
-      el('span', { class: 'dv-flag-name' }, f.you ? 'You' : name));
+      el('span', { class: 'dv-flag-name' }, f.you ? tr('You') : name));
   });
   const parts: Array<Node | string> = [el('span', { class: 'dv-node' },
     ...(shields.length === 0 ? [] : [el('span', { class: 'dv-flags' }, ...shields)]), disc)];
   if (state === 'is-frontier') {
     parts.push(el('div', { class: 'dv-plaque' },
-      el('p', { class: 'dv-plaque-title' }, `Floor ${formatCount(floor)} · `, powerTag(floorPower(floor))),
+      el('p', { class: 'dv-plaque-title' }, withTag(tr('Floor {n} · {power}', { n: formatCount(floor) }), { power: powerTag(floorPower(floor)) })),
       floorPay(floor)));
   } else if (state === 'is-ahead') {
     // A floor ahead says only what is worth going down for.
     const marks: HTMLElement[] = [];
-    if (pay.pack !== undefined) marks.push(el('span', { class: 'k-chip' }, iconEl('pack', { size: 'sm' }), `${pay.pack} pack`));
+    if (pay.pack !== undefined) marks.push(el('span', { class: 'k-chip' }, iconEl('pack', { size: 'sm' }), PACK_NAME[pay.pack]));
     if (floor % WORLD_PORTAL.milestoneEvery === 0) {
-      marks.push(el('span', { class: 'k-chip pt-milestone' }, 'First here', iconEl('Gems', { size: 'sm' }), formatCount(WORLD_PORTAL.milestoneGems)));
+      marks.push(el('span', { class: 'k-chip pt-milestone' }, tr('First here'), iconEl('Gems', { size: 'sm' }), formatCount(WORLD_PORTAL.milestoneGems)));
     }
     parts.push(el('div', { class: 'dv-tag' },
       el('span', { class: 'dv-tag-power' }, powerTag(floorPower(floor))),
@@ -80,11 +82,11 @@ function floorNode(
 function dock(game: Game, index: number, army: ArmyView | undefined, open: boolean, frontier: number): HTMLElement {
   if (army === undefined) {
     return el('div', { class: 'dv-dock' },
-      el('p', { class: 'wd-line' }, 'No army is down there.'),
+      el('p', { class: 'wd-line' }, tr('No army is down there.')),
       el('div', { class: 'dv-calls is-one' },
-        btn({ label: 'Send', kind: 'primary', disabledReason: open ? undefined : 'The Portal is shut', onClick: () => game.openArmy(index, 'portal') })));
+        btn({ label: tr('Send'), kind: 'primary', disabledReason: open ? undefined : tr('The Portal is shut'), onClick: () => game.openArmy(index, 'portal') })));
   }
-  if (army.phase !== 'camp') return marchingDock(game, army, 'On the way down');
+  if (army.phase !== 'camp') return marchingDock(game, army, tr('On the way down'));
   const lost = new Map((army.fallen ?? []).map((f) => [f.unitId, f.count]));
   const slots = army.slots ?? [];
   return el('div', { class: 'dv-dock' },
@@ -96,10 +98,10 @@ function dock(game: Game, index: number, army: ArmyView | undefined, open: boole
         .map((s) => ({ heroId: s.fighterId as HeroId, hp: s.hp, hpMax: s.hpMax })),
     }),
     el('div', { class: 'dv-calls' },
-      btn({ label: 'Withdraw', kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
+      btn({ label: tr('Withdraw'), kind: 'secondary', onClick: () => void game.doRecallArmy(army.id) }),
       btn({
-        label: 'Descend', kind: 'blue', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
-        disabledReason: !open ? 'The Portal is shut' : frontier > WORLD_PORTAL.floors ? 'At the bottom' : undefined,
+        label: tr('Descend'), kind: 'blue', cost: { Mana: game.fightMana() }, have: (c) => game.walletValue(c),
+        disabledReason: !open ? tr('The Portal is shut') : frontier > WORLD_PORTAL.floors ? tr('At the bottom') : undefined,
         onClick: () => void game.doDescendPortal(army.id),
       })));
 }
@@ -129,9 +131,9 @@ export function renderPortalScreen(game: Game): HTMLElement {
     at.set(frontier, list);
   }
 
-  const ribbon = el('div', { class: 'wd-ribbon' }, iconEl('hourglass', { size: 'sm' }), p === null ? 'Shut'
-    : open ? `Closes in ${formatCountdown(Math.max(0, p.closesAt - now) / 1000)}`
-      : `Opens in ${formatCountdown(Math.max(0, p.opensAt - now) / 1000)}`);
+  const ribbon = el('div', { class: 'wd-ribbon' }, iconEl('hourglass', { size: 'sm' }), p === null ? tr('Shut')
+    : open ? tr('Closes in {time}', { time: formatCountdown(Math.max(0, p.closesAt - now) / 1000) })
+      : tr('Opens in {time}', { time: formatCountdown(Math.max(0, p.opensAt - now) / 1000) }));
 
   const floors = Array.from({ length: WORLD_PORTAL.floors }, (_, i) => floorNode(game, i + 1, frontier, at.get(i + 1) ?? []));
   const shaft = el('div', { class: 'dv-descent pt-shaft', 'data-keep-scroll': 'portal-shaft' }, ...floors);
@@ -153,11 +155,11 @@ export function renderPortalScreen(game: Game): HTMLElement {
   const body = el('div', { class: 'dv-body is-portal' },
     ribbon,
     el('div', { class: 'dv-band' },
-      el('p', { class: 'dv-where' }, `Your floor ${formatExact(floor)} of ${formatExact(WORLD_PORTAL.floors)}`),
-      el('p', { class: 'dv-race-line' }, 'Ranked by the deepest floor reached; the first there leads.')),
+      el('p', { class: 'dv-where' }, tr('Your floor {n} of {max}', { n: formatExact(floor), max: formatExact(WORLD_PORTAL.floors) })),
+      el('p', { class: 'dv-race-line' }, tr('Ranked by the deepest floor reached; the first there leads.'))),
     el('div', { class: 'dv-stage' }, shaft),
     dock(game, index, armyThere(game), open, floor + 1));
-  const root = sheet({ title: 'The Dark Portal', tall: true, onClose: () => game.dismiss() }, body);
+  const root = sheet({ title: tr('The Dark Portal'), tall: true, onClose: () => game.dismiss() }, body);
   root.classList.add('is-panes');
   return root;
 }

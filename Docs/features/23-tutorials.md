@@ -51,6 +51,10 @@
    map**: with a sheet, a card or a placement open, Isolde first asks them to
    set it aside and points at its close ([`24-dialogue.md`](24-dialogue.md)
    §4).
+12. **A lesson never asks for what the player cannot pay.** One that leads to
+   a build or an upgrade (a `placing`, `placed` or `upgraded` line) waits
+   until the purse — currencies and goods — can pay for it, unless one of
+   its lines `stocks` the building, making up the currencies itself.
 
 ## 2. Three kinds of guidance
 
@@ -258,7 +262,7 @@ walks the player through.
 | `capital` | `ProperCapital` | **Kofi** (enters), Isolde | the Townhall → its **Upgrade** → the sheet's **Upgrade**; builders work while away |
 | `moreRoofs` | `MoreRoofs` | Tom, Kofi | Build → the House → placing it; a House against a House earns less. Kofi makes up the Wood when short |
 | `furrows` | `FreshFurrows` | Tom, Isolde | Build → a crop plot beside the Farm (it reaches one step around) → a second one |
-| `faces` | `NewFaces` | Tom, Isolde | the Townhall → **Train**, until five villagers live |
+| `faces` | `NewFaces` | Tom, Isolde | the Townhall → **Train**, until five villagers live or are in training |
 | `barn` | `BiggerBarn` | Tom, Kofi | a full barn stops the work; the Farm → **Upgrade** → **Upgrade** |
 | `twoSaws` | `TwoSaws` | Hob, Kofi | Build → a second Sawmill, where the trees are thickest |
 | `hands` | `ManyHands` | Hob, Tom | the new Sawmill → its **+**; more hands than ground in reach stand about |

@@ -12,6 +12,7 @@ import { BOARD_HEXES, PORTAL_INDICES, WORLD_RADIUS } from '../../sim/world/hex';
 import { fogStatesOf, worldFog } from '../../sim/world/explorers';
 import type { WorldTerrain } from '../../sim/world/types';
 import { el } from '../format';
+import { tr } from '../../i18n/tr';
 import { setHidden } from '../domWrite';
 
 /** The ground's colour, flat — the minimap is a map, not a painting. */
@@ -29,7 +30,7 @@ const EXTENT = (() => {
 })();
 
 export function mountMinimap(game: Game, root: HTMLElement): void {
-  const canvas = el('canvas', { class: 'wmini-canvas', 'aria-label': 'The world: tap to look there' }) as HTMLCanvasElement;
+  const canvas = el('canvas', { class: 'wmini-canvas', 'aria-label': tr('The world: tap to look there') }) as HTMLCanvasElement;
   root.replaceChildren(el('div', { class: 'wmini' }, canvas));
   root.hidden = WORLD_RADIUS === 0;
 

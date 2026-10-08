@@ -6,6 +6,7 @@
 // four places. You cannot hold a progress bar wrong if the only way to move
 // it is the function it hands you.
 
+import { tr } from '../../i18n/tr';
 import type { CurrencyId, Wallet } from '../../sim/state';
 import { el, formatCount, formatExact } from '../format';
 import { currencyIcon, iconEl, type IconName } from './icon';
@@ -107,7 +108,7 @@ export function costChips(cost: Wallet, have?: (c: CurrencyId) => number): HTMLE
 /** A POWER, wherever one is written: the crossed swords and the figure, as
  *  the army boards show it — never the word "Power". */
 export function powerTag(n: number): HTMLElement {
-  return el('span', { class: 'k-power', 'aria-label': `Power ${formatExact(Math.round(n))}` },
+  return el('span', { class: 'k-power', 'aria-label': tr('Power {n}', { n: formatExact(Math.round(n)) }) },
     iconEl('power', { size: 'sm' }), el('b', {}, formatExact(Math.round(n))));
 }
 
@@ -230,7 +231,7 @@ export function hpBar(hp: number, max: number): HTMLElement {
   const tone = share < 0.1 ? ' is-red' : share < 0.5 ? ' is-yellow' : '';
   return el('span', {
     class: `k-hp${tone}`,
-    role: 'meter', 'aria-label': `HP ${hp} of ${max}`,
+    role: 'meter', 'aria-label': tr('HP {hp} of {max}', { hp, max }),
     'aria-valuemin': '0', 'aria-valuemax': String(max), 'aria-valuenow': String(hp),
   }, fill);
 }

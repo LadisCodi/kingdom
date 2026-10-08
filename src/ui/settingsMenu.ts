@@ -6,13 +6,16 @@
 // has a full SFX layer and an ambience bed; and the save status was a
 // two-word badge evicted from the HUD.
 
+import { tr } from '../i18n/tr';
 import { ambienceMuted, setAmbienceMuted } from '../audio/ambience';
 import { musicMuted, setMusicMuted } from '../audio/music';
 import { setSfxMuted, sfxMuted } from '../audio/sfx';
 import type { Game } from '../game';
 import { GAME_VERSION, SAVE_VERSION } from '../sim/data/definitions';
 import { el } from './format';
-import { action, sectionHead, sheet, switchCtl } from './kit';
+import { action, sectionHead, sheet, switchCtl, toggleGroup } from './kit';
+import { currentLang, LANG_NAMES, LANGS } from '../i18n/lang';
+import { chooseLang } from '../i18n/browser';
 
 // Armed state for the two-step reset. Module-level so it survives the
 // per-tick re-render; the timeout disarms it visually.
@@ -53,7 +56,7 @@ export function renderSettingsMenu(
 
   const armed = Date.now() < armedUntil;
   const reset = action({
-    label: armed ? 'Yes, wipe it' : 'Start over',
+    label: armed ? tr('Yes, wipe it') : tr('Start over'),
     kind: 'destructive',
     onClick: () => {
       if (Date.now() < armedUntil) {
@@ -66,38 +69,45 @@ export function renderSettingsMenu(
     },
     // The consequence is stated BEFORE the first tap, not after it.
     info: el('span', { class: armed ? 'set-danger' : '' }, armed
-      ? 'Last chance — this cannot be undone.'
-      : 'Wipes every building, resource and quest, for good.'),
+      ? tr('Last chance — this cannot be undone.')
+      : tr('Wipes every building, resource and quest, for good.')),
   });
 
   const body = el('div', { class: 'set' },
-    sectionHead('Sound'),
-    toggle('music', 'Music', 'The harp loop', !musicMuted(), (on) => setMusicMuted(on)),
-    toggle('sfx', 'Sound effects', 'Taps, coins, construction', !sfxMuted(), (on) => setSfxMuted(on)),
-    toggle('ambience', 'Ambience', 'Wind, waves, birdsong', !ambienceMuted(), (on) => setAmbienceMuted(on)),
+    sectionHead(tr('Sound')),
+    toggle('music', tr('Music'), tr('The harp loop'), !musicMuted(), (on) => setMusicMuted(on)),
+    toggle('sfx', tr('Sound effects'), tr('Taps, coins, construction'), !sfxMuted(), (on) => setSfxMuted(on)),
+    toggle('ambience', tr('Ambience'), tr('Wind, waves, birdsong'), !ambienceMuted(), (on) => setAmbienceMuted(on)),
 
-    sectionHead('Your kingdom'),
+    // Each language named in itself, so a player lost in the wrong one can
+    // still find their own. Choosing one reloads the game in it.
+    sectionHead(tr('Language')),
+    el('div', { class: 'set-row is-language' },
+      toggleGroup(LANGS.map((l) => ({ label: LANG_NAMES[l], value: l })), currentLang(),
+        (l) => { if (l !== currentLang()) chooseLang(l); })),
+
+    sectionHead(tr('Your kingdom')),
     el('div', { class: 'set-row' },
       mark('save'),
-      words(opts.saveModeLabel.includes('cloud') ? 'Saved to the cloud' : 'Saved to this device',
-        'Your kingdom keeps working while you are away, until its stores are full.')),
+      words(opts.saveModeLabel.includes('cloud') ? tr('Saved to the cloud') : tr('Saved to this device'),
+        tr('Your kingdom keeps working while you are away, until its stores are full.'))),
 
-    sectionHead('Playing as'),
+    sectionHead(tr('Playing as')),
     el('div', { class: 'set-row' },
       mark('payer'),
-      words(game.payerInfo()?.label ?? 'No profile yet',
-        'Fixed for this kingdom. Starting over lets you pick another.')),
+      words(game.payerInfo()?.label ?? tr('No profile yet'),
+        tr('Fixed for this kingdom. Starting over lets you pick another.'))),
 
-    sectionHead('Start over'),
+    sectionHead(tr('Start over')),
     reset,
 
     // Said wherever the analytics are on (Docs/plans/analytics.md §5).
     ...(game.analytics === null ? [] : [el('div', { class: 'set-print' },
-      'This prototype sends anonymous play data, to learn how it is played.')]),
-    el('div', { class: 'set-print' }, `${GAME_VERSION} · save format v${SAVE_VERSION}`),
+      tr('This prototype sends anonymous play data, to learn how it is played.'))]),
+    el('div', { class: 'set-print' }, tr('{version} · save format v{save}', { version: GAME_VERSION, save: SAVE_VERSION })),
   );
 
   // A centred dialog, like the Mana sheet (M9): it asks a few questions and
   // has no list to scroll.
-  return sheet({ title: 'Settings', onClose: () => game.dismiss(), centred: true }, body);
+  return sheet({ title: tr('Settings'), onClose: () => game.dismiss(), centred: true }, body);
 }

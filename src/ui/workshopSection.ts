@@ -25,6 +25,7 @@ import type { District, GoodId } from '../sim/state';
 import { el, formatDuration, formatExact } from './format';
 import { action, iconEl, knob, progress, stat, type LiveParts } from './kit';
 import { timerButton } from './speedupSheet';
+import { tr } from '../i18n/tr';
 
 /** The whole block, or null when this building is not a workshop. `live`
  *  takes the queue and its countdown — the half that moves every second. */
@@ -52,7 +53,7 @@ export function workshopSection(
         ...(recipe.inputMana > 0
           ? [iconEl('Mana', { size: 'sm' }), formatExact(recipe.inputMana)] : []))),
     el('div', { class: 'dc-ws-held' },
-      stat(recipe.id as GoodId, formatExact(getGood(game.state.city.goods, recipe.id)), 'in store')),
+      stat(recipe.id as GoodId, formatExact(getGood(game.state.city.goods, recipe.id)), tr('in store'))),
   ));
 
   // ---- the crew, which is the engine -------------------------------------
@@ -60,9 +61,10 @@ export function workshopSection(
   const crewLine = () => el('div', { class: 'dc-ws-crew' },
     iconEl('workers', { size: 'sm' }),
     crew === 0
-      ? el('span', { class: 'is-warning' }, 'No villagers here — nothing is being made')
-      : el('span', {}, `${crew} working · `
-        + `${formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew)} each`));
+      ? el('span', { class: 'is-warning' }, tr('No villagers here — nothing is being made'))
+      : el('span', {}, tr('{n} working · {time} each', {
+        n: formatExact(crew), time: formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew),
+      })));
   const crewSig = () => (crew === 0 ? '0'
     : formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew));
   box.append(live ? live.add(crewSig, crewLine) : crewLine());
@@ -91,11 +93,11 @@ export function workshopSection(
     || !canAffordGoods(game.state.city.goods, goodCost)
     || (recipe.inputMana > 0 && mana(game.state) < recipe.inputMana);
   box.append(action({
-    label: `Make ${recipe.name}`,
+    label: tr('Make {good}', { good: recipe.name }),
     kind: 'primary',
     icon: DISTRICTS[district.definitionId].id,
     onClick: () => game.doQueueGood(district.uniqueId),
-    disabledReason: items.length >= capacity ? 'The queue is full' : undefined,
+    disabledReason: items.length >= capacity ? tr('The queue is full') : undefined,
     cost: recipe.input,
     have: (c) => game.walletValue(c),
     costExtra: [
@@ -112,7 +114,7 @@ export function workshopSection(
           short: mana(game.state) < recipe.inputMana,
         }] : []),
     ],
-    info: short ? undefined : el('span', {}, `${items.length}/${capacity} queued`),
+    info: short ? undefined : el('span', {}, tr('{n}/{cap} queued', { n: formatExact(items.length), cap: formatExact(capacity) })),
   }));
 
   return box;
@@ -141,7 +143,7 @@ function workshopQueue(game: Game, district: District): HTMLElement {
       slot.append(bar.root);
     }
     slot.append(knob('✕', () => game.doCancelWorkshopItem(district.uniqueId, i),
-      { label: 'Cancel' }));
+      { label: tr('Cancel') }));
     strip.append(slot);
   }
   box.append(strip);
@@ -152,9 +154,9 @@ function workshopQueue(game: Game, district: District): HTMLElement {
     const rush = itemRushCost(game.state, district, now);
     box.append(el('div', { class: 'dc-ws-eta' },
       iconEl('hourglass', { size: 'sm' }),
-      `next in ${formatDuration(remaining)}`,
+      tr('next in {time}', { time: formatDuration(remaining) }),
       ...(rush === null ? [] : [timerButton(game, { kind: 'workshop', districtId: district.uniqueId }, action({
-        label: 'Finish',
+        label: tr('Finish'),
         kind: 'secondary',
         onClick: () => game.doRushWorkshopItem(district.uniqueId),
         cost: { Gems: rush },

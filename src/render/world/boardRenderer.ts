@@ -35,6 +35,7 @@ import type { HexBits } from '../../sim/world/fogBits';
 import type { ArmyView } from '../../worldServer/types';
 import { depositMaterial, type WorldDistrict, type WorldTerrain } from '../../sim/world/types';
 import { formatCount, formatCountdown } from '../../ui/format';
+import { tr } from '../../i18n/tr';
 import { PALETTE } from '../palette';
 import { drawIcon, drawSprite, spriteAspect, spriteUrl } from '../sprites';
 import { homeboundMs, legPosition } from '../../sim/world/travel';
@@ -294,7 +295,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       : bh.scout.reward === 'Precious' ? lumpMaterial(board, seat, 'scout', bh.index, seat) : bh.scout.reward;
     const gold = exploreGold(state, bh.index);
     drawPromise(ctx, camera, c.x, c.y - r * 0.15, icon,
-      going ? null : gold === 0 ? 'Free' : formatCount(gold));
+      going ? null : gold === 0 ? tr('Free') : formatCount(gold));
   }
 
   // The Portals' appointment, over each: when they open, or how long they
@@ -315,7 +316,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
       const c = camera.hexToScreen(hexAt(index));
       if (c.x < -r * 3 || c.x > w + r * 3 || c.y < -r * 3 || c.y > h + r * 3) continue;
       drawPill(ctx, camera, c.x, c.y - camera.hexRadius * 0.75,
-        portal.open ? `Open · ${formatCountdown(left)}` : `Opens in ${formatCountdown(left)}`);
+        portal.open ? tr('Open · {time}', { time: formatCountdown(left) }) : tr('Opens in {time}', { time: formatCountdown(left) }));
     }
   }
 
@@ -2030,7 +2031,7 @@ function drawExplorer(
   // until it is home — and, while it waits for the player, a golden one
   // asking for the tap.
   const until = pos.there ? readyAt(trip) : pos.outbound ? arrivesAt(trip) : returnsAt(trip);
-  const text = ready ? 'Tap!' : formatCountdown(Math.max(0, (until - now) / 1000));
+  const text = ready ? tr('Tap!') : formatCountdown(Math.max(0, (until - now) / 1000));
   const fs = Math.max(11, Math.min(15, unit * 0.11));
   ctx.save();
   ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`;

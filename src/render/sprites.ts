@@ -36,6 +36,22 @@ export const preloadAllSprites = (): Promise<void> => preloadImages(spriteKeys.v
 export const spriteUrl = (key: string): string | null =>
   urls[`./assets/${key}.png`] ?? null;
 
+/**
+ * A building's art at a level, as the map draws it: the highest tier at or
+ * below the level (`_l1`–`_l3`, `_l4`, `_l8`), then the bare sprite. A
+ * plantable has no tiers: what it puts on the ground is its feature's art
+ * (`plantsSprite`), so a card shows the field the player will see, never an
+ * icon standing in for it.
+ */
+export function buildingArtUrl(sprite: string, level = 1, plantsSprite: string | null = null): string | null {
+  if (plantsSprite !== null) return spriteUrl(plantsSprite);
+  for (let l = Math.max(1, level); l >= 1; l--) {
+    const url = spriteUrl(`${sprite}_l${l}`);
+    if (url !== null) return url;
+  }
+  return spriteUrl(sprite);
+}
+
 /** The growth stage a planted feature draws at `progress` (0…1), or null
  *  when it has none (Docs/features/27-plantables.md §2). */
 export const growthStage = (stem: string, progress: number): string | null =>

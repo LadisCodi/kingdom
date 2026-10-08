@@ -29,6 +29,7 @@ npm run art          # rebuild the UI atlas
 npm run art:check    # verify it
 npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ (atlas + index)
 npm run server:bundle    # the world server's rules → supabase/functions/_shared/world.js (Deno)
+npm run i18n:sync        # new data texts into the Spanish overlays; reports missing/stale
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
@@ -287,6 +288,11 @@ than the build is rejected rather than downgraded.
   `String(n)` or `${n}` for a count the player reads, and never
   `toLocaleString` / `Intl.NumberFormat` elsewhere (`tests/numberFormat.test.ts`);
   the sim reads no locale. The suite pins `en-US` (`tests/setup.ts`).
+- **Every text the player reads is `tr('English')`** (`src/i18n/tr.ts`, or
+  `trn` for a plural) with its Spanish in `src/i18n/es/<area>.json` — a
+  literal, never a variable; `tests/i18n.test.ts` refuses one with no Spanish.
+  Data text is translated in `src/i18n/es/data/` after `npm run i18n:sync`
+  (`Docs/features/28-languages.md`).
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

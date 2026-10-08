@@ -1,0 +1,66 @@
+{
+  "unlocks.build.title": {
+    "en": "Build",
+    "es": "Construir"
+  },
+  "unlocks.research.title": {
+    "en": "Research",
+    "es": "Investigar"
+  },
+  "unlocks.heroes.title": {
+    "en": "Heroes",
+    "es": "Héroes"
+  },
+  "unlocks.bookSagas.title": {
+    "en": "The Sagas",
+    "es": "Las Sagas"
+  },
+  "unlocks.relics.title": {
+    "en": "Relics",
+    "es": "Reliquias"
+  },
+  "unlocks.bag.title": {
+    "en": "The Bag",
+    "es": "La Bolsa"
+  },
+  "unlocks.world.title": {
+    "en": "The World",
+    "es": "El mundo"
+  },
+  "unlocks.bookAtlas.title": {
+    "en": "The Atlas",
+    "es": "El Atlas"
+  },
+  "unlocks.build.text": {
+    "en": "Raise houses, farms and workshops on the land you have cleared. Every building works for the kingdom, and grows with every level.",
+    "es": "Levanta casas, granjas y talleres en la tierra que has despejado. Cada edificio trabaja para el reino, y crece con cada nivel."
+  },
+  "unlocks.research.text": {
+    "en": "The royal library is open. Spend Knowledge on technologies to unlock new buildings and make the kingdom thrive.",
+    "es": "La biblioteca real está abierta. Gasta Conocimiento en tecnologías para desbloquear edificios nuevos y hacer prosperar el reino."
+  },
+  "unlocks.heroes.text": {
+    "en": "Heroes lead your troops into battle. Call them at the Tavern, level them up and send them against the lairs around your kingdom.",
+    "es": "Los héroes guían a tus tropas en la batalla. Llámalos en la Taberna, súbeles de nivel y envíalos contra las guaridas que rodean tu reino."
+  },
+  "unlocks.bookSagas.text": {
+    "en": "A book found at the Tavern. Its technologies are about heroes, and the Tavern that hosts them.",
+    "es": "Un libro hallado en la Taberna. Sus tecnologías tratan de los héroes y de la Taberna que los acoge."
+  },
+  "unlocks.relics.text": {
+    "en": "Relics of the old kingdom lie broken across the land. Find their six pieces in lairs and the fog, restore them, and they work for you again.",
+    "es": "Las reliquias del viejo reino yacen rotas por toda la tierra. Encuentra sus seis piezas en guaridas y en la niebla, restáuralas y volverán a servirte."
+  },
+  "unlocks.bag.text": {
+    "en": "Chests, speed-ups and boosts you find are kept here until you use them. Open a chest when you need what is inside, or spend a speed-up on any timer.",
+    "es": "Los cofres, aceleradores y impulsos que encuentres se guardan aquí hasta que los uses. Abre un cofre cuando necesites lo que lleva, o gasta un acelerador en cualquier temporizador."
+  },
+  "unlocks.world.text": {
+    "en": "Beyond the mountains lie other kingdoms. From the Watchtower you can see the roads that lead to them.",
+    "es": "Más allá de las montañas hay otros reinos. Desde la Atalaya se ven los caminos que llevan hasta ellos."
+  },
+  "unlocks.bookAtlas.text": {
+    "en": "A book found at the Watchtower. Its technologies sharpen sight, claim landmarks and reach for the world beyond.",
+    "es": "Un libro hallado en la Atalaya. Sus tecnologías aguzan la vista, reclaman lugares emblemáticos y alcanzan el mundo de más allá."
+  }
+}

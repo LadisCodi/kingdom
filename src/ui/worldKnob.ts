@@ -12,11 +12,12 @@ import { watchtowerSighted } from '../sim/landmarks';
 import { el } from './format';
 import { iconEl } from './kit';
 import { setAttr, setHidden } from './domWrite';
+import { tr } from '../i18n/tr';
 
 export function mountWorldKnob(game: Game, root: HTMLElement): void {
   const lock = el('span', { class: 'world-knob-lock', 'aria-hidden': 'true' }, iconEl('padlock', { size: 'sm' }));
   const knob = el('button', {
-    class: 'k-knob world-knob', type: 'button', 'aria-label': 'The world', 'data-coach': 'world',
+    class: 'k-knob world-knob', type: 'button', 'aria-label': tr('The world'), 'data-coach': 'world',
   }, el('span', { class: 'world-knob-face world-knob-out', 'aria-hidden': 'true' }),
   el('span', { class: 'world-knob-face world-knob-home', 'aria-hidden': 'true' }), lock);
   knob.addEventListener('click', () => {
@@ -45,7 +46,7 @@ export function mountWorldKnob(game: Game, root: HTMLElement): void {
     knob.classList.toggle('is-locked', locked);
     const away = game.scene === 'world';
     knob.classList.toggle('is-away', away);
-    setAttr(knob, 'aria-label', away ? 'Back to the city' : 'The world');
+    setAttr(knob, 'aria-label', away ? tr('Back to the city') : tr('The world'));
   };
   game.onChange(refresh);
   refresh();

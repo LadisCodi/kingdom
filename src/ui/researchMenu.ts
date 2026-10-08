@@ -31,6 +31,7 @@ import {
 } from './research/layout';
 import { btn, closeKnob, ctaBadge, iconEl, priceLine, progress, sectionHead, type IconName } from './kit';
 import { el, formatExact, coach } from './format';
+import { tr, trn } from '../i18n/tr';
 
 /** Which book is open. Module-level so it survives the per-tick re-render,
  *  like the selection below. */
@@ -77,9 +78,9 @@ function bookmarks(game: Game): HTMLElement {
       // says what opens it (Docs/features/22-progression.md §3).
       const mark = el('button', {
         class: 'rb-mark is-locked', type: 'button', 'data-tome': id,
-        'aria-label': `${TOMES[id].name} — shut`, 'data-coach': `tome:${id}`,
+        'aria-label': tr('{book} — shut', { book: TOMES[id].name }), 'data-coach': `tome:${id}`,
       }, iconEl('padlock'));
-      mark.addEventListener('click', () => game.toast(TOME_HINT[id] ?? 'This book is shut.'));
+      mark.addEventListener('click', () => game.toast(TOME_HINT[id] ?? tr('This book is shut.')));
       row.append(mark);
       continue;
     }
@@ -159,7 +160,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // and overwriting it first would make every render look fresh.
   const fresh = isFreshMount();
   const page = el('div', { class: 'rb-page', 'data-keep-scroll': 'tech-page' },
-    el('h2', { class: 'rb-chapter-title' }, 'Chapter I'),
+    el('h2', { class: 'rb-chapter-title' }, tr('Chapter I')),
     el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
     flow);
   pageEl = page;
@@ -174,7 +175,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     flow.style.zoom = String(lastZoom);
   });
 
-  const close = coach(closeKnob(() => game.dismiss(), 'Close Research'), 'close');
+  const close = coach(closeKnob(() => game.dismiss(), tr('Close Research')), 'close');
   const sheet = el('div', { class: 'rb-stack' },
     // Two pins at the top corners; the way out sits over the right one.
     el('span', { class: 'rb-pin is-left', 'aria-hidden': 'true' }),
@@ -302,10 +303,10 @@ function chapter(state: GameState, tome: TomeId, era: number, top: number): HTML
     class: `rb-chapter${open ? ' is-open' : ''}`,
     style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
   },
-  el('span', { class: 'rb-chapter-name' }, `Chapter ${ROMAN[era] ?? era}`),
+  el('span', { class: 'rb-chapter-name' }, tr('Chapter {n}', { n: ROMAN[era] ?? era })),
   open ? el('span', { class: 'rb-chapter-gate' }, '')
     : el('span', { class: 'rb-chapter-gate' },
-      `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
+      trn(short, 'Reveal {n} more cell', 'Reveal {n} more cells', { n: formatExact(short) })));
 }
 
 /**
@@ -334,7 +335,9 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
     style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
     'data-coach': `tech:${id}`,
   },
-  el('span', { class: 'tech-card-name' }, def.name),
+  // A long name — Spanish runs longer — steps its type down rather than
+  // spilling a second line over the art.
+  el('span', { class: `tech-card-name${def.name.length > 18 ? ' is-longer' : def.name.length > 15 ? ' is-long' : ''}` }, def.name),
   el('span', { class: 'tech-card-glyph', 'aria-hidden': 'true' }, iconEl(def.icon as IconName, { size: 'lg' })),
   el('span', { class: 'tech-card-bar' },
     bar.root,
@@ -376,25 +379,25 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     el('p', { class: 'rb-says' }, techLine(id))));
   if (def.planned) {
     page.append(el('div', { class: 'res-planned' },
-      iconEl('hourglass', { size: 'sm' }), 'Not yet in the prototype'));
+      iconEl('hourglass', { size: 'sm' }), tr('Not yet in the prototype')));
   }
 
   if (status === 'done') {
-    page.append(el('div', { class: 'rb-done' }, iconEl('tick', { size: 'sm' }), 'Researched'));
+    page.append(el('div', { class: 'rb-done' }, iconEl('tick', { size: 'sm' }), tr('Researched')));
   } else if (status === 'locked') {
     // What it needs, as the upgrade popup says it: a row each, ticked or not.
     const short = eraShortfall(state, def.tome, def.era);
     const gates = [
       ...def.requires.map((req) => ({
-        met: isTechComplete(state, req), icon: 'research', label: `Research ${TECHNOLOGIES[req].name}`,
+        met: isTechComplete(state, req), icon: 'research', label: tr('Research {tech}', { tech: TECHNOLOGIES[req].name }),
       })),
-      ...(short > 0 ? [{ met: false, icon: 'compass', label: `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}` }] : []),
+      ...(short > 0 ? [{ met: false, icon: 'compass', label: trn(short, 'Reveal {n} more cell', 'Reveal {n} more cells', { n: formatExact(short) }) }] : []),
     ];
-    page.append(sectionHead('Requirements'), el('div', { class: 'up-table' },
+    page.append(sectionHead(tr('Requirements')), el('div', { class: 'up-table' },
       ...gates.map((g) => el('div', { class: `up-row k-section is-gate${g.met ? ' is-met' : ''}` },
         iconEl(g.icon as never),
         el('span', { class: 'up-row-label' }, g.label),
-        iconEl(g.met ? 'tick' : 'cross', { label: g.met ? 'Met' : 'Not met' })))));
+        iconEl(g.met ? 'tick' : 'cross', { label: g.met ? tr('Met') : tr('Not met') })))));
   } else {
     // ---- 2. Knowledge
     const need = techKnowledgeCost(id);
@@ -408,27 +411,27 @@ function techSheet(game: Game, id: TechId): HTMLElement {
           // Once the Knowledge is in there is nothing left to pour: a line in
           // the buttons' place, as tall as they are, so the sheet keeps its size.
           ...(pours.missing === 0 ? [el('div', { class: 'rb-filled' },
-            iconEl('tick'), el('span', {}, 'All its Knowledge is in — it is ready to research'))] : [el('div', { class: 'rb-pours' },
+            iconEl('tick'), el('span', {}, tr('All its Knowledge is in — it is ready to research')))] : [el('div', { class: 'rb-pours' },
             btn({
               label: formatExact(pours.gems),
               icon: 'Gems',
               kind: 'gem',
               onClick: () => game.doBuyMissingWithGems(id),
-              disabledReason: game.walletValue('Gems') < pours.gems ? 'Not enough Gems' : undefined,
+              disabledReason: game.walletValue('Gems') < pours.gems ? tr('Not enough Gems') : undefined,
             }),
             btn({
               label: '+1',
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id, 1),
-              disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
+              disabledReason: pours.most === 0 ? tr('Nothing to pour') : undefined,
             }),
             coach(btn({
               label: `+${formatExact(pours.most)}`,
               icon: 'Knowledge',
               kind: 'secondary',
               onClick: () => game.doPourTech(id),
-              disabledReason: pours.most === 0 ? 'Nothing to pour' : undefined,
+              disabledReason: pours.most === 0 ? tr('Nothing to pour') : undefined,
             }), 'tech-pour'))])));
     }
 
@@ -442,7 +445,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     // The refined goods beside the Gold, as a building level shows them.
     const goods = Object.entries(techGoodsCost(game.state, id)) as Array<[GoodId, number]>;
     const shortGoods = goods.some(([g, n]) => getGood(state.city.goods, g) < n);
-    const note = filled ? null : 'Assign all its Knowledge to research it';
+    const note = filled ? null : tr('Assign all its Knowledge to research it');
     page.append(el('div', { class: 'rb-rule', 'aria-hidden': 'true' }),
       el('div', { class: 'up-buy k-section' },
         priceLine([
@@ -453,12 +456,12 @@ function techSheet(game: Game, id: TechId): HTMLElement {
           })),
         ]),
         coach(btn({
-          label: 'Research',
+          label: tr('Research'),
           kind: 'primary',
           icon: filled ? undefined : 'padlock',
           onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
-          disabledReason: !filled ? note! : shortGold ? 'Not enough Gold'
-            : shortMaterials ? 'Not enough Wood, Stone or Food' : shortGoods ? 'Not enough refined goods' : undefined,
+          disabledReason: !filled ? note! : shortGold ? tr('Not enough Gold')
+            : shortMaterials ? tr('Not enough Wood, Stone or Food') : shortGoods ? tr('Not enough refined goods') : undefined,
         }), 'tech-research'),
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }

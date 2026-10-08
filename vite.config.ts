@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 // @ts-expect-error — plain ESM, dev-only, no types worth authoring for it.
 import { mapEditorPlugin } from './scripts/vite-map-editor.mjs';
 // @ts-expect-error — same.
@@ -22,5 +23,10 @@ export default defineConfig({
   // <img> — the store's gem packs blinked once a second (host.ts, sprites.ts).
   build: { assetsInlineLimit: 0 },
   // The suite reads numbers in English whatever the machine's locale is.
-  test: { setupFiles: ['tests/setup.ts'] },
+  test: {
+    setupFiles: ['tests/setup.ts'],
+    // Agent worktrees live inside the repo (.claude/worktrees): their copies
+    // of the suite are other branches' business, not this one's gate.
+    exclude: [...configDefaults.exclude, '.claude/**'],
+  },
 });

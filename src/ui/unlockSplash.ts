@@ -17,6 +17,7 @@ import { UNLOCKS } from '../sim/data/definitions';
 import { playSfx } from '../audio/sfx';
 import { spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
+import { tr } from '../i18n/tr';
 import { el } from './format';
 
 /** How long the entrance plays (unlock.css: the veil, the burst, the words). */
@@ -50,7 +51,7 @@ export function mountUnlockSplash(game: Game, root: HTMLElement): void {
       ...(url === null ? [] : [el('img', { class: 'unl-icon', src: url, alt: '', draggable: 'false' })])),
     el('h2', { class: 'unl-title', id: titleId }, u.title),
     el('p', { class: 'unl-text' }, u.text),
-    el('div', { class: 'unl-prompt' }, 'Tap to continue'));
+    el('div', { class: 'unl-prompt' }, tr('Tap to continue')));
 
     let ready = false;
     const leave = (): void => {

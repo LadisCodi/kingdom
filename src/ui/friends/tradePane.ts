@@ -5,6 +5,7 @@
 // can fill first and lit, with the fills left today in the head.
 
 import type { Game } from '../../game';
+import { tr } from '../../i18n/tr';
 import { FILL_WORDS } from '../../friendsClient';
 import { TRADE } from '../../sim/data/definitions';
 import { fillProblem } from '../../sim/trade';
@@ -21,15 +22,15 @@ export function tradePane(game: Game): HTMLElement[] {
   const left = (w: WishView) => formatCountdown(Math.max(0, (w.expiresAt - now) / 1000));
 
   const mine = snap.wishes.map((w) => el('div', { class: 'wb-wish' },
-    el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, 'I need'), lotTile(w.need)),
+    el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, tr('I need')), lotTile(w.need)),
     el('span', { class: 'wb-arrow', 'aria-hidden': 'true' }, '→'),
-    el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, 'I give'), lotTile(w.give)),
+    el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, tr('I give')), lotTile(w.give)),
     el('div', { class: 'wb-end' },
-      el('span', { class: 'wb-left' }, iconEl('clock', { size: 'sm' }), `${left(w)} left`),
+      el('span', { class: 'wb-left' }, iconEl('clock', { size: 'sm' }), tr('{time} left', { time: left(w) })),
       roundKnob(knob('✕', () => void f.withdrawWish(w.id), {
-        label: 'Take this wish down', kind: 'destructive', disabled: f.busy.has(w.id),
+        label: tr('Take this wish down'), kind: 'destructive', disabled: f.busy.has(w.id),
       })))));
-  const make = el('button', { class: 'wb-make', type: 'button' }, el('span', { class: 'wb-plus' }, '+'), 'Make a wish');
+  const make = el('button', { class: 'wb-make', type: 'button' }, el('span', { class: 'wb-plus' }, '+'), tr('Make a wish'));
   make.addEventListener('click', () => f.openWishNeed());
 
   // Fillable first, then the rest, each newest first as the server sent them.
@@ -43,29 +44,29 @@ export function tradePane(game: Game): HTMLElement[] {
       el('div', { class: 'wb-friend-body' },
         el('div', { class: 'fr-name' }, w.owner.nickname),
         el('div', { class: 'wb-trade' },
-          el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, 'Needs'), lotTile(w.need)),
+          el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, tr('Needs')), lotTile(w.need)),
           el('span', { class: 'wb-arrow', 'aria-hidden': 'true' }, '→'),
-          el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, 'Gives'), lotTile(w.give)))),
+          el('div', { class: 'wb-side' }, el('span', { class: 'wb-head' }, tr('Gives')), lotTile(w.give)))),
       el('div', { class: 'wb-end' },
         problem === null
-          ? el('span', { class: 'wb-tag is-have' }, 'You have it')
+          ? el('span', { class: 'wb-tag is-have' }, tr('You have it'))
           : el('span', { class: 'wb-tag' }, FILL_WORDS[problem]),
         ...(problem === null ? [btn({
-          label: 'Fill', kind: 'primary', onClick: () => void f.fillWish(w),
-          ...(f.busy.has(w.id) ? { disabledReason: 'Sending' } : snap.fillsLeft <= 0 ? { disabledReason: 'No fills left today' } : {}),
+          label: tr('Fill'), kind: 'primary', onClick: () => void f.fillWish(w),
+          ...(f.busy.has(w.id) ? { disabledReason: tr('Sending') } : snap.fillsLeft <= 0 ? { disabledReason: tr('No fills left today') } : {}),
         })] : [])));
   });
 
   return [
     el('section', { class: 'wb-mine' },
-      sectionHead(`Your wishes ${formatExact(snap.wishes.length)}/${formatExact(TRADE.wishes)}`),
+      sectionHead(tr('Your wishes {n}/{max}', { n: formatExact(snap.wishes.length), max: formatExact(TRADE.wishes) })),
       el('div', { class: 'fr-rows' }, ...mine, ...(snap.wishes.length < TRADE.wishes ? [make] : []))),
     el('section', { class: 'wb-theirs' },
       el('div', { class: 'wb-theirs-head' },
-        sectionHead('Friends need'),
-        el('span', { class: 'wb-fills' }, `Fills ${formatExact(snap.fillsLeft)}/${formatExact(TRADE.fillsPerDay)}`)),
+        sectionHead(tr('Friends need')),
+        el('span', { class: 'wb-fills' }, tr('Fills {n}/{max}', { n: formatExact(snap.fillsLeft), max: formatExact(TRADE.fillsPerDay) }))),
       el('div', { class: 'fr-rows' }, ...(friendRows.length > 0
         ? friendRows
-        : [el('p', { class: 'fr-empty' }, 'Your friends have no wishes just now.')]))),
+        : [el('p', { class: 'fr-empty' }, tr('Your friends have no wishes just now.'))]))),
   ];
 }

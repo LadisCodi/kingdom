@@ -9,6 +9,7 @@
 // Built once and mutated, never rebuilt: a new element restarts its own
 // animation.
 
+import { tr, trn } from '../i18n/tr';
 import type { Game } from '../game';
 import { el, formatCount } from './format';
 import { progress, setCta } from './kit';
@@ -19,11 +20,11 @@ export function mountSurveyPill(game: Game, root: HTMLElement): void {
   const bar = progress('gold');
   const seal = el('b', {}, '');
   const widget = el('button', {
-    class: 'svw', type: 'button', 'aria-label': 'The Royal Survey', 'data-coach': 'survey',
+    class: 'svw', type: 'button', 'aria-label': tr('The Royal Survey'), 'data-coach': 'survey',
   },
     compass,
     el('span', { class: 'svw-body' },
-      el('span', { class: 'svw-name' }, 'Survey'),
+      el('span', { class: 'svw-name' }, tr('Survey')),
       el('span', { class: 'svw-line' }, bar.root, el('span', { class: 'rs-seal is-active' }, seal))),
   );
   widget.addEventListener('click', () => game.setOverlay('survey'));
@@ -44,8 +45,8 @@ export function mountSurveyPill(game: Game, root: HTMLElement): void {
     widget.classList.toggle('is-ready', waiting > 0);
     setCta(compass, waiting);
     setAttr(widget, 'aria-label', waiting > 0
-      ? `${formatCount(waiting)} levels waiting on the Royal Survey`
-      : 'The Royal Survey');
+      ? trn(waiting, '{n} level waiting on the Royal Survey', '{n} levels waiting on the Royal Survey', { n: formatCount(waiting) })
+      : tr('The Royal Survey'));
   };
   game.onChange(refresh);
   refresh();

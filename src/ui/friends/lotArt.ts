@@ -2,8 +2,9 @@
 // with its lot size, or a relic's picture with a shard on its corner and
 // which fragment it is — a piece, or the keystone in gold.
 
-import { ARTIFACTS, TRADE } from '../../sim/data/definitions';
+import { ARTIFACTS, GOODS, TRADE } from '../../sim/data/definitions';
 import { KEYSTONE } from '../../sim/relics';
+import { tr } from '../../i18n/tr';
 import type { TradeLot } from '../../sim/trade';
 import { spriteImgAt, spriteUrl } from '../../render/sprites';
 import { el, formatExact } from '../format';
@@ -12,8 +13,10 @@ import { iconEl } from '../kit';
 /** What a lot is called: *Starmetal ×5*, *Verdant Seal piece 3*, *Verdant
  *  Seal keystone*. */
 export function lotWords(l: TradeLot): string {
-  if (l.kind === 'material') return `${l.id} ×${formatExact(TRADE.materialLot)}`;
-  return `${ARTIFACTS[l.relic].name} ${l.slot === KEYSTONE ? 'keystone' : `piece ${formatExact(l.slot + 1)}`}`;
+  if (l.kind === 'material') return `${GOODS[l.id].name} ×${formatExact(TRADE.materialLot)}`;
+  const relic = ARTIFACTS[l.relic].name;
+  return l.slot === KEYSTONE ? tr('{relic} keystone', { relic })
+    : tr('{relic} piece {n}', { relic, n: formatExact(l.slot + 1) });
 }
 
 /** The lot's picture alone. */

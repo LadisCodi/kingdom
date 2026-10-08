@@ -11,11 +11,28 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
+- **A quest that arrives already done** unrolls on its running face, empty;
+  its bar and count fill to the goal (~1 s), then it turns to Claim with the
+  completion sound. Before that, a tap points at the goal rather than claiming.
 - **68 quests**, paying 15,505 Gold, 210 Stone, 180 Food, 130 Mana,
   750 Gems, 120 Stardust, **21 Knowledge across thirteen of them** (§2.1) and
   **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
   kingdom's first pack ([`22-progression.md`](22-progression.md) §7).
+
+- **The pill wears a mark for its goal**, an atlas icon:
+
+| Goal | Mark |
+|---|---|
+| Collect / Hold a resource | that resource |
+| Build / Repair / Upgrade / Work in reach | that building; a group by its use — decoration: Harmony, workshop: anvil, military hall: shield, producer: hammer |
+| Complete tech(s) | research |
+| Reach population · Assign workers · Train army | population · workers · shield |
+| Collect taps | the pointing hand |
+| Discover cells · Discover feature | a fog tile · what the feature is: a tree, or what tapping it pays |
+| Find lairs · Clear lairs | the lair mouth · crossed swords |
+| Claim landmarks | the standing stones; a Leyspring: Mana; the Watchtower: itself |
+| Own relics · Own heroes | relics · the heroes' helmet |
 
 ### 1.1 Goal types
 

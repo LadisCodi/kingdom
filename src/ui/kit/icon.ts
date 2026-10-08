@@ -93,7 +93,11 @@ export type UiIconName =
   // THE TECHNOLOGIES (sheet UI-T1, Docs/art/ui/tech/prompt.md): what a
   // regrowth, an irrigation, a sail and a farsight look like — the four a
   // tech card needed that nothing else in the atlas could stand for.
-  | 'sapling' | 'wateringCan' | 'boat' | 'spyglass';
+  | 'sapling' | 'wateringCan' | 'boat' | 'spyglass'
+  // THE QUEST GOALS (sheet UI-Q1, Docs/art/ui/quests/prompt.md): the two a
+  // quest's mark needed — one tree for "find forests", and the standing
+  // stones for "claim landmarks", which wore the Mana orb.
+  | 'tree' | 'landmark';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -151,6 +155,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   flask: '🧪', tome: '📘', dowserMap: '🗺️', shard: '💠',
   // the technologies
   sapling: '🌱', wateringCan: '🚿', boat: '⛵', spyglass: '🔭',
+  // the quest goals
+  tree: '🌳', landmark: '🗿',
 };
 
 export interface IconOpts {

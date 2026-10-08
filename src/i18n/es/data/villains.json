@@ -1,0 +1,22 @@
+{
+  "villains.BarrowThane.name": {
+    "en": "Barrow Thane",
+    "es": "El señor del túmulo"
+  },
+  "villains.DrownedChoir.name": {
+    "en": "Drowned Choir",
+    "es": "El coro ahogado"
+  },
+  "villains.SlagWarden.name": {
+    "en": "Slag Warden",
+    "es": "El guardián de la escoria"
+  },
+  "villains.LedgerKeeper.name": {
+    "en": "The Ledger Keeper",
+    "es": "El guardián del libro mayor"
+  },
+  "villains.StarSeer.name": {
+    "en": "The Star Seer",
+    "es": "La vidente de estrellas"
+  }
+}

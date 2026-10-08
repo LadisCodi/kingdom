@@ -9,6 +9,7 @@
 // demand at that price, and it is data the store exists to collect.
 
 import type { Game } from '../game';
+import { tr } from '../i18n/tr';
 import { STORE } from '../sim/data/definitions';
 import type { StoreSkuId } from '../sim/state';
 import { priceCents } from '../sim/store';
@@ -41,34 +42,34 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
         // A SKU that grants no Gems on purchase says what it DOES instead:
         // "0 Gems" would be a true sentence and a wrong one.
         el('div', { class: 'iap-grant' },
-          sku.gems > 0 ? `${formatExact(sku.gems)} Gems` : sku.description))),
+          sku.gems > 0 ? tr('{n} Gems', { n: formatExact(sku.gems) }) : sku.description))),
     ...(grants.length === 0 ? [] : [el('div', { class: 'iap-grants' },
       ...grants.map((line) => el('div', { class: 'iap-grant-line' },
         iconEl('tick', { size: 'sm' }), el('span', {}, line))))]),
     el('div', { class: 'iap-rows' },
-      row('Price', formatUsd(price)),
-      row('Left this month', payer === null ? '—' : formatUsd(remaining)),
+      row(tr('Price'), formatUsd(price)),
+      row(tr('Left this month'), payer === null ? '—' : formatUsd(remaining)),
       affordable
-        ? row('After', formatUsd(remaining - price), 'is-ok')
-        : row('Short by', payer === null ? '—' : formatUsd(price - remaining), 'is-short')),
+        ? row(tr('After'), formatUsd(remaining - price), 'is-ok')
+        : row(tr('Short by'), payer === null ? '—' : formatUsd(price - remaining), 'is-short')),
     ...(affordable ? [] : [el('div', { class: 'iap-note' },
       iconEl('padlock', { size: 'sm' }),
       payer === null
-        ? 'Pick a payer profile first.'
+        ? tr('Pick a payer profile first.')
         : payer.budgetCents === 0
-          ? 'You are playing as someone who never spends.'
-          : `Your budget refills ${payer.resetsIn}.`)]),
+          ? tr('You are playing as someone who never spends.')
+          : tr('Your budget refills {when}.', { when: payer.resetsIn }))]),
     el('div', { class: 'iap-actions' },
-      btn({ label: 'Not now', kind: 'secondary', onClick: back }),
+      btn({ label: tr('Not now'), kind: 'secondary', onClick: back }),
       btn({
-        label: `Buy for ${formatUsd(price)}`,
+        label: tr('Buy for {price}', { price: formatUsd(price) }),
         kind: 'primary',
         finish: 'gem',
         onClick: () => game.confirmIap(),
-        disabledReason: affordable ? undefined : 'Not enough budget this month',
+        disabledReason: affordable ? undefined : tr('Not enough budget this month'),
       })),
-    el('div', { class: 'store-simulated' }, 'SIMULADO — no real money changes hands.'),
+    el('div', { class: 'store-simulated' }, tr('SIMULADO — no real money changes hands.')),
   );
 
-  return sheet({ title: 'Confirm purchase', onClose: back, centred: true }, body);
+  return sheet({ title: tr('Confirm purchase'), onClose: back, centred: true }, body);
 }

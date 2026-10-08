@@ -1,0 +1,762 @@
+{
+  "technologies.Forestry.name": {
+    "en": "Forestry",
+    "es": "Silvicultura"
+  },
+  "technologies.Agriculture.name": {
+    "en": "Agriculture",
+    "es": "Agricultura"
+  },
+  "technologies.VillagePride.name": {
+    "en": "Village Pride",
+    "es": "Orgullo aldeano"
+  },
+  "technologies.Farming.name": {
+    "en": "Farming",
+    "es": "Labranza"
+  },
+  "technologies.Hunting.name": {
+    "en": "Hunting",
+    "es": "Caza"
+  },
+  "technologies.Saws.name": {
+    "en": "Saws",
+    "es": "Sierras"
+  },
+  "technologies.SawpitsI.name": {
+    "en": "Sawpits I",
+    "es": "Serrerías I"
+  },
+  "technologies.TradeRoutesI.name": {
+    "en": "Trade Routes I",
+    "es": "Comercio I"
+  },
+  "technologies.Warrior.name": {
+    "en": "Warrior",
+    "es": "Guerrero"
+  },
+  "technologies.IrrigationI.name": {
+    "en": "Irrigation I",
+    "es": "Regadío I"
+  },
+  "technologies.ReforestingI.name": {
+    "en": "Reforesting I",
+    "es": "Reforestación I"
+  },
+  "technologies.Consecration.name": {
+    "en": "Consecration",
+    "es": "Consagración"
+  },
+  "technologies.CropRotationI.name": {
+    "en": "Crop Rotation I",
+    "es": "Barbecho I"
+  },
+  "technologies.UrbanPlanning.name": {
+    "en": "Urban Planning",
+    "es": "Urbanismo"
+  },
+  "technologies.Pickaxes.name": {
+    "en": "Pickaxes",
+    "es": "Picos"
+  },
+  "technologies.Masonry.name": {
+    "en": "Masonry",
+    "es": "Albañilería"
+  },
+  "technologies.Transplanting.name": {
+    "en": "Transplanting",
+    "es": "Trasplante"
+  },
+  "technologies.Hospitality.name": {
+    "en": "Hospitality",
+    "es": "Hospitalidad"
+  },
+  "technologies.GranariesI.name": {
+    "en": "Granaries I",
+    "es": "Graneros I"
+  },
+  "technologies.CarpentryI.name": {
+    "en": "Carpentry I",
+    "es": "Carpintería I"
+  },
+  "technologies.SchoolingI.name": {
+    "en": "Schooling I",
+    "es": "Escuelas I"
+  },
+  "technologies.Bureaucracy.name": {
+    "en": "Bureaucracy",
+    "es": "Burocracia"
+  },
+  "technologies.Mining.name": {
+    "en": "Mining",
+    "es": "Minería"
+  },
+  "technologies.CivicPride.name": {
+    "en": "Civic Pride",
+    "es": "Orgullo cívico"
+  },
+  "technologies.Infirmary.name": {
+    "en": "Infirmary",
+    "es": "Enfermería"
+  },
+  "technologies.StonecuttingI.name": {
+    "en": "Stonecutting I",
+    "es": "Cantería I"
+  },
+  "technologies.Aqueducts.name": {
+    "en": "Aqueducts",
+    "es": "Acueductos"
+  },
+  "technologies.Archery.name": {
+    "en": "Archery",
+    "es": "Tiro con arco"
+  },
+  "technologies.TimberFraming.name": {
+    "en": "Timber Framing",
+    "es": "Entramado"
+  },
+  "technologies.Communities.name": {
+    "en": "Communities",
+    "es": "Comunidades"
+  },
+  "technologies.Sailing.name": {
+    "en": "Sailing",
+    "es": "Navegación"
+  },
+  "technologies.FletchingI.name": {
+    "en": "Fletching I",
+    "es": "Emplumado I"
+  },
+  "technologies.Fishing.name": {
+    "en": "Fishing",
+    "es": "Pesca"
+  },
+  "technologies.TradeRoutesII.name": {
+    "en": "Trade Routes II",
+    "es": "Comercio II"
+  },
+  "technologies.TreasureHuntersI.name": {
+    "en": "Treasure Hunters I",
+    "es": "Cazatesoros I"
+  },
+  "technologies.Magistracy.name": {
+    "en": "Magistracy",
+    "es": "Magistratura"
+  },
+  "technologies.Townhouses.name": {
+    "en": "Townhouses",
+    "es": "Casas adosadas"
+  },
+  "technologies.StoneDressing.name": {
+    "en": "Stone Dressing",
+    "es": "Labra de piedra"
+  },
+  "technologies.Spears.name": {
+    "en": "Spears",
+    "es": "Lanzas"
+  },
+  "technologies.WarriorsII.name": {
+    "en": "Warriors II",
+    "es": "Guerreros II"
+  },
+  "technologies.Architecture.name": {
+    "en": "Architecture",
+    "es": "Arquitectura"
+  },
+  "technologies.SacredMasonry.name": {
+    "en": "Sacred Masonry",
+    "es": "Cantería sagrada"
+  },
+  "technologies.Joinery.name": {
+    "en": "Joinery",
+    "es": "Ebanistería"
+  },
+  "technologies.SawpitsII.name": {
+    "en": "Sawpits II",
+    "es": "Serrerías II"
+  },
+  "technologies.WarbandII.name": {
+    "en": "Warband II",
+    "es": "Mesnada II"
+  },
+  "technologies.GuildHallsI.name": {
+    "en": "Guild Halls I",
+    "es": "Casas gremiales I"
+  },
+  "technologies.LumberjacksI.name": {
+    "en": "Lumberjacks I",
+    "es": "Leñadores I"
+  },
+  "technologies.ShieldWallI.name": {
+    "en": "Shield Wall I",
+    "es": "Muro de escudos I"
+  },
+  "technologies.CarpentryII.name": {
+    "en": "Carpentry II",
+    "es": "Carpintería II"
+  },
+  "technologies.ArchersII.name": {
+    "en": "Archers II",
+    "es": "Arqueros II"
+  },
+  "technologies.WoodshedsI.name": {
+    "en": "Woodsheds I",
+    "es": "Leñeras I"
+  },
+  "technologies.Charter.name": {
+    "en": "Charter",
+    "es": "Fuero"
+  },
+  "technologies.LancersII.name": {
+    "en": "Lancers II",
+    "es": "Lanceros II"
+  },
+  "technologies.Ironmongery.name": {
+    "en": "Ironmongery",
+    "es": "Ferretería"
+  },
+  "technologies.Terraces.name": {
+    "en": "Terraces",
+    "es": "Terrazas"
+  },
+  "technologies.FarmhandsI.name": {
+    "en": "Farmhands I",
+    "es": "Jornaleros I"
+  },
+  "technologies.Cavalry.name": {
+    "en": "Cavalry",
+    "es": "Caballería"
+  },
+  "technologies.TradeRoutesIII.name": {
+    "en": "Trade Routes III",
+    "es": "Comercio III"
+  },
+  "technologies.CavalryII.name": {
+    "en": "Cavalry II",
+    "es": "Caballería II"
+  },
+  "technologies.WarbandIII.name": {
+    "en": "Warband III",
+    "es": "Mesnada III"
+  },
+  "technologies.Gardening.name": {
+    "en": "Gardening",
+    "es": "Jardinería"
+  },
+  "technologies.DeepMining.name": {
+    "en": "Deep Mining",
+    "es": "Minería profunda"
+  },
+  "technologies.BardingI.name": {
+    "en": "Barding I",
+    "es": "Bardas I"
+  },
+  "technologies.RichSoilI.name": {
+    "en": "Rich Soil I",
+    "es": "Tierra fértil I"
+  },
+  "technologies.AttunementII.name": {
+    "en": "Attunement II",
+    "es": "Sintonía II"
+  },
+  "technologies.SmokehousesI.name": {
+    "en": "Smokehouses I",
+    "es": "Ahumaderos I"
+  },
+  "technologies.Exchequer.name": {
+    "en": "Exchequer",
+    "es": "Hacienda"
+  },
+  "technologies.Manors.name": {
+    "en": "Manors",
+    "es": "Casas solariegas"
+  },
+  "technologies.Waterwheels.name": {
+    "en": "Waterwheels",
+    "es": "Norias"
+  },
+  "technologies.Fortifications.name": {
+    "en": "Fortifications",
+    "es": "Fortificaciones"
+  },
+  "technologies.Sculpture.name": {
+    "en": "Sculpture",
+    "es": "Escultura"
+  },
+  "technologies.WarriorsIII.name": {
+    "en": "Warriors III",
+    "es": "Guerreros III"
+  },
+  "technologies.Tactics.name": {
+    "en": "Tactics",
+    "es": "Táctica"
+  },
+  "technologies.ApprenticesI.name": {
+    "en": "Apprentices I",
+    "es": "Aprendices I"
+  },
+  "technologies.IrrigationII.name": {
+    "en": "Irrigation II",
+    "es": "Regadío II"
+  },
+  "technologies.VigourI.name": {
+    "en": "Vigour I",
+    "es": "Vigor I"
+  },
+  "technologies.ArchersIII.name": {
+    "en": "Archers III",
+    "es": "Arqueros III"
+  },
+  "technologies.AttunementIII.name": {
+    "en": "Attunement III",
+    "es": "Sintonía III"
+  },
+  "technologies.LancersIII.name": {
+    "en": "Lancers III",
+    "es": "Lanceros III"
+  },
+  "technologies.CarpentryIII.name": {
+    "en": "Carpentry III",
+    "es": "Carpintería III"
+  },
+  "technologies.PoulticesI.name": {
+    "en": "Poultices I",
+    "es": "Cataplasmas I"
+  },
+  "technologies.GamekeepingI.name": {
+    "en": "Gamekeeping I",
+    "es": "Guardería de caza I"
+  },
+  "technologies.Chancery.name": {
+    "en": "Chancery",
+    "es": "Cancillería"
+  },
+  "technologies.Mansions.name": {
+    "en": "Mansions",
+    "es": "Mansiones"
+  },
+  "technologies.CavalryIII.name": {
+    "en": "Cavalry III",
+    "es": "Caballería III"
+  },
+  "technologies.Bastions.name": {
+    "en": "Bastions",
+    "es": "Bastiones"
+  },
+  "technologies.TradeRoutesIV.name": {
+    "en": "Trade Routes IV",
+    "es": "Comercio IV"
+  },
+  "technologies.Windmills.name": {
+    "en": "Windmills",
+    "es": "Molinos de viento"
+  },
+  "technologies.SecondSanctum.name": {
+    "en": "Second Sanctum",
+    "es": "Segundo santuario"
+  },
+  "technologies.CivicTreasuryI.name": {
+    "en": "Civic Treasury I",
+    "es": "Tesoro cívico I"
+  },
+  "technologies.SawpitsIII.name": {
+    "en": "Sawpits III",
+    "es": "Serrerías III"
+  },
+  "technologies.WarhornsI.name": {
+    "en": "Warhorns I",
+    "es": "Cuernos de guerra I"
+  },
+  "technologies.LancersIV.name": {
+    "en": "Lancers IV",
+    "es": "Lanceros IV"
+  },
+  "technologies.MinersI.name": {
+    "en": "Miners I",
+    "es": "Mineros I"
+  },
+  "technologies.WarriorsIV.name": {
+    "en": "Warriors IV",
+    "es": "Guerreros IV"
+  },
+  "technologies.OldGrowthI.name": {
+    "en": "Old Growth I",
+    "es": "Bosque antiguo I"
+  },
+  "technologies.BunkhouseI.name": {
+    "en": "Bunkhouse I",
+    "es": "Barracón I"
+  },
+  "technologies.FrontierWorksI.name": {
+    "en": "Frontier Works I",
+    "es": "Obras fronterizas I"
+  },
+  "technologies.Dominion.name": {
+    "en": "Dominion",
+    "es": "Dominio"
+  },
+  "technologies.Sewers.name": {
+    "en": "Sewers",
+    "es": "Alcantarillado"
+  },
+  "technologies.Hydraulics.name": {
+    "en": "Hydraulics",
+    "es": "Hidráulica"
+  },
+  "technologies.Citadels.name": {
+    "en": "Citadels",
+    "es": "Ciudadelas"
+  },
+  "technologies.Paving.name": {
+    "en": "Paving",
+    "es": "Empedrado"
+  },
+  "technologies.StonecuttingII.name": {
+    "en": "Stonecutting II",
+    "es": "Cantería II"
+  },
+  "technologies.ColoursI.name": {
+    "en": "Colours I",
+    "es": "Enseñas I"
+  },
+  "technologies.CavalryIV.name": {
+    "en": "Cavalry IV",
+    "es": "Caballería IV"
+  },
+  "technologies.SurveyingI.name": {
+    "en": "Surveying I",
+    "es": "Agrimensura I"
+  },
+  "technologies.ArchersIV.name": {
+    "en": "Archers IV",
+    "es": "Arqueros IV"
+  },
+  "technologies.TradeRoutesV.name": {
+    "en": "Trade Routes V",
+    "es": "Comercio V"
+  },
+  "technologies.AttunementIV.name": {
+    "en": "Attunement IV",
+    "es": "Sintonía IV"
+  },
+  "technologies.ShieldWallII.name": {
+    "en": "Shield Wall II",
+    "es": "Muro de escudos II"
+  },
+  "technologies.GuildHallsII.name": {
+    "en": "Guild Halls II",
+    "es": "Casas gremiales II"
+  },
+  "technologies.SwiftScoutsI.name": {
+    "en": "Swift Scouts I",
+    "es": "Batidores raudos I"
+  },
+  "technologies.Sovereignty.name": {
+    "en": "Sovereignty",
+    "es": "Soberanía"
+  },
+  "technologies.GrandAvenues.name": {
+    "en": "Grand Avenues",
+    "es": "Grandes avenidas"
+  },
+  "technologies.Mechanics.name": {
+    "en": "Mechanics",
+    "es": "Mecánica"
+  },
+  "technologies.Warlords.name": {
+    "en": "Warlords",
+    "es": "Señores de la guerra"
+  },
+  "technologies.LancersV.name": {
+    "en": "Lancers V",
+    "es": "Lanceros V"
+  },
+  "technologies.IronPicksI.name": {
+    "en": "Iron Picks I",
+    "es": "Picos de hierro I"
+  },
+  "technologies.WarriorsV.name": {
+    "en": "Warriors V",
+    "es": "Guerreros V"
+  },
+  "technologies.FishersI.name": {
+    "en": "Fishers I",
+    "es": "Pescadores I"
+  },
+  "technologies.WarhornsII.name": {
+    "en": "Warhorns II",
+    "es": "Cuernos de guerra II"
+  },
+  "technologies.FlowerbedsI.name": {
+    "en": "Flowerbeds I",
+    "es": "Parterres I"
+  },
+  "technologies.ArchersV.name": {
+    "en": "Archers V",
+    "es": "Arqueros V"
+  },
+  "technologies.SupplyDepotsI.name": {
+    "en": "Supply Depots I",
+    "es": "Depósitos I"
+  },
+  "technologies.StrongroomI.name": {
+    "en": "Strongroom I",
+    "es": "Cámara acorazada I"
+  },
+  "technologies.GranariesII.name": {
+    "en": "Granaries II",
+    "es": "Graneros II"
+  },
+  "technologies.CavalryV.name": {
+    "en": "Cavalry V",
+    "es": "Caballería V"
+  },
+  "technologies.GoldenAge.name": {
+    "en": "Golden Age",
+    "es": "Edad de oro"
+  },
+  "technologies.CommonRoom.name": {
+    "en": "Common Room",
+    "es": "Sala común"
+  },
+  "technologies.TalesI.name": {
+    "en": "Tales I",
+    "es": "Relatos I"
+  },
+  "technologies.WarmWelcomeI.name": {
+    "en": "Warm Welcome I",
+    "es": "Cálida acogida I"
+  },
+  "technologies.GuestRooms.name": {
+    "en": "Guest Rooms",
+    "es": "Habitaciones"
+  },
+  "technologies.GreatHall.name": {
+    "en": "Great Hall",
+    "es": "Gran salón"
+  },
+  "technologies.MinstrelsGallery.name": {
+    "en": "Minstrels’ Gallery",
+    "es": "Galería de juglares"
+  },
+  "technologies.Cartography.name": {
+    "en": "Cartography",
+    "es": "Cartografía"
+  },
+  "technologies.FarsightI.name": {
+    "en": "Farsight I",
+    "es": "Vista lejana I"
+  },
+  "technologies.FrontierBuildersI.name": {
+    "en": "Frontier Builders I",
+    "es": "Pioneros I"
+  },
+  "technologies.KeenEyesI.name": {
+    "en": "Keen Eyes I",
+    "es": "Ojo avizor I"
+  },
+  "technologies.FarsightII.name": {
+    "en": "Farsight II",
+    "es": "Vista lejana II"
+  },
+  "technologies.Fortification.name": {
+    "en": "Fortification",
+    "es": "Fortificación"
+  },
+  "technologies.ForcedMarchI.name": {
+    "en": "Forced March I",
+    "es": "Marcha forzada I"
+  },
+  "technologies.FieldNotesI.name": {
+    "en": "Field Notes I",
+    "es": "Notas de campo I"
+  },
+  "technologies.RuralMarketsI.name": {
+    "en": "Rural Markets I",
+    "es": "Mercados rurales I"
+  },
+  "technologies.BountyHuntersI.name": {
+    "en": "Bounty Hunters I",
+    "es": "Cazarrecompensas I"
+  },
+  "technologies.LoggingRoadsI.name": {
+    "en": "Logging Roads I",
+    "es": "Caminos madereros I"
+  },
+  "technologies.Muster.name": {
+    "en": "Muster",
+    "es": "Leva"
+  },
+  "technologies.QuarryCartsI.name": {
+    "en": "Quarry Carts I",
+    "es": "Carros de cantera I"
+  },
+  "technologies.HuntersLodgesI.name": {
+    "en": "Hunters’ Lodges I",
+    "es": "Cotos de caza I"
+  },
+  "technologies.HolyGround.name": {
+    "en": "Holy Ground",
+    "es": "Tierra santa"
+  },
+  "technologies.ForcedMarchII.name": {
+    "en": "Forced March II",
+    "es": "Marcha forzada II"
+  },
+  "technologies.LightPacksI.name": {
+    "en": "Light Packs I",
+    "es": "Mochilas ligeras I"
+  },
+  "technologies.GarrisonRightsI.name": {
+    "en": "Garrison Rights I",
+    "es": "Guarniciones I"
+  },
+  "technologies.DelversI.name": {
+    "en": "Delvers I",
+    "es": "Incursores I"
+  },
+  "technologies.StrongboxesI.name": {
+    "en": "Strongboxes I",
+    "es": "Arcones I"
+  },
+  "technologies.FrontierBuildersII.name": {
+    "en": "Frontier Builders II",
+    "es": "Pioneros II"
+  },
+  "technologies.BountyHuntersII.name": {
+    "en": "Bounty Hunters II",
+    "es": "Cazarrecompensas II"
+  },
+  "technologies.WoodYardsI.name": {
+    "en": "Wood Yards I",
+    "es": "Acopios de madera I"
+  },
+  "technologies.PilgrimRoadsI.name": {
+    "en": "Pilgrim Roads I",
+    "es": "Peregrinaje I"
+  },
+  "technologies.StoneShedsI.name": {
+    "en": "Stone Sheds I",
+    "es": "Pilas de piedra I"
+  },
+  "technologies.FieldNotesII.name": {
+    "en": "Field Notes II",
+    "es": "Notas de campo II"
+  },
+  "technologies.DeepDigsI.name": {
+    "en": "Deep Digs I",
+    "es": "Minas hondas I"
+  },
+  "technologies.BattleLoreI.name": {
+    "en": "Battle Lore I",
+    "es": "Saber de batalla I"
+  },
+  "technologies.RuralMarketsII.name": {
+    "en": "Rural Markets II",
+    "es": "Mercados rurales II"
+  },
+  "technologies.MendersI.name": {
+    "en": "Menders I",
+    "es": "Reparadores I"
+  },
+  "technologies.PortalWardensI.name": {
+    "en": "Portal Wardens I",
+    "es": "Vigías del portal I"
+  },
+  "technologies.LoggingRoadsII.name": {
+    "en": "Logging Roads II",
+    "es": "Caminos madereros II"
+  },
+  "technologies.ForcedMarchIII.name": {
+    "en": "Forced March III",
+    "es": "Marcha forzada III"
+  },
+  "technologies.QuarryCartsII.name": {
+    "en": "Quarry Carts II",
+    "es": "Carros de cantera II"
+  },
+  "technologies.HuntersLodgesII.name": {
+    "en": "Hunters’ Lodges II",
+    "es": "Cotos de caza II"
+  },
+  "technologies.GarrisonRightsII.name": {
+    "en": "Garrison Rights II",
+    "es": "Guarniciones II"
+  },
+  "technologies.DelversII.name": {
+    "en": "Delvers II",
+    "es": "Incursores II"
+  },
+  "technologies.RootCellarsI.name": {
+    "en": "Root Cellars I",
+    "es": "Bodegas I"
+  },
+  "technologies.FrontierBuildersIII.name": {
+    "en": "Frontier Builders III",
+    "es": "Pioneros III"
+  },
+  "technologies.BountyHuntersIII.name": {
+    "en": "Bounty Hunters III",
+    "es": "Cazarrecompensas III"
+  },
+  "technologies.StarGazersI.name": {
+    "en": "Star Gazers I",
+    "es": "Astrónomos I"
+  },
+  "technologies.DeepDigsII.name": {
+    "en": "Deep Digs II",
+    "es": "Minas hondas II"
+  },
+  "technologies.KeenEyesII.name": {
+    "en": "Keen Eyes II",
+    "es": "Ojo avizor II"
+  },
+  "technologies.LightPacksII.name": {
+    "en": "Light Packs II",
+    "es": "Mochilas ligeras II"
+  },
+  "technologies.DeepVaultsI.name": {
+    "en": "Deep Vaults I",
+    "es": "Cámaras hondas I"
+  },
+  "technologies.BattleLoreII.name": {
+    "en": "Battle Lore II",
+    "es": "Saber de batalla II"
+  },
+  "technologies.FieldNotesIII.name": {
+    "en": "Field Notes III",
+    "es": "Notas de campo III"
+  },
+  "technologies.PilgrimRoadsII.name": {
+    "en": "Pilgrim Roads II",
+    "es": "Peregrinaje II"
+  },
+  "technologies.PortalWardensII.name": {
+    "en": "Portal Wardens II",
+    "es": "Vigías del portal II"
+  },
+  "technologies.MendersII.name": {
+    "en": "Menders II",
+    "es": "Reparadores II"
+  },
+  "technologies.FrontierCharter.name": {
+    "en": "Frontier Charter",
+    "es": "Fuero fronterizo"
+  },
+  "technologies.StrongboxesII.name": {
+    "en": "Strongboxes II",
+    "es": "Arcones II"
+  },
+  "technologies.Pathfinding.name": {
+    "en": "Pathfinding",
+    "es": "Rastreo"
+  },
+  "technologies.Transplanting.description": {
+    "en": "Hold a tree to pick it up and move it — it grows back in a day.",
+    "es": "Mantén pulsado un árbol para cogerlo y moverlo: vuelve a crecer en un día."
+  },
+  "technologies.Tactics.description": {
+    "en": "Reading the ground — a bad matchup costs a tenth less.",
+    "es": "Leer el terreno: un mal emparejamiento cuesta una décima parte menos."
+  }
+}
