@@ -4,7 +4,6 @@
     "tap": {
       "type": "object",
       "fields": {
-        "collectCooldownSeconds": { "type": "float" },
         "manaCost": { "type": "int", "min": 0, "doc": "What every player tap costs." },
         "workSeconds": { "type": "int", "min": 1, "doc": "A tap pays this many seconds of what it touches produces." }
       }

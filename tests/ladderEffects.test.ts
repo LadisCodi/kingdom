@@ -40,7 +40,7 @@ import { manaCap, manaProduction } from '../src/sim/mana';
 import { firstClearLump, knowledgeLump, landmarkClaimLump } from '../src/sim/knowledge';
 import { cityGoldPerMinute, districtCapacity, maxPopulation, ownGoldPerMinute } from '../src/sim/population';
 import {
-  cityGatherPerSecond, effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
+  cityGatherPerSecond, effectiveBuildTimeMultiplier,
   effectiveTaxRate,
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds, workerStrikeMs,
@@ -108,7 +108,6 @@ function probe(state: GameState): Record<string, number> {
 
   // The thumb and the crew.
   put('tapWorkSeconds', tapWorkSeconds(state));
-  put('autoTapCooldownMs', effectiveAutoTapCooldownMs(state));
   put('workerSpeed', effectiveWorkerSpeed(state));
   for (const id of SOURCES) {
     const spec = HARVEST[id];

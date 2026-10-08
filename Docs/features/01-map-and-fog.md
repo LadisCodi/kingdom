@@ -299,7 +299,6 @@ fallback past ring 14. The province reaches ring 23.
 - Every ring price from 3 out is a multiple of five. A price five does not
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
-- Hold-to-repeat covers reveal taps.
 - **Every tap that takes tears a fifth of the cell's mist away**, the last
   one blowing it off — every cell of a block at once (§4.2). A refused tap
   tears nothing.

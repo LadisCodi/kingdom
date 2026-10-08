@@ -1,6 +1,5 @@
 {
   "tap": {
-    "collectCooldownSeconds": 0.5,
     "manaCost": 1,
     "workSeconds": 10
   },

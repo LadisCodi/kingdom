@@ -109,9 +109,8 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec, at:
  * never goes stale (README working rule 2) and, priced in Gold and time, the
  * permanent sink the economy loses when the tech tree runs out.
  *
- * It is also the number behind what a rewarded ad is worth: the thumb is worth
- * `tapWorkSeconds / collectCooldown` workers, and **that has to stay ahead of
- * the crew** or the hand stops beating the machine (`04-harvest.md` §3.3).
+ * It is also the number behind what a rewarded ad is worth (`04-harvest.md`
+ * §3.3).
  */
 export const tapWorkSeconds = (state: GameState): number =>
   Math.max(0, resolve(state, 'tapYield', techValue(state, 'tapWorkSeconds', TAP.workSeconds)));
@@ -190,28 +189,6 @@ export const workerStrikeMs = (
       : techMultiplier(state, 'crewStrikeSpeed', { district: building.definitionId }));
   return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
-
-/** Cooldown between AUTO-taps — the repeats a held pointer generates, ms
- *  (QuickHands is a SPEED it is divided by; floor 0.1s).
- *
- *  Deliberately asymmetric, and this is the whole design: a *manual* tap is
- *  never gated, so tapping fast stays a skill the player is rewarded for,
- *  while holding trades that speed for not having to work. Nothing here is
- *  ever consulted on a deliberate tap — see `collectTap`.
- *
- *  It follows that QuickHands only ever speeds HOLDING up. That makes it a
- *  convenience line rather than a raw-throughput one, which is the right
- *  shape: it narrows the gap toward manual tapping without closing it (0.5s
- *  down to 0.25s at rank 5, still slower than a determined tapper).
- *
- *  It is also half of what the thumb is worth: `tapWorkSeconds` over this is
- *  how many workers a held finger is equal to, and that number has to stay
- *  ahead of the crew (`04-harvest.md` §3.3). */
-export const effectiveAutoTapCooldownMs = (state: GameState): number =>
-  Math.max(100, resolve(
-    state, 'autoTapCooldown',
-    (TAP.collectCooldownSeconds * 1000) / Math.max(1, techMultiplier(state, 'autoTapSpeed')),
-  ));
 
 /** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
  *  FSM when a leg STARTS, so a rank landing mid-walk shortens the next leg

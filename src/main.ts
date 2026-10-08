@@ -575,7 +575,6 @@ async function boot(): Promise<void> {
   wireInput(
     canvas, camera,
     (sx, sy) => game.handleTap(sx, sy),
-    (sx, sy) => game.handleHold(sx, sy),
     (sx, sy) => game.grabGhost(sx, sy),
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
@@ -585,7 +584,6 @@ async function boot(): Promise<void> {
   wireInput(
     worldCanvas, worldCamera,
     (sx, sy) => game.handleWorldTap(sx, sy),
-    () => false,
     () => false,
     () => {},
   );

@@ -207,12 +207,6 @@ export const TECH_STATS = {
     says: { percent: '{v} out of every tap' },
     reads: 'upgrades.ts#tapWorkSeconds',
   },
-  autoTapSpeed: {
-    what: 'how fast a held finger repeats its tap — the cooldown is divided by it',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} auto-tap speed while holding' },
-    reads: 'upgrades.ts#effectiveAutoTapCooldownMs',
-  },
   harvestYield: {
     what: 'the share more one extraction takes out of a KIND OF CELL — the tap and the crew alike; fractions carry',
     ops: ['percent'], targets: ['global', 'harvest'], unit: '×',

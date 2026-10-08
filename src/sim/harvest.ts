@@ -9,7 +9,7 @@ import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
 import { recordEvent } from './events';
 import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
+import { tapDraw } from './upgrades';
 import { footprintAt, neighbors, type MapData } from './grid';
 import { resolve, resolveAt } from './modifiers';
 import { techMultiplier } from './techEffects';
@@ -347,7 +347,7 @@ export type TapCellResult =
   | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked'
   /** Inside a standing lair's zone (Docs/proposals/lairs.md §3). */
   | 'LairHeld';
-export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
+export type CollectTapResult = TapCellResult | 'NoMana';
 
 /** Why this cell would refuse a tap, or null if it would harvest. Shared by
  *  the raw primitive and the player's tap, so the energy charge can be decided
@@ -410,13 +410,7 @@ export function tapCell(
 
 /** The PLAYER's collect tap.
  *
- *  A deliberate tap is never gated by TIME — tapping fast is a skill. Only the
- *  repeats a HELD pointer generates pass `autoRepeat`, and those wait out
- *  `effectiveAutoTapCooldownMs` so holding stays the lazier, slower option.
- *  Every successful collect stamps the clock, so starting a hold right after
- *  a manual tap still waits one full cooldown.
- *
- *  It IS gated by energy: every collect costs `TAP.manaCost` Mana. Mana is
+ *  It is never gated by TIME — tapping fast is a skill. It IS gated by energy: every collect costs `TAP.manaCost` Mana. Mana is
  *  what a tap on the GROUND costs; a tap on a building collects its store
  *  and is free (sim/storage.ts).
  *
@@ -427,15 +421,9 @@ export function collectTap(
   map: MapData,
   cell: Coord,
   now: number,
-  autoRepeat = false,
 ): CollectTapResult {
-  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
-    return 'OnCooldown';
-  }
   const blocked = harvestBlock(state, map, cell, now);
   if (blocked !== null) return blocked;
   if (!payMana(state, TAP.manaCost)) return 'NoMana';
-  const result = tapCell(state, map, cell, now);
-  if (result === 'Harvested') state.lastCollectTapAt = now;
-  return result;
+  return tapCell(state, map, cell, now);
 }
