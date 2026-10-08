@@ -13,9 +13,10 @@ import research from './es/research.json';
 import game from './es/game.json';
 import sim from './es/sim.json';
 import render from './es/render.json';
+import tech from './es/tech.json';
 // Keys more than one area says, moved here when the areas were merged.
 import shared from './es/shared.json';
 
-export const ES_FILES: Record<string, Record<string, string>> = { common, city, world, heroes, store, social, notices, research, game, sim, render, shared };
+export const ES_FILES: Record<string, Record<string, string>> = { common, city, world, heroes, store, social, notices, research, game, sim, render, tech, shared };
 
-export const ES: Record<string, string> = { ...common, ...city, ...world, ...heroes, ...store, ...social, ...notices, ...research, ...game, ...sim, ...render, ...shared };
+export const ES: Record<string, string> = { ...common, ...city, ...world, ...heroes, ...store, ...social, ...notices, ...research, ...game, ...sim, ...render, ...tech, ...shared };

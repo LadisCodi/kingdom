@@ -3,9 +3,8 @@
 > **Scope.** The game in the player's language: which one, how the code's
 > text and the data's text are translated, and how numbers follow it.
 >
-> **Status: building.** Built: the choice, the code's text, the data's short
-> texts. Next: the tutorial dialogue (`scenes`), then the generated prose
-> (technology cards, bonus sentences).
+> **Status: built.** Everything the player reads is in both languages but the
+> names the shared world generates.
 
 ## 1. The choice
 
@@ -44,6 +43,15 @@
 - Localized: buildings (name, promise, description), goods, items, quests,
   store, speakers, unlock splashes, villains, world buildings, scene lines,
   lair flavour, ruins, technologies.
+
+## 3b. The generated prose
+
+- A technology card and a quest line are built from the data
+  (`src/sim/techProse.ts`, `src/sim/questProse.ts`). Each stat's sentence
+  (`TECH_STATS[…].says`) is a `tr()` template; Spanish names a building's
+  target in parentheses or after a colon (*Desbloquea: Granja y Aserradero*,
+  *+25% de almacén (Granja)*), so no article has to agree with it.
+- Decimals the sim writes follow the language (`decimal`, `src/i18n/lang.ts`).
 
 ## 4. Numbers
 

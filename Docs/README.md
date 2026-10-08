@@ -93,7 +93,7 @@ One file per feature, in the order a player meets them.
 | 25 | [The Survey](features/25-the-survey.md) | **a ladder that pays for exploring** — 36 levels over the whole province, climbed by cells revealed, a free column and a paid one bought once; never resets | built, but for the seal that flies to the pill |
 | 26 | [Notices](features/26-notices.md) | **the bubbles in the corner** — news and standing states for what the player may not have seen, in the province and on the board, each a card with a way to go there | built |
 | 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots planted from the Build menu as features, and trees and plots moved with a long press, growing again where they land | built, but for the tutorial scene |
-| 28 | [Languages](features/28-languages.md) | **English and Spanish** — the choice in Settings, the code's text through `tr()`, the data's through overlays, numbers in the language's locale | building |
+| 28 | [Languages](features/28-languages.md) | **English and Spanish** — the choice in Settings, the code's text through `tr()`, the data's through overlays, numbers in the language's locale | built |
 
 ## Reference
 
