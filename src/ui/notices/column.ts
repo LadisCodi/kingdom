@@ -19,7 +19,7 @@ import { columnNotices, standingNotices, type Notice } from './model';
 
 /** News whose event sounds where it happens (game.ts), so its bubble
  *  arriving adds no pop on top. */
-const VOICED = new Set(['news:built', 'news:worldBuild', 'news:explorer', 'news:armyHome', 'news:raided']);
+const VOICED = new Set(['news:built', 'news:worldBuild', 'news:armyHome', 'news:raided', 'state:explorerReady']);
 
 /** How long a news bubble stays on screen unread, and how much of the end
  *  of that it spends blinking to say it is going (26 §3). */
@@ -45,6 +45,7 @@ function mountColumn(game: Game, root: HTMLElement, list: () => Notice[], expire
       type: 'button',
       'aria-label': n.title,
       'data-notice': n.id,
+      'data-coach': `notice:${n.id}`,
     },
     el('span', { class: 'nt-face' }, n.art.make()));
     if (n.count > 1) b.append(ctaBadge(n.count, `notice:${n.id}`));

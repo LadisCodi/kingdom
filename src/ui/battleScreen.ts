@@ -17,14 +17,14 @@
 // event would restart every animation on the board and re-decode every
 // portrait (the fault `battlePicker.ts` documents).
 
-import { COMBAT, HEROES, UNITS, VILLAINS, type SkillId } from '../sim/data/definitions';
+import { COMBAT, HEROES, TROOPS, VILLAINS, unitOf, type SkillId } from '../sim/data/definitions';
 import { SKILLS, type SkillKind } from '../sim/skills';
 import { setBattleMusic } from '../audio/music';
 import { playSfx, warmBattleSfx, type BattleSfx } from '../audio/sfx';
 import { haptic } from './haptics';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { targetingFor } from '../sim/battle';
-import type { BattleEvent, BattleLog, BoardSlot, Side, SlotRef } from '../sim/battle';
+import type { BattleEvent, BattleLog, BoardSlot, FieldPt, PlacedSlot, Side, SlotRef } from '../sim/battle';
 import type { UnitId } from '../sim/state';
 import type { BattleBackdrop, Game } from '../game';
 import { createFxLayer, type Pt } from './battleFx';
@@ -34,6 +34,7 @@ import bossGround from './assets/battle-ground-boss.jpg?url';
 import portalGround from './assets/battle-ground-portal.jpg?url';
 import { el, formatExact, formatShort } from './format';
 import { btn, iconEl } from './kit';
+import { rankBadge } from './unitArt';
 
 /** How long the white flash sits on a slot that was hit. Two frames of a
  *  stepped animation — a pixel-art screen snaps, it does not glow. */
@@ -43,13 +44,13 @@ const FLASH_MS = 180;
  *  creature's (`enemyFaces`) — a hero's portrait, a villain's. */
 function face(slot: BoardSlot, faces?: Partial<Record<UnitId, string>>): HTMLElement {
   if (slot.unitId !== null) {
-    const { sprite } = UNITS[slot.unitId];
-    const creature = faces?.[slot.unitId];
+    const { sprite } = TROOPS[slot.unitId];
+    const creature = faces?.[unitOf(slot.unitId)];
     const url = (creature ? spriteUrl(creature) : null)
       ?? spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
     return url
       ? spriteImgAt(url, 'bs-portrait')
-      : iconEl(slot.unitId, { size: 'lg' });
+      : iconEl(unitOf(slot.unitId), { size: 'lg' });
   }
   const def = slot.fighterId !== null && slot.fighterId in HEROES
     ? HEROES[slot.fighterId as keyof typeof HEROES]
@@ -78,8 +79,17 @@ interface SlotView {
    *  started with, so the ring shows the wound. */
   pool: number;
   max: number;
-  /** Its middle in the screen's own pixels, measured once it is laid out. */
+  /** Its middle in the screen's own pixels, where it stands NOW — moved
+   *  every frame as it walks. */
   at: Pt;
+  /** Where it stood when the fight opened, on the field (§3) — what its
+   *  place on the board is laid out from. */
+  home: FieldPt;
+  /** Where it stood at each tick it walked, from the log's `move` events,
+   *  oldest first and starting at `home` on tick 0. */
+  track: { tick: number; x: number; y: number }[];
+  /** Where it is drawn now, on the field. */
+  pos: FieldPt;
   lunge: Animation | null;
   /** A glow behind the portrait, lit in a skill's tint: the caster
    *  charging, a rally landing. */
@@ -89,14 +99,15 @@ interface SlotView {
   bubble: HTMLElement | null;
 }
 
-function slotView(slot: BoardSlot, side: Side, faces?: Partial<Record<UnitId, string>>): SlotView {
+function slotView(slot: PlacedSlot, side: Side, faces?: Partial<Record<UnitId, string>>): SlotView {
   const count = el('span', { class: 'bs-count' }, slot.kind === 'hero' ? '' : `x${formatExact(slot.count)}`);
   const life = el('span', { class: 'bs-life' });
   const aura = el('span', { class: 'bs-aura' });
-  const root = el('div', { class: `bs-slot is-${slot.kind} is-${side}` },
+  const root = el('div', { class: `bs-slot is-${slot.kind} is-${side} is-${slot.kind === 'hero' ? 'heroes' : slot.row}` },
     aura,
     life,
     face(slot, faces),
+    ...(slot.unitId === null ? [] : [rankBadge(slot.unitId)].filter((b): b is HTMLElement => b !== null)),
     count,
     el('span', { class: 'bs-skull' }, iconEl('skull', { size: 'lg' })));
   const max = Math.max(1, slot.hpUnit * slot.count);
@@ -105,35 +116,39 @@ function slotView(slot: BoardSlot, side: Side, faces?: Partial<Record<UnitId, st
   return {
     root, count, life, type: slot.type, kind: slot.kind, power: slot.power, troops: slot.count,
     pool: slot.hpPool, max, at: { x: 0, y: 0 }, lunge: null, aura, shield: 0, bubble: null,
+    home: { x: slot.x, y: slot.y }, track: [{ tick: 0, x: slot.x, y: slot.y }], pos: { x: slot.x, y: slot.y },
   };
 }
 
-/** The six rows, top to bottom: their heroes, their back, their front, then
- *  ours the other way up. The gap in the middle is the two armies facing each
- *  other, and it is the only thing on the screen that means nothing else. */
-function boardRows(
-  slots: readonly BoardSlot[], side: Side, faces?: Partial<Record<UnitId, string>>,
+/** One side's slots, and its three lines — front, back, heroes — for the
+ *  march on. Where each stands is the field's (§3), laid out by `measure`. */
+function boardSide(
+  slots: readonly PlacedSlot[], side: Side, faces?: Partial<Record<UnitId, string>>,
 ): {
-  rows: HTMLElement[];
+  lines: HTMLElement[][];
   views: Map<number, SlotView>;
 } {
   const views = new Map<number, SlotView>();
-  const row = (cls: string, of: readonly BoardSlot[]): HTMLElement => {
-    const line = el('div', { class: `bs-row ${cls}` });
-    for (const slot of of) {
-      const view = slotView(slot, side, faces);
-      views.set(slot.id, view);
-      line.append(view.root);
-    }
-    return line;
-  };
-  const heroes = slots.filter((s) => s.kind === 'hero');
-  const back = slots.filter((s) => s.kind === 'troop' && s.row === 'back');
-  const front = slots.filter((s) => s.kind === 'troop' && s.row === 'front');
-  const rows = side === 'theirs'
-    ? [row('is-heroes', heroes), row('is-back', back), row('is-front', front)]
-    : [row('is-front', front), row('is-back', back), row('is-heroes', heroes)];
-  return { rows, views };
+  const lines: HTMLElement[][] = [[], [], []];
+  for (const slot of slots) {
+    const view = slotView(slot, side, faces);
+    views.set(slot.id, view);
+    lines[slot.kind === 'hero' ? 2 : slot.row === 'front' ? 0 : 1]!.push(view.root);
+  }
+  return { lines, views };
+}
+
+/** Where a slot stands at fight-time `ms`: on its last point, or on its way
+ *  to the next one — a `move` at tick k is the walk from tick k − 1. */
+function posAt(track: SlotView['track'], ms: number): FieldPt {
+  const ft = ms / COMBAT.tickMs;
+  let i = 0;
+  while (i + 1 < track.length && track[i + 1]!.tick <= ft) i += 1;
+  const a = track[i]!;
+  const b = track[i + 1];
+  if (b === undefined || ft <= b.tick - 1) return a;
+  const k = ft - (b.tick - 1);
+  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
 }
 
 type Attack = Extract<BattleEvent, { kind: 'attack' }>;
@@ -302,14 +317,17 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     const start = log.events[0];
     if (start?.kind !== 'start') return;
 
-    const ours = boardRows(start.ours, 'ours');
-    const theirs = boardRows(start.theirs, 'theirs', playback.enemyFaces);
+    const ours = boardSide(start.ours, 'ours');
+    const theirs = boardSide(start.theirs, 'theirs', playback.enemyFaces);
     const views: Record<Side, Map<number, SlotView>> = {
       ours: ours.views,
       theirs: theirs.views,
     };
     const all = [...ours.views.values(), ...theirs.views.values()];
     const viewOf = (ref: SlotRef): SlotView | undefined => views[ref.side].get(ref.id);
+    for (const e of log.events) {
+      if (e.kind === 'move') viewOf(e.at)?.track.push({ tick: e.tick, x: e.x, y: e.y });
+    }
 
     // THE BAR. Two numbers and one split: what each side is still worth, as
     // the squads under it come apart (§12).
@@ -382,7 +400,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     /** The white of the last blow. */
     const flash = el('div', { class: 'bs-flash' });
     const gap = el('div', { class: 'bs-gap' });
-    const board = el('div', { class: 'bs-board' }, ...theirs.rows, gap, ...ours.rows);
+    const board = el('div', { class: 'bs-board' }, gap, ...all.map((v) => v.root));
     const where = el('div', { class: 'bs-where' },
       el('b', {}, playback.title),
       el('span', {}, playback.subtitle));
@@ -400,26 +418,66 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
 
     /** One design pixel (`--px`) in CSS pixels: a slot is 66 of them. */
     let unit = 1;
+    /** THE FIELD ON THE SCREEN: CSS pixels per field unit, and where the
+     *  field's middle falls — one scale both ways, so a walk across and a
+     *  walk forward read the same. Fitted to the board, never larger than
+     *  the slots were laid out at before the field moved. */
+    let scale = 1;
+    let mid: Pt = { x: 0, y: 0 };
+    let field = { x: 0, y: 0 };
+    let boardAt: Pt = { x: 0, y: 0 };
+    const homes = all.map((v) => v.home);
+    const span = {
+      x0: Math.min(...homes.map((p) => p.x)) - COMBAT.fieldColPitch / 2,
+      x1: Math.max(...homes.map((p) => p.x)) + COMBAT.fieldColPitch / 2,
+      y0: Math.min(...homes.map((p) => p.y)) - COMBAT.fieldRowPitch / 2,
+      y1: Math.max(...homes.map((p) => p.y)) + COMBAT.fieldRowPitch / 2,
+    };
+    field = { x: (span.x0 + span.x1) / 2, y: (span.y0 + span.y1) / 2 };
+    /** A field point, in the board's own pixels. */
+    const onBoard = (p: FieldPt): Pt => ({ x: mid.x + (p.x - field.x) * scale, y: mid.y + (p.y - field.y) * scale });
+    /** …and in the screen's, where the effects and the numbers are drawn. */
+    const onScreen = (p: FieldPt): Pt => {
+      const b = onBoard(p);
+      return { x: boardAt.x + b.x, y: boardAt.y + b.y };
+    };
     const measure = (): void => {
       const box = screen.getBoundingClientRect();
       if (box.width === 0) return;
-      // From the LAYOUT, not the screen rect: a slot mid-lunge or a row
-      // mid-entrance must not move where everything aims at it.
-      for (const v of all) {
-        let x = v.root.offsetWidth / 2;
-        let y = v.root.offsetHeight / 2;
-        for (let node: HTMLElement | null = v.root; node !== null && node !== screen;
-          node = node.offsetParent as HTMLElement | null) {
-          x += node.offsetLeft;
-          y += node.offsetTop;
-        }
-        v.at = { x, y };
-      }
       unit = (all[0]?.root.offsetWidth ?? 66) / 66;
-      gapY = gap.offsetTop + gap.offsetHeight / 2;
-      for (let node = gap.offsetParent as HTMLElement | null; node !== null && node !== screen;
-        node = node.offsetParent as HTMLElement | null) gapY += node.offsetTop;
+      boardAt = { x: 0, y: 0 };
+      for (let node: HTMLElement | null = board; node !== null && node !== screen;
+        node = node.offsetParent as HTMLElement | null) {
+        boardAt.x += node.offsetLeft;
+        boardAt.y += node.offsetTop;
+      }
+      const w = board.clientWidth;
+      const h = board.clientHeight;
+      scale = Math.min(w / (span.x1 - span.x0), h / (span.y1 - span.y0), (76 * unit) / COMBAT.fieldColPitch);
+      mid = { x: w / 2, y: h / 2 };
+      for (const v of all) {
+        const home = onBoard(v.home);
+        v.root.style.left = `${home.x}px`;
+        v.root.style.top = `${home.y}px`;
+      }
+      gapY = onScreen({ x: 0, y: 0 }).y;
+      gap.style.top = `${onBoard({ x: 0, y: 0 }).y}px`;
+      place(true);
       fx.resize(box.width, box.height, unit);
+    };
+    /** Every slot where the log has it at the fight's clock, and `at` with
+     *  it — so an arrow loosed now flies at where its target stands now. A
+     *  slot that moved since the last frame is walking, and bobs. */
+    const place = (still = false): void => {
+      const t = game.battle === null ? 0 : game.battleMs(game.now());
+      for (const v of all) {
+        const p = posAt(v.track, t);
+        const walking = !still && (p.x !== v.pos.x || p.y !== v.pos.y);
+        v.pos = p;
+        v.at = onScreen(p);
+        v.root.style.translate = `${(p.x - v.home.x) * scale}px ${(p.y - v.home.y) * scale}px`;
+        v.root.classList.toggle('is-walking', walking && motion);
+      }
     };
 
     const motion = !calm();
@@ -983,6 +1041,7 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
       // freezes them — and runs on past its end so the last sparks land.
       const phase = game.battle?.phase;
       fxT = phase === 'playing' ? t : fxT + (now - lastReal) * pace();
+      place();
       rollBar(now - lastReal);
       lastReal = now;
 
@@ -1044,16 +1103,18 @@ export function mountBattleScreen(game: Game, root: HTMLElement): void {
     // from its own edge, front rank first, and the swords on the bar clash.
     if (motion) {
       game.holdBattle(INTRO_MS);
-      const march = (rows: HTMLElement[], from: number): void => {
-        rows.forEach((row, i) => {
-          row.animate([
-            { translate: `0 ${from * 60 * unit}px`, opacity: 0 },
-            { translate: '0 0', opacity: 1 },
-          ], { duration: 420, delay: i * 90, easing: 'cubic-bezier(0.2, 1.3, 0.4, 1)', fill: 'backwards' });
+      const march = (lines: HTMLElement[][], from: number): void => {
+        lines.forEach((line, i) => {
+          for (const slot of line) {
+            slot.animate([
+              { translate: `0 ${from * 60 * unit}px`, opacity: 0 },
+              { translate: '0 0', opacity: 1 },
+            ], { duration: 420, delay: i * 90, easing: 'cubic-bezier(0.2, 1.3, 0.4, 1)', fill: 'backwards', composite: 'add' });
+          }
         });
       };
-      march([...theirs.rows].reverse(), -1); // their front is nearest the gap
-      march(ours.rows, 1);
+      march(theirs.lines, -1); // the front line first, nearest the gap
+      march(ours.lines, 1);
       bar.classList.add('is-clash');
       // The place's plaque swings down on its rope as they arrive, and the
       // knobs come after it.

@@ -146,8 +146,6 @@ describe('one technology, one line', () => {
       .toBe('+5% on every lump of Knowledge');
     expect(effectSentence({ stat: 'landmarkKnowledge', op: 'percent', value: 20 }))
       .toBe('+20% Knowledge from every landmark claimed');
-    expect(effectSentence({ stat: 'autoTapSpeed', op: 'percent', value: 15 }))
-      .toBe('+15% auto-tap speed while holding');
   });
 
   // A wait is moved by a SPEED, and the card says so: it climbs.

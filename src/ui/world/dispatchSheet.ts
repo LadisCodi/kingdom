@@ -9,8 +9,8 @@
 import type { Game } from '../../game';
 import type { BoardHex } from '../../sim/world/board';
 import {
-  arrivesAt, exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, fogStateOf, freeExplorers,
-  returnsAt, revealsAt, tripRevealing, type FogState,
+  exploreGold, exploreWorkMs, explorerRoute, explorerRushCost, explorerSlots, firstTripFree, fogStateOf, freeExplorers,
+  nextFreeAt, readyAt, returnsAt, tripPhase, tripRevealing, type FogState,
 } from '../../sim/world/explorers';
 import type { ExplorerTrip } from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
@@ -22,11 +22,11 @@ import { floorPower, floorReward, nextRoom, roomPower } from '../../worldServer/
 import { getWallet, type CurrencyId, type GoodId } from '../../sim/state';
 import { getGood } from '../../sim/goods';
 import { worldUpgradeGoods } from '../../sim/precious';
-import { el, formatCount, formatCountdown, formatDuration, formatExact } from '../format';
+import { coach, el, formatCount, formatCountdown, formatDuration, formatExact } from '../format';
 import { action, btn, chip, powerTag, progress, sheet, stat } from '../kit';
 import { timerButton } from '../speedupSheet';
 import type { SpeedJob } from '../../sim/speedups';
-import { hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
+import { explorersOutLine, hexActions, hexWork, scoutWords, type HexAction } from './worldActions';
 import { scoutPay } from '../../sim/world/scouting';
 import { campLoot } from '../../sim/world/fights';
 import { districtOf } from '../../worldServer/core';
@@ -48,7 +48,7 @@ function controlLines(game: Game, bh: BoardHex, fog: FogState): HTMLElement[] {
   const mine = h.owner === game.worldSeat();
   const lines: HTMLElement[] = [];
   const whose = `${seatName(game, h.owner)} ground`;
-  const work = hexWork(h);
+  const work = hexWork(h, game.worldBoost());
   if (!h.held) {
     lines.push(el('p', { class: 'wd-line' }, mine && work !== null && game.actingSeat === null
       ? `${whose}, being claimed`
@@ -163,9 +163,9 @@ function actionRows(game: Game, bh: BoardHex): HTMLElement[] {
   const asRival = game.actingSeat !== null;
   const have = (c: CurrencyId) => (asRival ? Infinity : getWallet(game.state.city.wallet, c));
   // Playing a rival's part, the player's own fog does not bind that seat.
-  const revealed = asRival || fogStateOf(game.state, bh.index, game.now()) === 'Revealed';
+  const revealed = asRival || fogStateOf(game.state, bh.index) === 'Revealed';
   const relics = asRival ? [] : game.worldRelicsRestored();
-  return hexActions(game.worldSource(), seat, bh, { revealed }, relics).map((a: HexAction) => {
+  return hexActions(game.worldSource(), seat, bh, { revealed }, relics, game.worldBoost()).map((a: HexAction) => {
     switch (a.kind) {
       case 'claim':
         return action({
@@ -264,7 +264,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   const state = game.state;
   const now = game.now();
   const bh = game.worldSource().board().hexes[index];
-  const fog = fogStateOf(state, index, now);
+  const fog = fogStateOf(state, index);
   const home = game.homeHex();
   const distance = hexDistance(hexAt(home), hexAt(index));
   const control = game.worldSource().controlOf(index);
@@ -289,7 +289,7 @@ export function renderDispatchSheet(game: Game): HTMLElement {
     // A camp that stands between the player and the ground (§3.4).
     if (held === null && !unguarded && fog === 'Revealed') return renderCamp(game, bh);
     if (held === null && fog === 'Revealed' && unguarded && districtOf(bh) !== null) {
-      const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }).find((a) => a.kind === 'claim');
+      const claim = hexActions(game.worldSource(), game.worldSeat(), bh, { revealed: true }, [], game.worldBoost()).find((a) => a.kind === 'claim');
       return renderFreeGround(game, bh, hexTitle(game, bh, fog), claim === undefined ? 'Build beside ground you hold' : undefined);
     }
   }
@@ -345,16 +345,12 @@ export function renderDispatchSheet(game: Game): HTMLElement {
   if (index !== home && fog !== 'Revealed' && trip === null && game.actingSeat === null) {
     const slots = explorerSlots(state);
     const free = freeExplorers(state);
-    const route = explorerRoute(state, index, now);
+    const route = explorerRoute(state, index);
     const work = exploreWorkMs(state, index) / 1000;
     const trip = route === null ? 0 : (outboundMs(route.stepMs) + homeboundMs(route.stepMs)) / 1000 + work;
     let reason: string | undefined;
-    if (slots === 0) reason = 'Research Cartography in the Atlas';
-    else if (route === null) reason = 'No way there through explored ground';
-    else if (free === 0) {
-      const back = Math.min(...state.world.explorers.map(returnsAt));
-      reason = `Every explorer is out — one is back in ${formatCountdown(Math.max(0, back - now) / 1000)}`;
-    }
+    if (route === null) reason = 'No way there through explored ground';
+    else if (free === 0) reason = explorersOutLine(state, nextFreeAt(state), now);
     body.append(
       ...(route === null ? [] : [el('div', { class: 'wd-march' },
         stat('compass', formatDuration(trip), 'there and back'),
@@ -362,9 +358,10 @@ export function renderDispatchSheet(game: Game): HTMLElement {
       action({
         label: 'Explore', kind: 'primary', icon: 'compass',
         cost: { Gold: exploreGold(state, index) }, have: (c: CurrencyId) => getWallet(state.city.wallet, c),
+        ...(firstTripFree(state) ? { note: 'Free' } : {}),
         onClick: () => game.doSendExplorer(),
         disabledReason: reason,
-        info: slots > 0 ? `Explorers ${formatCount(free)}/${formatCount(slots)}` : undefined,
+        info: `Explorers ${formatCount(free)}/${formatCount(slots)}`,
       }),
     );
   }
@@ -399,13 +396,21 @@ export function waitRow(
     })));
 }
 
-/** An explorer's trip: there, the work, and home. */
+/** An explorer's trip: there and the work, then — once the player has
+ *  revealed what it found — the road home. In between it waits at the hex,
+ *  and the row is the reveal. */
 function tripRow(game: Game, trip: ExplorerTrip): HTMLElement {
   const now = game.now();
-  const doing = now < arrivesAt(trip) ? 'On the way'
-    : now < revealsAt(trip) ? 'Exploring'
-      : 'Coming home';
-  return waitRow(game, doing, trip.departedAt, returnsAt(trip), explorerRushCost(trip, now),
+  const phase = tripPhase(trip, now);
+  if (phase === 'ready') {
+    return el('div', { class: 'tr-batch-row wd-trip is-ready' },
+      el('div', { class: 'tr-batch-progress' },
+        el('span', { class: 'tr-batch-what' }, 'Explored — your explorer waits for you')),
+      coach(btn({ label: 'Reveal', kind: 'primary', icon: 'compass', onClick: () => void game.doRevealHex(trip.target) }), 'reveal'));
+  }
+  const [doing, from, to] = phase === 'home' ? ['Coming home', trip.revealedAt!, returnsAt(trip)]
+    : [phase === 'out' ? 'On the way' : 'Exploring', trip.departedAt, readyAt(trip)];
+  return waitRow(game, doing, from, to, explorerRushCost(trip, now),
     () => game.doFinishExplorer(trip.id), { kind: 'explorer', tripId: trip.id });
 }
 
@@ -419,7 +424,7 @@ function hexWorkRow(game: Game, index: number, work: NonNullable<ReturnType<type
  *  cut off, burnt and its repair, a builder at work. */
 function ownStatus(game: Game, index: number, h: NonNullable<ReturnType<ReturnType<Game['worldSource']>['hexOf']>>): HTMLElement[] {
   const out: HTMLElement[] = [];
-  const work = hexWork(h);
+  const work = hexWork(h, game.worldBoost());
   if (!h.held) {
     out.push(el('p', { class: 'wd-line' }, 'Being claimed'));
   } else if (!h.active) {
@@ -427,7 +432,7 @@ function ownStatus(game: Game, index: number, h: NonNullable<ReturnType<ReturnTy
   }
   if (h.burnt) {
     out.push(el('p', { class: 'wd-line is-cut' }, 'Burnt by raiders — it makes nothing until it is repaired'));
-    const repair = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[index], { revealed: true })
+    const repair = hexActions(game.worldSource(), game.worldSeat(), game.worldSource().board().hexes[index], { revealed: true }, [], game.worldBoost())
       .find((a) => a.kind === 'repair');
     if (repair !== undefined && repair.kind === 'repair') {
       out.push(action({

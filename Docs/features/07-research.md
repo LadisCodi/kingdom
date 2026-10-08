@@ -46,6 +46,8 @@
   - **Gold is paid once, when the Knowledge is full**, from the **city**
     purse, so the tree competes with fog, buildings and Wonders for one budget
     ([`16-wonders.md`](16-wonders.md) §1).
+  - **Goods, and on the Atlas's first cards Wood, Stone and Food**, are paid
+    with the Gold, from the same purse ([`tech-tree.md`](tech-tree.md) §11.2).
   - **Paying the Gold completes the technology at that instant.** Nothing is
     under study and nothing waits, so research has no boundary source.
 - **Poured Knowledge stays in its technology.** It is never returned, moved to
@@ -100,7 +102,7 @@ A `bonus` names its effects, and each is four fields:
 - **Every bonus climbs** ([`22-progression.md`](22-progression.md) §9):
   - a `value` is never negative, and the rules refuse one;
   - a WAIT is moved by a **speed** the time is divided by — build speed,
-    regrowth speed, auto-tap speed, training speed, workshop speed — so no
+    regrowth speed, training speed, workshop speed — so no
     stack of ranks ever reaches zero;
   - **nothing discounts a price**: the fog, a claim, a recruit and a cast
     cost what they cost; the tree makes the kingdom produce more instead;

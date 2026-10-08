@@ -1,4 +1,4 @@
-// The tick resolver (Docs/features/combat.md §7, §8, §9, §10, §13).
+// The tick resolver (Docs/features/combat.md §3, §7, §8, §9, §10, §13).
 //
 // A fight is a deterministic auto-battler with no input in it, and this file
 // is the whole of it: two boards go in, an ORDERED LIST OF EVENTS comes out.
@@ -13,16 +13,17 @@
 // resolved on a server later — a replay is `(both boards, the list)`, and
 // nothing about the renderer knows which produced it.
 //
-// EVERYTHING IS INTEGER. The only division is the type fraction, floored
-// (§7), so the same boards produce the same list bit-for-bit on any engine —
+// EVERYTHING IS INTEGER, positions on the field included. The only divisions
+// are the type fraction (§7) and a walk's step (§10), each rounded to a whole
+// number, so the same boards produce the same list bit-for-bit on any engine —
 // which is what makes the golden test in `tests/battle.test.ts` a real guard
 // rather than a snapshot that drifts.
 
 import { BEATS } from './combat';
-import { COMBAT, UNITS, VILLAINS, type SkillId, type VillainId } from './data/definitions';
+import { COMBAT, TROOPS, UNITS, VILLAINS, troopId, type SkillId, type VillainId } from './data/definitions';
 import { randInt, type RngPart } from './rng';
 import { SKILLS, slotSkill, type SlotSkill } from './skills';
-import type { UnitId } from './state';
+import type { TroopId, UnitId, UnitRank } from './state';
 
 export type Side = 'ours' | 'theirs';
 export type Row = 'front' | 'back';
@@ -49,8 +50,8 @@ export interface BoardSlot {
   row: Row;
   /** What it fights as on the type chart. A hero carries one too (§7). */
   type: UnitId;
-  /** For the screen: which portrait to draw. */
-  unitId: UnitId | null;
+  /** For the screen: which portrait to draw — the troop, so its rank. */
+  unitId: TroopId | null;
   fighterId: string | null;
   name: string;
   /** Troops in the squad; 1 for a hero. */
@@ -79,8 +80,21 @@ export interface SlotRef {
   id: number;
 }
 
+/** A point on the field, in field units (§3): x across, y from the line the
+ *  two sides face over — the attacker's rows below it (positive), the
+ *  defender's above. */
+export interface FieldPt {
+  x: number;
+  y: number;
+}
+
+/** A slot as the fight opens: where it stands with it. */
+export type PlacedSlot = BoardSlot & FieldPt;
+
 export type BattleEvent =
-  | { kind: 'start'; ours: BoardSlot[]; theirs: BoardSlot[] }
+  | { kind: 'start'; ours: PlacedSlot[]; theirs: PlacedSlot[] }
+  /** A slot walked this tick, and where it now stands (§10). */
+  | { kind: 'move'; tick: number; at: SlotRef; x: number; y: number }
   | {
     kind: 'attack';
     tick: number;
@@ -142,20 +156,20 @@ export interface FighterSpec {
 }
 
 export interface SquadSpec {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
 /** Flat bonuses the kingdom's research hands its own troops. Resolved
  *  upstream (`expeditions.ts#drillOf`) so this file stays free of state. */
 export interface TroopBonus {
-  dmg: (unitId: UnitId) => number;
-  def: (unitId: UnitId) => number;
+  dmg: (troop: TroopId) => number;
+  def: (troop: TroopId) => number;
   /** A MULTIPLIER, unlike the two above: 1 is the identity. It stacks on top
    *  of the fighters' own `troopHpMult`, so a legendary's boon and a hero's
    *  type passive both reach the same number without either replacing the
    *  other. */
-  hpMult: (unitId: UnitId) => number;
+  hpMult: (troop: TroopId) => number;
 }
 
 const NO_BONUS: TroopBonus = { dmg: () => 0, def: () => 0, hpMult: () => 1 };
@@ -197,14 +211,17 @@ export function buildBoard(
   const slots: BoardSlot[] = [];
   for (const squad of squads) {
     if (squad.count <= 0) continue;
-    const u = UNITS[squad.unitId];
+    // The RANK sets the numbers; the UNIT is what the chart, the row and a
+    // hero's passive read (combat.md §6.1).
+    const u = TROOPS[squad.unitId];
+    const type = u.unit;
     const hpUnit = Math.max(1, Math.round(
-      u.hp * ((hpMult.get(squad.unitId) ?? 1) + rallyHp) * bonus.hpMult(squad.unitId)));
+      u.hp * ((hpMult.get(type) ?? 1) + rallyHp) * bonus.hpMult(squad.unitId)));
     slots.push({
       id: slots.length,
       kind: 'troop',
-      row: rowFor(squad.unitId),
-      type: squad.unitId,
+      row: rowFor(type),
+      type,
       unitId: squad.unitId,
       fighterId: null,
       name: u.name,
@@ -212,8 +229,8 @@ export function buildBoard(
       frontage: u.frontage,
       atk: u.atk,
       dmg: Math.max(1, Math.round(
-        (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(squad.unitId) ?? 1) + rallyDmg))),
-      def: u.def + bonus.def(squad.unitId) + (defFlat.get(squad.unitId) ?? 0) + rallyDef,
+        (u.dmg + bonus.dmg(squad.unitId)) * ((dmgMult.get(type) ?? 1) + rallyDmg))),
+      def: u.def + bonus.def(squad.unitId) + (defFlat.get(type) ?? 0) + rallyDef,
       hpUnit,
       hpPool: squad.count * hpUnit,
       cooldown: u.cooldown,
@@ -255,6 +272,39 @@ const alive = (s: BoardSlot): number => Math.ceil(s.hpPool / s.hpUnit);
 const living = (board: Board): BoardSlot[] => board.slots.filter((s) => s.hpPool > 0);
 
 /**
+ * WHERE A SIDE STANDS when the fight opens (§3): three lines behind the gap —
+ * the front row, the back row, the heroes — each centred, its slots in id
+ * order `fieldColPitch` apart. A hero stands in the heroes' line whatever row
+ * its type targets as.
+ */
+export function placeSide(slots: readonly BoardSlot[], side: Side): FieldPt[] {
+  const sign = side === 'ours' ? 1 : -1;
+  const lineOf = (s: BoardSlot): number => (s.kind === 'hero' ? 2 : s.row === 'front' ? 0 : 1);
+  const out: FieldPt[] = [];
+  for (let line = 0; line < 3; line++) {
+    const inLine = slots.filter((s) => lineOf(s) === line);
+    inLine.forEach((s, i) => {
+      out[s.id] = {
+        x: Math.trunc(((2 * i - (inLine.length - 1)) * COMBAT.fieldColPitch) / 2),
+        y: sign * (Math.trunc(COMBAT.fieldGap / 2) + line * COMBAT.fieldRowPitch),
+      };
+    });
+  }
+  return out;
+}
+
+/** The whole square root, exact on any engine: `Math.sqrt` is only the
+ *  first guess, and the two loops settle it on the integer. */
+function isqrt(n: number): number {
+  let r = Math.floor(Math.sqrt(n));
+  while (r * r > n) r -= 1;
+  while ((r + 1) * (r + 1) <= n) r += 1;
+  return r;
+}
+
+const dist2 = (a: FieldPt, b: FieldPt): number => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+
+/**
  * THE ATTACK AND DEFENCE RULE (§7), Heroes III's: the damage a blow carries
  * is moved by how far the attacker's Attack stands from the target's
  * Defence. Each point of Attack over adds `attackStepPerMille`, up to
@@ -285,33 +335,42 @@ function fraction(attacker: UnitId, target: UnitId): { num: number; den: number 
 }
 
 /**
- * Who this slot swings at, resolved fresh on every attack (§8).
+ * Who this slot goes for, resolved fresh on every tick (§8): what it walks
+ * toward, and what it strikes once it is near enough.
  *
  * Ties break by the lowest slot id, which is what makes the whole fight
  * reproducible: there is never a moment where two targets are equally good
  * and the answer depends on how a list happened to be ordered.
  */
-function pickTarget(attacker: BoardSlot, enemy: Board): BoardSlot | null {
+function pickTarget(
+  attacker: BoardSlot, here: FieldPt, enemy: Board, where: readonly FieldPt[],
+): BoardSlot | null {
   const candidates = living(enemy);
   if (candidates.length === 0) return null;
   const inRow = (row: Row): BoardSlot[] => candidates.filter((s) => s.row === row);
-  const lowestId = (list: BoardSlot[]): BoardSlot => list
-    .reduce((best, s) => (s.id < best.id ? s : best));
+  const nearest = (list: BoardSlot[]): BoardSlot => list.reduce((best, s) => {
+    const d = dist2(here, where[s.id]!);
+    const b = dist2(here, where[best.id]!);
+    return d < b || (d === b && s.id < best.id) ? s : best;
+  });
 
   switch (targetingFor(attacker.type)) {
     case 'ranged': {
-      // The weakest thing on the board, wherever it is standing: an archer
-      // line finishes what the front rank started.
-      return candidates.reduce((best, s) => (
+      // The weakest thing it can reach, wherever it is standing: an archer
+      // line finishes what the front rank started. Nothing in reach: it
+      // walks toward the nearest.
+      const reach = UNITS[attacker.type].range ** 2;
+      const near = candidates.filter((s) => dist2(here, where[s.id]!) <= reach);
+      return near.length === 0 ? nearest(candidates) : near.reduce((best, s) => (
         s.hpPool < best.hpPool || (s.hpPool === best.hpPool && s.id < best.id) ? s : best));
     }
     case 'flanker': {
       const back = inRow('back');
-      return lowestId(back.length > 0 ? back : candidates);
+      return nearest(back.length > 0 ? back : candidates);
     }
     default: {
       const front = inRow('front');
-      return lowestId(front.length > 0 ? front : candidates);
+      return nearest(front.length > 0 ? front : candidates);
     }
   }
 }
@@ -330,9 +389,13 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
     ours: { slots: ours.slots.map((s) => ({ ...s })) },
     theirs: { slots: theirs.slots.map((s) => ({ ...s })) },
   };
-  const events: BattleEvent[] = [
-    { kind: 'start', ours: sides.ours.slots.map((s) => ({ ...s })), theirs: sides.theirs.slots.map((s) => ({ ...s })) },
-  ];
+  // Where every slot stands, by side and id — the only state the field adds.
+  const where: Record<Side, FieldPt[]> = {
+    ours: placeSide(sides.ours.slots, 'ours'),
+    theirs: placeSide(sides.theirs.slots, 'theirs'),
+  };
+  const placed = (side: Side): PlacedSlot[] => sides[side].slots.map((s) => ({ ...s, ...where[side][s.id]! }));
+  const events: BattleEvent[] = [{ kind: 'start', ours: placed('ours'), theirs: placed('theirs') }];
   const ready: Record<Side, number[]> = {
     ours: sides.ours.slots.map((s) => s.cooldown),
     theirs: sides.theirs.slots.map((s) => s.cooldown),
@@ -471,15 +534,55 @@ export function resolveBattle(ours: Board, theirs: Board): BattleLog {
   };
 
   for (let tick = 1; tick <= COMBAT.timeoutTicks; tick++) {
+    // EVERYONE WALKS AT ONCE, from where everyone stood as the tick began:
+    // otherwise the side that moves second closes the last gap on its own
+    // turn and strikes first, and the attacker's first blow (below) is lost
+    // to the order of a loop.
+    const before: Record<Side, readonly FieldPt[]> = { ours: [...where.ours], theirs: [...where.theirs] };
     for (const side of ['ours', 'theirs'] as Side[]) {
       const foe: Side = side === 'ours' ? 'theirs' : 'ours';
       for (const slot of sides[side].slots) {
         if (slot.hpPool <= 0) continue;
-        ready[side][slot.id] -= 1;
-        if (ready[side][slot.id]! <= 0) {
+        const here = before[side][slot.id]!;
+        const target = pickTarget(slot, here, sides[foe], before[foe]);
+        if (target === null) break;
+        // OUT OF REACH, it walks: straight at its target, `speed` a tick,
+        // stopping where it can strike. Nothing blocks it.
+        const { speed, range } = UNITS[slot.type];
+        const there = before[foe][target.id]!;
+        const d2 = dist2(here, there);
+        if (d2 > range * range && speed > 0) {
+          const dist = isqrt(d2);
+          const dx = there.x - here.x;
+          const dy = there.y - here.y;
+          // The last step lands just inside `range` of the target — over
+          // `dist + 1`, which is past the true distance, and truncated toward
+          // it, so it is always in reach. Every other step is `speed` along
+          // the line, rounded.
+          const last = dist - range <= speed;
+          const x = last ? there.x - Math.trunc((dx * range) / (dist + 1)) : here.x + Math.round((dx * speed) / dist);
+          const y = last ? there.y - Math.trunc((dy * range) / (dist + 1)) : here.y + Math.round((dy * speed) / dist);
+          if (x !== here.x || y !== here.y) {
+            where[side][slot.id] = { x, y };
+            events.push({ kind: 'move', tick, at: { side, id: slot.id }, x, y });
+          }
+        }
+      }
+    }
+    // THEN THE BLOWS, attacker first, each slot at whatever is its target
+    // now and within reach of where it stands.
+    for (const side of ['ours', 'theirs'] as Side[]) {
+      const foe: Side = side === 'ours' ? 'theirs' : 'ours';
+      for (const slot of sides[side].slots) {
+        if (slot.hpPool <= 0) continue;
+        const target = pickTarget(slot, where[side][slot.id]!, sides[foe], where[foe]);
+        if (target === null) break;
+        const { range } = UNITS[slot.type];
+        // Its countdown runs while it walks, and a slot that is ready holds
+        // its blow until it arrives.
+        if (ready[side][slot.id]! > 0) ready[side][slot.id] -= 1;
+        if (ready[side][slot.id]! <= 0 && dist2(where[side][slot.id]!, where[foe][target.id]!) <= range * range) {
           ready[side][slot.id] = slot.cooldown;
-          const target = pickTarget(slot, sides[foe]);
-          if (target === null) break;
           const hits = Math.min(alive(slot), slot.frontage);
           if (land(tick, side, slot, target, hits, slot.dmg)) return finish(tick, side, 'wiped');
         }
@@ -568,6 +671,25 @@ export const villainFighter = (id: VillainId): FighterSpec => {
 };
 
 /**
+ * A villain grown by `extra` budget (§9.4): `k = (power + extra) / power`;
+ * `hp`, `dmg` and `power` times `k`, `atk` and `def` +2 for every ×1.6 in it,
+ * as a troop's rank climbs. Its skill, passive and cooldown stay its own.
+ */
+export function scaleFighter(f: FighterSpec, extra: number): FighterSpec {
+  if (extra <= 0) return f;
+  const k = (f.power + extra) / f.power;
+  const steps = Math.floor(Math.log(k) / Math.log(1.6) + 1e-9);
+  return {
+    ...f,
+    hp: Math.round(f.hp * k),
+    dmg: Math.round(f.dmg * k),
+    power: Math.round(f.power * k),
+    atk: f.atk + 2 * steps,
+    def: f.def + 2 * steps,
+  };
+}
+
+/**
  * WHAT A ROOM FIELDS, from its power budget (§11).
  *
  * Seeded by the room's own address, so the same room is the same fight every
@@ -654,28 +776,67 @@ export function generateEnemy(opts: {
     for (const t of order.slice(1)) share.set(t, (budget - lion) / (order.length - 1));
   }
 
-  const squads: SquadSpec[] = [];
-  let left = budget;
-  const add = (unitId: UnitId, troops: number): void => {
-    let want = troops;
-    while (want > 0 && squads.length < wanted) {
-      const count = Math.min(UNITS[unitId].squadSize, want);
-      squads.push({ unitId, count });
-      want -= count;
-      left -= count * UNITS[unitId].power;
-    }
-  };
-  for (const t of order) {
-    add(t, Math.floor(Math.min(share.get(t) ?? 0, Math.max(0, left)) / UNITS[t].power));
-  }
-  // Whatever the shares left on the table goes to the affinity, while there
-  // is a slot to put it in. Budget a board cannot hold is budget a room
-  // cannot field — which is the ceiling the authored ladder lives under.
+  // THE SQUADS, at a rank (§11 step 6). `rankAt(i)` is the rank of the i-th
+  // squad pushed: all I while the board can hold the budget, then the board
+  // in R−1 and R, the first squads — the affinity's, spent first — promoted.
+  // Spending is in budget, not in troops, so a promoted squad costs its own
+  // rank's `power` and holds fewer of them.
   const filler = mixed.length > 0 ? mixed[0]! : affinity === 'Any' ? order[0]! : affinity;
-  while (squads.length < wanted && left >= UNITS[filler].power) {
-    add(filler, Math.floor(left / UNITS[filler].power));
+  const plan = (rankAt: (i: number) => UnitRank): { squads: SquadSpec[]; left: number } => {
+    const squads: SquadSpec[] = [];
+    let left = budget;
+    const add = (unit: UnitId, purse: number): void => {
+      let want = purse;
+      while (want > 0 && squads.length < wanted) {
+        const troop = troopId(unit, rankAt(squads.length));
+        const { power, squadSize } = TROOPS[troop];
+        const count = Math.min(squadSize, Math.floor(want / power));
+        if (count <= 0) break;
+        squads.push({ unitId: troop, count });
+        want -= count * power;
+        left -= count * power;
+      }
+    };
+    for (const t of order) add(t, Math.min(share.get(t) ?? 0, Math.max(0, left)));
+    // Whatever the shares left on the table goes to the affinity, while there
+    // is a slot to put it in.
+    while (squads.length < wanted && left >= TROOPS[troopId(filler, rankAt(squads.length))].power) {
+      add(filler, left);
+    }
+    return { squads, left };
+  };
+  // The board holds the budget when what is left is rounding — a tenth of it
+  // at most, or less than one more of the filler — not an army the board had
+  // no room for.
+  const holds = (p: { left: number }, low: UnitRank): boolean =>
+    p.left <= Math.max(budget * 0.1, TROOPS[troopId(filler, low)].power - 1);
+  let best = plan(() => 1);
+  // Only a FULL board evolves: below six squads, what a thin roll cannot
+  // field stays unfielded, as it always has (the board is the ceiling, §11).
+  if (!holds(best, 1) && wanted >= COMBAT.genSlotsMax) {
+    search: for (let r = 2; r <= 5; r++) {
+      for (let k = 1; k <= wanted; k++) {
+        const top = r as UnitRank;
+        const low = (r - 1) as UnitRank;
+        best = plan((i) => (i < k ? top : low));
+        if (holds(best, low)) break search;
+      }
+    }
   }
+  const squads = best.squads;
   // A room always fields something, even at a budget of one.
   if (squads.length === 0) squads.push({ unitId: filler, count: 1 });
+
+  // SCALED VILLAINS (§9.4): what a board of rank-V squads could not hold goes
+  // to the villains, drawn now if none were, and spread evenly across them.
+  // Without a pool it is simply not fielded.
+  const over = best.left;
+  if (over > 0 && !holds(best, 5) && pool.length > 0) {
+    for (let i = fighters.length; i < COMBAT.genVillainSlots; i++) {
+      fighters.push(villainFighter(pool[randInt(seed, pool.length, ...parts, 'scaled', i)]!));
+    }
+    const each = over / fighters.length;
+    for (let i = 0; i < fighters.length; i++) fighters[i] = scaleFighter(fighters[i]!, each);
+  }
   return { squads, fighters };
 }

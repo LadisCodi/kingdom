@@ -19,7 +19,7 @@
 
 import type { Camera, PlotBox } from '../render/camera';
 import {
-  diamondPath, drawGround, drawStanding, FEATURE_PLOTS, fillDiamond, strokeDiamond,
+  diamondPath, drawGround, drawStanding, FEATURE_PLOTS, featurePlots, fillDiamond, strokeDiamond,
 } from '../render/iso';
 import { PALETTE, TERRAIN_COLORS } from '../render/palette';
 import { drawTerrainFringes, terrainKey, variantKey } from '../render/terrain';
@@ -187,7 +187,7 @@ export function drawEditor(
       const keys = size === 1
         ? [variantKey(def.sprite, cell)]
         : [`${def.sprite}_${size}x${size}`, variantKey(def.sprite, cell)];
-      later(anchor, size, () => { stand(plot, keys, def.glyph, FEATURE_PLOTS); });
+      later(anchor, size, () => { stand(plot, keys, def.glyph, featurePlots(def.sprite)); });
     }
   }
 

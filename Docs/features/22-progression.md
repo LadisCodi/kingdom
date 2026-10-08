@@ -35,7 +35,7 @@
 |---|---|---|
 | **Minute 0–10** · the First Morning | fog, a treasure, the quest scroll, the research tree, Knowledge, tapping, Mana, **repairing the old House**, Food, a villager, rent | the scripted opening ([`23-tutorials.md`](23-tutorials.md) §3) |
 | **Session 1** | silhouettes in the fog; the old plots, the old Farm and workers; **the Build tab** and a second House; the old Sawmill; Townhall 2 | the quest chain |
-| **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept | the quest chain |
+| **Session 1–2** | Agriculture, Farming and Saws: building more of what the fog kept — Houses, crop plots, a second Sawmill, the first levels — and **the village's first decorations** | the quest chain |
 | **Session 2** · ~hour 2 | **the Orcs**: a lair, raids, **the Warden** (captain of the guard) steps forward, the Warrior, the Barracks, soldiers | revealing a lair's ground |
 | **Session 2–3** | the first battle, the first card pack, **Relics** | clearing the Orcs |
 | **Session 2–3** | **the Watchtower**, repaired with the lens the Orcs carried: the world door, **the Atlas** | the Orcs' prize; the repair, forced by a scene |
@@ -114,8 +114,9 @@
   ([`23-tutorials.md`](23-tutorials.md) §4.3).
 - **The world door opens the world board**
   ([`19-world-map.md`](19-world-map.md)): the knob takes the player out to
-  the board and, wearing the castle, back home. Cartography, in the Atlas the
-  same claim opens, sends the first explorer.
+  the board and, wearing the castle, back home. The kingdom's own explorer is
+  ready the moment the board opens, and Wren sends it on its first trip, free
+  ([`19-world-map.md`](19-world-map.md) §3.3).
 
 ## 6. The Tavern and the heroes
 

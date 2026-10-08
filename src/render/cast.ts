@@ -12,7 +12,7 @@
 
 import { CHARACTERS } from './characters/atlas.generated';
 import { DISTRICTS } from '../sim/data/definitions';
-import type { DistrictId } from '../sim/state';
+import type { DistrictId, FeatureId } from '../sim/state';
 
 /** What the renderer asks a character to do. */
 export type UnitPose = 'idle' | 'walk' | 'work';
@@ -58,8 +58,8 @@ export const VILLAGERS: readonly string[] = [
  *
  * Cosmetic, like the cast below, and no business of the workbook's.
  */
-export const NEVER_HIDES: ReadonlySet<DistrictId> = new Set<DistrictId>([
-  'FarmLands',
+export const NEVER_HIDES: ReadonlySet<FeatureId> = new Set<FeatureId>([
+  'Crops',
 ]);
 
 /** A crew member for a building of this kind, or null when the building has

@@ -17,7 +17,8 @@ import { rand } from '../src/sim/rng';
 import { addBuilt, freshGame, freshPresenter, fund, map, T0 } from './helpers';
 import { SEAT_INDICES } from '../src/sim/world/board';
 import { boardNeighbors, PORTAL_INDEX } from '../src/sim/world/hex';
-import { dispatchExplorer, homeIndex, returnsAt } from '../src/sim/world/explorers';
+import { dispatchExplorer, homeIndex, readyAt, returnsAt } from '../src/sim/world/explorers';
+import { homeboundMs } from '../src/sim/world/travel';
 import { hasBit } from '../src/sim/world/fogBits';
 import { claim, emptyWorld, hurry, join } from '../src/worldServer/core';
 
@@ -279,23 +280,28 @@ describe('a speed-up on the world', () => {
     expect(hurry(b, seat, via, 60, T0 + 3000)).toEqual({ ok: false, why: 'NothingBuilding' });
   });
 
-  it('brings an explorer home sooner, and home now when it covers the trip', () => {
+  it('hurries an explorer\'s work — revealing its hex when it covers it — then its road home', () => {
     const state = freshGame();
-    state.research.completed.push('Cartography');
     fund(state, { Gold: 1e9 });
     const target = boardNeighbors(homeIndex(state)).find((n) => n !== PORTAL_INDEX)!;
     const r = dispatchExplorer(state, target, T0);
     if (r.kind !== 'Sent') throw new Error(r.kind);
+    const trip = state.world.explorers[0];
     const job: SpeedJob = { kind: 'explorer', tripId: r.trip.id };
-    const back = returnsAt(r.trip);
-    grantItem(state, 'GeneralSpeedup1m', 1);
+    const done = readyAt(trip);
+    grantItem(state, 'GeneralSpeedup1m', 2);
     grantItem(state, 'ConstructionSpeedup1h', 1);
     expect(useSpeedup(state, map, job, 'ConstructionSpeedup1h', 1, T0)).toBe('DoesNotFit');
     expect(useSpeedup(state, map, job, 'GeneralSpeedup1m', 1, T0)).toBe('Used');
-    expect(returnsAt(state.world.explorers[0])).toBe(back - MIN);
-    grantItem(state, 'GeneralSpeedup24h', 1);
+    expect(readyAt(trip)).toBe(done - MIN);
+    grantItem(state, 'GeneralSpeedup24h', 2);
+    useSpeedup(state, map, job, 'GeneralSpeedup24h', 1, T0);
+    expect(hasBit(state.world.revealed, target)).toBe(true);
+    expect(trip.revealedAt).toBe(T0);
+    // Finished, it is on its road home — and that can be hurried too.
+    expect(useSpeedup(state, map, job, 'GeneralSpeedup1m', 1, T0)).toBe('Used');
+    expect(returnsAt(trip)).toBe(T0 + homeboundMs(trip.stepMs) - MIN);
     useSpeedup(state, map, job, 'GeneralSpeedup24h', 1, T0);
     expect(state.world.explorers).toEqual([]);
-    expect(hasBit(state.world.revealed, target)).toBe(true);
   });
 });

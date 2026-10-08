@@ -2,7 +2,7 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { roundPrice } from './roundPrice';
-import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
+import { CITY_DEF, DISTRICTS, FEATURES, HARVEST, levelIndexed, type DistrictDef } from './data/definitions';
 import { anyPreciousForLevel, goodsCostForLevel } from './goods';
 import { resolvePrice } from './precious';
 import { cellExists, townhallDistance, type MapData } from './grid';
@@ -19,9 +19,14 @@ import {
 
 // ------------------------------------------------------------------ counting
 
-/** Count of a category, Built OR UnderConstruction (both count toward the cap). */
-export const districtCount = (state: GameState, definitionId: DistrictId): number =>
-  state.city.districts.filter((d) => d.definitionId === definitionId).length;
+/** Count of a category, Built OR UnderConstruction (both count toward the cap).
+ *  A PLANTABLE counts what of its feature stands on the ground, growing or
+ *  grown (Docs/features/27-plantables.md). */
+export const districtCount = (state: GameState, definitionId: DistrictId): number => {
+  const plants = DISTRICTS[definitionId].plants;
+  if (plants !== null) return Object.values(state.features).filter((f) => f === plants).length;
+  return state.city.districts.filter((d) => d.definitionId === definitionId).length;
+};
 
 /**
  * The ordinal the next one of this kind will be stamped with — *Housing #3*.
@@ -96,6 +101,30 @@ export type PlacementBlock =
  * question it is at build time, which is the point: a spot you may not build
  * on is a spot you may not move to.
  */
+/**
+ * The universal rules on one cell of ground: what may stand on it at all,
+ * whatever is put there — a building, a plantable, a moved tree. `movingId`
+ * is a building whose own footprint stays its own; `leaving` the cell a
+ * moved feature is lifted from.
+ */
+export function groundBlock(
+  state: GameState, map: MapData, c: Coord,
+  { movingId, leaving }: { movingId?: string; leaving?: string } = {},
+): PlacementBlock | null {
+  if (!cellExists(map, c)) return 'OffMap';
+  // The fog first: what lies under it is not the player's to read yet.
+  if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
+  if (state.features[coordKey(c)] && coordKey(c) !== leaving) return 'HasFeature';
+  // Landmarks and lairs are content, not building ground.
+  if (cellHasSite(state, c)) return 'HasSite';
+  // A lair holds the ground around it: nothing is built, or moved, into
+  // its zone while it stands.
+  if (lairHolding(state, c) !== null) return 'LairZone';
+  const sitting = districtAt(state, c);
+  if (sitting && sitting.uniqueId !== movingId) return 'Occupied';
+  return null;
+}
+
 export function placementBlock(
   state: GameState,
   map: MapData,
@@ -107,16 +136,8 @@ export function placementBlock(
   const footprint = cellsOfRect(cell, def.size);
   // Universal rules — every footprint cell must pass.
   for (const c of footprint) {
-    if (!cellExists(map, c)) return 'OffMap';
-    if (state.features[coordKey(c)]) return 'HasFeature';
-    // Landmarks and lairs are content, not building ground.
-    if (cellHasSite(state, c)) return 'HasSite';
-    // A lair holds the ground around it: nothing is built, or moved, into
-    // its zone while it stands.
-    if (lairHolding(state, c) !== null) return 'LairZone';
-    if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
-    const sitting = districtAt(state, c);
-    if (sitting && sitting.uniqueId !== movingId) return 'Occupied';
+    const ground = groundBlock(state, map, c, { movingId });
+    if (ground !== null) return ground;
     // Only the Docks (which checks its own land+water mix) may touch Water.
     if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
     // Mountains needed a rule of their own while they were a TERRAIN. They
@@ -129,7 +150,9 @@ export function placementBlock(
   ) {
     return 'CountLimit';
   }
-  if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
+  // A MOVE IS NOT A BUILD: a repaired ruin moves before its technology is
+  // researched, as the Shrine in the province does.
+  if (movingId === undefined && def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
   // Harmony, like the count cap above it, is about the BUILDING rather than
   // the cell — every cell on the map answers the same way, which is why the
   // build menu refuses the card before the player ever enters placement
@@ -333,8 +356,12 @@ export function stockBuild(state: GameState, definitionId: DistrictId): void {
   }
 }
 
+/** A plantable's wait is its GROWTH: its source's `growSeconds`, flat — no
+ *  builder works it, so nothing that speeds a builder speeds it. */
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
-  buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
+  DISTRICTS[definitionId].plants !== null
+    ? HARVEST[FEATURES[DISTRICTS[definitionId].plants!].source].growSeconds
+    : buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
 
 // -------------------------------------------------------- upgrade requirement
 

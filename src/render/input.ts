@@ -8,52 +8,65 @@
 // fighting mid-flick — the alternative (hit-testing every move) would hand
 // the ghost off to the camera the instant the finger left it.
 //
-// A press becomes a HOLD only after HOLD_START_MS, then auto-repeats. Two
-// rules keep a hold and a tap from both firing for one gesture — since
-// manual taps are deliberately not cooldown-gated, a double-fire would mean
-// one press collecting twice:
-//   1. the first repeat waits out HOLD_START_MS, longer than any real tap;
-//   2. if a repeat actually DID something (onHold returned true), the tap on
-//      release is suppressed — the hold already consumed the gesture.
-// A repeat that did nothing (held over empty ground, or waiting out the
-// auto-tap cooldown) leaves the release-tap alone, so pressing a building
-// still opens its card.
+// A press that never moved past the threshold is a tap on release — unless
+// it stayed down HOLD_MS and `onHold` took it: then the press becomes a ghost
+// drag on the spot (a long press on a building picks it up to move it), and
+// its release is no tap. Holding repeats nothing. While the press waits, a
+// ring fills beside the finger — up and to the right, where the finger does
+// not cover it — but only over something a long press would pick up.
+// (Docs/features/05-city-and-districts.md §4.3.)
 //
 // A SECOND finger turns the gesture into a pinch: the pair zooms about its
 // midpoint and pans with it, so the ground under the fingers stays under
-// them. A pinch ends the gesture as a tap, a hold and a ghost drag alike —
+// them. A pinch ends the gesture as a tap and a ghost drag alike —
 // lifting one finger leaves the other panning, and nothing fires on release.
 
 import type { Camera } from './camera';
+import { haptic } from '../ui/haptics';
 
 const DRAG_THRESHOLD_PX = 8;
-const HOLD_START_MS = 350;
-const HOLD_REPEAT_MS = 100;
+/** How long a still press waits before it is a long press. */
+const HOLD_MS = 450;
+/** How long a press waits before the hold ring shows, so a tap never
+ *  flashes one. */
+const RING_DELAY_MS = 120;
 
 export function wireInput(
   canvas: HTMLCanvasElement,
   /** What a gesture moves: the province's camera, or the world board's. */
   camera: Pick<Camera, 'panByScreen' | 'zoomAbout' | 'zoomBy'>,
   onTap: (sx: number, sy: number) => void,
-  /** Returns true when the repeat consumed the gesture (it collected). */
-  onHold: (sx: number, sy: number) => boolean,
   /** Does a drag from here grab the building ghost instead of the camera? */
   grabGhost: (sx: number, sy: number) => boolean,
   /** Drag the grabbed ghost to the pointer. */
   dragGhost: (sx: number, sy: number) => void,
   /** The finger took the ghost (true) or let it go (false). */
   holdGhost: (held: boolean) => void = () => {},
+  /** A still press held HOLD_MS: true when it picked up a ghost to drag. */
+  onHold: (sx: number, sy: number) => boolean = () => false,
+  /** Would a long press here pick something up? Only then does the ring show. */
+  canHold: (sx: number, sy: number) => boolean = () => false,
+  /** Show the hold ring at a page point, filling over `ms` — or hide it. */
+  holdRing: (at: { x: number; y: number; ms: number } | null) => void = () => {},
 ): void {
+  let holdTimer: ReturnType<typeof setTimeout> | null = null;
+  let ringTimer: ReturnType<typeof setTimeout> | null = null;
+  let ringShown = false;
+  const cancelHold = () => {
+    if (holdTimer !== null) clearTimeout(holdTimer);
+    holdTimer = null;
+    if (ringTimer !== null) clearTimeout(ringTimer);
+    ringTimer = null;
+    if (ringShown) holdRing(null);
+    ringShown = false;
+  };
   let pointerDown = false;
   let dragged = false;
-  let holdConsumed = false;
   let draggingGhost = false;
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
   let startY = 0;
-  let holdTimer: number | null = null;
-  let holdDelay: number | null = null;
   /** Every finger (or the mouse) currently down on the canvas. */
   const pointers = new Map<number, { x: number; y: number }>();
   /** The pinch under way: the first two fingers' spread and midpoint. */
@@ -68,20 +81,9 @@ export function wireInput(
     };
   };
 
-  const stopHold = () => {
-    if (holdTimer !== null) {
-      clearInterval(holdTimer);
-      holdTimer = null;
-    }
-    if (holdDelay !== null) {
-      clearTimeout(holdDelay);
-      holdDelay = null;
-    }
-  };
-
   const startPinch = () => {
-    stopHold();
-    dragged = true; // no tap, no hold: the pinch owns the gesture now
+    cancelHold();
+    dragged = true; // no tap: the pinch owns the gesture now
     if (draggingGhost) holdGhost(false);
     draggingGhost = false;
     pinch = measurePinch();
@@ -97,26 +99,34 @@ export function wireInput(
     if (pointers.size > 2) return;
     pointerDown = true;
     dragged = false;
-    holdConsumed = false;
     lastX = startX = e.clientX;
     lastY = startY = e.clientY;
-    stopHold();
     const rect = canvas.getBoundingClientRect();
     draggingGhost = grabGhost(e.clientX - rect.left, e.clientY - rect.top);
     if (draggingGhost) holdGhost(true);
-    // A press on the ghost is never a hold-to-collect: there is nothing under
-    // a ghost to harvest, and starting the timer would only race the drag.
-    if (draggingGhost) return;
-    const repeat = () => {
-      if (!pointerDown || dragged) return;
-      const rect = canvas.getBoundingClientRect();
-      if (onHold(lastX - rect.left, lastY - rect.top)) holdConsumed = true;
-    };
-    holdDelay = window.setTimeout(() => {
-      holdDelay = null;
-      repeat();
-      holdTimer = window.setInterval(repeat, HOLD_REPEAT_MS);
-    }, HOLD_START_MS);
+    cancelHold();
+    if (!draggingGhost) {
+      const r0 = canvas.getBoundingClientRect();
+      if (canHold(startX - r0.left, startY - r0.top)) {
+        ringTimer = setTimeout(() => {
+          ringTimer = null;
+          if (!pointerDown || dragged || pinch) return;
+          ringShown = true;
+          holdRing({ x: startX, y: startY, ms: HOLD_MS - RING_DELAY_MS });
+        }, RING_DELAY_MS);
+      }
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        if (ringShown) holdRing(null);
+        ringShown = false;
+        if (!pointerDown || dragged || pinch || pointers.size !== 1) return;
+        const r = canvas.getBoundingClientRect();
+        if (!onHold(startX - r.left, startY - r.top)) return;
+        draggingGhost = true;
+        dragged = true; // the release is no tap: the press became a carry
+        haptic(15);
+      }, HOLD_MS);
+    }
   });
 
   canvas.addEventListener('pointermove', (e) => {
@@ -139,6 +149,7 @@ export function wireInput(
       Math.abs(e.clientY - startY) > DRAG_THRESHOLD_PX
     ) {
       dragged = true;
+      cancelHold();
     }
     if (dragged) {
       if (draggingGhost) {
@@ -154,6 +165,7 @@ export function wireInput(
 
   const release = (e: PointerEvent, cancelled: boolean) => {
     if (!pointers.delete(e.pointerId)) return;
+    cancelHold();
     if (pinch) {
       if (pointers.size >= 2) {
         pinch = measurePinch(); // a third finger lifted: re-anchor on the pair left
@@ -169,10 +181,9 @@ export function wireInput(
       }
     }
     if (pointers.size > 0) return;
-    stopHold();
     // A drag that never crossed the threshold is still a tap, ghost or not —
     // tapping the ghost where it stands should not be swallowed.
-    if (!cancelled && pointerDown && !dragged && !holdConsumed) {
+    if (!cancelled && pointerDown && !dragged) {
       // Camera math expects canvas-relative coords; the canvas sits inside
       // the centered #app frame, so clientX/Y are offset from it.
       const rect = canvas.getBoundingClientRect();

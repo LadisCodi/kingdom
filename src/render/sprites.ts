@@ -36,7 +36,13 @@ export const preloadAllSprites = (): Promise<void> => preloadImages(spriteKeys.v
 export const spriteUrl = (key: string): string | null =>
   urls[`./assets/${key}.png`] ?? null;
 
+/** The growth stage a planted feature draws at `progress` (0…1), or null
+ *  when it has none (Docs/features/27-plantables.md §2). */
+export const growthStage = (stem: string, progress: number): string | null =>
+  pickGrowthStage(stem, progress, (key) => spriteUrl(key) !== null);
+
 import { spriteImgAt } from './spritePool';
+import { pickGrowthStage } from './growth';
 
 // The <img> pool lives in its own DOM-free-at-import module so the screen
 // host (ui/kit/host.ts) can import it under node; this file creates Images
@@ -412,6 +418,26 @@ export function drawSpriteOutline(
   return true;
 }
 let ringCanvas: HTMLCanvasElement | null = null;
+
+/**
+ * Sprite `key`'s silhouette in `color` filling (x, y, w, h), at whatever
+ * `globalAlpha` the caller set — a wash laid OVER the sprite, as the red on
+ * a ghost that may not stand where it is. False while the art is loading.
+ */
+export function drawSpriteTint(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+): boolean {
+  const sil = silhouetteOf(key, color);
+  if (!sil) return false;
+  ctx.drawImage(sil, x, y, w, h);
+  return true;
+}
 
 // ---------------------------------------------------------------- UI atlas
 

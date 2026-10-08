@@ -3,13 +3,13 @@
 
 import { lairHolding } from './lairZone';
 import {
-  DISTRICTS, FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
+  FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
 import { recordEvent } from './events';
 import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
+import { tapDraw } from './upgrades';
 import { footprintAt, neighbors, type MapData } from './grid';
 import { resolve, resolveAt } from './modifiers';
 import { techMultiplier } from './techEffects';
@@ -21,14 +21,8 @@ import {
 
 /** What (if anything) this cell yields when tapped/worked. */
 export function harvestSourceAt(state: GameState, cell: Coord): HarvestSourceId | null {
-  const district = districtAt(state, cell);
-  if (district) {
-    // Some districts ARE resource cells (a built FarmLands is a Crops cell);
-    // every other district blocks. Buildings with timers (Townhall, Housing)
-    // are NOT harvest sources — tapping them boosts their timers instead.
-    const provides = DISTRICTS[district.definitionId].providesHarvestSource;
-    return district.state === 'Built' ? provides : null;
-  }
+  // A building is never a resource cell; a crop plot is a feature.
+  if (districtAt(state, cell)) return null;
   const feature = state.features[coordKey(cell)];
   if (feature) return FEATURES[feature].source;
   return null;
@@ -179,6 +173,7 @@ function recoverIfDue(
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
     s.recoveryMs = null;
+    delete s.growing;
     s.units = depotStock(state, map, cell, spec);
   }
 }
@@ -192,6 +187,15 @@ export function stockAt(state: GameState, map: MapData, cell: Coord, now: number
   if (!s) return depotStock(state, map, cell, spec);
   recoverIfDue(state, s, map, cell, spec, now);
   return s.units;
+}
+
+/** Planted and not grown yet (Docs/features/27-plantables.md): exhausted,
+ *  and drawn as growing rather than spent. */
+export function isGrowing(
+  state: GameState, map: MapData, cell: Coord, now: number,
+): boolean {
+  const s = state.harvest[depotKey(map, cell)];
+  return s?.growing === true && s.exhaustedUntil !== null && s.exhaustedUntil > now;
 }
 
 export function isExhausted(
@@ -347,7 +351,7 @@ export type TapCellResult =
   | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked'
   /** Inside a standing lair's zone (Docs/proposals/lairs.md §3). */
   | 'LairHeld';
-export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
+export type CollectTapResult = TapCellResult | 'NoMana';
 
 /** Why this cell would refuse a tap, or null if it would harvest. Shared by
  *  the raw primitive and the player's tap, so the energy charge can be decided
@@ -410,13 +414,7 @@ export function tapCell(
 
 /** The PLAYER's collect tap.
  *
- *  A deliberate tap is never gated by TIME — tapping fast is a skill. Only the
- *  repeats a HELD pointer generates pass `autoRepeat`, and those wait out
- *  `effectiveAutoTapCooldownMs` so holding stays the lazier, slower option.
- *  Every successful collect stamps the clock, so starting a hold right after
- *  a manual tap still waits one full cooldown.
- *
- *  It IS gated by energy: every collect costs `TAP.manaCost` Mana. Mana is
+ *  It is never gated by TIME — tapping fast is a skill. It IS gated by energy: every collect costs `TAP.manaCost` Mana. Mana is
  *  what a tap on the GROUND costs; a tap on a building collects its store
  *  and is free (sim/storage.ts).
  *
@@ -427,15 +425,9 @@ export function collectTap(
   map: MapData,
   cell: Coord,
   now: number,
-  autoRepeat = false,
 ): CollectTapResult {
-  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
-    return 'OnCooldown';
-  }
   const blocked = harvestBlock(state, map, cell, now);
   if (blocked !== null) return blocked;
   if (!payMana(state, TAP.manaCost)) return 'NoMana';
-  const result = tapCell(state, map, cell, now);
-  if (result === 'Harvested') state.lastCollectTapAt = now;
-  return result;
+  return tapCell(state, map, cell, now);
 }

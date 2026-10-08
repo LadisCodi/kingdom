@@ -120,6 +120,9 @@ random**, and it does not matter, because the normaliser trims to the ink.
 | `forest` | 1.05 | 1.09 plots | three trees; one trunk, one compact round canopy each |
 | `forest_2` | 1.05 | 0.99 | two trees, one taller |
 | `forest_3` | 1.05 | 1.03 | three in a loose triangle, one set back |
+| `forest_growing1` | 0.75 | 0.65 | a planted tree's first stage: three seedlings on dug earth, each staked |
+| `forest_growing2` | 0.62 | 0.64 | staked saplings, one small round head each |
+| `forest_growing3` | 0.95 | 0.91 | young trees, the nearest still staked |
 | `mountain` | 1.20 | 0.70 | six or seven broad facets; craggy on every side |
 | `mountain_2x2` | 1.20 | 0.73 | two peaks and a saddle, on a 2×2 block |
 | `mountain_3x3` | 1.20 | 0.74 | three peaks stepping down, on a 3×3 |

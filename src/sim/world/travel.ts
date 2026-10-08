@@ -5,12 +5,20 @@
 // half again, a mountain three times. The way taken is the quickest one,
 // through hexes the marcher may enter.
 //
+// FAR GROUND IS SLOWER. A hex costs more the further it lies from the
+// marcher's own city — `marchGrowthPerHex` for every hex out, up to
+// `marchGrowthHexes` — so the ground round a city is crossed quickly and a
+// march on a rival takes its time. The march's first hex is always that city
+// (an explorer's and an army's path both start there), so the distance is
+// read off the path itself.
+//
 // Every kind of marcher has its own pace on open ground — an explorer is
 // quicker than an army — and the ground multiplies it. `speed` is the hook
 // for whatever makes a march faster over some ground — a hero, a technology:
 // it divides one hex's time, so a bonus only ever shortens a trip.
 
 import { WORLD, WORLD_TRAVEL } from '../data/definitions';
+import { hexDistance } from './hex';
 
 /** Who is marching, which sets the pace on open ground. */
 export type Marcher = 'explorer' | 'army';
@@ -28,17 +36,28 @@ export function hexTravelFactor(bh: BoardHex): number {
   return factor;
 }
 
-/** Milliseconds for `who` to leave this hex, before any speed. */
-export const hexTravelMs = (bh: BoardHex, who: Marcher): number => baseMs(who) * hexTravelFactor(bh);
+/** How much longer a hex `d` from the marcher's city takes to cross. */
+export const distanceFactor = (d: number): number =>
+  WORLD.marchGrowthPerHex ** Math.min(Math.max(0, d), WORLD.marchGrowthHexes);
+
+/** Milliseconds for `who` to leave this hex, `d` hexes from its own city,
+ *  before any speed. */
+export const hexTravelMs = (bh: BoardHex, who: Marcher, d = 0): number =>
+  baseMs(who) * hexTravelFactor(bh) * distanceFactor(d);
+
+/** The time to leave one hex on a march out of `origin`, at a speed. */
+const leaveMs = (bh: BoardHex, origin: BoardHex, who: Marcher, speed: (bh: BoardHex) => number): number =>
+  Math.max(1, Math.round(hexTravelMs(bh, who, hexDistance(origin.hex, bh.hex)) / Math.max(1, speed(bh))));
 
 /** A march's way: the hexes, city first, and the milliseconds it takes to
  *  leave each one — the last is spent on the way back. */
 export interface Route { path: number[]; stepMs: number[] }
 
-/** The time to leave each hex of a path, at a speed (≥ 1). */
+/** The time to leave each hex of a path, at a speed (≥ 1). The path starts
+ *  at the marcher's city, which every hex's distance is read from. */
 export const stepTimes = (
   hexes: readonly BoardHex[], path: readonly number[], who: Marcher, speed: (bh: BoardHex) => number = () => 1,
-): number[] => path.map((i) => Math.max(1, Math.round(hexTravelMs(hexes[i], who) / Math.max(1, speed(hexes[i])))));
+): number[] => path.map((i) => leaveMs(hexes[i], hexes[path[0]], who, speed));
 
 /**
  * The quickest way from `from` to `to`, entering only hexes `canEnter`
@@ -51,7 +70,8 @@ export function fastestRoute(
   canEnter: (index: number) => boolean, speed: (bh: BoardHex) => number = () => 1,
 ): Route | null {
   if (from === to) return null;
-  const leave = stepTimes(hexes, hexes.map((h) => h.index), who, speed);
+  // Every hex timed from `from`, the marcher's city.
+  const leave = hexes.map((h) => leaveMs(h, hexes[from], who, speed));
   const dist = new Map<number, number>([[from, 0]]);
   const prev = new Map<number, number>();
   const done = new Set<number>();

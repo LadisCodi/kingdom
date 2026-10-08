@@ -5,9 +5,8 @@
 > What a tap *costs* is [`08-magic.md`](08-magic.md); where the coins go is
 > [`03-economy.md`](03-economy.md).
 >
-> **Status: built.** Not built: a separate FarmLands harvest row (§2.1), the
-> map-editor production census (§2.3, OQ-50), the over-hire onboarding beat
-> (§6).
+> **Status: built.** Not built: the
+> map-editor production census (§2.3, OQ-50).
 
 ## 1. The rules
 
@@ -22,13 +21,12 @@
 
 ### 1.1 The thumb's worth
 
-- A held finger lands a tap every `tap.collectCooldownSeconds` (0.5 s).
-- `the thumb, in workers = tap.workSeconds ÷ collect cooldown = 10 ÷ 0.5 = 20`
-- Tuning relation: the thumb's worker-equivalent stays ahead of the crew the
-  city can house. It also sets what a rewarded ad is worth (§3.3).
-- At 10 s the thumb is 20 workers against the 30 a Townhall-3 city can house.
-  `QuickHands` at the top of its ladder (+45% tap speed) takes the thumb to 29,
-  `TapPower` at the top of its ladder to 36, both together to 52.
+- Every tap is a deliberate press. Holding a finger down repeats nothing; a
+  press that does not move is one tap on release.
+- Nothing times the thumb: the player taps as fast as they like, and Mana is
+  the only limit (one per tap on the ground).
+- `tap.workSeconds` sets what a tap and a rewarded ad are worth (§3.3).
+  `TapPower` at the top of its ladder makes a tap 1.8× the work.
 - `tap.workSeconds` is the dial for late-game hand-play; doubling it doubles the
   ad with it (§3.3).
 
@@ -71,8 +69,8 @@ Every resource cell carries:
   `recoverySeconds`.
 - `workers a cell supports = drain ÷ (drain + recovery)`; it never reaches 1.
 - Author `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`.
-  A cell then supports about **0.55** workers, rising with the walk (0.59 for a
-  Forest cell next door). **Roughly two cells per worker.**
+  A cell then supports about **0.55** workers, rising with the walk.
+  **Roughly two cells per worker.**
 - The law authors the cell; the trip belongs to where the shed sits. The rate
   column below varies with distance; the cell's numbers do not.
 - `tap.workSeconds` = 10 makes a ten-unit tree about ten taps.
@@ -80,7 +78,7 @@ Every resource cell carries:
 
 | Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
 |---|---|---|---|---|---|---|---|---|
-| **Forest** | 1 | 10 | 10 | 90 | **1** | **10** | 4.7 → 3.3/min | 0.59 |
+| **Forest** | 1 | 10 | 10 | 180 | **1** | **10** | 4.7 → 3.3/min | 0.42 |
 | **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 5.6 → 3.8/min | 0.64 |
 | **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 4.7 → 3.3/min | — |
 | **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 7.9 → 6.4/min | — |
@@ -92,14 +90,16 @@ Every resource cell carries:
 - The spread narrows as the ground slows: a tree next door pays 1.4× one at
   radius 4, an iron peak 1.1×. Fast ground rewards a close shed; slow ground
   does not care.
-- The renewables hold the law to within a hundredth.
+- Crops hold the law to within a hundredth. **Forest is authored at twice
+  the law's recovery**: a tree supports 0.42 workers, so a Sawmill reaches a
+  ring further (radius 2) to keep its crew of three fed
+  ([`buildings.md`](buildings.md) §4.4).
 - On slow ground the **floor** governs: ten seconds of work on a rock, an iron
   peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
   shows in the first `TapPower` levels.
 - A metal peak's richness is in the crew: five units a swing against one.
-- **FarmLands shares the `Crops` row.** A built plot behaves exactly like wild
-  crops. Its own rhythm needs a new harvest source id (code, not data) — not
-  built.
+- **A crop plot is the `Crops` row**: a feature planted from the Build menu
+  ([`27-plantables.md`](27-plantables.md)).
 
 ### 2.2 The ground under the cell
 
@@ -125,9 +125,9 @@ Every resource cell carries:
 - The Stone column moves nothing while no Stone source holds stock.
 - Poor ground is bad twice: the total per cycle scales with the multiplier, the
   sustainable rate falls further because recovery is a fixed cost. A desert
-  forest drains in 50 s and sits out 90, yielding 2.1 Wood/min against a
-  grassland tree's 3.5 (61%, not 50%); its workers-per-cell drops from 0.59 to
-  0.36, so a desert needs about three cells per worker.
+  forest drains in 50 s and sits out 180, yielding 1.3 Wood/min against a
+  grassland tree's 2.5 (53%, not 50%); its workers-per-cell drops from 0.41 to
+  0.22, so a desert needs about five cells per worker.
 - On the map as painted, Grassland holds 45 of the 57 trees; Tundra holds no
   trees (OQ-56).
 
@@ -135,9 +135,9 @@ Every resource cell carries:
 
 - A cell's sustainable rate is `stock ÷ (drain + recovery)`, so the province has
   one too.
-- At **57 Trees** on the map as painted, sheds next door: **157 Wood/min** is
-  everything the province can grow, and **33 workers** collect all of it
-  (against the 30 a Townhall-3 city can house).
+- At **57 Trees** on the map as painted, sheds next door: **about 113
+  Wood/min** is everything the province can grow, and **about 24 workers**
+  collect all of it (against the 30 a Townhall-3 city can house).
 - Both figures move with the walk: farther sheds collect less of the same
   ceiling and need more bodies.
 - The map editor should compute this census, weighting each cell by its ground
@@ -203,8 +203,7 @@ A rewarded ad pays a whole pool:
 - `TapPower` holds the ad's value up as the crew grows: pool ×3.3 against crew
   ×10 leaves the ad worth a third by Townhall 3; the ×3 duration ladder restores
   it (§1.1).
-- An ad buys about three minutes of things to do: a full pool is 332 taps and a
-  held finger spends it in under three minutes.
+- An ad buys a few minutes of things to do: a full pool is 332 taps.
 - `tap.workSeconds` is the ad's dial; halving it halves the ad. Whether ~5.5
   minutes of production for three minutes of thumb is worth six ad placements
   is **OQ-51**.
@@ -299,8 +298,9 @@ Quests:
   idle. No icon.
 - The count lives in the district card only (`4/7` busy). Nothing on the map.
 - When a stump becomes a tree, one of the loiterers heads for it.
-- One onboarding beat that makes the player hire past their ground — not
-  built.
+- The `hands` lesson says it when a second Sawmill is crewed, and the
+  `idleCrew` introduction points at the first crew standing about
+  ([`23-tutorials.md`](23-tutorials.md) §3.2, §4.1).
 
 ## 7. The three actors
 
@@ -345,21 +345,18 @@ Quests:
 | Influence radius, worker slots per level | §5 | `buildings` › `influenceRadiusPerLevel`, `maxWorkersPerLevel` |
 | What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
 | Mana per tap on the ground | 1 | `tap.manaCost` |
-| Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |
 | Strike punch, against the player's 1 | 0.55 | `STRIKE_PUNCH`, code |
 | Strike volume · extra jitter · voices | ×0.5 · ±5% · 3 | `strikeFeedback`, code |
 | Zoom below which a strike is silent | 0.8 | `STRIKE_AUDIBLE_ZOOM`, code |
 | Store capacity, which bounds an absence | [`03-economy.md`](03-economy.md) §3.2 | `buildings` › `storageCapacityPerLevel` |
 
-Two relations to hold while tuning:
-
-1. `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`,
-   or the workers-per-cell number drifts (§2.1).
-2. `tap.workSeconds ÷ tap.collectCooldownSeconds` stays ahead of the crew the city can
-   house (§1.1, §3.3).
+The relation to hold while tuning:
+`secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`,
+or the workers-per-cell number drifts (§2.1).
 
 ## 10. Deliberately not in this design
 
+- a held finger that repeats taps
 - pathfinding
 - continuous regrowth
 - a per-distance strike penalty

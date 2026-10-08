@@ -31,6 +31,16 @@ export const PALETTE = {
   // The placement ghost's outline: a warm white, the brightest thing on the
   // grass, so the building being placed reads apart from the ones around it.
   ghostOutline: '#fff8e1',
+  // A ghost on a cell it may not stand on: rimmed and washed in this red.
+  ghostBlocked: '#e0392b',
+  // The plot under a floating ghost, where it would land: a warm white wash,
+  // or a red one where it may not stand; and its shadow.
+  ghostPlot: 'rgba(255, 248, 225, 0.22)',
+  ghostBlockedPlot: 'rgba(224, 57, 43, 0.3)',
+  ghostShadow: '#1d140a',
+  // The dust a planted building kicks up: dry earth.
+  ghostDust: '#c9b48b',
+  ghostDustLight: '#f6eedd',
   // The placement ghost's move arrows: leaf green, lit from above, rimmed.
   moveArrow: '#4f9f33',
   moveArrowLight: '#8fd466',
@@ -69,6 +79,9 @@ export const PALETTE = {
   sighted: '#9aa3d6',
   sightedAlpha: 0.82,
   selected: '#ffe27a',
+  /** The player's colour: their border on the world board and the
+   *  Townhall's reach in the city, one line in one blue. */
+  yourBorder: '#2f6fe0',
   /** The tutorial's pointer on a map plot: the stage's magic blue
    *  (tokens.css --magic-glow-*), a wide soft halo and a bright line. */
   tutorialGlowOuter: '#3c9dff',

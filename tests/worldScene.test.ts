@@ -9,7 +9,8 @@ import { setBit } from '../src/sim/world/fogBits';
 import { hexActions } from '../src/ui/world/worldActions';
 import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import { hexTitle } from '../src/ui/world/hexNames';
-import { fogStateOf } from '../src/sim/world/explorers';
+import { fogStateOf, readyAt, returnsAt } from '../src/sim/world/explorers';
+import { hasBit } from '../src/sim/world/fogBits';
 import type { Game } from '../src/game';
 import { firstGame, freshGame, freshPresenter, T0 } from './helpers';
 
@@ -70,7 +71,7 @@ describe('a tap on the board', () => {
   it('names a hex only as far as the player has seen it', () => {
     const { game } = world();
     const board = game.worldSource().board();
-    const t = (i: number) => hexTitle(game, board.hexes[i], fogStateOf(game.state, i, T0));
+    const t = (i: number) => hexTitle(game, board.hexes[i], fogStateOf(game.state, i));
     expect(t(PORTAL_INDEX)).toBe('The Dark Portal');
     expect(t(game.homeHex())).toBe('Your city');
     const rival = SEAT_INDICES.find((i) => i !== game.homeHex())!;
@@ -86,22 +87,12 @@ describe('a tap on the board', () => {
 });
 
 describe('Explore', () => {
-  it('needs Cartography, then sends an explorer and closes the sheet', () => {
+  it('sends the first explorer free, and closes the sheet', () => {
     const { game, toasts } = world();
     game.enterWorld();
     const beside = boardNeighbors(game.homeHex()).find((n) => n !== PORTAL_INDEX)!;
     game.handleWorldTap(...tapAt(game, beside));
-    game.doSendExplorer();
-    expect(game.state.world.explorers).toHaveLength(0);
-    expect(toasts.at(-1)).toMatch(/Cartography/);
-
-    game.state.research.completed.push('Cartography');
     game.state.city.wallet.Gold = 0;
-    game.doSendExplorer();
-    expect(game.state.world.explorers).toHaveLength(0);
-    expect(toasts.at(-1)).toMatch(/Not enough Gold/);
-
-    game.state.city.wallet.Gold = 1e9;
     game.doSendExplorer();
     expect(game.state.world.explorers).toHaveLength(1);
     expect(game.state.world.explorers[0].target).toBe(beside);
@@ -114,9 +105,43 @@ describe('Explore', () => {
     expect(toasts.at(-1)).toMatch(/already on the way/);
   });
 
+  it('charges Gold from the second trip on', () => {
+    const { game, toasts } = world();
+    game.state.world.tripsSent = 1;
+    game.enterWorld();
+    const beside = boardNeighbors(game.homeHex()).find((n) => n !== PORTAL_INDEX)!;
+    game.handleWorldTap(...tapAt(game, beside));
+    game.state.city.wallet.Gold = 0;
+    game.doSendExplorer();
+    expect(game.state.world.explorers).toHaveLength(0);
+    expect(toasts.at(-1)).toMatch(/Not enough Gold/);
+  });
+
+  it('reveals the hex at the player\'s tap on it once the explorer waits there — and not before', () => {
+    const { game } = world();
+    game.enterWorld();
+    const beside = boardNeighbors(game.homeHex()).find((n) => n !== PORTAL_INDEX)!;
+    game.handleWorldTap(...tapAt(game, beside));
+    game.doSendExplorer();
+    const trip = game.state.world.explorers[0];
+    // Still at work: the tap opens the hex's card, and reveals nothing.
+    game.now = () => readyAt(trip) - 1;
+    game.handleWorldTap(...tapAt(game, beside));
+    expect(game.openOverlay).toBe('world');
+    expect(hasBit(game.state.world.revealed, beside)).toBe(false);
+    game.dismiss();
+    // Done and waiting: it stands in the notices, and the tap is the reveal.
+    game.now = () => readyAt(trip) + 60_000;
+    expect(game.explorersReady()).toEqual([{ id: trip.id, target: beside }]);
+    game.handleWorldTap(...tapAt(game, beside));
+    expect(hasBit(game.state.world.revealed, beside)).toBe(true);
+    expect(game.openOverlay).toBeNull();
+    expect(game.explorersReady()).toEqual([]);
+    expect(returnsAt(trip)).toBeLessThan(Number.POSITIVE_INFINITY);
+  });
+
   it('will not go where it has not seen the way', () => {
     const { game, toasts } = world();
-    game.state.research.completed.push('Cartography');
     game.enterWorld();
     game.selectedHex = hexIndex({ q: 0, r: -5 });
     game.doSendExplorer();
@@ -126,7 +151,6 @@ describe('Explore', () => {
 
   it('has nothing to explore on ground already explored', () => {
     const { game, toasts } = world();
-    game.state.research.completed.push('Cartography');
     game.enterWorld();
     game.handleWorldTap(...tapAt(game, PORTAL_INDEX));
     game.doSendExplorer();
@@ -138,14 +162,13 @@ describe('Explore', () => {
 describe('acting on the board', () => {
   it('offers nothing on ground not yet explored but Explore', async () => {
     const { game } = world();
-    game.state.research.completed.push('Cartography');
     const board = game.worldSource().board();
     const beside = boardNeighbors(game.homeHex()).find((n) => board.hexes[n].role !== 'portal')!;
-    expect(fogStateOf(game.state, beside, T0)).toBe('Sensed');
+    expect(fogStateOf(game.state, beside)).toBe('Sensed');
     expect(hexActions(game.worldSource(), game.worldSeat(), board.hexes[beside], { revealed: false })).toEqual([]);
     // Once seen, the same hex can be claimed.
     setBit(game.state.world.revealed, beside);
-    expect(fogStateOf(game.state, beside, T0)).toBe('Revealed');
+    expect(fogStateOf(game.state, beside)).toBe('Revealed');
     expect(hexActions(game.worldSource(), game.worldSeat(), board.hexes[beside], { revealed: true })
       .some((a) => a.kind === 'claim')).toBe(true);
   });

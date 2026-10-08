@@ -8,17 +8,27 @@
         "explorerSecondsPerHex": {
           "type": "int",
           "min": 1,
-          "doc": "Seconds an explorer takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel), and worldRevealSpeed divides it."
+          "doc": "Seconds an explorer takes to leave its own city on open ground; every hex further out multiplies it by marchGrowthPerHex, its terrain and features multiply it (worldTravel), and worldRevealSpeed divides it."
         },
         "armySecondsPerHex": {
           "type": "int",
           "min": 1,
-          "doc": "Seconds an army takes to leave a hex of open ground; each hex multiplies it by its terrain and features (worldTravel)."
+          "doc": "Seconds an army takes to leave its own city on open ground; every hex further out multiplies it by marchGrowthPerHex, and its terrain and features multiply it (worldTravel)."
+        },
+        "marchGrowthPerHex": {
+          "type": "float",
+          "min": 1,
+          "doc": "How much longer a hex takes to cross for every hex it lies from the marcher's own city: near ground is quick, far ground slow."
+        },
+        "marchGrowthHexes": {
+          "type": "int",
+          "min": 0,
+          "doc": "How many hexes out the growth runs: past it, every hex takes what the last one did."
         },
         "exploreWorkSeconds": {
           "type": "int",
           "min": 0,
-          "doc": "Seconds an explorer works at the hex it was sent to before it is revealed, whatever the distance."
+          "doc": "Seconds an explorer works at the hex it was sent to before the player can reveal it, whatever the distance; exploreSpeed divides it."
         },
         "exploreWorkSecondsPerHex": {
           "type": "int",
@@ -35,7 +45,7 @@
           "type": "int",
           "min": 1,
           "max": 2,
-          "doc": "Hexes round every hex of its path that a marching explorer reveals, before the tree."
+          "doc": "Hexes round its target that an explorer reveals, before the tree."
         },
         "revealRadiusMax": {
           "type": "int",
@@ -43,15 +53,15 @@
           "max": 2,
           "doc": "The most a reveal radius can reach, however the tree raises it."
         },
-        "cartographyExplorers": {
+        "startingExplorers": {
           "type": "int",
-          "min": 0,
-          "doc": "Explorer slots Cartography opens. The Atlas ladder adds to it."
+          "min": 1,
+          "doc": "Explorers every kingdom has from the start. The Atlas ladder adds to it."
         },
         "explorersForSale": {
           "type": "int",
           "min": 0,
-          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of what Cartography and the Atlas open."
+          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of its own and what the Atlas opens."
         },
         "explorerGemCostBase": { "type": "int", "min": 0, "doc": "Gems for the first explorer bought." },
         "explorerGemCostGrowth": {
@@ -275,6 +285,11 @@
           "type": "int",
           "min": 1,
           "doc": "One Chapel per this many hexes held, plus one: how many world relics act. A Shrine district has a Chapel of its own that does not count."
+        },
+        "fortresses": {
+          "type": "int",
+          "min": 1,
+          "doc": "Fortresses a kingdom may hold before the Atlas adds more (fortressSlots)."
         }
       }
     },

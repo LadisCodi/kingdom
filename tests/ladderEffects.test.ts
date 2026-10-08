@@ -28,7 +28,9 @@ import {
 import { armyCap, healSecondsAt, trainCost, trainSecondsAt, woundedCap, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import { drillOf, lairSupplyCost } from '../src/sim/expeditions';
-import { explorerSlots, explorerSpeed, revealRadius } from '../src/sim/world/explorers';
+import { exploreSpeed, explorerSlots, explorerSpeed, revealRadius } from '../src/sim/world/explorers';
+import { lootMultiplier, worldHeroXpMultiplier } from '../src/sim/world/loot';
+import { scoutPay } from '../src/sim/world/scouting';
 import { armyMarchSpeed } from '../src/sim/world/armies';
 import { worldImprovementBoost } from '../src/sim/world/boost';
 import { decorationHarmony } from '../src/sim/harmony';
@@ -40,7 +42,7 @@ import { manaCap, manaProduction } from '../src/sim/mana';
 import { firstClearLump, knowledgeLump, landmarkClaimLump } from '../src/sim/knowledge';
 import { cityGoldPerMinute, districtCapacity, maxPopulation, ownGoldPerMinute } from '../src/sim/population';
 import {
-  cityGatherPerSecond, effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
+  cityGatherPerSecond, effectiveBuildTimeMultiplier,
   effectiveTaxRate,
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds, workerStrikeMs,
@@ -108,7 +110,6 @@ function probe(state: GameState): Record<string, number> {
 
   // The thumb and the crew.
   put('tapWorkSeconds', tapWorkSeconds(state));
-  put('autoTapCooldownMs', effectiveAutoTapCooldownMs(state));
   put('workerSpeed', effectiveWorkerSpeed(state));
   for (const id of SOURCES) {
     const spec = HARVEST[id];
@@ -221,6 +222,18 @@ function probe(state: GameState): Record<string, number> {
   const boost = worldImprovementBoost(state);
   put('improvement.produce', boost.produce);
   put('improvement.store', boost.store);
+  for (const [d, m] of Object.entries(boost.districts ?? {})) {
+    put(`improvement.${d}.produce`, m.produce);
+    put(`improvement.${d}.store`, m.store);
+  }
+  put('world.build', boost.build ?? 1);
+  put('world.repair', boost.repair ?? 1);
+  put('world.fortresses', boost.fortresses ?? 0);
+  put('world.chapels', boost.chapels ?? 0);
+  put('exploreSpeed', exploreSpeed(state));
+  for (const from of ['camp', 'room', 'portal'] as const) put(`loot.${from}`, lootMultiplier(state, from));
+  put('loot.heroXp', worldHeroXpMultiplier(state));
+  put('scout.gold', scoutPay(state, { reward: 'Stardust', weight: 1, amount: 100, pack: null }, 'outer').wallet.Stardust ?? 0);
 
   // A control that no ladder may move: what a lair fields, which is authored
   // and belongs to nobody's ladder.

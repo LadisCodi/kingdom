@@ -86,6 +86,9 @@ guard { threat, power, warningMinutes }
 - **`power` is a budget in troops' worth, and the count is what the player
   sees**: the generator spends it on each unit's `power`, so fifteen orcs is
   15 × 3 (§2, [`combat.md`](combat.md) §5).
+- **A garrison more than six squads of rank I can hold fields evolved
+  creatures** — veteran orcs beside orcs ([`combat.md`](combat.md) §6, §11).
+  No province lair today is that big.
 
 ## 3. The counter
 

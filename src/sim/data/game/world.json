@@ -1,14 +1,16 @@
 {
   "world": {
-    "explorerSecondsPerHex": 60,
-    "armySecondsPerHex": 120,
+    "explorerSecondsPerHex": 15,
+    "armySecondsPerHex": 30,
+    "marchGrowthPerHex": 1.5,
+    "marchGrowthHexes": 6,
     "exploreWorkSeconds": 30,
     "exploreWorkSecondsPerHex": 30,
     "exploreGoldBase": 2500,
     "exploreGoldGrowth": 1.5,
     "explorerRevealRadius": 1,
     "revealRadiusMax": 2,
-    "cartographyExplorers": 1,
+    "startingExplorers": 1,
     "explorersForSale": 2,
     "explorerGemCostBase": 2500,
     "explorerGemCostGrowth": 2,
@@ -280,7 +282,8 @@
     },
     "innerRingMultiplier": 3,
     "sanctuaryManaCap": 10,
-    "chapelsPerHexes": 6
+    "chapelsPerHexes": 6,
+    "fortresses": 1
   },
   "worldBots": {
     "actEveryHours": 6,

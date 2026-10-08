@@ -7,8 +7,10 @@ import type { GameState } from '../src/sim/state';
 import { HOME_RING, SEAT_INDICES } from '../src/sim/world/board';
 import {
   arrivesAt, dispatchExplorer, exploreGold, exploreWorkMs, explorerRoute, explorerSlots, explorerSpeed, fogStateOf, fogStatesOf,
-  explorerRushCost, finishExplorerWithGems, freshWorld, homeIndex, returnsAt, revealsAt, tripRevealing, worldFogAt,
+  explorerRushCost, finishExplorerWithGems, freshWorld, homeIndex, readyAt, readyTrips, returnsAt, revealExplored, tripPhase,
+  tripRevealing, worldFog,
 } from '../src/sim/world/explorers';
+import type { ExplorerTrip } from '../src/sim/state';
 import { RUSH } from '../src/sim/data/definitions';
 import { boardOf } from '../src/sim/world/source';
 import { homeboundMs, outboundMs, stepTimes } from '../src/sim/world/travel';
@@ -37,10 +39,9 @@ const seenMost = (state: GameState) => {
   state.world.revealed = bitsFrom(boardWithin(hexIndex({ q: 0, r: 0 }), BOARD_RADIUS - 1));
 };
 
-/** A kingdom that has researched Cartography: one explorer. */
+/** A kingdom with its own explorer and Gold to send it. */
 function exploring(): GameState {
   const state = freshGame();
-  state.research.completed.push('Cartography');
   fund(state, { Gold: 1e9 }); // exploring is priced in Gold; what it costs is tested below
   return state;
 }
@@ -51,6 +52,13 @@ const sent = (state: GameState, target: number, now: number) => {
   return r.trip;
 };
 
+/** The player's tap on the hex a trip waits at, the moment its work is done. */
+const revealed = (state: GameState, trip: ExplorerTrip, at = readyAt(trip)) => {
+  const r = revealExplored(state, trip.target, at);
+  if (r.kind !== 'Revealed') throw new Error('not revealed');
+  return r.found;
+};
+
 /** The Portal, from the player's city: four hexes away. */
 /** What every player always sees: every Portal. */
 const portals = [...PORTAL_INDICES];
@@ -58,16 +66,16 @@ const portals = [...PORTAL_INDICES];
 describe('a new kingdom on the board', () => {
   it('sees its own city and the Portal, and nothing else', () => {
     const state = freshGame();
-    expect(bitIndices(worldFogAt(state, T0))).toEqual([homeIndex(state), ...portals].sort((a, b) => a - b));
+    expect(bitIndices(worldFog(state))).toEqual([homeIndex(state), ...portals].sort((a, b) => a - b));
     expect(countBits(state.world.revealed)).toBe(0);
     expect(SEAT_INDICES).toContain(homeIndex(state));
   });
 
   it('senses what is next to its city, but nothing round the Portal', () => {
     const state = freshGame();
-    for (const n of boardNeighbors(homeIndex(state))) expect(fogStateOf(state, n, T0)).toBe('Sensed');
-    for (const d of HEX_DIRS) expect(fogStateOf(state, hexIndex(d), T0)).toBe('Unknown');
-    expect(fogStateOf(state, PORTAL_INDEX, T0)).toBe('Revealed');
+    for (const n of boardNeighbors(homeIndex(state))) expect(fogStateOf(state, n)).toBe('Sensed');
+    for (const d of HEX_DIRS) expect(fogStateOf(state, hexIndex(d))).toBe('Unknown');
+    expect(fogStateOf(state, PORTAL_INDEX)).toBe('Revealed');
   });
 
   it('reads the fog of the whole world at once as it reads one hex', () => {
@@ -76,7 +84,7 @@ describe('a new kingdom on the board', () => {
     const fog = bitsFrom(Array.from({ length: BOARD_SIZE }, (_, i) => i).filter((i) => (i * 7919) % 11 === 0));
     const states = fogStatesOf(fog);
     expect(states).toHaveLength(BOARD_SIZE);
-    for (let i = 0; i < BOARD_SIZE; i++) expect(states[i]).toBe(fogStateOf(state, i, T0, fog));
+    for (let i = 0; i < BOARD_SIZE; i++) expect(states[i]).toBe(fogStateOf(state, i, fog));
   });
 
   it('has its board and seat from its own seed', () => {
@@ -87,21 +95,20 @@ describe('a new kingdom on the board', () => {
 });
 
 describe('sending an explorer', () => {
-  it('needs Cartography, a free explorer, and a hex that is not home', () => {
-    const state = freshGame();
-    fund(state, { Gold: 1e9 });
-    expect(dispatchExplorer(state, nextDoor(state), T0).kind).toBe('NoCartography');
-    state.research.completed.push('Cartography');
-    expect(explorerSlots(state)).toBe(WORLD.cartographyExplorers);
+  it('has an explorer from the start, and needs a free one and a hex that is not home', () => {
+    const state = exploring();
+    expect(explorerSlots(state)).toBe(WORLD.startingExplorers);
     expect(dispatchExplorer(state, -1, T0).kind).toBe('OffBoard');
     expect(dispatchExplorer(state, BOARD_SIZE, T0).kind).toBe('OffBoard');
     expect(dispatchExplorer(state, homeIndex(state), T0).kind).toBe('Home');
     const trip = sent(state, nextDoor(state), T0);
-    // Somewhere the first trip will not reveal: no explorer is left for it.
+    // Somewhere the first trip will not reveal: no explorer is left for it —
+    // and none is on its way home until its hex is revealed.
     const elsewhere = boardNeighbors(homeIndex(state))
       .find((n) => n !== PORTAL_INDEX && hexDistance(hexAt(n), hexAt(trip.target)) > trip.radius)!;
-    const busy = dispatchExplorer(state, elsewhere, T0);
-    expect(busy).toEqual({ kind: 'NoExplorerFree', nextFreeAt: returnsAt(trip) });
+    expect(dispatchExplorer(state, elsewhere, T0)).toEqual({ kind: 'NoExplorerFree', nextFreeAt: null });
+    revealed(state, trip);
+    expect(dispatchExplorer(state, elsewhere, readyAt(trip))).toEqual({ kind: 'NoExplorerFree', nextFreeAt: returnsAt(trip) });
   });
 
   it('goes only where it has seen the way, to a hex it has at least sensed', () => {
@@ -110,21 +117,22 @@ describe('sending an explorer', () => {
     const across = rim(state);
     const span = hexDistance(hexAt(across), hexAt(homeIndex(state)));
     setBit(state.world.revealed, boardNeighbors(across).find((n) => hexDistance(hexAt(n), hexAt(homeIndex(state))) === span - 1)!);
-    expect(fogStateOf(state, across, T0)).toBe('Sensed');
+    expect(fogStateOf(state, across)).toBe('Sensed');
     expect(dispatchExplorer(state, across, T0).kind).toBe('NoRoute');
     state.world.revealed = bitsFrom([]);
     const far = hexIndex({ q: 0, r: -5 });
-    expect(fogStateOf(state, far, T0)).toBe('Unknown');
+    expect(fogStateOf(state, far)).toBe('Unknown');
     expect(dispatchExplorer(state, far, T0).kind).toBe('NoRoute');
     seenMost(state);
     expect(dispatchExplorer(state, PORTAL_INDEX, T0).kind).toBe('Explored');
-    const edge = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, T0) === 'Sensed')!;
+    const edge = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index) === 'Sensed')!;
     expect(dispatchExplorer(state, edge.index, T0).kind).toBe('Sent');
   });
 
   it('has nothing to explore where it has already seen', () => {
     const state = exploring();
     const trip = sent(state, nextDoor(state), T0);
+    revealed(state, trip);
     advance(state, map, returnsAt(trip));
     expect(dispatchExplorer(state, nextDoor(state), returnsAt(trip)).kind).toBe('Explored');
     expect(dispatchExplorer(state, PORTAL_INDEX, returnsAt(trip)).kind).toBe('Explored');
@@ -135,7 +143,7 @@ describe('sending an explorer', () => {
     seenMost(state);
     const target = rim(state);
     const trip = sent(state, target, T0);
-    const fog = worldFogAt(state, T0);
+    const fog = worldFog(state);
     expect(trip.path[0]).toBe(homeIndex(state));
     expect(trip.path.at(-1)).toBe(target);
     expect(trip.path.slice(0, -1).every((i) => hasBit(fog, i))).toBe(true);
@@ -143,16 +151,30 @@ describe('sending an explorer', () => {
     expect(trip.stepMs).toEqual(stepTimes(hexes, trip.path, 'explorer'));
     expect(trip.stepMs[0]).toBe(WORLD.explorerSecondsPerHex * 1000); // the city is open ground
     expect(arrivesAt(trip) - T0).toBe(outboundMs(trip.stepMs));
-    expect(revealsAt(trip) - arrivesAt(trip)).toBe(trip.workMs);
-    expect(returnsAt(trip) - revealsAt(trip)).toBe(homeboundMs(trip.stepMs));
+    expect(readyAt(trip) - arrivesAt(trip)).toBe(trip.workMs);
+    // Home only once the player has revealed it: the road back from the tap.
+    expect(returnsAt(trip)).toBe(Number.POSITIVE_INFINITY);
+    const tap = readyAt(trip) + 5 * HOUR;
+    revealed(state, trip, tap);
+    expect(returnsAt(trip) - tap).toBe(homeboundMs(trip.stepMs));
     // No way through the seen ground is quicker: a straight line of open ground
     // is the floor.
     const d = hexDistance(hexAt(homeIndex(state)), hexAt(target));
     expect(outboundMs(trip.stepMs)).toBeGreaterThanOrEqual(d * WORLD.explorerSecondsPerHex * 1000);
   });
 
+  it('sends the first trip free — the tutorial\'s — and counts every trip', () => {
+    const state = freshGame();
+    state.city.wallet.Gold = 0;
+    expect(exploreGold(state, rim(state))).toBe(0);
+    sent(state, nextDoor(state), T0);
+    expect(state.world.tripsSent).toBe(1);
+    expect(exploreGold(state, nextDoor(state))).toBe(WORLD.exploreGoldBase);
+  });
+
   it('costs Gold when it leaves, dearer the further the hex lies, and refuses a short purse', () => {
     const state = exploring();
+    state.world.tripsSent = 1; // past the tutorial's free trip
     const near = nextDoor(state);
     expect(exploreGold(state, near)).toBe(WORLD.exploreGoldBase);
     expect(exploreGold(state, rim(state))).toBeGreaterThan(exploreGold(state, near));
@@ -172,39 +194,69 @@ describe('sending an explorer', () => {
     expect(sent(state, near, T0).workMs).toBe(exploreWorkMs(state, near));
   });
 
+  it('works faster with Cartography, and never slower', () => {
+    const state = exploring();
+    const near = nextDoor(state);
+    const slow = exploreWorkMs(state, near);
+    state.research.completed.push('Cartography');
+    expect(exploreWorkMs(state, near)).toBe(Math.round(slow / 1.5));
+  });
+
   it('marches faster with the Scout, and never slower', () => {
     const state = exploring();
     seenMost(state);
     expect(explorerSpeed(state)).toBe(1);
-    const slow = explorerRoute(state, rim(state), T0)!;
+    const slow = explorerRoute(state, rim(state))!;
     grantHero(state, 'Scout');
-    const quick = explorerRoute(state, rim(state), T0)!;
+    const quick = explorerRoute(state, rim(state))!;
     const v = HEROES.Scout.boon!.value;
     expect(quick.path).toEqual(slow.path);
-    expect(quick.stepMs).toEqual(slow.stepMs.map((ms) => Math.round(ms / v)));
+    // Each hex's time divided by the boon — to the millisecond either way,
+    // since both are rounded from the unrounded time.
+    quick.stepMs.forEach((ms, k) => expect(Math.abs(ms - slow.stepMs[k] / v)).toBeLessThanOrEqual(1));
   });
 });
 
-describe('what a march reveals', () => {
-  it('reveals nothing on the way, then a disc round the hex once its work there is done', () => {
+describe('what a trip reveals', () => {
+  it('reveals nothing on its own — not on the way, not when its work is done, not a day later', () => {
     const state = exploring();
     const target = nextDoor(state);
     const trip = sent(state, target, T0);
-    const start = bitIndices(worldFogAt(state, T0));
+    const start = bitIndices(worldFog(state));
     expect(start).toEqual([homeIndex(state), ...portals].sort((a, b) => a - b));
+    expect(tripPhase(trip, arrivesAt(trip) - 1)).toBe('out');
+    expect(tripPhase(trip, arrivesAt(trip))).toBe('working');
+    expect(tripPhase(trip, readyAt(trip))).toBe('ready');
+    expect(revealExplored(state, target, readyAt(trip) - 1).kind).toBe('NotReady');
+    const r = advance(state, map, readyAt(trip) + 24 * HOUR);
+    expect(bitIndices(worldFog(state))).toEqual(start);
+    expect(r.explorersHome).toEqual([]);
+    expect(readyTrips(state, state.lastAdvance)).toEqual([trip]);
+  });
 
+  it('reveals a disc round its hex at the player\'s tap, then walks home', () => {
+    const state = exploring();
+    const target = nextDoor(state);
+    const trip = sent(state, target, T0);
+    const tap = readyAt(trip) + HOUR;
+    advance(state, map, tap);
+    const found = revealed(state, trip, tap);
     const disc = [...new Set([homeIndex(state), ...portals, ...boardWithin(target, trip.radius)])].sort((a, b) => a - b);
-    expect(bitIndices(worldFogAt(state, arrivesAt(trip)))).toEqual(start);
-    expect(bitIndices(worldFogAt(state, revealsAt(trip) - 1))).toEqual(start);
-    expect(bitIndices(worldFogAt(state, revealsAt(trip)))).toEqual(disc);
-    // The way home reaches nothing new.
-    expect(bitIndices(worldFogAt(state, returnsAt(trip) - 1))).toEqual(disc);
+    expect(bitIndices(worldFog(state))).toEqual(disc);
+    expect(found).toMatchObject({ id: trip.id, target, revealed: disc.length - 1 - portals.length });
+    expect(tripPhase(trip, tap)).toBe('home');
+    // Nothing to reveal twice.
+    expect(revealExplored(state, target, tap).kind).toBe('NotReady');
+    // The city and the Portal are never stored.
+    expect(bitIndices(state.world.revealed)).not.toContain(PORTAL_INDEX);
+    expect(bitIndices(state.world.revealed)).not.toContain(homeIndex(state));
   });
 
   it('frees its slot the moment it is home, and keeps what it saw', () => {
     const state = exploring();
     const trip = sent(state, nextDoor(state), T0);
-    const seen = worldFogAt(state, revealsAt(trip));
+    revealed(state, trip);
+    const seen = worldFog(state);
 
     let r = advance(state, map, returnsAt(trip) - 1);
     expect(state.world.explorers).toHaveLength(1);
@@ -212,14 +264,9 @@ describe('what a march reveals', () => {
 
     r = advance(state, map, returnsAt(trip));
     expect(state.world.explorers).toHaveLength(0);
-    expect(r.explorersHome).toHaveLength(1);
-    expect(r.explorersHome[0]).toMatchObject({ id: trip.id, target: nextDoor(state) });
-    expect(r.explorersHome[0].revealed).toBe(bitIndices(seen).length - 1 - portals.length);
-    expect(worldFogAt(state, returnsAt(trip) + HOUR)).toEqual(seen);
-    // The city and the Portal are never stored.
-    expect(bitIndices(state.world.revealed)).not.toContain(PORTAL_INDEX);
-    expect(bitIndices(state.world.revealed)).not.toContain(homeIndex(state));
-    const further = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index, returnsAt(trip)) === 'Sensed')!;
+    expect(r.explorersHome).toEqual([trip.id]);
+    expect(worldFog(state)).toEqual(seen);
+    const further = boardOf(state.world.board).hexes.find((h) => fogStateOf(state, h.index) === 'Sensed')!;
     expect(dispatchExplorer(state, further.index, returnsAt(trip)).kind).toBe('Sent');
   });
 });
@@ -237,16 +284,22 @@ describe('one-call replay equals stepped ticking', () => {
         while (state.lastAdvance < t) advance(state, map, Math.min(t, state.lastAdvance + stepMs));
       };
       to(T1);
-      sent(state, nextDoor(state), T1);
+      const first = sent(state, nextDoor(state), T1);
+      // The player taps its hex hours after its work was done.
+      const tap = readyAt(first) + 5 * HOUR;
+      to(tap);
+      revealed(state, first, tap);
       to(second);
       // The furthest hex it has sensed by then, through what the first saw.
       const home = hexAt(homeIndex(state));
-      const fog = worldFogAt(state, second);
+      const fog = worldFog(state);
       const sensed = boardOf(state.world.board).hexes
-        .filter((h) => fogStateOf(state, h.index, second, fog) === 'Sensed')
+        .filter((h) => fogStateOf(state, h.index, fog) === 'Sensed')
         .sort((a, b) => hexDistance(home, b.hex) - hexDistance(home, a.hex) || a.index - b.index);
       expect(hexDistance(home, sensed[0].hex)).toBeGreaterThan(1);
-      sent(state, sensed[0].index, second);
+      const last = sent(state, sensed[0].index, second);
+      to(readyAt(last) + HOUR);
+      revealed(state, last, readyAt(last) + HOUR);
       to(end);
       return state;
     };
@@ -267,20 +320,49 @@ describe('the save', () => {
     return { loaded, report: report as CatchUpReport | null };
   };
 
-  it('keeps an explorer on the road through a reload, and brings it home on the next', () => {
+  it('keeps an explorer at work through a reload, and waiting through any absence', () => {
     const state = exploring();
     const trip = sent(state, nextDoor(state), T0);
     const mid = arrivesAt(trip) + 1;
     advance(state, map, mid);
 
-    const { loaded: onTheRoad } = reload(state, mid, mid);
-    expect(onTheRoad.world).toEqual(state.world);
-    expect(worldFogAt(onTheRoad, mid)).toEqual(worldFogAt(state, mid));
+    const { loaded: atWork } = reload(state, mid, mid);
+    expect(atWork.world).toEqual(state.world);
 
-    const { loaded: home, report } = reload(state, mid, returnsAt(trip) + HOUR);
+    const { loaded: away } = reload(state, mid, readyAt(trip) + 30 * 24 * HOUR);
+    expect(away.world.explorers).toEqual(state.world.explorers);
+    expect(worldFog(away)).toEqual(worldFog(state));
+    expect(readyTrips(away, readyAt(trip) + 30 * 24 * HOUR).map((t) => t.id)).toEqual([trip.id]);
+  });
+
+  it('keeps an explorer on its road home through a reload, and brings it home on the next', () => {
+    const state = exploring();
+    const trip = sent(state, nextDoor(state), T0);
+    revealed(state, trip);
+    const tap = readyAt(trip);
+    advance(state, map, tap);
+    const { loaded: onTheRoad } = reload(state, tap, tap);
+    expect(onTheRoad.world).toEqual(state.world);
+    const { loaded: home, report } = reload(state, tap, returnsAt(trip) + HOUR);
     expect(home.world.explorers).toEqual([]);
-    expect(worldFogAt(home, returnsAt(trip))).toEqual(worldFogAt(state, revealsAt(trip)));
-    expect(report!.result.explorersHome.map((e) => e.id)).toEqual([trip.id]);
+    expect(worldFog(home)).toEqual(worldFog(state));
+    expect(report!.result.explorersHome).toEqual([trip.id]);
+  });
+
+  it('reads a trip from before the tap as one waiting, and an explored kingdom as past its free trip', () => {
+    const state = exploring();
+    sent(state, nextDoor(state), T0);
+    const file = serialize(state, T0);
+    const world = (file.Modules as Record<string, any>)['kingdom.world'];
+    delete world.TripsSent;
+    file.SaveVersion = 111;
+    const loaded = deserialize(file, map, T0)!;
+    expect(loaded.world.explorers[0].revealedAt).toBeNull();
+    expect(loaded.world.tripsSent).toBe(1);
+    const fresh = freshGame();
+    const blank = serialize(fresh, T0);
+    delete (blank.Modules as Record<string, any>)['kingdom.world'].TripsSent;
+    expect(deserialize(blank, map, T0)!.world.tripsSent).toBe(0);
   });
 
   it('gives a save from before the world board the world its seed would have', () => {
@@ -338,22 +420,33 @@ describe('a trip out', () => {
     if (reached !== undefined) expect(tripRevealing(state, reached)).toBe(trip);
   });
 
-  it('is finished with Gems for the time it has left: revealed, and home', () => {
+  it('is finished with Gems for the work it has left — the player\'s act, so the hex is revealed', () => {
     const state = exploring();
     const target = nextDoor(state);
     const trip = sent(state, target, T0);
     const now = T0 + 10_000;
     const gems = explorerRushCost(trip, now);
-    expect(gems).toBe(Math.max(1, Math.ceil((returnsAt(trip) - now) / 1000 / RUSH.secondsPerGem)));
+    expect(gems).toBe(Math.max(1, Math.ceil((readyAt(trip) - now) / 1000 / RUSH.secondsPerGem)));
     state.player.wallet.Gems = gems;
     const r = finishExplorerWithGems(state, trip.id, now);
-    expect(r.kind).toBe('Finished');
+    expect(r).toMatchObject({ kind: 'Finished', finished: { home: false } });
     expect(state.player.wallet.Gems).toBe(0);
-    expect(state.world.explorers).toEqual([]);
     expect(hasBit(state.world.revealed, target)).toBe(true);
+    expect(tripPhase(trip, now)).toBe('home');
+    expect(returnsAt(trip)).toBe(now + homeboundMs(trip.stepMs));
+  });
+
+  it('is not hurried while it waits for the tap, and is brought home with Gems on the way back', () => {
+    const state = exploring();
+    const trip = sent(state, nextDoor(state), T0);
+    state.player.wallet.Gems = 1e6;
+    expect(finishExplorerWithGems(state, trip.id, readyAt(trip)).kind).toBe('Waiting');
+    revealed(state, trip);
+    const r = finishExplorerWithGems(state, trip.id, readyAt(trip) + 1);
+    expect(r).toMatchObject({ kind: 'Finished', finished: { found: null, home: true } });
+    expect(state.world.explorers).toEqual([]);
     // Nothing comes home twice when time catches up.
-    const report = advance(state, map, returnsAt(trip) + 1);
-    expect(report.explorersHome).toEqual([]);
+    expect(advance(state, map, returnsAt(trip) + 1).explorersHome).toEqual([]);
   });
 
   it('is not finished without the Gems', () => {

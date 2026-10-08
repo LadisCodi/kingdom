@@ -22,7 +22,7 @@ import type { RolledRole, WorldDistrict, WorldFeature, WorldTerrain, WorldUpgrad
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId, ItemId,
-  LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
+  LandmarkKind, LairId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, TroopId, UnitId, UnitRank,
   Wallet,
 } from '../state';
 
@@ -70,7 +70,7 @@ export interface TechnologyDef {
    *  derived from these (`GATES` below), so this is the ONE statement of
    *  "this technology unlocks the Sawmill". */
   unlocks: TechUnlock[];
-  cost: Wallet; // city Gold and kingdom Knowledge
+  cost: Wallet; // city Gold, Wood, Stone and Food, and kingdom Knowledge
   /** Refined goods paid with the Gold when it is completed; empty = none. */
   goods: GoodsStock;
   /** Precious material of any kind it costs (19 §7.6); 0 = none. */
@@ -136,7 +136,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       col: slot.col,
       placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
-      cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
+      cost: { Gold: node.gold, ...(knowledge > 0 ? { Knowledge: knowledge } : {}), ...(node.materials ?? {}) },
       goods: (node.goods ?? {}) as GoodsStock,
       anyPrecious: node.anyPrecious ?? 0,
       effects: node.effects ?? [],
@@ -167,8 +167,10 @@ const GATES = (() => {
   const districtLevel = new Map<string, TechId>();
   const districtCount = new Map<string, TechId>();
   const unit = new Map<string, TechId>();
+  const evolution = new Map<string, TechId>();
   const harvest = new Map<string, TechId>();
   const terrain = new Map<string, TechId>();
+  const worldUpgrade = new Map<string, TechId>();
   for (const id of TECH_ORDER) {
     if (!TECHNOLOGIES[id].placed) continue;
     for (const unlock of TECHNOLOGIES[id].unlocks) {
@@ -177,12 +179,18 @@ const GATES = (() => {
         districtLevel.set(`${unlock.districtLevel.id}:${unlock.districtLevel.level}`, id);
       } else if ('districtCount' in unlock) districtCount.set(unlock.districtCount, id);
       else if ('unit' in unlock) unit.set(unlock.unit, id);
+      else if ('evolution' in unlock) evolution.set(`${unlock.evolution.unit}:${unlock.evolution.rank}`, id);
       else if ('harvest' in unlock) harvest.set(unlock.harvest, id);
       else if ('terrain' in unlock) terrain.set(unlock.terrain, id);
+      else if ('worldUpgrade' in unlock) worldUpgrade.set(unlock.worldUpgrade, id);
     }
   }
-  return { district, districtLevel, districtCount, unit, harvest, terrain };
+  return { district, districtLevel, districtCount, unit, evolution, harvest, terrain, worldUpgrade };
 })();
+
+/** The technology a new building of this kind on the world board waits on
+ *  (Fortress, Chapel), or null when nothing gates it. */
+export const worldUpgradeGate = (id: string): TechId | null => GATES.worldUpgrade.get(id) ?? null;
 
 /** The technology a cell of this terrain waits on, or null. One gate today:
  *  Water waits on Sailing (`src/sim/fog.ts` reads this). */
@@ -317,6 +325,9 @@ export interface HarvestSpec {
    *  reappears in a random tile adjacent to its ORIGINAL map cell
    *  (0 = never — removed for good). */
   respawnSeconds: number;
+  /** How long one PLANTED or MOVED grows before it can be tapped or worked
+   *  (Docs/features/27-plantables.md §2). */
+  growSeconds: number;
 }
 
 // Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,
@@ -496,7 +507,7 @@ export const ADJACENCY_CLAMP = 0.25;
  *  quest activated); relative types count events only while active. */
 export type QuestGoalType =
   | 'BuildDistrict' | 'RepairDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
-  | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
+  | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'WorkInReach' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
   | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'
   | 'OwnHeroes';
@@ -560,12 +571,14 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
  *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
 export type SceneCondition =
   | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
-  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
+  | 'techDone' | 'techFilled' | 'placing' | 'moving' | 'ghostReaches' | 'reachCleared' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
   | 'treasureRevealed' | 'treasurePicked' | 'abandonedRevealed' | 'siteOpen' | 'repairing' | 'canRepair' | 'worldOpen' | 'worldVisited'
-  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed';
+  | 'explorerSent' | 'explorerReady' | 'explorerRevealed'
+  | 'relicPicked' | 'relicHosted' | 'holdsItem' | 'itemUsed'
+  | 'upgraded' | 'troops' | 'storeFull' | 'idleCrew' | 'knowledgeFull' | 'hexHeld' | 'boardSeen';
 
 export interface SceneLine {
   speaker: string;
@@ -705,8 +718,9 @@ export interface DistrictDef {
    *  iron pays Stone and gold pays Gold, so they cannot share a spec — and
    *  the same reason `trains` is a list for the military halls. */
   harvestSources: readonly HarvestSourceId[];
-  /** This district's own cell IS a resource cell of this type (FarmLands → Crops). */
-  providesHarvestSource: HarvestSourceId | null;
+  /** A PLANTABLE: placing it puts this feature on the ground and raises no
+   *  building (Docs/features/27-plantables.md). Null for every building. */
+  plants: FeatureId | null;
   maxLevel: number;
   /** What every level costs the FIRST instance of this building, one entry
    *  per level: index 0 is the BUILD, index 1 what reaching level 2 costs.
@@ -802,6 +816,9 @@ export interface DistrictDef {
   /** An item repairing this building's ruin also asks for, and spends —
    *  the Watchtower's lens (Docs/features/01-map-and-fog.md §6.3). '' = none. */
   repairItem: string;
+  /** How long repairing its ruin takes, flat; 0 = as long as building it.
+   *  A plantable's ruin grows instead (01-map-and-fog.md §6.3). */
+  repairDurationSeconds: number;
 }
 
 /**
@@ -907,10 +924,12 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
     id: 'FishShoal', name: 'Fish shoal', glyph: '🐟', exhaustedGlyph: '🫧',
     sprite: 'fish_shoal', source: 'Fish', respawnTerrain: 'Water',
   },
+  // Planted from the Build menu (the crop plots), never painted on the map.
+  Crops: {
+    id: 'Crops', name: 'Crop plot', glyph: '🌾', exhaustedGlyph: '🥀',
+    sprite: 'farmlands', source: 'Crops', respawnTerrain: 'Grassland',
+  },
 };
-
-/** Exhausted-crops visual (FarmLands districts have no feature). */
-export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // -------------------------------------------------------------- fog settings
 
@@ -1103,6 +1122,11 @@ export interface UnitDef {
   frontage: number;
   /** Ticks between this type's attacks (§10). A tick is 100 ms logical. */
   cooldown: number;
+  /** Field units it walks in one tick (§10); a slot is `fieldColPitch` across. */
+  speed: number;
+  /** How near its target it must stand to strike, centre to centre, in field
+   *  units (§8). A hero of this type walks and reaches the same. */
+  range: number;
   /** Troops of this type in ONE squad — the cap on a party slot's count, and
    *  the size the battle screen fills a slot to (Docs/features/combat.md §4).
    *  Fixed at every tier: a tier multiplies what a troop is worth, never how
@@ -1163,6 +1187,82 @@ export const UNITS: Record<UnitId, UnitDef> = Object.fromEntries(
 ) as unknown as Record<UnitId, UnitDef>;
 
 export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
+
+// ---------------------------------------------------------------- troops
+
+/**
+ * ONE TROOP — a unit at one rank (Docs/features/combat.md §6).
+ *
+ * Rank I is the unit's own row; ranks II–V are its `evolutions`, every number
+ * authored whole (the ×1.6 ladder is a balancing rule, not a formula, so a
+ * rank can be tuned on its own in `?dev=data`). What does NOT change with
+ * rank is read off the unit: type, tags, `squadSize`, `frontage`, `cooldown`.
+ */
+export interface TroopDef extends Omit<UnitDef, 'id'> {
+  id: TroopId;
+  unit: UnitId;
+  rank: UnitRank;
+  /** The level its hall must stand at before this rank can be trained. */
+  minBuildingLevel: number;
+}
+
+interface EvolutionRow {
+  atk: number; dmg: number; def: number; hp: number; power: number;
+  recruitCost: Wallet; trainDurationSeconds: number; minBuildingLevel: number;
+}
+
+export const RANKS: readonly UnitRank[] = [1, 2, 3, 4, 5];
+
+/** The troop a unit is at a rank: `Warrior` at I, `Warrior_e3` at III. */
+export const troopId = (unit: UnitId, rank: UnitRank): TroopId =>
+  (rank === 1 ? unit : `${unit}_e${rank}`) as TroopId;
+
+/** The unit a troop is — what the type chart, the rows and a hero's passive
+ *  read. */
+export const unitOf = (troop: TroopId): UnitId => troop.split('_e')[0] as UnitId;
+
+export const rankOf = (troop: TroopId): UnitRank => {
+  const at = troop.indexOf('_e');
+  return (at < 0 ? 1 : Number(troop.slice(at + 2))) as UnitRank;
+};
+
+export const isTroopId = (id: string): id is TroopId => {
+  const unit = id.split('_e')[0] as UnitId;
+  if (!(unit in UNITS)) return false;
+  return id === unit || RANKS.slice(1).some((r) => id === `${unit}_e${r}`);
+};
+
+export const TROOPS: Record<TroopId, TroopDef> = (() => {
+  const out: Partial<Record<TroopId, TroopDef>> = {};
+  for (const unit of UNIT_ORDER) {
+    const base = UNITS[unit];
+    out[unit] = { ...base, id: unit, unit, rank: 1, minBuildingLevel: 1 };
+    const rows = (balance.units[unit] as { evolutions?: EvolutionRow[] }).evolutions ?? [];
+    rows.forEach((row, i) => {
+      const rank = (i + 2) as UnitRank;
+      const id = troopId(unit, rank);
+      out[id] = {
+        ...base,
+        id, unit, rank,
+        name: `${base.name} ${['', 'I', 'II', 'III', 'IV', 'V'][rank]}`,
+        sprite: `${base.sprite}_e${rank}`,
+        atk: row.atk, dmg: row.dmg, def: row.def, hp: row.hp, power: row.power,
+        recruitCost: row.recruitCost,
+        trainDurationSeconds: row.trainDurationSeconds,
+        minBuildingLevel: row.minBuildingLevel,
+        requiredTech: GATES.evolution.get(`${unit}:${rank}`) ?? null,
+      };
+    });
+  }
+  return out as Record<TroopId, TroopDef>;
+})();
+
+/** Every troop, unit by unit and rank by rank. */
+export const TROOP_ORDER: TroopId[] = UNIT_ORDER.flatMap((u) =>
+  RANKS.map((r) => troopId(u, r)).filter((t) => t in TROOPS));
+
+/** A unit's ranks, I first. */
+export const troopsOf = (unit: UnitId): TroopId[] => TROOP_ORDER.filter((t) => unitOf(t) === unit);
 
 // ---------------------------------------------------------------- magic
 
@@ -1365,9 +1465,12 @@ const activation = (id: ArtifactId): ArtifactDef['activation'] =>
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
     id: 'DowsingRod', name: 'Staff of Renewal', glyph: '🪄', sprite: 'artifact_staff_of_renewal',
-    passiveText: 'Your buildings train soldiers and villagers faster',
+    passiveText: 'Forests, fields, rocks and shoals hold more and grow back faster',
     passive: {
-      stats: [{ stat: 'trainingSpeed', scope: null, op: 'mul' }],
+      stats: [
+        { stat: 'harvestStock', scope: null, op: 'mul' },
+        { stat: 'recoverySpeed', scope: null, op: 'mul' },
+      ],
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     active: null,
@@ -1387,11 +1490,12 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   },
   ForemansSigil: {
     id: 'ForemansSigil', name: 'The Winged Hammer', glyph: '🔨', sprite: 'artifact_winged_hammer',
-    passiveText: 'Your crews swing and walk faster',
+    passiveText: 'Your crews work and your buildings train faster',
     passive: {
       stats: [
         { stat: 'workerStrikeSpeed', scope: null, op: 'mul' },
         { stat: 'workerSpeed', scope: null, op: 'mul' },
+        { stat: 'trainingSpeed', scope: null, op: 'mul' },
       ],
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
@@ -1509,7 +1613,7 @@ export const relicDoor = (id: ArtifactId): string => ab(id).door;
 /** The Shrines (`relics.json`'s `shrines`): the Gems each premium Shrine
  *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
  *  own: it holds and wakes a relic (09-relics.md §2.1). */
-export const SHRINE_RULES = balance.shrines as { premiumGems: number[] };
+export const SHRINE_RULES = balance.shrines as { materialBuilds: number; premiumGems: number[] };
 
 /** What a level-up can raise on a city relic. */
 export type CityRelicAxis = 'window' | 'radius' | 'effect';
@@ -1524,9 +1628,7 @@ export const CITY_RELIC_LEVELS = balance.cityLevels as {
 
 /** Fragments and restoration (`relics.json`'s `fragments`). */
 export const RELIC_RULES = balance.fragments as {
-  keystoneOneIn: number; keystoneWorth: number; levelStardustBase: number; levelStardustGrowth: number;
-  replicaFreeSparesPiece: number; replicaFreeSparesKeystone: number; replicaSpares: number;
-  replicaGemsPiece: number; replicaGemsKeystone: number;
+  keystoneOneIn: number; levelStardustBase: number; levelStardustGrowth: number;
   fragmentPackGems: number; fragmentPackSize: number;
   treasureEvery: number; perLairTier: number[]; perPackTier: Record<string, number>;
 };
@@ -1692,6 +1794,9 @@ export interface HeroDef {
   /** Heroes carry a unit type of their own, so the hero choice feeds the same
    *  matchup chart as the troops. */
   rarity: HeroRarity;
+  /** Where it opens in the bag, before every unranked hero of its rarity;
+   *  null → after them, in a per-kingdom shuffle (10-heroes.md §6.6). */
+  bagRank: number | null;
   unitType: UnitId;
   skill: SkillDef;
   /** The body it brings to the board: it hits for `dmg` every `cooldown`
@@ -1897,7 +2002,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
 };
 
 const heroBalance = balance.heroes as Record<HeroId, {
-  rarity: string; unitType: string; skill: string; skillValue: number; skillEvery: number;
+  rarity: string; bagRank?: number; unitType: string; skill: string; skillValue: number; skillEvery: number;
   atk: number; dmg: number; def: number; hp: number; cooldown: number;
   atkPerLevel: number; dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
   troopDmgMult: number; troopHpMult: number; troopDefBonus: number;
@@ -1910,6 +2015,7 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       id,
       ...heroContent[id],
       rarity: b.rarity as HeroRarity,
+      bagRank: b.bagRank ?? null,
       unitType: b.unitType as UnitId,
       skill: { id: b.skill as SkillId, value: b.skillValue, every: b.skillEvery },
       atk: b.atk, dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
@@ -1951,7 +2057,9 @@ export interface BannerDef {
   key: ItemId;
   /** What one key costs in Gems, in the store. */
   keyGemCost: number;
-  heroChance: number;
+  /** The chance a call brings a whole hero, by heroes owned: the entry at
+   *  that count, the last one for every count past it (10-heroes.md §6.6). */
+  heroChanceByOwned: number[];
   softPityAt: number;
   hardPityAt: number;
   /** Pulls since the last Legendary that force one. 0 = this banner has no
@@ -1962,9 +2070,12 @@ export interface BannerDef {
   /** The store stands a hero of its rarest rarity on this banner, a new one
    *  each visit; false → its key. */
   showsHero: boolean;
-  /** How many prizes a call draws from `loot`, each count as likely. */
-  lootDrawsMin: number;
-  lootDrawsMax: number;
+  /** The season hero this banner leans toward: open in the bag over the
+   *  count until recruited. '' for none (10-heroes.md §6.6). */
+  featuredHero: HeroId | '';
+  /** The share of calls whose hero-goods slot pays a second Fragment. */
+  extraHeroSlotChance: number;
+  /** One prize per slot (10-heroes.md §6.4): the row's reward says its slot. */
   loot: BannerLoot[];
   /** Free pulls a day for a rewarded ad, and how long between them. */
   freePerDay: number;
@@ -2042,6 +2153,10 @@ export interface WorldDef {
    *  army — each hex multiplies its own (worldTravel). */
   explorerSecondsPerHex: number;
   armySecondsPerHex: number;
+  /** A hex `d` from the marcher's own city takes `marchGrowthPerHex^d` times
+   *  as long, `d` capped at `marchGrowthHexes`. */
+  marchGrowthPerHex: number;
+  marchGrowthHexes: number;
   /** An explorer's work at its target before the hex is revealed: a base,
    *  and more for every hex it lies from the city. */
   exploreWorkSeconds: number;
@@ -2052,7 +2167,8 @@ export interface WorldDef {
   exploreGoldGrowth: number;
   explorerRevealRadius: number;
   revealRadiusMax: number;
-  cartographyExplorers: number;
+  /** Explorers every kingdom has from the start; the Atlas adds more. */
+  startingExplorers: number;
   /** Explorers a kingdom may buy — with Gems or in a pack — and their price. */
   explorersForSale: number;
   explorerGemCostBase: number;
@@ -2121,6 +2237,8 @@ export interface WorldBuildDef {
   sanctuaryManaCap: number;
   /** One Chapel per this many hexes held, plus one (relic-restoration.md §5.2). */
   chapelsPerHexes: number;
+  /** Fortresses a kingdom may hold before the Atlas adds more. */
+  fortresses: number;
 }
 
 export const WORLD_BUILD = balance.worldBuild as WorldBuildDef;
@@ -2512,4 +2630,11 @@ export const GAME_VERSION: string = pkg.version;
 // v109: a lair is a path of fights — `Won` on a lair, additive.
 // v110: the Watchtower is a ruin to repair, not a landmark to claim; a
 // claimed one stands repaired, and the chain closes up (a migrator).
-export const SAVE_VERSION = 110;
+// v111: a crop plot is a feature, not a district — every FarmLands district
+// becomes a `Crops` cell (a migrator); a growing cell's `Growing`, additive.
+// v112: an explorer waits at its hex for the player's tap — `RevealedAtUtc` on
+// a trip, and the trips ever sent (`TripsSent` on the world), additive.
+// v113→v114: troop evolutions — an army unit, a wounded entry, a training
+// item or a world army may name a troop at a rank (`Warrior_e3`); additive,
+// rank I keeps the unit's own id. Bumped so an older build refuses the save.
+export const SAVE_VERSION = 115;

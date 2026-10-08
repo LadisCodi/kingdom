@@ -181,3 +181,35 @@ export const relicStatChanges = (id: ArtifactId, level: number): RelicStatChange
 /** This relic's ABILITY at its level, against the next one. */
 export const spellStatChanges = (id: ArtifactId, level: number): RelicStatChange[] =>
   pairs((l) => spellStatsAt(id, l), level);
+
+/**
+ * WHAT A RELIC DOES, AS A SENTENCE (the sheet's line under the art): the
+ * tiles say the numbers; this says what the relic is FOR, with the same
+ * numbers in it. A city relic's sentence ends on its window, because an
+ * activation is the only way it ever acts.
+ */
+export function relicStory(id: ArtifactId, level: number): string {
+  const pct = relicPercent(passiveValueAtLevel(id, level));
+  const window = ARTIFACTS[id].activation === null
+    ? '' : `, for ${spokenWindow(relicWindowMsAt(id, level))}`;
+  return STORY[id](pct) + window + '.';
+}
+
+/** A window as a sentence says it: *30 minutes*, *1 hour*, *8 hours*. */
+function spokenWindow(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60 || minutes % 60 !== 0) return `${formatExact(minutes)} minute${minutes === 1 ? '' : 's'}`;
+  const hours = minutes / 60;
+  return `${formatExact(hours)} hour${hours === 1 ? '' : 's'}`;
+}
+
+const STORY: Record<ArtifactId, (pct: string) => string> = {
+  DowsingRod: (p) => `Renews the land round its Shrine: forests, fields, rocks and shoals there hold ${p} more and grow back ${p} faster`,
+  VerdantSeal: (p) => `Blesses every blade and every hand round its Shrine: each swing of a crew and each tap of yours there brings in ${p} more`,
+  ForemansSigil: (p) => `Lends wings to every working hand round its Shrine: crews there swing and walk ${p} faster, and soldiers and villagers train ${p} faster`,
+  GildedLedger: (p) => `Reminds every household round its Shrine what it owes the crown: villagers there pay ${p} more tax`,
+  WanderersCompass: (p) => `Draws starlight out of the dark: every room you clear in the depths pays ${p} more Stardust`,
+  DelversLantern: (p) => `Its wisps find what the dark hides: every room in the depths pays ${p} more gold and stone`,
+  MusterHorn: (p) => `Its call brings more to your banner: your halls field an army ${p} larger`,
+  BailiffsTally: (p) => `Your stewards collect what is owed: every district you hold on the world map pays ${p} more an hour`,
+};

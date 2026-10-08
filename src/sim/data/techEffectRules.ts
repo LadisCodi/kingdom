@@ -36,7 +36,7 @@ export const TECH_EFFECT_OPS: TechEffectOp[] = ['flat', 'percent'];
 
 /** What an effect may aim at. `global` is every subject of that stat. */
 export type TargetKind =
-  | 'global' | 'district' | 'unit' | 'unitTag' | 'harvest' | 'tome';
+  | 'global' | 'district' | 'unit' | 'unitTag' | 'harvest' | 'tome' | 'worldDistrict';
 
 /**
  * One aimed effect.
@@ -50,7 +50,9 @@ export type TechTarget =
   | { unit: UnitId }
   | { unitTag: UnitTag }
   | { harvest: HarvestSourceId }
-  | { tome: TomeId };
+  | { tome: TomeId }
+  /** A kind of district on the world board (`worldBuild.districts`). */
+  | { worldDistrict: string };
 
 /** What a technology does, in one line of data. */
 export interface TechEffect {
@@ -206,12 +208,6 @@ export const TECH_STATS = {
     ops: ['percent'], targets: ['global'], unit: 's',
     says: { percent: '{v} out of every tap' },
     reads: 'upgrades.ts#tapWorkSeconds',
-  },
-  autoTapSpeed: {
-    what: 'how fast a held finger repeats its tap — the cooldown is divided by it',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} auto-tap speed while holding' },
-    reads: 'upgrades.ts#effectiveAutoTapCooldownMs',
   },
   harvestYield: {
     what: 'the share more one extraction takes out of a KIND OF CELL — the tap and the crew alike; fractions carry',
@@ -387,9 +383,9 @@ export const TECH_STATS = {
     reads: 'explorers.ts#explorerSlots',
   },
   worldRevealRadius: {
-    what: 'hexes an explorer reveals round each hex of its path — whole hexes, so flat, and capped',
+    what: 'hexes an explorer reveals round its target — whole hexes, so flat, and capped',
     ops: ['flat'], targets: ['global'], unit: 'hexes',
-    says: { flat: '{v} to how far an explorer sees round its path' },
+    says: { flat: '{v} to how far an explorer sees round the hex it explores' },
     reads: 'explorers.ts#revealRadius',
   },
   explorerSpeed: {
@@ -398,6 +394,12 @@ export const TECH_STATS = {
     says: { percent: '{v} explorer speed on the world board' },
     reads: 'explorers.ts#explorerSpeed',
   },
+  exploreSpeed: {
+    what: 'how fast an explorer works the hex it was sent to — the work is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} exploring speed on the world board' },
+    reads: 'explorers.ts#exploreSpeed',
+  },
   armyMarchSpeed: {
     what: 'how fast an army marches over every hex — each hex’s time is divided by it',
     ops: ['percent'], targets: ['global'], unit: '×',
@@ -405,16 +407,70 @@ export const TECH_STATS = {
     reads: 'armies.ts#armyMarchSpeed',
   },
   improvementYield: {
-    what: 'the share more a world improvement makes an hour',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} from every improvement on the world board' },
+    what: 'the share more a district on the world board makes an hour — every one, or one kind',
+    ops: ['percent'], targets: ['global', 'worldDistrict'], unit: '×',
+    says: { percent: '{v} from every[ {target}] world district' },
     reads: 'boost.ts#worldImprovementBoost',
   },
   improvementStore: {
-    what: 'the share more a world improvement’s store holds',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} storage in every improvement on the world board' },
+    what: 'the share more a world district’s store holds — every one, or one kind',
+    ops: ['percent'], targets: ['global', 'worldDistrict'], unit: '×',
+    says: { percent: '{v} storage in every[ {target}] world district' },
     reads: 'boost.ts#worldImprovementBoost',
+  },
+  worldBuildSpeed: {
+    what: 'how fast a builder raises a district or a building on the world board — the time is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} building speed on the world board' },
+    reads: 'boost.ts#worldImprovementBoost',
+  },
+  worldRepairSpeed: {
+    what: 'how fast a burnt district on the world board is repaired — the time is divided by it',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} repair speed for burnt districts' },
+    reads: 'boost.ts#worldImprovementBoost',
+  },
+  fortressSlots: {
+    what: 'Fortresses the kingdom may hold on the world board — whole Fortresses, so flat',
+    ops: ['flat'], targets: ['global'], unit: 'Fortresses',
+    says: { flat: '{v} to the Fortresses you may build' },
+    reads: 'boost.ts#worldImprovementBoost',
+  },
+  chapelSlots: {
+    what: 'Chapels the kingdom may build on the world board — whole Chapels, so flat',
+    ops: ['flat'], targets: ['global'], unit: 'Chapels',
+    says: { flat: '{v} to the Chapels you may build' },
+    reads: 'boost.ts#worldImprovementBoost',
+  },
+  campLoot: {
+    what: 'the share more a monster camp pays when it is cleared',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} loot from monster camps' },
+    reads: 'loot.ts#lootMultiplier',
+  },
+  dungeonLoot: {
+    what: 'the share more a dungeon room pays when it is cleared',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} loot from dungeon rooms' },
+    reads: 'loot.ts#lootMultiplier',
+  },
+  portalLoot: {
+    what: 'the share more a floor of the Dark Portal pays',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} loot from the Dark Portal’s floors' },
+    reads: 'loot.ts#lootMultiplier',
+  },
+  worldHeroXp: {
+    what: 'the share more Hero XP a fight on the world board pays — camps, dungeons and the Portal',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} Hero XP from fights on the world board' },
+    reads: 'loot.ts#lootMultiplier',
+  },
+  scoutReward: {
+    what: 'the share more a hex pays the explorer who reveals it — never its pack',
+    ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} from every hex your explorers reveal' },
+    reads: 'scouting.ts#scoutPay',
   },
   // ---- the army
   armyCap: {
@@ -491,6 +547,7 @@ export const TARGET_IDS: Record<TargetKind, readonly string[]> = {
   unitTag: UNIT_TAGS,
   harvest: Object.keys(balance.harvest),
   tome: ['Kingdom', 'Sagas', 'Atlas'],
+  worldDistrict: Object.keys(balance.worldBuild.districts),
 };
 
 /** Which kind of target this is, or null when it is malformed. */

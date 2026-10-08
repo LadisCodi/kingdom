@@ -1,0 +1,25 @@
+(Cell 4 of a 3x2 sheet, generated in one message with the montage of garden_l1, well_l1, statue_l1, housing_l1, housing_l2 attached. Whole sheet: village-decorations.master.png. Cut by blob; placed with one common scale 0.255 onto 128x192, footprint centred on the tile.)
+
+GENERATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — five isometric map sprites already shipped in this game (a garden, a well, a statue and two wooden huts). Your output will sit next to these on the same map; match them exactly: the same bright, chunky, softly bevelled stylized-3D renderer, the same saturated palette, the same top-left lighting, the same TRUE 2:1 isometric camera (a 1x1 ground square is a diamond exactly twice as wide as it is tall), the same level of detail. That style is LOCKED.
+
+=== WHAT TO DRAW ===
+One square image, 1:1, a 3 by 2 sheet of SIX small village decorations, one per cell, each centred in its own sixth of the canvas. Each one stands on a 1 by 1 tile plot. These are SMALL, HUMBLE, EARLY-VILLAGE pieces — wood, cloth, flowers, rough stone — cheaper-looking and simpler than the garden in the reference. Each must read clearly when shown only 128 pixels wide: big simple shapes, few details.
+
+Top row, left to right:
+1. FLOWERBED — a small raised wooden flower bed (plank box) packed with bright mixed flowers: reds, yellows, whites, pinks, a few green leaves.
+2. BENCH — a simple wooden park bench of planks, with a tiny clay pot of flowers beside it.
+3. LANTERN — an oil lantern with a warm glowing flame, hanging from a little crossarm on a single wooden post.
+
+Bottom row, left to right:
+4. BANNER — a tall wooden pole with a royal-blue kingdom pennant banner with gold trim, hanging from a crossbar at the top.
+5. TOPIARY — a round, neatly clipped green bush in a wooden tub with iron bands.
+6. BIRDBATH — a small rough-stone birdbath with clear cyan water and one or two little birds on its rim.
+
+=== RULES ===
+- No ground plate: no grass, soil, turf, base or platform under any object beyond what the reference garden has (none). The game supplies the terrain.
+- No drop shadows, no cast shadows on the ground.
+- Nothing may cross the canvas midlines or into a neighbouring cell: keep a clear empty 40 px band around every cell edge. Tall pieces (lantern, banner) must fit their cell's height.
+- Same scale for all six, as if on the same map.
+- No text, letters, numbers, labels, signs, emblems with letters, no red cross.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

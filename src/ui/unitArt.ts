@@ -21,23 +21,25 @@
 // to live in `battlePicker`, which is a MOUNT. A mount is a bad place to import
 // a function from.
 
-import { UNITS } from '../sim/data/definitions';
+import { TROOPS, rankOf, unitOf } from '../sim/data/definitions';
+import { ROMAN_RANK } from '../sim/data/techTreeRules';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el } from './format';
-import type { TrainableId } from '../sim/state';
+import type { TrainableId, TroopId } from '../sim/state';
 import { iconEl } from './kit';
 import type { IconName } from './kit/icon';
+import BUST_FRAMING from './bustFraming.json';
 
 const img = (url: string, cls: string): HTMLElement => spriteImgAt(url, cls);
 
 /** The asset stem a trainee's two files are named by. */
 const stemOf = (trainee: TrainableId): string =>
-  (trainee === 'Villager' ? 'unit_villager' : UNITS[trainee].sprite);
+  (trainee === 'Villager' ? 'unit_villager' : TROOPS[trainee].sprite);
 
 /** The atlas cell drawn while the art is missing — a crowd for a villager,
  *  the unit's own silhouette for a soldier. */
 const iconOf = (trainee: TrainableId): IconName =>
-  (trainee === 'Villager' ? 'population' : trainee);
+  (trainee === 'Villager' ? 'population' : unitOf(trainee));
 
 /**
  * The bust — head and shoulders, square. For anything drawn at roughly 48–72px:
@@ -78,6 +80,64 @@ export function unitBody(trainee: TrainableId, cls: string): HTMLElement {
  * Its size is the caller's `--portrait-size`; everything inside scales with it.
  */
 export function unitPortrait(trainee: TrainableId, cls = ''): HTMLElement {
-  return el('span', { class: `k-portrait${cls ? ` ${cls}` : ''}` },
-    el('span', { class: 'k-portrait-mask' }, unitBust(trainee, 'k-portrait-art')));
+  return portraitFrame(unitBust(trainee, 'k-portrait-art'), trainee === 'Villager' ? null : trainee, cls);
+}
+
+/**
+ * Any bust in the round frame, with its RANK when it is above I: the brass
+ * coin over the bottom-right with the numeral pressed into it
+ * (Docs/features/combat.md §6.5). The numeral is the UI's, never the art's,
+ * so an enemy creature at a rank wears the same coin.
+ */
+export function portraitFrame(face: HTMLElement, troop: TroopId | null, cls = ''): HTMLElement {
+  const badge = troop === null ? null : rankBadge(troop);
+  const frame = el('span', { class: `k-portrait${cls ? ` ${cls}` : ''}` },
+    el('span', { class: 'k-portrait-mask' }, face),
+    ...(badge === null ? [] : [badge]));
+  const framing = FRAMING_BY_URL.get(face.getAttribute('data-sprite') ?? '');
+  if (framing !== undefined) {
+    frame.style.setProperty('--bust-dx', String(framing.dx));
+    frame.style.setProperty('--bust-dy', String(framing.dy));
+    frame.style.setProperty('--bust-scale', String(framing.scale));
+  }
+  return frame;
+}
+
+/**
+ * HOW EACH BUST SITS IN THE ROUND FRAME, by sprite (`bustFraming.json`):
+ * scaled about its bottom centre, then moved `dx`/`dy` pixels of its 256px
+ * file. Set by eye, bust by bust, so every face sits at the same height in
+ * the circle. Only the frame reads it — a squad slot or a banner shows the
+ * file as it is — which is why the PNGs are not re-cut to match.
+ */
+const FRAMING_BY_URL = new Map(
+  Object.entries(BUST_FRAMING as Record<string, { dx: number; dy: number; scale: number }>)
+    .flatMap(([key, f]) => {
+      const url = spriteUrl(key);
+      return url === null ? [] : [[url, f] as const];
+    }),
+);
+
+/** The rank coin alone, or null at rank I. */
+export function rankBadge(troop: TroopId): HTMLElement | null {
+  const rank = rankOf(troop);
+  if (rank <= 1) return null;
+  // The numeral is an SVG so it scales with the coin, whatever size the frame
+  // is given (a percentage in a slot, pixels on a card): a light copy one
+  // unit down is the lip the light catches under a struck letter.
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 40 40');
+  svg.setAttribute('aria-hidden', 'true');
+  const size = ROMAN_RANK[rank].length > 2 ? 17 : 21;
+  for (const [cls, dy] of [['k-rank-lip', 1.4], ['k-rank-cut', 0]] as const) {
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', '20');
+    t.setAttribute('y', String(21 + dy));
+    t.setAttribute('class', cls);
+    t.setAttribute('font-size', String(size));
+    t.textContent = ROMAN_RANK[rank];
+    svg.append(t);
+  }
+  return el('b', { class: 'k-rank', role: 'img', 'aria-label': `Rank ${ROMAN_RANK[rank]}` }, svg as unknown as HTMLElement);
 }

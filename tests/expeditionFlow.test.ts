@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import { armyCap } from '../src/sim/army';
 import { grantArtifactLevel, ownsArtifact } from '../src/sim/artifacts';
-import { LAIRS, UNITS } from '../src/sim/data/definitions';
+import { LAIRS, TROOPS } from '../src/sim/data/definitions';
 import { firstClearLump } from '../src/sim/knowledge';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
@@ -60,7 +60,7 @@ describe('the route to a lair', () => {
     const game = freshPresenter(state);
     game.openLair(ORCS);
     for (const slot of game.expeditionParty) {
-      expect(slot.count).toBeLessThanOrEqual(UNITS[slot.unitId].squadSize);
+      expect(slot.count).toBeLessThanOrEqual(TROOPS[slot.unitId].squadSize);
     }
     expect(state.army.length).toBeLessThanOrEqual(armyCap(state));
     expect(game.lairBlockText()).toBeNull();

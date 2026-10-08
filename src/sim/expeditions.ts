@@ -8,7 +8,7 @@
 
 import { roundPrice } from './roundPrice';
 import { heroCanFight, heroHp, setHeroHp } from './heroHealth';
-import { COMBAT, HEROES, PARTY, LAIRS, RELIC_RULES, UNITS, garrisonForTier } from './data/definitions';
+import { COMBAT, HEROES, PARTY, LAIRS, RELIC_RULES, TROOPS, garrisonForTier } from './data/definitions';
 import { dropFragments, openRelicDoor, type FragmentDrop } from './relics';
 import { addHeroXp, heroSlots, skillRank } from './heroes';
 import { slotSkill, spoilsOf } from './skills';
@@ -22,14 +22,15 @@ import {
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
 import { applyLosses, availableRoster, woundedShareFor } from './army';
-import { lairBoard, lairFights, lairIsCleared, markLairCleared, markLairFightWon } from './lairs';
+import { lairBoard, lairFightIndex, lairFights, lairIsCleared, markLairCleared, markLairFightWon } from './lairs';
+import { track } from './analytics';
 import { fightMana } from './world/fights';
 import { firstClearLump, payKnowledge } from './knowledge';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techMultiplier, techPctAimed, techTotals } from './techEffects';
-import type { GameState, HeroId, ItemId, LairId, UnitId, Wallet } from './state';
+import type { GameState, HeroId, ItemId, LairId, TroopId, UnitId, Wallet } from './state';
 import { grantItem } from './bag';
 import { canAfford, pay } from './wallet';
 
@@ -153,10 +154,10 @@ export function partyBoard(party: Party): Board {
     };
   });
   const bonus = {
-    dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags)
-      + UNITS[unitId].dmg * drillFlat(drill.atkPct ?? {}, UNITS[unitId].tags),
-    def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags)
-      + UNITS[unitId].def * drillFlat(drill.defPct ?? {}, UNITS[unitId].tags),
+    dmg: (troop: TroopId) => drillFlat(drill.atk, TROOPS[troop].tags)
+      + TROOPS[troop].dmg * drillFlat(drill.atkPct ?? {}, TROOPS[troop].tags),
+    def: (troop: TroopId) => drillFlat(drill.def, TROOPS[troop].tags)
+      + TROOPS[troop].def * drillFlat(drill.defPct ?? {}, TROOPS[troop].tags),
     hpMult: () => drill.hpMult,
   };
   return buildBoard(party.slots.filter((s) => s.count > 0) as SquadSpec[], fighters, bonus);
@@ -171,12 +172,12 @@ const drillFlat = (
 /** The squads a board is showing, for the screens that draw one. */
 export const boardSquads = (board: Board): EnemySquad[] => board.slots
   .filter((s) => s.kind === 'troop' && s.unitId !== null)
-  .map((s) => ({ unitId: s.unitId as UnitId, count: s.count }));
+  .map((s) => ({ unitId: s.unitId as TroopId, count: s.count }));
 
 /** What our slots lost, read off the log: `count − alive`, per slot (§4). */
-export function lossesFrom(log: BattleLog, board: Board): Array<{ unitId: UnitId; count: number }> {
+export function lossesFrom(log: BattleLog, board: Board): Array<{ unitId: TroopId; count: number }> {
   const left = survivorsOf(log, 'ours');
-  const out: Array<{ unitId: UnitId; count: number }> = [];
+  const out: Array<{ unitId: TroopId; count: number }> = [];
   for (const slot of board.slots) {
     if (slot.kind !== 'troop' || slot.unitId === null) continue;
     const fell = slot.count - (left.get(slot.id) ?? slot.count);
@@ -280,9 +281,9 @@ export interface LairReport {
   supplies: Wallet;
   /** Who did not come back. A garrison fights: it costs soldiers whether it
    *  falls or not (§5). */
-  losses: Array<{ unitId: UnitId; count: number }>;
+  losses: Array<{ unitId: TroopId; count: number }>;
   /** The share of them that reached the infirmary and can be healed back. */
-  wounded: Array<{ unitId: UnitId; count: number }>;
+  wounded: Array<{ unitId: TroopId; count: number }>;
   /** What each hero came home with, and its full HP: the wound it carries
    *  into the next fight (sim/heroHealth.ts). */
   heroes: Array<{ id: HeroId; hp: number; max: number }>;
@@ -321,6 +322,9 @@ export function attackLair(
   const ours = partyBoard(party);
   const attack = partyPower(party);
   const log = resolveBattle(ours, theirs);
+  const fight = lairFightIndex(state, lairId) + 1;
+  const outcome = (result: LairReport['result']): void =>
+    track(state, 'lair_attack', { lair: lairId, fight, result, attack, power });
   // Win or lose, every hero keeps what the fight did to it.
   const heroes = heroesAfter(log, ours);
   for (const h of heroes) setHeroHp(state, h.id, h.hp, t);
@@ -329,6 +333,7 @@ export function attackLair(
   const { losses, wounded } = applyLosses(
     state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
+    outcome('Repelled');
     return {
       result: 'Repelled', attack, power, log, hoard: {}, knowledge: 0, heroXp: 0, supplies, losses, wounded, heroes,
     };
@@ -340,6 +345,7 @@ export function attackLair(
   if (!markLairFightWon(state, lairId)) {
     const heroXp = roundPrice(lairFightXp(lairId) * (1 + spoils.seasoned));
     addHeroXp(state, heroXp);
+    outcome('Won');
     return {
       result: 'Won', attack, power, log, hoard: {}, knowledge: 0, heroXp, supplies, losses, wounded, heroes,
     };
@@ -356,6 +362,7 @@ export function attackLair(
   // What the claim will pay, for the report — nothing has moved yet.
   const hoard: Wallet = { ...lair.hoard };
   const { knowledge } = lairClearReward(state, lairId);
+  outcome('Cleared');
   return { result: 'Cleared', attack, power, log, hoard, knowledge, heroXp: 0, supplies, losses, wounded, heroes };
 }
 
@@ -409,6 +416,7 @@ export function claimLair(state: GameState, lairId: LairId): ClaimReport {
     ...openRelicDoor(state, lairId),
     ...dropFragments(state, 'city', RELIC_RULES.perLairTier[tier - 1] ?? 0, ['lair', lairId]),
   ];
+  track(state, 'lair_claimed', { lair: lairId, tier });
   return { result: 'Claimed', hoard, heroXp, knowledge, items, fragments };
 }
 

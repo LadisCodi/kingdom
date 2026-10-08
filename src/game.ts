@@ -13,24 +13,25 @@ import { forgetRested, heroCanFight, heroHp, heroMaxHp, heroRestEndsAt, restedHe
 import { newsOf, postNews, readNews, type News, type NewsGroup } from './sim/notices';
 import {
   advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectBuilding, collectTap,
-  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, upgradeDistrict,
+  buildPremiumShrine, buyKeys, enqueueBuild, finishWithGems, gemRushCost, moveDistrict, premiumShrinePrice, researchTech, shrineBuild, upgradeDistrict,
+  type ShrineBuild,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
   repairAbandoned,
 } from './sim/commands';
 import {
   BANNER_ORDER,
-  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST, HERO_ORDER, HEROES,
+  AD, ARTIFACTS, ARTIFACT_ORDER, OFFER_ORDER, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, FEATURES, HARVEST, HERO_ORDER, HEROES,
   GOODS, ITEMS, ITEM_BUNDLE_ORDER, LANDMARK_ART, LANDMARKS, MANA, PARTY, LAIRS, LAIR_ORDER, STORE,
-  ERA_REWARDS, TECHNOLOGIES, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
-  RELIC_RULES, SHRINE_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
+  ERA_REWARDS, TECHNOLOGIES, TROOPS, TROOP_ORDER, UNITS, levelIndexed, troopsOf, unitOf, type AdjacencyStat, BANNERS, type BannerId,
+  RELIC_RULES, WORLD_BUILD, relicKind, type BoostKind, type ItemDef, type RelicKind, HELP } from './sim/data/definitions';
 import { formatCount, formatDuration, formatExact, formatNumber, formatCountdown } from './ui/format';
 import { relicPercent } from './ui/relicStats';
 import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, canPlaceAnywhere, districtCount, districtLabel, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
-  requiredPopulation,
+  requiredPopulation, buildShortfall, stockBuild, type PlacementBlock,
 } from './sim/districts';
 import {
   explorationGate, fogState, isPayable, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
@@ -38,13 +39,14 @@ import {
 import {
   cellsWithinRadius, cellsWithinRadiusOfRect, footprintCells, townhallDistance, type MapData,
 } from './sim/grid';
-import { activeZones, areaCovers, type Modifier } from './sim/modifiers';
+import { activeZones, areaCovers, type Modifier, type ModifierArea } from './sim/modifiers';
 import {
-  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, buildingInAura, hostOf, hostRelic,
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, auraTargets, buildingInAura, hostOf, hostRelic,
+  reachesBuilding, worksOnGround,
   isAwake, relicWindowMs, shrines, unhostRelic,
 } from './sim/hosts';
 import { shrineBubbleAt } from './render/shrineBubbles';
-import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { effectiveStock, harvestSourceAt, isExhausted, isGrowing, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
@@ -54,8 +56,8 @@ import {
 } from './sim/army';
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
-  canRestore, forgeReplica, isMet, levelStardust, levelUpRelic, openFragmentPack, replicaPrice, restoreRelic,
-  dropFragments, openRelicDoor, slotCount, spareWorth, type FragmentDrop,
+  canRestore, isMet, levelStardust, levelUpRelic, openFragmentPack, restoreRelic,
+  dropFragments, openRelicDoor, slotCount, type FragmentDrop,
 } from './sim/relics';
 import {
   activeRadius, cast, castBlock, castState, chargesLeft,
@@ -65,7 +67,7 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
   adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
-import { availableRoster, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
+import { availableRoster, rankGate, trainBatch, trainPlan, TRAIN_AMOUNTS, type TrainAmount, type TrainResult } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, itemRushCost, queueGood } from './sim/workshops';
 import {
   autoPlan, fits, jobRemainingSeconds, spendSpeedups, speedupRefusal, speedupsFor, useAuto, useSpeedup,
@@ -103,13 +105,12 @@ import { lairHolding, lairZoneCells } from './sim/lairZone';
 import {
   availableWorkers, districtCapacity, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
-import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
+import { activeQuest, claimQuest, goalNames, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, researchActionableCount, eraShortfall, freshlyOpenBooks, isTechComplete,
-  markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal, revealedCellCount,
+  markBookSeen, pourKnowledge, techKnowledgeMissing, techMaterialsCost, type ResearchRefusal, revealedCellCount,
 } from './sim/research';
 import {
-  effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
   PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
@@ -126,7 +127,7 @@ import {
   addToWallet, builderCount, buildQueueCapacity, busyBuilders, coordKey, districtAt, districtById, getWallet, queueProgress, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId,
-  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type UnitId,
+  type GameState, type HeroId, type ItemId, type PartySlotState, type LairId, type TechId, type TroopId, type UnitId,
   type QueueItem, type Wallet,
 } from './sim/state';
 import {
@@ -134,22 +135,26 @@ import {
   surveyLength, surveyLevel, surveyOwned,
 } from './sim/survey';
 import { pickUpTreasure, treasureAt } from './sim/treasures';
+import { MOVABLE_FEATURES, pickUpBlock, transplant, transplantBlock, TRANSPLANTING } from './sim/plants';
 import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { techValue } from './sim/techEffects';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
 import { worldRanking, type RankedSeat } from './sim/world/ranking';
-import { ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, type QuestDef } from './sim/data/definitions';
+import {
+  ABANDONED, KINGDOM_DEF, QUESTS, SCENES, SURVEY, UNLOCKS, WORLD, isAdjacencyGroup, type QuestDef,
+} from './sim/data/definitions';
 import { CAMERA_GLIDE_MS, Camera } from './render/camera';
 import { HexCamera } from './render/world/hexCamera';
 import {
-  arrivesAt, buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems, fogStateOf, freeExplorers, homeIndex, returnsAt, revealsAt,
-  worldFogAt, type ExplorerHome,
+  buyExplorer, cutExplorer, dispatchExplorer, explorerGemCost, explorerRushCost, explorerSlots, finishExplorerWithGems,
+  fogStateOf, freeExplorers, homeIndex, readyAt, readyTrips, revealExplored, returnsAt, tripPhase, worldFog,
+  type ExplorerFound, type TripFinished,
 } from './sim/world/explorers';
 import { gemsToFinish } from './sim/rush';
 import { CAMP_TITLE } from './ui/world/hexNames';
-import { hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
+import { explorersOutLine, hexWork, isUpgrade, scoutWords, worldBuildDone, worldBuildName, worldBuildSeconds } from './ui/world/worldActions';
 import { fastestRoute, homeboundMs, type Route } from './sim/world/travel';
 import { hasBit } from './sim/world/fogBits';
 import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
@@ -161,6 +166,8 @@ import { nicknameProblem } from './worldServer/nickname';
 import { FriendsClient } from './friendsClient';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
+import type { SeatBoost } from './worldServer/types';
+import { boostLoot } from './sim/world/loot';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
@@ -175,10 +182,27 @@ import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
 import { TapFx } from './render/tapFx';
+import { GhostFx } from './render/ghostFx';
+import { haptic } from './ui/haptics';
 import { pay } from './sim/wallet';
 import { addGood, getGood } from './sim/goods';
 import { worldUpgradeGoods } from './sim/precious';
 import { CAMP_CREATURE, campTribute } from './sim/world/camps';
+
+/** Why a ghost may not stand where it is, as the placement window says it. */
+const GHOST_BLOCK_WORDS: Record<PlacementBlock, string> = {
+  HasFeature: 'Clear the ground first',
+  NotRevealed: 'Reveal the ground first',
+  Occupied: 'Something already stands here',
+  OffMap: 'It does not fit on the map here',
+  CountLimit: 'Every one allowed is built',
+  NeedsResearch: 'Research it first',
+  NeedsShoreline: 'It needs a shoreline',
+  NeedsLand: 'It cannot stand on water',
+  NeedsHarmony: 'Needs more Harmony',
+  HasSite: 'Something already stands here',
+  LairZone: 'A lair holds this ground',
+};
 
 export type Mode =
   | { kind: 'normal' }
@@ -188,6 +212,9 @@ export type Mode =
    *  can put it back and so the ghost knows which footprint is its own. */
   | { kind: 'moving'; districtUniqueId: string; definitionId: DistrictId;
       selected: Coord | null; origin: Coord }
+  /** Moving a tree or a crop plot (Docs/features/27-plantables.md §4): the
+   *  same ghost as a building's move, for a feature lifted from `origin`. */
+  | { kind: 'transplanting'; feature: FeatureId; selected: Coord | null; origin: Coord }
   /** Casting reuses the placement machinery wholesale — select, highlight,
    *  tap to commit — rather than inventing a second targeting model. */
   | { kind: 'casting'; artifactId: ArtifactId; selected: Coord | null };
@@ -274,8 +301,6 @@ export interface RelicView {
   level: number; restored: boolean; met: boolean;
   /** Fragments held per slot: five pieces, then the keystone. */
   slots: number[];
-  /** Copies past the first of each slot, worth what a replica asks. */
-  spares: number;
   /** Stardust the next level asks; it also takes one fragment of each slot. */
   levelStardust: number;
   /** Every slot holds a fragment — the set a level takes. */
@@ -284,8 +309,6 @@ export interface RelicView {
   now: string; next: string;
   pending: string | null;
   cast: { phase: CastPhase; leftMs: number; charges: number };
-  /** The replica offer for its first missing fragment, or null. */
-  forge: { slot: number; freeSpares: number; spares: number; gems: number; canFree: boolean; canGems: boolean } | null;
   /** A restored city relic's Shrine, and the Shrines it could move to; null
    *  for a world relic or one not restored (sim/hosts.ts). */
   host: { at: string | null; shrines: ShrineOption[] } | null;
@@ -452,7 +475,19 @@ export type GachaPrize =
   // Into the Bag: a call's speed-up or chest.
   | { kind: 'item'; item: ItemId; amount: number }
   // A relic's fragment — its own piece of the relic (relicSheet `fragmentArt`).
-  | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number };
+  | { kind: 'relicFragment'; relic: ArtifactId; slot: number; amount: number }
+  // A ten-call's supplies of one family — every speed-up, or every chest —
+  // as one card listing what is in it (Docs/features/10-heroes.md §8.3).
+  | { kind: 'supplies'; family: SupplyFamily; items: Array<{ item: ItemId; amount: number }>; amount: number }
+  // A ten-call's Fragments, every hero of the bag that got any on one card.
+  | { kind: 'bag'; rows: BagRow[] };
+
+/** The two kinds of supply a call pays (10-heroes.md §6.4). */
+export type SupplyFamily = 'speedup' | 'chest';
+
+/** One hero's line on the bag card: what the batch paid them and where it
+ *  left their bar. */
+export interface BagRow { heroId: HeroId; amount: number; progress?: FragmentProgress }
 
 /**
  * Where a call's fragments of one hero leave them: toward RECRUITING a hero
@@ -501,6 +536,48 @@ export interface GachaReveal {
  * with them and then spend nine tiles winding down. Before them: the
  * currencies, then the Bag's items, then the fragments.
  */
+/**
+ * A ten-call's prizes, GROUPED into a handful of cards
+ * (Docs/features/10-heroes.md §8.3): a card per currency (already summed),
+ * a card per supply family with its contents listed, ONE bag card for every
+ * Fragment, and a hero card per new hero — a recruit on the bag card gets one
+ * too, so it is celebrated as a hero rather than as a line.
+ *
+ * Takes the prizes `gachaPrizes` made, after `openReveal` has read each
+ * fragment stack's progress, so the bag's bars carry it.
+ */
+export function groupPrizes(prizes: readonly GachaPrize[]): GachaPrize[] {
+  const currencies: GachaPrize[] = [];
+  const families = new Map<SupplyFamily, Array<{ item: ItemId; amount: number }>>();
+  const rows: BagRow[] = [];
+  const heroes: GachaPrize[] = [];
+  const rest: GachaPrize[] = [];
+  for (const p of prizes) {
+    if (p.kind === 'currency') currencies.push(p);
+    else if (p.kind === 'item' && (ITEMS[p.item].kind === 'speedup' || ITEMS[p.item].kind === 'chest')) {
+      const family = ITEMS[p.item].kind as SupplyFamily;
+      families.set(family, [...(families.get(family) ?? []), { item: p.item, amount: p.amount }]);
+    } else if (p.kind === 'fragments') {
+      rows.push({ heroId: p.heroId, amount: p.amount, ...(p.progress ? { progress: p.progress } : {}) });
+      if (p.progress?.recruited === true) heroes.push({ kind: 'hero', heroId: p.heroId });
+    } else if (p.kind === 'hero') heroes.push(p);
+    else rest.push(p);
+  }
+  const supplies = (['speedup', 'chest'] as const)
+    .filter((f) => families.has(f))
+    .map((family): GachaPrize => {
+      const items = families.get(family)!;
+      return { kind: 'supplies', family, items, amount: items.reduce((n, i) => n + i.amount, 0) };
+    });
+  // The bag's recruits last, so its rows read toward the heroes after it.
+  rows.sort((a, b) => Number(a.progress?.recruited === true) - Number(b.progress?.recruited === true));
+  return [
+    ...currencies, ...supplies, ...rest,
+    ...(rows.length > 0 ? [{ kind: 'bag', rows } as GachaPrize] : []),
+    ...heroes,
+  ];
+}
+
 export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
   const heroes: GachaPrize[] = [];
   const fragments = new Map<HeroId, number>();
@@ -682,6 +759,8 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
+  /** The placement ghost's float, glide and landing (render/ghostFx.ts). */
+  readonly ghostFx = new GhostFx();
   private questWasComplete = false;
   private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
@@ -701,7 +780,9 @@ export class Game {
    * stage sets it while a line holds a lock, and every tap, hold and ghost
    * drag asks it first. Absent = everything goes through.
    */
-  tapGate: ((cell: Coord | null, how: 'tap' | 'hold' | 'ghost') => boolean) | null = null;
+  tapGate: ((cell: Coord | null, how: 'tap' | 'ghost') => boolean) | null = null;
+  /** The same gate on the world board: which hex a tap may reach. */
+  hexGate: ((index: number | null) => boolean) | null = null;
   /** Inside an automatic claim — so the claim's own notify does not start another. */
   private autoClaiming = false;
 
@@ -847,6 +928,7 @@ export class Game {
     const offered = this.adOffer() !== null;
     if (offered && !this.adOfferShown) this.track('ad_offer_shown', { placement: 'mana' });
     this.adOfferShown = offered;
+    if (canPayMana(this.state, 1)) this.manaEmptySent = false;
     // The world board is server state: read it every second while it is on
     // screen, and now and then otherwise (a held Sanctuary moves the Mana
     // ceiling wherever the player is).
@@ -861,10 +943,11 @@ export class Game {
     for (const r of result.relicsAsleep) {
       if (!this.asleepNotices.includes(r)) this.asleepNotices.push(r);
     }
-    // An explorer home is a news (sim/notices.ts); the target's promise, if
-    // it kept one, is paid here (19 §3.2).
-    for (const home of result.explorersHome) this.payExplorer(home);
-    if (result.explorersHome.length > 0) playSfx('explorerHome');
+    // An explorer whose work is done waits at its hex for the player's tap:
+    // it calls out once, and stands in the notices until it is answered.
+    const ready = readyTrips(this.state, this.now()).map((t) => t.id);
+    if (ready.some((id) => !this.readyHeard.has(id))) playSfx('explorerHome');
+    this.readyHeard = new Set(ready);
     // A garrison come down on the city: a far horn, whatever it took.
     if (result.raids.length > 0) playSfx('raidAlarm');
     // A strike hits the CELL and a haul lands at the BUILDING, which is the
@@ -923,11 +1006,9 @@ export class Game {
     this.tapChain.register({
       priority: 310,
       handle: (cell) => {
-        if (this.mode.kind !== 'moving') return false;
-        if (this.canDropAt(cell)) {
-          this.mode.selected = cell;
-          this.notify();
-        }
+        if (this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return false;
+        // Any cell takes the ghost, legal or not: an illegal one turns it red.
+        this.stepGhostTo(cell);
         return true; // move mode swallows all map taps
       },
     });
@@ -936,11 +1017,8 @@ export class Game {
       priority: 300,
       handle: (cell) => {
         if (this.mode.kind !== 'placing') return false;
-        const valid = validPlacementCells(this.state, this.map, this.mode.definitionId);
-        if (valid.some((c) => c.x === cell.x && c.y === cell.y)) {
-          this.mode.selected = cell;
-          this.notify();
-        }
+        // Any cell takes the ghost, legal or not: an illegal one turns it red.
+        this.stepGhostTo(cell);
         return true; // placement mode swallows all map taps
       },
     });
@@ -1203,103 +1281,45 @@ export class Game {
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
   private outOfMana(cell: Coord): void {
+    // Once a dry spell (Docs/plans/analytics.md §3.3): the first tap refused,
+    // with whether the video stood ready to refill it.
+    if (!this.manaEmptySent) this.track('mana_empty', { ad: this.adOffer() !== null });
+    this.manaEmptySent = true;
     playSfx('error');
     this.shake(['Mana']);
     this.floaters.add(cell, 'empty', 'Mana');
   }
 
-  /** One collect on a resource cell, with feedback. `autoRepeat` marks the
-   *  ticks a held pointer generates — those are cooldown-gated, deliberate
-   *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
-  private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
+  /** One collect on a resource cell, with feedback. */
+  private collectAt(cell: Coord): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
     const units = tapYieldAt(this.state, this.map, cell, this.now()); // before the tap — it may empty the cell
-    const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
+    const result = collectTap(this.state, this.map, cell, this.now());
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
       this.floaters.add(cell, `+${formatExact(units)}`, HARVEST[source].currencyId);
       this.tapReward(cell, HARVEST[source].currencyId, units);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
-      this.floaters.add(cell, '💤');
-    } else if (result === 'TechLocked' && !autoRepeat && source !== null) {
+      this.floaters.add(cell, isGrowing(this.state, this.map, cell, this.now()) ? '🌱' : '💤');
+    } else if (result === 'TechLocked' && source !== null) {
       // Say WHICH research, by name. "You can see it and you cannot have it
       // yet" is the whole point of the gate, and it only teaches anything if
       // the player is told what would open it.
       const gate = HARVEST[source].requiredTech;
       playSfx('error');
       if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
-    } else if (result === 'LairHeld' && !autoRepeat) {
+    } else if (result === 'LairHeld') {
       // Say WHO: the refusal is the lair's, and naming it is what sends the
       // player to clear it (Docs/proposals/lairs.md §6). Costs no Mana — the
       // tap is refused before anything is charged.
       const lairId = lairHolding(this.state, cell);
       playSfx('error');
       if (lairId) this.toast(`${holdsThisGround(lairCreature(lairId))}`);
-    } else if (result === 'NoMana' && !autoRepeat) {
-      // A held pointer stays silent — it would otherwise shake the header
-      // once a frame for as long as the finger is down.
+    } else if (result === 'NoMana') {
       this.outOfMana(cell);
     }
     return result;
-  }
-
-  /** Held pointer: repeat COLLECT and REVEAL taps (never inspect or place).
-   *  The input layer repeats this while the press lasts; the auto-tap cooldown
-   *  decides how many actually land, so holding is the slow, lazy option and
-   *  tapping fast stays the skilful one.
-   *
-   *  Reveal is here because paying for fog is one Gold per tap on a doubling
-   *  ring curve: a single distance-9 iron vein is 320 individual taps, and the
-   *  whole map is 194,142. That is the difference between the game's
-   *  differentiator being filmable and being punishing.
-   *
-   *  Returns true when this repeat DID something — the input layer then
-   *  swallows the tap on release, so one press never acts twice. */
-  handleHold(sx: number, sy: number): boolean {
-    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
-    const cell = this.collectBubbleCell(sx, sy) ?? this.camera.screenToCell(sx, sy);
-    if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
-    if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a building collects its store once; an empty one holds still.
-    const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && showsCollect(this.state, district)) {
-      this.collectStoreOf(district);
-      this.notify();
-      return true;
-    }
-    if (district && district.state === 'Built' &&
-        districtCapacity(this.state, district) > 0) return false;
-    if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
-    if (harvestSourceAt(this.state, cell) === null) return false;
-    if (!this.state.fog.revealed[coordKey(cell)]) return false;
-    if (isExhausted(this.state, this.map, cell, this.now())) return false; // quiet — no 💤 spam
-    if (this.collectAt(cell, true) !== 'Harvested') return false;
-    this.notify();
-    return true;
-  }
-
-  /** One repeat of a held reveal. Paced by the SAME auto-tap cooldown as
-   *  collecting, so QuickHands speeds clearing fog up too and holding never
-   *  outruns a determined tapper. */
-  private revealHold(cell: Coord): boolean {
-    const now = this.now();
-    if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
-    const charged = nextRevealTapCost(this.state, this.map, cell);
-    const result = revealTap(this.state, this.map, cell);
-    if (result !== 'Paid' && result !== 'Revealed') return false;
-    this.flashFog(cell);
-    this.state.lastCollectTapAt = now;
-    if (result === 'Revealed') {
-      wakeIdleWorkersAt(this.state, now);
-      playSfx('revealDone');
-      this.floaters.add(cell, 'Revealed!');
-    } else {
-      playSfx('revealPaid');
-      this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
-    }
-    this.notify();
-    return true;
   }
 
   // ------------------------------------------------------------ placement mode
@@ -1372,9 +1392,16 @@ export class Game {
     const selected = this.defaultPlacementCell(definitionId);
     this.ghostHeld = false;
     this.mode = { kind: 'placing', definitionId, selected };
+    // Past the ruin and the material Shrines, a Shrine is paid in Gems.
+    if (DISTRICTS[definitionId].hostsRelic && shrineBuild(this.state).kind === 'gems') {
+      this.mode = { ...this.mode, premium: true };
+    }
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    if (selected) this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
+    if (selected) {
+      this.camera.centerOnCell(selected, DISTRICTS[definitionId].size, CAMERA_GLIDE_MS);
+      playSfx('ghostLift', { gain: 0.7 });
+    }
     this.notify();
   }
 
@@ -1383,7 +1410,7 @@ export class Game {
   /** Enter move mode for a built building. The ghost starts where the
    *  building already stands, so the first thing the player sees is the thing
    *  they picked up, not a jump to somewhere else. */
-  startMove(districtUniqueId: string): void {
+  startMove(districtUniqueId: string, glide = true): void {
     const district = districtById(this.state, districtUniqueId);
     if (!district) return;
     if (!canMoveDistrict(district)) {
@@ -1403,39 +1430,173 @@ export class Game {
     this.openOverlay = null;
     this.inspectedDistrictId = null;
     // The ghost is out where the building stands: bring it into view, as
-    // placement does for a new one.
-    this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
+    // placement does for a new one — unless a finger is already on it.
+    if (glide) this.camera.centerOnCell(district.location, DISTRICTS[district.definitionId].size, CAMERA_GLIDE_MS);
+    playSfx('ghostLift');
     this.notify();
   }
 
-  /** Is this a legal address for the building currently being moved? */
-  canDropAt(cell: Coord): boolean {
-    if (this.mode.kind !== 'moving') return false;
-    return placementBlock(
-      this.state, this.map, this.mode.definitionId, cell, this.mode.districtUniqueId,
-    ) === null;
+  /**
+   * A LONG PRESS on a building that may move picks it up: move mode starts
+   * with the ghost already under the finger, so the same press carries it.
+   * Only from the plain map — no mode, no menu, no tutorial lock.
+   */
+  holdAt(sx: number, sy: number): boolean {
+    if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
+    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    const cell = this.camera.screenToCell(sx, sy);
+    const district = districtAt(this.state, cell);
+    if (!district) return this.holdFeatureAt(cell);
+    if (!canMoveDistrict(district)) return false;
+    this.startMove(district.uniqueId, false);
+    if ((this.mode as Mode).kind !== 'moving') return false;
+    this.ghostGrip = { x: cell.x - district.location.x, y: cell.y - district.location.y };
+    this.ghostHeld = true;
+    this.ghostFx.grab();
+    this.notify();
+    return true;
+  }
+
+  /** Why the ghost may not stand where it is, or null when it may. */
+  ghostBlock(): PlacementBlock | null {
+    if (this.mode.kind === 'transplanting') {
+      const { selected, origin } = this.mode;
+      if (selected === null || (selected.x === origin.x && selected.y === origin.y)) return null;
+      return transplantBlock(this.state, this.map, origin, selected);
+    }
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return null;
+    if (this.mode.selected === null) return null;
+    return placementBlock(this.state, this.map, this.mode.definitionId, this.mode.selected,
+      this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined);
+  }
+
+  /** The ghost's refusal in words, for the placement window and the toast;
+   *  null when it may stand where it is. */
+  ghostBlockWords(): string | null {
+    const block = this.ghostBlock();
+    if (block === null) return null;
+    if (this.mode.kind === 'transplanting') return GHOST_BLOCK_WORDS[block];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return null;
+    return block === 'NeedsHarmony'
+      ? this.refusalWords(block, this.mode.definitionId, 1)
+      : GHOST_BLOCK_WORDS[block];
   }
 
   confirmMove(): void {
     if (this.mode.kind !== 'moving' || !this.mode.selected) return;
     const { districtUniqueId, selected, origin } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.refuseGhost(refusal);
+      return;
+    }
     // Putting it back where it started is a cancel, not an error — the player
     // dragged it around, changed their mind, and dropped it home.
     if (selected.x === origin.x && selected.y === origin.y) {
+      this.setGhostDown(selected, this.mode.definitionId, true);
       this.mode = { kind: 'normal' };
       this.inspectedDistrictId = districtUniqueId;
       this.notify();
       return;
     }
+    const definitionId = this.mode.definitionId;
     const result = moveDistrict(this.state, this.map, districtUniqueId, selected, this.now());
     if (result === 'Moved') {
-      playSfx('buildPlaced');
+      this.setGhostDown(selected, definitionId);
       this.mode = { kind: 'normal' };
       // Land back on the card the move was started from: the player is very
       // likely to want the thing they just repositioned.
       this.inspectedDistrictId = districtUniqueId;
     } else {
       this.toast(result === 'InvalidCell' ? 'It will not fit there' : result);
+    }
+    this.notify();
+  }
+
+  // ------------------------------------------------------------ transplanting
+
+  /**
+   * A long press on a tree or a crop plot picks it up, as one on a building
+   * does (Docs/features/27-plantables.md §4). A tree before Transplanting is
+   * refused with a toast naming it, since a press that did nothing on the
+   * one thing that looks movable would read as a fault.
+   */
+  private holdFeatureAt(cell: Coord): boolean {
+    const feature = this.state.features[coordKey(cell)];
+    if (feature === undefined || !MOVABLE_FEATURES.has(feature)) return false;
+    const block = pickUpBlock(this.state, cell);
+    if (block === 'NeedsResearch') {
+      playSfx('error');
+      this.toast(`Research ${TECHNOLOGIES[TRANSPLANTING].name} before you can move trees`);
+      this.notify();
+      return false;
+    }
+    if (block !== null) return false;
+    this.mode = { kind: 'transplanting', feature, selected: cell, origin: cell };
+    this.inspectedDistrictId = null;
+    this.ghostGrip = { x: 0, y: 0 };
+    this.ghostHeld = true;
+    this.ghostFx.grab();
+    playSfx('ghostLift');
+    haptic(10);
+    this.notify();
+    return true;
+  }
+
+  /** Can a long press here pick something up? What the hold ring asks
+   *  before it shows (render/input.ts). */
+  canHoldAt(sx: number, sy: number): boolean {
+    if (this.scene !== 'province' || this.mode.kind !== 'normal') return false;
+    if (this.openOverlay !== null || this.tapGate !== null) return false;
+    const cell = this.camera.screenToCell(sx, sy);
+    const district = districtAt(this.state, cell);
+    if (district) return canMoveDistrict(district);
+    const feature = this.state.features[coordKey(cell)];
+    return feature !== undefined && MOVABLE_FEATURES.has(feature)
+      && this.state.fog.revealed[coordKey(cell)] === true;
+  }
+
+  /** What a moved feature will be: its name, its art, and how long it
+   *  grows wherever it lands. */
+  transplantInfo(): {
+    feature: FeatureId; name: string; sprite: string; glyph: string;
+    growSeconds: number; unmoved: boolean; blocked: string | null;
+  } | null {
+    if (this.mode.kind !== 'transplanting') return null;
+    const { feature, selected, origin } = this.mode;
+    const def = FEATURES[feature];
+    return {
+      feature, name: def.name, sprite: def.sprite, glyph: def.glyph,
+      growSeconds: HARVEST[def.source].growSeconds,
+      unmoved: selected === null || (selected.x === origin.x && selected.y === origin.y),
+      blocked: this.ghostBlockWords(),
+    };
+  }
+
+  confirmTransplant(): void {
+    if (this.mode.kind !== 'transplanting' || !this.mode.selected) return;
+    const { selected, origin } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.refuseGhost(refusal);
+      return;
+    }
+    // Put back where it started: a cancel, and its growth or its Wood kept.
+    if (selected.x === origin.x && selected.y === origin.y) {
+      this.ghostFx.land(coordKey(selected), selected, { x: 1, y: 1 });
+      playSfx('ghostStep', { rate: 0.85 });
+      this.mode = { kind: 'normal' };
+      this.notify();
+      return;
+    }
+    const result = transplant(this.state, this.map, origin, selected, this.now());
+    if (result === 'Moved') {
+      this.ghostFx.land(coordKey(selected), selected, { x: 1, y: 1 });
+      playSfx('ghostPlant');
+      haptic(20);
+      this.mode = { kind: 'normal' };
+    } else {
+      this.toast(result in GHOST_BLOCK_WORDS ? GHOST_BLOCK_WORDS[result as PlacementBlock] : 'It cannot go there');
     }
     this.notify();
   }
@@ -1643,22 +1804,16 @@ export class Game {
   /**
    * WHAT AN AWAKE AURA PAYS THE BUILDINGS IN IT (M84), one badge a roof — on
    * what the relic actually moves: the Crown's houses with residents, the
-   * Hammer's buildings with a crew, the Staff's buildings that train. The
-   * Sickle moves the GROUND, which the tint already says.
+   * Hammer's buildings with a crew or that train. The Staff and the Sickle
+   * move the GROUND, which the tint already says.
    */
   private auraBadges(): MarkerLayer['auraBadges'] {
     const out: MarkerLayer['auraBadges'] = [];
     for (const host of shrines(this.state)) {
       const relic = host.hosts;
       if (relic === undefined || !isAwake(this.state, relic)) continue;
-      const reaches = relic === 'GildedLedger'
-        ? (d: District) => residentsOf(this.state, d) > 0
-        : relic === 'ForemansSigil'
-          ? (d: District) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0
-          : relic === 'DowsingRod'
-            ? (d: District) => DISTRICTS[d.definitionId].trains.length > 0
-            : null;
-      if (reaches === null) continue;
+      if (worksOnGround(relic)) continue;
+      const reaches = (d: District) => reachesBuilding(this.state, relic, d);
       const text = `+${relicPercent(passiveValue(this.state, relic))}`;
       const aura = auraOf(this.state, host, relic);
       for (const d of this.state.city.districts) {
@@ -1753,34 +1908,23 @@ export class Game {
   // ---------------------------------------------------------------- relics
 
   /**
-   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, its spares,
-   * what it does now and next, and the one thing to press — Restore, Level
-   * up, or Forge the missing fragment.
+   * A RELIC'S SHEET (Docs/art/ui-relics.md §2): its six slots, what it does
+   * now and next, and the one thing to press — Restore or Level up.
    */
   relicCard(id: ArtifactId): RelicView {
     const def = ARTIFACTS[id];
     const level = artifactLevel(this.state, id);
     const restored = level >= 1;
     const slots = Array.from({ length: 6 }, (_, s) => slotCount(this.state, id, s));
-    const missing = slots.findIndex((n) => n === 0);
-    const spares = spareWorth(this.state, id);
-    const forge = restored || missing < 0 ? null : (() => {
-      const price = replicaPrice(missing);
-      return {
-        slot: missing, freeSpares: price.freeSpares, spares: price.spares, gems: price.gems,
-        canFree: spares >= price.freeSpares, canGems: spares >= price.spares,
-      };
-    })();
     return {
       id, name: def.name, sprite: def.sprite, glyph: def.glyph, kind: relicKind(id),
-      level, restored, met: isMet(this.state, id), slots, spares,
+      level, restored, met: isMet(this.state, id), slots,
       levelStardust: levelStardust(Math.max(1, level)), hasSet: slots.every((n) => n > 0),
       canRestore: canRestore(this.state, id),
       now: relicEffectText(id, passiveValue(this.state, id)),
       next: relicEffectText(id, nextPassiveValue(this.state, id)),
       pending: def.pending,
       cast: this.castPhase(id),
-      forge,
       host: restored && relicKind(id) === 'world' ? {
         at: (() => {
           const c = this.myChapels().find((x) => x.relic === id);
@@ -1913,15 +2057,6 @@ export class Game {
       const chapel = relicKind(id) === 'world' ? this.myChapels().find((c) => c.relic === id) : undefined;
       if (chapel !== undefined) void this.doHostWorldRelic(id, chapel.index);
     } else this.shake(result === 'NotEnoughStardust' ? ['Stardust'] : []);
-    this.notify();
-  }
-
-  doForgeReplica(id: ArtifactId, withGems: boolean): void {
-    const view = this.relicCard(id);
-    if (view.forge === null) return;
-    const result = forgeReplica(this.state, id, view.forge.slot, withGems);
-    if (result === 'Forged') playSfx(withGems ? 'gemSpend' : 'click');
-    else this.shake(result === 'NotEnoughGems' ? ['Gems'] : []);
     this.notify();
   }
 
@@ -2567,40 +2702,39 @@ export class Game {
   }
 
   /** Place a Shrine anywhere, for Gems (relic-restoration.md §5.1). */
-  startPremiumShrine(): void {
-    if (premiumShrinePrice(this.state) === null) return;
-    this.startPlacement('Shrine');
-    if (this.mode.kind === 'placing') this.mode = { ...this.mode, premium: true };
-    this.notify();
+  /** How the next Shrine is built from the Build menu (`shrineBuild`). */
+  shrineBuild(): ShrineBuild {
+    return shrineBuild(this.state);
   }
 
-  /** The next premium Shrine's Gem price, and how many Shrines stand. */
-  shrineOffer(): { gems: number | null; standing: number; max: number } {
-    return {
-      gems: premiumShrinePrice(this.state),
-      standing: districtCount(this.state, 'Shrine'),
-      max: 1 + SHRINE_RULES.premiumGems.length,
-    };
+  /** How many Shrines stand, of how many the realm allows. */
+  shrineCount(): { standing: number; max: number } {
+    return { standing: districtCount(this.state, 'Shrine'), max: maxDistrictCount(this.state, DISTRICTS.Shrine) };
   }
 
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
+    const refusal = this.ghostBlockWords();
+    if (refusal !== null) {
+      this.refuseGhost(refusal);
+      return;
+    }
     if (this.mode.premium) {
       const result = buildPremiumShrine(this.state, this.map, selected);
       if (result === 'Started') {
-        playSfx('buildPlaced');
+        this.setGhostDown(selected, definitionId);
         this.mode = { kind: 'normal' };
       } else if (result === 'NotEnoughGems') this.shake(['Gems']);
       else if (result === 'NoBuilderFree') this.offerBuilder();
-      else this.toast(result === 'NoneLeft' ? 'Every Shrine is built' : result === 'CountLimit' ? 'Five Shrines stand already' : 'Not here');
+      else this.toast(result === 'NoneLeft' || result === 'CountLimit' ? 'Every Shrine is built' : result === 'NotForGems' ? 'Not for Gems yet' : 'Not here');
       this.notify();
       return;
     }
     const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
-      playSfx('buildPlaced');
+      this.setGhostDown(selected, definitionId);
       this.mode = { kind: 'normal' };
       // Confirmed from a free builder's row: the sheet was only in the way.
       if (this.openOverlay === 'builder') this.openOverlay = null;
@@ -2690,6 +2824,17 @@ export class Game {
   /** The boosts running, for the Boosts tab's ribbons. */
   bagBoosts(): Array<{ kind: BoostKind; value: number; endsAt: number }> {
     return runningBoosts(this.state);
+  }
+
+  /** A lesson makes up what the wallet lacks for a building (a line's
+   *  `stocks`): paid at once, and flown in from `from` like a collect, so
+   *  the player sees where it came from. */
+  stockBuild(id: DistrictId, from?: { x: number; y: number }): void {
+    const haul = buildShortfall(this.state, id);
+    if (Object.keys(haul).length === 0) return;
+    stockBuild(this.state, id);
+    this.notify();
+    queueMicrotask(() => this.reward(haul, from));
   }
 
   doUseItem(id: ItemId, n: number): void {
@@ -2835,10 +2980,14 @@ export class Game {
     if (job.kind === 'explorer') {
       const trip = this.state.world.explorers.find((t) => t.id === job.tripId);
       if (!trip) return null;
-      const total = returnsAt(trip) - trip.departedAt;
+      const phase = tripPhase(trip, now);
+      // Out and at work, then the road home: each wait its own bar.
+      const [from, to] = phase === 'home'
+        ? [trip.revealedAt!, returnsAt(trip)] : [trip.departedAt, readyAt(trip)];
+      const total = to - from;
       return {
-        title: `Explorer · ${now < arrivesAt(trip) ? 'on the way' : now < revealsAt(trip) ? 'exploring' : 'coming home'}`,
-        icon: 'compass', progress: total > 0 ? Math.min(1, (now - trip.departedAt) / total) : 1,
+        title: `Explorer · ${phase === 'out' ? 'on the way' : phase === 'working' ? 'exploring' : phase === 'ready' ? 'waiting for you' : 'coming home'}`,
+        icon: 'compass', progress: total > 0 ? Math.min(1, (now - from) / total) : 1,
         gems: explorerRushCost(trip, now),
       };
     }
@@ -2855,7 +3004,7 @@ export class Game {
     }
     if (job.kind === 'hex') {
       const h = this.worldServer === null ? null : this.worldSource().hexOf(job.index);
-      const work = h === null ? null : hexWork(h);
+      const work = h === null ? null : hexWork(h, this.worldBoost());
       if (work === null) return null;
       const total = work.endsAt - work.startedAt;
       return {
@@ -2927,15 +3076,15 @@ export class Game {
   }
 
   /**
-   * Take `seconds` off a job that is not the city's own: an explorer, whose
-   * return is told as it always is, or a world build, which the server moves
+   * Take `seconds` off a job that is not the city's own: an explorer, which
+   * reveals its hex if its work is done by it, or a world build, which the server moves
    * (`hurry`) before anything is spent. True when the time was taken.
    */
   private async speedAway(job: SpeedJob, seconds: number): Promise<boolean> {
     const now = this.now();
     if (job.kind === 'explorer') {
-      const { home } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
-      if (home !== null) this.explorerHomeToast(home);
+      const { finished } = cutExplorer(this.state, job.tripId, seconds * 1000, now);
+      if (finished !== null) this.tripFinished(finished);
       return true;
     }
     if (job.kind === 'army') {
@@ -3051,6 +3200,9 @@ export class Game {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
       return `Needs ${formatExact(short?.shortBy ?? 0)} more Harmony — build a decoration`;
     }
+    if (result === 'NotForMaterials') {
+      return shrineBuild(this.state).kind === 'ruinFirst' ? 'Repair the old shrine first' : 'Every Shrine is built';
+    }
     if (result === 'NeedsPopulation') {
       const need = requiredPopulation(definitionId, targetLevel);
       return `Needs ${formatExact(need)} villagers — you have ${formatExact(this.state.city.population)}. Train more at the Townhall`;
@@ -3126,7 +3278,7 @@ export class Game {
    *  carries no Finish. Its start is its finish less its authored time. */
   builderWorldJobs(): Array<{ index: number; name: string; task: string; startedAt: number; durationMs: number }> {
     return this.state.world.builds.map((b) => {
-      const seconds = worldBuildSeconds(b.what, b.level);
+      const seconds = worldBuildSeconds(b.what, b.level, this.worldBoost());
       return {
         index: b.index,
         name: worldBuildName(b.what),
@@ -3411,7 +3563,7 @@ export class Game {
       const held = this.state.heroes.fragments[p.heroId] ?? 0;
       if (!ownsHeroId(this.state, p.heroId)) {
         const recruited = unlockHero(this.state, p.heroId) === 'Unlocked';
-        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(), recruited };
+        p.progress = { toward: 'recruit', from: held - p.amount, to: held, goal: heroUnlockCost(p.heroId), recruited };
       } else {
         const entry = heroEntry(this.state, p.heroId);
         if (!isMaxAscension(entry)) {
@@ -3423,7 +3575,12 @@ export class Game {
     // fragments, just before the heroes.
     const rank = (p: GachaPrize): number => (p.kind === 'hero' ? 2 : p.kind === 'fragments' && p.progress?.recruited ? 1 : 0);
     prizes.sort((a, b) => rank(a) - rank(b));
-    this.gachaReveal = { banner, calls: pulls.length, prizes, chest: banner === 'advanced' ? 'golden' : 'common' };
+    // A batch is a handful of cards, dealt in beats; a single call, its three.
+    this.gachaReveal = {
+      banner, calls: pulls.length,
+      prizes: pulls.length > 1 ? groupPrizes(prizes) : prizes,
+      chest: banner === 'advanced' ? 'golden' : 'common',
+    };
   }
 
   /**
@@ -3461,6 +3618,7 @@ export class Game {
           this.state.kingdom.builders, this.state.world.explorersBought,
           BANNER_ORDER.map((b) => [this.freePull(b).left, this.freePull(b).ready, this.pullPrice(b).amount]),
           this.doorOpen('banner'), this.doorOpen('bag'), this.fragmentPackOffer(), this.storeVisits,
+          this.builderOffer(), BANNER_ORDER.map((b) => this.keyOffer(b)),
         ]);
       }
       case 'heroes': return this.heroesSignature();
@@ -3511,12 +3669,6 @@ export class Game {
       case 'wishFilled': return JSON.stringify(this.friends.justFilled);
       case 'iapConfirm':
         return JSON.stringify([this.pendingSku, this.payerInfo()]);
-      case 'store':
-        return JSON.stringify([
-          this.builderOffer(),
-          BANNER_ORDER.map((b) => this.keyOffer(b)),
-          this.walletValue('Gems'),
-        ]);
       // Not signed: the Collection counts the season down and the rest draw
       // prices against a purse that moves every tick.
       default: return null;
@@ -3635,7 +3787,7 @@ export class Game {
   doResearchTech(id: TechId): void {
     const paid = this.state.research.rewarded.length;
     const result = researchTech(this.state, this.map, id, this.now());
-    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id].effects)) {
+    if (result === 'Researched' && this.worldServer !== null && movesWorldBoost(TECHNOLOGIES[id])) {
       void this.worldServer.setBoost(worldImprovementBoost(this.state));
     }
     if (result === 'Researched') {
@@ -3647,7 +3799,9 @@ export class Game {
         if (n) this.toast(`Chapter ${formatExact(era)} complete — ${formatExact(n)} relic fragment${n === 1 ? '' : 's'}`);
       }
     } else if (result === 'NotEnoughGold') this.shake(['Gold']);
-    else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
+    else if (result === 'NotEnoughMaterials') {
+      this.shake((Object.keys(techMaterialsCost(id)) as CurrencyId[]).filter((c) => this.walletValue(c) < getWallet(TECHNOLOGIES[id].cost, c)));
+    } else if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
     else if (result === 'NotFilled') this.shake(['Knowledge']);
     else if (result !== 'AlreadyDone') this.researchRefusalToast(result, id);
     this.notify();
@@ -3746,12 +3900,20 @@ export class Game {
           centerCell(ruin.location);
           break;
         }
-        this.setUiHint(`build:${quest.goalTarget}`);
+        // A group (`AnyDecoration`) lights the first of its kinds the menu offers.
+        const card = isAdjacencyGroup(quest.goalTarget ?? '')
+          ? (Object.keys(DISTRICTS) as DistrictId[]).find((id) => goalNames(quest.goalTarget, id)
+            && DISTRICTS[id].buildable
+            && (DISTRICTS[id].requiredTech === null || isTechComplete(this.state, DISTRICTS[id].requiredTech)))
+          : quest.goalTarget;
+        this.setUiHint(`build:${card}`);
         overlay('build');
         break;
       }
       case 'UpgradeDistrict': {
-        const target = built((d) => d.definitionId === quest.goalTarget);
+        // One still under the bar, so the hint never opens a house already there.
+        const named = (d: District) => goalNames(quest.goalTarget, d.definitionId);
+        const target = built((d) => named(d) && d.level < (quest.goalLevel ?? 1)) ?? built(named);
         this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
         inspect(target);
         break;
@@ -3776,6 +3938,13 @@ export class Game {
       case 'AssignWorkers': {
         const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
         if (target) this.setUiHint('card:workers');
+        inspect(target);
+        break;
+      }
+      // Open it, and light its Move: where it stands is the whole question.
+      case 'WorkInReach': {
+        const target = this.state.city.districts.find((d) => d.definitionId === quest.goalTarget);
+        if (target) this.setUiHint('card:move');
         inspect(target);
         break;
       }
@@ -4189,13 +4358,13 @@ export class Game {
    * (Docs/features/combat.md §4). A partial squad is legal, so the roster is
    * a floor on nothing: eleven Archers send eleven.
    */
-  troopsAvailableFor(unitId: UnitId): number {
-    return Math.max(0, Math.min(UNITS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
+  troopsAvailableFor(unitId: TroopId): number {
+    return Math.max(0, Math.min(TROOPS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
   }
 
   /** Of this type, how many are still at home — the roster minus what the
    *  party has already committed. */
-  troopsLeftAtHome(unitId: UnitId): number {
+  troopsLeftAtHome(unitId: TroopId): number {
     const roster = availableRoster(this.state);
     return Math.max(0, roster[unitId] - this.expeditionParty
       .filter((slot) => slot.unitId === unitId)
@@ -4210,7 +4379,7 @@ export class Game {
    * fight is its unit's business (combat.md §8), never the player's, and the
    * deploy screen does not show it.
    */
-  assignTroop(unitId: UnitId): void {
+  assignTroop(unitId: TroopId): void {
     const refusal = this.troopRefusal(unitId);
     if (refusal !== null) {
       this.toast(refusal);
@@ -4223,8 +4392,8 @@ export class Game {
 
   /** Why a tile would send nothing right now, in the words the toast uses —
    *  or null when a tap would place a squad. */
-  troopRefusal(unitId: UnitId): string | null {
-    if (this.troopsAvailableFor(unitId) <= 0) return `No ${UNITS[unitId].name}s left to send`;
+  troopRefusal(unitId: TroopId): string | null {
+    if (this.troopsAvailableFor(unitId) <= 0) return `No ${TROOPS[unitId].name}s left to send`;
     if (this.expeditionParty.length >= this.troopSlotsOpen()) return 'Every troop slot is full';
     return null;
   }
@@ -4249,7 +4418,7 @@ export class Game {
   /** Squad after squad, best answer first, inside every rule a tap obeys. */
   private fillTroops(affinity: UnitId | 'Any'): void {
     this.expeditionParty = [];
-    const order = (Object.keys(availableRoster(this.state)) as UnitId[])
+    const order = (Object.keys(availableRoster(this.state)) as TroopId[])
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
     for (;;) {
       const next = order.find((u) => this.troopRefusal(u) === null);
@@ -4595,7 +4764,7 @@ export class Game {
 
   /** The troop roster the picker rail draws, minus nothing: a type with none
    *  left still shows, saying so, because an absent card reads as a bug. */
-  availableTroops(): Record<UnitId, number> {
+  availableTroops(): Record<TroopId, number> {
     return availableRoster(this.state);
   }
 
@@ -4811,7 +4980,7 @@ export class Game {
 
   /** Put a ward's worth of wounded back in the ranks. One order, one wait,
    *  in the hall the player pressed it on. */
-  doHealWounded(unitId: UnitId, count: number, at?: District): void {
+  doHealWounded(unitId: TroopId, count: number, at?: District): void {
     const result = healWounded(this.state, unitId, count, this.now(), at);
     if (result === 'Queued') {
       playSfx('unitTrained');
@@ -4827,18 +4996,18 @@ export class Game {
 
   /** The infirmary, for the card that draws it: who is waiting, and how full
    *  the ward is. */
-  woundedInfo(): { byUnit: Array<{ unitId: UnitId; count: number }>; used: number; cap: number } {
-    const byUnit = (Object.keys(UNITS) as UnitId[])
+  woundedInfo(): { byUnit: Array<{ unitId: TroopId; count: number }>; used: number; cap: number } {
+    const byUnit = TROOP_ORDER
       .map((unitId) => ({ unitId, count: woundedOf(this.state, unitId) }))
       .filter((w) => w.count > 0);
     return { byUnit, used: woundedCount(this.state), cap: woundedCap(this.state) };
   }
 
-  healPrice(unitId: UnitId, count: number): Record<string, number> {
+  healPrice(unitId: TroopId, count: number): Record<string, number> {
     return healCost(this.state, unitId, count);
   }
 
-  healWait(unitId: UnitId, count: number): number {
+  healWait(unitId: TroopId, count: number): number {
     const infirmary = infirmaries(this.state)[0];
     return healSecondsAt(this.state, infirmary?.uniqueId, unitId, count);
   }
@@ -4846,6 +5015,61 @@ export class Game {
   /** How many one press of Train orders (the card's x1 · x10 · x100 · All).
    *  A presenter's choice, kept for the session: every card shares it. */
   trainAmount: TrainAmount = 1;
+
+  /**
+   * THE RANK A HALL TRAINS (Docs/features/combat.md §6.4) — a presenter's
+   * choice, kept for the session and never saved.
+   *
+   * Each pick remembers the best rank open when it was made: once a better
+   * one opens, the pick lapses and the hall shows the new rank, so a player
+   * never forgets the troops they just unlocked, and training a worse rank
+   * stays a choice they make again.
+   */
+  private rankPicks = new Map<string, { troop: TroopId; top: TroopId }>();
+  /** The hall whose rank list is open, if any. */
+  rankMenuFor: string | null = null;
+
+  /** The best rank of its unit this hall can train right now — rank I when
+   *  none is open, so the card still has a trainee to show. */
+  private topRank(district: District): TroopId | null {
+    const unit = DISTRICTS[district.definitionId].trains.find((t) => t !== 'Villager') as UnitId | undefined;
+    if (unit === undefined) return null;
+    const open = troopsOf(unit).filter((t) => rankGate(this.state, t, district) === null);
+    return open[open.length - 1] ?? unit;
+  }
+
+  /** What the hall's card shows and Train trains: its picked rank, or the best
+   *  one open. A Townhall's villager is its own and only trainee. */
+  traineeAt(district: District): TrainableId {
+    const top = this.topRank(district);
+    if (top === null) return DISTRICTS[district.definitionId].trains[0]!;
+    const pick = this.rankPicks.get(district.uniqueId);
+    return pick !== undefined && pick.top === top ? pick.troop : top;
+  }
+
+  toggleRankMenu(district: District): void {
+    this.rankMenuFor = this.rankMenuFor === district.uniqueId ? null : district.uniqueId;
+    playSfx('click');
+    this.notify();
+  }
+
+  /** A row of the rank list tapped: that rank is the hall's until a better one
+   *  opens. A locked rank says why instead. */
+  pickRank(district: District, troop: TroopId): void {
+    const top = this.topRank(district);
+    if (top === null) return;
+    const gate = rankGate(this.state, troop, district);
+    if (gate !== null) {
+      this.toast(gate === 'HallLevel'
+        ? `${TROOPS[troop].name} needs the hall at level ${formatExact(TROOPS[troop].minBuildingLevel)}`
+        : `${TROOPS[troop].name} is not researched yet`);
+      return;
+    }
+    this.rankPicks.set(district.uniqueId, { troop, top });
+    this.rankMenuFor = null;
+    playSfx('click');
+    this.notify();
+  }
 
   /** The amount selector's tap: the next amount, round. */
   cycleTrainAmount(): void {
@@ -4862,7 +5086,7 @@ export class Game {
       const cost = plan.cost as Wallet;
       const name = unitId === 'Villager'
         ? (plan.count === 1 ? 'a villager' : `${formatExact(plan.count)} villagers`)
-        : (plan.count === 1 ? `a ${UNITS[unitId].name}` : `${formatExact(plan.count)} ${UNITS[unitId].name}s`);
+        : (plan.count === 1 ? `a ${TROOPS[unitId].name}` : `${formatExact(plan.count)} ${TROOPS[unitId].name}s`);
       if (!this.offerShortfall(`Train ${name}`, cost, () => this.doTrain(unitId, at))) {
         this.shake(Object.keys(cost) as CurrencyId[]);
       }
@@ -4870,8 +5094,12 @@ export class Game {
     if (result === 'AtMax') this.toast(this.atMaxWords());
     if (result === 'NoBuilding' && unitId !== 'Villager') {
       this.toast(
-        `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
+        `Build the ${trainerName(unitOf(unitId))} first — it is where ${UNITS[unitOf(unitId)].name}s are trained`);
     }
+    if (result === 'HallLevel' && unitId !== 'Villager') {
+      this.toast(`${TROOPS[unitId].name} needs the hall at level ${formatExact(TROOPS[unitId].minBuildingLevel)}`);
+    }
+    if (result === 'OtherRank') this.toast('Finish the current batch first — a hall trains one rank at a time');
     if (result === 'ArmyAtCapacity') {
       this.toast(`Army at capacity (${formatExact(committedTroops(this.state))}/${formatExact(armyCap(this.state))}) — build or upgrade a military building`);
     }
@@ -4997,6 +5225,11 @@ export class Game {
   canBuildNow(id: DistrictId): boolean {
     const def = DISTRICTS[id];
     if (districtCount(this.state, id) >= maxDistrictCount(this.state, def)) return false;
+    if (def.hostsRelic) {
+      const offer = shrineBuild(this.state);
+      if (offer.kind === 'gems') return this.walletValue('Gems') >= offer.gems && canPlaceAnywhere(this.state, this.map, id);
+      if (offer.kind !== 'materials') return false;
+    }
     if (!canAfford(this.state.city.wallet, nextBuildCost(this.state, id))) return false;
     return canPlaceAnywhere(this.state, this.map, id);
   }
@@ -5083,6 +5316,12 @@ export class Game {
       previewSprite: null,
       previewSize: null,
       previewSteps: this.ghostSteps(),
+      previewBlocked: this.ghostBlock() !== null,
+      previewHeld: this.ghostHeld,
+      previewId: this.mode.kind === 'placing' ? `build:${this.mode.definitionId}`
+        : this.mode.kind === 'moving' ? `move:${this.mode.districtUniqueId}`
+          : this.mode.kind === 'transplanting' ? `transplant:${coordKey(this.mode.origin)}` : '',
+      previewScaleIn: this.mode.kind === 'placing',
       selectedSize: null,
       liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       inspectedDistrictId: this.inspectedDistrictId,
@@ -5092,6 +5331,17 @@ export class Game {
       auraBadges: this.auraBadges(),
       relicBursts: [],
     };
+    if (this.mode.kind === 'transplanting') {
+      // A tree or a crop plot on the move: its own drawing — the one its
+      // origin shows, grown — on a feature's canvas, and its old cell faint.
+      const def = FEATURES[this.mode.feature];
+      layer.previewCell = this.mode.selected;
+      layer.previewGlyph = def.glyph;
+      layer.previewSprite = def.sprite;
+      layer.previewFeature = true;
+      layer.previewSize = { x: 1, y: 1 };
+      layer.liftedFeatureKey = coordKey(this.mode.origin);
+    }
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
       // Outline valid spots only for restricted buildings (Housing/Farm/
@@ -5170,6 +5420,16 @@ export class Game {
         }
         const provided = providedYieldLabel(this.state, this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
+        // A SHRINE WITH A RELIC carries its aura with it: the gold ring where
+        // it would land, and a badge on everything the relic would work on
+        // there — the reading a Shrine is placed by.
+        const aura = this.movingAura();
+        if (aura !== null) {
+          layer.influenceCells = this.map.cells.filter((c) => areaCovers(aura.area, c));
+          layer.influenceIsAura = true;
+          const label = `+${relicPercent(passiveValue(this.state, aura.relic))}`;
+          for (const cell of aura.here) layer.yieldCells.push({ cell, label, tone: 'good' });
+        }
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = withFootprint(cellsWithinRadiusOfRect(
@@ -5243,6 +5503,24 @@ export class Game {
    * ways — no price, no wait, and it previews the influence the building
    * ALREADY has rather than a level-1 footprint.
    */
+  /** The relic a Shrine on the move holds, its aura where the ghost stands,
+   *  and what that aura would reach there and where it stands now; null for
+   *  anything else on the move. */
+  private movingAura(): { relic: ArtifactId; area: ModifierArea; here: Coord[]; now: number } | null {
+    if (this.mode.kind !== 'moving' || this.mode.selected === null) return null;
+    const district = districtById(this.state, this.mode.districtUniqueId);
+    const relic = district?.hosts;
+    if (district === undefined || relic === undefined) return null;
+    const home = auraOf(this.state, district, relic);
+    const area = { ...home, centre: this.mode.selected };
+    return {
+      relic,
+      area,
+      here: auraTargets(this.state, this.map, relic, area, district.uniqueId),
+      now: auraTargets(this.state, this.map, relic, home, district.uniqueId).length,
+    };
+  }
+
   placementInfo(): {
     kind: 'build' | 'move';
     definitionId: DistrictId;
@@ -5253,6 +5531,11 @@ export class Game {
     captured: number;
     /** Move only: the ghost is still sitting where it started. */
     unmoved: boolean;
+    /** Why the ghost may not stand where it is; null when it may. */
+    blocked: string | null;
+    /** Move only, a Shrine holding a relic: what its aura would reach here
+     *  and reaches where it stands. */
+    aura?: { ground: boolean; here: number; now: number };
   } | null {
     if (this.mode.kind === 'moving') {
       const { definitionId, selected, origin, districtUniqueId } = this.mode;
@@ -5266,6 +5549,13 @@ export class Game {
         affordable: true,
         captured: selected ? this.capturedCells(definitionId, selected, level).length : 0,
         unmoved: selected !== null && selected.x === origin.x && selected.y === origin.y,
+        blocked: this.ghostBlockWords(),
+        ...(() => {
+          const aura = this.movingAura();
+          return aura === null ? {} : {
+            aura: { ground: worksOnGround(aura.relic), here: aura.here.length, now: aura.now },
+          };
+        })(),
       };
     }
     if (this.mode.kind !== 'placing') return null;
@@ -5273,7 +5563,7 @@ export class Game {
     if (!selected) {
       return {
         kind: 'build', definitionId, cell: null, cost: {},
-        duration: 0, affordable: false, captured: 0, unmoved: false,
+        duration: 0, affordable: false, captured: 0, unmoved: false, blocked: null,
       };
     }
     // A premium Shrine is paid in Gems, the city's price not at all.
@@ -5288,6 +5578,7 @@ export class Game {
       affordable: this.mode.premium ? getWallet(this.state.player.wallet, 'Gems') >= gems : canAfford(this.state.city.wallet, cost),
       captured: this.capturedCells(definitionId, selected).length,
       unmoved: false,
+      blocked: this.ghostBlockWords(),
     };
   }
 
@@ -5336,6 +5627,9 @@ export class Game {
     if (this.mode.kind === 'moving' && this.mode.selected) {
       return { cell: this.mode.selected, size: DISTRICTS[this.mode.definitionId].size };
     }
+    if (this.mode.kind === 'transplanting' && this.mode.selected) {
+      return { cell: this.mode.selected, size: { x: 1, y: 1 } };
+    }
     return null;
   }
 
@@ -5353,30 +5647,64 @@ export class Game {
     if (ghost === null) return false;
     if (this.tapGate !== null && !this.tapGate(null, 'ghost')) return false;
     const cell = this.camera.screenToCell(sx, sy);
-    return cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
+    const inside = cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
       && cell.y >= ghost.cell.y && cell.y < ghost.cell.y + ghost.size.y;
+    if (inside) this.ghostGrip = { x: cell.x - ghost.cell.x, y: cell.y - ghost.cell.y };
+    return inside;
   }
+
+  /** Which cell of its footprint the finger holds the ghost by, so a drag
+   *  carries it from there rather than snapping its anchor under the finger. */
+  private ghostGrip: Coord = { x: 0, y: 0 };
 
   /**
    * Drag the ghost under the pointer.
    *
-   * The anchor follows the finger by CELL, not by pixel offset, and an
-   * illegal cell is simply not taken — the ghost stays on the last legal one
-   * it passed through rather than following the finger somewhere it cannot be
-   * dropped and then snapping back. Dragging across a lake leaves it on the
-   * shore, which is the honest preview of where a release would put it.
+   * The anchor follows the finger by CELL, not by pixel offset, onto any
+   * cell of the map: an illegal one is taken too, and the ghost turns red
+   * there, so the finger is never fighting a ghost that will not follow.
    */
   dragGhostTo(sx: number, sy: number): void {
-    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
-    const cell = this.camera.screenToCell(sx, sy);
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return;
+    const finger = this.camera.screenToCell(sx, sy);
+    const cell = { x: finger.x - this.ghostGrip.x, y: finger.y - this.ghostGrip.y };
     const current = this.mode.selected;
     if (current && current.x === cell.x && current.y === cell.y) return;
     if (!this.map.terrain.has(coordKey(cell))) return;
-    const legal = this.mode.kind === 'moving'
-      ? this.canDropAt(cell)
-      : placementBlock(this.state, this.map, this.mode.definitionId, cell) === null;
-    if (!legal) return;
+    this.stepGhostTo(cell);
+  }
+
+  /** The ghost takes a cell — a click for each, a duller one where it may
+   *  not stand. */
+  private stepGhostTo(cell: Coord): void {
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return;
+    const was = this.mode.selected;
     this.mode.selected = cell;
+    if (was === null || was.x !== cell.x || was.y !== cell.y) {
+      playSfx('ghostStep', { rate: this.ghostBlock() === null ? 1 : 0.78, group: 'ghostStep', limit: 2 });
+    }
+    this.notify();
+  }
+
+  /** The ghost is set down at `cell` and stands there now: it drops onto
+   *  its plot with a thud and a puff of dust. Put back where it started, it
+   *  only settles. */
+  private setGhostDown(cell: Coord, definitionId: DistrictId, home = false): void {
+    this.ghostFx.land(coordKey(cell), cell, DISTRICTS[definitionId].size);
+    if (home) {
+      playSfx('ghostStep', { rate: 0.85 });
+      return;
+    }
+    playSfx('ghostPlant');
+    haptic(20);
+  }
+
+  /** A confirm on a spot the ghost may not take: it shakes its head. */
+  private refuseGhost(words: string): void {
+    this.ghostFx.shake();
+    playSfx('error');
+    haptic([12, 40, 12]);
+    this.toast(words);
     this.notify();
   }
 
@@ -5384,26 +5712,26 @@ export class Game {
   holdGhost(held: boolean): void {
     if (this.ghostHeld === held) return;
     this.ghostHeld = held;
+    // Picked up: a pop and a stretch, and it rises under the finger.
+    if (held) {
+      this.ghostFx.grab();
+      playSfx('ghostLift');
+      haptic(10);
+    }
     this.notify();
   }
 
   /**
-   * Which ways the ghost can step: one grid axis each, and only where the
-   * next cell that way is legal — so the arrows say where it can go, and
-   * their absence where it cannot.
+   * Which ways the ghost can step: one grid axis each, wherever the map
+   * goes on — legal or not, as a drag; the ghost's colour says which.
    */
   ghostSteps(): Coord[] {
     if (this.ghostHeld) return [];
-    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return [];
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving' && this.mode.kind !== 'transplanting') return [];
     const at = this.mode.selected;
     if (!at) return [];
-    const { definitionId } = this.mode;
-    const movingId = this.mode.kind === 'moving' ? this.mode.districtUniqueId : undefined;
-    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) => {
-      const cell = { x: at.x + d.x, y: at.y + d.y };
-      return this.map.terrain.has(coordKey(cell))
-        && placementBlock(this.state, this.map, definitionId, cell, movingId) === null;
-    });
+    return [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }].filter((d) =>
+      this.map.terrain.has(coordKey({ x: at.x + d.x, y: at.y + d.y })));
   }
 
   /**
@@ -5416,7 +5744,14 @@ export class Game {
     this.mode = { kind: 'normal' };
     this.ghostHeld = false;
     if (mode.kind === 'placing') this.openOverlay = 'build';
-    else if (mode.kind === 'moving') this.inspectedDistrictId = mode.districtUniqueId;
+    else if (mode.kind === 'moving') {
+      this.inspectedDistrictId = mode.districtUniqueId;
+      // Back where it stood: it settles onto its old plot.
+      this.setGhostDown(mode.origin, mode.definitionId, true);
+    } else if (mode.kind === 'transplanting') {
+      this.ghostFx.land(coordKey(mode.origin), mode.origin, { x: 1, y: 1 });
+      playSfx('ghostStep', { rate: 0.85 });
+    }
     this.notify();
   }
 
@@ -5464,6 +5799,8 @@ export class Game {
   // up; without it every event is dropped where it is made.
   analytics: Analytics | null = null;
   private adOfferShown = false;
+  /** A tap was refused for Mana and the pool has not filled since. */
+  private manaEmptySent = false;
 
   /** Record an event now, on the game's clock. */
   track(name: string, props: Record<string, unknown> = {}): void {
@@ -5686,31 +6023,33 @@ export class Game {
         });
       }
       else if (e.kind === 'loot') {
+        // The Atlas's share on top of what the server priced (sim/world/loot.ts).
+        const l = boostLoot(this.state, e);
         // A dungeon room's pay (11-expeditions.md §7): Gold to the city,
         // Knowledge and Stardust to the kingdom, Hero XP as Hero XP.
-        addToWallet(this.state.city.wallet, 'Gold', e.gold);
-        addToWallet(this.state.kingdom.wallet, 'Knowledge', e.knowledge);
-        addToWallet(this.state.kingdom.wallet, 'Stardust', e.stardust);
-        addHeroXp(this.state, e.heroXp);
-        if (e.gems) addToWallet(this.state.player.wallet, 'Gems', e.gems);
+        addToWallet(this.state.city.wallet, 'Gold', l.gold);
+        addToWallet(this.state.kingdom.wallet, 'Knowledge', l.knowledge);
+        addToWallet(this.state.kingdom.wallet, 'Stardust', l.stardust);
+        addHeroXp(this.state, l.heroXp);
+        if (l.gems) addToWallet(this.state.player.wallet, 'Gems', l.gems);
         // A camp's Wood, Food and Stone, in hours of the city's own
         // production, priced now (19 §5.4).
-        const made = campPay(this.state, e.hours ?? 0);
+        const made = campPay(this.state, l.hours ?? 0);
         for (const [c, n] of Object.entries(made) as Array<[CurrencyId, number]>) addToWallet(this.state.city.wallet, c, n);
         // A world relic's door, then its fragments: a boss's one, a Portal
         // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
-        const won = e.from ?? (e.pack ? 'portal' : 'room');
+        const won = l.from ?? (l.pack ? 'portal' : 'room');
         const found = [
           ...openRelicDoor(this.state, won),
-          ...dropFragments(this.state, 'world', e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', e.seq ?? e.at]),
+          ...dropFragments(this.state, 'world', l.pack ? RELIC_RULES.perPackTier[l.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', l.seq ?? l.at]),
         ];
         if (found.length > 0) this.toast(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
-        if (e.precious) {
-          addGood(this.state.city.goods, e.precious.id, e.precious.amount);
-          this.toast(`+${formatCount(e.precious.amount)} ${e.precious.id}`);
+        if (l.precious) {
+          addGood(this.state.city.goods, l.precious.id, l.precious.amount);
+          this.toast(`+${formatCount(l.precious.amount)} ${l.precious.id}`);
         }
-        this.reward({ Gold: e.gold, ...made, Knowledge: e.knowledge, Stardust: e.stardust, HeroXp: e.heroXp, ...(e.gems ? { Gems: e.gems } : {}) });
+        this.reward({ Gold: l.gold, ...made, Knowledge: l.knowledge, Stardust: l.stardust, HeroXp: l.heroXp, ...(l.gems ? { Gems: l.gems } : {}) });
       } else if (e.kind === 'portalClosed') {
         // A Portal opening closed with the player in its ranking: a place
         // that pays waits to be claimed, any other is news (26 §2).
@@ -5777,7 +6116,7 @@ export class Game {
   private reportSeenCamps(snap: WorldSnapshot): void {
     if (this.worldServer === null || this.actingSeat !== null || this.seenPending) return;
     const told = new Set(snap.seenCamps ?? []);
-    const fog = worldFogAt(this.state, this.now());
+    const fog = worldFog(this.state);
     const fresh = snapshotWorld(snap).board().hexes
       .filter((h) => h.camp?.lurking === true && !told.has(h.index) && hasBit(fog, h.index))
       .map((h) => h.index);
@@ -5810,6 +6149,7 @@ export class Game {
       BadNickname: 'That name cannot be used', NicknameTaken: 'Another kingdom has that name',
       NoChapel: 'Build a Chapel there first', TooManyChapels: 'Hold more ground to build another Chapel',
       NoSlot: 'Every slot of this district is taken',
+      Locked: 'Research it in the Atlas first', TooManyFortresses: 'Research the Atlas to hold another Fortress',
       NotAWorldRelic: 'Only a restored world relic can be hosted there',
     };
     return LINES[why];
@@ -5838,7 +6178,7 @@ export class Game {
   async doFinishHexWork(index: number): Promise<void> {
     if (this.worldServer === null) return;
     const h = this.worldSource().hexOf(index);
-    const work = h === null ? null : hexWork(h);
+    const work = h === null ? null : hexWork(h, this.worldBoost());
     if (work === null) return;
     const gems = gemsToFinish((work.endsAt - this.now()) / 1000);
     if (getWallet(this.state.player.wallet, 'Gems') < gems) {
@@ -5978,7 +6318,7 @@ export class Game {
   /** The quickest way an army can take to a hex: through Revealed ground
    *  only, at an army's pace (sim/world/travel.ts). Null when there is none. */
   armyRoute(target: number): Route | null {
-    const fog = worldFogAt(this.state, this.now());
+    const fog = worldFog(this.state);
     const speed = armyMarchSpeed(this.state);
     return fastestRoute(this.worldSource().board().hexes, this.homeHex(), target, 'army', (i) => hasBit(fog, i), () => speed);
   }
@@ -6080,10 +6420,11 @@ export class Game {
     // What the room paid, for the spoils the delve screen shows after the
     // fight (19 §8.2) — the newest loot owed, read before the snapshot's
     // effects are spent.
-    const loot = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
+    const owed = r.snapshot.effects.filter((e) => e.kind === 'loot').at(-1);
+    const loot = owed?.kind === 'loot' ? boostLoot(this.state, owed) : null;
     this.delveSpoils = {
       won: r.won, depth: r.depth, room: r.room, boss: r.boss, lost: r.lost,
-      loot: loot?.kind === 'loot' ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
+      loot: loot !== null ? { gold: loot.gold, heroXp: loot.heroXp, stardust: loot.stardust, knowledge: loot.knowledge, precious: loot.precious } : null,
     };
     this.delveDepth = null;
     this.applyWorldSnapshot(r.snapshot);
@@ -6143,19 +6484,25 @@ export class Game {
     this.applyWorldSnapshot(r.snapshot);
   }
 
-  /** What an explorer home says: what it revealed, and what its target paid. */
-  private explorerHomeToast(home: ExplorerHome): void {
-    const found = home.paid === null ? '' : `, and ${scoutWords(home.paid)}`;
-    this.toast(home.revealed > 0
-      ? `Your explorer is home — ${formatCount(home.revealed)} new hexes on the map${found}`
-      : `Your explorer is home — nothing new out there${found}`);
-    this.payExplorer(home);
+  /** What revealing an explorer's hex says: what it uncovered, and what its
+   *  target paid, flown into the header. */
+  private explorerFound(found: ExplorerFound): void {
+    playSfx('revealDone');
+    const paid = found.paid === null ? '' : ` — and ${scoutWords(found.paid)}`;
+    this.toast(found.revealed > 0
+      ? `${formatCount(found.revealed)} new hexes on the map${paid}`
+      : `Nothing new out there${paid}`);
+    if (found.paid !== null && Object.keys(found.paid.wallet).length > 0) this.reward(found.paid.wallet);
   }
 
-  /** What an explorer's promise paid, flown into the header. */
-  private payExplorer(home: ExplorerHome): void {
-    if (home.paid !== null && Object.keys(home.paid.wallet).length > 0) this.reward(home.paid.wallet);
+  /** A trip's wait bought off: the hex it explored, revealed — or the
+   *  explorer home. */
+  private tripFinished(finished: TripFinished): void {
+    if (finished.found !== null) this.explorerFound(finished.found);
   }
+
+  /** The trips the player has already been told are waiting at their hex. */
+  private readyHeard = new Set<string>();
 
   /** The dungeon the delve screen is about, the depth it shows (null: the
    *  player's current one), and what the last room fought there paid. */
@@ -6272,16 +6619,19 @@ export class Game {
     const arrival = this.worldArrival;
     this.worldArrival = null;
     this.worldCamera?.focusHex(hexAt(arrival ?? homeIndex(this.state)));
-    if (arrival !== null) {
+    if (arrival !== null && this.worldArrivalCard) {
       this.selectedHex = arrival;
       this.openOverlay = 'world';
     }
+    this.worldArrivalCard = true;
     void this.refreshWorld();
     this.notify();
   }
 
-  /** The hex the next trip out lands on, instead of home. */
+  /** The hex the next trip out lands on, instead of home — and whether its
+   *  card opens there. */
   private worldArrival: number | null = null;
+  private worldArrivalCard = true;
 
   // ------------------------------------------------------------- notices
 
@@ -6392,10 +6742,13 @@ export class Game {
   handleWorldTap(sx: number, sy: number): void {
     if (this.worldCamera === null) return;
     const index = hexIndex(this.worldCamera.screenToHex(sx, sy));
+    if (this.hexGate !== null && !this.hexGate(index < 0 ? null : index)) return;
     if (index < 0) {
       this.dismiss();
       return;
     }
+    // An explorer waiting there: the tap is the reveal.
+    if (this.actingSeat === null && this.doRevealHex(index)) return;
     // A ready store of the player's own is collected, as a city building's
     // is: the hex opens its card only when there is nothing to take.
     const held = this.actingSeat === null ? this.worldSource().hexOf(index) : null;
@@ -6454,16 +6807,50 @@ export class Game {
     this.notify();
   }
 
-  /** Bring an explorer home now, with Gems: its hexes are revealed at once. */
+  /** Finish what an explorer is doing, with Gems: its work, its hex
+   *  revealed at once — or its road home. */
   doFinishExplorer(tripId: string): void {
     const result = finishExplorerWithGems(this.state, tripId, this.now());
     if (result.kind === 'Finished') {
       playSfx('gemSpend');
-      this.explorerHomeToast(result.home);
+      this.tripFinished(result.finished);
     } else if (result.kind === 'NotEnoughGems') {
       this.shake(['Gems']);
     }
     this.notify();
+  }
+
+  /**
+   * THE TAP THAT REVEALS: an explorer waits at this hex, its work done — the
+   * hex and the ones round it are uncovered now, and what it found is paid
+   * now (19 §3.1). False when nobody waits there.
+   */
+  doRevealHex(index: number): boolean {
+    const result = revealExplored(this.state, index, this.now());
+    if (result.kind !== 'Revealed') return false;
+    this.dismiss();
+    this.explorerFound(result.found);
+    this.notify();
+    return true;
+  }
+
+  /** Out to a hex an explorer waits at, its card shut: the tap on the hex is
+   *  the player's to make. From a notice. */
+  lookAtHex(index: number): void {
+    if (this.scene !== 'world') {
+      this.worldArrival = index;
+      this.worldArrivalCard = false;
+      this.enterWorld();
+      return;
+    }
+    this.dismiss();
+    this.worldCamera?.focusHex(hexAt(index));
+    this.notify();
+  }
+
+  /** The explorers waiting at their hex for the player, the longest first. */
+  explorersReady(): Array<{ id: string; target: number }> {
+    return readyTrips(this.state, this.now()).map((t) => ({ id: t.id, target: t.target }));
   }
 
   /** Send an explorer to the hex the sheet is about. */
@@ -6477,9 +6864,7 @@ export class Game {
       return;
     }
     if (result.kind === 'NoExplorerFree') {
-      this.toast(`Every explorer is out — one is back in ${formatCountdown((result.nextFreeAt - this.now()) / 1000)}`);
-    } else if (result.kind === 'NoCartography') {
-      this.toast('Research Cartography in the Atlas to send an explorer');
+      this.toast(explorersOutLine(this.state, result.nextFreeAt, this.now()));
     } else if (result.kind === 'NoRoute') {
       this.toast('No way there through explored ground');
     } else if (result.kind === 'Explored') {
@@ -6490,6 +6875,12 @@ export class Game {
       this.toast(`Not enough Gold — exploring there costs ${formatExact(result.gold)}`);
     }
     this.notify();
+  }
+
+  /** What the player's research does on the world board, as the server
+   *  takes it (sim/world/boost.ts). */
+  worldBoost(): SeatBoost {
+    return worldImprovementBoost(this.state);
   }
 
   /** The player's own city on the board. */
@@ -6653,7 +7044,7 @@ export class Game {
   } {
     // Looking at ground in the mist → the explorers free to send there.
     if (this.scene === 'world' && this.openOverlay === 'world' && this.selectedHex !== null
-      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex, this.now()) !== 'Revealed') {
+      && this.selectedHex !== this.homeHex() && fogStateOf(this.state, this.selectedHex) !== 'Revealed') {
       const max = explorerSlots(this.state);
       return { kind: 'explorers', value: freeExplorers(this.state), max };
     }
@@ -6734,9 +7125,9 @@ export class Game {
 function providedYieldLabel(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
 ): YieldLabel | null {
-  const provides = DISTRICTS[definitionId].providesHarvestSource;
-  if (provides === null) return null;
-  const spec = HARVEST[provides];
+  const plants = DISTRICTS[definitionId].plants;
+  if (plants === null) return null;
+  const spec = HARVEST[FEATURES[plants].source];
   const held = effectiveStock(state, map, cell, spec);
   const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
   return { label: formatCount(held), icon: spec.currencyId, tone };
@@ -6930,9 +7321,9 @@ function relicShortEffect(id: ArtifactId, value: number): string {
 }
 
 const RELIC_SHORT: Record<ArtifactId, string> = {
-  DowsingRod: 'training',
+  DowsingRod: 'resources',
   VerdantSeal: 'per swing',
-  ForemansSigil: 'crew speed',
+  ForemansSigil: 'work speed',
   GildedLedger: 'tax',
   WanderersCompass: 'Stardust',
   DelversLantern: 'room haul',
@@ -6942,9 +7333,9 @@ const RELIC_SHORT: Record<ArtifactId, string> = {
 
 /** What each relic's number is ABOUT, in three or four words. */
 const RELIC_SUBJECT: Record<ArtifactId, string> = {
-  DowsingRod: 'Your buildings train',
+  DowsingRod: 'Forests, fields and rocks hold',
   VerdantSeal: 'Every swing and tap takes',
-  ForemansSigil: 'Your crews swing and walk',
+  ForemansSigil: 'Your crews work and halls train',
   GildedLedger: 'Your villagers pay',
   WanderersCompass: 'Rooms pay Stardust',
   DelversLantern: 'A room pays gold and stone',
@@ -6970,8 +7361,8 @@ const LAIR_BLOCK_TEXT: Record<LairBlock, string> = {
 
 /** How well a unit type answers a lair's threat — used only to pre-fill a
  *  sensible party, never to decide anything. */
-const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
-  typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;
+const scoreAgainst = (troop: TroopId, affinity: UnitId | 'Any'): number =>
+  typeMultiplier(unitOf(troop), affinity) * TROOPS[troop].dmg;
 
 /** "in 3 days" / "in 5 hours" / "in 12 minutes" — coarse on purpose; the
  *  budget refills on the first of the month, not on a stopwatch. */

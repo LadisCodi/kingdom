@@ -1,28 +1,29 @@
-// The Build menu (Docs/art/ui-menus-redesign.md §5.5, mockups M47–M48).
+// The Build menu (Docs/art/ui-menus-redesign.md §5.5, mockup M106).
 //
-// A drawer over the map with three tabs — Economy, Military, Decoration —
-// and one sideways row of tall cards under them. Each card is the
-// building's own level-1 art, its name and the ordinal it would get, what it
-// promises, its price as chips, and a footer strip with the wait and how
-// many the city owns of how many it may.
+// The whole height under the header, three tabs — Economy, Military,
+// Decoration — fixed at its top, and under them a list of full-width rows
+// that scrolls. Each row is the building's own level-1 art, its name and the
+// ordinal it would get, what it promises, its price as chips, and at the
+// right the wait and how many the city owns of how many it may. What can be
+// built comes first, then what cannot be paid for yet, then what is capped,
+// then what a technology still has to open — so the player learns it exists.
 //
-// Tapping a card goes straight to placement, and only with the price in
-// hand: a card the player cannot pay for shakes and pulses its short chips
+// Tapping a row goes straight to placement, and only with the price in
+// hand: a row the player cannot pay for shakes and pulses its short chips
 // instead. Placement's close comes back here, on the same tab and at the
 // same scroll, so two buildings can be compared without navigating twice.
 
-import { BUILD_TABS, CITY_DEF, DISTRICTS, HARMONY, type BuildTab } from '../sim/data/definitions';
+import { BUILD_TABS, CITY_DEF, DISTRICTS, HARMONY, TECHNOLOGIES, type BuildTab } from '../sim/data/definitions';
 import {
   buildCost, buildGoodsCost, districtCount, isNumbered, maxDistrictCount,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
-import { canAfford } from '../sim/commands';
 import { isTechComplete } from '../sim/research';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration, formatExact } from './format';
-import { costChips, ctaBadge, iconEl, sheet, sideScroll, type IconName } from './kit';
+import { costChips, ctaBadge, iconEl, sheet, type IconName } from './kit';
 import type { CurrencyId, DistrictId, GoodId } from '../sim/state';
 import { PROMISE } from './buildPromise';
 
@@ -32,7 +33,7 @@ import { PROMISE } from './buildPromise';
 // player back where they picked from.
 
 let openTab: BuildTab = 'Economy';
-const rowScroll: Partial<Record<BuildTab, number>> = {};
+const listScroll: Partial<Record<BuildTab, number>> = {};
 
 const TAB_ICON: Record<BuildTab, IconName> = {
   Economy: 'Gold',
@@ -119,7 +120,15 @@ function harmonyLine(game: Game): HTMLElement {
 /** Why a card cannot be picked at all, in words — or null when it can. */
 function blockedBy(game: Game, id: DistrictId): string | null {
   const def = DISTRICTS[id];
+  // Not yet opened: the technology that opens it, by name.
+  if (!isKnown(game, id)) return `Research ${TECHNOLOGIES[def.requiredTech!]?.name ?? def.requiredTech}`;
   const count = districtCount(game.state, id);
+  // The Shrine ladder: the ruin first, and an end (sim `shrineBuild`).
+  if (def.hostsRelic) {
+    const offer = game.shrineBuild().kind;
+    if (offer === 'ruinFirst') return 'Repair the old shrine first';
+    if (offer === 'none') return 'You have as many as the realm allows';
+  }
   if (count >= maxDistrictCount(game.state, def)) {
     // Say what lifts the cap. A count cap is the harder wall of the two: no
     // amount of decoration lifts it, so it is said first.
@@ -136,8 +145,10 @@ function blockedBy(game: Game, id: DistrictId): string | null {
 function cardFacts(game: Game, id: DistrictId) {
   const def = DISTRICTS[id];
   const count = districtCount(game.state, id);
-  const cost = buildCost(id, count + 1);
-  const goods = Object.entries(buildGoodsCost(game.state, id)) as Array<[GoodId, number]>;
+  // Past its material builds, a Shrine is priced in Gems alone.
+  const shrine = def.hostsRelic ? game.shrineBuild() : null;
+  const cost: Partial<Record<CurrencyId, number>> = shrine?.kind === 'gems' ? { Gems: shrine.gems } : buildCost(id, count + 1);
+  const goods = shrine?.kind === 'gems' ? [] : Object.entries(buildGoodsCost(game.state, id)) as Array<[GoodId, number]>;
   const shortGoods = goods.some(([g, n]) => getGood(game.state.city.goods, g) < n);
   return {
     count,
@@ -146,59 +157,78 @@ function cardFacts(game: Game, id: DistrictId) {
     numbered: isNumbered(game.state, def),
     cost,
     goods,
-    affordable: canAfford(game.state.city.wallet, cost) && !shortGoods,
+    affordable: (Object.entries(cost) as Array<[CurrencyId, number]>).every(([c, n]) => game.walletValue(c) >= n)
+      && !shortGoods,
     hinted: game.uiHint() === `build:${id}`,
     duration: game.buildCardDuration(id),
+    known: isKnown(game, id),
   };
 }
 
+/** Where a row sits: what can be built, what cannot be paid for yet, what
+ *  is capped, and last what a technology has still to open. */
+const rank = (f: ReturnType<typeof cardFacts>): number =>
+  (!f.known ? 3 : f.blocked !== null ? 2 : f.affordable ? 0 : 1);
+
+/** Harmony is only worth a word once something demands it: before that, a
+ *  decoration pays its neighbours, and "+1 Harmony" teaches a word for
+ *  nothing (21-harmony.md §2.1). */
+const harmonyMatters = (game: Game): boolean => harmonyDemand(game.state) > 0;
+
 function buildCard(game: Game, id: DistrictId, isNew: boolean): HTMLElement {
   const def = DISTRICTS[id];
-  const { count, max, blocked, numbered, cost, goods, affordable, hinted, duration } = cardFacts(game, id);
+  const facts = cardFacts(game, id);
+  const { count, max, blocked, numbered, cost, goods, affordable, hinted, duration, known } = facts;
   const art = spriteUrl(`${def.sprite}_l1`);
   const card = el('button', {
-    class: `bld-card${blocked !== null ? ' is-locked' : ''}${hinted ? ' hinted' : ''}`,
+    class: `bld-card${blocked !== null ? ' is-locked' : ''}${!known ? ' is-unknown' : ''}${hinted ? ' hinted' : ''}`,
     type: 'button',
     'data-id': id,
     'data-coach': `build:${id}`,
   },
-    el('div', { class: 'bld-art' }, art ? spriteImgAt(art) : iconEl(id, { size: 'lg' })),
-    // The ordinal it WOULD be: the price on this card is that instance's
-    // (Docs/features/05-city-and-districts.md §3.1). A qualifier, so quieter.
-    el('div', { class: 'bld-name' },
-      def.name,
-      ...(blocked !== null || !numbered
-        ? []
-        : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),
-    el('div', { class: 'bld-promise' }, PROMISE[id]),
-    // A card behind a ribbon shows no price: there is nothing to pay yet.
-    ...(blocked !== null ? [] : [el('div', { class: 'bld-cost' },
-      costChips(cost, (c) => game.walletValue(c)),
-      ...goods.map(([g, n]) => el('span',
-        { class: `k-chip${getGood(game.state.city.goods, g) < n ? ' is-short' : ''}` },
-        iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))),
-      ...(def.harmonySupply > 0
-        ? [el('span', { class: 'k-chip is-gain' },
-            iconEl('harmony', { size: 'sm' }), el('span', {}, `+${formatExact(def.harmonySupply)}`))]
-        : []))]),
-    el('div', { class: 'bld-foot' },
-      el('span', { class: 'bld-foot-time' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(duration)),
-      el('span', { class: 'bld-foot-built' }, `Built ${formatExact(count)}/${formatExact(max)}`)),
+    el('div', { class: 'bld-art' },
+      art ? spriteImgAt(art) : iconEl(id, { size: 'lg' }),
+      ...(blocked !== null ? [el('span', { class: 'bld-lock' }, iconEl('padlock', { size: 'md' }))] : [])),
+    el('div', { class: 'bld-mid' },
+      // The ordinal it WOULD be: the price on this row is that instance's
+      // (Docs/features/05-city-and-districts.md §3.1). A qualifier, so quieter.
+      el('div', { class: 'bld-name' },
+        def.name,
+        ...(blocked !== null || !numbered
+          ? []
+          : [el('span', { class: 'bld-ordinal' }, `#${count + 1}`)])),
+      // A row behind a lock says what opens it in place of a promise and a
+      // price: there is nothing to pay yet.
+      blocked !== null
+        ? el('div', { class: 'bld-why' }, blocked)
+        : el('div', { class: 'bld-promise' }, PROMISE[id]),
+      ...(blocked !== null ? [] : [el('div', { class: 'bld-cost' },
+        costChips(cost, (c) => game.walletValue(c)),
+        ...goods.map(([g, n]) => el('span',
+          { class: `k-chip${getGood(game.state.city.goods, g) < n ? ' is-short' : ''}` },
+          iconEl(g, { size: 'sm' }), el('span', {}, formatExact(n)))),
+        ...(def.harmonySupply > 0 && harmonyMatters(game)
+          ? [el('span', { class: 'k-chip is-gain' },
+              iconEl('harmony', { size: 'sm' }), el('span', {}, `+${formatExact(def.harmonySupply)}`))]
+          : []))])),
+    // The wait and the count, in a column of their own so they line up down
+    // the list. A row a technology has still to open has neither yet.
+    ...(!known ? [] : [el('div', { class: 'bld-side' },
+      ...(blocked !== null ? [] : [el('span', { class: 'bld-foot-time' },
+        iconEl('hourglass', { size: 'sm' }), formatDuration(duration))]),
+      el('span', { class: 'bld-foot-built' }, `Built ${formatExact(count)}/${formatExact(max)}`))]),
   );
   if (isNew && blocked === null) {
     card.append(el('span', { class: 'bld-new', 'aria-label': 'New' }, el('span', {}, 'New!')));
   }
   if (blocked !== null) {
     card.disabled = true;
-    card.querySelector('.bld-art')!.append(el('div', { class: 'bld-ribbon' },
-      iconEl('padlock', { size: 'sm' }), el('span', {}, blocked)));
     return card;
   }
   card.addEventListener('click', () => {
     if (!affordable) {
       // Not entered: placement is only reached with the price in hand. The
-      // card says no, and the chips that are short say why.
+      // row says no, and the chips that are short say why.
       game.shake((Object.entries(cost) as Array<[CurrencyId, number]>)
         .filter(([c, n]) => game.walletValue(c) < n).map(([c]) => c));
       card.classList.remove('is-refused');
@@ -218,6 +248,7 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
     class: `bld-tab${tab === openTab ? ' is-open' : ''}`,
     type: 'button',
     'aria-pressed': tab === openTab ? 'true' : 'false',
+    'data-coach': `build-tab:${tab}`,
   },
     iconEl(TAB_ICON[tab], { size: 'sm' }),
     el('span', { class: 'bld-tab-label' }, tab),
@@ -242,7 +273,7 @@ function tabButton(game: Game, tab: BuildTab): HTMLElement {
  */
 export function buildMenuSignature(game: Game): string {
   const seenIds = loadSeen(game);
-  const known = inTab(openTab).filter((id) => isKnown(game, id));
+  const all = inTab(openTab);
   return JSON.stringify([
     openTab,
     BUILD_TABS.map((t) => inTab(t).filter((id) => game.canBuildNow(id)).length),
@@ -250,47 +281,56 @@ export function buildMenuSignature(game: Game): string {
     game.state.city.wallet, game.state.kingdom.wallet, game.state.player.wallet,
     game.state.city.goods,
     harmonySupply(game.state), harmonyDemand(game.state), harmonySurplusTier(game.state),
-    known.map((id) => [id, seenIds.has(id), cardFacts(game, id)]),
+    all.map((id) => [id, seenIds.has(id), cardFacts(game, id)]),
   ]);
 }
 
 export function renderBuildMenu(game: Game): HTMLElement {
   followHint(game);
   const seenIds = loadSeen(game);
-  const known = inTab(openTab).filter((id) => isKnown(game, id));
+  const ids = inTab(openTab);
+  const known = ids.filter((id) => isKnown(game, id));
 
   showingNew.clear();
-  const cards = known.map((id) => {
-    const isNew = !seenIds.has(id);
+  // Stable within a rank: the menu's own order.
+  const order = ids.map((id, i) => ({ id, i, r: rank(cardFacts(game, id)) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i);
+  const cards = order.map(({ id }) => {
+    const isNew = isKnown(game, id) && !seenIds.has(id);
     if (isNew) showingNew.add(id);
     return buildCard(game, id, isNew);
   });
 
-  const row = sideScroll(el('div', { class: 'bld-row', 'data-keep-scroll': `bld-row-${openTab}` }, ...cards));
+  const list = el('div', { class: 'bld-list', 'data-keep-scroll': `bld-list-${openTab}` }, ...cards);
   const tab = openTab;
-  row.addEventListener('scroll', () => { rowScroll[tab] = row.scrollLeft; }, { passive: true });
-  // Back from placement: the row the player left, where they left it. Set
-  // once the row is in the document (the host keeps it from then on).
+  list.addEventListener('scroll', () => { listScroll[tab] = list.scrollTop; }, { passive: true });
+  // Back from placement: the list the player left, where they left it. Set
+  // once the list is in the document (the host keeps it from then on).
   requestAnimationFrame(() => {
-    const at = rowScroll[tab];
-    if (at !== undefined && row.isConnected && row.scrollLeft === 0) row.scrollLeft = at;
+    const at = listScroll[tab];
+    if (at !== undefined && list.isConnected && list.scrollTop === 0) list.scrollTop = at;
   });
 
-  return sheet(
+  const surface = sheet(
     {
       title: 'Build',
+      tall: true,
       onClose: () => {
         commitSeen();
         game.dismiss();
       },
     },
     el('div', { class: 'bld-tabs', role: 'tablist' }, ...BUILD_TABS.map((t) => tabButton(game, t))),
-    // Silent until Harmony exists in the player's world: a decoration they
-    // may build, or a supply or a demand already standing. "0 of 0" would
-    // teach a word for nothing.
-    ...(openTab === 'Decoration'
-      && (known.length > 0 || harmonySupply(game.state) > 0 || harmonyDemand(game.state) > 0)
-      ? [harmonyLine(game)] : []),
-    row,
+    // Silent until Harmony is asked for: before that, what a decoration pays
+    // is its place — a house beside it collects more Gold.
+    ...(openTab !== 'Decoration' ? []
+      : harmonyMatters(game)
+        ? [harmonyLine(game)]
+        : known.length > 0 ? [el('div', { class: 'bld-tip k-section' },
+          iconEl('Housing', { size: 'sm' }), el('span', {}, 'A house beside a decoration earns more Gold'))] : []),
+    list,
   );
+  // The tabs stay put; only the list under them scrolls (as the Bag's).
+  surface.classList.add('is-panes');
+  return surface;
 }

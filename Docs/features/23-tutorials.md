@@ -15,10 +15,13 @@
 1. **The quest chain teaches; the advisor speaks.** A beat never asks for
    anything the active quest does not.
 2. **Scripted stretches**: the First Morning, quests 1–7, about ten
-   minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
-   first buildings that work for the player; the first chest, used from the
-   Bag; and Stone, when the House's second story first asks for it. They are the only places
-   input is locked.
+   minutes, and short **lessons** (§3.1, §3.2) — the old plots, the Farm
+   (repaired, then moved beside them) and the Sawmill, the first buildings
+   that work for the player; the first chest, used from the Bag; Stone, when
+   the House's second story first asks for it; and the city's growth — the
+   first upgrade, more Houses, plots and villagers, a second Sawmill and its
+   crew, the first decorations, the Barracks, soldiers, the first assault and
+   the first hero. They are the only places input is locked.
 3. **Every other system is introduced once**, the first time its door opens,
    by a short scene the player taps through.
 4. **Help is asked for, or earned by being stuck.** After the First Morning
@@ -28,7 +31,8 @@
    gacha reveal, the rewarded video, an unlock splash or a sheet the player
    opened — unless the sheet is what the scene is about. Scenes due at once
    queue in authored order, and an introduction waits a breath (6 s) after
-   the last scene.
+   the last scene. Closing the last sheet ends the breath: back on the map,
+   the next scene due starts at once.
 7. **A scene plays where it belongs** (`where`): the province, the world
    board, or either. A scene about the city never starts on the world board;
    one that has started pauses, out of sight and locking nothing, while the
@@ -85,9 +89,11 @@ nervous, a bookworm who got the job because nobody else stayed:
   with her — she reads why, he knows how — and gives the town's reasons for
   the fog and the well. **Tom Miller**, the first villager home, asks for
   what the people need.
-- **She walks the player through accepting a gift twice** — `FirstSteps`
-  and `Timber` — and never again: from the third request on, the pill is
-  the player's to claim.
+- **Every scripted quest ends on its gift accepted**: the next lesson
+  starts on the next quest, so the hand leads the player from
+  one to the other. Isolde asks for the first gift (`FirstSteps`); from
+  then on the hand alone points at the pill, locked to it, once the quest
+  is complete.
 - **The hand never points at something paid for with Gems.** A line may
   name a Gem shortcut; following the hand never spends one
   (`tests/tutorialGems.test.ts`).
@@ -115,7 +121,7 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 3.2 | `Timber` | **Hob:** *Hold it down and the axe keeps going. When a stand's bare, move on — it grows back. Trees don't sulk.* | the nearest forest with wood left | none | the quest completes |
 | 3.3 | `Timber` | *Oh — the well is lower! Every swing drew a drop. Don't fret: it fills again by itself. I checked twice.* | the Mana gauge | everything | a tap |
 | 3.3b | `Timber` | **Hob:** *Three times. I counted.* | — | all | tap |
-| 3.4 | `Timber` | *Wood for Oakville! The Townhall folk sent their thanks — accept it, and the well gets a little magic back.* | the quest pill | the pill | claimed |
+| 3.4 | `Timber` | — (the hand alone) | the quest pill | the pill | claimed |
 | 4.1 | `ARoof` | *Wood at last — and nowhere to sleep. But that shape past the trees… the Millers' house! Clear the fog, Your Majesty!* | the old House ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3) | that cell | revealed |
 | 4.2 | `ARoof` | *There it is! The roof's fallen in, but the walls are sound. Open it.* | the old House | the House | its card is open |
 | 4.3 | `ARoof` | *Builders want their wood up front — it says so in the guild charter. Repair it!* | **Repair** | the button | repairing |
@@ -131,8 +137,13 @@ nervous, a bookworm who got the job because nobody else stayed:
 | 6.3b | `FirstVillager` | *Let's close the Townhall — Tom's settling in.* (skipped if it is closed) | the card's close knob | the knob | the scroll is on screen |
 | 7.1 | `TaxDay` | *Tom pays his rent into the House. When the purse shows, gather it — it's his to give, and it costs you nothing.* | the House | none | the quest completes |
 | 7.2 | `TaxDay` | *That's how a kingdom is kept, I think: clear the fog, gather, build — and they come home, one by one.* | the quest pill | all | tap |
-| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. Come back tomorrow — the barns and the purse fill up overnight.* | the quest pill | all | tap — **the First Morning ends** |
+| 7.3 | `TaxDay` | *Lost? Look at their request and I'll point the way. Come back tomorrow — the barns and the purse fill up overnight.* | the quest pill | all | tap |
+| 7.4 | `TaxDay` | — (the hand alone) | the quest pill | the pill | claimed — **the First Morning ends** |
 
+- **Every lesson from `Woodcraft` on ends the same way**: once its lines are
+  done it waits, invisible and locking nothing, for its quest to complete;
+  the hand alone points at the close of anything open; then at the pill
+  until the gift is accepted. The tables leave those beats out.
 - **A beat checks its condition when it starts**, so a beat already met is
   skipped.
 - **The Townhall's own Gold stays quiet through the First Morning**: no
@@ -140,7 +151,9 @@ nervous, a bookworm who got the job because nobody else stayed:
   shows once `TaxDay` is claimed.
 - **A scene resumes where the kingdom is**: after a reload it picks up after
   the last line whose PROGRESS condition already holds (a quest, a research,
-  a building) — never on a moment like a sheet being shut.
+  a building, an upgrade under way) — never on a moment like a sheet being
+  shut. Mid-scene, on the player's turn, a later line's progress already met
+  jumps the scene past it the same way.
 - **A tap on the plot the hand points at is a tap on that plot**, even where
   a store's bubble or a lair's picture floats over it.
 - **A lock releases itself** if its target is missing for five seconds; the
@@ -155,13 +168,39 @@ nervous, a bookworm who got the job because nobody else stayed:
 
 ### 3.1 The lessons: buildings that work for you
 
-Beats, as the First Morning's, each on its quest.
+Beats, as the First Morning's, each on its quest, and each ending on its
+quest's gift accepted with the hand alone (§3).
 
 | Scene | Quest | Says (Isolde, unless named) | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
+| `plots` | `FirstPlot` | **Tom:** *Your Majesty! Before the fog, Dad kept two crop plots just past the Townhall. Best turnips in Oakville, he swore.* | the south plot | all | tap |
+| | | **Hob:** *Turnips. Hmph. Fog's had them a year. Nothing left in there but weeds and a scarecrow.* | — | all | tap |
+| | | *Weeds we can pull! First we buy the ground back from the fog — follow my finger, Your Majesty.* | the way to the south plot (`abandoned:OldPlotSouthFog`) | that cell | the plot is revealed |
+| | | **Tom:** *There it is! The fence is down, but the soil's still good. Open it, Your Majesty.* | the plot | the plot | its card is open |
+| | | **Hob:** *A fence wants wood. Here — off my pile. Don't make a fuss.* (only while the Wood is short; he makes up the difference) | — | all | tap |
+| | | *Fresh seed, a new fence, and no builders needed — a field mends itself once it's sown. Repair it!* | **Repair** | the button | repairing |
+| | | **Hob:** *Sprouting already. Soil's been waiting for somebody, that's all.* | the plot | all | tap |
+| | | **Tom:** *And the other one, right beside it! Dad always planted them in pairs.* | the way to the north plot | that cell | revealed |
+| | | *There — open it…* | the plot | the plot | its card is open |
+| | | **Hob:** *More wood? …Fine. Last of the pile. Again.* (only while the Wood is short) | — | all | tap |
+| | | *…and repair it!* | **Repair** | the button | repairing |
+| | | **Tom:** *Two plots, just like Dad's! When they've grown, tap them and bring the harvest in.* | — | all | tap |
+| | | **Hob:** *Every sickle swing asks the well, same as an axe. Mind the blue.* | — | all | tap |
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
-| | | **Tom:** *Dad ran the old farm, right by the fields. Clear its fog and open it, Your Majesty — I'll show you.* | the old Farm, its ruin or its silhouette | none | its card is open |
-| | | *A Farm works the plots one step around it, corners too — and this one stands right beside ours. Repair it!* | **Repair** | the button | repairing |
+| | | **Tom:** *Dad's old farm is still out there, past the berry bushes. Clear the way, Your Majesty — I'll know it when I see it.* | the way to the old Farm | that cell | the Farm is revealed |
+| | | **Tom:** *That's her! Roof's sagging, but she's sound. Open it!* | the old Farm | the Farm | its card is open |
+| | | **Hob:** *Farm wants wood too, does it. …Take it. I'll chop more.* (only while the Wood is short) | — | all | tap |
+| | | *Hammers, sawdust and one cheerful racket — repair it!* | **Repair** | the button | repairing |
+| `farmMove` | `Fieldside` | *Nearly done — listen to those hammers!* (skipped if it stands) | the Farm | none | the Farm is finished |
+| | | *Oh. Oh no. A Farm works the plots one step around it, corners too — and ours are two steps away. I measured. Twice.* | the Farm | all | tap |
+| | | **Hob:** *So pick it up and carry it. Did it with Widow Pell's henhouse once. Hens weren't pleased.* | — | all | tap |
+| | | *Can we? …We can! The guild charter says a building may be moved for free, as often as you like. Page forty!* | — | all | tap |
+| | | **Tom:** *It wants to stand right between the two plots. Clear the fog there first, Your Majesty.* (skipped if that ground is clear) | the spot (`reach:Farm`) | that cell | the spot is revealed |
+| | | *Now open the Farm.* | the Farm | the Farm | its **Move** is on screen |
+| | | *That's its Move knob. Tap it, and the whole Farm lifts right off the ground!* | **Move** | the knob | the Farm is picked up |
+| | | **Tom:** *There — between Dad's plots! Tap the spot.* | the spot | that cell | the ghost reaches both plots |
+| | | *Both plots in reach! Move it.* | **Move** (the placement bar) | the button | `Fieldside` complete |
+| | | **Hob:** *Didn't drop a single plank. Better than the henhouse.* | — | all | tap |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
 | | | **Tom:** *The Farm stands — and nobody's working it. Open it, Your Majesty!* | the Farm | the Farm | its card is open |
 | | | **Tom:** *Send me! I know every furrow. Each pair of hands walks to a plot, reaps it and carries the crop home.* | the card's **+** | none | the quest completes |
@@ -193,11 +232,51 @@ Beats, as the First Morning's, each on its quest.
 - **A worker building's ghost starts where it would work the most** — the
   Farm beside the plots, the Sawmill in the thickest trees — the nearest of
   those to the Townhall.
+- **The old Farm stands two steps from the plots**, out of their reach, so
+  the opening teaches moving a building: `farmMove` walks the player through
+  picking it up from its card and setting it between the plots. A move is
+  free and instant ([`06-construction.md`](06-construction.md)).
+- **A ruin's way through the fog is pointed one cell at a time**
+  (`abandoned:<id>Fog`): the hand stands on the next cell the player can
+  pay for, and moves on as each is cleared.
+- **A repair takes about five seconds** ([`01-map-and-fog.md`](01-map-and-fog.md)
+  §6.3), so a lesson never waits on its builders.
 - **The fog's buildings are the opening's buildings.** The House, the plots,
   the Farm and the Sawmill are found and repaired, and no technology is
   researched to have them; the first building the player raises is the
   second House, in the `secondHouse` lesson, where the Build tab's padlock
   breaks.
+
+### 3.2 The lessons: the city grows
+
+Beats, as above, each on its quest and ending on its gift accepted. Every line
+is data in `?dev=data` › Scenes; the table says who speaks and what the hand
+walks the player through.
+
+| Scene | Quest | Speakers | The hand walks them through |
+|---|---|---|---|
+| `capital` | `ProperCapital` | **Kofi** (enters), Isolde | the Townhall → its **Upgrade** → the sheet's **Upgrade**; builders work while away |
+| `moreRoofs` | `MoreRoofs` | Tom, Kofi | Build → the House → placing it; a House against a House earns less. Kofi makes up the Wood when short |
+| `furrows` | `FreshFurrows` | Tom, Isolde | Build → a crop plot beside the Farm (it reaches one step around) → a second one |
+| `faces` | `NewFaces` | Tom, Isolde | the Townhall → **Train**, until five villagers live |
+| `barn` | `BiggerBarn` | Tom, Kofi | a full barn stops the work; the Farm → **Upgrade** → **Upgrade** |
+| `twoSaws` | `TwoSaws` | Hob, Kofi | Build → a second Sawmill, where the trees are thickest |
+| `hands` | `ManyHands` | Hob, Tom | the new Sawmill → its **+**; more hands than ground in reach stand about |
+| `pride` | `Pride` | **Priya** (enters), Isolde | Research → Village Pride → pour → research → close |
+| `corner` | `PrettyCorner` | Priya, Isolde | a house beside a decoration collects more Gold; Build → Decorations → a flower bed → a second piece of the player's choice; anything moves for free |
+| `upperFloors` | `UpperFloors` | Kofi | each House still below level 2, one by one |
+| `barracks` | `Mustered` | the Warden | Build → Military → the Barracks |
+| `recruits` | `FirstSoldier` | the Warden | the Barracks → **Train**; thirty make a company |
+| `assault` | `DriveThemOut` | the Warden | the lair → **Attack** → Quick deploy → the attack; the numbers foretell the fight |
+| `summon` | `FirstSummon` | Bess, Isolde | the Tavern → **Call** → the banner's free call; heroes lead soldiers |
+| `secondFarm` | `SecondFarm` | Tom | Build → a second Farm among new plots |
+| `civic` | `Civic` | Priya | Research → Civic Pride → pour → research → close |
+
+- **Spending lines never lock.** A line that asks the player to pay — an
+  upgrade, a call, a recruit — points with no lock, so a player short of the
+  price can walk away, earn it and come back.
+- **A lesson's player who has gone ahead is not taught**: each is needless
+  once its quest is claimed.
 
 ## 4. The introductions
 
@@ -214,6 +293,16 @@ last line, as a hint.
 | `builders` | the builder offer opens — a build refused because every builder is busy | Isolde | *Every builder is busy — I counted. Wait for one to finish, or hire another pair of hands, and two things rise at once.* | — |
 | `manaEmpty` | the Mana pool reaches 0, for the first time | Isolde | *The well has run dry, Your Majesty. It fills again by itself, about a pool a night — or our patrons could refill it now.* | the Mana gauge |
 | `eras` | 100 cells revealed — chapter 3's bar | Isolde | *You've seen more of the land than any monarch in years — and look, the tree has noticed! A new chapter can open.* | Research |
+| `speedups` | the first speed-up in the Bag | Kofi | *Anything that waits shows Speed up on its card. Spend one there and the wait shrinks.* | Bag |
+| `storeFull` | a building's store is full | Tom | *A full store stops the work dead — tap it and bring it home.* | that building |
+| `idleCrew` | a crew has more hands than ground in reach | Tom | *Move the building nearer the work, or send them elsewhere.* | that building |
+| `knowledgeFull` | the Knowledge bar at its cap | Isolde | *Ten points of Knowledge, and not one more will fit. Spend some in the book.* | the Knowledge plank |
+| `store` | the Store opens | **Marisol**, Isolde | *Marisol Vega, merchant of everywhere! … She once sold my aunt a bridge.* | Store |
+| `friends` | the friends' door opens | **Idris**, Isolde | *Write back, and they'll lend a hand each day. Pin a wish on the board, and a friend can fill it.* | Friends |
+| `notices` | the first notice is pinned | Idris | *When something happens while you're busy, I pin a note here. Tap one to read it.* | the notice |
+
+- `storeFull`, `idleCrew`, `knowledgeFull` and `notices` wait for the First
+  Morning to end, as `sighted` does.
 
 ### 4.2 The Orcs
 
@@ -234,18 +323,54 @@ plays this before the lair's own scene. Its lines are beats.
 | `raid` | the first raid lands | Hob, Isolde | **Hob:** *They've had my woodpile. MY woodpile.* · **Isolde:** *Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.* | the lair |
 | `battle` | the first attack sheet opens | the Warden | *Pick who goes in: as many soldiers as you can spare. The numbers tell you how it'll go before we march.* | the attack button |
 | `victory` | the first lair is cleared | the Warden, Isolde, Hob | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* · **Hob:** *Woodpile included.* | the lair |
+| `evolution` | Warriors II is researched | the Warden | *The Barracks trains them now — if its level is high enough.* | the Barracks |
 | `relics` | Relics opens | Isolde | *Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.* | Relics |
 
 ### 4.3 Magic, heroes, the world
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
+| `landmarkSeen` | the first landmark sighted, after the First Morning | Isolde | *Standing stones! Clear the fog around them and claim them. The well runs deeper for every one we wake.* (needless once one is claimed) | the landmark |
+| `atlas` | the Atlas opens | Wren | *None of its cards is needed — but every one makes the road easier.* | Research |
 | `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Isolde:** *The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
 | `towerSighted` | the Watchtower's ruin is sighted (01-map-and-fog.md §4.1) — in view from the start, so it plays as the First Morning ends | Isolde | *Do you see that shape on the northern hills? Something tall, past the fog. Clear the way towards it and we'll know. I hope it's friendly.* | the Watchtower |
 | `watchtowerSeen` | the Watchtower's ruin is revealed | Isolde | *An old watchtower! Its great lens is gone — torn out. From its top you could see past the mountains. Oh, I'd love to sketch it.* | the Watchtower |
 | `watchtowerRepair` — **locked** | the Watchtower can be repaired (`canRepair`): its ruin revealed, the lens in the Bag, the price and a builder in hand — on the main screen | Isolde | *The lens the Orcs carried off — it belongs to the old watchtower! Let's put it back. Tap the tower.* · *Set the lens and mend the stair. One minute, and we'll see past the mountains. Repair it!* | the tower, then **Repair** — nothing else can be pressed |
-| `world` — **locked** | the world door opens — the Watchtower stands — on the main screen | Isolde | *The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.* · on the board: *Other kingdoms. Other banners! Our scouts are mapping the roads — and the Atlas will help us read them.* | the world knob, until the board is open (`worldOpen`) |
+| `world` — **locked** | the world door opens — the Watchtower stands — on the main screen | Isolde | *The tower stands, and the lens is clear! Look, Your Majesty — come and see what lies past the hills.* · on the board: *Other kingdoms. Other banners! And all that mist between us… we’ll need someone with good boots.* | the world knob, until the board is open (`worldOpen`) |
+
+**`explorer` — the first trip.** The first time the world board is open,
+until an explorer has been sent. Its lines are beats; the trip is free
+([`19-world-map.md`](19-world-map.md) §3.3).
+
+| Says (Wren, unless named) | Points at | Lock | Moves on |
+|---|---|---|---|
+| *Wren, Royal Scout, at your service! Boots laced, compass oiled — I’m ready the moment you send me.* | — | all | tap |
+| **Isolde:** *Sending a scout costs Gold, as a rule… but this first trip is on the crown. I’ve already signed the chit!* | — | all | tap |
+| *See the mist next door? Something’s waiting under it. Tap that hex, Your Majesty.* | the misty hex nearest the city (`hex:explore`) | that hex | its card is open |
+| *Just say the word — Explore!* | **Explore** | the button | an explorer is sent |
+| *I’m off! I’ll walk there, have a good look round, and send word when I’m done. Then come and see what I found.* | — | all | tap |
+| **Isolde:** *She always sends word. Usually by shouting it across the valley.* | — | all | tap |
+
+**`explorerReady` — the first find.** The first time an explorer waits at
+its hex, in the province or on the board, until a hex has been revealed.
+
+| Says (Wren, unless named) | Points at | Lock | Moves on |
+|---|---|---|---|
+| *Your Majesty! I’m done at the hex — you’ll want to see this. Tap my message and I’ll take you there.* (passed on the board) | the *Explorer ready* notice | the bubble | the board is open |
+| *Here I am! Tap the hex, and I’ll show you everything I found.* | the hex (`hex:ready`) | that hex | it is revealed |
+| *Look at all that land — and what I dug up is already in your purse. I’ll head home now; send me out again once I’m back.* | — | all | tap |
+| **Isolde:** *Every trip pushes the mist back a little further. I’ll keep the map — and the ledger!* | — | all | tap |
+
+**The world board's introductions** play on the board (`where: world`).
+
+| Scene | Trigger | Speakers | Says | Points at |
+|---|---|---|---|---|
+| `claim` — beats | the first hex revealed by an explorer; needless once a hex is held | Wren | *Build on a hex beside the city, and it's ours. Its feature says what we'll build.* | a hex to claim → **Build**, until it is claimed |
+| `warCamp` | the War Camp stands | the Warden | *From here our armies march out onto the world board — to beat the camps, to take ground, to hold it.* | the world knob |
+| `camps` | a monster camp in sight | the Warden | *A camp guards its ground: nobody claims it till it's beaten. Leave it, and it's back in half a day.* | the camp |
+| `dungeon` | a dungeon out of the dark | Wren | *Camp an army at its door and delve, room by room. Nobody can hold a dungeon — only empty it.* | the dungeon |
+| `portal` | the Dark Portal open | Wren | *Once a week it opens, and every kingdom races down it. Each floor pays more than the last.* | the Portal |
 
 ### 4.4 What the fog gives up
 
@@ -268,7 +393,7 @@ nothing if it already is). Its lines are beats, like the first lair's.
 |---|---|---|---|
 | *The shrine stands again! And look what the Orcs left behind — the Staff of Renewal, whole. It wants an altar. Tap the shrine.* | the Shrine | the Shrine | its card is open |
 | *A relic set on this altar lends the kingdom its power. Tap the altar.* | the altar | the altar | the relic picker is open |
-| *There's the Staff. Its power trains soldiers and villagers faster in the buildings round the shrine. Choose it.* | the Staff's card | the card | the Staff is in the slot |
+| *There's the Staff. It renews the land round the shrine: woods, fields and stone hold more and grow back faster. Choose it.* | the Staff's card | the card | the Staff is in the slot |
 | *Now Select, and it takes its place.* | Select | Select | a Shrine holds the Staff |
 | *It sleeps until we wake it with Mana. Activate it and its power fills the ground round the shrine. It grows longer, wider and stronger.* | Activate | none | tap |
 
@@ -280,8 +405,9 @@ nothing if it already is). Its lines are beats, like the first lair's.
 | Scene | Trigger | Says (Isolde, unless named) |
 |---|---|---|
 | `wounded` | the first soldier comes home wounded | **Warden:** *They came home hurt, not lost. The Infirmary patches them up for less than a new recruit.* |
-| `workshops` | the first workshop is finished | *A workshop! It turns raw goods into fine ones — and our grandest buildings will ask for them.* |
-| `harmony` | the first decoration is unlocked | *A beautiful city is a willing one. Decorations lend Harmony — and our grandest buildings ask for it.* |
+| `workshops` | the first workshop is finished | **Kofi:** *A workshop! Planks from Wood, cut stone from rock — and our grandest levels ask for them. Queue the work on its card.* |
+| `harmony` | Gardening is researched | **Priya:** *Past level seven, the big buildings ask for Harmony, and only beauty pays it. Keep more than they ask and the purse fills faster too.* |
+| `transplant` | Transplanting is researched | **Priya:** *Hold a tree and it lifts right out of the ground. It sulks for a day while it settles.* — points at a tree |
 
 ### 4.6 The unlock splash
 

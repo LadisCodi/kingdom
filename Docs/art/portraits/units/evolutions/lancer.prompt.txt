@@ -1,0 +1,20 @@
+GENERA UNA IMAGEN NUEVA. No edites ni exportes los adjuntos: son SOLO referencias.
+
+Adjunto 1: el Lancero de rango I tal como está en el juego. Adjunto 2: un montaje de tropas y héroes del juego. Tu imagen va a convivir con ellas: mismo estilo exacto.
+
+ENCARGO: una hoja con las CUATRO EVOLUCIONES del mismo Lancero — rangos II, III, IV y V — en una cuadrícula de 2×2, de izquierda a derecha y de arriba abajo: II arriba a la izquierda, III arriba a la derecha, IV abajo a la izquierda, V abajo a la derecha. Hoja vertical 2:3. Cada figura cabe entera en su cuarto, centrada, con una banda vacía de al menos 40 px a lo largo de las líneas medias: nada cruza de un cuarto a otro.
+
+ES EL MISMO SOLDADO SUBIENDO DE RANGO, no cuatro personajes distintos: el mismo hombre de barba castaña y cara amable, la misma postura en guardia, la misma LANZA LARGA de asta de madera en las dos manos y el mismo escudo redondo, la misma librea VERDE con ribete crema y toques de acero. Lo que cambia con cada rango es SOLO el equipo: más metal, mejor acabado, más dorado y más presencia. Cada rango tiene que leerse claramente más fuerte que el anterior a tamaño de miniatura.
+
+- Rango II · Veterano: cota de malla en brazos y faldón, hombrera de acero, yelmo con nasal (la cara despejada), escudo con borde de acero.
+- Rango III · Élite: peto de acero sobre el gambesón verde, capa corta verde, yelmo con carrilleras abiertas, guanteletes de acero, punta de lanza más larga y escudo con umbo de acero.
+- Rango IV · Campeón: armadura de placas con ribetes dorados, penacho verde en el yelmo, capa verde con ribete crema, lanza con virola dorada bajo la punta y un pequeño gallardete verde, escudo con marco dorado.
+- Rango V · Leyenda: armadura de placas plateada y dorada, ornamentada pero limpia, capa verde forrada de crema, yelmo con cresta dorada y penacho, lanza de asta oscura con punta ancha dorada con un brillo suave, escudo dorado con la hoja en relieve. El más imponente, sin dejar de ser simpático.
+
+En los cuatro: la cara siempre visible y sin nada delante, la cabeza y los hombros despejados (de ahí se recorta su retrato), las dos manos y los dos pies visibles, la lanza y el escudo enteros dentro de su cuarto. Mismo tamaño de figura en los cuatro cuartos.
+
+ESTILO, copiado del montaje: cartoon plano de juego móvil, contorno marrón oscuro grueso y uniforme, color plano con un solo tono de sombra y un brillo, sin texturas, sin arañazos, poco detalle, proporciones compactas con cabeza y manos algo grandes. Saturación como el montaje. Dibuja como si se fuera a mostrar a 128 px de ancho.
+
+EVITAR: sin texto, sin números, sin etiquetas, sin numerales, sin marcos, sin suelo, sin pedestal, sin sombras proyectadas, sin resplandor de fondo, sin caballo, sin capa negra ni armadura de villano, sin cuernos, sin calaveras, sin yelmo cerrado que tape la cara.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

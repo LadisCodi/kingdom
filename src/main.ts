@@ -41,7 +41,7 @@ import { renderBuilderSheet } from './ui/builderSheet';
 import { renderSurveySheet } from './ui/surveySheet';
 import { mountSurveyPill } from './ui/surveyPill';
 import { buildMenuSignature, renderBuildMenu } from './ui/buildMenu';
-import { renderPlacementPanel } from './ui/placementPanel';
+import { renderPlacementPanel, renderTransplantPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { districtCardScreen } from './ui/districtCard';
 import { lairCardScreen, landmarkCardScreen, renderAbandonedCard } from './ui/siteCard';
@@ -77,7 +77,7 @@ import { renderWishFilled, renderWishGive, renderWishNeed } from './ui/friends/w
 import { renderFriendProfile, renderFriendsSheet } from './ui/friends/friendsSheet';
 import { LocalSocialServer, LOCAL_SOCIAL_KEY, browserSocialStore } from './socialServer/local';
 import { RemoteSocialServer } from './socialServer/remote';
-import { cloudAnalyticsSend, cloudSocialCall, cloudWorldCall } from './persist/cloud';
+import { cloudAnalyticsSend, cloudAnalyticsSendLeaving, cloudSocialCall, cloudWorldCall } from './persist/cloud';
 import { Analytics, browserAnalyticsStore } from './analytics/analytics';
 import { trackedWorld } from './analytics/worldEvents';
 import { mountWorldKnob } from './ui/worldKnob';
@@ -225,6 +225,7 @@ async function boot(): Promise<void> {
   if (saveManager.cloudActive) {
     game.analytics = new Analytics({
       send: cloudAnalyticsSend,
+      sendLeaving: cloudAnalyticsSendLeaving,
       store: browserAnalyticsStore(),
       context: () => game.analyticsContext(),
       dev: new URLSearchParams(location.search).has('dev'),
@@ -436,6 +437,8 @@ async function boot(): Promise<void> {
       // tear the panel down between placing and moving for no visible reason.
       // The window carries its own close (placementPanel.ts), so no legacy knob.
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
+    } else if (game.mode.kind === 'transplanting') {
+      panelSlot.show('transplant', () => legacy(() => renderTransplantPanel(game)));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
     } else if (site !== null && standingLairAt(game.state, site)) {
@@ -572,20 +575,39 @@ async function boot(): Promise<void> {
   }, true);
 
   // ----------------------------------------------------------------- input
+  // THE HOLD RING: a long press on something that moves fills a little brass
+  // ring beside the finger — up and to the right, where the finger does not
+  // cover it (render/input.ts). Restarted by re-adding the class.
+  const holdRingEl = document.createElement('div');
+  holdRingEl.className = 'hold-ring';
+  holdRingEl.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true">'
+    + '<circle class="hold-ring-track" cx="20" cy="20" r="15"/>'
+    + '<circle class="hold-ring-fill" cx="20" cy="20" r="15" pathLength="100"/></svg>';
+  document.body.append(holdRingEl);
+  const showHoldRing = (at: { x: number; y: number; ms: number } | null): void => {
+    holdRingEl.classList.remove('is-filling');
+    if (at === null) return;
+    holdRingEl.style.left = `${at.x + 34}px`;
+    holdRingEl.style.top = `${at.y - 46}px`;
+    holdRingEl.style.setProperty('--hold-ms', `${at.ms}ms`);
+    void holdRingEl.offsetWidth; // restart the fill
+    holdRingEl.classList.add('is-filling');
+  };
   wireInput(
     canvas, camera,
     (sx, sy) => game.handleTap(sx, sy),
-    (sx, sy) => game.handleHold(sx, sy),
     (sx, sy) => game.grabGhost(sx, sy),
     (sx, sy) => game.dragGhostTo(sx, sy),
     (held) => game.holdGhost(held),
+    (sx, sy) => game.holdAt(sx, sy),
+    (sx, sy) => game.canHoldAt(sx, sy),
+    showHoldRing,
   );
   // The world board takes the same gestures: a drag pans, a pinch or the
   // wheel zooms, a tap picks a hex. Nothing there is held or dragged.
   wireInput(
     worldCanvas, worldCamera,
     (sx, sy) => game.handleWorldTap(sx, sy),
-    () => false,
     () => false,
     () => {},
   );
@@ -630,6 +652,9 @@ async function boot(): Promise<void> {
   };
   setInterval(runTick, 1000);
   runTick(); // catch up immediately on load (offline progress pays out here)
+  // The session's start goes now, not at the first half minute: a visit that
+  // ends sooner is the one the numbers most need to see.
+  void game.analytics?.flush();
 
   // A page out of sight ends its session for now: it carries on if it is
   // seen again soon, and a new one starts after a longer absence.
@@ -637,7 +662,7 @@ async function boot(): Promise<void> {
   const leaving = (): void => {
     saveManager.save(game.state, game.now(), true);
     game.analytics?.endSession(game.now());
-    void game.analytics?.flush();
+    void game.analytics?.flush(true);
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
@@ -693,7 +718,7 @@ async function boot(): Promise<void> {
       if (view !== lastView) { lastView = view; lastActive = t; }
       if (shouldDraw({ now: t, lastDraw, lastActive, covered: overlayRoot.childElementCount > 0 })) {
         lastDraw = t;
-        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs));
+        timed('map', () => drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now(), game.collectBubbles, game.vanishingLairs, game.ghostFx));
       }
     }
     requestAnimationFrame(frame);
@@ -753,7 +778,10 @@ async function boot(): Promise<void> {
       }
       // The world board as well: the explorers and builders out, and every
       // time the local world server keeps — marches, builds, rivals.
-      for (const e of game.state.world.explorers) e.departedAt -= delta;
+      for (const e of game.state.world.explorers) {
+        e.departedAt -= delta;
+        if (e.revealedAt !== null) e.revealedAt -= delta;
+      }
       for (const b of game.state.world.builds) b.finishesAt -= delta;
       void game.worldServer?.devShift?.(delta).then(() => game.refreshWorld());
       runTick();

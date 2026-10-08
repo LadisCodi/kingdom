@@ -11,7 +11,7 @@
 // express against a box than against four corners.
 
 import type { PlotBox } from './camera';
-import { drawSprite, drawSpriteGlow, drawSpriteOutline, spriteAspect, spriteInkTop } from './sprites';
+import { drawSprite, drawSpriteGlow, drawSpriteOutline, drawSpriteTint, spriteAspect, spriteInkTop } from './sprites';
 
 /** The four corners of a plot's ground diamond, clockwise from the top. */
 export interface Corners {
@@ -172,6 +172,15 @@ export function drawGround(
 export const FEATURE_PLOTS = 2;
 
 /**
+ * The canvas width, in plots, of one feature's art. A crop plot was a
+ * building before it was a feature, and its art is still a building's —
+ * one plot across, its soil the plot's own diamond — so it is the exception.
+ */
+const ONE_PLOT_FEATURES: ReadonlySet<string> = new Set(['farmlands']);
+export const featurePlots = (sprite: string): number =>
+  ONE_PLOT_FEATURES.has(sprite) ? 1 : FEATURE_PLOTS;
+
+/**
  * DRAW A THING THAT STANDS ON THE GROUND.
  *
  * Building art is authored exactly as wide as its plot's ground diamond, with
@@ -210,6 +219,22 @@ export function drawStandingOutline(
   if (aspect === null) return false;
   const h = plotW * aspect;
   return drawSpriteOutline(ctx, key, baseX - plotW / 2, baseY - h, plotW, h, color, px);
+}
+
+/** A wash of `color` over what `drawStanding` would draw with the same
+ *  numbers (sprites.ts `drawSpriteTint`). */
+export function drawStandingTint(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  baseX: number,
+  baseY: number,
+  plotW: number,
+  color: string,
+): boolean {
+  const aspect = spriteAspect(key);
+  if (aspect === null) return false;
+  const h = plotW * aspect;
+  return drawSpriteTint(ctx, key, baseX - plotW / 2, baseY - h, plotW, h, color);
 }
 
 /** A soft glow round what `drawStanding` would draw with the same numbers,

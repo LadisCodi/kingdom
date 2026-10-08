@@ -69,13 +69,19 @@ Every event is one row:
 | `book_opened` | `tome` |
 | `research` | `tech` |
 | `townhall_level` | `level` |
+| `building` | `district`, `level` — every build (level 1) and every level finished |
 | `world_joined` | `board`, `players` (humans on it) |
+| `world_explored` | `hex` — the player revealed a hex an explorer waited at |
 | `relic_restored` · `relic_levelled` | `relic`, `level` on a level |
-| `relic_forged` | `relic`, `slot`, `gems` |
+| `relic_gifted` | `relic` — a whole relic handed over (a product, a reward) |
 | `fragment_pack` | `gems`, `n` — the store's pack of random fragments |
 | `premium_shrine` | `n` (which), `gems` |
 | `relic_hosted` | `relic` — moved or put in a Shrine; `world` when in a Chapel |
 | `relic_activated` | `relic`, `level`, `mana` — a city relic woken in its Shrine |
+| `hero_call` | `banner`, `n` (the banner's call count), `free`, `hero` and `rarity` (null on a miss), `duplicate` |
+| `hero_up` | `hero`, `what` (`recruit`, `level`, `star`, `skill`), `to` |
+| `lair_attack` | `lair`, `fight`, `result` (`Won`, `Cleared`, `Repelled`), `attack`, `power` |
+| `lair_claimed` | `lair`, `tier` |
 | `item_used` | `item`, `count` — one Use, ×N counted once; `job` (`queue`, `training`, `workshop`, `explorer`, `hex`) for a speed-up, `coin` for a choice chest |
 
 ### 3.3 The playtest signals
@@ -85,6 +91,7 @@ Every event is one row:
 | `treasure_placed` · `treasure_picked` | `n`, `wait_ms` on a pick |
 | `sighted` · `discovered` | `id`, `wait_ms` on a discovery |
 | `reveal_unasked` | `cells` |
+| `mana_empty` | `ad` — the video stood ready; once a dry spell: the first tap refused for Mana until the pool holds a tap again |
 | `return_tap` | `kind` |
 | `survey_opened` · `survey_claimed` | `level`, `paid` on a claim |
 | `notice_opened` | `id` — `news:<group>`, `state:<name>` or `more` — and `count`, the news it read |
@@ -106,7 +113,8 @@ Every event is one row:
 | `purchased` · `refused_no_credit` | `sku`, `price_cents`, `credit_cents` |
 | `dismissed` | `sku` |
 | `offer_opened` | `sku`, `trigger` — an offer's window opened (sim/offers.ts) |
-| `gems_spent` | `sink`, `gems` — Gems spent in the store outside a product (`explorer`) |
+| `next_day_claimed` | `sku` — an offer's next-day part collected |
+| `gems_spent` | `sink`, `gems` — every Gem spent: `rush_build`, `rush_training`, `rush_workshop`, `rush_explorer`, `builder`, `hero_slot`, `keys` (+ `banner`, `keys`), `mana_refill`, `knowledge`, `shrine`, `fragment_pack`, `explorer` |
 | `ad_offer_shown` · `ad_watched` | `placement` |
 
 ### 3.5 The world and errors
@@ -133,7 +141,9 @@ Every event is one row:
   their own — what `on conflict (id) do nothing` needs. No update or delete.
 - **The queue:** events wait in memory and in localStorage, so a session's
   events left unsent go with the next one.
-- **The upload:** a batch every 30 s, and at once when the page is hidden.
+- **The upload:** at once after load, a batch every 30 s, and at once when
+  the page is hidden — that one on a `keepalive` request (at most 60 KB),
+  which the browser finishes after the page is gone.
   Inserted ignoring duplicates on `id`, so a batch sent twice counts once.
 - **Limits:** `props` at most 2 KB; at most 200 queued, the oldest dropped.
 - **No cloud:** with no Supabase env, nothing is queued.

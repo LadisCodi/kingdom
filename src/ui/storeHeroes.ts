@@ -19,7 +19,7 @@
 
 import { BANNERS, BANNER_ORDER, HEROES, HERO_ORDER, type BannerId } from '../sim/data/definitions';
 import type { Game } from '../game';
-import { heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary } from '../sim/heroes';
+import { heroChanceAt, pullsToGuarantee, pullsToLegendary } from '../sim/heroes';
 import type { HeroId, ItemId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { el, formatExact } from './format';
@@ -102,7 +102,7 @@ function featuredHero(id: BannerId, visit: number): HeroId | null {
 /** The odds, both calls, as the tooltip a tap on "Odds" opens. */
 function oddsText(game: Game): string {
   return BANNER_ORDER.map((banner) => {
-    const chance = heroChanceAt(pityCount(game.state, banner), banner);
+    const chance = heroChanceAt(game.state, banner);
     const legend = pullsToLegendary(game.state, banner);
     return `${BANNERS[banner].name}: ${Math.round(chance * 100)}% a hero now, one within ${formatExact(pullsToGuarantee(game.state, banner))}`
       + (legend === null ? '' : `, a legend within ${formatExact(legend)}`);
@@ -134,6 +134,7 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
     });
   }
   if (banner === 'basic' && game.uiHint() === 'banner') b.classList.add('hinted');
+  if (banner === 'basic') b.dataset.coach = 'banner-call';
   return b;
 }
 

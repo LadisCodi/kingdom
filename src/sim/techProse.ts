@@ -18,12 +18,13 @@
 // back. The editor imports this module too, which is the point: the designer
 // arranging the page reads the sentence the player will read.
 
-import { DISTRICTS, HARVEST, TECHNOLOGIES, UNITS } from './data/definitions';
+import { DISTRICTS, HARVEST, TECHNOLOGIES, UNITS, WORLD_BUILD } from './data/definitions';
+import type { WorldDistrict } from './world/types';
 import {
   TECH_STATS, targetId, targetKind,
   type StatDef, type TechEffect, type TechEffectOp,
 } from './data/techEffectRules';
-import type { TechKind, TechUnlock } from './data/techTreeRules';
+import { ROMAN_RANK, type TechKind, type TechUnlock } from './data/techTreeRules';
 import type { DistrictId, HarvestSourceId, TechId, TerrainId, UnitId } from './state';
 
 /** A display name for an id the DATA holds as a bare string. An unlock names
@@ -107,10 +108,12 @@ export function unlockPhrase(unlock: TechUnlock): string {
     return `one more ${districtName(unlock.districtCount)}`;
   }
   if ('unit' in unlock) return `the ${unitName(unlock.unit)}`;
+  if ('evolution' in unlock) return `${unitName(unlock.evolution.unit)} ${ROMAN_RANK[unlock.evolution.rank] ?? unlock.evolution.rank}`;
   if ('harvest' in unlock) {
     return HARVEST_SAYS[unlock.harvest as HarvestSourceId]?.many ?? unlock.harvest;
   }
   if ('terrain' in unlock) return TERRAIN_SAYS[unlock.terrain as TerrainId] ?? unlock.terrain;
+  if ('worldUpgrade' in unlock) return `the ${unlock.worldUpgrade} on the world board`;
   return 'nothing';
 }
 
@@ -172,6 +175,7 @@ function targetPhrase(effect: TechEffect): string {
   if (kind === 'district') return districtName(id);
   if (kind === 'unit') return unitName(id);
   if (kind === 'harvest') return HARVEST_SAYS[id as HarvestSourceId]?.one ?? id;
+  if (kind === 'worldDistrict') return WORLD_BUILD.districts[id as WorldDistrict]?.name ?? id;
   return id; // a unit tag is already the word; a tome is its own name
 }
 
@@ -181,7 +185,7 @@ function targetPhrase(effect: TechEffect): string {
  * The template is the stat's (`TECH_STATS[...].says[op]`); everything this
  * does is fill it in and drop the `[ … ]` segments when the effect is unaimed.
  */
-export function effectSentence(effect: TechEffect): string {
+export function effectSentence(effect: TechEffect, targets?: string): string {
   const stat = TECH_STATS[effect.stat] as StatDef | undefined;
   const template = stat?.says?.[effect.op];
   // A stat with no sentence for this op cannot be rendered, and inventing one
@@ -189,7 +193,7 @@ export function effectSentence(effect: TechEffect): string {
   // effect long before here; this is the belt.
   if (template === undefined) return '';
   const aimed = effect.target !== undefined;
-  const where = targetPhrase(effect);
+  const where = targets ?? targetPhrase(effect);
   const source = targetKind(effect.target) === 'harvest'
     ? HARVEST[targetId(effect.target) as HarvestSourceId]?.currencyId ?? '' : '';
   return template
@@ -221,9 +225,25 @@ export function techSentences(node: TechSaying): string[] {
   const unlocks = node.unlocks ?? [];
   if (unlocks.length > 0) return unlockClauses(unlocks).map((c) => `Unlocks ${c}`);
   const effects = node.effects ?? [];
-  if (effects.length > 0) return effects.map(effectSentence).filter((s) => s !== '');
+  if (effects.length > 0) return effectGroups(effects).filter((s) => s !== '');
   const prose = (node.description ?? '').trim();
   return prose === '' ? [] : [prose];
+}
+
+/**
+ * One sentence per number moved: effects that move the same stat by the same
+ * amount, aimed at several things of one kind, read as one sentence naming
+ * them all — "+15% from every Farm Lands and Hunting Grounds world district",
+ * not the same sentence twice.
+ */
+function effectGroups(effects: readonly TechEffect[]): string[] {
+  const groups = new Map<string, TechEffect[]>();
+  for (const e of effects) {
+    const key = e.target === undefined ? `${groups.size}` : `${e.stat}|${e.op}|${e.value}|${targetKind(e.target)}`;
+    groups.set(key, [...(groups.get(key) ?? []), e]);
+  }
+  return [...groups.values()].map((group) => (group.length === 1 ? effectSentence(group[0])
+    : effectSentence(group[0], serial(group.map(targetPhrase)))));
 }
 
 /** All of it as ONE line: a card, a banner, a tooltip. Unlocks share their

@@ -20,7 +20,7 @@ import {
   coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
 } from '../src/sim/state';
 import {
-  addBuilt, canGather, completeTech, FOREST, firstGame, freshGame, freshPresenter, fund, map, openEveryEra, T0,
+  addBuilt, completeTech, FOREST, firstGame, freshGame, freshPresenter, fund, map, openEveryEra, T0,
   reveal, screenAt,
 } from './helpers';
 import { grantHero } from '../src/sim/heroes';
@@ -182,15 +182,14 @@ describe('the placement window and the builder sheet', () => {
     expect(game.placementInfo()!.duration).toBe(quoted);
   });
 
-  it('the ghost shows a move arrow only for legal steps, and none while it is held', () => {
+  it('the ghost shows a move arrow for every step on the map, and none while it is held', () => {
     const state = freshGame();
     const game = freshPresenter(state);
     game.startPlacement('Housing');
     const at = (game.mode as { selected: { x: number; y: number } }).selected;
-    const legal = new Set(validPlacementCells(state, map, 'Housing').map((c) => `${c.x},${c.y}`));
     const steps = game.ghostSteps();
     expect(steps.length).toBeGreaterThan(0);
-    for (const d of steps) expect(legal.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
+    for (const d of steps) expect(map.terrain.has(`${at.x + d.x},${at.y + d.y}`)).toBe(true);
     game.holdGhost(true);
     expect(game.ghostSteps()).toEqual([]);
     expect(game.markers().previewSteps).toEqual([]);
@@ -415,42 +414,6 @@ describe('the news a presenter files (Docs/features/26-notices.md)', () => {
       expect(keys.includes('sighted:Orcs'), `veteran ${veteran}`).toBe(veteran);
       expect(keys).toContain('sighted:Goblins');
     }
-  });
-});
-
-// Manual taps are deliberately not cooldown-gated, so if a held pointer's
-// repeat AND the tap on release both landed, one press would collect twice.
-// The input layer suppresses the release-tap when a repeat consumed the
-// gesture — which only works if handleHold reports honestly.
-describe('hold-to-collect reports whether it consumed the gesture', () => {
-  it('true when it actually collected, false once the cooldown closes', () => {
-    const state = canGather(freshGame()); // the forest is gated on Forestry
-    const game = freshPresenter(state);
-    game.camera.centerOnCell(FOREST);
-    const [sx, sy] = screenAt(game, FOREST);
-
-    expect(game.handleHold(sx, sy)).toBe(true); // collected
-    expect(game.handleHold(sx, sy)).toBe(false); // same instant — cooldown
-  });
-
-  it('false over ground it cannot harvest, so the release-tap survives', () => {
-    const state = freshGame();
-    const game = freshPresenter(state);
-    const bare = { x: 2, y: 0 }; // revealed grassland, no resource
-    game.camera.centerOnCell(bare);
-    const [sx, sy] = screenAt(game, bare);
-
-    expect(game.handleHold(sx, sy)).toBe(false);
-  });
-
-  it('false while a menu is open — holds never reach the map', () => {
-    const game = freshPresenter();
-    const forest = { x: 2, y: 2 };
-    game.camera.centerOnCell(forest);
-    const [sx, sy] = screenAt(game, forest);
-    game.setOverlay('build');
-
-    expect(game.handleHold(sx, sy)).toBe(false);
   });
 });
 

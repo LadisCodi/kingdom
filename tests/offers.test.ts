@@ -147,7 +147,6 @@ describe('an offer window', () => {
     const state = shop(3);
     const sku = byTrigger('explorersBusy');
     raiseWatchtower(state);
-    state.research.completed.push('Cartography');
     refreshOffers(state, T0);
     expect(offerOn(state, sku, T0)).toBe(false);
     for (let i = 0; i < explorerSlots(state); i++) state.world.explorers.push({} as never);
@@ -275,15 +274,13 @@ describe('the value a pack prints', () => {
 });
 
 describe('an explorer bought', () => {
-  it('waits for Cartography, then adds one out at once, on a rising Gem price', () => {
+  it('adds one out at once, on a rising Gem price', () => {
     const state = shop();
     raiseWatchtower(state);
     addToWallet(state.player.wallet, 'Gems', 1_000_000);
     const first = explorerGemCost(state);
     expect(buyExplorer(state)).toBe('Bought');
-    expect(explorerSlots(state)).toBe(0);
-    state.research.completed.push('Cartography');
-    expect(explorerSlots(state)).toBe(WORLD.cartographyExplorers + 1);
+    expect(explorerSlots(state)).toBe(WORLD.startingExplorers + 1);
     expect(explorerGemCost(state)).toBeGreaterThan(first);
     while (buyExplorer(state) === 'Bought');
     expect(state.world.explorersBought).toBe(WORLD.explorersForSale);

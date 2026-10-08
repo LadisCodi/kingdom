@@ -439,7 +439,13 @@ wood of its sides touches the screen's edges.
 - **The training widget** (`trainingSection.ts`; reference
   `mockups/m28-training-widget.png`), one block for every building that
   turns something out — the Townhall's villagers, a hall's soldiers. Each
-  building trains ONE thing, so there is no picker:
+  building trains ONE thing; a hall picks only its unit's rank:
+  - **Rank picker** ([`../features/combat.md`](../features/combat.md) §6.4):
+    on a hall, the portrait is a button (a carved caret on its rim) that
+    opens a list in the panel under the numbers — one row a rank: portrait
+    with its coin, name, the four stats as values, and a padlock with its
+    reason on a rank still shut. The picked rank is what the panel shows and
+    Train trains; a newly unlocked rank is picked for the player.
   - **Unit portrait** (kit `unitPortrait`, reused wherever a unit is shown
     round): three layers — a round paper base in a flat outline, a circular
     mask inside it, and the unit's bust drawn a little larger than the mask,
@@ -935,7 +941,7 @@ reachable by finding and tapping the Market building on the map.
 
 **Purpose.** Choose what to add to the kingdom.
 
-Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military-decoration.png` (Military, Decoration).
+Reference: `mockups/m106-build-rows.png` (chosen over the grid, `m105`/`m107`; prompts in `mockups/build-menu-prompts.md`).
 
 **The flow.** Nav **Build** → Build menu → tap a card → Placement → **Build**
 → the map, with the building under construction.
@@ -954,9 +960,9 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 
 **The menu.**
 
-- A **bottom drawer**, about half the screen tall. The map stays visible and
-  dimmed above it, so placement opens on the same map the player was looking
-  at.
+- **The whole height under the header** (a tall, paned sheet, as the Bag):
+  the tabs stay put and only the list under them scrolls. Placement closes
+  it and opens on the map.
 - **Three tabs** — the nav's wooden tab plates. The selected one is the plate
   pressed into the wood (the nav tab's pressed state), not lit or gilded.
   Each wears the same badge and count as the nav tab:
@@ -967,24 +973,26 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
   | **Military** | Barracks, Spear Hall, Shooting Grounds, Stables, Infirmary |
   | **Decoration** | Garden, Well, Orchard, Statue, Plaza, Shrine |
 
-- The Decoration tab carries the Harmony line above its cards: `supply /
-  demand` and what the surplus is paying — silent until a decoration can be
-  built or Harmony is supplied or demanded.
+- The Decoration tab carries the Harmony line above its rows — `supply /
+  demand` and what the surplus is paying — once something demands Harmony.
+  Before that it carries one tip: *A house beside a decoration earns more
+  Gold*.
 - Opens on the tab last used; the first time, on Economy.
-- Cards sit in **one horizontally scrolling row**, about 2.3 cards wide at
-  375px, so the cut-off card says there is more.
-- Order within a tab is `buildMenuOrder`; startable cards are not re-sorted
-  to the front.
+- Buildings sit in **a vertical list of full-width rows**; about six fit at
+  375×812, the last cut by the edge so it says there is more.
+- Order within a tab: what can be built now, then what cannot be paid for
+  yet, then what is capped, then what a technology still has to open — each
+  group in `buildMenuOrder`.
 
-**The card**, top to bottom:
+**The row**, left to right:
 
 | Part | Shows |
 |---|---|
-| Art | The level-1 sprite on its grass plot |
+| Art | The level-1 sprite in a frame of darker paper, its roof a little past the frame's top |
 | Name | The name, and the ordinal it would get, small and quiet (*Housing #3*) — the price is that instance's |
-| Promise | One line, `promise` in `buildings.json` (≤ 42 characters) |
-| Cost | Chips for every coin and good; a short chip turns `clay`. A decoration adds a `+N Harmony` chip |
-| Footer strip | ⏳ build time on the left — the wait at the cell the ghost will appear on — and **Built `n / max`** on the right |
+| Promise | `promise` in `buildings.json`, at most two lines |
+| Cost | Chips for every coin and good; a short chip turns `clay`. A decoration adds a `+N Harmony` chip once Harmony is demanded |
+| Side plaque | ⏳ build time — the wait at the cell the ghost will appear on — over **Built `n / max`**, the same width down the list |
 
 **Card states.**
 
@@ -993,15 +1001,15 @@ Reference: `mockups/m47-build-drawer.png` (Economy), `mockups/m48-build-military
 | Startable | Plain | Opens placement |
 | **New** | A *New!* wax seal on the corner, until the tab has been seen once | Opens placement |
 | Can't afford | Plain; the short chips in `clay` | Refused: the card shakes and the short chips pulse |
-| At the Townhall cap | Padlock ribbon: *Needs Townhall level 3* | Refused |
-| At the absolute cap | Ribbon: *You have as many as the realm allows* | Refused |
-| Short of Harmony | Ribbon: *Needs 12 more Harmony* | Refused |
-| Tech-locked | Hidden | — |
+| At the Townhall cap | Drained parchment, sepia art, a padlock; in place of promise and price: *Needs Townhall level 3* | Refused |
+| At the absolute cap | As above: *You have as many as the realm allows* | Refused |
+| Short of Harmony | As above: *Needs 12 more Harmony* | Refused |
+| Tech-locked | As above, at the end of the list: *Research Fishing*; no side plaque | Refused |
 | Quest target | Highlighted | As its state |
 
 - A free builder is **not** a card state: a build with every builder busy is
   refused when it is confirmed (§5.6).
-- A ribbon wins over the clay chips: a capped card shows the ribbon only.
+- A lock wins over the clay chips: a capped row shows its reason only.
 
 ---
 
@@ -1023,15 +1031,21 @@ Reference: `mockups/m49-placement.png`.
   §4.1).
 - **Move arrows**: four green arrows on the ground round the ghost's
   footprint, one per side, pointing outward along the isometric grid's axes.
-  An arrow shows only where the next cell that way is legal. They bob gently
+  An arrow shows wherever the map goes on that way. They bob gently
   outward along their axis (none under reduced motion), and hide while the
   ghost is held.
 - No verdict: the depot labels on the captured cells are the whole reading
   of a spot.
 - Only the Docks outline their legal cells.
-- Gestures (§4.3 of the city doc): drag the ghost to carry it; tap a legal
-  cell to send it there; a drag that starts off the ghost pans the camera.
-  The ghost lifts while held, snaps to legal cells only and never commits.
+- Gestures (§4.3 of the city doc): drag the ghost to carry it; tap any
+  cell to send it there; a drag that starts off the ghost pans the camera;
+  a long press on a movable building picks it up. The ghost lifts while
+  held, goes anywhere on the map and never commits.
+- The ghost floats over its plot — the plot washed white (red where
+  illegal), its shadow under it — and lifts higher while held.
+- **On a cell it may not stand on, the ghost is red** — rim and a red wash
+  over its body — and the Build / Move button is disabled, the reason
+  printed beside it.
 - The first placement ever shows a one-time coach line: *Drag the building,
   or tap where it should go*.
 

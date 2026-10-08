@@ -66,8 +66,9 @@ describe('the quest chain', () => {
       'TaxDay', 'Explorer',                       // 7-8  rent pays for more fog
       'FirstPlot', 'ByHand',                      // 9-10 the old plots, repaired,
                                                   //   and reaped by hand
-      'Lumber', 'Farmhand', 'ToWork',             // 11-13 and then not by hand —
-                                                  //   the old Farm beside them
+      'Lumber', 'Farmhand', 'Fieldside', 'ToWork', // 11-14 and then not by hand —
+                                                  //   the old Farm, carried
+                                                  //   beside them
       'GrowingTown', 'Neighbors',                 // 15-16 the first House the fog
                                                   //   did not keep, then the
                                                   //   citizen it makes room for
@@ -166,6 +167,22 @@ describe('the quest chain', () => {
     expect(questValue(state, tower)).toBe(0);
     raiseWatchtower(state);
     expect(isQuestComplete(state, tower)).toBe(true);
+  });
+
+  it('counts a group of buildings across its kinds', () => {
+    // `AnyDecoration` leaves the choice of piece to the player.
+    const state = freshGame();
+    const corner = QUESTS.find((q) => q.id === 'PrettyCorner')!;
+    expect(corner.goalTarget).toBe('AnyDecoration');
+    expect(questValue(state, corner)).toBe(0);
+    addBuilt(state, 'Flowerbed', { x: 4, y: 0 });
+    addBuilt(state, 'Bench', { x: 5, y: 0 });
+    expect(questValue(state, corner)).toBe(2);
+    // A level bar over a group counts each building at it.
+    const producers = { ...corner, goalType: 'UpgradeDistrict' as const, goalTarget: 'AnyProducer', goalLevel: 1 };
+    const before = questValue(state, producers);
+    addBuilt(state, 'Sawmill', { x: 6, y: 0 });
+    expect(questValue(state, producers)).toBe(before + 1);
   });
 
   it('gem rewards land in the PLAYER wallet', () => {
@@ -453,9 +470,10 @@ describe('quests fund the research tree', () => {
       held += q.rewardKnowledge;
       if (q.id === OPENING_ENDS_AT) break;
     }
-    // The opening asks for nine cards, and the guarantee is worth nothing if a
-    // re-scoped chain quietly stops covering most of them.
-    expect(asked).toBe(9);
+    // The opening asks for ten cards — Village Pride the tenth — and the
+    // guarantee is worth nothing if a re-scoped chain quietly stops covering
+    // most of them.
+    expect(asked).toBe(10);
   });
 
   it('pays the Knowledge for Pickaxes in the quest before it — its lesson comes later', () => {
@@ -509,12 +527,20 @@ describe('quests fund the research tree', () => {
     // 16,465: `Fellowship` at 250 asks for three heroes once the banner has
     // had time to answer — the kingdom starts with none.
     // 15,465: `TheWatchtower` takes `OldStones`' place and its 170.
-    expect(chain).toBe(15_465);
+    // 15,505: `Fieldside` at 40 — the old Farm carried beside its plots.
+    // 21,495: the city grows in the chain (v115) — houses, plots, levels, a
+    // second and third Sawmill, the village's decorations.
+    expect(chain).toBe(21_495);
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
-    expect(tree).toBe(4_732_305); // the same sum tests/fog.test.ts freezes, and why
+    // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
+    // 4,740,505: Transplanting (200) moves a tree.
+    // 12,153,405: the Atlas grew to 53 optional cards on the world board.
+    // 13,313,405: sixteen troop-evolution cards, all dead ends (2026-10-08).
+    // 13,314,945: Village Pride and Civic Pride, the village's decorations.
+    expect(tree).toBe(13_314_945); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — chapters 1 and 2
     // of the kingdom's tree, which are the tutorial's (Docs/plans/
     // tech-tree-rework.md §3.3). Every chapter after is the depth the city has
@@ -536,7 +562,9 @@ describe('quests fund the research tree', () => {
     // majors are Warrior and the Infirmary now, at 500 and 800.
     // 3,605 for chapters 1–2 of the one tree (2026-10-05), ranks included,
     // since a chapter's spine is required whatever kind of card it is.
-    expect(opening).toBe(3605);
+    // 3,805 with Transplanting (200) in chapter 2.
+    // 3,845 with Village Pride (40), the village's first decorations.
+    expect(opening).toBe(3845);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

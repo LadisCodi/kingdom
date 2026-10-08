@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { ABANDONED, DISTRICTS } from '../src/sim/data/definitions';
+import { ABANDONED, DISTRICTS, QUESTS } from '../src/sim/data/definitions';
 import { validateRegionMap, type RegionMapDoc } from '../src/sim/data/mapRules';
 import regionMap from '../src/sim/data/region-map.json';
-import { repairAbandoned, repairRefusal } from '../src/sim/commands';
+import { moveDistrict, repairAbandoned, repairRefusal } from '../src/sim/commands';
+import { questValue } from '../src/sim/quests';
 import { nextBuildCost } from '../src/sim/districts';
 import { fogState, recordVisibleSites } from '../src/sim/fog';
+import { isGrowing } from '../src/sim/harvest';
 import { placementBlock } from '../src/sim/districts';
 import { deserialize, serialize } from '../src/sim/save';
 import { sightedThings } from '../src/sim/sight';
 import { cellHasSite, standingAbandonedAt } from '../src/sim/sites';
-import { getWallet, type GameState } from '../src/sim/state';
+import { coordKey, getWallet, type GameState } from '../src/sim/state';
 import { firstGame, fund, map, reveal, T0 } from './helpers';
 
 const site = (id: string) => ABANDONED.find((a) => a.id === id)!;
@@ -44,7 +46,7 @@ describe('the abandoned buildings', () => {
     expect(placementBlock(state, map, 'Housing', at)).toBe('HasSite');
   });
 
-  it('is repaired as a build at level 1, without its technology, at the next ordinal', () => {
+  it('is repaired as a build, without its technology, at the next price', () => {
     const state = firstGame();
     const plot = site('OldPlotNorth');
     reveal(state, [plot.location]);
@@ -54,13 +56,39 @@ describe('the abandoned buildings', () => {
     const cost = nextBuildCost(state, 'FarmLands');
     const wood = getWallet(state.city.wallet, 'Wood');
     expect(repairAbandoned(state, map, plot.id)).toBe('Started');
-    const d = state.city.districts.find((x) => x.location.x === plot.location.x && x.location.y === plot.location.y)!;
-    expect(d.definitionId).toBe('FarmLands');
-    expect(d.state).toBe('UnderConstruction');
-    expect(d.ordinal).toBe(1);
+    // A crop plot is a plantable: it comes back as its feature, growing.
+    expect(state.city.districts.some((x) => x.location.x === plot.location.x && x.location.y === plot.location.y)).toBe(false);
+    expect(state.features[coordKey(plot.location)]).toBe('Crops');
+    expect(isGrowing(state, map, plot.location, state.lastAdvance)).toBe(true);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(wood - (cost.Wood ?? 0));
     expect(standingAbandonedAt(state, plot.location)).toBeUndefined();
     expect(repairAbandoned(state, map, plot.id)).toBe('NotFound');
+  });
+
+  it('is repaired in a short wait of its own, flat — not a build’s', () => {
+    const state = atTheOldHouse();
+    expect(DISTRICTS.Housing.repairDurationSeconds).toBeGreaterThan(0);
+    expect(repairAbandoned(state, map, 'OldHouse')).toBe('Started');
+    expect(state.city.queue.at(-1)!.durationSeconds).toBe(DISTRICTS.Housing.repairDurationSeconds);
+  });
+
+  it('keeps the old Farm out of its plots’ reach, so the opening carries it over', () => {
+    // FTUE: the plots are repaired, then the Farm, which works nothing where
+    // it stands until it is moved between them (23-tutorials.md §3.1).
+    const state = firstGame();
+    const plots = [site('OldPlotNorth'), site('OldPlotSouth')];
+    const farm = site('OldFarm');
+    reveal(state, [...plots.map((p) => p.location), farm.location]);
+    fund(state, { Wood: 1000, Gold: 1000 });
+    for (const a of [...plots, farm]) expect(repairAbandoned(state, map, a.id), a.id).toBe('Started');
+    const fieldside = QUESTS.find((q) => q.id === 'Fieldside')!;
+    expect(fieldside).toMatchObject({ goalType: 'WorkInReach', goalTarget: 'Farm', goalAmount: 2 });
+    expect(questValue(state, fieldside)).toBe(0);
+    const between = { x: plots[0].location.x, y: (plots[0].location.y + plots[1].location.y) / 2 };
+    reveal(state, [between]);
+    const district = state.city.districts.find((d) => d.definitionId === 'Farm')!;
+    expect(moveDistrict(state, map, district.uniqueId, between, T0)).toBe('Moved');
+    expect(questValue(state, fieldside)).toBe(2);
   });
 
   it('is refused as a build is', () => {

@@ -36,7 +36,7 @@
 |---|---|---|---|---|---|
 | **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; makes Gold of its own into its store (10 a minute at L1); the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
-| **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
+| **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | — | a plantable: plants a Food cell, no building ([`27-plantables.md`](27-plantables.md)) |
 | **Farm** | 1×1 | Farming | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
@@ -53,12 +53,18 @@
 | **Mason's Yard** | 2×2 | Stone Dressing | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 2×2 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
 | **Rune Carver** | 2×2 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Flower bed** | 1×1 | Village Pride | 3 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Bench** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Lantern** | 1×1 | Village Pride | 2 at TH2 → 10 | **1** | supplies 1 Harmony |
+| **Topiary** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 1 Harmony |
+| **Banner** | 1×1 | Civic Pride | 1 at TH3 → 8 | **1** | supplies 1 Harmony |
+| **Birdbath** | 1×1 | Civic Pride | 2 at TH3 → 9 | **1** | supplies 2 Harmony |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
 | **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
 | **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
 | **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
-| **Shrine** | 1×1 | the ruin, or Gems | up to 5 | **1** | holds and wakes one city relic — no Harmony, no Mana of its own; how long and how far the relic acts is the relic's level ([`09`](09-relics.md) §2.1) |
+| **Shrine** | 1×1 | the ruin; then Sacred Masonry — one for materials, the rest for Gems | up to 5 | **1** | holds and wakes one city relic — no Harmony, no Mana of its own; how long and how far the relic acts is the relic's level ([`09`](09-relics.md) §2.1) |
 | **Watchtower** | 1×1 | its ruin, with the Watchtower's lens | 1 | **1** | sees 8 rings round it, +10 max Mana — and opens the world door and the Atlas ([`22`](22-progression.md) §5) |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
@@ -142,10 +148,11 @@
 
 ### 4.2 FarmLands — the crop plot
 
-- The plot **is** the resource: a Crops cell, 1 Food per 8 s strike, stock 10,
+- A **plantable**, not a building: it plants a `Crops` feature
+  ([`27-plantables.md`](27-plantables.md)). 1 Food per 8 s strike, stock 10,
   recovers in 60 s ([`04-harvest.md`](04-harvest.md) §2).
 - Tapped by hand, or worked by a Farm whose area of influence covers it.
-- One level. Build 15 Gold + 10 Wood, 10 s.
+- 15 Gold + 10 Wood, no builder; grows for 10 s.
 
 ### 4.3 Farm
 
@@ -164,8 +171,10 @@
 
 ### 4.4 Sawmill
 
-- Sends its crew to every forest inside its area of influence: **radius 1,
-  3 workers, at every level**.
+- Sends its crew to every forest inside its area of influence: **radius 2,
+  3 workers, at every level** — a ring further than the other producers,
+  because a forest takes twice as long to grow back
+  ([`04-harvest.md`](04-harvest.md) §2.1).
 - Build 30 Gold + 20 Wood, 20 s. Level 2: 99 Gold + 66 Wood, 30 s; time ×1.5
   per level.
 
@@ -238,6 +247,9 @@ regeneration +20, +25, +30, +36, +42 an hour.
 - **One unit, one hall:** every hall trains exactly one unit and every unit
   has exactly one hall (checked by `dataRules.ts`); the technology that
   unlocks a unit unlocks its hall.
+- **A hall trains every rank of its unit its level allows**: II at level 3,
+  III at 5, IV at 7, V at 9, each also behind its own technology
+  ([`combat.md`](combat.md) §6).
 
 | Hall | Trains | Unlock | Build | Level 2 |
 |---|---|---|---|---|
@@ -338,11 +350,17 @@ written once. The Townhall's own ladder is §3.
 - **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
   the decorations supply ([`21-harmony.md`](21-harmony.md)).
 
-### 4.12 The six decorations
+### 4.12 The decorations
 
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
-does nothing else, and every piece past the Garden is priced in a refined
-good, paid when the build is queued. The count cap per piece is its Townhall
+does nothing else.
+
+- **The village's six small pieces** — Flower bed, Bench, Lantern, Topiary,
+  Banner, Birdbath — open at Townhall 2 and 3 and cost Gold and a raw
+  currency. Early on nothing demands Harmony, so what they pay is their
+  place: a house beside one collects more Gold ([`21-harmony.md`](21-harmony.md) §6).
+- **The late five** — Garden to Plaza — open from Townhall 5, and every piece
+  past the Garden is priced in a refined good, paid when the build is queued. The count cap per piece is its Townhall
 gate and its ceiling in one; the piece is discovered by a card in the tree.
 The table is [`21-harmony.md`](21-harmony.md) §2.
 

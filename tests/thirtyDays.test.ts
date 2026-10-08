@@ -14,7 +14,7 @@
 // (`KINGDOM_DAYS=7` shortens a run while the policy itself is being written).
 import { describe, expect, it } from 'vitest';
 import {
-  DECORATIONS, DISTRICTS, GOODS, TAP, TECH_ORDER, TECHNOLOGIES, type DistrictDef,
+  DECORATIONS, DISTRICTS, GOODS, TECH_ORDER, TECHNOLOGIES, type DistrictDef,
 } from '../src/sim/data/definitions';
 import {
   advance, changeWorkers, enqueueBuild, researchTech, upgradeDistrict, collectBuilding,
@@ -61,6 +61,7 @@ const DAYS = Number(process.env.KINGDOM_DAYS ?? 30);
  *  eleven hours, so every night crosses the 8 h offline cap on purpose. */
 const VISIT_HOURS = [8, 14, 21];
 const TAPS_PER_VISIT = 120; // a thumb budget: Mana runs out first anyway
+const THUMB_TAP_MS = 500; // how fast the simulated thumb taps
 /** The thumb's budget for FOG. It used to be what paced exploration — a cell
  *  cost one tap a Gold, so the far rings were hundreds of presses — and it no
  *  longer is: a cell is five taps at every ring, so this budget is a ceiling
@@ -165,9 +166,8 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   //    thumb budget runs out. Houses take no Mana and were collected above.
   const resourceCells = map.cells.filter((c) => harvestSourceAt(state, c) !== null
     && fogState(state, map, c) === 'Revealed');
-  // One tick per ROUND, not per tap: the collect cooldown is per cell, so a
-  // round-robin over every cell already leaves each one longer than its
-  // cooldown. Ticking per tap would be a full advance() per tap.
+  // One tick per ROUND, not per tap: ticking per tap would be a full
+  // advance() per tap.
   let taps = 0;
   let rounds = 0;
   while (mana(state) >= 1 && taps < TAPS_PER_VISIT && rounds++ < 12) {
@@ -177,8 +177,8 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       if (mana(state) < 1 + manaReserve || taps >= TAPS_PER_VISIT) break;
       if (collectTap(state, map, cell, t) === 'Harvested') { any = true; taps++; inRound++; }
     }
-    // The thumb's own cadence: a round of N taps took N cooldowns to make.
-    tick(Math.max(1, inRound) * TAP.collectCooldownSeconds * 1000);
+    // The thumb's own cadence: a round of N taps took N × THUMB_TAP_MS.
+    tick(Math.max(1, inRound) * THUMB_TAP_MS);
     if (!any) break;
   }
   if (taps > 0) acted = true;

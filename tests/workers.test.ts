@@ -26,8 +26,8 @@ import {
 // each test below hand the sawmill a precise number of workable cells.
 const SAWMILL_CELL = { x: 3, y: 1 };
 const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes it
-const FOREST_B = { x: 2, y: 3 }; // radius 2 — out of a Sawmill's reach at any level
-const FOREST_C = { x: 0, y: 3 }; // radius 3 — out of reach too
+const FOREST_B = { x: 2, y: 3 }; // radius 2 — the edge of a Sawmill's reach
+const FOREST_C = { x: 0, y: 3 }; // radius 3 — out of a Sawmill's reach at any level
 
 // One harvest cycle from an adjacent (orthogonal) cell: out, one strike, and
 // home again. The units leave the DEPOT at the strike and reach the WALLET on
@@ -36,9 +36,9 @@ const MOVE_MS = (1 / WORKER.moveSpeedTilesPerSecond) * 1000;
 const STRIKE_MS = HARVEST.Forest.secondsPerStrike * 1000;
 const CYCLE_MS = 2 * MOVE_MS + STRIKE_MS;
 
-// `level` is stamped after the build: the L1 area is radius 1, which is also
-// the fog ring the finished mill reveals, so a test that wants a SECOND
-// workable tree without revealing every neighbour asks for level 2.
+// `level` is stamped after the build. The reach is radius 2 at every level;
+// the finished mill reveals only its radius-1 ring, so a tree further out is
+// workable only once this fixture reveals it.
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 1) => {
   fund(state, { Gold: 500, Wood: 500 });
   // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
@@ -72,7 +72,7 @@ describe('area of influence & worker limit', () => {
     let swing = workerStrikeMs(state, HARVEST.Forest, sawmill);
     for (let level = 1; level <= DISTRICTS.Sawmill.maxLevel; level++) {
       sawmill.level = level;
-      expect(workableCells(state, map, sawmill), `level ${level}`).toEqual([FOREST_A]);
+      expect(workableCells(state, map, sawmill), `level ${level}`).toEqual([FOREST_A, FOREST_B]);
       expect(assignableWorkerLimit(state, sawmill), `level ${level}`).toBe(3);
       const now = workerStrikeMs(state, HARVEST.Forest, sawmill);
       if (level > 1) expect(now, `level ${level}`).toBeLessThan(swing);
@@ -231,7 +231,7 @@ describe('the harvest cycle', () => {
     const state = freshGame();
     state.city.population = 3;
     const sawmill = builtSawmill(state, [FOREST_A]);
-    // A second tree inside the radius-1 reach, beside the first.
+    // A second tree inside the reach, beside the first.
     const second = { x: 4, y: 2 };
     state.features[coordKey(second)] = 'Trees';
     reveal(state, [second]);
@@ -260,7 +260,7 @@ describe('the harvest cycle', () => {
     const state = freshGame();
     state.city.population = 5;
     const sawmill = builtSawmill(state, [FOREST_A]);
-    // A second tree inside the radius-1 reach, beside the first.
+    // A second tree inside the reach, beside the first.
     const second = { x: 4, y: 2 };
     state.features[coordKey(second)] = 'Trees';
     reveal(state, [second]);

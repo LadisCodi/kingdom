@@ -41,11 +41,10 @@ import type { SpeedJob } from '../sim/speedups';
 import {
   queueProgress, remainingSeconds, type CurrencyId, type District,
 } from '../sim/state';
-import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit } from '../sim/workers';
 import { coach, el, formatDuration, formatExact, formatShort } from './format';
-import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, pips, progress, restMarks, sectionHead, windowHead } from './kit';
+import { btn, closeKnob, ctaBadge, iconEl, knob, moveKnob, progress, restMarks, sectionHead, windowHead } from './kit';
 
 /** What each adjacency stat is called on a card. The number beside it is
  *  signed and the tone is already right, so the words only have to say WHAT
@@ -151,9 +150,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district, live);
     if (training) {
-      // The block is headed by what it trains — one unit per building.
+      // The block is headed by what it trains — one unit per building, at
+      // the rank the hall is set to (combat.md §6.4).
       body.append(sectionHead(def.bedsPerLevel.length > 0 || def.trains.length === 0
-        ? 'Ward' : nameFor(def.trains[0])), training);
+        ? 'Ward' : nameFor(game.traineeAt(district))), training);
     }
 
     // A workshop turns things out too, so it gets the same kind of block.
@@ -254,35 +254,6 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
         return JSON.stringify([view, cast?.phase ?? null, cast === null ? 0 : Math.ceil(cast.leftMs / 1000),
           view.holds === null ? 0 : game.walletValue('Mana')]);
       }, shrine));
-    }
-
-    // A crop plot is a resource cell you tap, so show what is left in it.
-    if (district.definitionId === 'FarmLands') {
-      const plot = () => {
-        const t = game.now();
-        const spec = HARVEST.Crops;
-        const left = stockAt(game.state, game.map, district.location, t);
-        const readyAt = recoversAt(game.state, game.map, district.location, t);
-        return el('div', { class: 'dc-live' },
-          el('div', { class: 'dc-homes' },
-            iconEl('Food', { size: 'sm' }),
-            pips(left, spec.stock),
-            el('span', {}, readyAt === null
-              ? `${formatExact(left)} Food left in it`
-              : `regrowing — ${formatDuration((readyAt - t) / 1000)}`)),
-          el('div', { class: 'dc-tapline' },
-            iconEl('showme', { size: 'sm' }),
-            `Tap the plot for +${formatExact(tapYieldAt(game.state, game.map, district.location, t))} Food`));
-      };
-      body.append(sectionHead('Crops'), part(() => {
-        const t = game.now();
-        const readyAt = recoversAt(game.state, game.map, district.location, t);
-        return JSON.stringify([
-          stockAt(game.state, game.map, district.location, t),
-          readyAt === null ? null : formatDuration((readyAt - t) / 1000),
-          tapYieldAt(game.state, game.map, district.location, t),
-        ]);
-      }, plot));
     }
 
     // A house's residents and rent are its stat tiles (Beds 2/2, Gold +3.6k/h);
@@ -401,7 +372,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     if (upgradeRefusal(game.state, district.uniqueId) === null) {
       upgrade.append(ctaBadge(1, `upgrade:${district.uniqueId}`));
     }
-    upgradeAction.push(el('div', { class: 'dc-upgrade' }, upgrade));
+    if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
+    upgradeAction.push(el('div', { class: 'dc-upgrade' }, coach(upgrade, 'card:upgrade')));
   }
 
   // THE HEADER: the building's name, and its two tools on the right — Move,
@@ -410,11 +382,12 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   // the footer's one-primary-action slot (§2.2): it is something you do TO
   // the building, and it is free, so it carries no price to show.
   const name = districtLabel(game.state, district);
+  const move = canMoveDistrict(district)
+    ? coach(moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`), 'card:move') : null;
+  if (move !== null && game.uiHint() === 'card:move') move.classList.add('hinted');
   // The level rides on the title, a size down: *Housing #3 Lv 2*.
   const header = windowHead(name, [
-    ...(canMoveDistrict(district)
-      ? [moveKnob(() => game.startMove(district.uniqueId), `Move ${name}`)]
-      : []),
+    ...(move !== null ? [move] : []),
     coach(closeKnob(() => game.dismiss(), `Close ${name}`), 'card:close'),
   ], `Lv ${district.level}`);
 

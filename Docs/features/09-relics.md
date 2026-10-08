@@ -60,9 +60,9 @@ never a discount, because a discount dies at 100%.
 
 | Relic | Its idea | Effect inside the aura | Moves |
 |---|---|---|---|
-| **Staff of Renewal** | **Fervour** | buildings **train +X% faster** — soldiers at the halls, villagers at the Townhall | `trainingSpeed`, read when a trainee's clock starts |
+| **Staff of Renewal** | **Renewal** | natural resources — forests, fields, rocks, shoals — **hold +X% and grow back +X% faster** | `harvestStock` and `recoverySpeed`, read at the cell |
 | **Sickle of Plenty** | **Abundance** | **every swing and every tap takes +X%** — trees, crops, every mountain | `harvestUnitsPerStrike` |
-| **The Winged Hammer** | **Morale** | crews **swing and walk +X% faster** — one number | `workerStrikeSpeed` and `workerSpeed` |
+| **The Winged Hammer** | **Labour** | crews **swing and walk +X% faster**, buildings **train +X% faster** — one number | `workerStrikeSpeed`, `workerSpeed` and `trainingSpeed`, the last read when a trainee's clock starts |
 | **The Tribute Crown** | **Generosity** | houses **pay +X% tax** | `taxRate` |
 
 | Relic | Effect | Moves |
@@ -81,9 +81,11 @@ never a discount, because a discount dies at 100%.
   one number would be unreadable.
 - **A relic whose system does not exist yet says so on its card**, in muted
   ink with the reason, and its level accrues normally against the day it lands.
-- **The Hammer moves two numbers with one value**: a crew that swung faster
+- **The Hammer moves three numbers with one value**: a crew that swung faster
   and walked at the old pace would be half a relic.
-- **The Staff prices a wait when it starts**: a trainee whose clock starts
+- **The Staff's regrowth is stamped when a cell empties**: a cell that runs
+  dry inside an awake aura keeps the shorter wait.
+- **The Hammer prices training when it starts**: a trainee whose clock starts
   while the window is open, at a building inside the aura, keeps the faster
   time; one already running is not repriced, and the window closing changes
   nothing that has started.
@@ -126,6 +128,13 @@ never a discount, because a discount dies at 100%.
 - **The close is a boundary**: offline replay ends it at the same instant as
   live ticking, and rent inside the aura is repriced there.
 - **On screen** (mockups M80–M85):
+  - **The sheet says what the relic does in a sentence** under its art, with
+    the numbers of its level in it — *Renews the land round its Shrine:
+    forests, fields, rocks and shoals there hold 20% more and grow back 20%
+    faster, for 30 minutes.* — and the tiles under it give each number.
+  - **A missing fragment is never made.** Fragments are won in battle — lairs,
+    the world map, the depths — bought in the store, or traded with friends
+    ([`15-social.md`](15-social.md)); the sheet says so while a slot is empty.
   - **More fragments are the store's**: the sheet's foot is one **Store**
     button; the store sells a **Relic fragments** pack for Gems — 5 bound
     fragments of the relics already found, at random (900 Gems,
@@ -162,8 +171,8 @@ never a discount, because a discount dies at 100%.
     bubble showing the relic **drained of colour, with resting Zs** — there,
     and off. A tap on the bubble, like a tap on the Shrine, opens its card
     and costs nothing; Activate there pays the Mana.
-  - Houses an awake Crown pays, and buildings with crews an awake Hammer
-    speeds, wear a **+X%** badge.
+  - Houses an awake Crown pays, and buildings with crews or that train an
+    awake Hammer speeds, wear a **+X%** badge.
   - A wake sweeps a ring over the aura and floats **+30% tax · 1h**.
   - A window that closes raises the *Relic asleep* notice
     ([`26-notices.md`](26-notices.md) §2.2) — **The Tribute Crown is asleep**
@@ -202,6 +211,27 @@ Chapel holds it.
   on the Crown — not to be safe.
 - The effect is a **modifier at the base stage**, resolved where the number is
   owned. A relic level is not a technology and never expires.
+
+### 2.3 Shrines
+
+- **The first is a ruin**, the Thorned Shrine, repaired once the Orcs are gone.
+  No technology is asked.
+- **More are built from the Build menu** (Decoration tab), once **Sacred
+  Masonry** is researched (Kingdom, era 4). Never from the relic screens,
+  which only count them.
+- **The ruin comes first**: until it is repaired the card says *Repair the
+  old shrine first*.
+- **Then `shrines.materialBuilds` (1) for materials**: the level-1 cost at
+  its ordinal — 60,000 Gold for the second (`instanceLinearGrowth` 29).
+- **Then Gems only**, one price each from `shrines.premiumGems` — 3,000 ·
+  5,000 · 8,000 — and the ladder ends at **5 Shrines**.
+- A repaired ruin moves before its technology: a move is not a build.
+- **A Shrine holding a relic is moved by its aura.** While it is out, the
+  ghost carries the gold aura and a **+X%** badge on everything the relic
+  would work on there — resource cells for the Staff and the Sickle,
+  buildings for the Hammer and the Crown. The move bar says **Reaches N**
+  (green when it beats the current spot, red when it loses) over **M where
+  it stands**.
 
 ## 3. The season
 

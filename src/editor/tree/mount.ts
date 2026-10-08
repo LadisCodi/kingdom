@@ -17,12 +17,12 @@
 import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
-  DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
+  DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS, WORLD_UPGRADE_IDS,
   isDrawnEdge, isPlaced, saysItself, unlockLabel,
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
-import { ERA_CEILING, GOOD_IDS } from '../../sim/data/techTreeRules';
+import { ERA_CEILING, GOOD_IDS, MATERIAL_IDS } from '../../sim/data/techTreeRules';
 import {
   TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
   type TargetKind, type TechEffect, type TechEffectOp, type TechStat, type TechTarget,
@@ -53,13 +53,15 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 const TARGET_KINDS = Object.keys(TARGET_IDS) as TargetKind[];
 
 /** The kinds of thing an unlock can name, and where each list comes from. */
-const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true }> = {
+const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true; rank?: true }> = {
   district: { ids: DISTRICT_IDS },
   districtLevel: { ids: DISTRICT_IDS, level: true },
   districtCount: { ids: DISTRICT_IDS },
   unit: { ids: UNIT_IDS },
+  evolution: { ids: UNIT_IDS, rank: true },
   harvest: { ids: HARVEST_IDS },
   terrain: { ids: TERRAIN_IDS },
+  worldUpgrade: { ids: WORLD_UPGRADE_IDS },
 };
 
 /** What `?dev=data` holds of a hosted tree editor — see the map editor's
@@ -843,6 +845,11 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     card.append(field('gold', number(node.gold, (v) => doc.update(id, { gold: v }))));
     card.append(field('knowledge',
       number(node.knowledge ?? 0, (v) => doc.update(id, { knowledge: v }))));
+    // The city's Wood, Stone and Food paid with the Gold — 0 = none.
+    for (const material of MATERIAL_IDS) {
+      card.append(field(material, number(node.materials?.[material] ?? 0,
+        (v) => doc.update(id, { materials: { ...(doc.node(id)?.materials ?? {}), [material]: v } }))));
+    }
     // The refined goods paid with the Gold — one box per good, 0 = none.
     for (const good of GOOD_IDS) {
       card.append(field(good, number(node.goods?.[good] ?? 0,
@@ -948,7 +955,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     const sync = (): void => {
       const spec = UNLOCK_TARGETS[what.value];
       target.replaceChildren(...spec.ids.map((v) => el('option', { value: v }, v)));
-      level.hidden = spec.level !== true;
+      level.hidden = spec.level !== true && spec.rank !== true;
+      level.title = spec.rank === true ? 'rank (2–5)' : 'level';
     };
     what.addEventListener('change', sync);
     sync();
@@ -956,7 +964,9 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     add.addEventListener('click', () => {
       const unlock: TechUnlock = what.value === 'districtLevel'
         ? { districtLevel: { id: target.value, level: Math.round(Number(level.value)) } }
-        : ({ [what.value]: target.value } as unknown as TechUnlock);
+        : what.value === 'evolution'
+          ? { evolution: { unit: target.value, rank: Math.round(Number(level.value)) } }
+          : ({ [what.value]: target.value } as unknown as TechUnlock);
       const had = sayProse(id);
       doc.addUnlock(id, unlock);
       saidGoodbye(id, had);
@@ -1154,8 +1164,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   /**
    * A whole number: Gold, Knowledge, a building level. Rounded,
    * because none of those has a fraction and a stray `.5` in a price is a
-   * price nobody meant. An effect's VALUE is not one of these — `−0.05`
-   * seconds off the auto-tap is a real bonus, so that field steps by 0.01.
+   * price nobody meant. An effect's VALUE is not one of these — a flat
+   * fraction of a second is a real bonus, so that field steps by 0.01.
    */
   function number(value: number, commit: (v: number) => void): HTMLInputElement {
     const node = el('input', { class: 'tre-search', type: 'number', value: String(value) });

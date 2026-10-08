@@ -1,0 +1,20 @@
+GENERA UNA IMAGEN NUEVA. No edites ni exportes los adjuntos: son SOLO referencias.
+
+Adjunto 1: el Jinete de caballería de rango I tal como está en el juego. Adjunto 2: un montaje de tropas y héroes del juego. Tu imagen va a convivir con ellas: mismo estilo exacto.
+
+ENCARGO: una hoja con las CUATRO EVOLUCIONES del mismo Jinete de caballería — rangos II, III, IV y V — en una cuadrícula de 2×2, de izquierda a derecha y de arriba abajo: II arriba a la izquierda, III arriba a la derecha, IV abajo a la izquierda, V abajo a la derecha. Hoja vertical 2:3. Cada figura cabe entera en su cuarto, centrada, con una banda vacía de al menos 40 px a lo largo de las líneas medias: nada cruza de un cuarto a otro.
+
+ES EL MISMO SOLDADO SUBIENDO DE RANGO, no cuatro personajes distintos: el mismo jinete joven de pelo castaño y cara amable MONTADO en el mismo caballo bayo, la misma postura parado de tres cuartos con las cuatro patas en el suelo, la misma LANZA DE CABALLERÍA vertical en la mano derecha, la misma librea AZUL REAL con ribete crema y toques dorados en el jinete y en la gualdrapa del caballo. Lo que cambia con cada rango es SOLO el equipo: más metal, mejor acabado, más dorado y más presencia. Cada rango tiene que leerse claramente más fuerte que el anterior a tamaño de miniatura.
+
+- Rango II · Veterano: el jinete con cota de malla y yelmo abierto, el caballo con testera de cuero y gualdrapa con ribete crema. Todavía sencillo.
+- Rango III · Élite: el jinete con peto de acero y capa corta azul, el caballo con testera de acero y petral de cuero, gualdrapa azul más larga.
+- Rango IV · Campeón: el jinete con armadura de placas con ribetes dorados y penacho azul, el caballo con barda parcial de acero con ribetes dorados en cabeza y cuello, gualdrapa azul con flor de lis dorada.
+- Rango V · Leyenda: el jinete con armadura plateada y dorada, capa azul forrada de crema y yelmo abierto con penacho; un caballo BLANCO con barda plateada y dorada ornamentada pero que deja ver el caballo, gualdrapa azul real con ribete dorado, la lanza con punta dorada y un brillo suave. El más imponente, sin dejar de ser simpático.
+
+En los cuatro: la cara siempre visible y sin nada delante, la cabeza y los hombros despejados (de ahí se recorta su retrato), las dos manos y los dos pies visibles, la lanza entera y las cuatro patas del caballo dentro de su cuarto. Mismo tamaño de figura en los cuatro cuartos.
+
+ESTILO, copiado del montaje: cartoon plano de juego móvil, contorno marrón oscuro grueso y uniforme, color plano con un solo tono de sombra y un brillo, sin texturas, sin arañazos, poco detalle, proporciones compactas con cabeza y manos algo grandes. Saturación como el montaje. Dibuja como si se fuera a mostrar a 128 px de ancho.
+
+EVITAR: sin texto, sin números, sin etiquetas, sin numerales, sin marcos, sin suelo, sin pedestal, sin sombras proyectadas, sin resplandor de fondo, sin capa negra ni armadura de villano, sin cuernos, sin calaveras, sin yelmo cerrado que tape la cara.
+
+Do not draw grid lines, cell borders, labels, captions, shadows or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

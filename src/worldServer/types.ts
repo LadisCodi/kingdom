@@ -7,7 +7,7 @@
 // part; the shapes here are what the real one will store and send.
 
 import type { Board } from '../sim/battle';
-import type { ArtifactId, HeroId, LairId, PreciousId, UnitId } from '../sim/state';
+import type { ArtifactId, HeroId, LairId, PreciousId, TroopId } from '../sim/state';
 import type { WorldDistrict, WorldUpgrade } from '../sim/world/types';
 
 /** Which board, and which of its six cities is the player's. */
@@ -76,7 +76,7 @@ export interface ServerArmy {
    *  stands in a Fortress or camps at a dungeon. */
   at: number | null;
   /** Everyone it has lost so far, for the count it comes home with. */
-  fallen: Array<{ unitId: UnitId; count: number }>;
+  fallen: Array<{ unitId: TroopId; count: number }>;
 }
 
 /** What the server owes a player, delivered with every snapshot until the
@@ -87,8 +87,8 @@ export interface ServerArmy {
 export type WorldEffect = { seq?: number } & (
   | {
     kind: 'armyHome'; armyId: string; at: number;
-    troops: Array<{ unitId: UnitId; count: number }>;
-    fallen: Array<{ unitId: UnitId; count: number }>;
+    troops: Array<{ unitId: TroopId; count: number }>;
+    fallen: Array<{ unitId: TroopId; count: number }>;
     heroes: Array<{ id: HeroId; hp: number }>;
   }
   /** A line for the notices; `hex` is where it happened, when it has a
@@ -155,8 +155,29 @@ export interface ServerSeat {
   relics?: Partial<Record<ArtifactId, number>>;
 }
 
-/** A seat's multipliers on its improvements' output and stores. */
-export interface SeatBoost { produce: number; store: number }
+/**
+ * What a seat's research does on the world board, as its client sends it
+ * (`setBoost`). Everything past `produce` and `store` is optional, so an
+ * older client and a stand-in rival — which send none of it — keep the board
+ * as it was: no Fortress cap, no building locked.
+ */
+export interface SeatBoost {
+  /** Multipliers (≥ 1) on what every district makes an hour and holds. */
+  produce: number;
+  store: number;
+  /** The same, for one kind of district, on top of the two above. */
+  districts?: Record<string, { produce: number; store: number }>;
+  /** Speeds (≥ 1) a world build's and a repair's time is divided by. */
+  build?: number;
+  repair?: number;
+  /** How many Fortresses the seat may hold; absent = no cap. */
+  fortresses?: number;
+  /** Chapels on top of what the ground it holds allows. */
+  chapels?: number;
+  /** The buildings it may raise anew in a district; absent = every one.
+   *  One already standing keeps its levels. */
+  upgrades?: WorldUpgrade[];
+}
 
 export interface ServerBoard {
   id: string;
@@ -296,8 +317,8 @@ export interface ArmyView {
   heroes: HeroId[] | null;
   /** Its own owner sees what it fights with as it stands: each slot, a
    *  hero's wounds, and the soldiers lost so far. */
-  slots?: Array<{ kind: 'troop' | 'hero'; unitId: UnitId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
-  fallen?: Array<{ unitId: UnitId; count: number }>;
+  slots?: Array<{ kind: 'troop' | 'hero'; unitId: TroopId | null; fighterId: string | null; name: string; count: number; hp: number; hpMax: number }>;
+  fallen?: Array<{ unitId: TroopId; count: number }>;
 }
 
 export interface SeatView {
@@ -374,6 +395,9 @@ export type Refusal =
 
   /** A world relic's host (relic-restoration.md §5.2). */
   | 'NoChapel' | 'TooManyChapels' | 'NoSlot' | 'NotAWorldRelic'
+  /** A building its research has not opened yet, and a Fortress past its
+   *  cap (Docs/features/19-world-map.md §7.2). */
+  | 'Locked' | 'TooManyFortresses'
   /** The dev tool asked to play a seat that is not a rival's. */
   | 'NotARival'
   /** The server could not be reached, however often it was asked. */

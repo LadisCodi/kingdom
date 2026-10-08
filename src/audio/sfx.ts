@@ -44,6 +44,9 @@ import errorUrl from './sounds/error_denied.ogg?url';
 import explorerDepartUrl from './sounds/explorer_depart.ogg?url';
 import explorerHomeUrl from './sounds/explorer_home.ogg?url';
 import gemUrl from './sounds/gem_spend.wav?url';
+import ghostLiftUrl from './sounds/ghost_lift.ogg?url';
+import ghostPlantUrl from './sounds/ghost_plant.ogg?url';
+import ghostStepUrl from './sounds/ghost_step.ogg?url';
 import popUrl from './sounds/pop-06.wav?url';
 import tooltipUrl from './sounds/tooltip_pop.wav?url';
 import questUrl from './sounds/quest_claimed.mp3?url';
@@ -136,6 +139,9 @@ export type SfxName =
   | 'raidAlarm'
   // A speed-up taking time off a wait; a spell cast; a relic woken.
   | 'speedup' | 'spellCast' | 'relicWake'
+  // The placement ghost (game.ts): picked up, carried a cell, set down to
+  // build.
+  | 'ghostLift' | 'ghostStep' | 'ghostPlant'
   | BattleSfx;
 
 /**
@@ -326,6 +332,13 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   speedup: { urls: [speedup1, speedup2, speedup3, speedup4], volume: 0.45, jitter: 0.04 },
   spellCast: { urls: one(spellCastUrl), volume: 0.45, jitter: 0.02 },
   relicWake: { urls: one(relicWakeUrl), volume: 0.45, jitter: 0 },
+  // The ghost. Peak-normalised to -3 dB, so these volumes are the mix: Pop 09
+  // as it is picked up; Click Tap Knock Subtle, one per cell it is carried —
+  // quiet, it can fire ten times a second; Impact
+  // Deep Thud Bounce 03 under Hitting Nail with Hammer 01 as it is planted.
+  ghostLift: { urls: one(ghostLiftUrl), volume: 0.45, jitter: 0.05 },
+  ghostStep: { urls: one(ghostStepUrl), volume: 0.18, jitter: 0.08 },
+  ghostPlant: { urls: one(ghostPlantUrl), volume: 0.6, jitter: 0.03 },
 };
 
 let ctx: AudioContext | null = null;

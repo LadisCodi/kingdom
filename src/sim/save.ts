@@ -11,7 +11,7 @@
 // no offline cap; the buildings' stores, the pools and the queues bound it.
 
 import {
-  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, SAVE_VERSION, TECHNOLOGIES, UNITS,
+  ABANDONED, ARTIFACT_ORDER, DISTRICTS, GAME_VERSION, HEROES, ITEMS, SAVE_VERSION, TECHNOLOGIES, isTroopId,
   ARTIFACTS, STORE, relicKind,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
@@ -36,7 +36,7 @@ import {
   type ArtifactId, type Coord, type District, type GameState, type ItemId, type QueueItem,
   type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type LairId, type UnitId, type CurrencyId,
+  type LairId, type TroopId, type CurrencyId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -965,8 +965,97 @@ const MIGRATIONS: readonly Migration[] = [
       if (quests !== undefined && (quests.Index ?? 0) > THE_WATCHTOWER_AT_V109) quests.Index = (quests.Index ?? 0) - 1;
       else if (quests !== undefined && quests.Index === THE_WATCHTOWER_AT_V109) quests.Progress = 0;
     },
+  }, {
+    // v111: A CROP PLOT IS A FEATURE (27-plantables.md). Every FarmLands
+    // district leaves the list and its cell carries a grown `Crops` feature;
+    // one still being built is planted grown, and its job leaves the queue.
+    // The depot a built plot kept is its cell's already, so it carries on.
+    to: 111,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })?.Cities?.[0];
+      if (city === undefined) return;
+      const plots = ((city.Districts ?? []) as Array<{ UniqueID: string; DefinitionID: string; GridLocation: Coord }>)
+        .filter((d) => d.DefinitionID === 'FarmLands');
+      if (plots.length === 0) return;
+      const gone = new Set(plots.map((d) => d.UniqueID));
+      city.Districts = (city.Districts as Array<{ UniqueID: string }>).filter((d) => !gone.has(d.UniqueID));
+      // `QueueKinds` is a parallel array: both sides are filtered together.
+      const items = (city.QueueItems ?? []) as Array<{ DistrictID: string }>;
+      const kinds = (city.QueueKinds ?? []) as string[];
+      const keep = items.map((q) => !gone.has(q.DistrictID));
+      city.QueueItems = items.filter((_, i) => keep[i]);
+      if (city.QueueKinds !== undefined) city.QueueKinds = kinds.filter((_, i) => keep[i]);
+      const features = (modules['kingdom.features'] ??= { Cells: [], Respawns: [] }) as { Cells?: Array<Record<string, unknown>> };
+      features.Cells ??= [];
+      for (const d of plots) features.Cells.push({ Coord: d.GridLocation, FeatureID: 'Crops' });
+    },
+  },
+  {
+    // v113: THE FARM IS CARRIED TO ITS PLOTS. `Fieldside` (move the Farm
+    // beside two crop plots) enters the chain in front of `ToWork`. A kingdom
+    // on `ToWork` or past it moves on by one: its Farm was repaired where it
+    // already reached the plots, so it never has to move it.
+    to: 113,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      if (index >= FIELDSIDE_AT_V113) Object.assign(quests, { Index: index + 1 });
+    },
+  },
+  {
+    // v115: THE CITY GROWS IN THE CHAIN. Houses, plots, a second Sawmill,
+    // levels and the village's decorations join it, and `FullHouse` moves up
+    // to the second Townhall. A kingdom keeps the quest it is on, found by id
+    // in the new order; the new ones it has passed are not asked again.
+    to: 115,
+    migrate: (modules) => {
+      const quests = modules['kingdom.quests'] as { Index?: number; Progress?: number } | undefined;
+      if (quests === undefined) return;
+      const index = quests.Index ?? 0;
+      const id = CHAIN_V114[index];
+      if (id === undefined) { quests.Index = CHAIN_V115.length; return; }
+      const to = CHAIN_V115.indexOf(id);
+      // A quest moved EARLIER (`FullHouse`) is passed by a kingdom already
+      // beyond its new place: it stays on the one it was on.
+      quests.Index = to;
+    },
   },
 ];
+
+/** The chain before and after v115 put the city's growth into it, frozen as
+ *  history: a kingdom's place is carried across by quest id. */
+const CHAIN_V114: readonly string[] = [
+  'FirstSteps', 'Woodcraft', 'Timber', 'ARoof', 'Rations', 'FirstVillager', 'TaxDay',
+  'Explorer', 'FirstPlot', 'ByHand', 'Lumber', 'Farmhand', 'Fieldside', 'ToWork',
+  'SecondVillager', 'GrowingTown', 'Neighbors', 'TheSawmill', 'Crewed', 'ProperCapital',
+  'Fields', 'Tillage', 'SawTeeth', 'Levies', 'Sawpits', 'Regrowth', 'FurtherAfield', 'WarDrums',
+  'ArmedMen', 'Mustered', 'FirstSoldier', 'MusterCompany', 'DriveThemOut', 'TheWatchtower',
+  'Attuned', 'Mapmakers', 'Surveyors', 'Watered', 'Fallow', 'MoreRoom', 'Picks', 'Rubble',
+  'SecondStory', 'Chisels', 'Stoneworks', 'Crafts', 'Knack', 'Hearth', 'OpenDoors',
+  'FirstSummon', 'FullHouse', 'IronRoad', 'Deft', 'Fellowship', 'Architect', 'GrandCapital',
+  'DeepSeams', 'TheSanctum', 'AWarband', 'TheBarrowsPrize', 'PutToSea', 'Cartographers',
+  'Magistrate', 'Township', 'Borough', 'Leylines', 'SecondLair', 'DeeperStill',
+];
+const CHAIN_V115: readonly string[] = [
+  'FirstSteps', 'Woodcraft', 'Timber', 'ARoof', 'Rations', 'FirstVillager', 'TaxDay',
+  'Explorer', 'FirstPlot', 'ByHand', 'Lumber', 'Farmhand', 'Fieldside', 'ToWork',
+  'SecondVillager', 'GrowingTown', 'Neighbors', 'TheSawmill', 'Crewed', 'ProperCapital',
+  'MoreRoofs', 'Fields', 'FreshFurrows', 'NewFaces', 'Tillage', 'BiggerBarn', 'SawTeeth',
+  'TwoSaws', 'ManyHands', 'Pride', 'PrettyCorner', 'Levies', 'Sawpits', 'FourRoofs', 'Regrowth',
+  'FurtherAfield', 'WarDrums', 'ArmedMen', 'Mustered', 'SharperSaws', 'FirstSoldier',
+  'FullHouse', 'MusterCompany', 'DriveThemOut', 'TheWatchtower', 'Attuned', 'Mapmakers',
+  'Surveyors', 'Watered', 'Fallow', 'Lamplight', 'MoreRoom', 'Picks', 'Rubble', 'SecondStory',
+  'UpperFloors', 'Chisels', 'Stoneworks', 'Crafts', 'Knack', 'DeeperCuts', 'Hearth',
+  'OpenDoors', 'FirstSummon', 'IronRoad', 'Deft', 'Fellowship', 'Architect', 'GrandCapital',
+  'SixRoofs', 'SecondFarm', 'DeepSeams', 'Civic', 'Finery', 'TheSanctum', 'ThirdSaw',
+  'AWarband', 'TheBarrowsPrize', 'PutToSea', 'StoriedStreet', 'Cartographers', 'SecondQuarry',
+  'Magistrate', 'Township', 'Borough', 'NineRoofs', 'Leylines', 'SecondLair', 'DeeperStill',
+];
+
+
+/** Where `Fieldside` entered the chain in v113, frozen as history. */
+const FIELDSIDE_AT_V113 = 12;
 
 /** Where `TheWatchtower` stood in the v109 chain, frozen as history. */
 const THE_WATCHTOWER_AT_V109 = 66;
@@ -1135,6 +1224,7 @@ export function serialize(state: GameState, now: number): SaveFile {
             Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
             RecoveryMs: s.recoveryMs,
+            ...(s.growing === true ? { Growing: true } : {}),
           })),
       },
       'kingdom.workers': {
@@ -1299,8 +1389,10 @@ export function serialize(state: GameState, now: number): SaveFile {
         Explorers: state.world.explorers.map((e) => ({
           ID: e.id, Target: e.target, Path: e.path,
           DepartedAtUtc: iso(e.departedAt), StepMs: e.stepMs, WorkMs: e.workMs, Radius: e.radius,
+          ...(e.revealedAt === null ? {} : { RevealedAtUtc: iso(e.revealedAt) }),
         })),
         ExplorersBought: state.world.explorersBought,
+        TripsSent: state.world.tripsSent,
         // The builders out on the board: a TIMER each, priced when the server
         // accepted the build, so a builder away during an absence is home on
         // return.
@@ -1450,7 +1542,7 @@ export function deserialize(
     }));
     state.city.wounded = {};
     for (const w of (cityDto.Wounded ?? []) as any[]) {
-      state.city.wounded[w.UnitID as UnitId] = w.Count ?? 0;
+      if (isTroopId(String(w.UnitID))) state.city.wounded[w.UnitID as TroopId] = w.Count ?? 0;
     }
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
@@ -1568,6 +1660,7 @@ export function deserialize(
         // wait for that one cell, exactly as it did before, and the next
         // exhaustion stamps a real one.
         recoveryMs: c.RecoveryMs ?? null,
+        ...(c.Growing === true ? { growing: true as const } : {}),
       };
     }
   }
@@ -1591,7 +1684,7 @@ export function deserialize(
 
   const armyDto = modules['kingdom.army']?.Units;
   if (armyDto) {
-    state.army = (armyDto as any[]).map((u) => ({
+    state.army = (armyDto as any[]).filter((u) => isTroopId(String(u.DefinitionID))).map((u) => ({
       uniqueId: u.UniqueID,
       definitionId: u.DefinitionID,
     }));
@@ -1949,6 +2042,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
     BoardID?: unknown; BoardSeed?: unknown; Seat?: unknown; Revealed?: unknown;
     Explorers?: Array<Record<string, unknown>>;
     ExplorersBought?: unknown;
+    TripsSent?: unknown;
     Builds?: Array<Record<string, unknown>>;
     Sanctuaries?: unknown;
     Chapels?: unknown;
@@ -1987,8 +2081,14 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         stepMs: stepsOf(e)!,
         workMs: Number.isFinite(e.WorkMs) && (e.WorkMs as number) >= 0 ? e.WorkMs as number : 0,
         radius: Number.isInteger(e.Radius) ? Math.max(1, e.Radius as number) : 1,
+        // A trip from before v112 has not been revealed: it waits for the tap.
+        revealedAt: typeof e.RevealedAtUtc === 'string' ? ms(e.RevealedAtUtc) : null,
       })),
     explorersBought: Number.isInteger(d.ExplorersBought) && (d.ExplorersBought as number) >= 0 ? d.ExplorersBought as number : 0,
+    // Before v112 nobody counted: a kingdom that has explored, or has an
+    // explorer out, has had its free trip.
+    tripsSent: Number.isInteger(d.TripsSent) && (d.TripsSent as number) >= 0 ? d.TripsSent as number
+      : readBits(d.Revealed).some((w) => w !== 0) || (Array.isArray(d.Explorers) && d.Explorers.length > 0) ? 1 : 0,
     builds: (Array.isArray(d.Builds) ? d.Builds : [])
       .filter((b) => isBoardIndex(b.Index) && typeof b.FinishesAtUtc === 'string'
         && (WORLD_DISTRICTS.includes(b.What as never) || WORLD_UPGRADES.includes(b.What as never) || b.What === 'Repair'))
@@ -2009,7 +2109,7 @@ function readWorld(dto: unknown, seed: number): GameState['world'] {
         id: a.ID as string,
         heroes: (a.Heroes as string[]).filter((h) => h in HEROES) as GameState['world']['armies'][number]['heroes'],
         troops: (a.Troops as Array<{ unitId: string; count: number }>)
-          .filter((t) => t.unitId in UNITS && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
+          .filter((t) => isTroopId(t.unitId) && Number.isInteger(t.count) && t.count > 0) as GameState['world']['armies'][number]['troops'],
         target: a.Target as number,
         purpose: a.Purpose as GameState['world']['armies'][number]['purpose'],
       })),

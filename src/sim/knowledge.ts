@@ -22,6 +22,7 @@
 //
 // THE BAR IS THE DRIP'S ONLY CEILING, away or not: ten hours away fills it.
 
+import { track } from './analytics';
 import { roundPrice } from './roundPrice';
 import { DELVE, KNOWLEDGE } from './data/definitions';
 import { clearedLairCount } from './lairs';
@@ -161,6 +162,7 @@ export function buyKnowledge(state: GameState, count: number, till: KnowledgeTil
     const price = knowledgeGemPrice(count);
     if (getWallet(state.player.wallet, 'Gems') < price) return 'NotEnoughGems';
     addToWallet(state.player.wallet, 'Gems', -price);
+    track(state, 'gems_spent', { sink: 'knowledge', gems: price });
   }
   payKnowledge(state, count);
   return 'Bought';

@@ -5,8 +5,8 @@
 // finishes — and the player saw none of it. The game's strongest retention
 // beat was invisible, and its AdvanceResult was dropped on the floor.
 
-import { DISTRICTS, UNITS } from '../sim/data/definitions';
-import type { UnitId } from '../sim/state';
+import { DISTRICTS, TROOPS, unitOf } from '../sim/data/definitions';
+import type { TroopId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
@@ -56,8 +56,8 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
   }
   for (const [unitId, n] of countBy(report.result.trainedUnits)) {
     rows.push(el('div', { class: 'wel-row' },
-      iconEl(unitId),
-      el('span', { class: 'wel-name' }, UNITS[unitId].name),
+      iconEl(unitOf(unitId)),
+      el('span', { class: 'wel-name' }, TROOPS[unitId].name),
       el('span', { class: 'wel-gain' }, gain(n))));
   }
 
@@ -118,8 +118,8 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
 
 /** Counts, in first-seen order — one row per unit type rather than five rows
  *  saying "Warrior". */
-function countBy(units: readonly UnitId[]): Array<[UnitId, number]> {
-  const counts = new Map<UnitId, number>();
+function countBy(units: readonly TroopId[]): Array<[TroopId, number]> {
+  const counts = new Map<TroopId, number>();
   for (const u of units) counts.set(u, (counts.get(u) ?? 0) + 1);
   return [...counts.entries()];
 }

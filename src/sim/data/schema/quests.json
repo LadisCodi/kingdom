@@ -14,6 +14,7 @@
         "CompleteTech",
         "CompleteTechs",
         "AssignWorkers",
+        "WorkInReach",
         "TrainArmy",
         "ClaimLandmarks",
         "OwnArtifacts",
@@ -30,7 +31,7 @@
     "goalTarget": {
       "type": "text",
       "nullable": true,
-      "doc": "What the goal names. ClaimLandmarks may name a landmark KIND (Watchtower) or nothing for any."
+      "doc": "What the goal names. ClaimLandmarks may name a landmark KIND (Watchtower) or nothing for any; BuildDistrict and UpgradeDistrict may name a group (AnyDecoration, AnyProducer, AnyHall, AnyWorkshop)."
     },
     "goalAmount": { "type": "int", "min": 1 },
     "goalLevel": { "type": "int", "nullable": true },

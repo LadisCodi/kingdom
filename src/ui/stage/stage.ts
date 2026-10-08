@@ -27,10 +27,17 @@ import type { Game } from '../../game';
 import { el } from '../format';
 import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
-import { buildShortfall, stockBuild } from '../../sim/districts';
+import { buildShortfall } from '../../sim/districts';
 import { conditionHolds } from './conditions';
-import { inPlace, pickScene, sceneKey, settleScene } from './director';
+import { inPlace, pickScene, PROGRESS, sceneKey, settleScene } from './director';
 import { bubbleTopOver, handPlace, resolveTarget, targetHasCell, targetRect, uiNode, type Rect, type Target } from './targets';
+import { hexAt } from '../../sim/world/hex';
+
+/** The world board's camera, on a hex a line points at — the board's twin
+ *  of the province camera flying to a cell. */
+const glideToHex = (game: Game, target: Target | null): void => {
+  if (target?.kind === 'hex' && game.scene === 'world') game.worldCamera?.centerOnHex(hexAt(target.index));
+};
 
 /** A scene on the stage, and where it has got to. */
 interface Playing {
@@ -77,8 +84,14 @@ function bringIntoView(game: Game, key: string): void {
     const scrolls = /(auto|scroll)/.test(style.overflowX + style.overflowY);
     if (!scrolls) continue;
     const box = p.getBoundingClientRect();
+    // The row itself, and nothing above it: `scrollIntoView` would also
+    // scroll the frame — clipped, but still scrollable — and slide the whole
+    // game sideways, the quest pill off the screen.
     if (r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom) {
-      node.scrollIntoView({ block: 'nearest', inline: 'center' });
+      p.scrollBy({
+        left: r.left + r.width / 2 - (box.left + box.width / 2),
+        top: r.top < box.top ? r.top - box.top : r.bottom > box.bottom ? r.bottom - box.bottom : 0,
+      });
     }
     return;
   }
@@ -96,16 +109,6 @@ const REFOCUS_MS = 1500;
 
 /** How far a press may travel and still be a tap rather than a pan. */
 const TAP_SLOP_PX = 10;
-
-/** Conditions that record how far the kingdom has got, and so can tell a
- *  scene where to resume. The rest (a sheet open, a control on screen, taps
- *  since the line began) are moments, not progress. */
-const PROGRESS: ReadonlySet<string> = new Set([
-  'questReached', 'questComplete', 'questClaimed', 'questProgress', 'techDone', 'techFilled',
-  'placed', 'built', 'population', 'training', 'heroes', 'lairFound', 'lairDefeated', 'lairCleared',
-  'landmarkClaimed', 'landmarkSeen', 'bookOpen', 'doorOpen', 'revealed',
-  'treasureRevealed', 'treasurePicked', 'abandonedRevealed', 'repairing', 'canRepair', 'worldVisited',
-]);
 
 export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): void {
   // ------------------------------------------------------------ the pieces
@@ -243,8 +246,17 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
    *  `stocks` a building makes up what the wallet lacks for it. */
   const hand = (l: SceneLine): void => {
     if (l.gives) giveBook(game.state, l.gives);
-    if (l.stocks) { stockBuild(game.state, l.stocks); game.notify(); }
+    if (l.stocks) game.stockBuild(l.stocks, speakerAt(l.side));
     if (l.restores && giveRelic(game.state, l.restores)) game.notify();
+  };
+
+  /** The middle of whoever stands on `side`, in the frame's pixels — where
+   *  what they hand over bursts from. */
+  const speakerAt = (side: 'left' | 'right'): { x: number; y: number } | undefined => {
+    const r = (side === 'left' ? left : right).getBoundingClientRect();
+    if (r.width === 0) return undefined;
+    const f = frame.getBoundingClientRect();
+    return { x: r.left - f.left + r.width / 2, y: r.top - f.top + r.height / 2 };
   };
 
   /** A line that `stocks` a building has nothing to say while the wallet can
@@ -283,6 +295,16 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // The camera flies to a map target before the line appears.
     if (playing.target?.kind === 'cell') {
       game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
+    }
+    glideToHex(game, playing.target);
+    // A LINE WITH NOTHING TO SAY is the hand alone (23-tutorials.md §3): no
+    // box, nobody on stage — what it points at is the player's to tap.
+    if (l.text === '') {
+      leave('left');
+      leave('right');
+      voiced = null;
+      act();
+      return;
     }
     // A speaker taking their turn says so — a little vocal emote in the
     // line's mood — once, not on every line they speak in a row.
@@ -355,15 +377,21 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     // Only PROGRESS counts — a quest, a research, a building: a sheet being
     // shut or a control being on screen says nothing about how far along
     // the player is.
-    let resumeAt = 0;
-    scene.lines.forEach((l, i) => {
-      if (PROGRESS.has(l.until) && lineHolds(l)) resumeAt = i + 1;
-    });
     hinted = null;
     layer.classList.remove('is-hint');
     root.replaceChildren(layer);
     graced();
-    begin(resumeAt);
+    begin(progressedTo(0));
+  };
+
+  /** The line after the last one from `from` on whose PROGRESS condition
+   *  already holds — `from` when none does. */
+  const progressedTo = (from: number): number => {
+    let at = from;
+    playing!.scene.lines.forEach((l, i) => {
+      if (i >= from && PROGRESS.has(l.until) && lineHolds(l)) at = i + 1;
+    });
+    return at;
   };
 
   /** Who spoke the line before, so a run of lines voices only its first. */
@@ -455,7 +483,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
       let r = playing?.target ? targetRect(game, playing.target, frame) : null;
       // A map target is being flown to the middle of the screen: judge it
       // where it is going, not where the glide has it now.
-      if (r !== null && playing?.target?.kind === 'cell') {
+      if (r !== null && (playing?.target?.kind === 'cell' || playing?.target?.kind === 'hex')) {
         r = { ...r, x: (frame.clientWidth - r.w) / 2, y: (frame.clientHeight - r.h) / 2 };
       }
       const judged = PLACES.map((p) => ({ p, ...judge(p, r) }));
@@ -517,8 +545,18 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     return l.lock;
   };
 
+  /** THE SAME GATE ON THE WORLD BOARD: which hex a tap may reach. */
+  game.hexGate = (index: number | null): boolean => {
+    if (waitsForTap() || inGrace()) return false;
+    const lock = lockNow();
+    if (lock === 'none' || lock === 'map') return true;
+    if (lock === 'all') return false;
+    const t = playing!.target;
+    return t?.kind === 'hex' && index === t.index;
+  };
+
   /** THE ONE GATE ON THE MAP: which taps a line lets through. */
-  game.tapGate = (cell: Coord | null, how: 'tap' | 'hold' | 'ghost'): boolean => {
+  game.tapGate = (cell: Coord | null, how: 'tap' | 'ghost'): boolean => {
     if (waitsForTap() || inGrace()) return false; // the frame's click moves the line on
     const lock = lockNow();
     if (lock === 'none' || lock === 'map') return true;
@@ -729,9 +767,16 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
     drawTarget(targetRect(game, hinted, frame));
   };
   let lastIdleHelp = 0;
+  /** Was a sheet open on the last frame? */
+  let sheetWasOpen = false;
   const frameTick = (now: number): void => {
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
+    // BACK ON THE MAP is where a scene expects the player: the last sheet
+    // closing ends the breath and looks for a scene at once.
+    const sheetOpen = game.hasOpenSheet();
+    if (sheetWasOpen && !sheetOpen) { gapUntil = 0; lastCheck = 0; }
+    sheetWasOpen = sheetOpen;
     if (playing === null) {
       pointHint();
       // Not while the page is hidden: a timer still fires there, and a
@@ -786,10 +831,11 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
         // forest than the one pointed at, or panned away, and the hand is
         // pointing at nothing they can see. Once the hands are off the
         // screen for a moment — never mid-pan.
-        if (playing.target?.kind === 'cell' && r !== null && outOfSight(r)) {
+        if ((playing.target?.kind === 'cell' || playing.target?.kind === 'hex') && r !== null && outOfSight(r)) {
           playing.hiddenSince ??= now;
           if (now - playing.hiddenSince > REFOCUS_MS && now - lastActivity > REFOCUS_MS) {
-            game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
+            if (playing.target.kind === 'cell') game.camera.centerOnCell(playing.target.cell, playing.target.span, CAMERA_GLIDE_MS);
+            glideToHex(game, playing.target);
             playing.hiddenSince = null;
           }
         } else {
@@ -815,6 +861,13 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
           if (!playing.acting) replace(l);
           fitCast();
           if (lineHolds(l)) { graced(); next(); }
+          // ALREADY DONE MID-SCENE: on the player's turn, a later line's
+          // progress already met — the upgrade started from elsewhere —
+          // jumps the scene past it, or it waits for a button that is gone.
+          else if (l.until !== 'tap') {
+            const ahead = progressedTo(playing.index + 1);
+            if (ahead > playing.index + 1) { graced(); begin(ahead); }
+          }
         }
       }
     }

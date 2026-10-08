@@ -20,7 +20,7 @@ import { ITEMS, type SpeedupKind } from './data/definitions';
 import type { MapData } from './grid';
 import { itemCount } from './bag';
 import { districtById, remainingSeconds, type GameState, type ItemId } from './state';
-import { cutExplorer, returnsAt } from './world/explorers';
+import { cutExplorer, tripMsLeft } from './world/explorers';
 import { cutWorkshopItem, isWorkshop, itemRemainingSeconds } from './workshops';
 
 /** A running timer a speed-up can be used on. A world build (`hex`) is the
@@ -66,8 +66,10 @@ export function jobRemainingSeconds(state: GameState, job: SpeedJob, now: number
     return lineFor(state, job.buildingId).length === 0 ? null : lineRemainingSeconds(state, job.buildingId, now);
   }
   if (job.kind === 'explorer') {
+    // Nothing runs while it waits at its hex for the player's tap.
     const trip = state.world.explorers.find((t) => t.id === job.tripId);
-    return trip === undefined ? null : Math.max(0, (returnsAt(trip) - now) / 1000);
+    const left = trip === undefined ? null : tripMsLeft(trip, now);
+    return left === null ? null : left / 1000;
   }
   if (job.kind === 'army') return job.at <= now ? null : (job.at - now) / 1000;
   if (job.kind === 'hex') {

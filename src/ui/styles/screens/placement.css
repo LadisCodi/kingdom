@@ -48,6 +48,17 @@
   font-weight: var(--weight-strong);
   color: var(--ink);
 }
+/* A Shrine on the move: what its relic would reach here, against now. */
+.plc-aura {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 5);
+  font-size: calc(var(--px) * 15);
+  font-weight: var(--weight-strong);
+  color: var(--ink);
+}
+.plc-aura.is-up { color: var(--leaf-dark); }
+.plc-aura.is-down { color: var(--clay); }
 .plc-reason {
   display: flex;
   align-items: center;

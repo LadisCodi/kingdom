@@ -25,6 +25,13 @@
       "gold": 25, "knowledge": 2,
       "unlocks": [{"district":"FarmLands"}]
     },
+    "VillagePride": {
+      "name": "Village Pride", "icon": "Garden", "kind": "unlock",
+      "tome": "Kingdom", "era": 2, "row": 1, "col": 2,
+      "requires": ["Forestry"],
+      "gold": 40, "knowledge": 2,
+      "unlocks": [{"district":"Flowerbed"}, {"district":"Bench"}, {"district":"Lantern"}]
+    },
     "Farming": {
       "name": "Farming", "icon": "Farm", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 2, "col": 0,
@@ -126,6 +133,13 @@
       "gold": 100, "knowledge": 3,
       "unlocks": [{"district":"Quarry"}]
     },
+    "Transplanting": {
+      "name": "Transplanting", "icon": "Wood", "kind": "mechanic",
+      "description": "Hold a tree to pick it up and move it — it grows back in a day.",
+      "tome": "Kingdom", "era": 2, "row": 6, "col": 1,
+      "requires": ["UrbanPlanning"],
+      "gold": 200, "knowledge": 3
+    },
     "Hospitality": {
       "name": "Hospitality", "icon": "Tavern", "kind": "unlock",
       "tome": "Kingdom", "era": 2, "row": 6, "col": 2,
@@ -173,6 +187,13 @@
       "requires": ["Bureaucracy"],
       "gold": 2000, "knowledge": 3,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}, {"harvest":"MountainGold"}]
+    },
+    "CivicPride": {
+      "name": "Civic Pride", "icon": "Garden", "kind": "unlock",
+      "tome": "Kingdom", "era": 3, "row": 9, "col": 1,
+      "requires": ["Bureaucracy"],
+      "gold": 1500, "knowledge": 3,
+      "unlocks": [{"district":"Topiary"}, {"district":"Banner"}, {"district":"Birdbath"}]
     },
     "Infirmary": {
       "name": "Infirmary", "icon": "Infirmary", "kind": "unlock",
@@ -289,12 +310,26 @@
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
+    "WarriorsII": {
+      "name": "Warriors II", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 16, "col": 0,
+      "requires": ["Spears"],
+      "gold": 8000, "knowledge": 6,
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":2}}]
+    },
     "Architecture": {
       "name": "Architecture", "icon": "builders", "kind": "unlock",
       "tome": "Kingdom", "era": 4, "row": 16, "col": 1,
       "requires": ["Townhouses", "StoneDressing", "Spears"],
       "gold": 8000, "knowledge": 5,
       "unlocks": [{"districtLevel":{"id":"Farm","level":4}}, {"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":4}}, {"districtLevel":{"id":"Docks","level":4}}]
+    },
+    "SacredMasonry": {
+      "name": "Sacred Masonry", "icon": "Shrine", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 16, "col": 2,
+      "requires": ["Spears"],
+      "gold": 8000, "knowledge": 5,
+      "unlocks": [{"district":"Shrine"}]
     },
     "Joinery": {
       "name": "Joinery", "icon": "Carpenter", "kind": "unlock",
@@ -355,6 +390,13 @@
         {"stat":"buildSpeed","op":"percent","value":15}
       ]
     },
+    "ArchersII": {
+      "name": "Archers II", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 4, "row": 19, "col": 1,
+      "requires": ["ShieldWallI"],
+      "gold": 8000, "knowledge": 6,
+      "unlocks": [{"evolution":{"unit":"Archer","rank":2}}]
+    },
     "WoodshedsI": {
       "name": "Woodsheds I", "icon": "chestWood", "kind": "bonus",
       "tome": "Kingdom", "era": 4, "row": 19, "col": 2,
@@ -370,6 +412,13 @@
       "requires": ["CarpentryII"],
       "gold": 12000, "knowledge": 4,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":5}}]
+    },
+    "LancersII": {
+      "name": "Lancers II", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 5, "row": 21, "col": 0,
+      "requires": ["Charter"],
+      "gold": 9000, "knowledge": 8,
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":2}}]
     },
     "Ironmongery": {
       "name": "Ironmongery", "icon": "builders", "kind": "unlock",
@@ -409,6 +458,13 @@
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
+    },
+    "CavalryII": {
+      "name": "Cavalry II", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 5, "row": 23, "col": 1,
+      "requires": ["Cavalry"],
+      "gold": 9000, "knowledge": 8,
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":2}}]
     },
     "WarbandIII": {
       "name": "Warband III", "icon": "Barracks", "kind": "unlock",
@@ -502,6 +558,13 @@
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"district":"Well"}, {"district":"Statue"}]
     },
+    "WarriorsIII": {
+      "name": "Warriors III", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 28, "col": 1,
+      "requires": ["Fortifications"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":3}}]
+    },
     "Tactics": {
       "name": "Tactics", "icon": "power", "kind": "mechanic",
       "description": "Reading the ground — a bad matchup costs a tenth less.",
@@ -536,12 +599,26 @@
         {"stat":"unitHp","op":"percent","value":10}
       ]
     },
+    "ArchersIII": {
+      "name": "Archers III", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 30, "col": 0,
+      "requires": ["VigourI"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":3}}]
+    },
     "AttunementIII": {
       "name": "Attunement III", "icon": "Sanctum", "kind": "unlock",
       "tome": "Kingdom", "era": 6, "row": 30, "col": 1,
       "requires": ["ApprenticesI", "IrrigationII"],
       "gold": 20000, "knowledge": 9,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":5}}]
+    },
+    "LancersIII": {
+      "name": "Lancers III", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 6, "row": 30, "col": 2,
+      "requires": ["VigourI"],
+      "gold": 20000, "knowledge": 10, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":3}}]
     },
     "CarpentryIII": {
       "name": "Carpentry III", "icon": "build", "kind": "bonus",
@@ -583,6 +660,13 @@
       "requires": ["Chancery"],
       "gold": 42000, "knowledge": 14, "goods": {"Planks":4,"CutStone":4,"Iron":2},
       "unlocks": [{"districtLevel":{"id":"Housing","level":7}}]
+    },
+    "CavalryIII": {
+      "name": "Cavalry III", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 33, "col": 1,
+      "requires": ["Chancery"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":1},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":3}}]
     },
     "Bastions": {
       "name": "Bastions", "icon": "Barracks", "kind": "unlock",
@@ -641,6 +725,13 @@
         {"stat":"unitAtk","op":"percent","value":10}
       ]
     },
+    "LancersIV": {
+      "name": "Lancers IV", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 36, "col": 0,
+      "requires": ["WarhornsI"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":4}}]
+    },
     "MinersI": {
       "name": "Miners I", "icon": "workers", "kind": "bonus",
       "tome": "Kingdom", "era": 7, "row": 36, "col": 1,
@@ -649,6 +740,13 @@
       "effects": [
         {"stat":"crewStrikeSpeed","op":"percent","value":15,"target":{"district":"Quarry"}}
       ]
+    },
+    "WarriorsIV": {
+      "name": "Warriors IV", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 7, "row": 36, "col": 2,
+      "requires": ["WarhornsI"],
+      "gold": 42000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":4}}]
     },
     "OldGrowthI": {
       "name": "Old Growth I", "icon": "Heartwood", "kind": "bonus",
@@ -730,6 +828,13 @@
         {"stat":"armyCap","op":"percent","value":10}
       ]
     },
+    "CavalryIV": {
+      "name": "Cavalry IV", "icon": "Cavalry", "kind": "unlock",
+      "tome": "Kingdom", "era": 8, "row": 41, "col": 0,
+      "requires": ["ColoursI"],
+      "gold": 90000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":4}}]
+    },
     "SurveyingI": {
       "name": "Surveying I", "icon": "tile", "kind": "bonus",
       "tome": "Kingdom", "era": 8, "row": 41, "col": 1,
@@ -738,6 +843,13 @@
       "effects": [
         {"stat":"influenceRadius","op":"flat","value":1}
       ]
+    },
+    "ArchersIV": {
+      "name": "Archers IV", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 8, "row": 41, "col": 2,
+      "requires": ["ColoursI"],
+      "gold": 90000, "knowledge": 12, "goods": {"Iron":2},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":4}}]
     },
     "TradeRoutesV": {
       "name": "Trade Routes V", "icon": "boostRent", "kind": "bonus",
@@ -810,6 +922,13 @@
       "gold": 190000, "knowledge": 14, "goods": {"Planks":6,"CutStone":6,"Iron":4,"Runestone":2},
       "unlocks": [{"districtLevel":{"id":"Barracks","level":9}}, {"districtLevel":{"id":"SpearHall","level":9}}, {"districtLevel":{"id":"ShootingGrounds","level":9}}, {"districtLevel":{"id":"Stables","level":9}}, {"districtLevel":{"id":"Barracks","level":10}}, {"districtLevel":{"id":"SpearHall","level":10}}, {"districtLevel":{"id":"ShootingGrounds","level":10}}, {"districtLevel":{"id":"Stables","level":10}}]
     },
+    "LancersV": {
+      "name": "Lancers V", "icon": "Lancer", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 46, "col": 0,
+      "requires": ["Warlords"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Lancer","rank":5}}]
+    },
     "IronPicksI": {
       "name": "Iron Picks I", "icon": "Iron", "kind": "bonus",
       "tome": "Kingdom", "era": 9, "row": 46, "col": 1,
@@ -818,6 +937,13 @@
       "effects": [
         {"stat":"harvestYield","op":"percent","value":15,"target":{"harvest":"MountainIron"}}
       ]
+    },
+    "WarriorsV": {
+      "name": "Warriors V", "icon": "Warrior", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 46, "col": 2,
+      "requires": ["Warlords"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Warrior","rank":5}}]
     },
     "FishersI": {
       "name": "Fishers I", "icon": "workers", "kind": "bonus",
@@ -845,6 +971,13 @@
       "effects": [
         {"stat":"decorationHarmony","op":"percent","value":25}
       ]
+    },
+    "ArchersV": {
+      "name": "Archers V", "icon": "Archer", "kind": "unlock",
+      "tome": "Kingdom", "era": 9, "row": 48, "col": 1,
+      "requires": ["WarhornsII"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Archer","rank":5}}]
     },
     "SupplyDepotsI": {
       "name": "Supply Depots I", "icon": "chest", "kind": "bonus",
@@ -874,14 +1007,12 @@
         {"stat":"storageCapacity","op":"percent","value":25,"target":{"district":"Farm"}}
       ]
     },
-    "ForcedMarchI": {
-      "name": "Forced March I", "icon": "boot", "kind": "bonus",
+    "CavalryV": {
+      "name": "Cavalry V", "icon": "Cavalry", "kind": "unlock",
       "tome": "Kingdom", "era": 9, "row": 49, "col": 2,
-      "requires": ["FlowerbedsI"],
-      "gold": 190000, "knowledge": 20, "goods": {"Starmetal":15,"Heartwood":15,"Moonglass":15},
-      "effects": [
-        {"stat":"armyMarchSpeed","op":"percent","value":15}
-      ]
+      "requires": ["SupplyDepotsI"],
+      "gold": 190000, "knowledge": 14, "goods": {"Iron":3,"Runestone":1},
+      "unlocks": [{"evolution":{"unit":"Cavalry","rank":5}}]
     },
     "GoldenAge": {
       "name": "Golden Age", "icon": "Townhall", "kind": "unlock",
@@ -937,63 +1068,485 @@
       "unlocks": [{"districtLevel":{"id":"Tavern","level":5}}]
     },
     "Cartography": {
-      "name": "Cartography", "icon": "dowserMap", "kind": "mechanic",
-      "description": "The first explorer — send it out to reveal the world map.",
+      "name": "Cartography", "icon": "dowserMap", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 2000, "knowledge": 4
+      "gold": 3000, "knowledge": 4, "materials": {"Wood":600,"Stone":300,"Food":300},
+      "effects": [
+        {"stat":"exploreSpeed","op":"percent","value":50}
+      ]
     },
     "FarsightI": {
       "name": "Farsight I", "icon": "spyglass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 0,
       "requires": ["Cartography"],
-      "gold": 800, "knowledge": 4,
+      "gold": 4800, "knowledge": 5, "materials": {"Wood":1500,"Food":1000},
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
     },
-    "ScoutsI": {
-      "name": "Scouts I", "icon": "compass", "kind": "bonus",
+    "FrontierBuildersI": {
+      "name": "Frontier Builders I", "icon": "build", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 1, "col": 1,
+      "requires": ["Cartography"],
+      "gold": 6000, "knowledge": 5, "materials": {"Wood":2000,"Stone":1500},
+      "effects": [
+        {"stat":"worldBuildSpeed","op":"percent","value":10}
+      ]
+    },
+    "KeenEyesI": {
+      "name": "Keen Eyes I", "icon": "spyglass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 1, "col": 2,
       "requires": ["Cartography"],
-      "gold": 2500, "knowledge": 4,
+      "gold": 4800, "knowledge": 5, "materials": {"Food":1500,"Stone":1000},
       "effects": [
-        {"stat":"explorerSlots","op":"flat","value":1}
+        {"stat":"scoutReward","op":"percent","value":15}
       ]
     },
     "FarsightII": {
       "name": "Farsight II", "icon": "spyglass", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 0,
       "requires": ["FarsightI"],
-      "gold": 1500, "knowledge": 4, "goods": {"Heartwood":2},
+      "gold": 8000, "knowledge": 5, "goods": {"Heartwood":3},
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
     },
-    "ScoutsII": {
-      "name": "Scouts II", "icon": "compass", "kind": "bonus",
+    "Fortification": {
+      "name": "Fortification", "icon": "def", "kind": "unlock",
+      "tome": "Atlas", "era": 1, "row": 2, "col": 1,
+      "requires": ["FrontierBuildersI"],
+      "gold": 10000, "knowledge": 5, "goods": {"Moonglass":3,"Starmetal":3},
+      "unlocks": [{"worldUpgrade":"Fortress"}]
+    },
+    "ForcedMarchI": {
+      "name": "Forced March I", "icon": "army", "kind": "bonus",
       "tome": "Atlas", "era": 1, "row": 2, "col": 2,
-      "requires": ["ScoutsI"],
-      "gold": 4000, "knowledge": 5, "goods": {"Starmetal":2},
+      "requires": ["FrontierBuildersI"],
+      "gold": 8000, "knowledge": 5, "goods": {"Starmetal":3},
       "effects": [
-        {"stat":"explorerSlots","op":"flat","value":1}
+        {"stat":"armyMarchSpeed","op":"percent","value":10}
       ]
     },
-    "Pathfinding": {
-      "name": "Pathfinding", "icon": "compass", "kind": "bonus",
-      "tome": "Atlas", "era": 1, "row": 3, "col": 1,
-      "requires": ["ScoutsII"],
-      "gold": 8000, "knowledge": 7, "goods": {"Moonglass":2},
+    "FieldNotesI": {
+      "name": "Field Notes I", "icon": "compass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 3, "col": 0,
+      "requires": ["Fortification"],
+      "gold": 11200, "knowledge": 6, "goods": {"Heartwood":5},
       "effects": [
-        {"stat":"worldRevealRadius","op":"flat","value":1}
+        {"stat":"exploreSpeed","op":"percent","value":15}
+      ]
+    },
+    "RuralMarketsI": {
+      "name": "Rural Markets I", "icon": "Gold", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 3, "col": 1,
+      "requires": ["Fortification"],
+      "gold": 14000, "knowledge": 6, "goods": {"Moonglass":5,"Starmetal":5},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"Rural"}}
+      ]
+    },
+    "BountyHuntersI": {
+      "name": "Bounty Hunters I", "icon": "skull", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 3, "col": 2,
+      "requires": ["ForcedMarchI"],
+      "gold": 11200, "knowledge": 6, "goods": {"Starmetal":5},
+      "effects": [
+        {"stat":"campLoot","op":"percent","value":10}
+      ]
+    },
+    "LoggingRoadsI": {
+      "name": "Logging Roads I", "icon": "Wood", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 4, "col": 0,
+      "requires": ["RuralMarketsI"],
+      "gold": 14600, "knowledge": 6, "goods": {"Heartwood":7},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"LoggingCamp"}}
       ]
     },
     "Muster": {
       "name": "Muster", "icon": "WarCamp", "kind": "unlock",
       "tome": "Atlas", "era": 1, "row": 4, "col": 1,
-      "requires": ["Pathfinding"],
-      "gold": 9000, "knowledge": 7,
+      "requires": ["RuralMarketsI"],
+      "gold": 18200, "knowledge": 6, "goods": {"Moonglass":7,"Starmetal":7},
       "unlocks": [{"district":"WarCamp"}]
+    },
+    "QuarryCartsI": {
+      "name": "Quarry Carts I", "icon": "Stone", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 4, "col": 2,
+      "requires": ["RuralMarketsI"],
+      "gold": 14600, "knowledge": 6, "goods": {"Starmetal":7},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"Quarry"}}
+      ]
+    },
+    "HuntersLodgesI": {
+      "name": "Hunters’ Lodges I", "icon": "Meat", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 5, "col": 0,
+      "requires": ["Muster"],
+      "gold": 19000, "knowledge": 7, "goods": {"Heartwood":9},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"FarmLands"}},
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"HuntingGrounds"}}
+      ]
+    },
+    "HolyGround": {
+      "name": "Holy Ground", "icon": "Shrine", "kind": "unlock",
+      "tome": "Atlas", "era": 1, "row": 5, "col": 1,
+      "requires": ["Muster"],
+      "gold": 23700, "knowledge": 7, "goods": {"Moonglass":9,"Starmetal":9},
+      "unlocks": [{"worldUpgrade":"Chapel"}]
+    },
+    "ForcedMarchII": {
+      "name": "Forced March II", "icon": "army", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 5, "col": 2,
+      "requires": ["Muster"],
+      "gold": 19000, "knowledge": 7, "goods": {"Starmetal":9},
+      "effects": [
+        {"stat":"armyMarchSpeed","op":"percent","value":10}
+      ]
+    },
+    "LightPacksI": {
+      "name": "Light Packs I", "icon": "boot", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 6, "col": 0,
+      "requires": ["HolyGround"],
+      "gold": 24600, "knowledge": 7, "goods": {"Heartwood":11},
+      "effects": [
+        {"stat":"explorerSpeed","op":"percent","value":10}
+      ]
+    },
+    "GarrisonRightsI": {
+      "name": "Garrison Rights I", "icon": "helmet", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 6, "col": 1,
+      "requires": ["HolyGround"],
+      "gold": 30800, "knowledge": 7, "goods": {"Moonglass":11,"Starmetal":11},
+      "effects": [
+        {"stat":"fortressSlots","op":"flat","value":1}
+      ]
+    },
+    "DelversI": {
+      "name": "Delvers I", "icon": "dungeon", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 6, "col": 2,
+      "requires": ["HolyGround"],
+      "gold": 24600, "knowledge": 7, "goods": {"Starmetal":11},
+      "effects": [
+        {"stat":"dungeonLoot","op":"percent","value":10}
+      ]
+    },
+    "StrongboxesI": {
+      "name": "Strongboxes I", "icon": "vault", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 7, "col": 0,
+      "requires": ["GarrisonRightsI"],
+      "gold": 32000, "knowledge": 8, "goods": {"Heartwood":13},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"Rural"}}
+      ]
+    },
+    "FrontierBuildersII": {
+      "name": "Frontier Builders II", "icon": "build", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 7, "col": 1,
+      "requires": ["GarrisonRightsI"],
+      "gold": 40000, "knowledge": 8, "goods": {"Moonglass":13,"Starmetal":13},
+      "effects": [
+        {"stat":"worldBuildSpeed","op":"percent","value":10}
+      ]
+    },
+    "BountyHuntersII": {
+      "name": "Bounty Hunters II", "icon": "skull", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 7, "col": 2,
+      "requires": ["GarrisonRightsI"],
+      "gold": 32000, "knowledge": 8, "goods": {"Starmetal":13},
+      "effects": [
+        {"stat":"campLoot","op":"percent","value":10}
+      ]
+    },
+    "WoodYardsI": {
+      "name": "Wood Yards I", "icon": "chestWood", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 8, "col": 0,
+      "requires": ["FrontierBuildersII"],
+      "gold": 41600, "knowledge": 8, "goods": {"Heartwood":15},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"LoggingCamp"}}
+      ]
+    },
+    "PilgrimRoadsI": {
+      "name": "Pilgrim Roads I", "icon": "Sanctum", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 8, "col": 1,
+      "requires": ["FrontierBuildersII"],
+      "gold": 52000, "knowledge": 8, "goods": {"Moonglass":15,"Starmetal":15},
+      "effects": [
+        {"stat":"chapelSlots","op":"flat","value":1}
+      ]
+    },
+    "StoneShedsI": {
+      "name": "Stone Sheds I", "icon": "chestStone", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 8, "col": 2,
+      "requires": ["FrontierBuildersII"],
+      "gold": 41600, "knowledge": 8, "goods": {"Starmetal":15},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"Quarry"}}
+      ]
+    },
+    "FieldNotesII": {
+      "name": "Field Notes II", "icon": "compass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 9, "col": 0,
+      "requires": ["PilgrimRoadsI"],
+      "gold": 54100, "knowledge": 9, "goods": {"Heartwood":17},
+      "effects": [
+        {"stat":"exploreSpeed","op":"percent","value":15}
+      ]
+    },
+    "DeepDigsI": {
+      "name": "Deep Digs I", "icon": "Starmetal", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 9, "col": 1,
+      "requires": ["PilgrimRoadsI"],
+      "gold": 67600, "knowledge": 9, "goods": {"Moonglass":17,"Starmetal":17},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"GroveCamp"}},
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"StarmetalDig"}},
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"SpireQuarry"}}
+      ]
+    },
+    "BattleLoreI": {
+      "name": "Battle Lore I", "icon": "HeroXp", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 9, "col": 2,
+      "requires": ["PilgrimRoadsI"],
+      "gold": 54100, "knowledge": 9, "goods": {"Starmetal":17},
+      "effects": [
+        {"stat":"worldHeroXp","op":"percent","value":10}
+      ]
+    },
+    "RuralMarketsII": {
+      "name": "Rural Markets II", "icon": "Gold", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 10, "col": 0,
+      "requires": ["DeepDigsI"],
+      "gold": 70200, "knowledge": 9, "goods": {"Planks":2,"CutStone":2,"Heartwood":19},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"Rural"}}
+      ]
+    },
+    "MendersI": {
+      "name": "Menders I", "icon": "anvil", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 10, "col": 1,
+      "requires": ["DeepDigsI"],
+      "gold": 87800, "knowledge": 9, "goods": {"Planks":2,"CutStone":2,"Moonglass":19,"Starmetal":19},
+      "effects": [
+        {"stat":"worldRepairSpeed","op":"percent","value":25}
+      ]
+    },
+    "PortalWardensI": {
+      "name": "Portal Wardens I", "icon": "sparkle", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 10, "col": 2,
+      "requires": ["DeepDigsI"],
+      "gold": 70200, "knowledge": 9, "goods": {"Planks":2,"CutStone":2,"Starmetal":19},
+      "effects": [
+        {"stat":"portalLoot","op":"percent","value":10}
+      ]
+    },
+    "LoggingRoadsII": {
+      "name": "Logging Roads II", "icon": "Wood", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 11, "col": 0,
+      "requires": ["MendersI"],
+      "gold": 91200, "knowledge": 10, "goods": {"Planks":2,"CutStone":2,"Heartwood":21},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"LoggingCamp"}}
+      ]
+    },
+    "ForcedMarchIII": {
+      "name": "Forced March III", "icon": "army", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 11, "col": 1,
+      "requires": ["MendersI"],
+      "gold": 114000, "knowledge": 10, "goods": {"Planks":2,"CutStone":2,"Moonglass":21,"Starmetal":21},
+      "effects": [
+        {"stat":"armyMarchSpeed","op":"percent","value":10}
+      ]
+    },
+    "QuarryCartsII": {
+      "name": "Quarry Carts II", "icon": "Stone", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 11, "col": 2,
+      "requires": ["MendersI"],
+      "gold": 91200, "knowledge": 10, "goods": {"Planks":2,"CutStone":2,"Starmetal":21},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"Quarry"}}
+      ]
+    },
+    "HuntersLodgesII": {
+      "name": "Hunters’ Lodges II", "icon": "Meat", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 12, "col": 0,
+      "requires": ["ForcedMarchIII"],
+      "gold": 118000, "knowledge": 10, "goods": {"Planks":3,"CutStone":3,"Heartwood":23},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"FarmLands"}},
+        {"stat":"improvementYield","op":"percent","value":15,"target":{"worldDistrict":"HuntingGrounds"}}
+      ]
+    },
+    "GarrisonRightsII": {
+      "name": "Garrison Rights II", "icon": "helmet", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 12, "col": 1,
+      "requires": ["ForcedMarchIII"],
+      "gold": 148000, "knowledge": 10, "goods": {"Planks":3,"CutStone":3,"Moonglass":23,"Starmetal":23},
+      "effects": [
+        {"stat":"fortressSlots","op":"flat","value":1}
+      ]
+    },
+    "DelversII": {
+      "name": "Delvers II", "icon": "dungeon", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 12, "col": 2,
+      "requires": ["ForcedMarchIII"],
+      "gold": 118000, "knowledge": 10, "goods": {"Planks":3,"CutStone":3,"Starmetal":23},
+      "effects": [
+        {"stat":"dungeonLoot","op":"percent","value":10}
+      ]
+    },
+    "RootCellarsI": {
+      "name": "Root Cellars I", "icon": "chestFood", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 13, "col": 0,
+      "requires": ["GarrisonRightsII"],
+      "gold": 154000, "knowledge": 11, "goods": {"Planks":3,"CutStone":3,"Iron":1,"Heartwood":25},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"FarmLands"}},
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"HuntingGrounds"}}
+      ]
+    },
+    "FrontierBuildersIII": {
+      "name": "Frontier Builders III", "icon": "build", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 13, "col": 1,
+      "requires": ["GarrisonRightsII"],
+      "gold": 193000, "knowledge": 11, "goods": {"Planks":3,"CutStone":3,"Iron":1,"Moonglass":25,"Starmetal":25},
+      "effects": [
+        {"stat":"worldBuildSpeed","op":"percent","value":10}
+      ]
+    },
+    "BountyHuntersIII": {
+      "name": "Bounty Hunters III", "icon": "skull", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 13, "col": 2,
+      "requires": ["GarrisonRightsII"],
+      "gold": 154000, "knowledge": 11, "goods": {"Planks":3,"CutStone":3,"Iron":1,"Starmetal":25},
+      "effects": [
+        {"stat":"campLoot","op":"percent","value":10}
+      ]
+    },
+    "StarGazersI": {
+      "name": "Star Gazers I", "icon": "Knowledge", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 14, "col": 0,
+      "requires": ["FrontierBuildersIII"],
+      "gold": 201000, "knowledge": 11, "goods": {"Planks":4,"CutStone":4,"Iron":1,"Heartwood":27},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":25,"target":{"worldDistrict":"Observatory"}}
+      ]
+    },
+    "DeepDigsII": {
+      "name": "Deep Digs II", "icon": "Starmetal", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 14, "col": 1,
+      "requires": ["FrontierBuildersIII"],
+      "gold": 251000, "knowledge": 11, "goods": {"Planks":4,"CutStone":4,"Iron":1,"Moonglass":27,"Starmetal":27},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"GroveCamp"}},
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"StarmetalDig"}},
+        {"stat":"improvementYield","op":"percent","value":10,"target":{"worldDistrict":"SpireQuarry"}}
+      ]
+    },
+    "KeenEyesII": {
+      "name": "Keen Eyes II", "icon": "spyglass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 14, "col": 2,
+      "requires": ["FrontierBuildersIII"],
+      "gold": 201000, "knowledge": 11, "goods": {"Planks":4,"CutStone":4,"Iron":1,"Starmetal":27},
+      "effects": [
+        {"stat":"scoutReward","op":"percent","value":15}
+      ]
+    },
+    "LightPacksII": {
+      "name": "Light Packs II", "icon": "boot", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 15, "col": 0,
+      "requires": ["DeepDigsII"],
+      "gold": 261000, "knowledge": 12, "goods": {"Planks":4,"CutStone":4,"Iron":2,"Heartwood":29},
+      "effects": [
+        {"stat":"explorerSpeed","op":"percent","value":10}
+      ]
+    },
+    "DeepVaultsI": {
+      "name": "Deep Vaults I", "icon": "Moonglass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 15, "col": 1,
+      "requires": ["DeepDigsII"],
+      "gold": 326000, "knowledge": 12, "goods": {"Planks":4,"CutStone":4,"Iron":2,"Moonglass":29,"Starmetal":29},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"GroveCamp"}},
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"StarmetalDig"}},
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"SpireQuarry"}}
+      ]
+    },
+    "BattleLoreII": {
+      "name": "Battle Lore II", "icon": "HeroXp", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 15, "col": 2,
+      "requires": ["DeepDigsII"],
+      "gold": 261000, "knowledge": 12, "goods": {"Planks":4,"CutStone":4,"Iron":2,"Starmetal":29},
+      "effects": [
+        {"stat":"worldHeroXp","op":"percent","value":10}
+      ]
+    },
+    "FieldNotesIII": {
+      "name": "Field Notes III", "icon": "compass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 16, "col": 0,
+      "requires": ["DeepVaultsI"],
+      "gold": 339000, "knowledge": 12, "goods": {"Planks":5,"CutStone":5,"Iron":2,"Runestone":1,"Heartwood":31},
+      "effects": [
+        {"stat":"exploreSpeed","op":"percent","value":15}
+      ]
+    },
+    "PilgrimRoadsII": {
+      "name": "Pilgrim Roads II", "icon": "Sanctum", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 16, "col": 1,
+      "requires": ["DeepVaultsI"],
+      "gold": 424000, "knowledge": 12, "goods": {"Planks":5,"CutStone":5,"Iron":2,"Runestone":1,"Moonglass":31,"Starmetal":31},
+      "effects": [
+        {"stat":"chapelSlots","op":"flat","value":1}
+      ]
+    },
+    "PortalWardensII": {
+      "name": "Portal Wardens II", "icon": "sparkle", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 16, "col": 2,
+      "requires": ["DeepVaultsI"],
+      "gold": 339000, "knowledge": 12, "goods": {"Planks":5,"CutStone":5,"Iron":2,"Runestone":1,"Starmetal":31},
+      "effects": [
+        {"stat":"portalLoot","op":"percent","value":10}
+      ]
+    },
+    "MendersII": {
+      "name": "Menders II", "icon": "anvil", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 17, "col": 0,
+      "requires": ["PilgrimRoadsII"],
+      "gold": 441000, "knowledge": 13, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1,"Heartwood":33},
+      "effects": [
+        {"stat":"worldRepairSpeed","op":"percent","value":25}
+      ]
+    },
+    "FrontierCharter": {
+      "name": "Frontier Charter", "icon": "hex", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 17, "col": 1,
+      "requires": ["PilgrimRoadsII"],
+      "gold": 551000, "knowledge": 13, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1,"Moonglass":33,"Starmetal":33},
+      "effects": [
+        {"stat":"improvementYield","op":"percent","value":10},
+        {"stat":"improvementStore","op":"percent","value":10}
+      ]
+    },
+    "StrongboxesII": {
+      "name": "Strongboxes II", "icon": "vault", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 17, "col": 2,
+      "requires": ["PilgrimRoadsII"],
+      "gold": 441000, "knowledge": 13, "goods": {"Planks":5,"CutStone":5,"Iron":3,"Runestone":1,"Starmetal":33},
+      "effects": [
+        {"stat":"improvementStore","op":"percent","value":25,"target":{"worldDistrict":"Rural"}}
+      ]
+    },
+    "Pathfinding": {
+      "name": "Pathfinding", "icon": "compass", "kind": "bonus",
+      "tome": "Atlas", "era": 1, "row": 18, "col": 1,
+      "requires": ["FrontierCharter"],
+      "gold": 1500000, "knowledge": 30, "goods": {"Planks":15,"CutStone":15,"Iron":10,"Runestone":5,"Starmetal":40,"Heartwood":40,"Moonglass":40},
+      "effects": [
+        {"stat":"worldRevealRadius","op":"flat","value":1}
+      ]
     }
   }
 }

@@ -261,6 +261,78 @@
 .k-portrait.tr-portrait { --portrait-size: calc(var(--px) * 64); }
 /* The portrait, with how many the player owns on a pill at its corner. */
 .tr-who { position: relative; }
+/* A HALL'S PORTRAIT IS A BUTTON (combat.md §6.4): it drops its rank list.
+   A small carved caret on its rim says it opens. */
+.tr-who.is-picker {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.tr-who.is-picker:active .tr-portrait { translate: 0 calc(var(--px) * 1); filter: brightness(0.95); }
+.tr-who-caret {
+  position: absolute;
+  left: calc(var(--px) * -6);
+  top: calc(var(--px) * -2);
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 22);
+  height: calc(var(--px) * 22);
+  border: calc(var(--px) * 2) solid var(--wood-dark);
+  border-radius: 50%;
+  background: var(--parchment);
+  rotate: 180deg;
+}
+.tr-who.is-picker[aria-expanded='true'] .tr-who-caret { rotate: 0deg; }
+.tr-who-caret .icon { --icon-size: calc(var(--px) * 14); }
+
+/* THE RANK LIST: a parchment sheet opened in the panel, under its numbers,
+   one row a rank — its round face with the coin, its name and its four
+   numbers, and a padlock with what opens it on a rank still shut. */
+.tr-ranks {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 6);
+  border: calc(var(--px) * 2) solid var(--section-line);
+  border-radius: calc(var(--px) * 10);
+  background: var(--parchment);
+  box-shadow: inset 0 calc(var(--px) * 2) calc(var(--px) * 4) rgba(40, 22, 10, 0.18);
+}
+.tr-rank {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--px) * 8);
+  padding: calc(var(--px) * 4) calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 4);
+  border: calc(var(--px) * 2) solid transparent;
+  border-radius: calc(var(--px) * 8);
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.tr-rank.is-picked { border-color: var(--gold-dark); background: rgba(242, 178, 51, 0.18); }
+.tr-rank.is-locked { color: var(--ink-muted); }
+.tr-rank.is-locked .tr-rank-face { filter: grayscale(0.7) brightness(0.9); }
+.k-portrait.tr-rank-face { --portrait-size: calc(var(--px) * 44); }
+.tr-rank-body { display: flex; flex-direction: column; gap: calc(var(--px) * 2); min-width: 0; }
+.tr-rank-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 calc(var(--px) * 8); }
+.tr-rank-name { font-size: var(--text-desc); font-weight: var(--weight-title); line-height: 1.1; }
+.tr-rank-stats { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 2) calc(var(--px) * 10); }
+.tr-rank-stat, .tr-rank-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  font-size: var(--text-desc);
+  font-weight: var(--weight-title);
+  font-variant-numeric: tabular-nums;
+}
+.tr-rank-lock { font-weight: var(--weight-body); }
 .tr-body { display: flex; flex-direction: column; gap: calc(var(--px) * 4); min-width: 0; }
 .tr-name { font-size: var(--text-body); font-weight: var(--weight-title); line-height: 1.1; }
 .tr-desc {
@@ -728,3 +800,8 @@
 
 /* The Tavern's two doors: the roster and a call. */
 .dc-tavern { display: flex; gap: calc(var(--px) * 10); justify-content: center; }
+
+/* A ranked trainee's coin takes the portrait's bottom-right; its count
+   steps left to leave it clear. */
+.tr-who:has(.k-rank) > .tr-count,
+.tr-batch-face:has(.k-rank) > .tr-count { left: 0; translate: 0 0; }

@@ -27,11 +27,11 @@
       "of": { "type": "text", "ref": "harvest" },
       "doc": "What its workers go out and harvest in its reach."
     },
-    "providesHarvestSource": {
+    "plants": {
       "type": "text",
-      "ref": "harvest",
+      "options": ["Trees", "Crops"],
       "nullable": true,
-      "doc": "The building IS a source of this (the crop plots are Crops)."
+      "doc": "A PLANTABLE: placing it puts this feature on the ground instead of raising a building (Docs/features/27-plantables.md)."
     },
     "trains": {
       "type": "list",
@@ -158,6 +158,11 @@
       "ref": "item",
       "emptyOk": true,
       "doc": "An item repairing this building's ruin also asks for, and spends (01-map-and-fog.md §6.3). Empty: none."
+    },
+    "repairDurationSeconds": {
+      "type": "int",
+      "min": 0,
+      "doc": "How long repairing its ruin in the fog takes, flat: no growth with the ordinal or the distance (01-map-and-fog.md §6.3). 0: as long as building it. A plantable's ruin grows for its source's growSeconds instead."
     }
   }
 }

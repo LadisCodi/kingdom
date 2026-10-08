@@ -21,7 +21,7 @@ import { upgradeCost, upgradeDuration, upgradeGoodsCost } from '../sim/districts
 import { getGood } from '../sim/goods';
 import type { District, GoodId } from '../sim/state';
 import { buildingPortrait } from './districtCard';
-import { el, formatDuration, formatExact } from './format';
+import { coach, el, formatDuration, formatExact } from './format';
 import { btn, iconEl, priceLine, sectionHead, sheet, type IconName } from './kit';
 import { requirements, statChanges } from './upgradeStats';
 
@@ -77,13 +77,13 @@ export function renderUpgradeSheet(game: Game, district: District): HTMLElement 
   const note = locked
     ? 'Complete all requirements to upgrade'
     : refusal === 'NoBuilderFree' ? 'Every builder is busy' : null;
-  const button = btn({
+  const button = coach(btn({
     label: 'Upgrade',
     kind: 'primary',
     icon: locked ? 'padlock' : undefined,
     onClick: () => { game.doUpgrade(district.uniqueId); game.closeUpgrade(); },
     disabledReason: refusal === null ? undefined : (note ?? 'Not enough to pay for it'),
-  });
+  }), 'upgrade-go');
 
   const body = el('div', { class: 'up' },
     levels,

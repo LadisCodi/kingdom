@@ -11,7 +11,7 @@ import { CAMP_TITLE } from './hexNames';
 import { campLoot, sendFights } from '../../sim/world/fights';
 import { outboundMs } from '../../sim/world/travel';
 import { hexAt, hexDistance } from '../../sim/world/hex';
-import type { UnitId } from '../../sim/state';
+import type { TroopId } from '../../sim/state';
 import { el, formatCount, formatDuration } from '../format';
 import { renderBattleSheet, type BattleView } from '../battleSheet';
 import { unitBust } from '../unitArt';
@@ -59,7 +59,7 @@ export function renderArmySheet(game: Game): HTMLElement {
       // A camp's army is seeded by its hex, so it is shown before the fight.
       squads: game.armyPurpose === 'clear' && camp != null ? campSquads(source.board().seed, target, camp) : [],
       power: preview.power,
-      portrait: (unitId: UnitId) => (game.armyPurpose === 'clear' ? creatureFace(unitId) : unitBust(unitId, 'k-portrait-art')),
+      portrait: (unitId: TroopId) => (game.armyPurpose === 'clear' ? creatureFace(unitId) : unitBust(unitId, 'k-portrait-art')),
     },
     attack: preview.attack,
     enough: preview.attack >= preview.power,

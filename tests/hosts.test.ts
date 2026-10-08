@@ -8,14 +8,15 @@ import { advance, moveDistrict } from '../src/sim/commands';
 import { CITY_RELIC_LEVELS } from '../src/sim/data/definitions';
 import { cityRelicSteps, nextCityRelicAxis, passiveValueAtLevel, relicWindowMsAt } from '../src/sim/artifacts';
 import {
-  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, hostOf, hostRelic,
-  isAwake, relicAura, unhostRelic,
+  activateBlock, activateRelic, activationCost, auraOf, auraRadiusAt, auraTargets, hostOf, hostRelic,
+  isAwake, worksOnGround, relicAura, unhostRelic,
 } from '../src/sim/hosts';
 import { mana } from '../src/sim/mana';
 import { areaCovers } from '../src/sim/modifiers';
 import { houseGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
-import { districtAt, type GameState } from '../src/sim/state';
+import { coordKey, districtAt, type GameState } from '../src/sim/state';
+import { harvestSpecAt } from '../src/sim/harvest';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const MIN = 60_000;
@@ -273,5 +274,42 @@ describe('a window is a boundary', () => {
     expect(isAwake(state, 'GildedLedger')).toBe(true);
     const host = hostOf(state, 'GildedLedger')!;
     expect(areaCovers(auraOf(state, host, 'GildedLedger'), { x: 3, y: 6 })).toBe(true);
+  });
+});
+
+// WHAT AN AURA WOULD REACH (09-relics.md §2.3): the reading a Shrine on the
+// move is placed by — the ground for the Staff and the Sickle, buildings for
+// the Hammer and the Crown, never the Shrine itself.
+describe('what an aura reaches', () => {
+  it('splits the relics into ground and buildings', () => {
+    expect(worksOnGround('DowsingRod')).toBe(true);
+    expect(worksOnGround('VerdantSeal')).toBe(true);
+    expect(worksOnGround('ForemansSigil')).toBe(false);
+    expect(worksOnGround('GildedLedger')).toBe(false);
+  });
+
+  it('counts the resource cells under the Staff, and follows the aura', () => {
+    const state = freshGame();
+    shrine(state, 'S', { x: 2, y: 2 });
+    const home = auraOf(state, state.city.districts.find((d) => d.uniqueId === 'S')!, 'DowsingRod');
+    const here = auraTargets(state, map, 'DowsingRod', home, 'S');
+    expect(here.length).toBeGreaterThan(0);
+    for (const c of here) {
+      expect(areaCovers(home, c)).toBe(true);
+      expect(harvestSpecAt(state, c)).not.toBeNull();
+    }
+    // Strip the ground of every feature: nothing left to reach.
+    for (const c of here) delete state.features[coordKey(c)];
+    expect(auraTargets(state, map, 'DowsingRod', home, 'S')).toEqual([]);
+  });
+
+  it('counts the buildings the Hammer trains in, but not the Shrine itself', () => {
+    const state = freshGame();
+    shrine(state, 'S', { x: 2, y: 2 });
+    addBuilt(state, 'Barracks', { x: 3, y: 3 });
+    const home = auraOf(state, state.city.districts.find((d) => d.uniqueId === 'S')!, 'ForemansSigil');
+    const reached = auraTargets(state, map, 'ForemansSigil', home, 'S');
+    expect(reached).toContainEqual({ x: 3, y: 3 });
+    expect(reached).not.toContainEqual({ x: 2, y: 2 });
   });
 });

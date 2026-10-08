@@ -186,17 +186,27 @@ export function drawLairBubble(
   ctx.strokeStyle = DANGER_RIM;
   ctx.stroke();
 
-  // The creature's head, a medallion clipped to its circle.
+  // The creature's head in a medallion: the bust is cut out, so the bubble
+  // draws the disc it sits on — parchment, rimmed — and clips it to it.
   const midY = y + h / 2;
   const hx = x + pad;
   ctx.save();
   ctx.beginPath();
   ctx.arc(hx + head / 2, midY, head / 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#f0d9ae';
+  ctx.fill();
   ctx.clip();
-  if (!drawSprite(ctx, avatar, hx, midY - head / 2, head, head)) {
+  if (!drawSprite(ctx, avatar, hx, midY - head / 2 + head * 0.08, head, head)) {
     ctx.fillStyle = DANGER_RIM;
     ctx.fill();
   }
+  ctx.restore();
+  ctx.save();
+  ctx.lineWidth = Math.max(1.5, head * 0.06);
+  ctx.strokeStyle = '#e2b14f';
+  ctx.beginPath();
+  ctx.arc(hx + head / 2, midY, head / 2 - ctx.lineWidth / 2, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 
   // The hourglass, then the time left.

@@ -9,10 +9,12 @@
 > **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
 > card and the reveal screen (§8); the stat block and the type passive on the
 > board (§2.3, §2.4), the skills (§2.5) and the boons (§2.6); the whole ladder
-> (§4); the Gem-bought hero slots (§3); and the **Tavern**, whose standing
-> opens the Heroes tab and the banner. **Not built:** the rarity multipliers
-> (§2.1) — every hero's numbers are authored whole in `heroes` — and the banner
-> moving into the Tavern (§8.3).
+> (§4); the Gem-bought hero slots (§3); the **Tavern**, whose standing
+> opens the Heroes tab and the banner; the hero bag and the falling hero
+> chance (§6.6), the three prize slots (§6.4) and the ten-call's grouped
+> reveal (§8.3). **Not built:** the rarity multipliers (§2.1) — every hero's
+> numbers are authored whole in `heroes` — and the banner moving into the
+> Tavern (§8.3).
 
 ## 1. The collection substrate
 
@@ -241,15 +243,15 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | | Raise | Cost |
 |---|---|---|
-| **Recruit** | not owned → owned, no star, level 1 | **10 of that hero's Fragments** |
+| **Recruit** | not owned → owned, no star, level 1 | that hero's Fragments: **15 Common · 25 Rare · 40 Legendary** |
 | **Level** | +1, up to the ascension's cap | Hero XP: `round(20 × 1.0165^level)` — 20 for level 2, 3,140 for level 310, **192,333** for the whole ladder |
 | **Ascension** | +1 point of the current star: **every stat +2%** and the cap **+10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
 - **A call hands over either a hero or fragments of one. They are different
-  prizes**, and both end at the same place: **ten fragments recruit the hero
-  outright.**
+  prizes**, and both end at the same place: **enough fragments (15 · 25 · 40 by
+  rarity) recruit the hero outright.**
 - Without that second door, fragments of a stranger pile up against a door
   with no handle, and §4's promise that every drop has a play-based route is
   only true for heroes the banner has already given you.
@@ -331,14 +333,14 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|---|
 | Key | Silver | Gold |
 | A key costs | **500 Gems** | **1,500 Gems** |
-| Base hero chance | **5%** | **5%** |
+| Base hero chance | **20% → 5%**, by heroes owned (§6.6) | **20% → 5%**, by heroes owned (§6.6) |
 | Soft pity from | pull 40 | pull 30 |
 | A hero guaranteed at | pull **60** | pull **50** |
 | A Legendary guaranteed at | — | pull **40** |
 | Rarity weights | 55 Common / 45 Rare | 75 Rare / 25 Legendary |
 | Pool | ~26 heroes | ~18 heroes |
 | A duplicate pays | 10 Fragments | 10 Fragments |
-| Every call draws | 2–3 prizes (§6.4) | 2–3 richer prizes (§6.4) |
+| Every call pays | 3 prizes, one per slot (§6.4) | 3 richer prizes, one per slot (§6.4) |
 | Free calls a day | **5**, one every 5 minutes | **1** |
 
 - **A banner's rarity weights are its pool.** A weight of zero excludes a
@@ -382,34 +384,48 @@ Every faucet is a fight or a banner. Room and floor amounts are
   hard one, and resets on any hero.
 - **A Legendary pity** runs only on the golden banner, increments on **every**
   call, and resets only on a Legendary.
-- **No dead pulls.** Every call draws its loot (§6.4). A duplicate converts
+- **No dead pulls.** Every call pays its three slots (§6.4). A duplicate converts
   to Fragments.
 - **Rolls are a deterministic hash of `(seed, namespace, bannerId,
   pullNumber)`**, not a stream — one draw for hit/miss, one for rarity, one for
   the hero within it.
-- **The pool prefers a hero the player does not own**, so breadth comes before
-  a duplicate.
+- **A hit can only be a hero in the bag** (§6.6), and prefers one the player
+  does not own, so breadth comes before a duplicate.
 
-### 6.4 The loot
+### 6.4 The three slots
 
-- **Every call draws 2 or 3 prizes** from its banner's loot table, hero or
-  not; each count is as likely and each prize is a weighted draw. A hero, when
-  the roll hits, comes on top.
-- **Most of a call is for the town and the levels.** About half the prizes
-  are fragments — about one a call — and the rest is Stardust, Hero XP,
-  speed-ups and resource chests.
-- **A fragment is of any hero of its rarity the banner calls**, owned or not:
-  toward a recruit, or toward the next star.
-- The golden table holds the same kinds, each worth more: Legendary
+- **Every call pays exactly three prizes, one per slot**, always in this
+  order:
+
+  | Slot | Pays |
+  |---|---|
+  | **Hero** | the hero, on a hit (a duplicate's 10 Fragments, if owned); otherwise **1 Fragment** of a hero in the bag (§6.6) |
+  | **Hero goods** | Stardust or Hero XP |
+  | **Supplies** | a speed-up or a resource chest |
+
+- **The extra hero slot**: on **20%** of calls the hero-goods slot becomes a
+  second hero slot and pays 1 Fragment of a hero in the bag. It is never a
+  second hit: a call rolls for a hero once.
+- **Each slot is a weighted draw from its own rows of the banner's loot
+  table**, and a row's reward says its slot: Fragments the hero slot,
+  Stardust and Hero XP the hero-goods slot, an item the supplies slot. A
+  Fragment's rarity is drawn by the hero slot's weights; the hero within it
+  from the bag.
+- **A fragment is of any hero of its rarity in the bag** (§6.6), owned or
+  not: toward a recruit, or toward the next star.
+- The golden tables hold the same kinds, each worth more: Legendary
   fragments, more Stardust and Hero XP, 1 h speed-ups and chests.
 
-| Prize (% of the draws) | The common call | The golden call |
+| Slot (% of its draws) | The common call | The golden call |
 |---|---|---|
-| 1 Fragment | 25 Common · 20 Rare | 15 Legendary · 30 Rare |
-| Stardust | 10 × 10 · 9 × 25 · 2 × 100 | 3 × 10 · 8 × 25 · 10 × 100 |
-| Hero XP | 10 × 50 · 10 × 200 | 10 × 200 · 10 × 500 |
-| A speed-up — construction, training, workshop | 4, of 5 min | 4, of 1 h |
-| A resource chest — Food, Wood, Stone, Gold | 8, of 10 min | 8, of 1 h |
+| Hero — a Fragment's rarity | 55 Common · 45 Rare | 33 Legendary · 67 Rare |
+| Hero goods — Stardust | 24 × 10 · 22 × 25 · 5 × 100 | 7 × 10 · 20 × 25 · 24 × 100 |
+| Hero goods — Hero XP | 24 × 50 · 24 × 200 | 24 × 200 · 24 × 500 |
+| Supplies — a speed-up: construction, training, workshop | 11 each, of 5 min | 11 each, of 1 h |
+| Supplies — a resource chest: Food, Wood, Stone, Gold | 17 each, of 10 min | 17 each, of 1 h |
+
+- A call pays about **1.1 Fragments** (a miss's one, plus the extra slot),
+  **0.8** hero goods and **1** supply.
 
 ### 6.5 The ten-call
 
@@ -418,6 +434,57 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - It refuses up front if the purse cannot pay all ten — never a partial batch.
 - Both pities carry across the ten, and each call rolls with its own pull
   number, so a batch is identical to ten taps.
+
+### 6.6 The hero bag and the falling chance
+
+Fragments go to a few heroes at a time, and the first heroes come
+quickly.
+
+- **The player never sees the bag.** It is a pacing tool: no screen lists
+  it, and the banners and the store show the same as without it.
+
+- **The bag is per rarity, and both banners share it.** It holds every hero
+  the player owns plus a few they do not, the **open** ones:
+  **3 Common · 2 Rare · 1 Legendary**.
+- **A call only reaches the bag.** The hero of a hit, a duplicate and every
+  loot fragment of a rarity are drawn from that rarity's bag. A fragment is
+  an even draw over the bag, owned or open.
+- **The bag refills.** When an open hero is recruited (by a hit or by
+  Fragments), the next one of its rarity opens, so there are always as many
+  open as the rarity has left.
+- **What opens next:**
+  - first, the heroes with a `bagRank`, in ascending rank;
+  - then the rest, in an order shuffled per kingdom by
+    `rand(seed, 'heroBag', heroId)`.
+- **An unowned hero holding Fragments is always open**, over the count, so
+  a Fragment from any other source is never stranded.
+- **A season hero is always open**, over the count, while a banner leans
+  toward them (`banners.featuredHero`) and until they are recruited.
+- **The bag is derived, never stored**: owned heroes, Fragments held and the
+  order decide it. No save field and no migrator are needed.
+- **The hero chance falls as the collection grows.** It is a ladder indexed
+  by the heroes owned; the last rung holds for ever:
+
+  | Heroes owned | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8+ |
+  |---|---|---|---|---|---|---|---|---|---|
+  | Hero chance | 30% | 26.5% | 23% | 19.5% | 16% | 12.5% | 9% | 5.5% | 2% |
+
+- **The pity does not move.** The soft-pity ramp starts from the ladder's
+  rung and still ends in a certainty at the hard pity (§6.3).
+- **The first calls are unchanged** (§6.2): the forced new hero is an
+  open one.
+
+**The target pace**, for a player who makes only the free calls (5 common
+and 1 golden a day): **7–8 heroes on day 7, about 12 on day 30.** Measured
+over 400 kingdoms with the bag, the ladder, the three slots (§6.4) and the
+recruit prices:
+
+| Heroes owned | day 3 | day 7 | day 14 | day 30 | day 60 | day 90 |
+|---|---|---|---|---|---|---|
+| Free calls only | 4.9 | 7.1 | 8.6 | 12.2 | 19.6 | 25.4 |
+
+- After the first week a free player's heroes come mostly from the two hard
+  pities and from Fragments, not from the 2% rung.
 
 - **The gacha sells power.** A Legendary is stronger than a Common, and the
   golden call is how one is reached — by a wallet, or by the daily free call
@@ -510,7 +577,8 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
   war chest for spoils. Every reveal of RANDOM rewards uses it.
 - **The sequence**:
   1. the chest drops onto the carpet with a count of the cards inside and
-     opens on its own — the player already paid;
+     opens on its own — the player already paid. A single call is **three
+     cards**, one per slot (§6.4); a ten-call is grouped (below);
   2. the first card rises face down — *Tap to reveal*;
   3. a tap flips it;
   4. the next tap sends it to its own place on the stage — smaller and
@@ -533,9 +601,23 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - **The places are the summary.** When the last card lands the chest sinks
   away, every card lights up, a *Rewards* plaque and **Collect** appear. No
   separate receipt is drawn.
-- **A ten-call condenses.** Same thing, one card with a count: three draws
-  of 25 Stardust are one 75, two Food chests one card of two, and four
-  fragments of one hero one stack of four.
+- **A ten-call is grouped into a handful of cards**, never one per prize:
+  - **one card per currency**, the sum of every draw: all the Stardust is
+    one card, all the Hero XP another;
+  - **one card per supply family** — *Speed-ups* and *Chests* — with the
+    total count, and its contents listed on the card in small rows
+    (*3 × construction 5 min · 1 × training 5 min*);
+  - **one bag card** for every Fragment: each hero of the bag that got any,
+    a row with its portrait (a silhouette if not recruited), *+n* and its
+    bar;
+  - **one card per new hero**.
+- **A ten-call is dealt in three beats**, not a tap per card:
+  1. **the goods**: the currency and supply cards rise together, face up,
+     and settle in one tap;
+  2. **the bag**: its card flips, every bar fills at once, and a bar that
+     reaches the recruiting price flares and seals its hero;
+  3. **each new hero**, one at a time, with its celebration.
+- The summary of a ten-call is then at most five cards plus its new heroes.
 - **The order:** currencies, then items, then fragments. **Heroes come last**, so the sequence arrives at what the player called for.
 - **A whole new hero is the rarest thing in a chest, and is celebrated.**
   Before the flip its card back glows and trembles in its rarity over a drum
@@ -627,15 +709,20 @@ how many slots it wants (1…n) and what to do with the answer.
 | How many ascensions | 5 stars × 6 points | `heroLadder.ascensionStars`, `heroLadder.ascensionStepsPerStar` |
 | What a point does to the stats | +2% Attack, Damage, Defence and HP | `heroLadder.statsPerAscension` |
 | How long a hero's ladder is | 10 a point, 310 in all | `heroLadder.heroLevelsPerAscension`, `heroLadder.heroLevelsPerStar` (extra on a full star, 0), `heroLadder.heroMaxLevel` |
-| What a recruit costs | 10 Fragments | `heroLadder.recruitFragments` |
+| What a recruit costs | 15 Common · 25 Rare · 40 Legendary Fragments | `heroLadder.recruitFragments` |
 | What an ascension costs | §4.2 — 1 Fragment · 4 Stardust a point, ×2 a star | `heroLadder.fragmentsPerStep*`, `heroLadder.ascensionStardustBase`, `heroLadder.ascensionStardustGrowth` |
 | How fast a hero's HP comes back | 8 h from empty to full | `party.heroRecoverHours` |
 | What a hero slot costs | §3 | `party.heroSlotGemCostBase`, `heroSlotGemCostGrowth`, `party.heroSlots` |
 | What a key costs in Gems | 500 / 1,500 | `banners.keyGemCost` |
-| The odds and both pities | §6.1 | `banners.heroChance`, `softPityAt`, `hardPityAt`, `legendaryPityAt` |
+| How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` |
+| The hero chance by heroes owned | §6.6 — 30% → 2% | `banners.heroChanceByOwned` |
+| Who opens first | §6.6 | `heroes.bagRank` |
+| The season hero, always open | §6.6 | `banners.featuredHero` |
+| Both pities | §6.3 | `banners.softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
 | What a duplicate pays | §6.1 | `banners.duplicateFragments` |
-| What a call draws | §6.4 | `banners.loot`, `lootDrawsMin`, `lootDrawsMax` |
+| What each slot draws | §6.4 | `banners.loot` — a row's reward is its slot |
+| How often hero goods become a second hero slot | 20% | `banners.extraHeroSlotChance` |
 | The free calls and their spacing | §6.2 | `banners.freePerDay`, `freeCooldownSeconds` |
 
 ## 10. Deliberately not in this design

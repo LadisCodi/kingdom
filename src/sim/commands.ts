@@ -18,6 +18,7 @@ import { closeRelicWindows, nextRelicWindowEnd } from './hosts';
 import { advanceRaids, armLairs, nextRaidBoundary, type RaidEvent } from './lairs';
 import { fogState, revealAroundDistrict } from './fog';
 import { pickUpTreasure } from './treasures';
+import { isPlantable, plantAt } from './plants';
 import { recordEvent } from './events';
 import { grantItem, itemCount, takeItem } from './bag';
 import {
@@ -49,13 +50,13 @@ import {
   districtOccupies, getWallet,
   districtCells, newId, remainingSeconds, townhall,
   type ItemId, type ArtifactId, type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type TechId, type UnitId, type Wallet, type WorldBuild,
+  type QueueItem, type TechId, type TroopId, type Wallet, type WorldBuild,
 } from './state';
 import { collectStore } from './storage';
 import { applyRentRush, nextRentRush, stampRentRush } from './quests';
 import { gemsToFinish } from './rush';
 import {
-  finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers, type ExplorerHome,
+  finishWorldBuilds, nextExplorerReturn, nextWorldBuildDone, returnExplorers,
 } from './world/explorers';
 
 // ------------------------------------------------------------------ building
@@ -100,6 +101,7 @@ export function buyBuilder(state: GameState): BuyBuilderResult {
   const cost = builderGemCost(state);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'builder', gems: cost });
   state.kingdom.builders += 1;
   return 'Purchased';
 }
@@ -119,6 +121,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
   const cost = def.keyGemCost * count;
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'keys', gems: cost, banner, keys: count });
   grantItem(state, def.key, count);
   return 'Purchased';
 }
@@ -128,7 +131,7 @@ export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysR
  *  for (`Docs/features/06-construction.md`). */
 export type EnqueueBuildResult =
   | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods'
-  | 'NeedsHarmony' | 'InvalidCell';
+  | 'NeedsHarmony' | 'InvalidCell' | 'NotForMaterials';
 
 export function enqueueBuild(
   state: GameState,
@@ -136,7 +139,10 @@ export function enqueueBuild(
   definitionId: DistrictId,
   cell: Coord,
 ): EnqueueBuildResult {
-  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  // A Shrine is sold for its materials only while `shrineBuild` says so.
+  if (DISTRICTS[definitionId].hostsRelic && shrineBuild(state).kind !== 'materials') return 'NotForMaterials';
+  // A plantable takes no builder: it grows by itself.
+  if (!isPlantable(definitionId) && busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   // Harmony and the goods are told apart from the cell before it is, because
   // the answer to each is a different errand — build a decoration, queue at a
   // workshop, or pick another spot — and `InvalidCell` would name none of
@@ -155,6 +161,8 @@ function startBuild(
   state: GameState, map: MapData, definitionId: DistrictId, cell: Coord,
   /** False when the price was paid another way — a premium Shrine's Gems. */
   charge = true,
+  /** The wait, when it is not a build's — a ruin's repair. */
+  seconds?: number,
 ): 'Started' | 'NotEnoughResources' | 'NotEnoughGoods' {
   const cost = charge ? nextBuildCost(state, definitionId) : {};
   // Three purses: the wallet, the stockpile, and the city's own beauty. The
@@ -165,6 +173,12 @@ function startBuild(
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
+  if (isPlantable(definitionId)) {
+    // A command carries no time: the sim's own now is where it last advanced.
+    plantAt(state, map, definitionId, cell, state.lastAdvance);
+    wakeIdleWorkersAt(state, state.lastAdvance); // a new cell to wait on
+    return 'Started';
+  }
   const district: District = {
     uniqueId: newId(state, `district_${definitionId}`),
     definitionId,
@@ -177,7 +191,7 @@ function startBuild(
     state: 'UnderConstruction',
     visualVariant: 1,
   };
-  const duration = buildDurationForCell(state, definitionId, cell, map);
+  const duration = seconds ?? buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);
   // A treasure under the new footprint is picked up, not buried
   // (Docs/features/01-map-and-fog.md §6.2).
@@ -195,26 +209,48 @@ function startBuild(
 // ------------------------------------------------------------- repairing
 
 /** The Gems the next premium Shrine costs, or null when all are built
- *  (Docs/proposals/relic-restoration.md §5.1, §9). */
+ *  (Docs/features/09-relics.md). */
 export const premiumShrinePrice = (state: GameState): number | null =>
   SHRINE_RULES.premiumGems[state.relics.premiumShrines] ?? null;
 
-export type PremiumShrineResult =
-  | 'Started' | 'NoneLeft' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+/** How the next Shrine is built from the Build menu. */
+export type ShrineBuild =
+  | { kind: 'ruinFirst' } | { kind: 'materials' } | { kind: 'gems'; gems: number } | { kind: 'none' };
 
 /**
- * BUILD A SHRINE ANYWHERE, FOR GEMS: breadth, like a builder — one more
- * host, never a relic. The ruin in the fog is the Shrine play finds; these
- * are the rest, each dearer than the last, and the ladder ends.
+ * THE SHRINE LADDER: the ruin in the province is repaired first; then
+ * `materialBuilds` Shrines are built for their materials (the level-1 cost
+ * at their ordinal, dear by design); every one after that asks Gems, one
+ * price each from `premiumGems`, until the ladder ends.
+ */
+export function shrineBuild(state: GameState): ShrineBuild {
+  const ruins = ABANDONED.filter((a) => DISTRICTS[a.districtId].hostsRelic);
+  if (ruins.some((a) => state.abandoned.repaired[a.id] !== true)) return { kind: 'ruinFirst' };
+  const forMaterials = districtCount(state, 'Shrine') - ruins.length - state.relics.premiumShrines;
+  if (forMaterials < SHRINE_RULES.materialBuilds) return { kind: 'materials' };
+  const gems = premiumShrinePrice(state);
+  return gems === null ? { kind: 'none' } : { kind: 'gems', gems };
+}
+
+export type PremiumShrineResult =
+  | 'Started' | 'NoneLeft' | 'NotForGems' | 'NotEnoughGems' | 'NoBuilderFree' | 'CountLimit' | 'InvalidCell';
+
+/**
+ * BUILD A SHRINE FOR GEMS: breadth, like a builder — one more host, never a
+ * relic. Only once the ruin and the material Shrines stand (`shrineBuild`),
+ * each dearer than the last, and the ladder ends.
  */
 export function buildPremiumShrine(state: GameState, map: MapData, cell: Coord): PremiumShrineResult {
-  const price = premiumShrinePrice(state);
-  if (price === null) return 'NoneLeft';
+  const offer = shrineBuild(state);
+  if (offer.kind === 'none') return 'NoneLeft';
+  if (offer.kind !== 'gems') return 'NotForGems';
+  const price = offer.gems;
   if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, 'Shrine') >= maxDistrictCount(state, DISTRICTS.Shrine)) return 'CountLimit';
   if (placementBlock(state, map, 'Shrine', cell) !== null) return 'InvalidCell';
   if (getWallet(state.player.wallet, 'Gems') < price) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -price);
+  track(state, 'gems_spent', { sink: 'shrine', gems: price });
   state.relics.premiumShrines += 1;
   startBuild(state, map, 'Shrine', cell, false);
   track(state, 'premium_shrine', { n: state.relics.premiumShrines, gems: price });
@@ -250,7 +286,7 @@ export function repairRefusal(state: GameState, map: MapData, id: string): Repai
   if (cells.some((c) => fogState(state, map, c) !== 'Revealed')) return 'NotRevealed';
   // Not on ground a lair still holds — the Thorned Shrine waits on the Orcs.
   if (cells.some((c) => lairHolding(state, c) !== null)) return 'LairHeld';
-  if (busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  if (!isPlantable(site.districtId) && busyBuilders(state) >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (districtCount(state, site.districtId) >= maxDistrictCount(state, def)) return 'CountLimit';
   if (harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   if (!canAfford(state.city.wallet, nextBuildCost(state, site.districtId))) return 'NotEnoughResources';
@@ -268,7 +304,9 @@ export function repairAbandoned(state: GameState, map: MapData, id: string): Rep
   const refusal = repairRefusal(state, map, id);
   if (refusal !== null) return refusal;
   const site = ABANDONED.find((a) => a.id === id)!;
-  const started = startBuild(state, map, site.districtId, site.location);
+  // A ruin's repair has a wait of its own, flat: the walls are standing.
+  const seconds = DISTRICTS[site.districtId].repairDurationSeconds;
+  const started = startBuild(state, map, site.districtId, site.location, true, seconds > 0 ? seconds : undefined);
   if (started === 'Started') {
     state.abandoned.repaired[id] = true;
     // The piece the ruin was missing goes into it.
@@ -512,6 +550,7 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     district.state = 'Built';
     revealAroundDistrict(state, map, district); // the new building pushes back the fog
     recordEvent(state, { kind: 'districtBuilt', district: district.definitionId });
+    track(state, 'building', { district: district.definitionId, level: 1 });
     // The Watchtower stands: what claiming a landmark pays, it pays — a lump
     // of Knowledge (its Mana is `manaCap`'s, its eight rings its own fog
     // radius, the world's door `watchtowerClaimed`).
@@ -523,6 +562,7 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
     recordEvent(state, {
       kind: 'districtLevel', district: district.definitionId, level: district.level,
     });
+    track(state, 'building', { district: district.definitionId, level: district.level });
     if (district.definitionId === 'Townhall') track(state, 'townhall_level', { level: district.level });
   }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
@@ -544,6 +584,7 @@ export function finishWithGems(
   const cost = gemRushCost(item, now);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
+  track(state, 'gems_spent', { sink: 'rush_build', gems: cost });
   // Remove from the queue FIRST so the advance can't double-complete it.
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
   completeQueueItem(state, map, item, now);
@@ -676,7 +717,7 @@ export interface AdvanceResult {
   manaEarned: number;
   knowledgeEarned: number;
   /** Units that finished training in this window. */
-  trainedUnits: UnitId[];
+  trainedUnits: TroopId[];
   /** Military buildings whose training line ran dry in this window: the
    *  last soldier out, and when. What the 'trained' news is about — a hall
    *  standing idle, not every soldier it hands over. */
@@ -688,14 +729,15 @@ export interface AdvanceResult {
   scheduleEvents: ScheduleEvent[];
   /** Garrisons that came down off the hill while the player was away. */
   raids: RaidEvent[];
-  /** Explorers that came home from the world board, and what they revealed. */
-  explorersHome: ExplorerHome[];
+  /** Explorers that came home from the world board, by trip id. What they
+   *  found was revealed when the player tapped their hex. */
+  explorersHome: string[];
   /** World builds whose builder came home: the district or upgrade stands. */
   worldBuildsDone: WorldBuild[];
 }
 
 /** A military building's training line that ran dry (`AdvanceResult.linesDone`). */
-export interface LineDone { buildingId: string; unit: UnitId; at: number }
+export interface LineDone { buildingId: string; unit: TroopId; at: number }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], goldEarned: 0,
@@ -741,7 +783,7 @@ function applyDueAt(
     // stepped one agree on.
     for (const [buildingId, d] of last) {
       if (lineFor(state, buildingId).length === 0) {
-        out.linesDone.push({ buildingId, unit: d.trainee as UnitId, at: d.at });
+        out.linesDone.push({ buildingId, unit: d.trainee as TroopId, at: d.at });
       }
     }
     // NOTHING FOR THE LAIRS. A room resolves the instant the player enters
@@ -762,8 +804,9 @@ function applyDueAt(
     // `runContinuous`, because it changes another subsystem's inputs: the
     // next building level may become affordable on it.
     out.goodsMade.push(...completeWorkshopItems(state, t));
-    // An explorer home is a TIMER: its march resolves at its absolute time,
-    // and its whole reveal folds into the fog here (sim/world/explorers.ts).
+    // An explorer home is a TIMER: its march home resolves at its absolute
+    // time and frees its slot. Its reveal was the player's tap
+    // (sim/world/explorers.ts).
     out.explorersHome.push(...returnExplorers(state, t));
     // A builder out on the world board comes home when its build stands.
     out.worldBuildsDone.push(...finishWorldBuilds(state, t));

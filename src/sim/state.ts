@@ -63,11 +63,24 @@ export type TerrainId =
 // research that opens one to a pick and differ only in what they pay.
 export type FeatureId =
   | 'Trees' | 'BerryBush' | 'WildAnimals' | 'FishShoal'
-  | 'Mountain' | 'MountainIron' | 'MountainGold';
+  | 'Mountain' | 'MountainIron' | 'MountainGold'
+  | 'Crops';
 export type HarvestSourceId =
   | 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Fish'
   | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
+/** A troop's rank, I to V (Docs/features/combat.md §6). */
+export type UnitRank = 1 | 2 | 3 | 4 | 5;
+/**
+ * ONE TROOP: a unit at one rank. Rank I is the unit's own id, so every save
+ * written before evolutions already names troops; ranks II–V carry the
+ * suffix the art files carry (`Warrior_e3`, `unit_warrior_e3.png`).
+ *
+ * Every rank is a troop of its own — its own count, squads and wounded — and
+ * ranks never mix (combat.md §6.1). What fights on the type chart is the
+ * UNIT (`unitOf`, definitions.ts); what a troop is worth is its rank's row.
+ */
+export type TroopId = UnitId | `${UnitId}_e${2 | 3 | 4 | 5}`;
 /** A landmark's kind decides its art and name — and, for the Watchtower, a
  *  door: claiming it opens the world (Docs/features/22-progression.md §5). */
 export type LandmarkKind = 'StandingStones' | 'Leyspring' | 'Watchtower';
@@ -242,7 +255,7 @@ export interface City {
    * same soldier would, which is the whole point of the pool: a bad fight is
    * a bill rather than a loss.
    */
-  wounded: Partial<Record<UnitId, number>>;
+  wounded: Partial<Record<TroopId, number>>;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
    *  shape as a house's `rentAnchor` so both replay deterministically. */
   lastManaAt: number;
@@ -266,6 +279,9 @@ export interface CellHarvestState {
    * 90 seconds to 21, and a bar spanning 90 opens at 77%.
    */
   recoveryMs: number | null;
+  /** PLANTED and not grown yet: the wait is its growth, not a recovery
+   *  (Docs/features/27-plantables.md). Cleared with the wait. */
+  growing?: true;
 }
 
 export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';
@@ -316,7 +332,7 @@ export interface ScheduledEntry {
 
 export interface ArmyUnit {
   uniqueId: string;
-  definitionId: UnitId;
+  definitionId: TroopId;
 }
 
 /**
@@ -325,7 +341,7 @@ export interface ArmyUnit {
  * not in the UNITS table. But they QUEUE identically, so the queue carries the
  * union rather than two parallel systems that drift apart.
  */
-export type TrainableId = UnitId | 'Villager';
+export type TrainableId = TroopId | 'Villager';
 
 /** One trainee waiting. Paid for up front; `startedAt` is stamped when it
  *  reaches the front of its BUILDING's line. */
@@ -360,7 +376,7 @@ export interface TrainingItem {
  *  which is what makes the type chart interesting and what "coverage" means
  *  when a second hero arrives. */
 export interface PartySlotState {
-  unitId: UnitId;
+  unitId: TroopId;
   count: number;
 }
 
@@ -401,9 +417,10 @@ export interface LairState {
  * One explorer out on the world board (Docs/features/19-world-map.md §3.1).
  *
  * Everything a trip will ever do is priced when it leaves: its path, its
- * pace and how far it sees. What it has revealed at any moment is derived
- * from those and the clock (sim/world/explorers.ts), so a march is a TIMER
- * with one boundary — the moment it is home.
+ * pace and how far it sees. Where it is at any moment is derived from those
+ * and the clock (sim/world/explorers.ts); its work done, it waits at the hex
+ * until the player reveals it, so a trip is a TIMER with one boundary — the
+ * moment it is home after that.
  */
 /** What can stand on a held world hex (sim/world/types.ts). */
 /** What a builder out on the world board is building: a hex's district
@@ -426,19 +443,23 @@ export interface ExplorerTrip {
   workMs: number;
   /** Hexes it reveals round its target. */
   radius: number;
+  /** When the player tapped its hex and revealed it — the moment it set out
+   *  for home. Null while it is out, working, or waiting for the tap. */
+  revealedAt: number | null;
 }
 
 export interface WorldState {
   /** Which board, and which of its six cities is the player's. */
   board: { id: string; seed: number; seat: number };
-  /** The hexes revealed and folded in: three uint32 words over the board's
-   *  91 indices. The city and the Portal are always revealed and never
-   *  stored; a march under way is derived, not stored. */
+  /** The hexes revealed: three uint32 words over the board's 91 indices.
+   *  The city and the Portal are always revealed and never stored. */
   revealed: number[];
   explorers: ExplorerTrip[];
-  /** Explorers bought — with Gems or in a pack — on top of what Cartography
-   *  and the Atlas open (sim/world/explorers.ts). */
+  /** Explorers bought — with Gems or in a pack — on top of the kingdom's
+   *  own and the Atlas's (sim/world/explorers.ts). */
   explorersBought: number;
+  /** Trips ever sent. The first is the tutorial's, and free. */
+  tripsSent: number;
   /** Builders out on the world board: what each is raising and when it is
    *  done. The server holds the hex; this is the builder's half, so a
    *  province build and a world build share the one crew. */
@@ -475,7 +496,7 @@ export interface PortalPrize {
 export interface WorldArmyOut {
   id: string;
   heroes: HeroId[];
-  troops: Array<{ unitId: UnitId; count: number }>;
+  troops: Array<{ unitId: TroopId; count: number }>;
   target: number;
   purpose: 'attack' | 'claim' | 'garrison' | 'delve' | 'portal' | 'clear';
 }
@@ -732,7 +753,7 @@ export interface GameState {
    * play only, so a replayed absence moves none of them. Nothing else may
    * read this flag.
    *
-   * Transient, like `lastCollectTapAt`: never saved, false on load.
+   * Transient: never saved, false on load.
    */
   replaying: boolean;
   /** First-time discoveries already announced (keys like 'resource:Wood'). */
@@ -812,9 +833,6 @@ export interface GameState {
   seed: number;
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
-  /** Epoch ms of the last successful player collect tap (cooldown anchor).
-   *  Transient — not persisted; resets on load. */
-  lastCollectTapAt: number;
   /** Fractional units a tap has earned but not yet been paid, per currency.
    *  A tap is priced in SECONDS of work, so on most cells it owes a fraction;
    *  carrying the remainder is what makes a +20% TapPower honest instead of

@@ -361,6 +361,116 @@
 }
 .gr-card.is-stamped .gr-stamp { opacity: 1; }
 
+/* A TEN-CALL'S GROUPED CARDS (10-heroes.md §8.3). The name heads these
+   pages, since what they hold is a list rather than one picture. */
+.gr-card.is-supplies .gr-card-name,
+.gr-card.is-bag .gr-card-name {
+  padding: 0 0 calc(var(--cw) * 0.035);
+  border-top: none;
+  border-bottom: max(1px, calc(var(--cw) * 0.008)) solid rgba(92, 58, 30, 0.35);
+}
+/* Supplies: every speed-up, or every chest, as a small grid of what is in it. */
+.gr-supplies {
+  flex: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  align-content: center;
+  gap: calc(var(--cw) * 0.04);
+}
+.gr-supply {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ink);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.12));
+  font-weight: var(--weight-title);
+  line-height: 1;
+}
+.gr-supply > .icon { --icon-size: calc(var(--cw) * 0.27); }
+
+/* The bag: one wide page across the board, a line for every hero of the
+   bag the batch paid Fragments to. */
+.gr-card.is-bag {
+  grid-column: 1 / -1;
+  width: 100%;
+  aspect-ratio: auto;
+  height: calc(var(--cw) * (0.42 + 0.5 * var(--rows, 1)));
+  perspective: calc(var(--cw) * 14);
+}
+.gr-card.is-bag .gr-card-face { padding: calc(var(--cw) * 0.1) calc(var(--cw) * 0.16) calc(var(--cw) * 0.08); }
+.gr-bag {
+  flex: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: calc(var(--cw) * 0.06) calc(var(--cw) * 0.14);
+  padding-top: calc(var(--cw) * 0.04);
+}
+.gr-bag-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--cw) * 0.06);
+  min-width: 0;
+}
+.gr-bag-art {
+  position: relative;
+  flex: none;
+  width: calc(var(--cw) * 0.42);
+  aspect-ratio: 1;
+}
+.gr-bag-art::before {
+  content: '';
+  position: absolute;
+  inset: -6%;
+  background: radial-gradient(closest-side, var(--wash, transparent), transparent);
+}
+.gr-bag-row.is-common { --wash: rgba(95, 143, 168, 0.32); }
+.gr-bag-row.is-rare { --wash: rgba(138, 107, 196, 0.32); }
+.gr-bag-row.is-legendary { --wash: rgba(242, 178, 51, 0.4); }
+.gr-bag-row.is-missing .gr-card-img { filter: brightness(0) opacity(0.5); }
+.gr-bag-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cw) * 0.02);
+}
+.gr-bag-name {
+  color: var(--ink);
+  font-size: max(calc(var(--px) * 10), calc(var(--cw) * 0.1));
+  font-weight: var(--weight-strong);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gr-bag-count {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--cw) * 0.03);
+  color: var(--ink);
+  font-size: max(calc(var(--px) * 11), calc(var(--cw) * 0.11));
+  font-weight: var(--weight-title);
+  line-height: 1;
+}
+.gr-bag-count > .icon { --icon-size: calc(var(--cw) * 0.13); }
+.gr-bag-bar .k-trough { --bar-h: calc(var(--cw) * 0.13); }
+.gr-bag-bar .k-trough-label { font-size: max(calc(var(--px) * 9), calc(var(--cw) * 0.08)); }
+.gr-bag-row.is-full .gr-bag-bar { filter: drop-shadow(0 0 calc(var(--cw) * 0.04) #ffd36b) drop-shadow(0 0 calc(var(--cw) * 0.08) rgba(242, 178, 51, 0.8)); }
+.gr-bag-row .gr-stamp {
+  left: calc(var(--cw) * 0.21);
+  top: 50%;
+  width: calc(var(--cw) * 0.36);
+  margin: calc(var(--cw) * -0.18) 0 0 calc(var(--cw) * -0.18);
+  font-size: max(calc(var(--px) * 9), calc(var(--cw) * 0.09));
+}
+.gr-bag-row.is-stamped .gr-stamp { opacity: 1; }
+.gr-bag-row .gr-card-img { transition: filter 700ms ease-out; }
+
 /* -------------------------------------------------------- a new hero's moment */
 
 /* The party: the room darkens round the card, and a white flash opens it. */

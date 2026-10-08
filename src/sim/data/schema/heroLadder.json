@@ -10,7 +10,24 @@
           "min": 1,
           "doc": "How many points make one star. Each ascension fills one point; a full star raises the level cap."
         },
-        "recruitFragments": { "type": "int", "min": 1, "doc": "Fragments that recruit a hero not owned yet." },
+        "recruitFragments": {
+          "type": "object",
+          "doc": "Fragments that recruit a hero not owned yet, by its rarity.",
+          "fields": {
+            "Common": { "type": "int", "min": 1 },
+            "Rare": { "type": "int", "min": 1 },
+            "Legendary": { "type": "int", "min": 1 }
+          }
+        },
+        "bagOpen": {
+          "type": "object",
+          "doc": "How many heroes the player does not own are open in the bag, by rarity: what a call can hand over or pay Fragments of (Docs/features/10-heroes.md §6.6).",
+          "fields": {
+            "Common": { "type": "int", "min": 1 },
+            "Rare": { "type": "int", "min": 1 },
+            "Legendary": { "type": "int", "min": 1 }
+          }
+        },
         "fragmentsPerStepBase": { "type": "int", "min": 1, "doc": "Fragments one ascension asks for on the first star." },
         "fragmentsPerStepGrowth": {
           "type": "int",

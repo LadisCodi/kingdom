@@ -8,9 +8,12 @@ import { QUESTS, SCENES, SPEAKERS } from '../src/sim/data/definitions';
 import { buildShortfall, nextBuildCost, stockBuild } from '../src/sim/districts';
 import { canAfford } from '../src/sim/wallet';
 import { conditionHolds } from '../src/ui/stage/conditions';
+import { PROGRESS } from '../src/ui/stage/director';
 import { grantItem, useItem } from '../src/sim/bag';
-import { handPlace } from '../src/ui/stage/targets';
-import { addBuilt, firstGame, freshPresenter, reveal, WATCHTOWER } from './helpers';
+import { handPlace, resolveTarget } from '../src/ui/stage/targets';
+import { dispatchExplorer, fogStateOf, homeIndex, readyAt, revealExplored } from '../src/sim/world/explorers';
+import { PORTAL_INDEX, boardNeighbors } from '../src/sim/world/hex';
+import { addBuilt, firstGame, freshPresenter, reveal, T0, WATCHTOWER } from './helpers';
 import { LAIRS, LANDMARKS } from '../src/sim/data/definitions';
 
 /** Every `data-coach` key the UI source writes: literals, and the prefix of
@@ -30,6 +33,8 @@ function coachKeys(): { exact: Set<string>; prefixes: Set<string> } {
     // `coach(btn({...}), 'key')`: the key is the string after the call it wraps.
     if (src.includes('coach(')) for (const m of src.matchAll(/\}?\)\s*,\s*'([a-z][\w:-]*)'\)/g)) exact.add(m[1]);
     for (const m of src.matchAll(/dataset\.coach\s*=\s*'([^']+)'/g)) exact.add(m[1]);
+    // `coach(upgrade, 'card:upgrade')`: a node already made, by name.
+    for (const m of src.matchAll(/coach\(\w+,\s*'([a-z][\w:-]*)'\)/g)) exact.add(m[1]);
   }
   return { exact, prefixes };
 }
@@ -106,6 +111,19 @@ describe('the scenes, against the game', () => {
     expect(wallet.Wood).toBe(cost.Wood);
   });
 
+  it('flies what a lesson hands over into the header, like a collect', async () => {
+    const game = freshPresenter(firstGame());
+    const cost = nextBuildCost(game.state, 'Sawmill');
+    game.state.city.wallet.Wood = 0;
+    game.state.city.wallet.Gold = 0;
+    const flown: object[] = [];
+    game.onReward((haul) => flown.push(haul));
+    game.stockBuild('Sawmill');
+    game.stockBuild('Sawmill'); // already met: nothing more, nothing flown
+    await Promise.resolve();
+    expect(flown).toEqual([cost]);
+  });
+
   it('steps back out to the map before it points at the nav bar', () => {
     // The nav bar steps aside for every sheet, card and placement bar, so a
     // line that points at it over one would point at nothing — and, locked
@@ -120,11 +138,47 @@ describe('the scenes, against the game', () => {
     }
   });
 
+  it('chains the lessons by their gifts: each ends on its quest claimed, Isolde asking only the first time', () => {
+    // A lesson rides on its quest being reached, so the one before must be
+    // claimed for the next to start: the hand leads the player to the pill.
+    const opening = SCENES.filter((s) => s.trigger === 'questReached');
+    const claims = opening.map((scene) => {
+      const last = scene.lines[scene.lines.length - 1];
+      expect(last, scene.id).toMatchObject({ point: 'quest', lock: 'target', until: 'questClaimed', untilTarget: scene.triggerTarget });
+      return last;
+    });
+    expect(claims.filter((l) => l.text !== '').length).toBe(1);
+    expect(claims[0].text).not.toBe('');
+  });
+
+  it('lets a line with nothing to say only point: never a tap, never at nothing', () => {
+    for (const scene of SCENES) {
+      for (const line of scene.lines.filter((l) => l.text === '')) {
+        expect(line.until, scene.id).not.toBe('tap');
+        if (line.lock !== 'none') expect(line.point, scene.id).not.toBe('');
+      }
+    }
+  });
+
   it('never locks a line to a target it does not point at', () => {
     for (const scene of SCENES) {
       for (const line of scene.lines) {
         if (line.lock === 'target') expect(line.point, `${scene.id}: "${line.text}"`).not.toBe('');
       }
+    }
+  });
+
+  // An upgrade started before its lesson takes the Upgrade button away: the
+  // lesson must have a PROGRESS line to jump to, or it waits for it forever.
+  it('never waits on an Upgrade button an upgrade under way has taken away', () => {
+    for (const scene of SCENES) {
+      scene.lines.forEach((line, i) => {
+        if (line.until !== 'ui' || !['card:upgrade', 'upgrade-go'].includes(line.untilTarget)) return;
+        const rest = scene.lines.slice(i + 1);
+        const talk = rest.findIndex((l) => l.until === 'tap');
+        const turn = talk < 0 ? rest : rest.slice(0, talk);
+        expect(turn.some((l) => PROGRESS.has(l.until)), `${scene.id} line ${i}`).toBe(true);
+      });
     }
   });
 });
@@ -213,6 +267,31 @@ describe('the conditions read the kingdom', () => {
     expect(conditionHolds(game, args('built' as never, 'AnyWorkshop', 1))).toBe(false);
   });
 
+  it('sees a level climbed or under way, soldiers, a full store and idle hands', () => {
+    const game = freshPresenter(firstGame());
+    const holds = (kind: string, t = '', n = 0) => conditionHolds(game, args(kind as never, t, n));
+    // The Upgrade pressed is the lesson: a level in the queue counts.
+    expect(holds('upgraded', 'Townhall', 2)).toBe(false);
+    const hall = game.state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    game.state.city.queue.push({ uniqueId: 'q', kind: 'upgrade', districtUniqueId: hall.uniqueId, targetLevel: 2 } as never);
+    expect(holds('upgraded', 'Townhall', 2)).toBe(true);
+    game.state.city.queue.pop();
+    hall.level = 2;
+    expect(holds('upgraded', 'Townhall', 2)).toBe(true);
+    expect(holds('upgraded', 'Townhall', 3)).toBe(false);
+    // Soldiers, not villagers.
+    expect(holds('troops', '', 1)).toBe(false);
+    game.state.city.trainingQueue.push({ trainee: 'Villager' } as never);
+    expect(holds('troops', '', 1)).toBe(false);
+    game.state.city.trainingQueue.push({ trainee: 'Warrior' } as never);
+    expect(holds('troops', '', 1)).toBe(true);
+    // A crew of more hands than ground in reach stands about.
+    expect(holds('idleCrew')).toBe(false);
+    addBuilt(game.state, 'Sawmill', { x: 40, y: 40 });
+    game.state.city.districts.find((d) => d.definitionId === 'Sawmill')!.assignedWorkers = 2;
+    expect(holds('idleCrew')).toBe(true);
+  });
+
   it('sees what stands past the fog, by kind, landmark kind or lair', () => {
     const game = freshPresenter(firstGame());
     game.state.fog.revealed = {}; // the opening's own ground already sights the tower
@@ -270,5 +349,51 @@ describe('the hand and the line box', () => {
 
   it('stands as it always did with no box on screen', () => {
     expect(handPlace(target, hand, null, frameH)).toEqual({ above: true, moveBox: false });
+  });
+});
+
+// The explorer's two scenes (Docs/features/19-world-map.md §3.3): what they
+// wait on, and the hexes they point at.
+describe('the explorer scenes', () => {
+  const holds = (game: ReturnType<typeof freshPresenter>, kind: 'explorerSent' | 'explorerReady' | 'explorerRevealed') =>
+    conditionHolds(game, { kind, target: '', amount: 0, tapsAtStart: 0 });
+
+  it('wait on a trip sent, an explorer waiting, and a hex revealed', () => {
+    const game = freshPresenter();
+    game.now = () => T0;
+    expect(holds(game, 'explorerSent')).toBe(false);
+    const target = boardNeighbors(homeIndex(game.state)).find((n) => n !== PORTAL_INDEX)!;
+    const r = dispatchExplorer(game.state, target, T0);
+    if (r.kind !== 'Sent') throw new Error(r.kind);
+    expect(holds(game, 'explorerSent')).toBe(true);
+    expect(holds(game, 'explorerReady')).toBe(false);
+    game.now = () => readyAt(r.trip);
+    expect(holds(game, 'explorerReady')).toBe(true);
+    expect(holds(game, 'explorerRevealed')).toBe(false);
+    expect(resolveTarget(game, 'hex:ready', null)).toEqual({ kind: 'hex', index: target });
+    revealExplored(game.state, target, readyAt(r.trip));
+    expect(holds(game, 'explorerReady')).toBe(false);
+    expect(holds(game, 'explorerRevealed')).toBe(true);
+  });
+
+  it('point a first explorer at misty ground next to the city', () => {
+    const game = freshPresenter();
+    game.now = () => T0;
+    const t = resolveTarget(game, 'hex:explore', null);
+    expect(t?.kind).toBe('hex');
+    const index = (t as { index: number }).index;
+    expect(fogStateOf(game.state, index)).toBe('Sensed');
+    expect(boardNeighbors(homeIndex(game.state))).toContain(index);
+  });
+
+  it('send the first trip free, and teach it on the board and the reveal anywhere', () => {
+    const explorer = SCENES.find((s) => s.id === 'explorer')!;
+    const ready = SCENES.find((s) => s.id === 'explorerReady')!;
+    expect(explorer).toMatchObject({ trigger: 'worldOpen', where: 'world', doneWhen: 'explorerSent' });
+    expect(ready).toMatchObject({ trigger: 'explorerReady', where: 'any', doneWhen: 'explorerRevealed' });
+    expect(explorer.lines.some((l) => l.point === 'hex:explore' && l.lock === 'target')).toBe(true);
+    expect(ready.lines.some((l) => l.point === 'hex:ready' && l.lock === 'target' && l.until === 'explorerRevealed')).toBe(true);
+    // The world's own scene goes first.
+    expect(SCENES.indexOf(explorer)).toBe(SCENES.findIndex((s) => s.id === 'world') + 1);
   });
 });

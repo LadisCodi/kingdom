@@ -6,7 +6,7 @@
 // and the map canvas, which holds everything that stands.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, UNITS,
+  DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART, LANDMARKS, TROOPS, rankOf,
 } from '../sim/data/definitions';
 import { sightedThings, type Sighted } from '../sim/sight';
 import { landmarkDefAt, standingAbandonedAt, standingLairAt } from '../sim/sites';
@@ -19,14 +19,14 @@ import { itemCount, lineFor, lineRemainingSeconds, trainingProgress, unitInTrain
 import { fogState, isPayable, reachBorder } from '../sim/fog';
 import { footprintAt, type MapData } from '../sim/grid';
 import {
-  recoveryProgress, recoversForSpec, stockFraction,
+  isGrowing, recoveryProgress, recoversForSpec, stockFraction,
 } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtCells,
   type ArtifactId, type HarvestSourceId,
-  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId, type UnitId,
+  type Coord, type DistrictId, type FeatureId, type GameState, type LairId, type TerrainId,
 } from '../sim/state';
 import type { Camera, PlotBox } from './camera';
 import type { Floaters } from './floaters';
@@ -35,13 +35,14 @@ import { drawAsleepBubble, drawAuraBadge, drawClaimBubble, drawCollectBubble, dr
 import { clearShrineBubbles, markShrineBubble } from './shrineBubbles';
 import { showsCollect } from '../sim/doors';
 import type { TapFx } from './tapFx';
+import type { GhostFx } from './ghostFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS } from './palette';
 import {
-  drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
+  drawIcon, drawSprite, drawSpriteGlow, drawSpriteThreeSlice, growthStage, spriteAspect, spriteInkTop, spriteSolidAt, spriteUrl, withSpriteLook,
 } from './sprites';
 import {
-  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, edgePath, FEATURE_PLOTS,
+  diamondPath, drawGround, drawStanding, drawStandingGlow, drawStandingOutline, drawStandingTint, edgePath, FEATURE_PLOTS, featurePlots,
   fillDiamond, strokeDiamond,
 } from './iso';
 import { drawTerrainFringes, terrainKey, variantKey } from './terrain';
@@ -73,10 +74,24 @@ export interface MarkerLayer {
   /** The grid steps the ghost can take — one green arrow each, on the ground
    *  beside the footprint, pointing that way. */
   previewSteps: Coord[];
+  /** The ghost stands where it may not: it is drawn red. */
+  previewBlocked?: boolean;
+  /** A finger holds the ghost: it lifts higher. */
+  previewHeld?: boolean;
+  /** Which ghost is out, so a new one appears (render/ghostFx.ts); and
+   *  whether it is a new build, which scales in, or a move, which rises. */
+  previewId?: string;
+  previewScaleIn?: boolean;
   /** The district currently being MOVED. It is drawn faint at its old address
    *  while its ghost is out — otherwise the player sees two of the same
    *  building and no way to tell which one is real. */
   liftedDistrictId: string | null;
+  /** A FEATURE on the move (a tree, a crop plot): its cell, drawn faint the
+   *  same way, and the ghost is its art on a feature's canvas. */
+  liftedFeatureKey?: string | null;
+  /** The ghost is a FEATURE's: its own drawing — the variant the cell it
+   *  stands on would show, grown — on a feature's canvas. */
+  previewFeature?: boolean;
   /** The building whose card is open: it pulses white, so the player can
    *  tell which one the card is about. */
   inspectedDistrictId: string | null;
@@ -205,6 +220,8 @@ export function drawMap(
   /** Lairs just claimed, and the `performance.now()` of the claim: their
    *  going-away is played from it, then they are forgotten (§5). */
   vanishing: Map<LairId, number> = new Map(),
+  /** The placement ghost's float, glide and landing (render/ghostFx.ts). */
+  ghostFx: GhostFx | null = null,
 ): void {
   const dpr = camera.dpr;
   const w = canvas.clientWidth;
@@ -363,9 +380,12 @@ export function drawMap(
 
   // Tap punch: draw a sprite squashed/stretched about its bottom center
   // (things smoosh into the ground), brightened while the flash lasts.
+  // A building just planted from the ghost falls the last of the way and
+  // squashes the same way, about the same corner.
   const punched = (anchorKey: string, box: PlotBox, draw: () => void) => {
-    const p = tapFx.sample(anchorKey);
-    if (!p) {
+    const p = tapFx.idle ? null : tapFx.sample(anchorKey);
+    const land = ghostFx === null || ghostFx.settled ? null : ghostFx.landing(anchorKey);
+    if (!p && !land) {
       draw();
       return;
     }
@@ -373,10 +393,10 @@ export function drawMap(
     // The squash anchors on the diamond's BOTTOM CORNER, which is the same
     // point the art stands on: a tapped building smooshes into its own plot.
     const { x: cx, y: cy } = base(box);
-    ctx.translate(cx, cy);
-    ctx.scale(p.sx, p.sy);
+    ctx.translate(cx, cy - (land ? land.lift * box.w : 0));
+    ctx.scale((p?.sx ?? 1) * (land?.sx ?? 1), (p?.sy ?? 1) * (land?.sy ?? 1));
     ctx.translate(-cx, -cy);
-    brightened(p.flash > 0.02 ? 2.5 * p.flash : 0, draw);
+    brightened(p && p.flash > 0.02 ? 2.5 * p.flash : 0, draw);
     ctx.restore();
   };
 
@@ -487,14 +507,6 @@ export function drawMap(
     const c = mid(box);
     const foot = base(box);
     if (lifted) ctx.globalAlpha = 0.28;
-    // Its harvest source, as `harvestSourceAt` would say for its own cell.
-    const source = district.state === 'Built' ? def.providesHarvestSource : null;
-    const exhausted = source !== null
-      && recoversForSpec(state, map, district.location, HARVEST[source], now) !== null;
-    // Exhausted crop plot gets its own base sprite when available;
-    // otherwise the normal sprite (or glyph) plus the withered overlay.
-    const exhaustedPlot = district.definitionId === 'FarmLands' &&
-      exhausted && district.state !== 'UnderConstruction';
     // Docks art faces water-right; mirror it when the wet half is on the left
     // (the anchor cell is the Water one). Sprites only — glyphs never flip.
     const mirrored = district.definitionId === 'Docks' &&
@@ -515,10 +527,8 @@ export function drawMap(
     // what stops a level with no art of its own from falling past the base
     // sprite to the emoji.
     const keys: string[] = [];
-    if (exhaustedPlot) keys.push(`${def.sprite}_exhausted`);
     for (let l = district.level; l >= 1; l--) keys.push(`${def.sprite}_l${l}`);
     keys.push(def.sprite);
-    let drewExhaustedPlot = false;
     let tall = 0;
     // Its card is open: a small white pulse — the art a touch brighter and a
     // soft white glow around its edge — breathing while the card stays up.
@@ -536,12 +546,7 @@ export function drawMap(
     };
     punched(coordKey(district.location), box, () => {
       brightened(0.18 * pulse, () => {
-        tall = stand(box, keys, def.glyph, (draw) => {
-          const drew = flip(() => { glow(); return draw(); });
-          drewExhaustedPlot = drew > 0 && exhaustedPlot &&
-            spriteAspect(`${def.sprite}_exhausted`) !== null;
-          return drew;
-        });
+        tall = stand(box, keys, def.glyph, (draw) => flip(() => { glow(); return draw(); }));
       });
     });
     // WHERE THE ROOF IS. A label belongs above the building, and how tall a
@@ -559,13 +564,6 @@ export function drawMap(
       fillDiamond(ctx, box);
     } else {
       if (district.level > 1) drawLevelPlaque(ctx, district.level, box.x + box.w - 3, roof, size);
-      // Exhausted crop plot: withered overlay (unless its sprite covers it).
-      if (exhaustedPlot && !drewExhaustedPlot) {
-        drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, box.x, c.y - box.h * 0.5, box.w, size * 0.3, box.h);
-      }
-      // A district that is itself a resource cell (FarmLands → Crops,
-      // lived-in Housing → Taxes): wear/recovery bar.
-      if (def.providesHarvestSource !== null) drawResourceState(district.location, box, source);
       // Townhall: villager-training progress bar, and the population count.
       //
       // Population is drawn HERE rather than in the header because the
@@ -972,12 +970,24 @@ export function drawMap(
         const keys = size === 1
           ? [variantKey(stem, cell)]
           : [`${stem}_${size}x${size}`, variantKey(stem, cell)];
+        // Planted and not grown: the growth stage its progress has reached,
+        // else the exhausted art (Docs/features/27-plantables.md §2).
+        if (isGrowing(state, map, cell, now)) {
+          const stage = growthStage(def.sprite,
+            recoveryProgress(state, map, cell, HARVEST[def.source], now) ?? 0);
+          if (stage !== null) keys.unshift(stage);
+        }
+        // On the move: faint at the address it is leaving, as a building is.
+        const lifted = key === markers.liftedFeatureKey;
         later(cell, () => dimmed(dim, () => {
+          ctx.save();
+          if (lifted) ctx.globalAlpha *= 0.28;
           punched(key, plot, () => {
             stand(plot, keys,
-              exhausted ? def.exhaustedGlyph : def.glyph, undefined, FEATURE_PLOTS);
+              exhausted ? def.exhaustedGlyph : def.glyph, undefined, featurePlots(def.sprite));
           });
-        }), { x: size, y: size });
+          ctx.restore();
+        }), { x: size, y: size }, { occludes: !NEVER_HIDES.has(feature) });
       }
     }
 
@@ -1338,8 +1348,7 @@ export function drawMap(
         const art = artRect(box, drawDistrict(district, box), 1);
         artOf.set(district.uniqueId, art);
         mark(art);
-      }, def.size,
-      { occludes: !NEVER_HIDES.has(district.definitionId) });
+      }, def.size);
   }
 
   // THE LAIRS, once FOUND and until cleared (Docs/proposals/lairs.md §2.1,
@@ -1471,9 +1480,10 @@ export function drawMap(
       labelFont(barH * 0.6, 12, true), 'green');
     const line = lineFor(state, district.uniqueId);
     const trainee = line[0].trainee;
-    const bust = `${trainee === 'Villager' ? 'unit_villager' : UNITS[trainee as UnitId].sprite}_avatar`;
+    const bust = `${trainee === 'Villager' ? 'unit_villager' : TROOPS[trainee].sprite}_avatar`;
     drawTraineeBadge(ctx, x, y + barH / 2, d, bust,
-      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true));
+      line.reduce((n, item) => n + itemCount(item), 0), labelFont(d * 0.3, 12, true),
+      trainee === 'Villager' ? 1 : rankOf(trainee));
   }
 
   // Pass 3a: THE WHEELS of the zones that carry one, over what stands —
@@ -1566,22 +1576,98 @@ export function drawMap(
     }
   }
   if (markers.previewCell && markers.previewGlyph) {
-    const b = camera.plotBox(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 });
-    // No footprint diamond: the ghost's rim and its move arrows are what
-    // tell it apart, and a square round its feet was one outline too many.
+    const fp = markers.previewSize ?? { x: 1, y: 1 };
+    // THE GHOST FLOATS over the plot it would land on (render/ghostFx.ts):
+    // a little at rest, higher under a finger, gliding between cells.
+    const pose = ghostFx?.pose(markers.previewCell, markers.previewHeld === true,
+      markers.previewId ?? '', markers.previewScaleIn === true)
+      ?? { at: markers.previewCell, lift: 0, sx: 1, sy: 1, shake: 0, alpha: 1 };
+    const ground = camera.plotBox(pose.at, fp);
+    const blocked = markers.previewBlocked === true;
+    // On the ground, where it would land: its plot, washed white — or red
+    // where it may not stand — and its shadow, smaller the higher it is.
+    ctx.save();
+    ctx.globalAlpha = pose.alpha;
+    ctx.fillStyle = blocked ? PALETTE.ghostBlockedPlot : PALETTE.ghostPlot;
+    fillDiamond(ctx, ground);
+    ctx.strokeStyle = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
+    ctx.lineWidth = Math.max(1.5, size * 0.025);
+    ctx.globalAlpha = pose.alpha * 0.8;
+    strokeDiamond(ctx, ground, 1);
+    const c = mid(ground);
+    const spread = 1 - Math.min(0.4, pose.lift * 2);
+    ctx.globalAlpha = pose.alpha * 0.28 * spread;
+    ctx.fillStyle = PALETTE.ghostShadow;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, ground.w * 0.32 * spread, ground.h * 0.32 * spread, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    const b = { ...ground, x: ground.x + pose.shake * ground.w, y: ground.y - pose.lift * ground.w };
     // New builds preview at level 1; fall back to the un-levelled sprite.
     const sprite = markers.previewSprite;
-    const keys = sprite ? [`${sprite}_l1`, sprite] : [];
+    const keys = !sprite ? []
+      : markers.previewFeature === true ? [variantKey(sprite, markers.previewCell), sprite]
+        : [`${sprite}_l1`, sprite];
+    const plots = markers.previewFeature === true && sprite ? featurePlots(sprite) : 1;
+    const foot = base(b);
+    ctx.save();
+    ctx.translate(foot.x, foot.y);
+    ctx.scale(pose.sx, pose.sy);
+    ctx.translate(-foot.x, -foot.y);
     // A solid rim round the ghost, opaque under the translucent building,
     // so it stands out from the grass and the roofs around it.
+    ctx.globalAlpha = pose.alpha;
+    const rim = Math.max(2.5, b.w / (fp.x + fp.y) * 0.05);
+    // Red, rim and body, where it may not stand — it still follows the
+    // finger there, so the colour is the whole verdict.
+    const rimColor = blocked ? PALETTE.ghostBlocked : PALETTE.ghostOutline;
+    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w * plots, rimColor, rim));
+    ctx.globalAlpha = 0.6 * pose.alpha;
+    stand(b, keys, markers.previewGlyph, undefined, plots);
+    if (blocked) {
+      ctx.globalAlpha = 0.45 * pose.alpha;
+      keys.some((k) => drawStandingTint(ctx, k, foot.x, foot.y, b.w * plots, PALETTE.ghostBlocked));
+    }
+    ctx.restore();
     ctx.globalAlpha = 1;
-    const foot = base(b);
-    const rim = Math.max(2.5, b.w / (markers.previewSize ? markers.previewSize.x + markers.previewSize.y : 2) * 0.05);
-    keys.some((k) => drawStandingOutline(ctx, k, foot.x, foot.y, b.w, PALETTE.ghostOutline, rim));
-    ctx.globalAlpha = 0.6;
-    stand(b, keys, markers.previewGlyph);
-    ctx.globalAlpha = 1;
-    drawMoveArrows(markers.previewCell, markers.previewSize ?? { x: 1, y: 1 }, markers.previewSteps);
+    drawMoveArrows(pose.at, fp, markers.previewSteps);
+  } else {
+    ghostFx?.clear();
+  }
+  // A PLANTED GHOST'S DUST: puffs rolling out from the front and sides of
+  // its plot as it lands — never the back, which is behind the building —
+  // growing, rising a little and thinning as they go.
+  if (ghostFx !== null && !ghostFx.settled) {
+    for (const d of ghostFx.dust()) {
+      const g = camera.plotBox(d.cell, d.size);
+      const c = mid(g);
+      const ease = 1 - (1 - d.k) * (1 - d.k);
+      const fade = Math.pow(1 - d.k, 1.5);
+      const n = 12;
+      ctx.save();
+      for (let i = 0; i < n; i++) {
+        // From the left corner round the front to the right one; each puff
+        // a little bigger or smaller, a little nearer or further out.
+        const a = Math.PI * (-0.12 + 1.24 * (i / (n - 1)));
+        const vary = [1, 0.75, 1.15, 0.85, 1.25, 0.8, 1.1, 0.7, 1.2, 0.9, 1.05, 0.8][i];
+        const r = 0.92 + (0.3 + 0.12 * vary) * ease;
+        const x = c.x + Math.cos(a) * g.w * 0.5 * r;
+        const y = c.y + Math.sin(a) * g.h * 0.5 * r - ease * g.h * 0.18 * vary;
+        const rad = g.w * (0.06 + 0.1 * ease) * vary;
+        // Two tones, lit from above: earth below, a pale crown on top.
+        ctx.globalAlpha = 0.75 * fade;
+        ctx.fillStyle = PALETTE.ghostDust;
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.8 * fade;
+        ctx.fillStyle = PALETTE.ghostDustLight;
+        ctx.beginPath();
+        ctx.arc(x - rad * 0.15, y - rad * 0.25, rad * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
   }
   // A placement's or a move's target is the ghost itself; only a spell's
   // target keeps the outline.

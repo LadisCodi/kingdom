@@ -14,7 +14,7 @@ import { canAffordGoods, payGoods } from './goods';
 import { resolvePrice } from './precious';
 import {
   addToWallet, getWallet,
-  type DistrictId, type GameState, type GoodsStock, type TechId, type TomeId, type UnitId,
+  type CurrencyId, type DistrictId, type GameState, type GoodsStock, type TechId, type TomeId, type UnitId, type Wallet,
 } from './state';
 
 /** Something a technology puts in the player's hands. */
@@ -68,6 +68,16 @@ export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost,
 export const techKnowledgeCost = (id: TechId): number =>
   getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
 
+/** The city's Wood, Stone and Food paid with the Gold, when it is completed. */
+export function techMaterialsCost(id: TechId): Wallet {
+  const out: Wallet = {};
+  for (const c of ['Wood', 'Stone', 'Food'] as const) {
+    const n = getWallet(TECHNOLOGIES[id].cost, c);
+    if (n > 0) out[c] = n;
+  }
+  return out;
+}
+
 /** The goods paid with the Gold, when it is completed: refined goods, and
  *  precious materials — never asked while the world is shut (19 §7.6). */
 export const techGoodsCost = (state: GameState, id: TechId): GoodsStock =>
@@ -77,6 +87,8 @@ const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
 const hasGoods = (state: GameState, id: TechId): boolean =>
   canAffordGoods(state.city.goods, techGoodsCost(state, id));
 const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
+const hasMaterials = (state: GameState, id: TechId): boolean =>
+  Object.entries(techMaterialsCost(id)).every(([c, n]) => getWallet(state.city.wallet, c as CurrencyId) >= (n ?? 0));
 
 /** Knowledge already poured into a technology. */
 export const techPoured = (state: GameState, id: TechId): number =>
@@ -178,12 +190,12 @@ export function pourKnowledge(
 }
 
 export type ResearchResult =
-  | ResearchRefusal | 'Researched' | 'NotFilled' | 'NotEnoughGold' | 'NotEnoughGoods';
+  | ResearchRefusal | 'Researched' | 'NotFilled' | 'NotEnoughGold' | 'NotEnoughMaterials' | 'NotEnoughGoods';
 
 /** Could the Gold and the goods be paid and the technology completed this second? */
 export const canResearchTech = (state: GameState, id: TechId): boolean =>
   researchRefusal(state, id) === null && isTechFilled(state, id) && gold(state) >= techCost(id)
-  && hasGoods(state, id);
+  && hasMaterials(state, id) && hasGoods(state, id);
 
 /**
  * Pay the Gold and the goods and complete the technology. Its Knowledge must
@@ -197,8 +209,10 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
   if (refusal !== null) return refusal;
   if (!isTechFilled(state, id)) return 'NotFilled';
   if (gold(state) < techCost(id)) return 'NotEnoughGold';
+  if (!hasMaterials(state, id)) return 'NotEnoughMaterials';
   if (!hasGoods(state, id)) return 'NotEnoughGoods';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));
+  for (const [c, n] of Object.entries(techMaterialsCost(id))) addToWallet(state.city.wallet, c as CurrencyId, -(n ?? 0));
   payGoods(state.city.goods, techGoodsCost(state, id));
   delete state.research.poured[id];
   state.research.completed.push(id);
@@ -214,7 +228,7 @@ export function completeTech(state: GameState, id: TechId): ResearchResult {
 export const canStartTech = (state: GameState, id: TechId): boolean =>
   researchRefusal(state, id) === null
   && (isTechFilled(state, id)
-    ? gold(state) >= techCost(id) && hasGoods(state, id)
+    ? gold(state) >= techCost(id) && hasMaterials(state, id) && hasGoods(state, id)
     : knowledge(state) >= techKnowledgeMissing(state, id));
 
 /** Anything at all worth a trip to the Research screen. */

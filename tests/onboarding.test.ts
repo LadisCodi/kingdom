@@ -14,9 +14,12 @@
 // opening grants and the ones it earns.
 import { describe, expect, it } from 'vitest';
 import {
-  ABANDONED, CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
+  ABANDONED, CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES, isAdjacencyGroup,
 } from '../src/sim/data/definitions';
-import { advance, changeWorkers, enqueueBuild, repairAbandoned, upgradeDistrict } from '../src/sim/commands';
+import { advance, changeWorkers, enqueueBuild, moveDistrict, repairAbandoned, upgradeDistrict } from '../src/sim/commands';
+import { workableCells } from '../src/sim/workers';
+import { districtCount, nextBuildCost, upgradeCost, validPlacementCells } from '../src/sim/districts';
+import { canAfford } from '../src/sim/wallet';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -31,7 +34,7 @@ import {
 } from '../src/sim/research';
 import {
   coordKey, getWallet, parseCoordKey, townhall, type Coord,
-  type DistrictId, type TechId,
+  type District, type DistrictId, type TechId, type Wallet,
 } from '../src/sim/state';
 import { BERRIES, collectAll, FOREST, map, pourAndResearch, T0 } from './helpers';
 
@@ -104,7 +107,10 @@ describe('a player can actually play the onboarding', () => {
       clearTo(site.location);
       expect(repairAbandoned(state, map, id), `could not repair ${id}`).toBe('Started');
       tick(600);
-      expect(state.city.districts.some((d) => d.definitionId === site.districtId
+      // A plantable's ruin comes back as its feature, never as a district.
+      const plants = DISTRICTS[site.districtId].plants;
+      if (plants !== null) expect(state.features[coordKey(site.location)]).toBe(plants);
+      else expect(state.city.districts.some((d) => d.definitionId === site.districtId
         && d.location.x === site.location.x && d.location.y === site.location.y && d.state === 'Built')).toBe(true);
     };
     const research = (id: TechId) => {
@@ -130,6 +136,42 @@ describe('a player can actually play the onboarding', () => {
           if (collectTap(state, map, cell, now) === 'Harvested') any = true;
         }
         if (!any) tick(30); // every reachable cell is spent — wait for recovery
+      }
+    };
+    /** Wait out a price the way a player does: chop the Wood, and let rent,
+     *  hauls and the plots bring in the rest. */
+    const afford = (cost: Wallet) => {
+      chop(Math.max(0, (cost.Wood ?? 0) - wood()));
+      let guard = 0;
+      while (!canAfford(state.city.wallet, cost)) {
+        expect(guard++, `never affords ${JSON.stringify(cost)}`).toBeLessThan(2000);
+        tick(60);
+      }
+    };
+    /** One more of a kind, wherever it may stand — a plantable included. */
+    const buildAnywhere = (id: DistrictId) => {
+      const before = districtCount(state, id);
+      afford(nextBuildCost(state, id));
+      const cell = validPlacementCells(state, map, id)[0];
+      expect(cell, `nowhere to put ${id}`).toBeDefined();
+      expect(enqueueBuild(state, map, id, cell), `could not queue ${id}`).toBe('Started');
+      tick(600);
+      expect(districtCount(state, id)).toBe(before + 1);
+    };
+    const levelUp = (d: District) => {
+      afford(upgradeCost(d.definitionId, d.ordinal, d.level));
+      const level = d.level;
+      expect(upgradeDistrict(state, d.uniqueId), `could not upgrade ${d.definitionId}`).toBe('Started');
+      tick(1800);
+      expect(d.level).toBe(level + 1);
+    };
+    const villagers = (n: number) => {
+      expect(maxPopulation(state)).toBeGreaterThanOrEqual(n);
+      let guard = 0;
+      while (state.city.population < n) {
+        expect(guard++, `never reaches ${n} villagers`).toBeLessThan(500);
+        if (trainUnit(state, 'Villager', T0) !== 'Queued') tick(30);
+        tick(30);
       }
     };
     const build = (id: DistrictId, cell: Coord) => {
@@ -218,7 +260,15 @@ describe('a player can actually play the onboarding', () => {
     repair('OldFarm');
     finish('Farmhand');
 
+    // The old Farm stands two steps from the plots: it is carried between
+    // them, for nothing.
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
+    expect(workableCells(state, map, farm)).toEqual([]);
+    const between: Coord = { x: PLOT.x + 1, y: PLOT.y + 1 };
+    clearTo(between);
+    expect(moveDistrict(state, map, farm.uniqueId, between, now)).toBe('Moved');
+    finish('Fieldside');
+
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
@@ -260,14 +310,36 @@ describe('a player can actually play the onboarding', () => {
     expect(townhall(state).level).toBe(2);
     finish('ProperCapital');
 
-    // ---- steps 20-22: the technologies of what the fog kept — each opens
-    // building MORE of it ----
+    // ---- the second Townhall's city: a roof, plots, people, a bigger barn,
+    // a second Sawmill and its crew — between the technologies of what the
+    // fog kept, each of which opens building MORE of it ----
+    buildAnywhere('Housing');
+    finish('MoreRoofs');
     research('Agriculture');
     finish('Fields');
+    buildAnywhere('FarmLands');
+    buildAnywhere('FarmLands');
+    finish('FreshFurrows');
+    villagers(5);
+    finish('NewFaces');
     research('Farming');
     finish('Tillage');
+    levelUp(farm);
+    finish('BiggerBarn');
     research('Saws');
     finish('SawTeeth');
+    buildAnywhere('Sawmill');
+    finish('TwoSaws');
+    const second = state.city.districts.filter((d) => d.definitionId === 'Sawmill')[1]!;
+    expect(changeWorkers(state, map, second.uniqueId, 1, now)).toBe('Assigned');
+    expect(changeWorkers(state, map, second.uniqueId, 1, now)).toBe('Assigned');
+    finish('ManyHands');
+    research('VillagePride');
+    finish('Pride');
+    // The village's first decorations: two flower beds, the cheapest piece.
+    buildAnywhere('Flowerbed');
+    buildAnywhere('Flowerbed');
+    finish('PrettyCorner');
 
     // ---- steps 23-25: the three cards after Saws ----
     // A requirement is the row above (2026-09-08), so the book puts Taxes,
@@ -281,10 +353,12 @@ describe('a player can actually play the onboarding', () => {
     finish('Levies');
     research('SawpitsI');
     finish('Sawpits');
+    buildAnywhere('Housing');
+    finish('FourRoofs');
     research('ReforestingI');
     finish('Regrowth');
 
-    // The player is now twenty-four beats in and has never been handed
+    // The player is now thirty-six beats in and has never been handed
     // anything.
     expect(activeQuest(state)!.id).toBe('FurtherAfield');
 
@@ -378,6 +452,9 @@ describe('the chain never asks for a building the city cannot hold', () => {
         townhallLevel = quest.goalLevel ?? townhallLevel;
       }
       if (quest.goalType !== 'BuildDistrict') continue;
+      // A group (`AnyDecoration`) is the player's choice of kinds, each with
+      // its own cap: what it asks of one kind is not the question here.
+      if (isAdjacencyGroup(quest.goalTarget ?? '')) continue;
       const id = quest.goalTarget as keyof typeof DISTRICTS;
       built[id] = quest.goalAmount;
       const caps = DISTRICTS[id].maxCountPerTownhallLevel;
@@ -424,6 +501,8 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
       QUESTS.findIndex((q) => q.goalType === 'CompleteTech' && q.goalTarget === tech);
 
     QUESTS.forEach((quest, i) => {
+      // A group leaves the kind to the player, who picks one they can pay for.
+      if (isAdjacencyGroup(quest.goalTarget ?? '')) return;
       const id = quest.goalTarget as keyof typeof DISTRICTS;
       // Level 1 is the build; level 2 is the cheapest upgrade a quest asks
       // for, and the first that could name a currency the map cannot pay.

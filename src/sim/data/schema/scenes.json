@@ -48,7 +48,17 @@
         "relicHosted",
         "holdsItem",
         "itemUsed",
-        "worldVisited"
+        "worldVisited",
+        "explorerSent",
+        "explorerReady",
+        "explorerRevealed",
+        "upgraded",
+        "troops",
+        "storeFull",
+        "idleCrew",
+        "knowledgeFull",
+        "hexHeld",
+        "boardSeen"
       ],
       "doc": "What starts the scene, the first time it holds."
     },
@@ -111,7 +121,17 @@
         "relicHosted",
         "holdsItem",
         "itemUsed",
-        "worldVisited"
+        "worldVisited",
+        "explorerSent",
+        "explorerReady",
+        "explorerRevealed",
+        "upgraded",
+        "troops",
+        "storeFull",
+        "idleCrew",
+        "knowledgeFull",
+        "hexHeld",
+        "boardSeen"
       ],
       "emptyOk": true,
       "doc": "What makes the scene needless: if this already holds when the scene is due, it is marked played without playing — the player did it on their own. Its lines still hand over what they give. Empty: never."
@@ -137,7 +157,7 @@
           },
           "point": {
             "type": "text",
-            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, lair:<id> (lair: alone is the first one found and standing), landmark:<id>, quest — or empty."
+            "doc": "What the pointer shows: ui:<key>, cell:<x>,<y>, feature:<id>[Revealed], district:<id>, abandoned:<id> (abandoned:<id>Fog is the way to it through the fog: the ruin once its fog can be paid, until then the next cell that can), reach:<building> (where it would work the most, cleared or not), lair:<id> (lair: alone is the first one found and standing), landmark:<id>, hex:explore (the hex the first explorer should go to), hex:ready (the hex an explorer waits at), hex:claim (a hex a first claim should take), hex:camp, hex:dungeon, hex:portal (the nearest of each), crew:<building> (the one of its kind with most room for hands), lowest:<building> (the one furthest behind in level), idle: (a crew with hands to spare), full: (a full store), landmark: (the nearest unclaimed one in sight), quest — or empty. A ui: key ending in : is the first of its kind on screen (ui:notice:)."
           },
           "lock": {
             "type": "text",
@@ -157,6 +177,9 @@
               "techDone",
               "techFilled",
               "placing",
+              "moving",
+              "ghostReaches",
+              "reachCleared",
               "placed",
               "built",
               "overlay",
@@ -191,7 +214,17 @@
               "relicHosted",
               "holdsItem",
               "itemUsed",
-              "worldVisited"
+              "worldVisited",
+              "explorerSent",
+              "explorerReady",
+              "explorerRevealed",
+              "upgraded",
+              "troops",
+              "storeFull",
+              "idleCrew",
+              "knowledgeFull",
+              "hexHeld",
+              "boardSeen"
             ],
             "doc": "What moves the line on; tap is a tap on the box."
           },

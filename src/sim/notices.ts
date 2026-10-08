@@ -12,11 +12,11 @@
 import { NOTICES } from './data/definitions';
 import type { AdvanceResult } from './commands';
 import { completesAt } from './state';
-import type { GameState, GoodId, LairId, UnitId, Wallet, WorldBuildWhat } from './state';
+import type { GameState, GoodId, LairId, TroopId, Wallet, WorldBuildWhat } from './state';
 
 /** What a news is about; one bubble per group. */
 export type NewsGroup =
-  | 'raided' | 'built' | 'trained' | 'goods' | 'sighted' | 'explorer'
+  | 'raided' | 'built' | 'trained' | 'goods' | 'sighted'
   | 'worldBuild' | 'armyHome' | 'world' | 'portal' | 'event' | 'chainDone';
 
 interface NewsBase { key: string; at: number }
@@ -26,12 +26,11 @@ export type News = NewsBase & (
   | { group: 'built'; district: string; level: number }
   /** A military building's training queue ran dry: it stands idle.
    *  `unit` is the last one it trained. */
-  | { group: 'trained'; district: string; unit: UnitId }
+  | { group: 'trained'; district: string; unit: TroopId }
   | { group: 'goods'; district: string; good: GoodId; count: number }
   | { group: 'raided'; lair: LairId; took: Wallet }
   /** A landmark, lair or abandoned building sighted, by id. */
   | { group: 'sighted'; site: string }
-  | { group: 'explorer'; hex: number; revealed: number }
   | { group: 'worldBuild'; hex: number; what: WorldBuildWhat; level: number }
   | { group: 'armyHome'; troops: number; fallen: number }
   /** A world server report; `hex` is where it happened, when it has a place. */
@@ -46,7 +45,7 @@ export type News = NewsBase & (
 
 /** Every group, in the order the column shows news of equal age. */
 export const NEWS_GROUPS: readonly NewsGroup[] = [
-  'raided', 'built', 'trained', 'goods', 'sighted', 'explorer', 'worldBuild', 'armyHome', 'world', 'portal', 'event', 'chainDone',
+  'raided', 'built', 'trained', 'goods', 'sighted', 'worldBuild', 'armyHome', 'world', 'portal', 'event', 'chainDone',
 ];
 
 /** File a news, newest first. The same event twice is one; past the cap the
@@ -82,12 +81,12 @@ export function readSavedNews(dto: unknown): News | null {
 /** Where `advance()`'s report stood before a boundary's work: what it adds
  *  past these is that boundary's news. */
 export interface NewsMark {
-  completed: number; linesDone: number; goods: number; raids: number; schedule: number; explorers: number; worldBuilds: number;
+  completed: number; linesDone: number; goods: number; raids: number; schedule: number; worldBuilds: number;
 }
 
 export const newsMark = (out: AdvanceResult): NewsMark => ({
   completed: out.completedItems.length, linesDone: out.linesDone.length, goods: out.goodsMade.length,
-  raids: out.raids.length, schedule: out.scheduleEvents.length, explorers: out.explorersHome.length,
+  raids: out.raids.length, schedule: out.scheduleEvents.length,
   worldBuilds: out.worldBuildsDone.length,
 });
 
@@ -124,9 +123,6 @@ export function postBoundaryNews(state: GameState, t: number, out: AdvanceResult
     postNews(state, {
       group: 'event', key: `event:${e.entryId}:${t}`, at: t, entry: e.entryId, title: e.title, detail: e.detail,
     });
-  }
-  for (const e of out.explorersHome.slice(from.explorers)) {
-    postNews(state, { group: 'explorer', key: `explorer:${e.id}`, at: t, hex: e.target, revealed: e.revealed });
   }
   for (const b of out.worldBuildsDone.slice(from.worldBuilds)) {
     postNews(state, {

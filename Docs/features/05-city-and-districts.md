@@ -250,20 +250,33 @@ What follows the building:
 - An unfinished building has neither ring nor crew yet, so its address is the
   only thing that moves.
 
-### 4.3 The two gestures
+### 4.3 The gestures
 
-- **Tap** a legal cell to send the ghost there. **Drag** the ghost to carry it.
+- **Tap** any cell to send the ghost there. **Drag** the ghost to carry it.
 - The split is decided once, at pointerdown: a press inside the ghost's
   footprint drags the ghost; anything else pans the camera.
-- The anchor follows the finger by cell, not by pixel offset. An illegal cell
-  is not taken: dragging across a lake leaves the ghost on the shore.
-- A press on the ghost never starts the hold-to-collect timer.
+- The ghost follows the finger by cell, held by the cell of its footprint it
+  was grabbed at, onto any cell of the map — legal or not.
+- **On an illegal cell the ghost turns red**, and the Build / Move button is
+  disabled with the reason beside it.
+- **A long press on a building that may move** starts its move with the
+  ghost already under the finger: the same press carries it. Not while a
+  tutorial line holds a lock, nor with a menu or another mode open. A tree
+  or a crop plot is picked up the same way ([`27-plantables.md`](27-plantables.md) §4).
+- **While a long press waits, a ring fills beside the finger** — up and to
+  the right, where the finger does not cover it — over anything it would pick
+  up, and only after a moment, so a tap never flashes one.
 - The building draws faint at its old address while its ghost is out.
+- **The ghost floats** a little above the plot it would land on, bobbing,
+  over a wash of that plot (white, or red) and its shadow. A finger lifts it
+  higher; it glides from cell to cell.
+- **Feedback**: a pop and a stretch when it is picked up; a wooden click per
+  cell it is carried (duller on illegal ground); on Build or Move it hops,
+  drops onto its plot, squashes, kicks up dust and sounds a thud and a
+  hammer; a confirm on illegal ground shakes it with the error sound. No
+  motion under reduced motion.
 - Confirming a move to the cell it started on is a cancel, not an error.
 - Confirming reopens the card the move was started from.
-- Known rough edge: a refused drag leaves the ghost where it was, and the only
-  feedback is the green outline of legal cells, which is drawn for restricted
-  buildings only.
 
 ## 5. Dials, in the order to reach for them
 

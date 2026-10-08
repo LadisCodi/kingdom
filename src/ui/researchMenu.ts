@@ -17,14 +17,14 @@ import type { Game } from '../game';
 import { TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechComplete, isTechFilled,
-  isFoundTome, isTomeOpen, openTomes, researchRefusal, revealedCellCount, techCost, techGoodsCost,
+  isFoundTome, isTomeOpen, openTomes, researchRefusal, revealedCellCount, techCost, techGoodsCost, techMaterialsCost,
   techKnowledgeCost,
   techPoured, techState,
 } from '../sim/research';
 import { knowledgeHeld } from '../sim/knowledge';
 import { techLine } from '../sim/techProse';
 import { getGood } from '../sim/goods';
-import { type GameState, type GoodId, type TechId, type TomeId } from '../sim/state';
+import { type CurrencyId, type GameState, type GoodId, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, EDGE_BAND, edgePath, edgePieces, ELBOW_R, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
   type EdgePiece,
@@ -436,6 +436,9 @@ function techSheet(game: Game, id: TechId): HTMLElement {
     const filled = isTechFilled(state, id);
     const gold = techCost(id);
     const shortGold = game.walletValue('Gold') < gold;
+    // Wood, Stone and Food beside the Gold, out of the city's purse.
+    const materials = Object.entries(techMaterialsCost(id)) as Array<[CurrencyId, number]>;
+    const shortMaterials = materials.some(([c, n]) => game.walletValue(c) < n);
     // The refined goods beside the Gold, as a building level shows them.
     const goods = Object.entries(techGoodsCost(game.state, id)) as Array<[GoodId, number]>;
     const shortGoods = goods.some(([g, n]) => getGood(state.city.goods, g) < n);
@@ -444,6 +447,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
       el('div', { class: 'up-buy k-section' },
         priceLine([
           ...(gold > 0 ? [{ icon: 'Gold' as IconName, amount: formatExact(gold), short: shortGold }] : []),
+          ...materials.map(([c, n]) => ({ icon: c as IconName, amount: formatExact(n), short: game.walletValue(c) < n })),
           ...goods.map(([g, n]) => ({
             icon: g as IconName, amount: formatExact(n), short: getGood(state.city.goods, g) < n,
           })),
@@ -454,7 +458,7 @@ function techSheet(game: Game, id: TechId): HTMLElement {
           icon: filled ? undefined : 'padlock',
           onClick: () => { game.doResearchTech(id); if (isTechComplete(game.state, id)) dismiss(); },
           disabledReason: !filled ? note! : shortGold ? 'Not enough Gold'
-            : shortGoods ? 'Not enough refined goods' : undefined,
+            : shortMaterials ? 'Not enough Wood, Stone or Food' : shortGoods ? 'Not enough refined goods' : undefined,
         }), 'tech-research'),
         ...(note === null ? [] : [el('div', { class: 'up-note' }, note)])));
   }

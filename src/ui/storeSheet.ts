@@ -192,7 +192,7 @@ function suppliesTab(game: Game): HTMLElement {
       crewCard(game, 'Another builder', iconEl('build', { size: 'lg' }),
         `${formatExact(builder.builders)} of ${formatExact(KINGDOM_DEF.maxBuilders)} hired`,
         builder.builders >= builder.ceiling, builder.cost, () => game.doBuyBuilder({ closeSheet: false })),
-      ...(explorer.slots === 0 ? [] : [crewCard(game, 'Another explorer', iconEl('compass', { size: 'lg' }),
+      ...(!game.doorOpen('world') ? [] : [crewCard(game, 'Another explorer', iconEl('compass', { size: 'lg' }),
         `${formatExact(explorer.bought)} of ${formatExact(explorer.forSale)} bought`,
         explorer.bought >= explorer.forSale, explorer.cost, () => game.doBuyExplorer())]),
       ...(!game.doorOpen('heroes') ? [] : [crewCard(game, 'Another hero slot', iconEl('helmet', { size: 'lg' }),

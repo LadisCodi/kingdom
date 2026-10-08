@@ -29,7 +29,6 @@
       "doc": "Fragments and restoration (Docs/proposals/relic-restoration.md §2, §4, §9, §11).",
       "fields": {
         "keystoneOneIn": { "type": "int", "min": 1, "doc": "A fragment that drops is the keystone one time in this many." },
-        "keystoneWorth": { "type": "int", "min": 1, "doc": "What a spare keystone counts for towards a replica's spares." },
         "levelStardustBase": {
           "type": "int",
           "min": 1,
@@ -40,11 +39,6 @@
           "min": 1,
           "doc": "Each level-up costs this many times the one before, rounded to three figures."
         },
-        "replicaFreeSparesPiece": { "type": "int", "min": 1, "doc": "Spares that forge a missing piece without Gems." },
-        "replicaFreeSparesKeystone": { "type": "int", "min": 1, "doc": "Spares that forge the missing keystone without Gems." },
-        "replicaSpares": { "type": "int", "min": 0, "doc": "Spares the Gem forge takes besides its Gems." },
-        "replicaGemsPiece": { "type": "int", "min": 0, "doc": "Gems the forge asks for a piece." },
-        "replicaGemsKeystone": { "type": "int", "min": 0, "doc": "Gems the forge asks for the keystone." },
         "fragmentPackGems": { "type": "int", "min": 0, "doc": "The store's fragment pack: its Gem price." },
         "fragmentPackSize": {
           "type": "int",
@@ -72,10 +66,15 @@
       "type": "object",
       "doc": "The Shrines (relic-restoration.md §5.1).",
       "fields": {
+        "materialBuilds": {
+          "type": "int",
+          "min": 0,
+          "doc": "Shrines the Build menu sells for their materials once the ruin is repaired, before the rest ask Gems."
+        },
         "premiumGems": {
           "type": "list",
           "of": { "type": "int", "min": 0 },
-          "doc": "The Shrines built anywhere for Gems: one price each, in order; how many there are is how long this is."
+          "doc": "The Shrines after those, for Gems: one price each, in order; how many there are is how long this is."
         }
       }
     }

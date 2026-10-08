@@ -65,8 +65,8 @@ Buildability:
 
 | Feature | Pays | Per tap | Taps to exhaust | Recovery | Tech |
 |---|---|---|---|---|---|
-| **Forest** | Wood | 1 | 10 | 90 s | Forestry |
-| **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
+| **Forest** | Wood | 1 | 10 | 180 s | Forestry |
+| **Crops** (a planted crop plot) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
 | **Mountain** | Stone | 1 | never | — | Pickaxes |
@@ -214,13 +214,11 @@ Respawn:
   refused tap costs nothing.
 - A Discovered cell past the reach stays visible under the mist and draws like
   a cell the frontier has not reached.
-- **The reach is drawn**: a line of white dots, each ringed in a thin dark
-  outline, along the last ring the player may pay for, with a soft shadow on
-  the far side only, over the fog and across undiscovered ground, so the border
-  is read off the map before a tap is refused. It is UI laid over the view,
-  under what stands on the ground (mockup
-  `../art/mockups/area-overlays/reach-simple-2-dots-shadow.png`). It
-  disappears once the reach holds the whole province.
+- **The reach is drawn** as the player's border on the world map: a line in
+  their blue with a soft glow, along the last ring the player may pay for,
+  over the fog and across undiscovered ground, so the border is read off the
+  map before a tap is refused. It is UI laid over the view, under what stands
+  on the ground. It disappears once the reach holds the whole province.
 
 ### 4.1 Sighting
 
@@ -299,7 +297,6 @@ fallback past ring 14. The province reaches ring 23.
 - Every ring price from 3 out is a multiple of five. A price five does not
   divide — rings 1 and 2, a multiplied one, a discounted one — is split into slices
   that still sum to it exactly, never rounded either way.
-- Hold-to-repeat covers reveal taps.
 - **Every tap that takes tears a fifth of the cell's mist away**, the last
   one blowing it off — every cell of a block at once (§4.2). A refused tap
   tears nothing.
@@ -447,10 +444,15 @@ them, to be found and repaired.
 - **Its card** says what the building is and what it does, and offers
   **Repair**.
 - **Repairing it is building it at level 1, where it stands**: the level-1
-  cost at the next ordinal, a builder and the level-1 time
+  cost at the next ordinal and a builder
   ([`05-city-and-districts.md`](05-city-and-districts.md) §3,
   [`06-construction.md`](06-construction.md) §1). It is refused as a build is
   — no builder free, the count cap reached, a coin short.
+- **A repair has its own wait**, flat (`buildings` ›
+  `repairDurationSeconds`): **5 s** for the opening's House, Farm and
+  Sawmill, so a repair never stalls the tutorial. 0 is a build's wait — the
+  Watchtower and the Shrine. A plot grows instead, for the crop's
+  `growSeconds` (5 s).
 - **A ruin may be missing a piece** (`buildings` › `repairItem`): repairing
   it also asks for that item from the Bag, and spends it. **The Watchtower**
   (`NorthWatch`, 5 rings north) is the one: it needs **the Watchtower's
@@ -472,8 +474,8 @@ them, to be found and repaired.
 | Building | Where |
 |---|---|
 | **the old House** | ring 3, past the first forest |
-| **two old plots** (FarmLands) | by the berries |
-| **the old Farm** | beside the old plots, working both |
+| **two old plots** (FarmLands — repaired, each plants a crop plot) | by the berries |
+| **the old Farm** | ring 3, past the berries, two steps from the plots — out of their reach until it is moved ([`23-tutorials.md`](23-tutorials.md) §3.1) |
 | **the old Sawmill** | ring 3, at the edge of a wood, clear of the Townhall |
 
 - **Every abandoned building can be repaired at the Townhall level whose reach
@@ -514,6 +516,7 @@ them, to be found and repaired.
 | Which coin a treasure is | Gold 3 · Wood 3 · Food 3 · Stone 2 · Knowledge 1 (1 point) | `treasure.weights`, `treasure.knowledge` |
 | The first treasure | 20 Gold | `treasure.firstCoin`, `treasure.firstAmount` |
 | Where the abandoned buildings stand | §6.3 | the map editor |
+| How long a ruin's repair takes | 5 s (House, Farm, Sawmill) · a build's (0) | `buildings` › `repairDurationSeconds` |
 | How far a tall thing is sighted past the fog | §4.1 | `fog.sight` |
 | A building's reveal / discover radius | 0 / 2 (the Townhall 1, then 3 from level 2 / 2) | `buildings` › `fogRevealRadius`, `fogRevealRadiusPerLevel`, `fogDiscoverRadius` |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |

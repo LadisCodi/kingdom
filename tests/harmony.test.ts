@@ -95,14 +95,23 @@ describe('the surplus tiers', () => {
   });
 });
 
-describe('the five decorations', () => {
+/** The five pieces the late ladder's demand is authored against; the rest
+ *  are the village's small pieces, for the first days (21-harmony.md §2). */
+const LATE = ['Garden', 'Well', 'Orchard', 'Statue', 'Plaza'] as const;
+const VILLAGE = DECORATIONS.filter((id) => !(LATE as readonly string[]).includes(id));
+
+describe('the decorations', () => {
   it('opens one Townhall level at a time, and caps each kind', () => {
     // Variety is what prices Harmony now the plot is unbounded (OQ-1): a
     // Townhall's demand cannot be met by spamming the cheapest piece.
     const caps = DECORATIONS.map((id) => DISTRICTS[id].maxCountPerTownhallLevel);
-    // Each opens strictly later than the last, and none before Townhall 5.
-    const opensAt = caps.map((c) => c.findIndex((n) => n > 0) + 1);
-    expect(opensAt).toEqual([5, 6, 6, 7, 8]);
+    const opensAt = (id: string): number => DISTRICTS[id as keyof typeof DISTRICTS].maxCountPerTownhallLevel
+      .findIndex((n) => n > 0) + 1;
+    // The late pieces each open strictly later than the last, none before
+    // Townhall 5; the village's open with Townhall 2 or 3.
+    expect(LATE.map(opensAt)).toEqual([5, 6, 6, 7, 8]);
+    expect(VILLAGE.length).toBeGreaterThan(0);
+    for (const id of VILLAGE) expect([2, 3], id).toContain(opensAt(id));
     // And every cap only ever grows with the Townhall.
     for (const [i, c] of caps.entries()) {
       const falls = c.some((n, j) => j > 0 && n < c[j - 1]!);
@@ -110,10 +119,12 @@ describe('the five decorations', () => {
     }
   });
 
-  it('prices every piece past the Garden in a refined good', () => {
+  it('prices every late piece past the Garden in a refined good, and no village piece in any', () => {
     // Which is what makes a decoration a queue at a workshop rather than a
     // walk to the map — the whole reason Harmony is not just a second wallet.
-    for (const id of DECORATIONS) {
+    // The village's pieces come before the first workshop.
+    for (const id of VILLAGE) expect(DISTRICTS[id].costPerLevel[0].goods, id).toEqual({});
+    for (const id of LATE) {
       const def = DISTRICTS[id];
       expect(Object.keys(def.costPerLevel[0].cost).length, `${id} has no raw cost`)
         .toBeGreaterThan(0);
@@ -140,7 +151,7 @@ describe('the five decorations', () => {
     }, 0);
     // The Shrines supply on top of this (relic-restoration.md §5.1): they are
     // hosts, found and bought, not decorations to spam.
-    expect([5, 6, 7, 8, 9, 10].map(ceiling)).toEqual([16, 48, 90, 162, 234, 306]);
+    expect([5, 6, 7, 8, 9, 10].map(ceiling)).toEqual([47, 86, 135, 214, 293, 371]);
   });
 });
 

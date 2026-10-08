@@ -49,10 +49,10 @@ describe('map data', () => {
     const onMap = new Set(
       [...map.initialFeatures.values()].map((f) => FEATURES[f].source),
     );
-    // A crop plot IS its own Crops cell, so that source is built rather than
-    // authored and never shows up as a map feature.
+    // A plantable's source is planted rather than authored, and need not
+    // show up as a map feature.
     const built = new Set(Object.values(DISTRICTS)
-      .map((d) => d.providesHarvestSource).filter((s) => s !== null));
+      .flatMap((d) => (d.plants === null ? [] : [FEATURES[d.plants].source])));
     for (const def of Object.values(DISTRICTS)) {
       for (const source of def.harvestSources) {
         if (built.has(source)) continue;
@@ -260,15 +260,27 @@ describe('exploring pays in ground, not in currency', () => {
     // 4,922,305: chapters 5–9 at half the Gold, so their Knowledge, not a
     // second Gold wall, is what holds them.
     // 4,732,305: Sacred Grounds leaves chapter 9 — a Shrine has one level.
-    expect(tree).toBe(4_732_305);
+    // 4,740,305: Sacred Masonry (8,000) opens the Shrine to the Build menu.
+    // 4,740,505: Transplanting (200) moves a tree.
+    // 12,153,405: the Atlas grew to 53 optional cards on the world board
+    // (2026-10-08) — Scouts I–II left, Pathfinding became its 1,500,000-Gold
+    // finale.
+    // 13,313,405: troop evolutions — sixteen cards, Warriors II to Cavalry V
+    // (2026-10-08), dead ends in chapters 4–9.
+    // 13,314,945: Village Pride (40) and Civic Pride (1,500) open the
+    // village's small decorations.
+    expect(tree).toBe(13_314_945);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
-    // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
-    // raw materials: a full quarry buys no research, which is what keeps the
-    // tree in the same contest as fog and buildings. (Refined GOODS ride
-    // beside the price, in `goods`, from chapter 5 — not in `cost`.)
+    // a base rate (2026-09-08) — the research clock, 07-research.md §3. Raw
+    // materials only on the Atlas's first cards, which open before the world
+    // pays in precious materials (tech-tree.md §11.2): elsewhere a full
+    // quarry buys no research, which is what keeps the tree in the same
+    // contest as fog and buildings. (Refined GOODS ride beside the price, in
+    // `goods` — not in `cost`.)
     for (const id of TECH_ORDER) {
       const keys = Object.keys(TECHNOLOGIES[id].cost);
-      expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
+      const allowed = TECHNOLOGIES[id].tome === 'Atlas' ? ['Gold', 'Knowledge', 'Wood', 'Stone', 'Food'] : ['Gold', 'Knowledge'];
+      expect(keys.every((k) => allowed.includes(k)), `${id} costs ${keys}`).toBe(true);
       // Every book is priced in the clock, a found book's cards too.
       expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
     }
