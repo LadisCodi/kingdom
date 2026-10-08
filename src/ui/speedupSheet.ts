@@ -13,6 +13,7 @@ import type { SpeedJob } from '../sim/speedups';
 import { coach, el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, sheet } from './kit';
 import { tileArt } from './itemArt';
+import { tr } from '../i18n/tr';
 
 /** Auto's face: what it will spend, largest first — "2× 1h, 1× 15m". */
 const planWords = (plan: Array<{ id: keyof typeof ITEMS; n: number }>): string =>
@@ -24,7 +25,7 @@ const planWords = (plan: Array<{ id: keyof typeof ITEMS; n: number }>): string =
 export function renderSpeedupSheet(game: Game): HTMLElement {
   const view = game.speedupScreen();
   const close = () => game.closeSpeedup();
-  if (view === null) return sheet({ title: 'Speed up', onClose: close, centred: true });
+  if (view === null) return sheet({ title: tr('Speed up'), onClose: close, centred: true });
 
   const bar = progress('blue');
   bar.run(view.progress, view.left * 1000, '');
@@ -36,23 +37,23 @@ export function renderSpeedupSheet(game: Game): HTMLElement {
     el('div', { class: 'spd-left' }, formatDuration(Math.ceil(view.left))));
 
   const rows = view.rows.length === 0
-    ? [el('p', { class: 'spd-none' }, 'No speed-ups for this in the Bag')]
+    ? [el('p', { class: 'spd-none' }, tr('No speed-ups for this in the Bag'))]
     : view.rows.map((r) => el('div', { class: 'spd-row' },
       el('div', { class: `bag-tile spd-tile is-tier-${r.def.tier}` },
         ...tileArt(r.id, formatDuration(r.def.seconds)),
         el('span', { class: 'bag-tile-count' }, formatExact(r.count))),
       el('div', { class: 'spd-row-name' }, r.def.name),
-      coach(btn({ label: 'Use', kind: 'primary', onClick: () => game.doSpeedup(r.id) }), 'speedup-use')));
+      coach(btn({ label: tr('Use'), kind: 'primary', onClick: () => game.doSpeedup(r.id) }), 'speedup-use')));
 
-  return sheet({ title: 'Speed up', onClose: close, centred: true },
+  return sheet({ title: tr('Speed up'), onClose: close, centred: true },
     job,
     ...(view.auto.length > 0
       ? [el('div', { class: 'spd-auto' },
-        btn({ label: `Auto · ${planWords(view.auto)}`, kind: 'gold', onClick: () => game.doAutoSpeedup() }))]
+        btn({ label: tr('Auto · {plan}', { plan: planWords(view.auto) }), kind: 'gold', onClick: () => game.doAutoSpeedup() }))]
       : []),
     el('div', { class: 'spd-rows' }, ...rows),
     el('div', { class: 'spd-finish' }, btn({
-      label: 'Finish',
+      label: tr('Finish'),
       kind: 'gem',
       onClick: () => game.doFinishSpeedJob(),
       cost: { Gems: view.gems },
@@ -68,5 +69,5 @@ export function renderSpeedupSheet(game: Game): HTMLElement {
  */
 export function timerButton(game: Game, job: SpeedJob, finish: HTMLElement): HTMLElement {
   if (!game.hasSpeedups(job)) return finish;
-  return coach(btn({ label: 'Speed up', kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(job) }), 'speedup');
+  return coach(btn({ label: tr('Speed up'), kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(job) }), 'speedup');
 }

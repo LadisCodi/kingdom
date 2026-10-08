@@ -25,6 +25,7 @@ import type { Game } from '../game';
 import { coach, el, formatDuration, formatExact } from './format';
 import { btn, closeKnob, iconEl, windowHead } from './kit';
 import { PROMISE } from './buildPromise';
+import { tr, trn } from '../i18n/tr';
 
 export function renderPlacementPanel(game: Game): HTMLElement {
   const info = game.placementInfo()!;
@@ -45,7 +46,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
 
   // A ghost on an illegal cell is red on the map; the button says why.
   const blockedBy = info.cell === null
-    ? (moving ? 'Nowhere legal to put it' : 'Nowhere legal to build it')
+    ? (moving ? tr('Nowhere legal to put it') : tr('Nowhere legal to build it'))
     : info.blocked ?? undefined;
   // Refined goods ride beside the currencies, as everywhere a price is
   // quoted: a move pays nothing, so only a build carries them.
@@ -57,7 +58,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   }));
   const confirm = coach(btn({
     // One verb on a labelled button: the destination is the ghost's cell.
-    label: moving ? 'Move' : 'Build',
+    label: moving ? tr('Move') : tr('Build'),
     kind: 'primary',
     onClick: () => (moving ? game.confirmMove() : game.confirmBuild()),
     ...(moving ? {} : {
@@ -69,7 +70,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   }), 'place-confirm');
 
   const header = windowHead(title, [
-    closeKnob(() => game.closePlacement(), `Close ${title}`),
+    closeKnob(() => game.closePlacement(), tr('Close {name}', { name: title })),
   ], sub);
 
   return el('div', { class: 'dc plc-win' },
@@ -82,7 +83,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
         // what it reaches where it stands — the number a spot is chosen by,
         // in the place of the promise the player read when they built it.
         ...(info.aura !== undefined && !info.unmoved ? auraLines(info.aura) : [el('div', { class: 'plc-promise' },
-          moving && info.unmoved ? 'Drag it, or tap where it should go' : PROMISE[info.definitionId])]),
+          moving && info.unmoved ? tr('Drag it, or tap where it should go') : PROMISE[info.definitionId])]),
         // A move is instant and free: neither a wait nor a price — the empty
         // space is the message.
         ...(moving
@@ -101,12 +102,14 @@ export function renderPlacementPanel(game: Game): HTMLElement {
 /** *Reaches 14 resources* (green up, red down), over *9 where it
  *  stands*. */
 function auraLines(aura: { ground: boolean; here: number; now: number }): HTMLElement[] {
-  const noun = aura.ground ? 'resource' : 'building';
+  const n = formatExact(aura.here);
   const tone = aura.here > aura.now ? ' is-up' : aura.here < aura.now ? ' is-down' : '';
   return [
     el('div', { class: `plc-aura${tone}` }, iconEl('Shrine', { size: 'sm' }),
-      el('span', {}, `Reaches ${formatExact(aura.here)} ${noun}${aura.here === 1 ? '' : 's'}`)),
-    el('div', { class: 'plc-promise' }, `${formatExact(aura.now)} where it stands`),
+      el('span', {}, aura.ground
+        ? trn(aura.here, 'Reaches {n} resource', 'Reaches {n} resources', { n })
+        : trn(aura.here, 'Reaches {n} building', 'Reaches {n} buildings', { n }))),
+    el('div', { class: 'plc-promise' }, tr('{n} where it stands', { n: formatExact(aura.now) })),
   ];
 }
 
@@ -120,13 +123,13 @@ export function renderTransplantPanel(game: Game): HTMLElement {
   const art = spriteUrl(info.sprite);
   const blockedBy = info.blocked ?? undefined;
   const confirm = coach(btn({
-    label: 'Move',
+    label: tr('Move'),
     kind: 'primary',
     onClick: () => game.confirmTransplant(),
     disabledReason: blockedBy,
   }), 'place-confirm');
   const header = windowHead(info.name, [
-    closeKnob(() => game.closePlacement(), `Close ${info.name}`),
+    closeKnob(() => game.closePlacement(), tr('Close {name}', { name: info.name })),
   ]);
   return el('div', { class: 'dc plc-win' },
     el('div', { class: 'k-frame', 'aria-hidden': 'true' }),
@@ -135,7 +138,7 @@ export function renderTransplantPanel(game: Game): HTMLElement {
       el('div', { class: 'plc-art' }, art ? spriteImgAt(art) : iconEl('Wood', { size: 'lg' })),
       el('div', { class: 'plc-body' },
         el('div', { class: 'plc-promise' },
-          info.unmoved ? 'Drag it, or tap where it should go' : 'It grows again where it lands'),
+          info.unmoved ? tr('Drag it, or tap where it should go') : tr('It grows again where it lands')),
         el('div', { class: 'plc-time' },
           iconEl('hourglass', { size: 'sm' }), formatDuration(info.growSeconds)),
         ...(blockedBy
