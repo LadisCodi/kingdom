@@ -16,7 +16,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ABANDONED, CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { advance, changeWorkers, enqueueBuild, repairAbandoned, upgradeDistrict } from '../src/sim/commands';
+import { advance, changeWorkers, enqueueBuild, moveDistrict, repairAbandoned, upgradeDistrict } from '../src/sim/commands';
+import { workableCells } from '../src/sim/workers';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -221,7 +222,15 @@ describe('a player can actually play the onboarding', () => {
     repair('OldFarm');
     finish('Farmhand');
 
+    // The old Farm stands two steps from the plots: it is carried between
+    // them, for nothing.
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
+    expect(workableCells(state, map, farm)).toEqual([]);
+    const between: Coord = { x: PLOT.x + 1, y: PLOT.y + 1 };
+    clearTo(between);
+    expect(moveDistrict(state, map, farm.uniqueId, between, now)).toBe('Moved');
+    finish('Fieldside');
+
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 

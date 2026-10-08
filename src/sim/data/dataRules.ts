@@ -190,7 +190,7 @@ export const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDe
  *  the importer's QUEST_GOAL_TYPES. */
 export const QUEST_GOALS: Record<string, RefKind | null> = {
   BuildDistrict: 'building', RepairDistrict: 'building', UpgradeDistrict: 'building', HoldResource: 'currency',
-  ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null,
+  ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null, AssignWorkers: null, WorkInReach: 'building',
   TrainArmy: null, ClaimLandmarks: 'landmarkKind',
   OwnArtifacts: null, OwnHeroes: null, FindLairs: null, ClearLairs: null, CollectResource: 'currency',
   CollectTaps: null, DiscoverCells: null, SellGoods: null, DiscoverFeature: 'feature',
@@ -500,6 +500,9 @@ const SCENE_TARGETS: Record<string, (doc: DataDoc) => readonly string[]> = {
   techDone: () => STATIC_IDS.tech ?? [],
   techFilled: () => STATIC_IDS.tech ?? [],
   placing: (doc) => Object.keys(doc.districts ?? {}),
+  moving: (doc) => Object.keys(doc.districts ?? {}),
+  ghostReaches: (doc) => Object.keys(doc.districts ?? {}),
+  reachCleared: (doc) => Object.keys(doc.districts ?? {}),
   placed: (doc) => Object.keys(doc.districts ?? {}),
   built: (doc) => [...Object.keys(doc.districts ?? {}), 'AnyWorkshop'],
   lairFound: () => ['', ...(STATIC_IDS.lair ?? [])],

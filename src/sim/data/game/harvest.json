@@ -13,7 +13,7 @@
     "stock": 10,
     "recoverySeconds": 60,
     "respawnSeconds": 0,
-    "growSeconds": 10
+    "growSeconds": 5
   },
   "Berries": {
     "unitsPerStrike": 1,

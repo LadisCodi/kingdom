@@ -15,8 +15,9 @@
 1. **The quest chain teaches; the advisor speaks.** A beat never asks for
    anything the active quest does not.
 2. **Scripted stretches**: the First Morning, quests 1–7, about ten
-   minutes, and short **lessons** (§3.1) — the Farm and the Sawmill, the
-   first buildings that work for the player; the first chest, used from the
+   minutes, and short **lessons** (§3.1) — the old plots, the Farm (repaired,
+   then moved beside them) and the Sawmill, the first buildings that work for
+   the player; the first chest, used from the
    Bag; and Stone, when the House's second story first asks for it. They are the only places
    input is locked.
 3. **Every other system is introduced once**, the first time its door opens,
@@ -159,9 +160,34 @@ Beats, as the First Morning's, each on its quest.
 
 | Scene | Quest | Says (Isolde, unless named) | Points at | Lock | Moves on |
 |---|---|---|---|---|---|
+| `plots` | `FirstPlot` | **Tom:** *Your Majesty! Before the fog, Dad kept two crop plots just past the Townhall. Best turnips in Oakville, he swore.* | the south plot | all | tap |
+| | | **Hob:** *Turnips. Hmph. Fog's had them a year. Nothing left in there but weeds and a scarecrow.* | — | all | tap |
+| | | *Weeds we can pull! First we buy the ground back from the fog — follow my finger, Your Majesty.* | the way to the south plot (`abandoned:OldPlotSouthFog`) | that cell | the plot is revealed |
+| | | **Tom:** *There it is! The fence is down, but the soil's still good. Open it, Your Majesty.* | the plot | the plot | its card is open |
+| | | **Hob:** *A fence wants wood. Here — off my pile. Don't make a fuss.* (only while the Wood is short; he makes up the difference) | — | all | tap |
+| | | *Fresh seed, a new fence, and no builders needed — a field mends itself once it's sown. Repair it!* | **Repair** | the button | repairing |
+| | | **Hob:** *Sprouting already. Soil's been waiting for somebody, that's all.* | the plot | all | tap |
+| | | **Tom:** *And the other one, right beside it! Dad always planted them in pairs.* | the way to the north plot | that cell | revealed |
+| | | *There — open it…* | the plot | the plot | its card is open |
+| | | **Hob:** *More wood? …Fine. Last of the pile. Again.* (only while the Wood is short) | — | all | tap |
+| | | *…and repair it!* | **Repair** | the button | repairing |
+| | | **Tom:** *Two plots, just like Dad's! When they've grown, tap them and bring the harvest in.* | — | all | tap |
+| | | **Hob:** *Every sickle swing asks the well, same as an axe. Mind the blue.* | — | all | tap |
 | `farm` | `Farmhand` | *Reaping every plot by hand will wear us out — and drain the well. A Farm sends villagers to do it, day and night.* | the crop plots | all | tap |
-| | | **Tom:** *Dad ran the old farm, right by the fields. Clear its fog and open it, Your Majesty — I'll show you.* | the old Farm, its ruin or its silhouette | none | its card is open |
-| | | *A Farm works the plots one step around it, corners too — and this one stands right beside ours. Repair it!* | **Repair** | the button | repairing |
+| | | **Tom:** *Dad's old farm is still out there, past the berry bushes. Clear the way, Your Majesty — I'll know it when I see it.* | the way to the old Farm | that cell | the Farm is revealed |
+| | | **Tom:** *That's her! Roof's sagging, but she's sound. Open it!* | the old Farm | the Farm | its card is open |
+| | | **Hob:** *Farm wants wood too, does it. …Take it. I'll chop more.* (only while the Wood is short) | — | all | tap |
+| | | *Hammers, sawdust and one cheerful racket — repair it!* | **Repair** | the button | repairing |
+| `farmMove` | `Fieldside` | *Nearly done — listen to those hammers!* (skipped if it stands) | the Farm | none | the Farm is finished |
+| | | *Oh. Oh no. A Farm works the plots one step around it, corners too — and ours are two steps away. I measured. Twice.* | the Farm | all | tap |
+| | | **Hob:** *So pick it up and carry it. Did it with Widow Pell's henhouse once. Hens weren't pleased.* | — | all | tap |
+| | | *Can we? …We can! The guild charter says a building may be moved for free, as often as you like. Page forty!* | — | all | tap |
+| | | **Tom:** *It wants to stand right between the two plots. Clear the fog there first, Your Majesty.* (skipped if that ground is clear) | the spot (`reach:Farm`) | that cell | the spot is revealed |
+| | | *Now open the Farm.* | the Farm | the Farm | its **Move** is on screen |
+| | | *That's its Move knob. Tap it, and the whole Farm lifts right off the ground!* | **Move** | the knob | the Farm is picked up |
+| | | **Tom:** *There — between Dad's plots! Tap the spot.* | the spot | that cell | the ghost reaches both plots |
+| | | *Both plots in reach! Move it.* | **Move** (the placement bar) | the button | `Fieldside` complete |
+| | | **Hob:** *Didn't drop a single plank. Better than the henhouse.* | — | all | tap |
 | `workers` | `ToWork` | *The Farm is still going up. When it stands, it'll need hands.* (skipped if it stands) | the Farm | none | the Farm is finished |
 | | | **Tom:** *The Farm stands — and nobody's working it. Open it, Your Majesty!* | the Farm | the Farm | its card is open |
 | | | **Tom:** *Send me! I know every furrow. Each pair of hands walks to a plot, reaps it and carries the crop home.* | the card's **+** | none | the quest completes |
@@ -193,6 +219,15 @@ Beats, as the First Morning's, each on its quest.
 - **A worker building's ghost starts where it would work the most** — the
   Farm beside the plots, the Sawmill in the thickest trees — the nearest of
   those to the Townhall.
+- **The old Farm stands two steps from the plots**, out of their reach, so
+  the opening teaches moving a building: `farmMove` walks the player through
+  picking it up from its card and setting it between the plots. A move is
+  free and instant ([`06-construction.md`](06-construction.md)).
+- **A ruin's way through the fog is pointed one cell at a time**
+  (`abandoned:<id>Fog`): the hand stands on the next cell the player can
+  pay for, and moves on as each is cleared.
+- **A repair takes about five seconds** ([`01-map-and-fog.md`](01-map-and-fog.md)
+  §6.3), so a lesson never waits on its builders.
 - **The fog's buildings are the opening's buildings.** The House, the plots,
   the Farm and the Sawmill are found and repaired, and no technology is
   researched to have them; the first building the player raises is the

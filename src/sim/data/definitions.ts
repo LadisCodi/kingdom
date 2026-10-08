@@ -505,7 +505,7 @@ export const ADJACENCY_CLAMP = 0.25;
  *  quest activated); relative types count events only while active. */
 export type QuestGoalType =
   | 'BuildDistrict' | 'RepairDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
-  | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
+  | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'WorkInReach' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
   | 'ClaimLandmarks' | 'FindLairs' | 'ClearLairs' | 'OwnArtifacts'
   | 'OwnHeroes';
@@ -569,7 +569,7 @@ export const QUESTS = balance.quests as unknown as QuestDef[];
  *  (`src/ui/stage/conditions.ts`); which one a line waits on is data. */
 export type SceneCondition =
   | 'tap' | 'always' | 'questReached' | 'questComplete' | 'questClaimed' | 'questProgress'
-  | 'techDone' | 'techFilled' | 'placing' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
+  | 'techDone' | 'techFilled' | 'placing' | 'moving' | 'ghostReaches' | 'reachCleared' | 'placed' | 'built' | 'overlay' | 'noOverlay' | 'mainScreen' | 'ui'
   | 'taps' | 'lairFound' | 'lairDefeated' | 'lairCleared' | 'landmarkClaimed' | 'landmarkSeen'
   | 'bookOpen' | 'doorOpen' | 'manaEmpty' | 'buildersBusy' | 'raided' | 'wounded' | 'heroes'
   | 'population' | 'training' | 'revealed' | 'featureSeen' | 'sighted'
@@ -813,6 +813,9 @@ export interface DistrictDef {
   /** An item repairing this building's ruin also asks for, and spends —
    *  the Watchtower's lens (Docs/features/01-map-and-fog.md §6.3). '' = none. */
   repairItem: string;
+  /** How long repairing its ruin takes, flat; 0 = as long as building it.
+   *  A plantable's ruin grows instead (01-map-and-fog.md §6.3). */
+  repairDurationSeconds: number;
 }
 
 /**
@@ -2538,4 +2541,4 @@ export const GAME_VERSION: string = pkg.version;
 // becomes a `Crops` cell (a migrator); a growing cell's `Growing`, additive.
 // v112: an explorer waits at its hex for the player's tap — `RevealedAtUtc` on
 // a trip, and the trips ever sent (`TripsSent` on the world), additive.
-export const SAVE_VERSION = 112;
+export const SAVE_VERSION = 113;

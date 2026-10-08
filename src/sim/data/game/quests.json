@@ -204,6 +204,23 @@
     "tutorialRentSeconds": null
   },
   {
+    "id": "Fieldside",
+    "name": "Fieldside",
+    "goalType": "WorkInReach",
+    "goalTarget": "Farm",
+    "goalAmount": 2,
+    "goalLevel": null,
+    "reward": { "Gold": 40 },
+    "rewardGems": 0,
+    "rewardStardust": 0,
+    "rewardKnowledge": 0,
+    "rewardMana": 0,
+    "rewardFragments": 0,
+    "rewardItems": {},
+    "autoClaim": false,
+    "tutorialRentSeconds": null
+  },
+  {
     "id": "ToWork",
     "name": "To work",
     "goalType": "AssignWorkers",

@@ -3856,6 +3856,13 @@ export class Game {
         inspect(target);
         break;
       }
+      // Open it, and light its Move: where it stands is the whole question.
+      case 'WorkInReach': {
+        const target = this.state.city.districts.find((d) => d.definitionId === quest.goalTarget);
+        if (target) this.setUiHint('card:move');
+        inspect(target);
+        break;
+      }
       case 'TrainArmy': {
         // The Army screen is gone: units are trained at the building that
         // trains them, exactly as villagers are trained at the Townhall. So

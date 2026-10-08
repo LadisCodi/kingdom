@@ -66,8 +66,9 @@ describe('the quest chain', () => {
       'TaxDay', 'Explorer',                       // 7-8  rent pays for more fog
       'FirstPlot', 'ByHand',                      // 9-10 the old plots, repaired,
                                                   //   and reaped by hand
-      'Lumber', 'Farmhand', 'ToWork',             // 11-13 and then not by hand —
-                                                  //   the old Farm beside them
+      'Lumber', 'Farmhand', 'Fieldside', 'ToWork', // 11-14 and then not by hand —
+                                                  //   the old Farm, carried
+                                                  //   beside them
       'GrowingTown', 'Neighbors',                 // 15-16 the first House the fog
                                                   //   did not keep, then the
                                                   //   citizen it makes room for
@@ -509,7 +510,8 @@ describe('quests fund the research tree', () => {
     // 16,465: `Fellowship` at 250 asks for three heroes once the banner has
     // had time to answer — the kingdom starts with none.
     // 15,465: `TheWatchtower` takes `OldStones`' place and its 170.
-    expect(chain).toBe(15_465);
+    // 15,505: `Fieldside` at 40 — the old Farm carried beside its plots.
+    expect(chain).toBe(15_505);
     // 9,674,305: one tree in nine chapters (2026-10-05) — every card past the
     // tutorial priced in days of what the city collects, the way buildings are.
     // 4,922,305: chapters 5–9 at half the Gold (2026-10-05).

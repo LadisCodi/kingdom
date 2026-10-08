@@ -6,7 +6,7 @@ import { questLine, QUEST_LINE_MAX } from '../src/sim/questProse';
 
 const ALL_GOALS: readonly QuestGoalType[] = [
   'BuildDistrict', 'RepairDistrict', 'UpgradeDistrict', 'HoldResource', 'ReachPopulation',
-  'CompleteTech', 'CompleteTechs', 'AssignWorkers', 'TrainArmy',
+  'CompleteTech', 'CompleteTechs', 'AssignWorkers', 'WorkInReach', 'TrainArmy',
   'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
   'ClaimLandmarks', 'FindLairs', 'ClearLairs',
   'OwnArtifacts', 'OwnHeroes',

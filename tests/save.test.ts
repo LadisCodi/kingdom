@@ -636,6 +636,22 @@ describe('Pickaxes, moved to the second story (v72)', () => {
 });
 
 // v73: a lair is found before the army is asked for (Docs/features/12-quests.md §2).
+describe('Fieldside, in front of To work (v113)', () => {
+  const v112 = (index: number) => {
+    const state = firstGame();
+    state.quests.index = index;
+    const save = serialize(state, T0);
+    save.SaveVersion = 112;
+    return save;
+  };
+  // v112's chain: Farmhand 11, ToWork 12.
+  it('leaves a kingdom on Farmhand there, and moves one on ToWork or past it on by one', () => {
+    expect(QUESTS[deserialize(v112(11), map, T0)!.quests.index].id).toBe('Farmhand');
+    expect(QUESTS[deserialize(v112(12), map, T0)!.quests.index].id).toBe('ToWork');
+    expect(QUESTS[deserialize(v112(13), map, T0)!.quests.index].id).toBe(QUESTS[14].id);
+  });
+});
+
 describe('War drums, in front of Armed men (v73)', () => {
   const v72 = (index: number) => {
     const state = firstGame();
@@ -761,7 +777,8 @@ describe('v110 makes the Watchtower a ruin to repair', () => {
   it('closes the chain up behind the old tower quest', () => {
     const at = (index: number) => at109((m) => { m['kingdom.quests'].Index = index; }).quests.index;
     expect(QUESTS[at(32)].id).toBe('TheWatchtower');
-    expect(QUESTS[at(40)].id).toBe(QUESTS[40].id);
+    // …and v113 put `Fieldside` in front of it: one on.
+    expect(QUESTS[at(40)].id).toBe(QUESTS[41].id);
     expect(QUESTS[at(66)].id).toBe('DeeperStill');
     expect(QUESTS[at(67)].id).toBe('DeeperStill');
   });

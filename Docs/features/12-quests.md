@@ -11,7 +11,7 @@
   is chain order, reordered by dragging.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **67 quests**, paying 15,465 Gold, 210 Stone, 180 Food, 130 Mana,
+- **68 quests**, paying 15,505 Gold, 210 Stone, 180 Food, 130 Mana,
   750 Gems, 120 Stardust, **21 Knowledge across thirteen of them** (§2.1) and
   **one card pack**.
 - A reward may carry a **card pack** (`rewardPack`); the first fight's is the
@@ -50,7 +50,7 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · RepairDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
+| BuildDistrict · RepairDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · WorkInReach · TrainArmy · ClaimLandmarks · FindLairs · ClearLairs · OwnArtifacts · OwnHeroes · DiscoverCells | CollectResource · CollectTaps · DiscoverFeature |
 
 - **`FindLairs` counts lairs found**, cleared or not — a lair is found when a
   cell of its zone is revealed. The chain asks for it before any military
@@ -72,6 +72,10 @@
   phrase rather than 53 rewrites.
 - **The tracker holds 44 characters**, and that is the whole budget: it is the
   only place a quest's line is ever shown. The generated lines top out at 30.
+- **`WorkInReach`** counts, for the best-placed building of its kind, the
+  revealed cells its crew works from where it stands: `Fieldside` asks the
+  old Farm to be moved beside both old plots. The hint opens the building
+  and lights its **Move**.
 - **`DiscoverFeature`** counts the reveals that uncover a given feature,
   from activation — at the reveal, because a finite feature (a berry bush)
   leaves the map when it is used up.
@@ -93,16 +97,16 @@
 | # | Quests | The beat | Opens |
 |---|---|---|---|
 | **1–7** · the First Morning | `FirstSteps` · `Woodcraft` · `Timber` · `ARoof` · `Rations` · `FirstVillager` · `TaxDay` | four forest cells and the first treasure, Forestry, 25 Wood, **the old House repaired**, Food, a villager, rent | Research, Knowledge |
-| **8–13** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `ToWork` | 30 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, a worker | |
-| **14–19** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build**; the Store and the Survey |
-| **20–25** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
-| **26–32** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 80 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 30, **the first fight** | the first pack and **Relics** |
-| **33–36** · past the hills | `TheWatchtower` · `Attuned` · `Mapmakers` · `Surveyors` | **the Watchtower repaired** with the lens the Orcs carried — a scene forces it — Consecration, 90 and 120 cells cleared | **the world door**, **the Atlas**, **Magic** |
-| **37–44** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
-| **45–49** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
-| **50–57** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, two heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
-| **58–64** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
-| **65–67** · the world | `Leylines` · `SecondLair` · `DeeperStill` | three landmarks, the Harpies, a hundred soldiers | |
+| **8–14** · the old fields | `Explorer` · `FirstPlot` · `ByHand` · `Lumber` · `Farmhand` · `Fieldside` · `ToWork` | 30 cells cleared, **the two old plots repaired**, Food by hand, 30 Wood held, **the old Farm repaired**, **the Farm moved beside both plots**, a worker | |
+| **15–20** · the village | `SecondVillager` · `GrowingTown` · `Neighbors` · `TheSawmill` · `Crewed` · `ProperCapital` | a second villager (the first House full), **a second House, the first one built**, three villagers, **the old Sawmill repaired**, three workers, **Townhall 2** | **Build**; the Store and the Survey |
+| **21–26** · building our own | `Fields` · `Tillage` · `SawTeeth` · `Levies` · `Sawpits` · `Regrowth` | Agriculture, Farming, Saws — more of what the fog kept — then Trade Routes I, Sawpits I, Reforesting I | |
+| **27–33** · the Orcs | `FurtherAfield` · `WarDrums` · `ArmedMen` · `Mustered` · `FirstSoldier` · `MusterCompany` · `DriveThemOut` | 80 cells cleared — the Townhall 2 ring clears 64 — then **a lair found**; Warrior, the Barracks (built of Wood), a soldier, a company of 30, **the first fight** | the first pack and **Relics** |
+| **34–37** · past the hills | `TheWatchtower` · `Attuned` · `Mapmakers` · `Surveyors` | **the Watchtower repaired** with the lens the Orcs carried — a scene forces it — Consecration, 90 and 120 cells cleared | **the world door**, **the Atlas**, **Magic** |
+| **38–45** · stone | `Watered` · `Fallow` · `MoreRoom` · `Picks` · `Rubble` · `SecondStory` · `Chisels` · `Stoneworks` | the rows above Urban Planning; **Pickaxes and 20 Stone**, just before the first upgrade that costs it — Housing L2; Masonry, the Quarry | |
+| **46–50** · the Tavern | `Crafts` · `Knack` · `Hearth` · `OpenDoors` · `FirstSummon` | the rows above Hospitality, the Tavern, the first hero — the free first call | **Heroes**, the banner, **the Sagas** |
+| **51–58** · the town | `FullHouse` · `IronRoad` · `Deft` · `Fellowship` · `Architect` · `GrandCapital` · `DeepSeams` · `TheSanctum` | eight villagers, Stone, Quick Hands I, two heroes, Bureaucracy, **Townhall 3**, Mining, the Sanctum | |
+| **59–65** · the borough | `AWarband` · `TheBarrowsPrize` · `PutToSea` · `Cartographers` · `Magistrate` · `Township` · `Borough` | sixty soldiers, a second landmark, Sailing, 160 cells cleared, Magistracy, twelve villagers, **Townhall 4** | |
+| **66–68** · the world | `Leylines` · `SecondLair` · `DeeperStill` | three landmarks, the Harpies, a hundred soldiers | |
 
 - **The fog's buildings come first, the player's own after.** The House, the
   plots, the Farm and the Sawmill of the opening are abandoned ones, found
@@ -126,13 +130,13 @@
   In the opening **only the quest just before a research quest pays
   Knowledge, and exactly that card's Knowledge**, prerequisites included —
   Quest 1 pays Forestry's 2. Every card the chain demands up to `Attuned` —
-  quest 34, Consecration — is affordable **with no drip at all**, and nothing
+  quest 35, Consecration — is affordable **with no drip at all**, and nothing
   piles up: what a player banks beyond the next card comes from the drip.
 - **Past `Attuned` the chain stops paying and the clock takes over**
   ([`07-research.md`](07-research.md) §3). The zero-drip guarantee is
   asserted for the opening and **only** the opening (`tests/quests.test.ts`);
   the cut is by chain position, not by era — `MoreRoom` asks for an era-1
-  card at quest 39, past it.
+  card at quest 40, past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
   `ByHand`, 30 · 30 · 40 (and `Rubble`, 30, later). They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
@@ -151,13 +155,13 @@
   ([`22-progression.md`](22-progression.md) §6).
 - **The first two calls, on either banner, are each a new hero**
   (`heroLadder` › `firstCallsNewHero`), so `Fellowship` never waits on a roll.
-- The three research beats at 23–25 (`Levies` · `Sawpits` · `Regrowth`) pay
+- The three research beats at 24–26 (`Levies` · `Sawpits` · `Regrowth`) pay
   80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
   - a crop plot costs **15 Gold + 10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **99 Gold + 66 Wood**, no Stone (the Quarry is quest 44).
+  - Townhall L1→L2 costs **99 Gold + 66 Wood**, no Stone (the Quarry is quest 45).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 

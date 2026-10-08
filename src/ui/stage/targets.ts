@@ -8,10 +8,14 @@
 // because screens rebuild their nodes.
 
 import { ABANDONED, DISTRICTS, LAIRS, LANDMARKS } from '../../sim/data/definitions';
+import { groundBlock, placementBlock } from '../../sim/districts';
 import { explorationGate, fogState, isPayable } from '../../sim/fog';
 import { townhallDistance } from '../../sim/grid';
 import { harvestSourceAt, isExhausted } from '../../sim/harvest';
-import { coordKey, type Coord, type FeatureId, type LairId } from '../../sim/state';
+import { workableCountAt } from '../../sim/workers';
+import {
+  cellsOfRect, coordKey, type Coord, type District, type DistrictId, type FeatureId, type LairId,
+} from '../../sim/state';
 import { hexAt, hexDistance } from '../../sim/world/hex';
 import { explorerRoute, fogStatesOf, homeIndex, readyTrips, tripRevealing, worldFog } from '../../sim/world/explorers';
 import { boardOf } from '../../sim/world/source';
@@ -44,8 +48,15 @@ function nearest(game: Game, pred: (cell: Coord) => boolean): Coord | null {
 const featureAt = (game: Game, c: Coord): FeatureId | undefined =>
   game.state.features[coordKey(c)] as FeatureId | undefined;
 
+/** Can the player pay the fog off `cell` right now? */
+const buyable = (game: Game, cell: Coord): boolean =>
+  fogState(game.state, game.map, cell) === 'Discovered' && isPayable(game.state, game.map, cell)
+  && explorationGate(game.map, cell) === null;
+
 /** Does `cell` still answer the point it was resolved for? */
 function stillGood(game: Game, point: string, cell: Coord): boolean {
+  // `abandoned:<id>Fog` is a step of the way: good until it is cleared.
+  if (point.startsWith('abandoned:') && point.endsWith('Fog')) return buyable(game, cell);
   if (!point.startsWith('feature:')) return true;
   // `feature:<id>` is the nearest cell carrying it out of the dark;
   // `…Fog` the nearest FOGGED one the player can pay for — to be bought;
@@ -60,10 +71,7 @@ function stillGood(game: Game, point: string, cell: Coord): boolean {
     return fog === 'Revealed' && harvestSourceAt(game.state, cell) !== null
       && !isExhausted(game.state, game.map, cell, game.now());
   }
-  if (mode === 'fog') {
-    return fog === 'Discovered' && isPayable(game.state, game.map, cell)
-      && explorationGate(game.map, cell) === null;
-  }
+  if (mode === 'fog') return buyable(game, cell);
   return fog !== 'Undiscovered';
 }
 
@@ -78,16 +86,72 @@ function towards(game: Game, point: string): Coord | null {
   const id = point.slice('feature:'.length, -'Fog'.length);
   const goal = nearest(game, (c) => featureAt(game, c) === id
     && game.state.fog.revealed[coordKey(c)] !== true);
-  if (goal === null) return null;
+  return goal === null ? null : stepTowards(game, goal);
+}
+
+/** The cell the player can pay for that is nearest `goal` — the next step
+ *  of the way through the fog; straight lines before diagonals. */
+function stepTowards(game: Game, goal: Coord): Coord | null {
   let best: Coord | null = null;
   let bestD = Infinity;
   for (const c of game.map.cells) {
-    if (fogState(game.state, game.map, c) !== 'Discovered' || !isPayable(game.state, game.map, c)
-      || explorationGate(game.map, c) !== null) continue;
-    const d = Math.max(Math.abs(c.x - goal.x), Math.abs(c.y - goal.y));
+    if (!buyable(game, c)) continue;
+    const dx = Math.abs(c.x - goal.x);
+    const dy = Math.abs(c.y - goal.y);
+    const d = Math.max(dx, dy) * 100 + dx + dy;
     if (d < bestD) { bestD = d; best = c; }
   }
   return best;
+}
+
+/** A building of this kind to measure with: the player's own, or one as it
+ *  would stand at level 1. */
+const sampleOf = (game: Game, id: DistrictId): District =>
+  game.state.city.districts.find((d) => d.definitionId === id)
+  ?? {
+    uniqueId: '', definitionId: id, ordinal: 0, level: 1, assignedWorkers: 0,
+    location: { x: 0, y: 0 }, state: 'Built', visualVariant: 1,
+  };
+
+/** Could a footprint stand on `cell` once the player pays off its fog? Every
+ *  cell clear already, or buyable and bare. */
+function standsOnceCleared(game: Game, id: DistrictId, cell: Coord, movingId: string): boolean {
+  const state = game.state;
+  return cellsOfRect(cell, DISTRICTS[id].size).every((c) => {
+    if (!game.map.terrain.has(coordKey(c)) || game.map.terrain.get(coordKey(c)) === 'Water') return false;
+    if (state.fog.revealed[coordKey(c)] === true) return groundBlock(state, game.map, c, { movingId }) === null;
+    // Under the fog: the rest of groundBlock's rules, read off the state.
+    return buyable(game, c) && state.features[coordKey(c)] === undefined
+      && !state.city.districts.some((d) => cellsOfRect(d.location, DISTRICTS[d.definitionId].size)
+        .some((f) => f.x === c.x && f.y === c.y))
+      && !ABANDONED.some((a) => a.location.x === c.x && a.location.y === c.y && state.abandoned.repaired[a.id] !== true);
+  });
+}
+
+/**
+ * WHERE A WORKER BUILDING WOULD WORK THE MOST (`reach:<id>`): of the cells it
+ * could stand on — or could, once their fog is paid — the one its crew
+ * reaches the most from; ground already clear before fogged ground, then
+ * the nearest the Townhall. `clearOnly` keeps to ground already clear. Its
+ * own footprint counts as free, since it is the thing being moved.
+ */
+export function reachSpot(
+  game: Game, id: DistrictId, clearOnly = false,
+): { cell: Coord; works: number; clear: boolean } | null {
+  const sample = sampleOf(game, id);
+  let best: { cell: Coord; works: number; clear: boolean; d: number } | null = null;
+  for (const c of game.map.cells) {
+    const clear = placementBlock(game.state, game.map, id, c, sample.uniqueId || undefined) === null;
+    if (!clear && (clearOnly || !standsOnceCleared(game, id, c, sample.uniqueId))) continue;
+    const works = workableCountAt(game.state, sample, c);
+    const d = townhallDistance(game.map, c);
+    if (best === null || works > best.works
+      || (works === best.works && clear && !best.clear)
+      || (works === best.works && clear === best.clear && d < best.d)) {
+      best = { cell: c, works, clear, d };
+    }
+  }
+  return best === null ? null : { cell: best.cell, works: best.works, clear: best.clear };
 }
 
 /**
@@ -138,10 +202,25 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
       return l === undefined ? null : { kind: 'cell', cell: l.location, span: { x: l.size, y: l.size } };
     }
     // An abandoned building, wherever the fog has it — a silhouette, a ruin
-    // under the scrim, or revealed (01-map-and-fog.md §6.3).
+    // under the scrim, or revealed (01-map-and-fog.md §6.3). `…Fog` is the
+    // way to it: the ruin once its fog can be paid, until then the cell the
+    // player can pay for that leads towards it.
     case 'abandoned': {
-      const a = ABANDONED.find((x) => x.id === id);
-      return a === undefined ? null : { kind: 'cell', cell: a.location, span: DISTRICTS[a.districtId].size };
+      const way = id.endsWith('Fog');
+      const a = ABANDONED.find((x) => x.id === (way ? id.slice(0, -'Fog'.length) : id));
+      if (a === undefined) return null;
+      const span = DISTRICTS[a.districtId].size;
+      if (!way || fogState(game.state, game.map, a.location) === 'Revealed' || buyable(game, a.location)) {
+        return { kind: 'cell', cell: a.location, span };
+      }
+      const step = stepTowards(game, a.location);
+      return step === null ? { kind: 'cell', cell: a.location, span } : { kind: 'cell', cell: step, span: ONE };
+    }
+    // Where a worker building would work the most (`reachSpot`).
+    case 'reach': {
+      if (!(id in DISTRICTS)) return null;
+      const spot = reachSpot(game, id as DistrictId);
+      return spot === null ? null : { kind: 'cell', cell: spot.cell, span: DISTRICTS[id as DistrictId].size };
     }
     // The nearest treasure still on the ground, chest or open (§6.2).
     case 'treasure': {

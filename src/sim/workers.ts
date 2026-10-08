@@ -48,6 +48,25 @@ export function workableCells(state: GameState, map: MapData, district: District
   );
 }
 
+/** How many cells its crew would work were it standing at `at` — the same
+ *  cells `workableCells` counts, without the map: off the map nothing is
+ *  revealed. What the quest that asks a Farm to be moved beside its plots
+ *  counts, and where the ghost is shown to put it. */
+export function workableCountAt(state: GameState, district: District, at: Coord): number {
+  const def = DISTRICTS[district.definitionId];
+  if (def.harvestSources.length === 0) return 0;
+  const r = influenceRadius(state, district);
+  let n = 0;
+  for (let dy = -r; dy < def.size.y + r; dy++) {
+    for (let dx = -r; dx < def.size.x + r; dx++) {
+      if (dx >= 0 && dx < def.size.x && dy >= 0 && dy < def.size.y) continue; // its own footprint
+      const c = { x: at.x + dx, y: at.y + dy };
+      if (state.fog.revealed[coordKey(c)] === true && worksHere(def.harvestSources, state, c)) n += 1;
+    }
+  }
+  return n;
+}
+
 /** Does this building go after whatever is on that cell? The Mine works two
  *  different mountains, so "the building's source" is a set, not a value. */
 const worksHere = (

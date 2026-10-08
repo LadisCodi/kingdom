@@ -158,6 +158,11 @@
       "ref": "item",
       "emptyOk": true,
       "doc": "An item repairing this building's ruin also asks for, and spends (01-map-and-fog.md §6.3). Empty: none."
+    },
+    "repairDurationSeconds": {
+      "type": "int",
+      "min": 0,
+      "doc": "How long repairing its ruin in the fog takes, flat: no growth with the ordinal or the distance (01-map-and-fog.md §6.3). 0: as long as building it. A plantable's ruin grows for its source's growSeconds instead."
     }
   }
 }
