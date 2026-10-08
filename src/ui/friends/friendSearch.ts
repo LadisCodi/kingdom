@@ -6,36 +6,37 @@
 // a refused name stays crossed until it is changed.
 
 import type { Game } from '../../game';
+import { tr } from '../../i18n/tr';
 import { el } from '../format';
 import { btn, sheet } from '../kit';
 
 export function renderFriendSearch(game: Game): HTMLElement {
   const f = game.friends;
   const close = (): void => f.closeSearch();
-  const lede = el('p', { class: 'fr-search-lede' }, 'Ask a kingdom to be your friend by its name, or by its friend code.');
+  const lede = el('p', { class: 'fr-search-lede' }, tr('Ask a kingdom to be your friend by its name, or by its friend code.'));
 
   if (f.searchStage === 'sent') {
     const to = f.sentTo;
     const friendsNow = to !== null && (f.snap?.friends ?? []).some((k) => k.code === to.code);
-    return sheet({ title: 'Find a friend', onClose: close, centred: true },
+    return sheet({ title: tr('Find a friend'), onClose: close, centred: true },
       el('div', { class: 'fr-search-pop' },
         lede,
-        el('div', { class: 'fr-sent' }, friendsNow ? 'You are friends now' : 'Friend request sent'),
+        el('div', { class: 'fr-sent' }, friendsNow ? tr('You are friends now') : tr('Friend request sent')),
         el('p', { class: 'fr-search-fine' },
-          to === null ? '' : friendsNow ? `${to.nickname} had already asked you.` : `Awaiting response from ${to.nickname}`)));
+          to === null ? '' : friendsNow ? tr('{name} had already asked you.', { name: to.nickname }) : tr('Awaiting response from {name}', { name: to.nickname }))));
   }
 
   const sending = f.searchStage === 'sending';
   const input = el('input', {
     class: 'fr-field', type: 'text', maxlength: '32', autocomplete: 'off', autocapitalize: 'words', spellcheck: 'false',
-    placeholder: 'Name or friend code', 'aria-label': 'A kingdom\'s name or friend code',
+    placeholder: tr('Name or friend code'), 'aria-label': tr('A kingdom\'s name or friend code'),
     ...(sending ? { disabled: 'true' } : {}),
   }) as HTMLInputElement;
   input.value = f.searchDraft;
   const mark = el('span', { class: 'fr-mark', 'aria-hidden': 'true' });
   const field = el('div', { class: 'fr-field-wrap' }, input, mark);
   const refused = el('p', { class: 'fr-refused' });
-  const add = btn({ label: 'Add', kind: 'primary', onClick: () => void f.sendSearch() });
+  const add = btn({ label: tr('Add'), kind: 'primary', onClick: () => void f.sendSearch() });
   // Marks itself as the player types, without a rebuild — a rebuild would
   // take the field from under their thumb.
   const show = (): void => {
@@ -55,12 +56,12 @@ export function renderFriendSearch(game: Game): HTMLElement {
   show();
   if (!sending) globalThis.requestAnimationFrame?.(() => input.focus());
 
-  return sheet({ title: 'Find a friend', onClose: close, centred: true },
+  return sheet({ title: tr('Find a friend'), onClose: close, centred: true },
     el('div', { class: 'fr-search-pop' },
       lede,
       field,
       refused,
       sending
-        ? el('div', { class: 'fr-sending' }, el('span', { class: 'fr-wait' }), 'Sending request…')
+        ? el('div', { class: 'fr-sending' }, el('span', { class: 'fr-wait' }), tr('Sending request…'))
         : add));
 }

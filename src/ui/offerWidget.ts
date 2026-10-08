@@ -10,6 +10,7 @@
 // written in place on every notify, so its scroll never restarts.
 
 import type { Game, OfferWidget } from '../game';
+import { tr, trn } from '../i18n/tr';
 import { HEROES, STORE } from '../sim/data/definitions';
 import type { StoreSkuId } from '../sim/state';
 import { spriteImgAt, spriteUrl } from '../render/sprites';
@@ -40,9 +41,9 @@ export function offerIcon(w: OfferWidget): HTMLElement {
 
 /** What the sign says. */
 function words(game: Game, w: OfferWidget): string {
-  if (w.state === 'ready') return 'Claim!';
+  if (w.state === 'ready') return tr('Claim!');
   const left = Math.max(0, Math.ceil((w.at - game.now()) / 1000));
-  if (w.state === 'waiting') return `Tomorrow in ${formatCountdown(left)}`;
+  if (w.state === 'waiting') return tr('Tomorrow in {time}', { time: formatCountdown(left) });
   return w.at > 0 ? `${w.name} · ${formatCountdown(left)}` : w.name;
 }
 
@@ -57,7 +58,7 @@ export function mountOfferWidgets(game: Game, root: HTMLElement): void {
   const iconSlot = el('span', { class: 'ofw-slot' });
   // A sparkle at each spot, on its own delay, so they never light together.
   const sparkles = [['78%', '14%', 1, 0], ['16%', '30%', 0.7, 1.3], ['70%', '68%', 0.8, 2.4]] as const;
-  const node = el('button', { class: 'ofw', type: 'button', 'aria-label': 'Offers' },
+  const node = el('button', { class: 'ofw', type: 'button', 'aria-label': tr('Offers') },
     el('span', { class: 'ofw-glow', 'aria-hidden': 'true' }),
     iconSlot,
     ...sparkles.map(([left, top, s, delay]) => el('span', {
@@ -90,7 +91,7 @@ export function mountOfferWidgets(game: Game, root: HTMLElement): void {
     const text = words(game, lead);
     for (const t of texts) if (t.textContent !== text) t.textContent = text;
     node.classList.toggle('is-ready', lead.state === 'ready');
-    node.setAttribute('aria-label', list.length > 1 ? `${formatCount(list.length)} offers` : lead.name);
+    node.setAttribute('aria-label', list.length > 1 ? trn(list.length, '{n} offer', '{n} offers', { n: formatCount(list.length) }) : lead.name);
   };
 
   game.onChange(refresh);
