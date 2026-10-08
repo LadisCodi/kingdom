@@ -11,6 +11,9 @@
 //  3. WHAT THE PLAYER HAS ALREADY DONE IS NOT TAUGHT. A scene whose
 //     `doneWhen` holds when it is due is settled — marked played — without
 //     playing.
+//  4. A LESSON NEVER ASKS FOR WHAT THE PLAYER CANNOT PAY. One that leads to
+//     a build or an upgrade waits until the purse can pay for it — unless a
+//     line `stocks` the building, making up the currencies itself.
 
 import { SCENES, type SceneDef } from '../../sim/data/definitions';
 import { firstMorningOn } from '../../sim/doors';
@@ -18,6 +21,13 @@ import type { Game } from '../../game';
 import { giveBook } from '../../sim/research';
 import { giveRelic } from '../../sim/relics';
 import { conditionHolds } from './conditions';
+import {
+  buildGoodsCost, nextBuildCost, upgradeCost, upgradeGoodsCost,
+} from '../../sim/districts';
+import { canAfford } from '../../sim/wallet';
+import { canAffordGoods } from '../../sim/goods';
+import { goalNames } from '../../sim/quests';
+import type { DistrictId } from '../../sim/state';
 
 /** Conditions that record how far the kingdom has got, and so can tell a
  *  scene where to resume. The rest (a sheet open, a control on screen, taps
@@ -62,6 +72,34 @@ const triggered = (game: Game, scene: SceneDef): boolean => conditionHolds(game,
   kind: scene.trigger, target: scene.triggerTarget, amount: scene.triggerAmount, tapsAtStart: 0,
 });
 
+/** Can the purse pay for what the scene leads to? Every `placing`/`placed`
+ *  line's next building, every `upgraded` line's next level on at least one
+ *  building it names — what is already done asks nothing, and a building a
+ *  line `stocks` asks only for its goods. */
+export function canPayFor(game: Game, scene: SceneDef): boolean {
+  const state = game.state;
+  const stocked = new Set(scene.lines.map((l) => l.stocks).filter((x) => !!x));
+  const met = (kind: SceneDef['lines'][number]['until'], target: string, amount: number): boolean =>
+    conditionHolds(game, { kind, target, amount, tapsAtStart: 0 });
+  return scene.lines.every((l) => {
+    if (l.until === 'placing' || l.until === 'placed') {
+      const id = l.untilTarget as DistrictId;
+      // A `placed` already met: the building is up, nothing to pay.
+      if (scene.lines.some((m) => m.until === 'placed' && m.untilTarget === id
+        && met('placed', id, m.untilAmount))) return true;
+      return (stocked.has(id) || canAfford(state.city.wallet, nextBuildCost(state, id)))
+        && canAffordGoods(state.city.goods, buildGoodsCost(state, id));
+    }
+    if (l.until === 'upgraded' && !met('upgraded', l.untilTarget, l.untilAmount)) {
+      const level = Math.max(2, l.untilAmount);
+      return state.city.districts.some((d) => goalNames(l.untilTarget, d.definitionId) && d.level < level
+        && canAfford(state.city.wallet, upgradeCost(d.definitionId, d.ordinal, d.level))
+        && canAffordGoods(state.city.goods, upgradeGoodsCost(state, d.definitionId, d.level + 1)));
+    }
+    return true;
+  });
+}
+
 export interface Pick {
   /** The scene to start now, or null. */
   scene: SceneDef | null;
@@ -86,7 +124,7 @@ export function pickScene(game: Game, breathing: boolean): Pick {
     if (alreadyDone(game, scene)) { settled.push(scene); continue; }
     if (heldBack(game)) return { scene: null, settled };
     if (scene.skippable && breathing) return { scene: null, settled };
-    if (fitsHere(game, scene)) return { scene, settled };
+    if (fitsHere(game, scene) && canPayFor(game, scene)) return { scene, settled };
     // A beat of the First Morning waits its turn, strictly in order.
     if (!scene.skippable) return { scene: null, settled };
   }

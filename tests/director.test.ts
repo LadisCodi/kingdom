@@ -4,9 +4,9 @@
 
 import { describe, expect, it } from 'vitest';
 import { SCENES } from '../src/sim/data/definitions';
-import { pickScene, sceneKey, settleScene } from '../src/ui/stage/director';
+import { canPayFor, pickScene, sceneKey, settleScene } from '../src/ui/stage/director';
 import type { Game } from '../src/game';
-import { completeTech, firstGame, freshPresenter } from './helpers';
+import { addBuilt, completeTech, firstGame, freshPresenter } from './helpers';
 
 /** A presenter past the First Morning with every scene played but `only`. */
 function onlyOwed(...only: string[]): Game {
@@ -48,6 +48,27 @@ describe('the director', () => {
     expect(pickScene(game, true).scene).toBeNull();
     game.unlockQueue.push({ kind: 'door', id: 'relics' } as never);
     expect(pickScene(game, false).scene).toBeNull();
+  });
+
+  it('waits to teach an upgrade until the purse can pay for it', () => {
+    const game = onlyOwed('barn');
+    const barn = SCENES.find((s) => s.id === 'barn')!;
+    addBuilt(game.state, 'Farm', { x: 3, y: 1 });
+    game.state.city.wallet.Wood = 0;
+    game.state.city.wallet.Gold = 0;
+    expect(canPayFor(game, barn)).toBe(false);
+    game.state.city.wallet.Wood = 1e6;
+    game.state.city.wallet.Gold = 1e6;
+    expect(canPayFor(game, barn)).toBe(true);
+  });
+
+  it('never makes a lesson that stocks its building wait on the currencies', () => {
+    const game = onlyOwed();
+    for (const scene of SCENES.filter((s) => s.lines.some((l) => l.stocks))) {
+      game.state.city.wallet.Wood = 0;
+      game.state.city.wallet.Gold = 0;
+      expect(canPayFor(game, scene), scene.id).toBe(true);
+    }
   });
 
   it('settles a scene the player has already done, without playing it', () => {
