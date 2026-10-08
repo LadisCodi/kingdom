@@ -7,7 +7,9 @@
 // would be chasing the player's thumb. A UI target is re-found every frame,
 // because screens rebuild their nodes.
 
-import { ABANDONED, DISTRICTS, LAIRS, LANDMARKS } from '../../sim/data/definitions';
+import { ABANDONED, DISTRICTS, LAIRS, LANDMARKS, levelIndexed } from '../../sim/data/definitions';
+import { isStoreFull } from '../../sim/storage';
+import { campHex, claimHex, dungeonHex, portalHex } from './boardRead';
 import { groundBlock, placementBlock } from '../../sim/districts';
 import { explorationGate, fogState, isPayable } from '../../sim/fog';
 import { townhallDistance } from '../../sim/grid';
@@ -173,7 +175,11 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
     case 'hex': {
       const index = id === 'explore' ? firstExploreHex(game)
         : id === 'ready' ? readyTrips(game.state, game.now())[0]?.target ?? null
-          : id !== '' && Number.isInteger(Number(id)) ? Number(id) : null;
+          : id === 'claim' ? claimHex(game)
+            : id === 'camp' ? campHex(game)
+              : id === 'dungeon' ? dungeonHex(game)
+                : id === 'portal' ? portalHex(game)
+                  : id !== '' && Number.isInteger(Number(id)) ? Number(id) : null;
       return index === null ? null : { kind: 'hex', index };
     }
     case 'cell': {
@@ -186,10 +192,24 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
     }
     case 'district': {
       const all = game.state.city.districts.filter((d) => d.definitionId === id);
-      const d = all.find((x) => x.state === 'Built') ?? all[0];
-      if (d === undefined) return null;
-      return { kind: 'cell', cell: d.location, span: DISTRICTS[d.definitionId].size };
+      return cellOf(all.find((x) => x.state === 'Built') ?? all[0]);
     }
+    // `crew:<id>` the one of its kind with the most room for hands: the new
+    // Sawmill, not the old one already full.
+    case 'crew': {
+      const room = (d: District): number => levelIndexed(DISTRICTS[d.definitionId].maxWorkersPerLevel, d.level)
+        - d.assignedWorkers;
+      return cellOf(game.state.city.districts.filter((d) => d.definitionId === id && d.state === 'Built')
+        .sort((a, b) => room(b) - room(a))[0]);
+    }
+    // `lowest:<id>` the one of its kind furthest behind: the House a street
+    // of upper floors still waits on.
+    case 'lowest':
+      return cellOf(game.state.city.districts.filter((d) => d.definitionId === id && d.state === 'Built')
+        .sort((a, b) => a.level - b.level)[0]);
+    // `idle:` a crew with hands to spare; `full:` a store that has stopped.
+    case 'idle': return cellOf(idleCrew(game));
+    case 'full': return cellOf(game.state.city.districts.find((d) => isStoreFull(game.state, d)));
     case 'lair': {
       // `lair:` alone is the first lair found that still stands — what a
       // scene on `lairFound` with no target is about.
@@ -197,8 +217,12 @@ export function resolveTarget(game: Game, point: string, previous: Target | null
       return lair === undefined ? null
         : { kind: 'cell', cell: lair.location, span: { x: lair.size, y: lair.size } };
     }
+    // `landmark:` alone is the nearest one out of the dark and unclaimed.
     case 'landmark': {
-      const l = LANDMARKS.find((x) => x.id === id);
+      const l = id !== '' ? LANDMARKS.find((x) => x.id === id) : LANDMARKS
+        .filter((x) => game.state.landmarks.claimed[x.id] !== true
+          && fogState(game.state, game.map, x.location) !== 'Undiscovered')
+        .sort((a, b) => townhallDistance(game.map, a.location) - townhallDistance(game.map, b.location))[0];
       return l === undefined ? null : { kind: 'cell', cell: l.location, span: { x: l.size, y: l.size } };
     }
     // An abandoned building, wherever the fog has it — a silhouette, a ruin
@@ -294,7 +318,18 @@ function backNode(): HTMLElement | null {
 
 /** The DOM node a UI target names, if it is on screen. */
 export const uiNode = (key: string): HTMLElement | null => (key === BACK ? backNode()
-  : document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(key)}"]`));
+  // A key ending in `:` is the first of its kind on screen: `notice:`.
+  : key.endsWith(':') ? document.querySelector<HTMLElement>(`[data-coach^="${CSS.escape(key)}"]`)
+    : document.querySelector<HTMLElement>(`[data-coach="${CSS.escape(key)}"]`));
+
+/** A building whose crew has more hands than ground in reach — the extra
+ *  ones stand about (04-harvest.md §6) — or null. */
+export const idleCrew = (game: Game): District | null => game.state.city.districts.find((d) =>
+  d.state === 'Built' && d.assignedWorkers > 0
+  && d.assignedWorkers > workableCountAt(game.state, d, d.location)) ?? null;
+
+const cellOf = (d: District | undefined | null): Target | null => (d === undefined || d === null ? null
+  : { kind: 'cell', cell: d.location, span: DISTRICTS[d.definitionId].size });
 
 /** Where a target is on screen right now, relative to `frame` (#app). */
 export function targetRect(game: Game, target: Target, frame: HTMLElement): Rect | null {

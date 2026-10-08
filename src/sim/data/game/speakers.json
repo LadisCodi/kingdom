@@ -40,5 +40,29 @@
     "title": "Royal Scout",
     "portrait": "hero_scout",
     "frame": "figure"
+  },
+  "mason": {
+    "name": "Master Kofi",
+    "title": "Master of the Builders’ Guild",
+    "portrait": "portrait_mason",
+    "frame": "figure"
+  },
+  "florist": {
+    "name": "Priya",
+    "title": "Nine and three quarters; makes the town pretty",
+    "portrait": "portrait_florist",
+    "frame": "figure"
+  },
+  "merchant": {
+    "name": "Marisol",
+    "title": "Merchant of everywhere",
+    "portrait": "portrait_merchant",
+    "frame": "figure"
+  },
+  "courier": {
+    "name": "Idris",
+    "title": "Royal courier",
+    "portrait": "portrait_courier",
+    "frame": "figure"
   }
 }

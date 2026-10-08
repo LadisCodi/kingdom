@@ -10,7 +10,7 @@
 import type { Game } from '../game';
 import { ITEMS } from '../sim/data/definitions';
 import type { SpeedJob } from '../sim/speedups';
-import { el, formatDuration, formatExact } from './format';
+import { coach, el, formatDuration, formatExact } from './format';
 import { btn, iconEl, progress, sheet } from './kit';
 import { tileArt } from './itemArt';
 
@@ -42,7 +42,7 @@ export function renderSpeedupSheet(game: Game): HTMLElement {
         ...tileArt(r.id, formatDuration(r.def.seconds)),
         el('span', { class: 'bag-tile-count' }, formatExact(r.count))),
       el('div', { class: 'spd-row-name' }, r.def.name),
-      btn({ label: 'Use', kind: 'primary', onClick: () => game.doSpeedup(r.id) })));
+      coach(btn({ label: 'Use', kind: 'primary', onClick: () => game.doSpeedup(r.id) }), 'speedup-use')));
 
   return sheet({ title: 'Speed up', onClose: close, centred: true },
     job,
@@ -68,5 +68,5 @@ export function renderSpeedupSheet(game: Game): HTMLElement {
  */
 export function timerButton(game: Game, job: SpeedJob, finish: HTMLElement): HTMLElement {
   if (!game.hasSpeedups(job)) return finish;
-  return btn({ label: 'Speed up', kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(job) });
+  return coach(btn({ label: 'Speed up', kind: 'blue', icon: 'hourglass', onClick: () => game.openSpeedup(job) }), 'speedup');
 }

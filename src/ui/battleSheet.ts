@@ -31,7 +31,7 @@ import { HEROES, TROOP_ORDER, TROOPS, rankOf } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
 import type { HeroId, TroopId, Wallet } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatExact } from './format';
+import { coach, el, formatExact } from './format';
 import { btn, headPanel, hpBar, iconEl, sectionHead, sheet } from './kit';
 import { portraitFrame, unitBust } from './unitArt';
 import { emptyHeroSlot, heroCard } from './heroCard';
@@ -236,15 +236,15 @@ function actionBox(game: Game, view: BattleView): HTMLElement {
     ?? (view.fallen === 0 ? 'No soldiers lost' : `Expected losses: ~${view.fallen} soldier${view.fallen === 1 ? '' : 's'}`);
   return el('div', { class: 'bt-go k-section' },
     el('div', { class: 'bt-go-row' },
-      btn({ label: 'Quick deploy', kind: 'blue', onClick: () => game.quickDeploy() }),
+      coach(btn({ label: 'Quick deploy', kind: 'blue', onClick: () => game.quickDeploy() }), 'battle-deploy'),
       el('div', { class: 'bt-go-buy' },
         price,
-        btn({
+        coach(btn({
           label: view.actionLabel,
           kind: 'primary',
           onClick: view.onFight,
           disabledReason: view.blocked ?? undefined,
-        }))),
+        }), 'battle-go'))),
     el('div', { class: 'bt-go-note' }, hint));
 }
 

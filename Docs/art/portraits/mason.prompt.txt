@@ -1,0 +1,19 @@
+(Attached: a montage of portrait_advisor, portrait_hob, portrait_villager, hero_cook, hero_warden as the style anchor. Cut with: python3 cut_moods.py mason-moods.master.png portrait_mason portrait_mason_happy portrait_mason_worried portrait_mason_surprised)
+
+GENERATE A NEW IMAGE. Do not edit or export the attached file: it is ONLY the style reference — five characters already drawn for this game. Your output sits next to these; match them exactly: bold uniform dark-brown outline, flat colour + one shadow tone + one highlight, same proportions and framing, standing, both hands and feet visible, no ground, no shadow. That style is LOCKED; do not drift.
+
+=== STYLE ===
+Flat 2D cartoon illustration for a cozy medieval-fantasy mobile strategy game, NOT 3D, NOT Pixar, NOT a render, NOT anime. Bold, clean dark-brown outlines on every shape, uniform in weight. Flat colour with simple cel shading: one shadow tone and one small highlight per material, no gradients, no textures, no ambient occlusion. Big simple readable shapes, friendly slightly chunky proportions — large head, big hands and boots. Small simple eyes, expressive faces. Warm saturated palette, steel grey for metal, gold accents. Lit from the top left. Draw as if shown 200 px tall: nothing thinner than the outline.
+
+=== COMPOSITION ===
+One landscape image, wide (about 2:1), FOUR poses of the SAME character side by side, each in its own quarter of the canvas, all at the same scale and the same height (about 80% of the canvas height), full body, standing, facing the viewer with a touch of 3/4. The face, hair, body and outfit are IDENTICAL in all four — only the expression and a small gesture change. Both hands and both feet visible in every pose; every prop entirely inside its quarter. Nothing crosses into a neighbouring quarter: keep a clear 40 px empty band between figures.
+Left to right:
+1. REST — calm, friendly, neutral standing pose.
+2. HAPPY — big smile, a cheerful small gesture.
+3. WORRIED — brows up and together, a hand to the chin or clutching their prop.
+4. SURPRISED — eyes wide, mouth open, hands up a little.
+
+=== THE CHARACTER ===
+Master Kofi, the guild master builder — a perfectionist who quotes the builders' guild charter. Black man in his early fifties, broad and sturdy, short greying beard, warm proud smile. A soft cloth cap. Rolled-sleeve linen shirt, a leather builder's apron with tools tucked in (a wooden mallet, a chisel), sturdy trousers and work boots. A folding wooden ruler or a plumb line in one hand, a rolled blueprint under the other arm. No armour, no weapon.
+
+Do not draw grid lines, cell borders, labels, captions, names, text, shadows, ground, pedestal or any background. The background must be alpha 0 everywhere, not white, not a checkerboard. Then apply the true-alpha transparency correction and give me the download link for the corrected PNG.

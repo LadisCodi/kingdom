@@ -32,6 +32,8 @@ function coachKeys(): { exact: Set<string>; prefixes: Set<string> } {
     // `coach(btn({...}), 'key')`: the key is the string after the call it wraps.
     if (src.includes('coach(')) for (const m of src.matchAll(/\}?\)\s*,\s*'([a-z][\w:-]*)'\)/g)) exact.add(m[1]);
     for (const m of src.matchAll(/dataset\.coach\s*=\s*'([^']+)'/g)) exact.add(m[1]);
+    // `coach(upgrade, 'card:upgrade')`: a node already made, by name.
+    for (const m of src.matchAll(/coach\(\w+,\s*'([a-z][\w:-]*)'\)/g)) exact.add(m[1]);
   }
   return { exact, prefixes };
 }
@@ -122,12 +124,10 @@ describe('the scenes, against the game', () => {
     }
   });
 
-  it('chains the opening by its gifts: each lesson ends on its quest claimed, Isolde asking only the first time', () => {
+  it('chains the lessons by their gifts: each ends on its quest claimed, Isolde asking only the first time', () => {
     // A lesson rides on its quest being reached, so the one before must be
     // claimed for the next to start: the hand leads the player to the pill.
-    const until = QUESTS.findIndex((q) => q.id === 'Rubble');
-    const opening = SCENES.filter((s) => s.trigger === 'questReached'
-      && QUESTS.findIndex((q) => q.id === s.triggerTarget) <= until);
+    const opening = SCENES.filter((s) => s.trigger === 'questReached');
     const claims = opening.map((scene) => {
       const last = scene.lines[scene.lines.length - 1];
       expect(last, scene.id).toMatchObject({ point: 'quest', lock: 'target', until: 'questClaimed', untilTarget: scene.triggerTarget });
@@ -237,6 +237,31 @@ describe('the conditions read the kingdom', () => {
     expect(conditionHolds(game, args('bookOpen' as never, 'Sagas'))).toBe(true);
     expect(conditionHolds(game, args('doorOpen' as never, 'heroes'))).toBe(true);
     expect(conditionHolds(game, args('built' as never, 'AnyWorkshop', 1))).toBe(false);
+  });
+
+  it('sees a level climbed or under way, soldiers, a full store and idle hands', () => {
+    const game = freshPresenter(firstGame());
+    const holds = (kind: string, t = '', n = 0) => conditionHolds(game, args(kind as never, t, n));
+    // The Upgrade pressed is the lesson: a level in the queue counts.
+    expect(holds('upgraded', 'Townhall', 2)).toBe(false);
+    const hall = game.state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+    game.state.city.queue.push({ uniqueId: 'q', kind: 'upgrade', districtUniqueId: hall.uniqueId, targetLevel: 2 } as never);
+    expect(holds('upgraded', 'Townhall', 2)).toBe(true);
+    game.state.city.queue.pop();
+    hall.level = 2;
+    expect(holds('upgraded', 'Townhall', 2)).toBe(true);
+    expect(holds('upgraded', 'Townhall', 3)).toBe(false);
+    // Soldiers, not villagers.
+    expect(holds('troops', '', 1)).toBe(false);
+    game.state.city.trainingQueue.push({ trainee: 'Villager' } as never);
+    expect(holds('troops', '', 1)).toBe(false);
+    game.state.city.trainingQueue.push({ trainee: 'Warrior' } as never);
+    expect(holds('troops', '', 1)).toBe(true);
+    // A crew of more hands than ground in reach stands about.
+    expect(holds('idleCrew')).toBe(false);
+    addBuilt(game.state, 'Sawmill', { x: 40, y: 40 });
+    game.state.city.districts.find((d) => d.definitionId === 'Sawmill')!.assignedWorkers = 2;
+    expect(holds('idleCrew')).toBe(true);
   });
 
   it('sees what stands past the fog, by kind, landmark kind or lair', () => {

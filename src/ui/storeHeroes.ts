@@ -134,6 +134,7 @@ function callSlot(game: Game, banner: BannerId): HTMLElement {
     });
   }
   if (banner === 'basic' && game.uiHint() === 'banner') b.classList.add('hinted');
+  if (banner === 'basic') b.dataset.coach = 'banner-call';
   return b;
 }
 

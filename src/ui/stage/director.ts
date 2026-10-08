@@ -21,6 +21,11 @@ import { conditionHolds } from './conditions';
 
 export const sceneKey = (id: string): string => `scene:${id}`;
 
+/** Introductions that would only interrupt the First Morning: what stands
+ *  past the fog, the notices column, a full store, an idle crew, a full head
+ *  of Knowledge. They wait for it to end. */
+const WAITS_FOR_MORNING: ReadonlySet<string> = new Set(['sighted', 'ui', 'storeFull', 'idleCrew', 'knowledgeFull']);
+
 /** Is the player on the screen this scene belongs to? */
 export const inPlace = (game: Game, scene: SceneDef): boolean =>
   scene.where === 'any' || (scene.where === 'world') === (game.scene === 'world');
@@ -65,7 +70,7 @@ export function pickScene(game: Game, breathing: boolean): Pick {
   const morning = firstMorningOn(game.state);
   for (const scene of SCENES) {
     if (game.state.tutorial.seen[sceneKey(scene.id)]) continue;
-    if (morning && scene.trigger === 'sighted') continue;
+    if (morning && WAITS_FOR_MORNING.has(scene.trigger)) continue;
     if (!triggered(game, scene)) continue;
     if (alreadyDone(game, scene)) { settled.push(scene); continue; }
     if (heldBack(game)) return { scene: null, settled };

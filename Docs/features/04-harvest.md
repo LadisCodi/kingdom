@@ -6,8 +6,7 @@
 > [`03-economy.md`](03-economy.md).
 >
 > **Status: built.** Not built: the
-> map-editor production census (§2.3, OQ-50), the over-hire onboarding beat
-> (§6).
+> map-editor production census (§2.3, OQ-50).
 
 ## 1. The rules
 
@@ -299,8 +298,9 @@ Quests:
   idle. No icon.
 - The count lives in the district card only (`4/7` busy). Nothing on the map.
 - When a stump becomes a tree, one of the loiterers heads for it.
-- One onboarding beat that makes the player hire past their ground — not
-  built.
+- The `hands` lesson says it when a second Sawmill is crewed, and the
+  `idleCrew` introduction points at the first crew standing about
+  ([`23-tutorials.md`](23-tutorials.md) §3.2, §4.1).
 
 ## 7. The three actors
 
