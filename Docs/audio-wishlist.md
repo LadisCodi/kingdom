@@ -163,7 +163,7 @@ are auditioned on the Ghost Bench artifact.
 | Name | Plays when | Source |
 |---|---|---|
 | `ghostLift` | A ghost appears, a finger takes it, a long press lifts a building | Pop 09 |
-| `ghostStep` | The ghost takes a cell (pitched down onto illegal ground); a move cancelled | Wood Block Sticks Hit Clap 01–03, cut to 0.16 s |
+| `ghostStep` | The ghost takes a cell (pitched down onto illegal ground); a move cancelled | Click Tap Knock Subtle |
 | `ghostPlant` | Build or Move confirmed | Impact Deep Thud Bounce 03 under Hitting Nail with Hammer 01 |
 
 A confirm on illegal ground plays `error`.

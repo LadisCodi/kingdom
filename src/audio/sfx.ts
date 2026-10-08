@@ -46,9 +46,7 @@ import explorerHomeUrl from './sounds/explorer_home.ogg?url';
 import gemUrl from './sounds/gem_spend.wav?url';
 import ghostLiftUrl from './sounds/ghost_lift.ogg?url';
 import ghostPlantUrl from './sounds/ghost_plant.ogg?url';
-import ghostStep1 from './sounds/ghost_step_01.ogg?url';
-import ghostStep2 from './sounds/ghost_step_02.ogg?url';
-import ghostStep3 from './sounds/ghost_step_03.ogg?url';
+import ghostStepUrl from './sounds/ghost_step.ogg?url';
 import popUrl from './sounds/pop-06.wav?url';
 import tooltipUrl from './sounds/tooltip_pop.wav?url';
 import questUrl from './sounds/quest_claimed.mp3?url';
@@ -335,11 +333,11 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   spellCast: { urls: one(spellCastUrl), volume: 0.45, jitter: 0.02 },
   relicWake: { urls: one(relicWakeUrl), volume: 0.45, jitter: 0 },
   // The ghost. Peak-normalised to -3 dB, so these volumes are the mix: Pop 09
-  // as it is picked up; Wood Block Sticks Hit Clap 01–03, cut to 0.16 s, one
-  // per cell it is carried — quiet, it can fire ten times a second; Impact
+  // as it is picked up; Click Tap Knock Subtle, one per cell it is carried —
+  // quiet, it can fire ten times a second; Impact
   // Deep Thud Bounce 03 under Hitting Nail with Hammer 01 as it is planted.
   ghostLift: { urls: one(ghostLiftUrl), volume: 0.45, jitter: 0.05 },
-  ghostStep: { urls: [ghostStep1, ghostStep2, ghostStep3], volume: 0.18, jitter: 0.08 },
+  ghostStep: { urls: one(ghostStepUrl), volume: 0.18, jitter: 0.08 },
   ghostPlant: { urls: one(ghostPlantUrl), volume: 0.6, jitter: 0.03 },
 };
 
