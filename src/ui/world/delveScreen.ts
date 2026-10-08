@@ -16,7 +16,7 @@ import { lumpMaterial } from '../../sim/world/board';
 import type { CurrencyId, HeroId, PreciousId, UnitId } from '../../sim/state';
 import { nextRoom, roomPower, roomReward } from '../../worldServer/core';
 import type { ArmyView, DungeonView } from '../../worldServer/types';
-import { el, formatCount } from '../format';
+import { capitalize, el, formatCount } from '../format';
 import { action, btn, chip, iconEl, powerTag, sheet } from '../kit';
 import { fieldArmyPanel } from '../battleSheet';
 import { waitRow } from './dispatchSheet';
@@ -40,7 +40,6 @@ const armyHere = (game: Game, index: number): ArmyView | undefined =>
   game.worldView?.armies.find((a) => a.owner === game.worldSeat() && a.target === index && a.purpose === 'delve' && a.phase !== 'home');
 
 /** "the Rot Baron" at the head of a line. */
-const capital = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The soldier a dungeon's creature fights as — its portrait on the frontier. */
 const creatureUnit = (info: DungeonView): UnitId => {
@@ -83,7 +82,7 @@ function roomNode(
     ...(flags.length === 0 ? [] : [el('span', { class: 'dv-flags' }, ...flags.map((s) => shieldOn(game, s)))]),
     disc)];
   if (boss) {
-    parts.push(el('div', { class: 'dv-boss-name' }, capital(info?.bosses[depth] ?? tr('the boss'))));
+    parts.push(el('div', { class: 'dv-boss-name' }, capitalize(info?.bosses[depth] ?? tr('the boss'))));
   }
   if (state === 'is-frontier' && !boss) {
     const pay = roomReward(depth, room);

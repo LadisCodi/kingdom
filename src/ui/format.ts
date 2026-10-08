@@ -155,6 +155,10 @@ export function troopsName(id: TroopId): string {
   return t.rank > 1 ? `${unitsName(t.unit)} ${['', 'I', 'II', 'III', 'IV', 'V'][t.rank]}` : unitsName(t.unit);
 }
 
+/** A name that heads its row or window starts with a capital, even one the
+ *  data keeps in lower case to read well mid-sentence ("crop plots"). */
+export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},
