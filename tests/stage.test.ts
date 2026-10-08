@@ -267,6 +267,17 @@ describe('the conditions read the kingdom', () => {
     expect(conditionHolds(game, args('built' as never, 'AnyWorkshop', 1))).toBe(false);
   });
 
+  it('counts villagers on their way: the lesson asks only for the rest', () => {
+    const game = freshPresenter(firstGame());
+    const holds = (n: number) => conditionHolds(game, args('training' as never, '', n));
+    game.state.city.population = 3;
+    expect(holds(5)).toBe(false);
+    game.state.city.trainingQueue.push({ trainee: 'Villager' } as never, { trainee: 'Warrior' } as never);
+    expect(holds(5)).toBe(false); // a soldier is not a villager
+    game.state.city.trainingQueue.push({ trainee: 'Villager' } as never);
+    expect(holds(5)).toBe(true);
+  });
+
   it('sees a level climbed or under way, soldiers, a full store and idle hands', () => {
     const game = freshPresenter(firstGame());
     const holds = (kind: string, t = '', n = 0) => conditionHolds(game, args(kind as never, t, n));

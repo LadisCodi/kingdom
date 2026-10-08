@@ -258,7 +258,7 @@ walks the player through.
 | `capital` | `ProperCapital` | **Kofi** (enters), Isolde | the Townhall → its **Upgrade** → the sheet's **Upgrade**; builders work while away |
 | `moreRoofs` | `MoreRoofs` | Tom, Kofi | Build → the House → placing it; a House against a House earns less. Kofi makes up the Wood when short |
 | `furrows` | `FreshFurrows` | Tom, Isolde | Build → a crop plot beside the Farm (it reaches one step around) → a second one |
-| `faces` | `NewFaces` | Tom, Isolde | the Townhall → **Train**, until five villagers live |
+| `faces` | `NewFaces` | Tom, Isolde | the Townhall → **Train**, until five villagers live or are in training |
 | `barn` | `BiggerBarn` | Tom, Kofi | a full barn stops the work; the Farm → **Upgrade** → **Upgrade** |
 | `twoSaws` | `TwoSaws` | Hob, Kofi | Build → a second Sawmill, where the trees are thickest |
 | `hands` | `ManyHands` | Hob, Tom | the new Sawmill → its **+**; more hands than ground in reach stand about |

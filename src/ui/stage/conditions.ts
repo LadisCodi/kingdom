@@ -164,10 +164,11 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
     case 'wounded': return woundedCount(state) > 0;
     case 'heroes': return state.heroes.owned.length >= Math.max(1, c.amount);
     case 'population': return state.city.population >= Math.max(1, c.amount);
-    // A villager called: one in training, or already `amount` of them home.
+    // Villagers called: `amount` of them home or on their way — the ones
+    // already in training count, so the lesson asks only for the rest.
     case 'training':
-      return state.city.population >= Math.max(1, c.amount)
-        || state.city.trainingQueue.some((i) => i.trainee === 'Villager');
+      return state.city.population + state.city.trainingQueue.filter((i) => i.trainee === 'Villager').length
+        >= Math.max(1, c.amount);
     case 'revealed': return Object.keys(state.fog.revealed).length >= Math.max(1, c.amount);
     // A silhouette past the fog (01-map-and-fog.md §4.1): anything, a kind
     // of thing, a kind of landmark, or one lair.
