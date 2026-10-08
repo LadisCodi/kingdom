@@ -237,7 +237,6 @@ The registry is `src/sim/data/techEffectRules.ts`; every stat names the one call
 |---|---|---|
 | `armyCap` | multiplies the number | 1 |
 | `armyMarchSpeed` | an army's time per hex on the world board is divided by it; the city sends the pace with the army | 1 |
-| `autoTapSpeed` | the auto-tap cooldown is divided by it | 0 |
 | `buildSpeed` | build and upgrade times are divided by it | 3 |
 | `cellStock` | multiplies what a cell holds when full; never a mountain, which holds no stock | 2 |
 | `crewSlots` | whole workers, added to a producer's level | 1 |

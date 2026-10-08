@@ -732,7 +732,7 @@ export interface GameState {
    * play only, so a replayed absence moves none of them. Nothing else may
    * read this flag.
    *
-   * Transient, like `lastCollectTapAt`: never saved, false on load.
+   * Transient: never saved, false on load.
    */
   replaying: boolean;
   /** First-time discoveries already announced (keys like 'resource:Wood'). */
@@ -812,9 +812,6 @@ export interface GameState {
   seed: number;
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
-  /** Epoch ms of the last successful player collect tap (cooldown anchor).
-   *  Transient — not persisted; resets on load. */
-  lastCollectTapAt: number;
   /** Fractional units a tap has earned but not yet been paid, per currency.
    *  A tap is priced in SECONDS of work, so on most cells it owes a fraction;
    *  carrying the remainder is what makes a +20% TapPower honest instead of

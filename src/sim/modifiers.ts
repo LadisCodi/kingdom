@@ -25,7 +25,6 @@ export type ModifierStat =
   | 'tapYield'
   | 'workerYield'
   | 'taxRate'
-  | 'autoTapCooldown'
   | 'manaRegen'
   | 'revealCost'
   | 'cellRecovery'    // how long a cell waits before it refills in place

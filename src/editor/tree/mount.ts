@@ -1154,8 +1154,8 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
   /**
    * A whole number: Gold, Knowledge, a building level. Rounded,
    * because none of those has a fraction and a stray `.5` in a price is a
-   * price nobody meant. An effect's VALUE is not one of these — `−0.05`
-   * seconds off the auto-tap is a real bonus, so that field steps by 0.01.
+   * price nobody meant. An effect's VALUE is not one of these — a flat
+   * fraction of a second is a real bonus, so that field steps by 0.01.
    */
   function number(value: number, commit: (v: number) => void): HTMLInputElement {
     const node = el('input', { class: 'tre-search', type: 'number', value: String(value) });

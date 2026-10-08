@@ -166,10 +166,8 @@ tap 50      →   50        offer returns
 1. **`tap.workSeconds`** — 10. What a tap is worth, and therefore what an ad
    is worth: **a pool buys ~5.5 minutes of the city's own production, at both
    ends of the game** ([`04-harvest.md`](04-harvest.md) §3.3). The relation
-   to hold is `tap.workSeconds ÷ tap.collectCooldownSeconds` against the crew the city can
-   house. At 10 a bare thumb is worth 20 workers and Townhall 3 houses 30, so
-   hand-play pays once `QuickHands` and `TapPower` are bought. **Doubling it
-   doubles the ad with it.** Whether the ad economy balances on ~5.5 minutes
+   to hold is a tap against the crew: `TapPower` keeps hand-play worth it as
+   the city hires. **Doubling it doubles the ad with it.** Whether the ad economy balances on ~5.5 minutes
    is OQ-51.
 2. **`mana.gemRefillCosts`** — the Gem ladder, **400 / 600 / 800 / 1,000 /
    2,000**, indexed by refills bought today. Its LENGTH is the daily cap, so

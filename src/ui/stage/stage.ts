@@ -518,7 +518,7 @@ export function mountStage(game: Game, root: HTMLElement, frame: HTMLElement): v
   };
 
   /** THE ONE GATE ON THE MAP: which taps a line lets through. */
-  game.tapGate = (cell: Coord | null, how: 'tap' | 'hold' | 'ghost'): boolean => {
+  game.tapGate = (cell: Coord | null, how: 'tap' | 'ghost'): boolean => {
     if (waitsForTap() || inGrace()) return false; // the frame's click moves the line on
     const lock = lockNow();
     if (lock === 'none' || lock === 'map') return true;

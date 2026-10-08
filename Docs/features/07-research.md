@@ -100,7 +100,7 @@ A `bonus` names its effects, and each is four fields:
 - **Every bonus climbs** ([`22-progression.md`](22-progression.md) §9):
   - a `value` is never negative, and the rules refuse one;
   - a WAIT is moved by a **speed** the time is divided by — build speed,
-    regrowth speed, auto-tap speed, training speed, workshop speed — so no
+    regrowth speed, training speed, workshop speed — so no
     stack of ranks ever reaches zero;
   - **nothing discounts a price**: the fog, a claim, a recruit and a cast
     cost what they cost; the tree makes the kingdom produce more instead;

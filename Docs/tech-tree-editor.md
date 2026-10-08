@@ -128,7 +128,7 @@ wherever it is placed.
 |---|---|
 | `stat` | the registry — every number the game can be told to move |
 | `op` | `percent` or `flat`, narrowed to the ops that stat accepts |
-| `value` | **signed**, in whole points for a percent. `-22` is −22%, `-0.05` is 0.05 s off the auto-tap |
+| `value` | **signed**, in whole points for a percent. `-22` is −22% |
 | `target` | narrowed to the target kinds that stat accepts: a district, a unit, a unit tag, a harvest source, a tome — or `global` for every subject |
 
 The three selects narrow each other, so the row can only produce an effect the

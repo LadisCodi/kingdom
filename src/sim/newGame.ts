@@ -102,7 +102,6 @@ export function newGame(map: MapData, now: number): GameState {
     seed,
     nextId: 1,
     lastAdvance: now,
-    lastCollectTapAt: 0,
     tapCarry: {},
   };
 

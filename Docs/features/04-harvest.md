@@ -22,13 +22,12 @@
 
 ### 1.1 The thumb's worth
 
-- A held finger lands a tap every `tap.collectCooldownSeconds` (0.5 s).
-- `the thumb, in workers = tap.workSeconds ÷ collect cooldown = 10 ÷ 0.5 = 20`
-- Tuning relation: the thumb's worker-equivalent stays ahead of the crew the
-  city can house. It also sets what a rewarded ad is worth (§3.3).
-- At 10 s the thumb is 20 workers against the 30 a Townhall-3 city can house.
-  `QuickHands` at the top of its ladder (+45% tap speed) takes the thumb to 29,
-  `TapPower` at the top of its ladder to 36, both together to 52.
+- Every tap is a deliberate press. Holding a finger down repeats nothing; a
+  press that does not move is one tap on release.
+- Nothing times the thumb: the player taps as fast as they like, and Mana is
+  the only limit (one per tap on the ground).
+- `tap.workSeconds` sets what a tap and a rewarded ad are worth (§3.3).
+  `TapPower` at the top of its ladder makes a tap 1.8× the work.
 - `tap.workSeconds` is the dial for late-game hand-play; doubling it doubles the
   ad with it (§3.3).
 
@@ -203,8 +202,7 @@ A rewarded ad pays a whole pool:
 - `TapPower` holds the ad's value up as the crew grows: pool ×3.3 against crew
   ×10 leaves the ad worth a third by Townhall 3; the ×3 duration ladder restores
   it (§1.1).
-- An ad buys about three minutes of things to do: a full pool is 332 taps and a
-  held finger spends it in under three minutes.
+- An ad buys a few minutes of things to do: a full pool is 332 taps.
 - `tap.workSeconds` is the ad's dial; halving it halves the ad. Whether ~5.5
   minutes of production for three minutes of thumb is worth six ad placements
   is **OQ-51**.
@@ -345,21 +343,18 @@ Quests:
 | Influence radius, worker slots per level | §5 | `buildings` › `influenceRadiusPerLevel`, `maxWorkersPerLevel` |
 | What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `buildings.extraUnitsPerDeliveryPerLevel`, `.strikeSpeedPerLevel` |
 | Mana per tap on the ground | 1 | `tap.manaCost` |
-| Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collectCooldownSeconds` |
 | Strike punch, against the player's 1 | 0.55 | `STRIKE_PUNCH`, code |
 | Strike volume · extra jitter · voices | ×0.5 · ±5% · 3 | `strikeFeedback`, code |
 | Zoom below which a strike is silent | 0.8 | `STRIKE_AUDIBLE_ZOOM`, code |
 | Store capacity, which bounds an absence | [`03-economy.md`](03-economy.md) §3.2 | `buildings` › `storageCapacityPerLevel` |
 
-Two relations to hold while tuning:
-
-1. `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`,
-   or the workers-per-cell number drifts (§2.1).
-2. `tap.workSeconds ÷ tap.collectCooldownSeconds` stays ahead of the crew the city can
-   house (§1.1, §3.3).
+The relation to hold while tuning:
+`secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`,
+or the workers-per-cell number drifts (§2.1).
 
 ## 10. Deliberately not in this design
 
+- a held finger that repeats taps
 - pathfinding
 - continuous regrowth
 - a per-distance strike penalty

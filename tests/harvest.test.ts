@@ -1,4 +1,4 @@
-// Cell harvest: tap yields, exhaustion, lazy recovery, the auto-tap cooldown
+// Cell harvest: tap yields, exhaustion, lazy recovery
 // that paces holding (but never a deliberate tap), and the ENERGY every
 // player tap is paid from.
 //
@@ -19,7 +19,6 @@ import {
   coordKey, getWallet, parseCoordKey, type Coord, type TerrainId,
 } from '../src/sim/state';
 import { storageCapacity, storedTotal } from '../src/sim/storage';
-import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
   addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
   reveal, screenAt, T0,
@@ -127,24 +126,6 @@ describe('tapping', () => {
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(3 * perTap);
-  });
-
-  it('held-pointer repeats wait out the auto-tap cooldown', () => {
-    const state = canGather(freshGame());
-    const cooldownMs = effectiveAutoTapCooldownMs(state);
-    const perTap = tapYieldAt(state, map, FOREST, T0);
-    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
-    // The input layer retries every 100ms; those land as autoRepeat…
-    expect(collectTap(state, map, FOREST, T0 + 100, true)).toBe('OnCooldown');
-    expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1, true)).toBe('OnCooldown');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(perTap); // nothing meanwhile
-    // …and the first retry at/after the cooldown collects again.
-    expect(collectTap(state, map, FOREST, T0 + cooldownMs, true)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(2 * perTap);
-    // A failed collect (an empty cell) does NOT reset the cooldown anchor.
-    for (let i = 0; i < 20; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // drain it
-    expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs, true)).toBe('Exhausted');
-    expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
   });
 
   it('rejects unrevealed and non-resource cells', () => {
@@ -499,14 +480,6 @@ describe('a tap on a collect bubble', () => {
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(wood);
     expect(mana(state)).toBe(before);
     expect(getWallet(state.city.wallet, 'Food')).toBe(food); // the berries were not picked
-  });
-
-  it('holding on it collects too, not the berries', () => {
-    const { state, game, sawmill, sx, sy } = withFullMill();
-    const before = mana(state);
-    expect(game.handleHold(sx, sy)).toBe(true);
-    expect(storedTotal(sawmill)).toBe(0);
-    expect(mana(state)).toBe(before);
   });
 
   it('is gone once it is no longer drawn, and the berries answer again', () => {

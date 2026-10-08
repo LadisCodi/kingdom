@@ -110,7 +110,6 @@ import {
   markBookSeen, pourKnowledge, techKnowledgeMissing, type ResearchRefusal, revealedCellCount,
 } from './sim/research';
 import {
-  effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
   PROFILE_LABEL, budgetRemainingCents, buyStoreSku, isItemBundle, canAffordSku, choosePayerProfile,
@@ -698,7 +697,7 @@ export class Game {
    * stage sets it while a line holds a lock, and every tap, hold and ghost
    * drag asks it first. Absent = everything goes through.
    */
-  tapGate: ((cell: Coord | null, how: 'tap' | 'hold' | 'ghost') => boolean) | null = null;
+  tapGate: ((cell: Coord | null, how: 'tap' | 'ghost') => boolean) | null = null;
   /** Inside an automatic claim — so the claim's own notify does not start another. */
   private autoClaiming = false;
 
@@ -1205,13 +1204,11 @@ export class Game {
     this.floaters.add(cell, 'empty', 'Mana');
   }
 
-  /** One collect on a resource cell, with feedback. `autoRepeat` marks the
-   *  ticks a held pointer generates — those are cooldown-gated, deliberate
-   *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
-  private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
+  /** One collect on a resource cell, with feedback. */
+  private collectAt(cell: Coord): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
     const units = tapYieldAt(this.state, this.map, cell, this.now()); // before the tap — it may empty the cell
-    const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
+    const result = collectTap(this.state, this.map, cell, this.now());
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
       this.floaters.add(cell, `+${formatExact(units)}`, HARVEST[source].currencyId);
@@ -1219,84 +1216,24 @@ export class Game {
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
-    } else if (result === 'TechLocked' && !autoRepeat && source !== null) {
+    } else if (result === 'TechLocked' && source !== null) {
       // Say WHICH research, by name. "You can see it and you cannot have it
       // yet" is the whole point of the gate, and it only teaches anything if
       // the player is told what would open it.
       const gate = HARVEST[source].requiredTech;
       playSfx('error');
       if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
-    } else if (result === 'LairHeld' && !autoRepeat) {
+    } else if (result === 'LairHeld') {
       // Say WHO: the refusal is the lair's, and naming it is what sends the
       // player to clear it (Docs/proposals/lairs.md §6). Costs no Mana — the
       // tap is refused before anything is charged.
       const lairId = lairHolding(this.state, cell);
       playSfx('error');
       if (lairId) this.toast(`${holdsThisGround(lairCreature(lairId))}`);
-    } else if (result === 'NoMana' && !autoRepeat) {
-      // A held pointer stays silent — it would otherwise shake the header
-      // once a frame for as long as the finger is down.
+    } else if (result === 'NoMana') {
       this.outOfMana(cell);
     }
     return result;
-  }
-
-  /** Held pointer: repeat COLLECT and REVEAL taps (never inspect or place).
-   *  The input layer repeats this while the press lasts; the auto-tap cooldown
-   *  decides how many actually land, so holding is the slow, lazy option and
-   *  tapping fast stays the skilful one.
-   *
-   *  Reveal is here because paying for fog is one Gold per tap on a doubling
-   *  ring curve: a single distance-9 iron vein is 320 individual taps, and the
-   *  whole map is 194,142. That is the difference between the game's
-   *  differentiator being filmable and being punishing.
-   *
-   *  Returns true when this repeat DID something — the input layer then
-   *  swallows the tap on release, so one press never acts twice. */
-  handleHold(sx: number, sy: number): boolean {
-    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
-    const cell = this.collectBubbleCell(sx, sy) ?? this.camera.screenToCell(sx, sy);
-    if (this.tapGate !== null && !this.tapGate(cell, 'hold')) return false;
-    if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a building collects its store once; an empty one holds still.
-    const district = districtAt(this.state, cell);
-    if (district && district.state === 'Built' && showsCollect(this.state, district)) {
-      this.collectStoreOf(district);
-      this.notify();
-      return true;
-    }
-    if (district && district.state === 'Built' &&
-        districtCapacity(this.state, district) > 0) return false;
-    if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
-    if (harvestSourceAt(this.state, cell) === null) return false;
-    if (!this.state.fog.revealed[coordKey(cell)]) return false;
-    if (isExhausted(this.state, this.map, cell, this.now())) return false; // quiet — no 💤 spam
-    if (this.collectAt(cell, true) !== 'Harvested') return false;
-    this.notify();
-    return true;
-  }
-
-  /** One repeat of a held reveal. Paced by the SAME auto-tap cooldown as
-   *  collecting, so QuickHands speeds clearing fog up too and holding never
-   *  outruns a determined tapper. */
-  private revealHold(cell: Coord): boolean {
-    const now = this.now();
-    if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
-    const charged = nextRevealTapCost(this.state, this.map, cell);
-    const result = revealTap(this.state, this.map, cell);
-    if (result !== 'Paid' && result !== 'Revealed') return false;
-    this.flashFog(cell);
-    this.state.lastCollectTapAt = now;
-    if (result === 'Revealed') {
-      wakeIdleWorkersAt(this.state, now);
-      playSfx('revealDone');
-      this.floaters.add(cell, 'Revealed!');
-    } else {
-      playSfx('revealPaid');
-      this.floaters.add(cell, `\u2212${formatExact(charged)}`, 'Gold');
-    }
-    this.notify();
-    return true;
   }
 
   // ------------------------------------------------------------ placement mode

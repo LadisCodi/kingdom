@@ -12,7 +12,7 @@ import { getWallet } from '../src/sim/state';
 import { researchTech } from '../src/sim/commands';
 import { canStartTech, pourKnowledge, techKnowledgeCost } from '../src/sim/research';
 import {
-  effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
+  effectiveBuildTimeMultiplier,
   effectiveTaxRate, effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike,
   strikeDraw, tapDraw, tapWorkSeconds,
 } from '../src/sim/upgrades';
@@ -132,21 +132,6 @@ describe('effects reach the sim', () => {
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood'))
       .toBe(Math.floor(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike));
-  });
-
-  // A SPEED on the gap between AUTO-taps: the cooldown is divided by it.
-  it('autoTapSpeed speeds the auto-tap, and never lets a hold out-pace a manual tap', () => {
-    const state = freshGame();
-    fund(state, { Gold: 100000 });
-    canGather(state);
-    expect(effectiveAutoTapCooldownMs(state)).toBe(500);
-    grantEffect(state, { stat: 'autoTapSpeed', op: 'percent', value: 45 });
-    const wait = effectiveAutoTapCooldownMs(state);
-    expect(wait).toBeCloseTo(500 / 1.45);
-    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
-    expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
-    expect(collectTap(state, map, FOREST, T0 + 2, true)).toBe('OnCooldown');
-    expect(collectTap(state, map, FOREST, T0 + 1 + Math.ceil(wait), true)).toBe('Harvested');
   });
 
   it('TradeRoutes boosts the passive tax rate', () => {

@@ -257,7 +257,6 @@ What follows the building:
   footprint drags the ghost; anything else pans the camera.
 - The anchor follows the finger by cell, not by pixel offset. An illegal cell
   is not taken: dragging across a lake leaves the ghost on the shore.
-- A press on the ghost never starts the hold-to-collect timer.
 - The building draws faint at its old address while its ghost is out.
 - Confirming a move to the cell it started on is a cancel, not an error.
 - Confirming reopens the card the move was started from.

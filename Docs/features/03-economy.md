@@ -296,7 +296,6 @@ and research**.
 | Ready to collect | 30 s of the building's current production | `storage.collectSeconds` |
 | Housing capacity per level | 2 · 4 · 6 … 20 — contested, OQ-46 | `buildings` › Housing › `populationCapacityPerLevel` |
 | Villager training | 20 s ×1.07 per villager already in town or queued; cost `5,10,20,40,70,110,160,230,320,440,600,800,1000` then ×1.1 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.populationCost*` |
-| Collect cooldown | 0.5 s | `tap.collectCooldownSeconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `currencies.goldValue` |
 | Adjacency rules | §3.1 | `adjacency` — `district`, `neighbor`, `stat`, `magnitude` |
 
