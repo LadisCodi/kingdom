@@ -1,6 +1,6 @@
 # The Bag — UI/UX of the inventory
 
-> **Scope.** The screens of [`../proposals/inventory.md`](../proposals/inventory.md):
+> **Scope.** The screens of [`../features/29-the-bag.md`](../features/29-the-bag.md):
 > the Bag, its tabs, the tile and the popover an item opens, and the three
 > places an item is used without opening the Bag — a timer's Speed up, a
 > shortfall, and a choice chest. Built from the shipped UI kit

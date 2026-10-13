@@ -93,6 +93,7 @@ One file per feature, in the order a player meets them.
 | 26 | [Notices](features/26-notices.md) | **the bubbles in the corner** — news and standing states for what the player may not have seen, in the province and on the board, each a card with a way to go there | built |
 | 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots planted from the Build menu as features, and trees and plots moved with a long press, growing again where they land | built |
 | 28 | [Languages](features/28-languages.md) | **English and Spanish** — the choice in Settings, the code's text through `tr()`, the data's through overlays, numbers in the language's locale | built |
+| 29 | [The Bag](features/29-the-bag.md) | **items held until they are used** — chests worth the city's own production, typed speed-ups and the picker on every timer, boosts, flasks, tomes, keys; the shortfall sheet; where items come from and how they are sold | built |
 
 ## Reference
 

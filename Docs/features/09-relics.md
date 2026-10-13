@@ -5,7 +5,7 @@
 > Stardust, and hosted where it acts — a city relic in a Shrine, a world
 > relic in a Chapel. Where fragments come from, the store's fragment pack,
 > trading, and the screens. The Bag's items are
-> [`../proposals/inventory.md`](../proposals/inventory.md); trading's board
+> [`29-the-bag.md`](29-the-bag.md); trading's board
 > is [`15-social.md`](15-social.md) §2.4.
 >
 > **Status: built** — fragments, restoration, levelling, the Shrines and

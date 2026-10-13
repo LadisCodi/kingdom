@@ -86,6 +86,7 @@ yet inside it.
 | Notices — the bubbles in the corner | [`26`](features/26-notices.md) | — |
 | Plantables | [`27`](features/27-plantables.md) | — |
 | Languages | [`28`](features/28-languages.md) | — |
+| The Bag — items, the Speed-up picker, the shortfall sheet | [`29`](features/29-the-bag.md) | — |
 | The tick auto-battler and its replay screen | [`combat`](features/combat.md) | authored boss formations, villains in a dungeon's standard room (OQ-86) |
 | The fantasy signals and the analytics pipeline | [`playtest`](playtest.md) §5, [`plans/analytics.md`](plans/analytics.md) | — |
 | The data editor, the map editor, the tree editor | [`data-editor`](plans/data-editor.md), [`map-editor`](map-editor.md), [`tech-tree-editor`](tech-tree-editor.md) | — |
