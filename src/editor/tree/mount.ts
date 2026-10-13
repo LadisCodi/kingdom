@@ -719,6 +719,17 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
       bar.append(cells, el('span', { class: 'ed-note' }, 'cells revealed'));
     }
 
+    const reward = el('input', {
+      class: 'tre-search tre-era-cells', type: 'number', min: '0', step: '1',
+      value: String(doc.eraReward(tome, era) ?? 0),
+      title: 'relic fragments paid once every placed card of this band is researched — 0 for nothing',
+    });
+    reward.addEventListener('change', () => {
+      doc.setEraReward(tome, era, Number(reward.value));
+      refresh();
+    });
+    bar.append(reward, el('span', { class: 'ed-note' }, 'fragments when finished'));
+
     const drop = el('button', {
       class: 'tre-era-drop', title: `drop era ${era} from ${tome}`,
     }, '🗑');
