@@ -163,7 +163,7 @@ import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { Analytics, AnalyticsContext } from './analytics/analytics';
-import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
+import type { ArmyPurpose, ArmyView, Refusal, WorldSnapshot } from './worldServer/types';
 import { nicknameProblem } from './worldServer/nickname';
 import { FriendsClient } from './friendsClient';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
@@ -3000,8 +3000,18 @@ export class Game {
       ...this.state.city.districts.map((d): SpeedJob => ({ kind: 'workshop', districtId: d.uniqueId })),
       ...this.state.world.builds.map((b): SpeedJob => ({ kind: 'hex', index: b.index })),
       ...this.state.world.explorers.map((t): SpeedJob => ({ kind: 'explorer', tripId: t.id })),
+      // The player's own armies on the road, as the army's own timer offers them.
+      ...this.ownArmiesOnTheRoad().map((a): SpeedJob => ({ kind: 'army', armyId: a.id, at: a.at })),
     ];
     return jobs.find((j) => fits(id, j) && jobRemainingSeconds(this.state, j, now) !== null) ?? null;
+  }
+
+  /** The player's armies the last snapshot shows with an arrival ahead. */
+  private ownArmiesOnTheRoad(): Array<ArmyView & { at: number }> {
+    const snap = this.worldView;
+    if (snap === null) return [];
+    return snap.armies.filter((a): a is ArmyView & { at: number } =>
+      a.owner === snap.board.seat && a.at !== null);
   }
 
   private jobFacts(job: SpeedJob): { title: string; icon: IconName; progress: number; gems: number } | null {

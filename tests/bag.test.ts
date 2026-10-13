@@ -14,6 +14,7 @@ import { buyKeys } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
 import { addBuilt, freshGame, freshPresenter, map, T0 } from './helpers';
+import { itemLine, itemName, sizeLabel } from '../src/ui/itemText';
 
 const gold = (s: ReturnType<typeof freshGame>) => getWallet(s.city.wallet, 'Gold');
 
@@ -172,5 +173,19 @@ describe('items as rewards', () => {
   it('the Survey carries its item column into its cells', () => {
     const sLevel = SURVEY.freeItems.findIndex((id) => id !== '') + 1;
     expect(freeSurveyCell(freshGame(), sLevel).items[SURVEY.freeItems[sLevel - 1] as never]).toBe(1);
+  });
+});
+
+describe('what the Bag calls an item', () => {
+  it('prints no size on a key or a part', () => {
+    const part = ITEM_ORDER.find((id) => ITEMS[id].kind === 'part')!;
+    expect(sizeLabel(ITEMS[part])).toBe('');
+    expect(itemName(ITEMS[part])).toBe(ITEMS[part].name);
+    expect(sizeLabel(ITEMS.GoldKey)).toBe('');
+    expect(sizeLabel(ITEMS.WoodChest1h)).toBe('1h');
+  });
+
+  it('says a General speed-up also fits a trip or a march', () => {
+    expect(itemLine(ITEMS.GeneralSpeedup5m, {})).toMatch(/trip or march/);
   });
 });

@@ -73,7 +73,7 @@ of its kind.
 - **On a timer**: a speed-up, from the timer's **Speed up** (§4). The Bag's
   popover sends the player there.
 - **On a call**: a key, from the store. Its popover's **Use** opens the
-  store.
+  store's Heroes tab, where the banners are.
 - **On a repair**: a part, taken when the repair starts.
 - **On a refusal**: a chest, from the shortfall sheet (§5).
 - **On a relic short of Mana**: the smallest flask held, from the relic's
@@ -206,8 +206,8 @@ of its kind.
   - the plate's colour is its `tier`: 1 cream · 2 green · 3 blue · 4 violet
     · 5 gold;
   - its icon;
-  - its size at the top — a duration, a flask's share, a tome's Knowledge —
-    unless its own art carries it;
+  - its size at the top — a duration, a flask's share, a tome's Knowledge;
+    none on a key or a part, or where its own art carries it;
   - its count at the bottom right;
   - a speed-up drawn with the shared icon carries its type's badge: a hammer
     (Construction), a helmet (Training), an anvil (Workshop);
@@ -233,7 +233,7 @@ of its kind.
 | Boost | *Extends the running one* while one runs; quantity | **Use** / **Use ×N** |
 | Flask, tome | quantity | **Use** / **Use ×N** |
 | Speed-up | — | **Speed up a timer** — the picker on the first running timer it fits; with none, *Nothing of this kind is running* |
-| Key | — | **Use** — the store |
+| Key | — | **Use** — the store's Heroes tab |
 | Part | the building it repairs | none |
 
 - **Quantity** shows only when more than one is held: − · a slider · + · the
