@@ -10,11 +10,10 @@
 > [`../art/ui-relics.md`](../art/ui-relics.md); the mockups M67–M72 are in
 > [`../art/ui/mockups/`](../art/ui/mockups).
 >
-> **Status: steps 0–4 built** (PRs #149–#156, 2026-10-05): the Bag, speed-ups
-> (city and world), boosts, flasks, tomes, the choice chest, the shortfall
-> sheet, one reward path, keys in the Bag, items as rewards, the store's
-> item bundles. Step 5 waits on the Gem faucet (§6). The world's `hurry`
-> command ships with the next release's server deploy.
+> **Status: built, but for step 9 (the Excavation)**, and with the
+> differences [`../features/09-relics.md`](../features/09-relics.md) records:
+> no replicas or Dowser's maps, Shrines without Mana or Harmony, trading on
+> the friends' wish board.
 
 ## 1. Steps
 

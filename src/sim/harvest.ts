@@ -137,7 +137,7 @@ export const effectiveRecoveryMs = (
     // AT THE CELL, because the Staff of Renewal's zone is a place. It is read once,
     // when the cell exhausts, so a zone only ever reaches the cells that empty
     // INSIDE it — which is exactly what the active's instant refill arranges,
-    // by emptying the waiting list first (Docs/proposals/relic-effects.md §3.1).
+    // by emptying the waiting list first (Docs/features/09-relics.md §2).
     / Math.max(1, resolveAt(state, 'recoverySpeed', 1, at))));
 
 /**

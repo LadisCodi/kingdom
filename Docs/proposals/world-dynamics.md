@@ -12,25 +12,9 @@
 > scouting, an encounter to beat before building, precious goods only the
 > map yields.
 >
-> **Decided 2026-10-05:** camps are per player; the stand-in rivals beat
-> camps; a camp can be paid off, dearer than fighting it; precious materials
-> are traded, one of the three near each player; a little early, required
-> later (§1.4, §3).
-> **Built:** camps (§1.1–§1.4, Gold and Hero XP loot) — the spec is now
-> [`19`](../features/19-world-map.md) §5.4. Still proposed: villain-led inner
-> camps (§1.2), the precious-material and pack loot (§1.5) and camp raids
-> (§1.6). Scouting rewards (§2) are built too — spec
-> [`19`](../features/19-world-map.md) §3.2. Precious materials (§3.1–§3.3)
-> are built — spec [`19`](../features/19-world-map.md) §7.4 — and paid by
-> camps and scouting, and traded on the Exchange (§3.4, spec 19 §7.5);
-> what they buy is built for buildings and the Fortress (§3.5, spec 19
-> §7.6). The delve (§4) is built — spec 19 §8.2 — with the rooms' precious
-> lumps. Camp raids (§1.6) are built — spec 19 §5.5 — burning the district
-> rather than only emptying its store, a garrisoned Fortress fighting them.
-> Research asks for them from the single tree's chapter 5 on (19 §7.6),
-> the Atlas being one chapter now, and Portal floors pay lumps (19 §10.4).
-> **Everything in this proposal is now built**; the spec is
-> [`19-world-map.md`](../features/19-world-map.md).
+> **Status: built.** The live design is
+> [`19-world-map.md`](../features/19-world-map.md) (§3.2, §5.4–§5.5,
+> §7.4–§7.6, §8.2, §10); this file keeps the reasoning.
 > **Mockups** (prompts in [`../art/ui/mockups/world-dynamics-prompts.md`](../art/ui/mockups/world-dynamics-prompts.md)):
 > [M64 the map](../art/ui/mockups/m64-world-dynamics.png) — camps, scouting
 > rewards, a rich hex; [M65 the delve](../art/ui/mockups/m65-delve.png);

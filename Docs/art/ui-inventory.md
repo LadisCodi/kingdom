@@ -8,7 +8,7 @@
 > the flow is Kingshot's *Mochila*, captured in
 > [`ui/mockups/m69-refs/kingshot/`](ui/mockups/m69-refs/kingshot).
 >
-> **Status: designed, not built.** Mockups M69–M72 in `ui/mockups/`
+> **Status: built.** Mockups M69–M72 in `ui/mockups/`
 > ([`ui/mockups/inventory-prompts.md`](ui/mockups/inventory-prompts.md)).
 
 ## 1. What the reference does

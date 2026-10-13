@@ -175,7 +175,7 @@ export function strikeDraw(
  *  zone asking where it was standing would flicker as it crossed the edge —
  *  and travel is Euclidean while a zone is Chebyshev. *The Sawmill is in the
  *  area, so the Sawmill's crew works faster* is one sentence and one stable
- *  answer (Docs/proposals/relic-effects.md §3.1). */
+ *  answer (Docs/features/09-relics.md §2). */
 export const workerStrikeMs = (
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number => {

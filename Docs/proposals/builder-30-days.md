@@ -2,10 +2,14 @@
 
 > **What this is.** A menu of building content for the city half of the game,
 > sized so a player has something to build, upgrade and wait for every day for
-> **at least 30 days**. It is a **proposal**, not a feature doc: each block
-> below is a candidate, with options and a recommendation, for you to pick from
-> and turn into an implementation plan. Nothing here is built. Numbers are a
-> first pass and say so.
+> **at least 30 days**. **Status: built, but for the Dragon's Nest (§3).** The live
+> designs are [`buildings.md`](../features/buildings.md),
+> [`17`](../features/17-workshops-and-goods.md) (workshops),
+> [`21`](../features/21-harmony.md) (decorations),
+> [`19`](../features/19-world-map.md) (the Watchtower's world),
+> [`10`](../features/10-heroes.md) (the Tavern) and
+> [`03`](../features/03-economy.md) (adjacency); §6's Reliquary became the
+> Shrines of [`09`](../features/09-relics.md). This file keeps the reasoning.
 >
 > **Comparables** used throughout: **Elvenar** (Culture, goods manufactories,
 > chapters), **Kingshot** (Town Center as the one ladder to L30, the Tavern,

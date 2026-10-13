@@ -73,14 +73,14 @@ export type ModifierStat =
   // moves the two together — a node gets richer as fast as the swing gets
   // bigger — because either alone saturates: a bigger swing empties a node it
   // cannot exceed, and a richer node nobody can drain faster is just a longer
-  // queue (Docs/proposals/relic-effects.md §4.2).
+  // queue (Docs/features/09-relics.md §2).
   | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
   | 'harvestStock'    // units a cell holds before it is spent
   | 'trainingSpeed'   // how fast a building trains — soldiers and villagers alike
   // TODO(OQ-113): NOTHING READS `roomHaul`. It moved a ROOM's Gold and Stone,
   // and the rooms were retired with the depths; it stays defined so the
   // Wisp Lantern that names it still loads. The Lantern needs a new
-  // effect (Docs/open-questions.md OQ-113, Docs/proposals/relic-effects.md).
+  // effect (Docs/open-questions.md OQ-113).
   | 'roomHaul'        // a room's Gold and Stone — NOT READ
   | 'worldImprovementYield'; // what a world-map district grants an hour — NOT READ YET
 

@@ -89,7 +89,7 @@ export type LairId =
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
   // The three pillars the city relics do not touch: the dungeon, the war and
-  // the world map (Docs/proposals/relic-effects.md §6).
+  // the world map (Docs/features/09-relics.md §2).
   | 'DelversLantern' | 'MusterHorn' | 'BailiffsTally';
 export type HeroId =
   'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |

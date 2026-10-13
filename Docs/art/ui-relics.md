@@ -7,7 +7,7 @@
 > Bag and its Relics tab are [`ui-inventory.md`](ui-inventory.md). Built from
 > the shipped kit ([`ui-menus-redesign.md`](ui-menus-redesign.md) §7.17).
 >
-> **Status: designed, not built.** Mockups M67, M68, M72
+> **Status: built, but for the Excavation.** Mockups M67, M68, M72
 > ([`ui/mockups/relic-restoration-prompts.md`](ui/mockups/relic-restoration-prompts.md),
 > [`ui/mockups/inventory-prompts.md`](ui/mockups/inventory-prompts.md)).
 

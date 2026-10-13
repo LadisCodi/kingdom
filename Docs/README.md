@@ -121,7 +121,7 @@ Not features — how the game is tested, built and authored.
 | [`plans/review-readiness.md`](plans/review-readiness.md) | what is left before the studio's prototype review: the decisions the checklist asks for, the builds still missing, and where each answer comes from |
 | [`plans/ux-pass.md`](plans/ux-pass.md) | usability fixes found playing on a phone as a free player — one branch each, with what was seen, the rule, where it lives and when it is done |
 
-**Proposals** — not specs. Where one was adopted, the feature doc it names is the authority.
+**Proposals** — the reasoning behind built features. The feature doc each one names is the authority.
 
 | File | What it covers |
 |---|---|
@@ -130,7 +130,6 @@ Not features — how the game is tested, built and authored.
 | [`proposals/world-dynamics.md`](proposals/world-dynamics.md) | a living world map — monster camps, scouting rewards shown before exploring, precious materials only the world yields, and the delve screen |
 | [`proposals/inventory.md`](proposals/inventory.md) | the Bag: one place for everything owned that is not a currency or a building |
 | [`proposals/relic-restoration.md`](proposals/relic-restoration.md) | relics found as fragments, restored, hosted in Shrines and Chapels, and traded |
-| [`proposals/relic-effects.md`](proposals/relic-effects.md) | what each relic does, level by level |
 | [`proposals/friend-trading.md`](proposals/friend-trading.md) | trading between friends on a wish board |
 | [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | one kingdom passive per Legendary hero |
 | [`proposals/hero-abilities.md`](proposals/hero-abilities.md) | a skill per hero and villain, ranked up with Stardust |

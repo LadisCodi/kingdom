@@ -1398,8 +1398,8 @@ export interface ArtifactDef {
    * The Sickle of Plenty moves a node's stock and what a strike takes out of it,
    * and the Winged Hammer moves a crew's swing and its walk: in both cases
    * half the pair alone saturates or reads as nothing, so they are one passive
-   * with two stats rather than two passives (Docs/proposals/relic-effects.md
-   * §4.2). They share one `base` and one `per_level`, which is not a
+   * with two stats rather than two passives (Docs/features/09-relics.md
+   * §2). They share one `base` and one `per_level`, which is not a
    * convenience — it is the design saying the two must move together.
    */
   passive: {
@@ -1422,7 +1422,7 @@ export interface ArtifactDef {
    * promised an effect the build cannot deliver would be lying to somebody who
    * spent one. The card prints this instead, in muted ink, and the level
    * accrues normally against the day the system lands
-   * (Docs/proposals/relic-effects.md §6.4).
+   * (Docs/features/09-relics.md §2).
    */
   pending: string | null;
 }

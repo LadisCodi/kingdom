@@ -4,12 +4,9 @@
 > is a different KIND of thing to own rather than a Common with bigger
 > numbers.
 >
-> **Status: built 2026-09-14**, all six, less the one call site the world map
-> owes. Every number here is a first pass (**OQ-96**).
->
-> **The Scout's boon divides an explorer's march time**
-> ([`../features/19-world-map.md`](../features/19-world-map.md) §3.1); the
-> world board has no screen yet to send one from.
+> **Status: built**, all six. The live design is
+> [`../features/10-heroes.md`](../features/10-heroes.md) §2.6; every number is
+> a first pass (**OQ-96**).
 >
 > **It contradicts one line of the current design on purpose.**
 > [`../features/10-heroes.md`](../features/10-heroes.md) §2.1 says *"rarity is
