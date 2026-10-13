@@ -6,6 +6,8 @@
 // the city's own arithmetic, applied when the effect lands. Gems, packs and
 // relic fragments are never multiplied.
 
+import { RELIC_RULES } from '../data/definitions';
+import { dropFragments, openRelicDoor, type FragmentDrop } from '../relics';
 import { roundPrice } from '../roundPrice';
 import type { GameState } from '../state';
 import { techMultiplier } from '../techEffects';
@@ -48,4 +50,17 @@ export function boostLoot(state: GameState, e: Loot): Loot {
     ...(e.hours !== undefined ? { hours: e.hours * k } : {}),
     ...(e.precious ? { precious: { ...e.precious, amount: scale(e.precious.amount, k) } } : {}),
   };
+}
+
+/** The relic fragments a fight's pay hands over: the door of the world relic
+ *  first found where it was won, then a boss's one fragment, or a Portal
+ *  floor's what its pack was worth. A camp opens no door and pays none
+ *  (Docs/features/09-relics.md §5–§6). */
+export function lootFragments(state: GameState, e: Loot): FragmentDrop[] {
+  const from = lootSource(e);
+  const n = e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : from === 'boss' ? 1 : 0;
+  return [
+    ...openRelicDoor(state, from),
+    ...dropFragments(state, 'world', n, ['loot', e.seq ?? e.at]),
+  ];
 }

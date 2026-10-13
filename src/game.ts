@@ -59,7 +59,7 @@ import {
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
   canRestore, isMet, levelStardust, levelUpRelic, openFragmentPack, restoreRelic,
-  dropFragments, openRelicDoor, slotCount, type FragmentDrop,
+  slotCount, type FragmentDrop,
 } from './sim/relics';
 import {
   activeRadius, cast, castBlock, castState, chargesLeft,
@@ -169,7 +169,7 @@ import { FriendsClient } from './friendsClient';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import type { SeatBoost } from './worldServer/types';
-import { boostLoot } from './sim/world/loot';
+import { boostLoot, lootFragments } from './sim/world/loot';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
@@ -6077,13 +6077,8 @@ export class Game {
         // production, priced now (19 §5.4).
         const made = campPay(this.state, l.hours ?? 0);
         for (const [c, n] of Object.entries(made) as Array<[CurrencyId, number]>) addToWallet(this.state.city.wallet, c, n);
-        // A world relic's door, then its fragments: a boss's one, a Portal
-        // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
-        const won = l.from ?? (l.pack ? 'portal' : 'room');
-        const found = [
-          ...openRelicDoor(this.state, won),
-          ...dropFragments(this.state, 'world', l.pack ? RELIC_RULES.perPackTier[l.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', l.seq ?? l.at]),
-        ];
+        // A world relic's door, then its fragments (sim/world/loot.ts).
+        const found = lootFragments(this.state, l);
         if (found.length > 0) this.note(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
         if (l.precious) {

@@ -214,6 +214,7 @@ rolled by hash on the event that paid it.
 | **The fragment pack** | any | §7 — bound |
 
 - A source with nothing met of its kind pays nothing.
+- A dungeon room and a world camp pay none; a room opens its door (§5).
 
 ## 7. The fragment pack
 
