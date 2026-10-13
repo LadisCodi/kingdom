@@ -8,7 +8,7 @@
 > [`open-questions.md`](open-questions.md). Where this file names a question it
 > names it by id (`OQ-n`). What is done is what is merged into `develop`.
 >
-> **State: 150 test suites, 2,022 tests, all green.**
+> **State: 151 test suites, 2,028 tests, all green.**
 
 ## 1. The engine contract
 
