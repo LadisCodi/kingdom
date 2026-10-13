@@ -1,5 +1,5 @@
-// SPEED-UPS (Docs/proposals/inventory.md §3.2, Docs/plans/relics-and-bag.md
-// step 2): Bag items that take time off a running timer.
+// SPEED-UPS (Docs/features/29-the-bag.md §4): Bag items that take time off a
+// running timer.
 //
 // Three rules this file keeps:
 //

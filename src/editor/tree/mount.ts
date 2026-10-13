@@ -95,7 +95,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
 
   // `data-keep-scroll` is the game host's idiom (`ui/kit/host.ts`) and it is
   // here for the same reason: every gesture in this editor redraws all four
-  // panes, and a redraw throws the scroll away. Working on row 28 of Civics
+  // panes, and a redraw throws the scroll away. Working on row 28 of Kingdom
   // meant being thrown back to row 0 on every click — including a click on a
   // connector, which is a gesture you make deep in a page by definition.
   const palette = el('div', { class: 'ed-toolbar tre-palette', 'data-keep-scroll': '' });
@@ -472,7 +472,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     for (const id of TOME_IDS) {
       const tab = el('button', { class: `ed-btn tre-tab${id === tome ? ' on' : ''}` }, id);
       // A different book starts at its own beginning — keeping the scroll
-      // would open Warfare halfway down for no reason anyone asked for.
+      // would open the Atlas halfway down for no reason anyone asked for.
       tab.addEventListener('click', () => {
         tome = id; selected = null; toTop = true; refresh();
       });
@@ -1122,7 +1122,7 @@ export function mountEditor(host: HTMLElement = document.body): TreeHandle {
     const { errors, warnings, offPage } = doc.validation;
     // The per-band totals the `Technologies` sheet used to add up with a
     // formula. This is where the price-band pass happens now
-    // (Docs/features/tech-tree.md §5).
+    // (Docs/features/tech-tree.md §1).
     const bands = doc.totals(tome)
       .filter((band) => band.count > 0)
       .map((band) => `${ROMAN[band.era] ?? band.era}: ${band.count}× `

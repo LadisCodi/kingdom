@@ -108,7 +108,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBe(foodBeforeTap + 1);
 
     // --- The Farm is one research further down: Farming, the row under
-    // Agriculture (Docs/features/12-quests.md §2 steps 9-15).
+    // Agriculture (Docs/features/12-quests.md §2 steps 22-25).
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
     // Research takes no time: fill it, pay it, and it is done this second.
     expect(researchNow(state, map, 'Farming', now)).toBe('Researched');

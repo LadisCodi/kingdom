@@ -46,7 +46,8 @@ function cellFogState(state: GameState, map: MapData, cell: Coord): FogState {
   return 'Undiscovered';
 }
 
-/** Total Gold to reveal a cell at BFS distance d (FogOfWarSettings.GetTotalCost). */
+/** Total Gold to reveal a cell `d` Chebyshev rings from the Townhall's
+ *  footprint (`townhallDistance`). */
 export function revealCost(d: number): number {
   const rings = FOG.rings;
   let cost: number;
@@ -88,9 +89,9 @@ export function countMultiplier(state: GameState): number {
   return growth ** Math.floor(revealedCellCount(state) / step);
 }
 
-/** The cost the PLAYER actually pays, after the Staff of Renewal and anything else
- *  that discounts the fog. Every consumer reads this rather than revealCost(),
- *  so a discount can never apply to the bar but not the charge. */
+/** The cost the PLAYER actually pays: the ring price, the count multiplier
+ *  and the modifier stack's `revealCost`. Every consumer reads this rather
+ *  than revealCost(), so nothing can apply to the bar but not the charge. */
 export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>
   // A block costs the SUM of its cells, so a 3x3 is nine cells' Gold and a
   // tap charges a fifth of that. Nothing says so on screen: the floater on
@@ -135,7 +136,7 @@ export const isReachable = (state: GameState, map: MapData, cell: Coord): boolea
   );
 
 /**
- * How far from the Townhall the player may PAY for a cell, in BFS rings —
+ * How far from the Townhall the player may PAY for a cell, in Chebyshev rings —
  * the same axis the price is authored on — indexed by the Townhall's level
  * (Docs/features/01-map-and-fog.md §4, 05-city-and-districts.md §1).
  *

@@ -1111,7 +1111,7 @@ function closeDungeon(b: ServerBoard, index: number, closer: number, t: number):
 }
 
 /**
- * A closed dungeon comes back in its own sixth, on rings 3–5: on ground
+ * A closed dungeon comes back in its own sixth, on rings 3–6: on ground
  * nobody holds and no other site stands on, never beside a city, never where
  * it last stood. It covers what the ground holds while it stands. With
  * nowhere to go it tries again an hour later.

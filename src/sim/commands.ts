@@ -452,7 +452,7 @@ export type UpgradeResult =
  *    needs no line of its own.
  *  * **A technology that raises a lump pays it back** for every landmark and
  *    lair already held (sim/knowledge.ts `territoryKnowledge`).
- *  * **The last card of a band pays the band's card pack**, once
+ *  * **The last card of a band pays the band's relic fragments**, once
  *    (`research.ts#claimBandReward`). Research takes no time, so this is the
  *    moment, and no boundary is needed.
  *

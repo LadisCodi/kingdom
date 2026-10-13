@@ -52,8 +52,8 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
-    // Nothing is researched, and nothing is granted. Civics is open from the
-    // first minute; every other book opens on a fact about the world
+    // Nothing is researched, and nothing is granted. Kingdom is open from the
+    // first minute; a found book opens on a fact about the world
     // (sim/research.ts `TOME_OPENS`), and the era bars pace each page.
     research: { completed: [], poured: {}, rewarded: [] },
     schedule: [],

@@ -240,7 +240,7 @@
             "type": "text",
             "nullable": true,
             "options": ["Warfare"],
-            "doc": "A book the speaker hands the player as the line is read. Only a book that opens on a gift (sim/research.ts TOME_OPENS) — today, Warfare."
+            "doc": "A book the speaker hands the player as the line is read. No book opens on a gift today (sim/research.ts TOME_OPENS), so no line uses it."
           },
           "stocks": {
             "type": "text",

@@ -1,9 +1,8 @@
 // Rewarded-ad offers (Docs/features/08-magic.md §6): the first monetisation
 // surface, and the thing the Mana pool was made scarce FOR.
 //
-// Mana is the energy every tap is paid from, and `magic.md` records that its
-// tuning law was suspended deliberately — the pool takes longer than a night
-// to refill — so that a refill has something to sell.
+// Mana is the energy every tap is paid from — a spend budget that can run
+// dry — so a refill has something to sell (08-magic.md §2, §6).
 // This is the refill: a full pool's worth of Mana for watching a video.
 //
 // FIVE A DAY, AND THE GEMS ARE THE OTHER TILL. The videos pay at most

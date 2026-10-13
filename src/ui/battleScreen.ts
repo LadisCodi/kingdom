@@ -1,4 +1,4 @@
-// The fight, played back (Docs/features/11a-ruins-ui.md §2.5,
+// The fight, played back (Docs/features/11a-ruins-ui.md §2.7,
 // Docs/features/combat.md §13).
 //
 // THE FIGHT IS ALREADY OVER. The resolver ran the instant the player tapped,

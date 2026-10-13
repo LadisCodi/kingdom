@@ -168,7 +168,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
     expect(upgradeDuration(base, 'Sawmill', 2)).toBe(45);
   });
   // No Stone, deliberately: the onboarding chain reaches Townhall 2 before
-  // it reaches the Quarry (Docs/features/12-quests.md §2 (quest 35)), and
+  // it reaches the Quarry (Docs/features/12-quests.md §2.1), and
   // an upgrade that asks for Stone the player has no building for is a wall,
   // not a goal.
   it('Townhall L1→L2 = 66 Wood in 30 s; L2→L3 = 330 Wood in 120 s', () => {
@@ -183,7 +183,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   });
 });
 
-// The late half of the ladder (Docs/features/buildings.md §4). The early
+// The late half of the ladder (Docs/features/buildings.md §4.11). The early
 // examples above are the proof it did not move: they are the same numbers
 // they were before the pivot existed.
 describe('the late curve, from level 6', () => {

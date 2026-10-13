@@ -295,6 +295,7 @@ export function cast(
   return report;
 }
 
-/** Divination's value at a glance: the Gold this cast would save right here. */
+/** What a Survey saves on one cell: its reveal price, less any Gold already
+ *  paid towards it. */
 export const divinationSaving = (state: GameState, map: MapData, cell: Coord): number =>
   Math.max(0, revealCostForCell(state, map, cell) - revealPaidSoFar(state, map, cell));

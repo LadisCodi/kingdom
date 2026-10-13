@@ -1,5 +1,5 @@
 // What the city's research adds to a fight's pay on the world board
-// (Docs/features/19-world-map.md §5.4, §8.2, §10.3).
+// (Docs/features/19-world-map.md §5.4, §8.1, §10.4).
 //
 // The server prices a camp, a dungeon room or a Portal floor; the city
 // collects it (game.ts, the 'loot' effect), so the Atlas's share on top is

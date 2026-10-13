@@ -1,38 +1,26 @@
-// Mana (Docs/features/08-magic.md §1): the only capped currency in the game, and
-// the only pressure the design applies to a player who stays away.
+// Mana (Docs/features/08-magic.md §1): the only capped currency in the game,
+// and the energy every tap on the ground is paid from.
 //
-// TWO DIALS THAT MUST KEEP DOING DIFFERENT JOBS.
+// TWO DIALS THAT MUST KEEP DOING DIFFERENT JOBS (08-magic.md §2).
 //
-//   production (Mana/h) = Townhall level
-//   capacity   (pool)   = Townhall level + the Sanctum + sanctuaries claimed
+//   production (Mana/h) = the floor + the Sanctum
+//   capacity   (pool)   = the base + the Sanctum + landmarks, the Watchtower
+//                         and the world's Sanctuaries
 //
 // Production answers "how much do I get for free"; capacity answers "how big
-// is a session, and how big is an ad". Conflating them would waste both.
+// is a session, and how big is a refill". The Townhall touches neither, and a
+// claim buys capacity, never rate, so every future refill is bigger. The two
+// base dials are tuned together so an empty pool fills in about a night.
 //
-// SANCTUARIES BUY CAPACITY, NOT RATE (2026-09-02). They used to pay +1 Mana/h
-// each, which mattered most on the day you found one and less every day
-// after. Against a pool the ad reward is measured in, a claim instead makes
-// every future ad permanently bigger — so exploring compounds rather than
-// decays, and the map is worth clearing at any stage of the game.
+// NOTHING DRAINS IT but the player: taps, a city relic's activation, a world
+// relic's spell, a fight, a Runestone queued (08-magic.md §3). There is no
+// upkeep. Mana is a SPEND budget — it has to be able to run out, or there is
+// nothing for a refill to sell (§6).
 //
-// NOTHING DRAINS IT. Relics used to charge an hourly upkeep while attuned;
-// that was removed once Mana became the energy every tap is paid from, because
-// the two jobs fought: a player wearing the relic set had no pool left to play
-// with, and at Townhall 1 the full set drew exactly what the Townhall made, so
-// wearing everything stalled the pool dead. Mana is a tap budget now, and the
-// only thing that spends it is the player.
-//
-// THE TUNING LAW IS SUSPENDED (2026-09-02). It was cap ≈ 8 × net regen, which
-// kept "an overnight absence fills the pool exactly" true at every stage. That
-// law belonged to a pool whose only job was sustaining artifacts — an ABSENCE
-// budget. Mana is now the energy every tap is paid from, so the pool is a
-// SPEND budget, and the two want opposite things: an absence budget should
-// refill exactly overnight, while a spend budget has to be able to run out or
-// there is nothing for a refill to sell. See magic.md §"The tuning law".
-//
-// THE POOL CAN EXCEED ITS CAP. An ad reward (adOffers.ts) grants a full pool
-// on top of whatever is banked. Only `grantMana` may cross the ceiling;
-// everything else clamps.
+// THE POOL CAN EXCEED ITS CAP. A refill (adOffers.ts, or Gems) grants a full
+// pool on top of whatever is banked, as do a quest's Mana and a refunded
+// Runestone (08-magic.md §2.1); they go through `grantMana` or the wallet
+// directly. Everything else clamps.
 //
 // Above the cap the regen clock keeps running and banks nothing, exactly as a
 // full pool has always behaved — and it falls out of `addMana`'s ceiling
@@ -59,8 +47,8 @@ import {
  *
  * The Townhall used to be the whole of it. It produces nothing now — it gates
  * and nothing else (Docs/features/08-magic.md §2) — so the Sanctum is the
- * engine as well as the reservoir, and the whole Mana curve lives in the
- * Magic tome where the fog, the landmarks and the lairs already are.
+ * engine as well as the reservoir, and the whole Mana curve lives in its
+ * levels.
  *
  * The floor is what a kingdom regenerates before it has built anything, which
  * has to be non-zero or the opening session has no Mana to tap with.
@@ -74,8 +62,8 @@ export function manaProduction(state: GameState): number {
       base += levelIndexed(MANA.sanctumPerHourPerLevel, d.level);
     }
   }
-  // Ley Taps: a share on the whole rate, so a rank is worth the same to a
-  // new kingdom and to one with ten Sanctum levels.
+  // The tree's `manaRegen`: a share on the whole rate, so a rank is worth the
+  // same to a new kingdom and to one with ten Sanctum levels.
   return Math.max(0, resolve(state, 'manaRegen', base * techMultiplier(state, 'manaRegen')));
 }
 

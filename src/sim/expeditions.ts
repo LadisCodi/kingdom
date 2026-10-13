@@ -61,7 +61,7 @@ export function lairSupplyCost(
 }
 
 /**
- * The kingdom's drill: what the Warfare technologies add to every soldier
+ * The kingdom's drill: what the tree's army technologies add to every soldier
  * sent, in the shape combat.ts takes it. Resolved HERE, once per launch or
  * preview, so combat stays pure and a fight replays from its inputs. The `all`
  * terms go through the modifier stack; the per-tag ones are the tree's and
@@ -193,7 +193,7 @@ export const heroLevel = (state: GameState, id: HeroId): number => state.heroes.
 export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.owned.includes(id);
 
 // NOBODY IS EVER BUSY. A fight resolves on entry, so no hero is ever away
-// and the same hero leads every attempt (Docs/features/10-heroes.md §2.6).
+// and the same hero leads every attempt (Docs/features/10-heroes.md §2.7).
 export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned];
 
 // -------------------------------------------------------------- the lair
@@ -239,7 +239,7 @@ export function lairBlock(
   // A hero the last fight left with nothing has to get some of it back first.
   if (heroIds.some((id) => !heroCanFight(state, id, t))) return 'HeroDown';
   // NO 'HeroBusy'. A lair resolves on ENTRY, so a hero is never busy for it
-  // (Docs/features/10-heroes.md §2.6).
+  // (Docs/features/10-heroes.md §2.7).
   // A LAIR WANTS SOLDIERS (18-garrisons-and-raids.md): soldiers alone, or
   // soldiers with heroes — never a hero alone, who would hold a garrison off
   // on its defence and win the slow way.

@@ -196,7 +196,7 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   });
 });
 
-// Docs/features/10-heroes.md §4 — clearing fog pays no currency at all.
+// Docs/features/01-map-and-fog.md §5 — clearing fog pays no currency at all.
 //
 // CLAIM: a reveal buys GROUND. Resource cells, buildable land, lairs and
 // landmarks, against a Gold price that doubles from ring 4 — and nothing
