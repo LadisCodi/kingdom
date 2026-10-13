@@ -7,8 +7,7 @@ Tech tree editor
 > — the shared rule module every consumer validates against, and the dev-only
 > save path.
 >
-> **Status: built.** Not built: a field for what finishing a chapter pays
-> (`eraRewards`) — the editor neither shows nor keeps it (§2, §6). The tree
+> **Status: built.** The tree
 > this authors is designed in [`features/07-research.md`](features/07-research.md)
 > and its content is [`features/tech-tree.md`](features/tech-tree.md).
 
@@ -234,9 +233,11 @@ redirects there, and `?dev=data#tree/<id>` opens that technology on its page.
   **`+ effect`** picks a stat, op, value, then what it aims at.
 - **`+` and `−`** in the left channel open a row above or close an empty one;
   everything below renumbers.
-- **Every band has a header**: what it asks for in revealed cells, and the 🗑
-  that drops it — its cards go to the palette and every band below shifts up
-  one, cards and thresholds together. A book keeps at least one band.
+- **Every band has a header**: what it asks for in revealed cells, the relic
+  fragments finishing it pays (0 for nothing), and the 🗑 that drops it — its
+  cards go to the palette and every band below shifts up one, cards,
+  thresholds and rewards together. A book keeps at least one band.
+- A band added pays nothing until its header says so.
 - **`+ era`** adds a band at the end, opening at the cells the band above asks
   for.
 - The last row of each band is an empty **spare row**; dropping into it pushes
@@ -263,9 +264,6 @@ redirects there, and `?dev=data#tree/<id>` opens that technology on its page.
   `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
 - **A saved file is an event, not a reload** (`kingdom:data`): the game
   reloads on it.
-- **`eraRewards` is not carried by the editor.** The editor loads only `eras`
-  and `technologies`, so its save writes every band's reward as `null`; until
-  it carries the field, the file's `eraRewards` must be restored after a save.
 
 ## 7. Dials
 
@@ -273,7 +271,7 @@ redirects there, and `?dev=data#tree/<id>` opens that technology on its page.
 |---|---|
 | a technology: everything about it | here |
 | what opens a band | the band header's cells, saved as the book's `eras` |
-| what finishing a band pays | `eraRewards` in the file (§6) |
+| what finishing a band pays | the band header's fragments, saved as the book's `eraRewards` |
 | three columns, card and gutter sizes, the side channel | `src/ui/research/layout.ts` |
 | what a district, unit or harvest source costs and does | its collection in `?dev=data` |
 
