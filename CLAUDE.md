@@ -1,6 +1,7 @@
 # Kingdom — working notes for Claude
 
-An accessible 4X: a square-grid city-builder on a fog-shrouded province that
+**Spellcrown** (code name *Kingdom*, which the repo, the package and the
+code keep) is an accessible 4X: a square-grid city-builder on a fog-shrouded province that
 opens onto a shared hex world map. Vite + TypeScript, Canvas 2D, no
 framework. `src/sim/` is a **pure** simulation core — no DOM, no clock,
 injectable randomness — so it can later run server-side.

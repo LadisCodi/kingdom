@@ -1,6 +1,6 @@
-# Kingdom — the design documentation
+# Spellcrown — the design documentation
 
-**Kingdom** is a **4X for people who bounce off 4X** — a city-builder on a
+**Spellcrown** (code name *Kingdom*) is a **4X for people who bounce off 4X** — a city-builder on a
 fog-shrouded province that opens onto a hex world shared with other players,
 built for the web. **This folder is the design.** It describes the game as
 currently designed — not its history, and not how it is coded.

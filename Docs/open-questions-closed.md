@@ -11,6 +11,7 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| What is the game called? | 2026-10-13 | **Spellcrown**; *Kingdom* stays the code name ([`overview.md`](overview.md) §The name). The wizard-monarch and the magic are what set it apart from Kingshot and Rise of Kingdoms, where *Kingdom*, *Realm* and *Crown* alone are crowded. Clear on 2026-10-13: no app on the App Store, Google Play, Steam or itch.io; no mark containing it in WIPO's Global Brand Database; spellcrown.com/.net/.io/.game unregistered. **Before filing**: IP counsel to weigh **SPELLCROW** (Spellcrow Ltd, fantasy miniatures, UK, class 28) against ours in classes 9 and 41. |
 | What does the trade screen carry beyond the send? (**OQ-89**) | 2026-10-13 | **The wish board**: a friend posts what they are missing and others send it; only found fragments and precious materials can be sent ([`features/15-social.md`](features/15-social.md) §2.4). |
 | How strong is the season hero's rate-up? (**OQ-90**) | 2026-10-13 | **Moot: there is no season.** A banner names a `featuredHero`, kept open in the hero bag; there is no rate-up weight ([`features/10-heroes.md`](features/10-heroes.md) §6). |
 | Do upgrades stay Gold-only forever? (**OQ-14**) | 2026-10-13 | **Moot: there are no Gold upgrades.** What they bought is technology ranks in the tree ([`features/07-research.md`](features/07-research.md)). |
