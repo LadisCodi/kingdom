@@ -1,5 +1,5 @@
 /* The battle playback (src/ui/battleScreen.ts, Docs/features/11a-ruins-ui.md
-   §2.5). A full-bleed board: the bar at the top, six rows of slots, and
+   §2.7). A full-bleed board: the bar at the top, six rows of slots, and
    nothing else — the fight is the content, so the frame gets out of its way.
 
    The STATES snap — `steps(2)` on the flash, no transition on the skull — and

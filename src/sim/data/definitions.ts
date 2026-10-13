@@ -89,7 +89,7 @@ export interface TechnologyDef {
    *  Empty on anything that moves no number. */
   effects: TechEffect[];
   /** On the tree for its shape; does nothing yet. Badged in the game, and the
-   *  tree editor warns when anything requires one (tech-tree.md §7). */
+   *  tree editor warns when anything requires one (07-research.md §1.3). */
   planned: boolean;
 }
 
@@ -245,7 +245,7 @@ const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef 
  *
  * `workSeconds` is the work ONE villager does on a queued item. The crew
  * shares itself over the items in progress, so two workers on one item finish
- * it in half the time (Docs/features/17-workshops-and-goods.md §3).
+ * it in half the time (Docs/features/17-workshops-and-goods.md §4).
  */
 export interface GoodDef {
   id: GoodId;
@@ -405,7 +405,7 @@ export const BAG = balance.bag;
 /** The notices column and the news inbox (Docs/features/26-notices.md). */
 export const NOTICES = balance.notices;
 
-/** What using an item does (Docs/proposals/inventory.md §3). */
+/** What using an item does (Docs/features/29-the-bag.md §2). */
 export type ItemKind = 'chest' | 'choice' | 'speedup' | 'boost' | 'flask' | 'tome' | 'key' | 'part';
 
 /** What a boost raises. */
@@ -551,11 +551,10 @@ export interface QuestDef {
   /** The research clock, seeded by the chain before the first landmark drips
    *  (07-research.md §3). */
   rewardKnowledge: number;
-  /** A card pack handed over on the claim, or null. The first one is how the
-   *  collection is met (Docs/features/22-progression.md §7). */
-  /** Relic fragments it pays, of relics already met. */
+  /** Relic fragments it pays, rolled among the relics already met
+   *  (Docs/features/09-relics.md §6). */
   rewardFragments: number;
-  /** Items it puts in the Bag (Docs/plans/relics-and-bag.md, step 4). */
+  /** Items it puts in the Bag (Docs/features/29-the-bag.md §6). */
   rewardItems: Partial<Record<ItemId, number>>;
   /** Claims itself the moment it is done (Docs/features/12-quests.md §1). */
   autoClaim: boolean;
@@ -1038,8 +1037,8 @@ export const techsInTome = (tome: TomeId): TechId[] =>
 /**
  * How many bands each book has — authored in `?dev=tree`, not a constant.
  *
- * Per book, because a book is where a band belongs: Civics may run to five
- * while Warfare stays at four. The LAST band of a book is its sealed one.
+ * Per book, because a book is where a band belongs: Kingdom runs to nine
+ * while the Atlas has one.
  */
 export const ERA_COUNT: Record<TomeId, number> = (() => {
   const out = {} as Record<TomeId, number>;
@@ -1380,10 +1379,10 @@ export const ABANDONED: readonly AbandonedDef[] = ((regionMap as {
  *
  * A CITY RELIC IS ACTIVATED, a world relic is held. A city relic does nothing
  * until a Shrine holds it AND the player pays its `activation` in Mana; then
- * its effect reaches the aura for the Shrine's window. Its level is the
- * POWER — the number and the aura's reach — and the Shrine's level is the
- * DURATION. A world relic acts while a Chapel holds it, and may carry a
- * spell (`active`).
+ * its effect reaches the aura for a window. Its level sets all three — the
+ * number, the aura's reach and the window — round a fixed cycle
+ * (`CITY_RELIC_LEVELS`, 09-relics.md §2.1). A world relic acts while a
+ * Chapel holds it, and may carry a spell (`active`).
  */
 export interface ArtifactDef {
   id: ArtifactId;
@@ -1395,10 +1394,10 @@ export interface ArtifactDef {
   /**
    * ONE IDEA, sometimes spread over more than one number.
    *
-   * The Sickle of Plenty moves a node's stock and what a strike takes out of it,
-   * and the Winged Hammer moves a crew's swing and its walk: in both cases
-   * half the pair alone saturates or reads as nothing, so they are one passive
-   * with two stats rather than two passives (Docs/features/09-relics.md
+   * The Staff of Renewal moves a node's stock and its regrowth, and the
+   * Winged Hammer a crew's swing, its walk and a building's training: half of
+   * either alone saturates or reads as nothing, so each is one passive with
+   * several stats rather than several passives (Docs/features/09-relics.md
    * §2). They share one `base` and one `per_level`, which is not a
    * convenience — it is the design saying the two must move together.
    */
@@ -1418,11 +1417,11 @@ export interface ArtifactDef {
   /**
    * WHY THIS RELIC'S NUMBER DOES NOTHING YET, or null when it works.
    *
-   * A relic is a whole album — nine cards and a season — so a card that
-   * promised an effect the build cannot deliver would be lying to somebody who
-   * spent one. The card prints this instead, in muted ink, and the level
-   * accrues normally against the day the system lands
-   * (Docs/features/09-relics.md §2).
+   * A relic is six fragments and Stardust a level, so a card that promised
+   * an effect the build cannot deliver would be lying to somebody who spent
+   * them. The card prints this instead, in muted ink, and the level accrues
+   * normally against the day the system lands (Docs/features/09-relics.md
+   * §2, OQ-113).
    */
   pending: string | null;
 }
@@ -1620,7 +1619,7 @@ export const relicDoor = (id: ArtifactId): string => ab(id).door;
 
 /** The Shrines (`relics.json`'s `shrines`): the Gems each premium Shrine
  *  costs — as many premium Shrines as prices. A Shrine adds nothing of its
- *  own: it holds and wakes a relic (09-relics.md §2.1). */
+ *  own: it holds and wakes a relic (09-relics.md §2.3). */
 export const SHRINE_RULES = balance.shrines as { materialBuilds: number; premiumGems: number[] };
 
 /** What a level-up can raise on a city relic. */
@@ -1758,7 +1757,7 @@ export const LAIRS: Record<LairId, LairDef> = Object.fromEntries(
  * What a hero's rarity is worth: its stats, the magnitude of its trait, and
  * WHICH banner can roll it. A banner weights each rarity and a weight of 0 is
  * what keeps a rarity off a banner, so the weights ARE the pool — there is no
- * pool column and no rate-up table (Docs/features/10-heroes.md §5).
+ * pool column and no rate-up table (Docs/features/10-heroes.md §6.1).
  */
 export type HeroRarity = 'Common' | 'Rare' | 'Legendary';
 export const HERO_RARITIES: HeroRarity[] = ['Common', 'Rare', 'Legendary'];
@@ -2183,7 +2182,8 @@ export interface WorldDef {
   explorerGemCostGrowth: number;
   /** Armies out at once before the War Camp adds any. */
   armySlots: number;
-  /** Who holds the five other cities until the board comes from the server. */
+  /** Names the local stand-in server gives the other cities' owners, used
+   *  in turn round all of them. */
   rivals: readonly string[];
 }
 

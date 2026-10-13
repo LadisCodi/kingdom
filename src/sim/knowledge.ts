@@ -107,8 +107,8 @@ export const knowledgeLump = (state: GameState, raw: number): number =>
 export const landmarkClaimLump = (state: GameState): number =>
   knowledgeLump(state, KNOWLEDGE.landmarkClaimLump * techMultiplier(state, 'landmarkKnowledge'));
 
-/** What clearing one lair pays, once: the lump, raised by Warfare's
- *  Bounties. */
+/** What clearing one lair pays, once: the lump, raised by the tree's
+ *  `lairKnowledge`. */
 export const firstClearLump = (state: GameState): number =>
   knowledgeLump(state, DELVE.firstClearKnowledge * techMultiplier(state, 'lairKnowledge'));
 

@@ -1,6 +1,8 @@
-// The board: what each of its 127 hexes holds, where the six cities stand,
-// and which precious deposits each seat is dealt (Docs/features/19-world-map.md
-// §1, §2, §9; Docs/plans/precious-deposits.md).
+// The board: what each of its hexes holds, where the cities stand, and which
+// precious deposits each seat is dealt (Docs/features/19-world-map.md §1, §2,
+// §9; Docs/plans/precious-deposits.md). A world is seven mini-boards of 127
+// hexes and six seats each — 889 hexes, 42 seats — rolled one mini-board at a
+// time.
 //
 // A board is a pure function of its seed and the data — `generateBoard`
 // below — so the save never carries its contents, only which board and

@@ -1,7 +1,7 @@
 // What a relic IS at a level, and what the next one would change.
 //
 // The building card's model, applied to a relic (`upgradeStats.ts`, and
-// Docs/art/ui-menus-redesign.md §7.27). Same shape, same rule: a stat is a
+// Docs/art/ui-menus-redesign.md, the upgrade popup). Same shape, same rule: a stat is a
 // NUMBER WITH A NAME, and turning it into a row is the screen's business.
 //
 // THE PAIRS ARE BUILT BY ZIPPING TWO READS of one function, never by a second

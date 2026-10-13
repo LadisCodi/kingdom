@@ -146,7 +146,7 @@ export class TreeDoc {
    * What each band of one book costs.
    *
    * The `Technologies` sheet is gone, so the price-band pass — "is era 2
-   * really ten times era 1" (Docs/features/tech-tree.md §5) — has nowhere
+   * really ten times era 1" (Docs/features/tech-tree.md §1) — has nowhere
    * else to happen. It happens here.
    */
   totals(tome: TomeId): BandTotals[] {
@@ -635,7 +635,7 @@ export class TreeDoc {
     // A PLANNED card is on the tree for its shape and does nothing yet, so
     // waiting on one is waiting on nothing — preferred against, but not
     // refused: adjacency comes first, and a whole row of planned cards is a
-    // real shape (Warfare era 2's row 6). The rules warn, and the answer is
+    // real shape. The rules warn, and the answer is
     // to move the planned card, not to reach past it.
     if (straight !== null && !planned(straight)) return [straight];
     const whole: string[] = [];

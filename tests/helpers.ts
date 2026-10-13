@@ -49,7 +49,7 @@ export const freshGame = (): GameState => {
   return state;
 };
 
-/** A kingdom exactly as a new player meets it: every door but Civics shut,
+/** A kingdom exactly as a new player meets it: every door shut,
  *  no scene played. What the onboarding and the doors are tested on. */
 export const firstGame = (): GameState => {
   const state = newGame(map, T0);
@@ -249,9 +249,8 @@ export const addAllTrainers = (state: GameState): void => {
 /**
  * Mark a technology done, AND everything it needs.
  *
- * Since the tree became three tomes paced by eras, "have Cavalry" means the
- * Warfare cover page, the keystones above it and every technology those
- * keystones require. A test that means "the player has researched this" wants
+ * The tree is paced by chapters, so "have Cavalry" means every card on the
+ * way to it, and every finale above it. A test that means "the player has researched this" wants
  * all of it; spelling the chain out per test would be forty lines of setup
  * that says nothing about what is under test.
  */
@@ -290,7 +289,7 @@ export const ladders = (() => {
   return out;
 })();
 
-/** Which ladder a technology is a rank of, if any. `TapPowerIII` → `TapPower`;
+/** Which ladder a technology is a rank of, if any. `SawpitsIII` → `Sawpits`;
  *  `Cartography` → undefined, because it is a major and not a rank. */
 export const ladderOf: Partial<Record<TechId, string>> = (() => {
   const out: Partial<Record<TechId, string>> = {};

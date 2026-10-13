@@ -1,4 +1,4 @@
-// A technology's goods, and the card pack a finished band pays
+// A technology's goods, and the relic fragments a finished band pays
 // (Docs/plans/tech-tree-rework.md §3.4–§3.5).
 import { afterEach, describe, expect, it } from 'vitest';
 import { ERA_REWARDS, TECHNOLOGIES, TECH_ORDER } from '../src/sim/data/definitions';

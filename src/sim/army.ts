@@ -1,5 +1,5 @@
 // The army: what it costs to keep, what raises the ceiling, and how long a
-// unit takes to appear (Docs/features/11-expeditions.md §6, Docs/features/11-expeditions.md §6).
+// unit takes to appear (Docs/features/combat.md §14, §6.4).
 //
 // Two things changed here, and they are the same change from two directions.
 //
@@ -77,8 +77,8 @@ export const committedTroops = (state: GameState): number =>
  * "a rout costs less than a repulse" needs no rule of its own any more — a
  * party that wins in twenty ticks is simply swung at fewer times.
  *
- * Heroes are never in it: a hero can fall in a fight and is whole again when
- * it ends (Docs/features/10-heroes.md §2.3). What dies here is soldiers.
+ * Heroes are never in it: a hero's wounds heal on their own, and it is never
+ * lost (Docs/features/10-heroes.md §2.8). What dies here is soldiers.
  */
 
 /**
@@ -315,7 +315,7 @@ export function trainSecondsAt(
   const building = districtById(state, buildingId);
   const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
   // The tree's half is a SPEED the time is divided by, so a rank never meets
-  // a floor: Civics trains villagers, Warfare trains soldiers.
+  // a floor: `villagerTrainingSpeed` for villagers, `recruitSpeed` for soldiers.
   const speed = (trainee === 'Villager'
     ? techMultiplier(state, 'villagerTrainingSpeed')
     : techMultiplier(state, 'recruitSpeed', { unit: unitOf(trainee) }))
@@ -361,8 +361,8 @@ export const itemTrainSeconds = (item: TrainingItem): number =>
     : trainSeconds(item.trainee));
 
 // There is no tap that hurries a trainee along. A queue is a FIXED duration
-// and a tap is a scaling one (`tap.workSeconds` x TapPower), so a maxed thumb
-// would finish a 20-second villager in a single press. Timers are hurried with
+// and a tap is a scaling one (`tap.workSeconds` of production), so a rich
+// city's thumb would finish a 20-second villager in a single press. Timers are hurried with
 // Gems; Mana buys work, and a queue is not work.
 
 /** What it costs right now. A villager's price climbs with the population —

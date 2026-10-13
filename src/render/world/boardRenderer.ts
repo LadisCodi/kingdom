@@ -163,7 +163,7 @@ export function drawWorld(canvas: HTMLCanvasElement, camera: HexCamera, frame: W
 
   // The clouds, over the ground and under what stands on it: every Unknown
   // hex, and the world past the board's edge — the board stops and the
-  // clouds go on (19 §1) — and the veil over every Sensed one.
+  // clouds go on (19 §3) — and the veil over every Sensed one.
   const mask = cloudMask(motion, board, density);
   drawCloudBank(layers.clouds, HEX_GRID, {
     w, h, dpr, camX: camera.x, camY: camera.y, zoom: camera.zoom,

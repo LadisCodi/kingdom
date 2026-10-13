@@ -63,7 +63,7 @@ const OPENS: Record<DoorId, (state: GameState) => boolean> = {
   survey: (state) => townhall(state).level >= 2,
   world: watchtowerClaimed,
   // The first item held, or the first relic fragment — relics are kept in
-  // the Bag (Docs/art/ui-inventory.md §3.1, §3.6).
+  // the Bag (Docs/features/29-the-bag.md §8).
   bag: (state) => Object.keys(state.bag.held).length > 0 || ARTIFACT_ORDER.some((id) => isMet(state, id)),
   // Friends need a name others can read: the world board's, so the world
   // first (Docs/features/15-social.md §2.1).

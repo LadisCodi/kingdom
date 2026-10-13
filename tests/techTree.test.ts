@@ -143,7 +143,7 @@ describe('the shipped tech tree', () => {
   // The pacing promise of the shape: a band is a run of rows, and the era bar
   // between two of them is a line of its own.
   it('lays every tome out as bands of rows, in era order', () => {
-    for (const tome of ['Civics', 'Warfare', 'Magic']) {
+    for (const tome of ['Kingdom', 'Sagas', 'Atlas']) {
       const rows = pageRows(TECHNOLOGIES, tome);
       let era = 0;
       let seenRow = -1;
@@ -279,8 +279,8 @@ describe('what the rules refuse', () => {
 
   // …but the FIRST ROW of a book is where a root belongs: there is nothing
   // above it to require. It is POSITIONAL, not a name — the cover pages that
-  // used to hold row 0 are gone, and Civics now opens on three ordinary
-  // technologies that require nothing.
+  // used to hold row 0 are gone, and Kingdom opens on an ordinary
+  // technology that requires nothing.
   it('accepts a root on the page’s first row, whatever it is called', () => {
     expect(messages(clone())).toEqual([]);
     expect(TECHNOLOGIES.Forestry.requires).toEqual([]);

@@ -1,15 +1,15 @@
 // The city's effective numbers: what a tap owes, what a worker hauls, how
 // long a build takes, what a house pays.
 //
-// Every node in the tree is a technology (Docs/features/tech-tree.md §1
-// rule 2), so what used to be a levelled upgrade is a rank: `Sawpits I -> II
-// -> III`, each requiring the one before, each costing Gold AND time like
-// anything else in the tree.
+// Every node in the tree is a technology, so what used to be a levelled
+// upgrade is a rank: `Sawpits I -> II -> III`, a stem plus a roman numeral,
+// each costing Knowledge and Gold like any other card
+// (Docs/features/07-research.md §1.1).
 //
 // The effective-value helpers below are the ONE place effects are applied, and
-// each is a three-stage pipeline: base -> the completed technologies -> the
-// modifier stack (artifact passives, hero traits, seasons; see
-// sim/modifiers.ts). The middle stage is `techValue` and its siblings
+// each is a pipeline: base -> the completed technologies -> a city relic's
+// aura where one reaches -> the modifier stack (world relics, Legendary
+// boons, Bag boosts; see sim/modifiers.ts). The middle stage is `techValue` and its siblings
 // (sim/techEffects.ts), which sum whatever the tree AIMS at that number —
 // there is no hook per bonus, and a new one is data. Both the tech stage and
 // an empty modifier stack are the bit-exact identity, so nothing changes until
@@ -105,12 +105,12 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec, at:
  *
  * > **One tap is `tap.workSeconds` of work on the thing you tapped.**
  *
- * `TapPower` buys this DURATION, +20% a rank, so it is a relative ladder that
- * never goes stale (README working rule 2) and, priced in Gold and time, the
- * permanent sink the economy loses when the tech tree runs out.
+ * A DURATION, so it never goes stale as the city grows. The tree's
+ * `tapWorkSeconds` stat could move it; no card does (tech-tree.md §14: no card
+ * about the tap).
  *
- * It is also the number behind what a rewarded ad is worth (`04-harvest.md`
- * §3.3).
+ * It is also the number behind what a rewarded ad is worth
+ * (`14-monetization.md` §6.1).
  */
 export const tapWorkSeconds = (state: GameState): number =>
   Math.max(0, resolve(state, 'tapYield', techValue(state, 'tapWorkSeconds', TAP.workSeconds)));
@@ -216,7 +216,7 @@ const resolveAtHome = (home: Coord) =>
  * Both halves are SPEEDS the time is divided by: the tree's (`buildSpeed`,
  * Carpentry, +10% a rank) and the modifier stack's (a relic, a season, a
  * legendary's boon). A discount would die at 100%; a speed only ever
- * approaches zero (Docs/proposals/legendary-boons.md §2.1). ×2 is half the
+ * approaches zero (Docs/features/22-progression.md §9). ×2 is half the
  * wait, ×5 a fifth, and no number of them reaches a build that takes no time.
  */
 export const effectiveBuildTimeMultiplier = (state: GameState): number =>

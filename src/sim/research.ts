@@ -253,8 +253,8 @@ export function isBandFinished(state: GameState, tome: TomeId, era: number): boo
 }
 
 /**
- * The card pack researching `id` has just earned, if it finished its band
- * whole and that band pays one it has not paid yet — recorded as paid here,
+ * The relic fragments researching `id` has just earned, if it finished its
+ * band whole and that band pays some it has not paid yet — recorded as paid here,
  * so it is earned once. The caller grants it (`commands.ts#researchTech`).
  */
 export function claimBandReward(state: GameState, id: TechId): { tome: TomeId; era: number; fragments: number } | null {

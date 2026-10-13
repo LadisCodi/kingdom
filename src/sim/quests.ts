@@ -115,8 +115,8 @@ export function questValue(state: GameState, quest: QuestDef): number {
     case 'ClearLairs':
       return clearedLairCount(state);
     case 'OwnArtifacts':
-      // A relic arrives by finishing its album, so this counts albums
-      // finished for the first time (Docs/open-questions.md OQ-91).
+      // Relics restored (or handed over whole) — a relic still in fragments
+      // is not owned (Docs/features/09-relics.md §4).
       return ownedArtifacts(state).length;
     case 'OwnHeroes':
       return state.heroes.owned.length;

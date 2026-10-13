@@ -56,12 +56,12 @@
         "startingExplorers": {
           "type": "int",
           "min": 1,
-          "doc": "Explorers every kingdom has from the start. The Atlas ladder adds to it."
+          "doc": "Explorers every kingdom has from the start. A technology's `explorerSlots` adds to it."
         },
         "explorersForSale": {
           "type": "int",
           "min": 0,
-          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of its own and what the Atlas opens."
+          "doc": "Explorers a kingdom may buy, with Gems or in a pack, on top of its own and what technologies add."
         },
         "explorerGemCostBase": { "type": "int", "min": 0, "doc": "Gems for the first explorer bought." },
         "explorerGemCostGrowth": {
@@ -73,7 +73,7 @@
           "type": "list",
           "of": { "type": "text" },
           "length": { "exact": 5 },
-          "doc": "Who holds the five other cities until the board comes from the server."
+          "doc": "Names the local stand-in server gives the other cities' owners, used in turn round all of them."
         },
         "armySlots": {
           "type": "int",

@@ -237,7 +237,7 @@ export type OverlayName =
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
-  // button (Docs/art/ui-menus-redesign.md §7.27).
+  // button (Docs/art/ui-menus-redesign.md, the upgrade popup).
   | 'upgrade'
   // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
   | 'knowledge'
@@ -510,7 +510,7 @@ export interface FragmentProgress {
  *
  * It was built for the gacha and it is not the gacha's alone any more: a
  * cleared room hands it what the room paid (Docs/features/11a-ruins-ui.md
- * §2.5). Hence the optional half — a banner and a call count are what a PULL
+ * §2.8). Hence the optional half — a banner and a call count are what a PULL
  * has to say about itself, and a fight says something else.
  */
 /** What a reveal is opened FROM (ui/gachaScreen.ts): the silver-bound chest
@@ -742,7 +742,7 @@ export class Game {
   gachaReveal: GachaReveal | null = null;
   /** The fight being replayed, or null when none is. Its own mount for the
    *  same reason the reveal has one — and the reveal plays OVER it, which is
-   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
+   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.7). */
   battle: BattlePlayback | null = null;
   /** The hero whose card is open on the roster screen, or null for the grid.
    *  On the presenter rather than in the view for the reason `lairId`
@@ -2179,14 +2179,6 @@ export class Game {
     this.setOverlay('bag');
   }
 
-  /**
-   * The store's BUNDLE shelf (§6.1): star packs and wildcards for money.
-   *
-   * Empty in the last hours of a season — a bundle is two things the close
-   * wipes, so the store withdraws it rather than sell an hour of it. The UI
-   * renders no shelf at all rather than a row explaining why, because a
-   * withdrawn product is not an offer.
-   */
   /** The Bag's bundles, as the store's item shelf draws them: what each
    *  holds, and — for the speed-ups — what that time would cost in Gems at
    *  the rush price, the comparison the shelf exists to offer. */
@@ -4358,7 +4350,7 @@ export class Game {
   // a card fills the first free slot with as much as it legally can. Nothing
   // here is a stepper: the player picks a TYPE and the game works out the
   // count, which is the whole difference between composing a party and doing
-  // arithmetic (Docs/features/11a-lairs-ui.md §2.6).
+  // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
 
   /**
    * Put the board back in step with the roster.

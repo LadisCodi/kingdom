@@ -1,6 +1,6 @@
 // Minor RANKS: the ladders that used to be levelled upgrades. Their gating,
 // their cost curve, and the effective-value helpers actually changing sim
-// behaviour. See Docs/features/tech-tree.md §1 rule 2.
+// behaviour. See Docs/features/07-research.md §1.1.
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   ARMY, DELVE, DISTRICTS, HARVEST, KNOWLEDGE, LANDMARKS, TECHNOLOGIES,
@@ -377,7 +377,7 @@ describe('the Mana and Knowledge stats reach their numbers', () => {
   });
 });
 
-describe('the Warfare lines reach their numbers', () => {
+describe('the army lines reach their numbers', () => {
   it('Colours is a share of what the halls can field, and nothing to a kingdom with no hall', () => {
     const state = freshGame();
     completeRanks(state, 'Colours', ladders.Colours.length);

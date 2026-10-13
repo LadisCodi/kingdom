@@ -1,4 +1,4 @@
-// When a world district's store is ready to collect (19 §7.1): the board
+// When a world district's store is ready to collect (19 §7.3): the board
 // draws its bubble, and a tap on the hex collects it rather than opening its
 // card — as a tap on a city building does.
 

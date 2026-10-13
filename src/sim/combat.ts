@@ -52,8 +52,8 @@ export interface PartySlot {
 }
 
 /**
- * What the kingdom's research adds to the soldiers it sends — the Warfare
- * lines Shield Wall, Fletching, Barding, Warhorns and Manoeuvre, resolved OUT
+ * What the kingdom's research adds to the soldiers it sends — the tree's
+ * army ranks (Fletching, Shield Wall, Barding, Warhorns), resolved OUT
  * HERE by expeditions.ts and carried in on the Party, exactly the way the
  * hero's level travels. Combat stays pure: no GameState ever reaches this
  * module, so a fight can be replayed from its inputs alone.
@@ -102,7 +102,7 @@ export interface PartyHero {
 
 export interface Party {
   /** One per HERO SLOT, and none at all is legal: soldiers may fight alone
-   *  (Docs/features/10-heroes.md §2.6). */
+   *  (Docs/features/10-heroes.md §2.7). */
   heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
   /** The kingdom's drill, resolved by the caller. Absent = none. */

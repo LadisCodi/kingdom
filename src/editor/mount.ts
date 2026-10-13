@@ -477,7 +477,7 @@ export function mountEditor(host: HTMLElement = document.body): EditorHandle {
       toolbar.append(el('div', { class: 'ed-label' }, 'Sites'), modeRow);
       if (siteMode === 'place') {
         toolbar.append(el('p', { class: 'ed-note' },
-          'New landmarks arrive as an unnamed Shrine at 25,000 Gold — rename and price it here.'));
+          'New landmarks arrive as Standing stones at 25,000 Gold — rename and price it here.'));
       }
       if (siteMode === 'placeRuin') {
         toolbar.append(el('p', { class: 'ed-note' },
