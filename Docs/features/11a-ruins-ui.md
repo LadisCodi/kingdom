@@ -1,139 +1,115 @@
-# 11a · Ruins — screens
+# 11a · Dungeons and fights — the screens
 
-> **Spec.** Systems: [`11-expeditions.md`](11-expeditions.md). Fight screen:
-> [`combat.md`](combat.md). Map marker and fog:
-> [`01-map-and-fog.md`](01-map-and-fog.md). Guild and reservoir are owned
-> elsewhere; this document specifies only what ruins add to them.
+> **Scope.** The screens of a world dungeon, and the two screens every fight
+> in the game uses: the battle screen that composes the party, and the
+> playback. Systems: [`11-expeditions.md`](11-expeditions.md) and
+> [`19-world-map.md`](19-world-map.md) §8. The fight itself:
+> [`combat.md`](combat.md).
 >
-> **Status: partly built.** The battle screen (§2.5–2.6) serves a lair's
-> attack and an army leaving for the world board; the playback (§2.7) serves
-> every fight. A dungeon room is fought from the camped army's sheet on the
-> world board (*Delve*), straight into the playback. Not built: the map marker,
-> discovery card, ruin sheet, room ladder, the room's widget, the Guild preview
-> and the reservoir meter.
+> **Status: built.**
 
 ## 1. Flow
 
 ```
-World map ──▶ Discovery card (one-off)
-     │
-     └──▶ Ruin sheet ──▶ Room ladder ──▶ Room sheet ──▶ Battle playback ──▶ Spoils
-                                              │                                │
-                                       Party composition          the room sheet, next room
-
-Guild screen ──▶ Next-level unlock preview
-City HUD ─────▶ Reservoir meter
+World map ──▶ dungeon hex ──▶ the dungeon's card ──▶ Delve ──▶ the delve
+                                                                 │
+                     no army there: Send ──▶ battle screen ──▶ march
+                     army camped:   Attack ──▶ playback ──▶ spoils on the descent
+                                                              │
+                                                  Fight next / Fight again / Back
 ```
+
+A lair ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) and every
+army sent onto the world board go through the same battle screen (§2.5) and
+the same playback (§2.7).
 
 ## 2. Screens
 
 ### 2.1 Map marker
 
-| | |
-|---|---|
-| Data | Ruin name, tier, affinity, rooms cleared / total, `has_available_room`, `has_new_unlock` |
-| Elements | Marker art per tier, progress ring or `12/30`, badge |
-| Rules | Tap opens the ruin sheet with no confirmation. Badge shows when a room is enterable and unattempted since last visit |
+- A dungeon's hex carries a **ring filled as far as the player has gone**,
+  *13/24*.
+- A **red badge** while the player's army is camped there.
+- Its progress label shows once the camera is close enough
+  ([`19-world-map.md`](19-world-map.md) §1.2).
+- A tap opens the dungeon's card.
 
-### 2.2 Discovery card
-
-| | |
-|---|---|
-| Data | Ruin name, tier, affinity, flavour line, Depth 1 room count |
-| Elements | Full-bleed art, `Enter`, `Later` |
-| Rules | Fires once on fog lift. Queues behind other reveals. Never blocks input |
-
-### 2.3 Ruin sheet — depth stack
+### 2.2 The dungeon's card
 
 | | |
 |---|---|
-| Data per ruin | Name, tier, affinity, total progress |
-| Data per depth | `depth_index`, name, `rooms`, rooms cleared, `guildReq`, boss name + art + chest contents, `passiveOnComplete` |
-| Data for the gate | creature + type, raid countdown, trips left, hoard ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §7) — while it stands |
-| Elements | Vertical stack, deepest at bottom; the gate band above Depth 1 while it stands; one band per depth showing `7/12`; boss card at the end of each band with reward art |
-| States | Gated · locked · open · in progress · complete · bottomed out |
-| Rules | While the gate stands every depth reads gated and only the gate band is tappable. Locked depths display `guildReq` and their boss reward. Bottomed out is a distinct visual from locked. Tapping an in-progress band opens the frontier room |
+| Title | The dungeon's name |
+| Head | Its entrance, *Held by {creature}. Three depths of 8 rooms.*, how far it is, and **Delve** |
+| Progress | *Depth n/3* and *Room n/8* — or *Cleared, to the bottom* |
+| The race | *First to beat {boss} closes it for everyone, and is paid his chest ×2*; then every kingdom in it as the world ranking's rows, each with its rooms cleared (*13/24*), furthest first, opened on the player's own. Empty: *Nobody has cleared a room yet.* |
 
-### 2.4 Room ladder
+### 2.3 The delve
+
+The full-height menu where rooms are fought: the descent, the depth tabs,
+the army docked at the foot and the spoils after a fight —
+[`19-world-map.md`](19-world-map.md) §8.2. The Portal's descent is built the
+same way (§10.3a there).
+
+### 2.4 The army sheet
+
+Sending an army onto the world board is the battle screen (§2.5) with:
+
+- **The title**: where it goes — *Ground nobody holds*, *A dungeon*, *The
+  Dark Portal*, a camp's name, *Your Fortress*, or the holder's ground.
+- **The enemy**: a camp's squads, which are seeded by its hex and shown
+  before the fight; nothing for a dungeon, the Portal or a rival.
+- **The widgets** under the boards: a camp's **LOOT**, and the **TERRAIN** —
+  the ground, the hexes and the march there, and each ground rule that applies
+  ([`19-world-map.md`](19-world-map.md) §4.2). Below ground (a dungeon, the
+  Portal) there is no terrain.
+- **The price**: Mana only on an attack on a rival; a camp, a room and a
+  floor are paid when fought.
+- **The button**: *Attack*, *Claim*, *Garrison*, *Delve*, *Descend* or
+  *March* (to a camp). It needs a hero in the party.
+
+### 2.5 The battle screen
+
+One screen serves every fight that is composed: a lair's attack and every
+army sent onto the world board. The caller hands it a descriptor; what
+differs between two fights is the title, the enemy, the widgets and the
+button.
 
 | | |
 |---|---|
-| Data per room | `room_index`, `power_req`, threat type (Scout only), reward preview, cleared flag, is-boss |
-| Elements | One card per room; cleared dimmed + ticked; frontier highlighted; locked rooms flat. Next-carrot banner pinned above the frontier |
-| Banner | Two variants — next overridden reward row, next boss. Boss wins when closer. Format: *"5 rooms → the Hollowed Crown, +12 Stardust/h"* |
-| Rules | Auto-scroll to frontier on open |
+| Data | The fight's title, the enemy's squads, villains and power, the party's slots and attack, the price, the soldiers the fight will cost, and the caller's widgets |
+| Elements, top to bottom | The **enemy's board** (cold) and **your board** (warm), each with its power; the **roster**; the widgets; the **action box** — the price over the primary button, *Quick deploy* beside it, the expected losses under it |
+| Height | The sheet takes the **whole frame**. The spare height goes to the two boards, so the button never moves as the party changes |
+| States | Party over power · party under power (your board warns, the button still goes) · blocked (the button says why: no Mana, no hero, a hero who cannot fight…) |
+| Rules | A power shortfall **warns, never blocks**. The enemy's squads are what the fight is scored against. **No prose that restates the screen's own numbers**: the two boards and their power are the comparison. No rows: a squad's place in the fight is its type's ([`combat.md`](combat.md) §8) |
 
-### 2.5 Room sheet — the battle screen
-
-Used by a lair's attack ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md))
-and by an army sent onto the world board. One screen serves every fight; the caller hands it a descriptor, and
-what differs between two fights is **the widget at the top** and the bands
-under the board.
-
-| | |
-|---|---|
-| Data | Battle name and place, a **dynamic band** for whatever this kind of fight has to say, the enemy squads and their power, the party's slots and its attack, supply cost, reward preview |
-| Elements | Two army boxes of the same shape — theirs cold, ours warm — each with its power on the right; the party's slots; the reward chips; one primary button |
-| Height | The sheet takes the **whole frame**, whatever is on it. The spare height goes to the two army boxes, so the slots are the size of the barracks picker and the button never moves as the party changes |
-| States | Party over power · party under power (the box warns, the button still goes) · supplies unaffordable (the button blocks) |
-| Rules | A power shortfall **warns, never blocks**. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown. **The screen carries no prose that restates its own numbers**: the two armies' faces and their two power figures are the comparison, and the only way out is the sheet's own knob |
-
-**What each fight puts in the widget:**
-
-| Fight | The widget carries |
-|---|---|
-| **A gate** | the raid countdown, trips left, the hoard |
-| **A room** | the address (`Depth 2 · Room 5`), **two progress bars**, and the boss's chest at the end of the depth |
-
-**The room's two bars.** One for the **depth**, one for the **room inside it**,
-with a **skull at the end of the room bar** — the boss of this depth, dim until
-the player is standing at it.
-
-- The **fill is what is behind them** and the **label is where they are**:
-  room 1 of 8 with nothing cleared is an empty bar, and should be.
-- Nothing else counts rooms: the bars replaced the line that said *22 of 30
-  cleared*.
-
-- A room's enemy box is sized from that room's `power_req` and typed by the
-  ruin's **bias**: what a room drew is not shown until the Guild's scouting
-  buys it, so the box says *mostly*, never *is*.
-- **No band under the board.** A room used to carry one for the relic the hero
-  took down; a relic is never on a board or in a ruin
-  ([`09-relics.md`](09-relics.md) §1), and there is nothing else a room decides
-  that is not a slot.
-- There is no "how far will you go" control: one room, one fight, resolved on
-  the tap ([`11-expeditions.md`](11-expeditions.md) §5). The button reads
-  *Enter the room*, or *Fight the boss* on the last room of a depth.
-
-### 2.6 Party composition — slots and panels
+### 2.6 Party composition — slots and the roster
 
 Two rows of slots on the battle screen, filled from the roster under them.
 
 | | |
 |---|---|
-| Data | Troop slots and hero slots — open, filled or **locked**; the roster behind each panel; party attack, live |
-| Flow | Tap a troop tile in the roster → **the next free troop slot fills**. Tap a hero slot → the hero picker. *Quick deploy* (on a lair) fills the board: the best heroes that can fight, then squad after squad, best answer to the lair first |
-| Fill rule | A card sends **as much as it legally can**: a whole squad (`squadSize`), or everything left of that type, or everything the army cap still allows |
+| Data | Troop slots and hero slots — open, filled or **locked**; the roster; the party's attack, live |
+| Flow | Tap a troop tile → **the next free troop slot fills**. Tap a hero slot → the hero picker. *Quick deploy* (on a lair) fills the board: the highest-level heroes that can fight, then squad after squad, the best answer to the lair first |
+| Fill rule | A tile sends **as much as it legally can**: a whole squad (`squadSize`), or everything left of that type, or everything the army cap still allows |
 | Clearing | A tap on a filled troop slot sends that squad home |
-| Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
-| Roster | One tile per troop type: its bust, how many are left at home, its name. A tile that can send nothing says why when tapped |
+| Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight |
+| Roster | One tile per troop type: rank I always, a higher rank once the kingdom has any; its bust, how many are at home, its name. A tile that can send nothing says why when tapped |
 
 ### 2.7 The fight — the playback
 
-Its own full-screen mount at
-z 90, under the reveal (100) and over the nav (10): a fight the player can tap
-around is not a fight.
+Its own full-screen mount at z 90, under the reveal (100) and over the nav
+(10): nothing behind it can be tapped.
 
 **The fight is already over when this opens.** The resolver ran on the tap,
 the rewards are banked and the fallen are off the roster — this replays the
-event stream ([`combat.md`](combat.md) §13) at the tick it was written in, so
-an interrupted replay costs nothing.
+event stream ([`combat.md`](combat.md) §13) at the tick it was written in. An
+interrupted replay changes nothing.
 
 | | |
 |---|---|
 | Data | The log, and nothing else: the two boards from its `start`, then every `attack`, `troops_lost` and `slot_wiped` in order |
 | Elements | **The power bar** at the top — two totals and one split fill, falling as squads come apart (§12). **Six rows of slots**: their heroes · their back · their front · *a gap* · our front · our back · our heroes. The back rank draws smaller, because the row is what decides who gets hit. **Each slot's ring is its health** — leaf for ours, clay for theirs — emptying round the dial; what a blow just took stays pale for a beat |
-| Ground | The board stands on the ground of its kind of fight, seen from above and quiet in the middle: the **field** outside a lair, a **dungeon** room, a depth's **boss** hall, the **Portal**'s depths ([`../art/battle/README.md`](../art/battle/README.md)) |
+| Ground | The board stands on the ground of its kind of fight, seen from above and quiet in the middle: the **field** for a lair or a camp, a **dungeon** room, a depth's **boss** hall, the **Portal**'s depths ([`../art/battle/README.md`](../art/battle/README.md)) |
 | Opening | The replay holds **0.8 s** while each side's rows slide in from its own edge, front rank first, the crossed swords on the bar clash and the place's plaque swings down on its rope, the knobs after it |
 | Swing | The attacker moves first, timed so the blow lands **on the tick the log wrote**. Melee lunges at its target (Cavalry further, raising dust); a shooter draws back and looses — an arrow per troop line (up to three), a bolt for a hero — and it lands on the tick |
 | Hit | The target flashes, flinches away from the blow and a hit sound plays. A blade's mark crosses it — a slash, a straight thrust for Lancers — with sparks; an arrow throws sparks only. The weight of all of it scales with the share of the slot's health the blow took |
@@ -148,190 +124,37 @@ an interrupted replay costs nothing.
 | Haptics | Where the device vibrates: a short buzz on a heavy blow, a longer one on a wipe, a pattern on the verdict; never two within 120 ms, and none under reduced motion |
 | Reduced motion | No opening, swings, flinches, effects, holds, slow motion or flash; the plaque and the skull appear without moving. The ring, the numbers and the cracks stay |
 | Ending | A fight won by a wipe plays its **last 0.3 s at 0.3×** and ends on a white flash. **0.6 s** later the plaque lands over the middle of the board: *Victory* drops in and bounces in a burst of gold; *Defeat* lands heavy and askew, cracked, and the field goes grey under it |
-| Rewards | On a victory with spoils, the **gacha reveal** deals them over the board — the one screen that already knows how to hand things over one at a time (§8.3 of [`10-heroes.md`](10-heroes.md)) |
-| Leaving | Then, and only then, a button at the bottom. It returns to the room sheet, which is already showing the NEXT room |
+| Rewards | On a victory with spoils, the **reveal** deals them over the board one at a time, from the war chest ([`10-heroes.md`](10-heroes.md) §8.3) |
+| Leaving | Then, and only then, **Leave the field** at the bottom. It returns to what the fight was called from (§2.8) |
 | Rules | Two controls under the bar: **speed** — ×1, ×2, ×4 in turn, kept for the next fight — and **Skip** (straight to the result). At ×1 one tick is 100 ms, so the replay is as long as the fight was |
 
-### 2.8 Result — the sheet behind it
+### 2.8 After the fight
 
-There is no separate result screen. The room sheet is still standing when the
-playback closes, showing the next room, the survivors already in its slots and
-the same numbers it always shows — which is the diagnosis a beaten player
-needs (*their power against yours*) without a screen of its own.
+There is no separate result screen. The playback closes onto what the fight
+was called from:
 
-### 2.9 Guild screen — unlock preview
+- **a dungeon room or a Portal floor**: the delve or the descent, with the
+  spoils over it — what the room paid and the soldiers it cost — and **Fight
+  next** (or **Fight again** after a defeat) and **Back**
+  ([`19-world-map.md`](19-world-map.md) §8.2);
+- **a lair**: the lair's card, its path a step on — or *Claim* once its
+  last fight is won ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md));
+- **a camp**: the board, the army marching home.
 
-Owned by [`buildings.md`](buildings.md).
+## 3. Dials, in the order to reach for them
 
-| | |
+| Dial | Key |
 |---|---|
-| Data | Current level, next level cost, depths the next level opens (ruin + depth + boss name + art), other level rewards |
-| Elements | *"Guild 5 → Ironworks D3 · Counting House D2"* with both boss cards |
-| Also hosts | Ruins index: every discovered ruin, its progress, what it waits on |
+| Hero slots, and the Gem price of the next one | `party.heroSlots`, `party.heroSlotGemCostBase`, `.heroSlotGemCostGrowth` |
+| Troop slots (6) | `party.troopSlots` |
+| Replay pace at ×1 (100 ms a tick) | `combat.tickMs` |
 
-### 2.10 Reservoir meter
+## 4. Deliberately not in this design
 
-Owned by the city economy.
-
-| | |
-|---|---|
-| Data | Accrued Stardust / XP / Gold, cap (2 h), time to cap, capped flag |
-| Rules | One meter for the whole idle economy. Distinct full state, visible from the city HUD |
-
-## 3. Cross-cutting
-
-- **Badge priority**, one order across map marker, Guild button and city HUD:
-  reservoir full > new unlock > room available.
-- **Number formatting** for Stardust and XP in the thousands.
-- **Empty states**: no ruin discovered; all open depths cleared with the Guild
-  unaffordable.
-- **Currency copy**: one line each for XP, Stardust, fragments.
-- **Localisation**: 5 ruin names, ~20 depth names, 15 boss names.
-
-## 4. Build order
-
-1. Ruin sheet · room ladder · room sheet · both result screens — one milestone,
-   nothing is playable until all five exist.
-2. Guild unlock preview.
-3. Discovery card, badging, ruins index.
-
-**Prototype cut:** step 1 only, placeholder art, simplified battle view.
-
-**Long-lead art:** 15 boss cards, 5 ruin markers, 5 discovery illustrations,
-affinity and threat icons.
-
-## 5. Mockup prompts
-
-For image generation in ChatGPT. Paste the style block first, then one screen
-prompt per image. Keep labels short — rendered text will be imperfect and is
-placeholder only.
-
-### 5.1 Style block (prepend to every prompt)
-
-```
-Mobile game UI mockup, portrait aspect ratio 9:19.5, full screen.
-Cozy stylized medieval-fantasy kingdom builder. Hand-painted illustrative
-style, soft rim lighting, no photorealism, no 3D renders.
-Palette: warm parchment and aged wood panels, brass and gold trim, deep
-slate-blue shadows; magic accents in cyan-teal. Rounded panel corners,
-generous padding, chunky readable buttons, one clear primary action per
-screen in warm gold.
-Clean flat UI overlay on top of illustrated art. High contrast, legible at
-phone size. No brand logos, no watermarks, no photographic elements.
-```
-
-### 5.2 Ruin sheet — depth stack
-
-```
-Screen: a dungeon ruin's depth list. Vertical scrolling stack of four wide
-horizontal bands, deepest at the bottom, receding into darker stone as they
-descend. Top bar with the ruin's name, a small tier badge and a sword-type
-affinity icon.
-Band 1: complete — dimmed, gold tick, progress "10/10".
-Band 2: in progress — brightest band, progress bar "7/12", small glowing
-frontier marker.
-Band 3: locked — greyed with a padlock, a short requirement label, and a
-visible ornate boss portrait card at its right end showing a treasure item.
-Band 4: locked and darker, boss card silhouetted.
-Each band ends in a taller boss card with painted monster portrait art.
-Bottom: a wide gold primary button.
-```
-
-### 5.3 Room ladder
-
-```
-Screen: a vertical ladder of twelve small square room cards inside one dungeon
-depth, ascending path layout on a dark stone background with candlelight.
-Cards 1-6: cleared — dimmed with gold ticks.
-Card 7: current — bright, glowing outline, larger, showing a monster icon and
-a small power number.
-Cards 8-11: locked — flat dark cards with faint monster silhouettes.
-Card 12: boss room — wide ornate card with a monster portrait and a treasure
-chest icon.
-Pinned banner above the current card: a slim parchment ribbon with a reward
-icon and a short label.
-Top bar: back arrow, depth name, progress "7/12".
-```
-
-### 5.4 Room sheet — pre-fight
-
-```
-Screen: pre-battle preparation panel for a single dungeon room.
-Top: enemy preview card — a painted monster portrait with a type icon and a
-strength value.
-Middle: the hero focus — a large power comparison element showing two numbers
-facing each other, the player's on the left in gold, the enemy's on the right
-in red, with a subtle warning glow because the player's is lower.
-Below: a horizontal party strip of four portrait slots, three filled with
-armoured unit portraits and one empty with a plus icon.
-Below that: a small cost row with a wheat icon and a coin icon.
-Bottom: one large gold primary button.
-```
-
-### 5.5 Result — cleared
-
-```
-Screen: victory reward panel over a darkened dungeon background.
-Center: an open treasure chest with warm light spilling out, painted style.
-Below it: a row of four reward tiles — a coin stack, a cyan-teal crystal, a
-blue XP orb, and a glowing character shard, each with a small quantity label.
-Below: a slim progress row showing a passive-income counter with a small
-upward arrow and a cyan crystal icon.
-Bottom: two buttons, a large gold primary and a smaller flat secondary.
-No confetti, restrained celebration, cozy not explosive.
-```
-
-### 5.6 Result — failed
-
-```
-Screen: post-defeat information panel, calm and informative rather than harsh.
-Muted palette, cool slate-blue, no red alarm styling, no skulls.
-Top: a short heading and a small dimmed monster portrait.
-Middle: the core element — a clear side-by-side comparison of two numbers,
-the player's lower value on the left and the enemy's on the right, with a
-small explanatory line beneath and two matchup icons showing a cavalry icon
-beating an archer icon.
-Below: a spent-cost row with a wheat icon.
-Bottom: three buttons stacked — one gold primary, two flat secondary.
-```
-
-### 5.7 Discovery card
-
-```
-Screen: a full-bleed discovery reveal card. Painted illustration of a sunken
-overgrown stone ruin entrance at dusk, mist and fireflies, cozy and
-inviting rather than horror.
-Overlaid lower third: a parchment panel with a title line, a small tier badge,
-an affinity icon, and two short lines of flavour text.
-Bottom: one gold primary button and one flat text link.
-Vignette edges, soft depth of field.
-```
-
-### 5.8 Guild screen — unlock preview
-
-```
-Screen: a building upgrade panel for an Adventurers' Guild in a cozy
-kingdom builder.
-Top: painted illustration of a timber-and-stone guild hall with hanging
-banners, plus a level badge.
-Middle: an upgrade cost row of three resource icons with quantities and one
-large gold upgrade button.
-Below: a "unlocks next" section containing two ornate preview cards side by
-side, each with a painted monster boss portrait, a short label and a small
-treasure icon.
-Bottom: a compact list of three rows, each with a small ruin icon and a
-progress bar.
-```
-
-### 5.9 Map marker
-
-```
-Close crop of an illustrated overworld map tile in a cozy kingdom builder,
-top-down slightly angled painted style, grass, trees and stone paths.
-Center: a ruin entrance marker — a small painted stone archway on a raised
-base, with a circular progress ring around it in gold, a tiny affinity icon
-on the ring, and a small glowing notification badge at its upper right.
-Nearby: two dimmer markers partially covered by soft grey fog at the frame
-edges.
-No UI panels, no text beyond the badge.
-```
+- A screen per dungeon, per depth or per room: the delve is the one screen.
+- A preview of a room's enemy before it is fought; only the boss shows his
+  face.
+- A separate result screen (§2.8).
+- A control for how far to go: one room, one fight, resolved on the tap.
+- A troop slot that is locked or sold.
+- Choosing a squad's row.

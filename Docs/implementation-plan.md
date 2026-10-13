@@ -8,7 +8,7 @@
 > [`open-questions.md`](open-questions.md). Where this file names a question it
 > names it by id (`OQ-n`). What is done is what is merged into `develop`.
 >
-> **State: 95 test suites, 1,561 tests, all green.**
+> **State: 151 test suites, 2,028 tests, all green.**
 
 ## 1. The engine contract
 
@@ -62,29 +62,33 @@ yet inside it.
 
 | Feature | Doc | Not built yet |
 |---|---|---|
-| The map, fog, terrain, features, reveal curve, treasures, abandoned buildings, the sea of clouds | [`01`](features/01-map-and-fog.md) | the wisps of a tear and a reveal, and the colour flooding back |
-| The province and the world board as two scopes | [`02`](features/02-map-scopes.md) | a second region |
-| Currencies, taxes, adjacency, building stores | [`03`](features/03-economy.md) | the Knowledge ↔ Stardust split (§1.1) |
-| Harvest as a depot, the tap as a duration, the strike | [`04`](features/04-harvest.md) | a separate FarmLands harvest row, the map editor's production census (OQ-50), the over-hire beat, the half-cut depot art |
+| The map, fog, terrain, features, reveal curve, Townhall reach, treasures, abandoned buildings, landmarks, the sea of clouds | [`01`](features/01-map-and-fog.md) | the wisps of a tear and a reveal (§4.2) |
+| The province and the world board as two scopes | [`02`](features/02-map-scopes.md) | a second region; temporary provinces |
+| Currencies, taxes, adjacency, building stores | [`03`](features/03-economy.md) | — |
+| Harvest as a depot, the tap as a duration, the strike | [`04`](features/04-harvest.md) | the map editor's production census (OQ-50) |
 | Districts, placement, costs per level, moving buildings | [`05`](features/05-city-and-districts.md), [`buildings`](features/buildings.md) | — |
 | Builders, the priced refusal | [`06`](features/06-construction.md) | — |
-| The tech tree — five books, climbing bonuses, the Knowledge bar | [`07`](features/07-research.md), [`tech-tree`](features/tech-tree.md) | world-map landmarks in the tree (§7), guild investment (§8) |
-| Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | — |
-| Relics and the eight-album card collection | [`09`](features/09-relics.md) | trading (OQ-89) |
-| Heroes, the gacha, the Tavern | [`10`](features/10-heroes.md) | the hero on the resolver (§4 Step 8) |
-| Dungeons — depths of rooms on the world board | [`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md) | supplies, the Scout preview, room materials, boss chests, permanent generation, per-dungeon content |
+| The tech tree — the Kingdom tree in nine chapters, the Sagas and the Atlas, the Knowledge bar | [`07`](features/07-research.md), [`tech-tree`](features/tech-tree.md) | guild investment (§8) |
+| Mana, the Sanctum, landmarks, refills, the rewarded ad | [`08`](features/08-magic.md) | — |
+| Relics — fragments, restoration, Shrines, Chapels, trading | [`09`](features/09-relics.md) | three world relics move numbers nothing reads (OQ-113) |
+| Heroes, their stat blocks and skills, the gacha, the Tavern | [`10`](features/10-heroes.md) | the rarity multipliers (§2.1); the banner in the Tavern |
+| Dungeons on the world board and their screens | [`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md) | — |
 | The quest chain | [`12`](features/12-quests.md) | — |
-| The timeline and its scheduling | [`13`](features/13-events.md) | the event archetype (§4 Step 3); the catalogue is empty |
-| The store, the payer profile, three ad placements | [`14`](features/14-monetization.md) | the other placements and SKUs, the telemetry pipeline (§4 Step 4) |
+| The timeline and its scheduling | [`13`](features/13-events.md) | the event archetype; the catalogue is empty |
+| The store, the payer profile, three ad placements, the funnel | [`14`](features/14-monetization.md) | ad placements 4–6, the cosmetic probe (§5) |
+| Friends, the crest, the Inbox, the wish board, daily help | [`15`](features/15-social.md) | the guild, the guild week, the siege |
 | Workshops and refined goods | [`17`](features/17-workshops-and-goods.md) | — |
-| Garrisons, raids and lairs | [`18`](features/18-garrisons-and-raids.md) | — |
-| The world board — explorers, claims, chains, improvements, armies, conquest, the Portals, a world of seven boards on the real server | [`19`](features/19-world-map.md) | the season (OQ-3) |
+| Lairs and raids | [`18`](features/18-garrisons-and-raids.md) | — |
+| The world — seven boards, explorers, claims, armies, conquest, camps, dungeons, the Portal, stand-in rivals, on the world server | [`19`](features/19-world-map.md) | the season (OQ-3) |
 | Harmony and the decorations | [`21`](features/21-harmony.md) | — |
 | Progression doors, tutorials, the dialogue stage | [`22`](features/22-progression.md), [`23`](features/23-tutorials.md), [`24`](features/24-dialogue.md) | the advisor's portrait |
 | The Royal Survey | [`25`](features/25-the-survey.md) | the seal that flies to the pill (§4) |
 | Notices — the bubbles in the corner | [`26`](features/26-notices.md) | — |
+| Plantables | [`27`](features/27-plantables.md) | — |
+| Languages | [`28`](features/28-languages.md) | — |
+| The Bag — items, the Speed-up picker, the shortfall sheet | [`29`](features/29-the-bag.md) | — |
 | The tick auto-battler and its replay screen | [`combat`](features/combat.md) | authored boss formations, villains in a dungeon's standard room (OQ-86) |
-| The fantasy signals, kept in the save | [`playtest`](playtest.md) §5 | a pipeline: the save is the log |
+| The fantasy signals and the analytics pipeline | [`playtest`](playtest.md) §5, [`plans/analytics.md`](plans/analytics.md) | — |
 | The data editor, the map editor, the tree editor | [`data-editor`](plans/data-editor.md), [`map-editor`](map-editor.md), [`tech-tree-editor`](tech-tree-editor.md) | — |
 
 **The load-bearing assertion holds** across a research completion, a modifier
@@ -97,7 +101,7 @@ an army's march, and an event window opening and closing during an absence.
 
 | # | Hole | Where |
 |---|---|---|
-| **H3** | **No rate-up banner is scheduled.** The timeline carries a banner payload and the activation query exists, but nothing schedules one, so rate-up is untested code. | [`10`](features/10-heroes.md) §11 |
+| **H3** | **A scheduled banner does nothing but post its news.** `banner` is the timeline's one payload; no schedule is authored and nothing reads an active one. | [`13`](features/13-events.md) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
 | **H7** | **No new sounds.** Casting, claiming, clearing a room and taking a depth reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
@@ -117,8 +121,7 @@ Numbers only, measured with the thirty-day harness (`npm run harness`) and the p
   Survey's ladder).
 - **The city:** OQ-93 (villagers per Townhall level), OQ-107 (store
   capacities).
-- **Combat and garrisons:** OQ-72, OQ-109, OQ-110, OQ-112.
-- **The book names:** OQ-15, before a playtester sees them.
+- **Combat and lairs:** OQ-72, OQ-109, OQ-110, OQ-112.
 
 ### Step 3 · The event archetype
 
@@ -139,14 +142,13 @@ authored ten times a year.
 
 ### Step 4 · Simulated monetisation
 
-The store's first cut ships. What is left: the other rewarded placements, the
-remaining SKUs, and the telemetry that makes a retention read-out possible.
-**Without a pipeline there is no way to produce a D30.**
+The store, its funnel and the analytics pipeline ship. What is left: rewarded
+placements 4–6 and the cosmetic probe.
 
 - **Design:** [`14-monetization.md`](features/14-monetization.md).
-- **Blocked on:** **OQ-25** (how a pass is bought), **OQ-26** (does cosmetic
-  content exist), **OQ-29** (disclosure — settle before a playtester sees a
-  price). **OQ-31** is a price to watch.
+- **Blocked on:** **OQ-26** (does cosmetic content exist), **OQ-29**
+  (disclosure — settle before a playtester sees a price). **OQ-31** is a price
+  to watch.
 - **Gate:** a one-page ranking of surfaces by intent from at least two weeks of
   playtester sessions. If the ranking is not stable between week one and week
   two, the sample is the finding.
@@ -165,27 +167,11 @@ shipping on its own: **the save stops evaporating.**
 5. The siege — the world board's co-op encounter.
 
 - **Design:** [`15-social.md`](features/15-social.md).
-- **Blocked on:** **OQ-33**, **OQ-36**, **OQ-38**, **OQ-39**, and
-  **OQ-89** if card trading ships with it.
+- **Blocked on:** **OQ-33**, **OQ-36**, **OQ-38**, **OQ-39**.
 - **Depends on:** Step 3's build-speed modifier.
 - **Gate:** two playtesters in one guild each see the bar move because of what
   the other did; the daily cap holds against a client that spends it twice; a
   gift applied during an absence still leaves the replay assertion true.
-
-### Step 8 · Heroes onto the resolver
-
-The collection half ships — XP-bought levels, Fragment-plus-Stardust
-ascension, Gem hero slots. What is left is the hero as a body on the board.
-
-- **Design:** [`10-heroes.md`](features/10-heroes.md) §2.
-- **What it changes:** a hero's stat block (`dmg`, `cooldown`, growth per
-  level, the troop multipliers, the passive stepped by tier) replaces the
-  `atk`/`def`/`hp` read and the trait; the resolver applies the passive at
-  battle start; the hero card reads the block. Closes **OQ-95**.
-- **Numbers:** OQ-78, OQ-79, OQ-80, OQ-115.
-- **Gate:** an old save loads with every hero level intact; a fight with no
-  hero is refused; two heroes of one type buff their troops once by
-  `1 + Σ(mult − 1)`; a hero's passive survives its death within the fight.
 
 ### The Dragon's Nest
 

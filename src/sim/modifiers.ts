@@ -1,18 +1,15 @@
 // The modifier layer (Docs/implementation-plan.md §1).
 //
-// Before this, effects came only from upgrade LEVELS, read through the five
-// effectiveX helpers in upgrades.ts. Nothing could apply a temporary or
-// externally-sourced effect — which is every artifact passive, every hero
-// trait, every season and every event.
+// The stack carries every effect that is not a technology: a world relic in
+// a Chapel, a Legendary's boon, a Bag boost, an event. The effectiveX helpers
+// in upgrades.ts read it as the last stage: base → the completed technologies
+// (sim/techEffects.ts) → a city relic's aura (sim/hosts.ts) → the modifier
+// stack. An empty stack is the bit-exact identity, `(base + 0) x 1 === base`.
 //
-// The pipeline is now three stages: base → upgrade levels → modifier stack.
-// An empty stack is the bit-exact identity, `(base + 0) x 1 === base`, which
-// is what let this ship without touching a single existing assertion.
-//
-// Upgrade levels are deliberately NOT re-expressed as modifiers. They are
-// persisted as levels, purchasable, and priced on a curve; converting them
-// would mean a save migration plus rebuilding stack entries on every purchase,
-// in exchange for elegance nobody can see.
+// Technologies are deliberately NOT re-expressed as modifiers. They are
+// persisted as completed ids and summed on read; converting them would mean a
+// save migration plus rebuilding stack entries on every purchase, in exchange
+// for elegance nobody can see.
 
 import { relicAura } from './hosts';
 import type {
@@ -32,10 +29,9 @@ export type ModifierStat =
   | 'knowledgeYield'  // every lump of Knowledge — never the drip
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
-  // The era-2/3 hooks (Docs/features/tech-tree.md §6.2). Each is reached by
-  // the tech tree (a `stat` in `data/techEffectRules.ts`) AND by this stack,
-  // in the helper that owns the number — three stages, one place, like
-  // everything above.
+  // Each is read in the helper that owns the number, beside whatever the
+  // tree moves there (`data/techEffectRules.ts`, Docs/features/tech-tree.md
+  // §12) — the stages in one place, like everything above.
   | 'buildTime'       // seconds to raise or upgrade a building
   | 'workerSpeed'     // tiles per second a worker walks
   | 'manaCap'         // the ceiling of the pool
@@ -44,8 +40,7 @@ export type ModifierStat =
   // — the rooms were its only payer. The Stargazer's Orb passive and the
   // Prospecting ranks still name it and move nothing.
   | 'stardustYield'   // Stardust a room paid — NOT READ
-  // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
-  // adding a twin of it.
+  // The army.
   | 'armyCap'         // power the halls can field
   | 'supplyCost'      // what a lair attack costs in supplies
   | 'haulLoss'        // the fraction a failed depth loses
@@ -60,27 +55,25 @@ export type ModifierStat =
   | 'discoverRadius'  // how far a building sees into the fog
   // THE SPEEDS. A wait is owned by the game as a TIME and moved as a SPEED the
   // call site DIVIDES by, so the bonus points up and never arrives at zero
-  // (Docs/proposals/legendary-boons.md §2.1). `buildTime` above is the tree's
-  // ranks, which are authored as a discount and stay one; this is the stack's
-  // half of the same number, and the two multiply.
+  // (Docs/features/22-progression.md §9). `buildTime` above is a multiplier
+  // on the time itself; this is a speed the time is divided by, and the tree's
+  // `buildSpeed` is a third — the three multiply.
   | 'buildSpeed'      // how fast the builders work
   | 'recoverySpeed'   // how fast a cell refills in place
   | 'workerStrikeSpeed' // how fast a worker swings
   | 'worldRevealSpeed' // how fast an explorer marches (sim/world/explorers.ts)
   | 'unitHp'          // multiplies every unit's HP, on the board and in the estimate
   // THE GROUND. Both are FLAT on a base the workbook authors and never grows,
-  // so flat cannot go stale here the way it does on a rate. The Sickle of Plenty
-  // moves the two together — a node gets richer as fast as the swing gets
-  // bigger — because either alone saturates: a bigger swing empties a node it
-  // cannot exceed, and a richer node nobody can drain faster is just a longer
-  // queue (Docs/proposals/relic-effects.md §4.2).
+  // so flat cannot go stale here the way it does on a rate. The Sickle of
+  // Plenty moves the swing, the Staff of Renewal the stock and its regrowth
+  // (Docs/features/09-relics.md §2).
   | 'harvestUnitsPerStrike' // units one extraction takes — the thumb and the crew
   | 'harvestStock'    // units a cell holds before it is spent
   | 'trainingSpeed'   // how fast a building trains — soldiers and villagers alike
   // TODO(OQ-113): NOTHING READS `roomHaul`. It moved a ROOM's Gold and Stone,
   // and the rooms were retired with the depths; it stays defined so the
   // Wisp Lantern that names it still loads. The Lantern needs a new
-  // effect (Docs/open-questions.md OQ-113, Docs/proposals/relic-effects.md).
+  // effect (Docs/open-questions.md OQ-113).
   | 'roomHaul'        // a room's Gold and Stone — NOT READ
   | 'worldImprovementYield'; // what a world-map district grants an hour — NOT READ YET
 
@@ -219,10 +212,9 @@ export function resolve(
  * else keeps calling `resolve()`, and the two agree exactly wherever no zone
  * is standing, because an empty area set folds to the same identity.
  *
- * ZONES OVERLAP FREELY and their values multiply. The cooldown is what stops a
- * player carpeting the map, so two zones on one cell is a choice the player
- * made — an area taking two effects is an area somewhere else taking none —
- * rather than a rule to police (Docs/features/09-relics.md §2.1).
+ * A city relic's aura is folded first, as a stage of its own (sim/hosts.ts),
+ * where two auras of one relic take the stronger and never add
+ * (Docs/features/09-relics.md §2). Modifier zones (`area`) after it multiply.
  */
 export function resolveAt(
   state: GameState,
@@ -269,16 +261,6 @@ export function addModifier(state: GameState, m: Modifier): void {
 export function removeModifiersWhere(state: GameState, pick: (m: Modifier) => boolean): number {
   const before = state.modifiers.length;
   state.modifiers = state.modifiers.filter((m) => !pick(m));
-  return before - state.modifiers.length;
-}
-
-/** Drop every modifier from `source` (a relic being un-attuned, a season
- *  ending). Returns how many went. */
-export function removeModifiersFrom(state: GameState, source: ModifierSource, tag?: string): number {
-  const before = state.modifiers.length;
-  state.modifiers = state.modifiers.filter(
-    (m) => m.source !== source || (tag !== undefined && !m.id.startsWith(tag)),
-  );
   return before - state.modifiers.length;
 }
 

@@ -1,5 +1,5 @@
 // Watching a fight that has already happened
-// (Docs/features/11a-ruins-ui.md §2.5, Docs/features/combat.md §13).
+// (Docs/features/11a-ruins-ui.md §2.7, Docs/features/combat.md §13).
 //
 // The screen is a pure function of these four fields and one clock, which is
 // why the machine lives on the presenter: the phases, the two-second pause

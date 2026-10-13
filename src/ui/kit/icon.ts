@@ -68,11 +68,10 @@ export type UiIconName =
   // The mark the battle screen paints over a squad that is gone. It is the
   // one icon that is drawn ON something rather than beside it.
   | 'skull'
-  // THE CARD COLLECTION (Docs/features/09-relics.md §11). `pack` is the thing
-  // a lair pays and the reveal opens; `cards` is the nav tab, which replaced
-  // the Reliquary's `relics` chest; `vault` is the safe in the corner of the
-  // Collection, where duplicates go; `crest` is the season's wax seal, which
-  // the pill wears and the header plank repeats.
+  // `pack` is a world reward's pack of relic fragments (a hex's promise, a
+  // Portal floor's prize); `crest` is a wax seal (a Legendary's boon, a
+  // dungeon's depth count). `cards` and `vault` are left from the retired
+  // card collection; nothing in the game draws them.
   | 'pack' | 'cards' | 'vault' | 'crest'
   // One undiscovered map cell, its borders running past its corners so it
   // reads as a cell of the grid: the mark of a quest that reveals the map.

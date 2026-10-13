@@ -86,15 +86,13 @@ describe('the quest chain', () => {
                                                   //   leaving the player to find
                                                   //   them
       'FurtherAfield',                            // 25   the shrine comes into view
-      'WarDrums',                                 // 26   FIND a lair: the first one
-                                                  //   found opens the Book of
-                                                  //   Warfare and starts the clock,
-                                                  //   and a cell count can be met
-                                                  //   facing away from both
+      'WarDrums',                                 // 26   FIND a lair: a cell count
+                                                  //   can be met facing away
+                                                  //   from it
       'ArmedMen', 'Mustered', 'FirstSoldier',     // 26-28 something worth killing
       'MusterCompany',                            // 29   a company, led by the Warden
       'DriveThemOut',                             // 30   THE FIRST FIGHT — and the
-                                                  //   first card pack
+                                                  //   first relic fragment
       'TheWatchtower', 'Attuned',                 // 31-32 the tower the Orcs robbed:
                                                   //   its lens opens the world
       'Mapmakers', 'Surveyors',                   // 33-34 exploration becomes a system
@@ -391,7 +389,7 @@ describe('first-time discoveries', () => {
   it('the first quest pays the first research', () => {
     expect(QUESTS[0].rewardKnowledge).toBeGreaterThanOrEqual(techKnowledgeCost('Forestry'));
     expect(CURRENCIES.Knowledge.start).toBe(0);
-    // The clock the back half leans on instead of the chain (§3) — if this
+    // The clock the back half leans on instead of the chain (07-research.md §3) — if this
     // ever went to zero, nothing else in the game would fund a technology.
     expect(KNOWLEDGE.basePerHour).toBeGreaterThan(0);
   });
@@ -406,7 +404,7 @@ describe('first-time discoveries', () => {
   });
 });
 
-// Docs/features/10-heroes.md §4 — the steady half of the research budget.
+// Docs/features/12-quests.md §2.2 — the steady half of the research budget.
 //
 // CLAIM: quests pay Stardust into the KINGDOM purse, and the chain pays out
 // more Gold than the whole tech tree costs. Exploring is the half that scales;
@@ -433,16 +431,16 @@ describe('quests fund the research tree', () => {
   // sitting. The one thing this may lean on is the lump the Watchtower pays
   // when it stands, because `TheWatchtower` IS its repair.
   //
-  // NARROWED 2026-09-09 to end at `Attuned`. Past the Sanctum the chain stops
-  // funding its own research and the base rate takes over (§3): a player at
-  // `Highlands` has a province dripping, and by then the wait is the content
-  // rather than a wall. The cut is by CHAIN POSITION, not by era — `MoreRoom`
-  // asks for an era-1 card at quest 40, long after the drip is the funding.
+  // The opening ends at `Attuned`. Past the Sanctum the chain stops funding
+  // its own research and the drip takes over (07-research.md §3): by then the
+  // province is dripping, and the wait is the content rather than a wall. The
+  // cut is by CHAIN POSITION, not by chapter — `MoreRoom` asks for a
+  // chapter-2 card at quest 52, long after the drip is the funding.
   const OPENING_ENDS_AT = 'Attuned';
 
   it('pays enough Knowledge that the OPENING is never stuck, with zero drip', () => {
-    // Nothing starts researched: every book is open from the first minute and
-    // no cover page is granted, so the chain-follower pays for all of it.
+    // Nothing starts researched and no card is granted, so the
+    // chain-follower pays for all of it.
     const done = new Set<TechId>();
     const need = (id: TechId): number => {
       if (done.has(id)) return 0;

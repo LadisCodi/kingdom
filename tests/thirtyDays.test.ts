@@ -559,9 +559,9 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
           army: armyCap(state),
-          // Supply over demand. Both stay 0 until the Townhall ladder past 4
-          // lands: the first piece opens at TH5 and the first level that
-          // demands any is 8 (Docs/features/18-harmony.md).
+          // Supply over demand. Supply starts with the first decoration (TH2);
+          // demand stays 0 until a building reaches level 8
+          // (Docs/features/21-harmony.md §2, §3).
           harmony: `${harmonySupply(state)}/${harmonyDemand(state)}`,
           lairs: clearedLairCount(state),
           landmarks: Object.keys(state.landmarks.claimed).length,

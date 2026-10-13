@@ -1,15 +1,15 @@
 # 15 · The social layer
 
-> **Scope.** Identity, the friends list, daily help, a persistent guild, a
-> weekly collective bar, and the co-op siege that clears the world map's
-> landmarks. Card trading is
-> [`09-relics.md`](09-relics.md) §8; investing research points into a guild
+> **Scope.** Identity, the friends list, the Inbox, trading on the wish
+> board, daily help, and the guild: a persistent group, a weekly collective
+> bar and a siege on the world board. Investing Knowledge into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
-> **Status: identity, the friends list, the crest, the
-> Inbox, the wish board and daily help built (§2–§3); the rest
-> designed, not built.** Prototype population is five to ten named
-> playtesters.
+> **Status: built** — identity, the friends list, the crest, the Inbox, the
+> wish board and daily help (§1–§3), on the `social` edge function, with a
+> stand-in in the browser when there is no cloud. **Designed, not built** —
+> the guild, its week and the siege (§4–§6). Prototype population is five to
+> ten named playtesters.
 
 ## 1. The server
 
@@ -18,16 +18,18 @@
 | City simulation, economy, events | client |
 | The world board — claims, armies, dungeons ([`19-world-map.md`](19-world-map.md)) | **server** |
 | Save | per-player |
-| Friends, neighbours, guilds, help, collective bars | **server** |
+| Friends, the Inbox, the wish board, help — and guilds and their bars | **server** (`social`) |
 | Purchase-intent log, telemetry | **server** |
 
 - Shared tables are readable but never directly writable.
-- Every mutation is a server-side function that validates, applies the cap and
-  returns the new state. One per action: set a display name, create a guild,
-  join, leave, list neighbours, give help, contribute, drain effects, commit
-  units, resolve a siege.
-- Every mutation is idempotent, keyed on a client-supplied id. A retry cannot
-  double-spend a daily action or double-count a contribution.
+- Every mutation is a server-side command that validates, applies the cap and
+  returns the new state. One per action: `hello`, `name`, `request`,
+  `accept`, `decline`, `cancel`, `remove`, `read`, `deleteRead`, `pinWish`,
+  `withdrawWish`, `fillWish`, `help`; for the guild, create, join, leave,
+  contribute, commit units and resolve a siege.
+- Every mutation is idempotent. A social command is idempotent by what it
+  says (asking twice is one request); a world command carries an id, so a
+  retry runs once. A retry cannot double-spend a daily action.
 - The server keeps the time. A request carries none; the client keeps its
   clock on the server's.
 - The protocol and the steps to the real server:
@@ -44,23 +46,22 @@
 
 ### 1.2 Server effects and the deterministic sim
 
-- Server effects are drained at load, **before** the offline advance.
-- An effect is sent with every answer until the client acknowledges it, and
-  the client acknowledges only what it has saved. Each is applied once.
-- A drained effect enters the state as an ordinary modifier with an explicit
-  expiry: a live command with a definite timestamp. After it lands the replay
-  is pure again.
-- Same position as the event catalogue, which merges into state at load,
-  before the replay.
+- What the server owes a player — a world effect (loot, an army home, a
+  report) or a social **delivery** (a lot, a gift) — is numbered, and sent
+  with every answer until the client acknowledges it.
+- The client applies each once, past the last number it applied, saves, then
+  acknowledges it.
+- An effect only adds to the state; it never rewrites the past, so the
+  offline replay holds with it in the state.
 - Nothing writes into another player's save.
 
 ## 2. Identity
 
-- One anonymous account per browser (built). Its id is who the player is to
-  the world server (built).
+- One anonymous account per browser. Its id is who the player is to
+  the world server.
 - A **nickname**, chosen the first time out onto the world map, unique and
-  never changed ([`19-world-map.md`](19-world-map.md) §1.3) (built).
-- A **friend code**: eight letters in two fours (`K7QD-M2XA`), handed out by
+  never changed ([`19-world-map.md`](19-world-map.md) §1.3).
+- A **friend code**: eight characters in two fours (`K7QD-M2XA`), handed out by
   the server the first time anyone needs it; no 0/O or 1/I.
 - A **crest**, chosen by the player (§2.2); until then the one its nickname
   picks, the same everywhere.
@@ -242,7 +243,7 @@ Inbox message.
 
 ## 3. Daily help
 
-- **Who:** the player's friends (§2.1). Needs no guild.
+- **Who:** the player's friends (§2.1).
 - **Where:** a **Help** button on each friend's row in the List; the head
   of the friends section counts the helps left (*Helps 4/5*). A friend
   helped shows *Helped · again in …*.
@@ -260,7 +261,6 @@ Inbox message.
 
 - Helping changes only the helper's state and queues a gift for the target.
 - No presence required. A gift is not instant.
-- **OQ-34**, closed.
 
 ## 4. The guild
 
@@ -293,8 +293,8 @@ Submitted as they happen:
 | Contribution | Weight |
 |---|---|
 | A **Wonder level** bought | its Gold cost |
-| A **dungeon depth** cleared | depth × tier |
-| A **landmark** claimed, a **lair** first-cleared | flat, large |
+| A **dungeon room** cleared | by its depth |
+| A **landmark** claimed, a **lair** cleared | flat, large |
 | Resources **donated** to the guild | a fraction of the city's hourly rate |
 | A **help** given | flat, small |
 
@@ -313,42 +313,25 @@ Submitted as they happen:
 
 ## 6. The siege
 
-> **To be redesigned with the social layer.** Written against the delves and
-> landmark claims that no longer exist; the world board now comes first
-> ([`02-map-scopes.md`](02-map-scopes.md) §7).
+> Designed in outline; to be redesigned on the world board with the guild
+> (**OQ-38**).
 
-- The siege is the **world map's** encounter
-  ([`02-map-scopes.md`](02-map-scopes.md) §7): a contested landmark held by an
-  authored threat, cleared by a guild. The province's lairs are cleared
-  solo, by a hero and a party
-  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)); province
-  landmarks are claimed for Gold.
-- A player **commits units** to a besieged landmark. Committed units are
-  unavailable for delves.
+- The siege is the **world board's** guild encounter
+  ([`02-map-scopes.md`](02-map-scopes.md) §7): a site held by an authored
+  threat, cleared by a guild.
+- A player **commits units** to it. Committed units are unavailable for
+  anything else until the deadline.
 - At the week's deadline the **sum of committed power** is scored against the
-  landmark's authored threat with the delve scoring pass: same type chart,
-  same safe-depth-style preview. A well-prepared siege never fails.
-- Success: the cleared flag is written for every contributor, and everyone who
-  committed gets the **+10 Mana cap**.
-- Failure: the units come home; the siege is available next week. Nothing is
+  authored threat with the ordinary type chart. A well-prepared siege never
+  fails.
+- Success: the site is cleared for every contributor, and each is paid.
+- Failure: the units come home; the siege is open again next week. Nothing is
   lost.
-- One command; contributor count 1 to 10. A solo player clears a landmark
-  alone over several weeks; a guild clears it in one.
+- One command; contributor count 1 to 10. A solo player clears it alone over
+  several weeks; a guild clears it in one.
 - No synchronous play, no battle screen.
-- The one route into combat that does not require a hero.
 
-## 7. Card trading
-
-- Rules: [`09-relics.md`](09-relics.md) §8 — a **one-way gift**, three sends a
-  day, receiving uncapped, gold cards never.
-- The send is a server mutation on the model of daily help (§3): idempotent,
-  capped on the sender, drained by the receiver at next load before the
-  offline advance.
-- Safe because of the season: a card is wiped at the close, so a spare is
-  free to give and pointless to hoard.
-- What the trade screen carries beyond the send: **OQ-89.**
-
-## 8. Exit gate
+## 7. Exit gate
 
 - Two playtesters in one guild each see the bar move because of what the other
   did.
@@ -356,18 +339,20 @@ Submitted as they happen:
   target, and against a client that replays the same contribution id.
 - A gift given while the target is offline is applied exactly once when they
   return, and the replay property still holds with a drained gift in the state.
-- A siege committed by one player over three weeks clears the same landmark a
+- A siege committed by one player over three weeks clears the same site a
   guild clears in one.
 - No client can read the contributions of a guild it is not in.
 
-## 9. Deliberately not in this design
+## 8. Deliberately not in this design
 
 - Chat
 - Avatars and frames; crests locked behind progress or sold
 - A leaderboard at prototype population
-- Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §5)
+- Raiding or looting another player's city ([`02-map-scopes.md`](02-map-scopes.md) §5)
+- Trading on the world map, or with anyone but a friend (§2.4)
+- Trading bound fragments, or a fragment of a relic the player has never met
 - Writing into another player's save
 - A live-presence requirement
 - The sim on the server
 
-**Open questions:** OQ-89, OQ-33, OQ-36, OQ-37, OQ-38, OQ-39.
+**Open questions:** OQ-33, OQ-36, OQ-37, OQ-38, OQ-39.

@@ -261,7 +261,7 @@ export function spellSection(game: Game, id: ArtifactId, view: RelicView): HTMLE
 
 /** Where a missing fragment comes from: the only doors there are. */
 const FRAGMENT_SOURCES = (): string =>
-  tr('More fragments are won in battle — in lairs, on the world map and in the depths — bought in the store, or traded with friends');
+  tr('More fragments are found in the fog, won in lairs and on the world map, paid by quests and research, bought in the store, or traded with friends');
 
 /**
  * THE LEVEL SECTION (one `.k-section`): the relic's level, its six slots and

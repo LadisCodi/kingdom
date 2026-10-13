@@ -24,11 +24,10 @@ Every feature below is shaped by these.
    province is inviolable. The only thing that ever takes from it is a lair
    you have found and left standing — three raids a day from the buildings'
    stores, never the wallet, and what it carries handed back when you clear
-   it. **What a player
-   can take from a player is territory**: a claimed hex on the world map, never
-   a building and never a purse. Every other pressure is *opportunity that
-   expires* — a pool that overflows, a window that closes, a haul you chose to
-   risk.
+   it. **What a player can take from a player is ground on the world map** —
+   a hex, with the district and the store on it — never the province and
+   never a purse. Every other pressure is *opportunity that expires* — a pool
+   that overflows, a window that closes, a haul you chose to risk.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. A fight is composed, never played.
 3. **Wallets buy power, comfort and breadth — but never exclusivity.**
@@ -41,15 +40,15 @@ Every feature below is shaped by these.
    three check-ins. **If a feature needs more, the feature is wrong.**
 2. **Price every reward in a duration of the player's own production**, never in
    absolute amounts. A tap pays seconds of WORK on what you tapped; a
-   Survey chest pays hours of production. A ladder is relative too: a Wonder's cost
-   is a curve, not a table.
+   Survey purse pays minutes of Gold production. A ladder is relative too: a
+   Wonder's cost is a curve, not a table.
 3. **There is no offline cap.** An absence is replayed in full; what the city
    makes is bounded by what it can hold — each building's store, the Mana
    pool, the Knowledge bar, the queues.
-4. **Adding a wallet row needs an argument.** Eleven rows, five things on the
-   plank. A counter beside the thing it belongs to usually beats a coin — the
-   argument that wins is that the thing is a *price* on a button, which is
-   what the two gacha keys are.
+4. **Adding a wallet row needs an argument.** Nine rows, five on the plank. A
+   counter beside the thing it belongs to — hero Fragments, refined goods,
+   relic fragments — or an item in the Bag — keys, speed-ups, chests —
+   usually beats a coin.
 5. **One job per currency.**
 
 **The paid fog is the differentiator.** It pays back in resources,
@@ -63,61 +62,80 @@ One file per feature, in the order a player meets them.
 
 | # | Feature | Covers | State |
 |---|---|---|---|
-| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds — **treasures and abandoned buildings** | built, but for the wisps of a tear and a reveal |
-| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the three scopes, who is authoritative over each, what the save records, and what the promises allow to be contested | the province built; the world board built against a local stand-in; temporary provinces and the guild siege not built |
-| 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
-| 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
-| 5 | [The city](features/05-city-and-districts.md) | every district, the Townhall as era gate, **every level's cost authored and multiplied by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
+| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal price, and what the fog holds — **treasures, abandoned buildings, landmarks and lairs** | built, but for the wisps of a tear and a reveal |
+| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the province, the world and the temporary province, who is authoritative over each, what the save records, and what the promises allow to be contested | the province and the world built; temporary provinces and the guild siege not built |
+| 3 | [The economy](features/03-economy.md) | the nine wallet rows and the job of each, rent, building stores, adjacency, villagers, what a tap is worth | built |
+| 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built, but for the map's production census |
+| 5 | [The city](features/05-city-and-districts.md) | every district, the Townhall as era gate, **every level's cost authored and priced by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
-| 7 | [Research](features/07-research.md) | **spellbooks — three general ones (Civics, Warfare, Magic) plus books the player FINDS (the Sagas, the Atlas)**, each opened by a fact about the world — one flow-chart page each, eras opened by exploring, climbing bonuses only, and Knowledge as the research clock; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
-| 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
-| 9 | [Relics and the collection](features/09-relics.md) | eight relics as **permanent passives with no ceiling**, levelled by **card albums in a 28-day shared season** — packs, duplicates, the vault, trading, wildcards, the season hero | built; trading and the season hero's rate-up not built |
-| 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | built |
-| 11 | [Ruins](features/11-expeditions.md) | **depths of numbered rooms**, a boss at the end of every depth, per-room rewards — the world board's dungeons; the resolver is [`combat.md`](features/combat.md) | built on the world board as 3 depths × 8 rooms; supplies, boss chests and permanent generation not built |
-| 11a | [Ruins — the screens](features/11a-ruins-ui.md) | the battle screen, the playback, and the room screens | partly built |
-| — | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls. **The resolver 11, 18 and the world map all call** | built; unit tiers T2–T5 not built |
-| — | [Buildings](features/buildings.md) | **the building list** — every district, its levels, the late ladder, the decorations | built; Wonders not built |
-| — | [The tech tree](features/tech-tree.md) | **the node list** — every technology by book and era, generated from the tree file | built |
+| 7 | [Research](features/07-research.md) | **one tree, *Kingdom*, read in nine chapters** — one per Townhall step, each paying relic fragments when finished whole — and **the books found by play** (the Sagas, the Atlas); Knowledge poured into a technology, completed on the spot; the Knowledge bar; the node list is [`tech-tree.md`](features/tech-tree.md) | built, but for guild investment |
+| 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the refill — a rewarded ad or Gems | built |
+| 9 | [Relics](features/09-relics.md) | eight relics, **each restored from six fragments** and levelled with a full set again and Stardust; where fragments come from, the fragment pack, trading, and **hosting** — a city relic in a Shrine, a world relic in a Chapel | built; three world relics move numbers nothing reads yet |
+| 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body, a type buff and a skill** on the battle board, boons for Legendaries, Hero XP levels, Fragment-and-Stardust ascension, HP and rest, Gem-bought hero slots, two banners called with silver and gold keys, with pity and no dead pulls | built |
+| 11 | [Dungeons](features/11-expeditions.md) | **depths of numbered rooms** on the world board, a boss at the end of every depth, per-room rewards; the first to beat the last boss closes it for everyone; the resolver is [`combat.md`](features/combat.md) | built as 3 depths × 8 rooms; supplies, boss chests and permanent generation not built |
+| 11a | [Dungeons — the screens](features/11a-ruins-ui.md) | the battle screen, the playback, and the room screens | partly built |
+| — | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and rank, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap, the four training halls and troop evolutions. **The resolver lairs, dungeons and the world map all call** | built, but for authored boss formations and villains in a dungeon's standard room |
+| — | [Buildings](features/buildings.md) | **the building list** — every district, its levels, the workshops, the decorations | built; Wonders not built |
+| — | [The tech tree](features/tech-tree.md) | **the node list** — every technology by chapter and book, generated from the tree file | built |
 | 12 | [Quests and onboarding](features/12-quests.md) | the quest chain and the authored onboarding it carries | built |
-| 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track, the shop, the deadline | machinery built, **catalogue empty** |
-| 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, six ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
-| 15 | [The social layer](features/15-social.md) | identity, the friends list, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | friends built; the rest designed |
+| 13 | [Events](features/13-events.md) | **the archetype authored ten times a year** — points, the fog island, the track, the shop, the deadline — and the scheduling machinery under it | machinery built, **catalogue empty**; the archetype designed |
+| 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, Bag bundles, offers and daily offers, the Survey's paid column; the Gem sinks; rewarded video; the funnel | built, but for the cosmetic probe and three of the six ad placements |
+| 15 | [The social layer](features/15-social.md) | identity, the friends list, the crest, the Inbox, **the wish board** where friends trade fragments, daily help; a guild, its weekly bar, and the siege | friends, crest, Inbox, wish board and daily help built; the guild designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
-| 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
-| 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — the province's lairs: the minute-scale counter discovery starts, the bounded and recoverable raids it makes while it stands, and the fight that clears it: the doorway to combat | built |
-| 19 | [The world map](features/19-world-map.md) | **the shared board** — 91 hexes and six players in rings around the Dark Portal, explorers that march to reveal, connection chains and inactive hexes, conquest against denial, the Fortress, dungeons, and the weekly Portal dive | built against a local stand-in for the world server |
-| 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built |
-| 22 | [Progression](features/22-progression.md) | **how the game opens up** — the doors and what opens each, the five books and the milestones that open them, the Orcs, the Thorned Shrine and the Watchtower as places that open mechanics, heroes by story then by the Tavern, the first pack, and the pace of the tree | built |
+| 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four refined goods, the four workshops that make them, and the queue a villager works | built |
+| 18 | [Lairs and raids](features/18-garrisons-and-raids.md) | **a monster camp with a clock** — the province's lairs: the counter revealing its ground starts, three bounded and recoverable raids a day while it stands, the ground it denies, and the three to seven fights that clear it for good: the doorway to combat | built |
+| 19 | [The world map](features/19-world-map.md) | **the shared board** — seven boards of six seats, 889 hexes, 41 other kingdoms or stand-in rivals; explorers that march to reveal, districts and their stores, chains and inactive hexes, conquest against denial, the Fortress, monster camps, dungeons, Sanctuaries, Observatories and precious deposits, and the weekly Dark Portal | built on the world server; the season not built |
+| 21 | [Harmony and the decorations](features/21-harmony.md) | the city stat eleven decorations supply and the levels from 8 demand — a gate, never a drain | built |
+| 22 | [Progression](features/22-progression.md) | **how the game opens up** — the doors and what opens each, the chapters of the tree and the found books, the Orcs, the Thorned Shrine and the Watchtower as places that open mechanics, heroes by story then by the Tavern, and the pace of the tree | built |
 | 23 | [Tutorials](features/23-tutorials.md) | the **First Morning** — ten scripted minutes, beat by beat — then one introduction per system, help when stuck, and the input lock | built |
 | 24 | [Dialogue](features/24-dialogue.md) | the **visual-novel stage** every tutorial speaks through: a character each side, a box that can sit anywhere, the pointer, the conditions, and the cast led by **Isolde, the Royal Advisor** | built |
 | 25 | [The Survey](features/25-the-survey.md) | **a ladder that pays for exploring** — 36 levels over the whole province, climbed by cells revealed, a free column and a paid one bought once; never resets | built, but for the seal that flies to the pill |
 | 26 | [Notices](features/26-notices.md) | **the bubbles in the corner** — news and standing states for what the player may not have seen, in the province and on the board, each a card with a way to go there | built |
-| 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots planted from the Build menu as features, and trees and plots moved with a long press, growing again where they land | built, but for the tutorial scene |
+| 27 | [Plantables](features/27-plantables.md) | **editing the ground** — crop plots planted from the Build menu as features, and trees and plots moved with a long press, growing again where they land | built |
 | 28 | [Languages](features/28-languages.md) | **English and Spanish** — the choice in Settings, the code's text through `tr()`, the data's through overlays, numbers in the language's locale | built |
+| 29 | [The Bag](features/29-the-bag.md) | **items held until they are used** — chests worth the city's own production, typed speed-ups and the picker on every timer, boosts, flasks, tomes, keys; the shortfall sheet; where items come from and how they are sold | built |
 
 ## Reference
 
-Not features — how content and art are made.
+Not features — how the game is tested, built and authored.
 
 | File | What it covers |
 |---|---|
-| [`playtest.md`](playtest.md) | **how a playtest checks the fantasy**: the moments each fantasy is pinned to, what to watch, the five questions to ask after, and how to read the numbers |
-| [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
-| [`proposals/collection-packs.md`](proposals/collection-packs.md) | a **proposal**, not a spec: six packs defined by the rarity they guarantee, three vault chests duplicates buy, what a duplicate is worth, and where each falls — with every figure measured by simulation against the authored odds |
-| [`proposals/album-cycles.md`](proposals/album-cycles.md) | a **proposal**, not a spec: how a relic's level advances — running the five albums again inside a season (which needs the nine cards SPENT, or the loop never terminates), and rotating which relic each album levels so the two dearest ones are not unreachable for ever |
-| [`proposals/relic-effects.md`](proposals/relic-effects.md) | a **proposal**, not a spec: what each relic does, level by level — the five that exist and the **three that have to be created** for the eight albums — a passive that never stops being worth having, and an active that is a placed ZONE on a cooldown, with exactly one of its four numbers growing with the relic's level |
-| [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | a **proposal**, not a spec: one kingdom passive per Legendary hero, spread across economy, research, exploration and combat, so a Legendary is a different kind of thing to own rather than a bigger number |
-| [`proposals/world-dynamics.md`](proposals/world-dynamics.md) | a **proposal**, not a spec: a living world map — monster camps to beat before building, scouting rewards shown before exploring, three precious materials only the world yields, and a delve screen that sells the descent, with mockups |
-| [`proposals/lairs.md`](proposals/lairs.md) | a **proposal**, not a spec: the province's ruins become **lairs** — a monster camp found by revealing its ground, that raids the city on a clock, denies a radius of ground, and is cleared once by one fight and gone; the repeatable dungeon moves to the world map |
-| [`plans/world-districts.md`](plans/world-districts.md) | the steps from the world board as built — radius 5, two features a hex, an Outpost then an improvement — to districts on a radius-6 board, and the art they need |
-| [`plans/analytics.md`](plans/analytics.md) | what the game sends the server about how it is played — the events, how they are sent, and the views they are read from |
-| [`plans/online-server.md`](plans/online-server.md) | the steps from the local world stand-in and the cloud save to a real Supabase server, then the social layer; the protocol every world request follows |
-| [`plans/data-editor.md`](plans/data-editor.md) | `?dev=data`, the tool every piece of game data is authored in: its collections, views and navigation, the files it saves, and the module that says what legal data is |
-| [`plans/review-readiness.md`](plans/review-readiness.md) | what is left before the studio's prototype review: the decisions the checklist asks for, the builds still missing, the docs to tidy, and where each checklist answer comes from |
-| [`plans/ux-pass.md`](plans/ux-pass.md) | usability fixes found playing v0.3.0 on a phone as a free player — one branch each, with what was seen, the rule, where it lives and when it is done |
-| [`map-editor.md`](map-editor.md) | the map editor (`?dev=data#map`) the world is painted in, and the one module that says what a legal map is |
+| [`playtest.md`](playtest.md) | **how a playtest checks the fantasy**: the moments each fantasy is pinned to, what to watch, the five questions to ask after, how to read the numbers, and the signals the log carries |
+| [`dev-saves.md`](dev-saves.md) | how to put the game into a late state on purpose, to look at screens a new save never shows |
+| [`map-editor.md`](map-editor.md) | the map editor (`?dev=data#map`) the province is painted in, and the one module that says what a legal map is |
 | [`tech-tree-editor.md`](tech-tree-editor.md) | the tech tree editor (`?dev=data#tree`) technologies are created and arranged in, and the one module that says what a legal tree is |
-| [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
+| [`audio-wishlist.md`](audio-wishlist.md) | the sound map: every sound the build plays and what it is for |
+
+**Plans** — the steps from what was built to a design.
+
+| File | What it covers |
+|---|---|
+| [`plans/data-editor.md`](plans/data-editor.md) | `?dev=data`, the tool every piece of game data is authored in: its collections, views and navigation, the files it saves, and the module that says what legal data is |
+| [`plans/analytics.md`](plans/analytics.md) | what the game sends the server about how it is played — the events, how they are sent, and the views they are read from |
+| [`plans/online-server.md`](plans/online-server.md) | the world server and the cloud save on Supabase, then the social layer; the protocol every world request follows |
+| [`plans/world-districts.md`](plans/world-districts.md) | districts on the radius-6 world board, and the art they need |
+| [`plans/world-hex-art.md`](plans/world-hex-art.md) | how a hex of the world board is drawn — terrain, feature, district, Fortress, roads |
+| [`plans/precious-deposits.md`](plans/precious-deposits.md) | the precious deposits, and a world of many boards |
+| [`plans/tech-tree-rework.md`](plans/tech-tree-rework.md) | research as one tree in chapters, one per Townhall step |
+| [`plans/relics-and-bag.md`](plans/relics-and-bag.md) | the Bag, and relics restored from fragments and hosted in Shrines and Chapels |
+| [`plans/review-readiness.md`](plans/review-readiness.md) | what is left before the studio's prototype review: the decisions the checklist asks for, the builds still missing, and where each answer comes from |
+| [`plans/ux-pass.md`](plans/ux-pass.md) | usability fixes found playing on a phone as a free player — one branch each, with what was seen, the rule, where it lives and when it is done |
+
+**Proposals** — the reasoning behind built features. The feature doc each one names is the authority.
+
+| File | What it covers |
+|---|---|
+| [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Tavern and Dragon's Nest |
+| [`proposals/lairs.md`](proposals/lairs.md) | the province's lairs — a monster camp found by revealing its ground, that raids on a clock, denies a radius of ground, and is cleared once |
+| [`proposals/world-dynamics.md`](proposals/world-dynamics.md) | a living world map — monster camps, scouting rewards shown before exploring, precious materials only the world yields, and the delve screen |
+| [`proposals/inventory.md`](proposals/inventory.md) | the Bag: one place for everything owned that is not a currency or a building |
+| [`proposals/relic-restoration.md`](proposals/relic-restoration.md) | relics found as fragments, restored, hosted in Shrines and Chapels, and traded |
+| [`proposals/friend-trading.md`](proposals/friend-trading.md) | trading between friends on a wish board |
+| [`proposals/legendary-boons.md`](proposals/legendary-boons.md) | one kingdom passive per Legendary hero |
+| [`proposals/hero-abilities.md`](proposals/hero-abilities.md) | a skill per hero and villain, ranked up with Stardust |
+| [`proposals/isolde-voice.md`](proposals/isolde-voice.md) | a script pass on the opening's scene lines |
+| [`proposals/world-menus.md`](proposals/world-menus.md) | every menu of the world board, rebuilt from the city's UI pieces |
 
 ## Art
 
@@ -132,9 +150,12 @@ discipline and is settled; the world is what the direction covers.
 |---|---|---|
 | [`art/art-direction.md`](art/art-direction.md) | **how every asset of the WORLD is made** — the 2:1 isometric projection, canvas sizes and anchors, terrain, buildings, units, the hex board, the map's states, and the pipeline | **current** |
 | [`art/style-prompt.md`](art/style-prompt.md) | **the locked visual style block**, and the prompt every new asset is generated from | **current** |
-| [`art/ui/mockups/`](art/ui/mockups) | 26 full-screen UI mockups in the right style — the authority for the chrome's layout, colour and shapes | **current** |
+| [`art/ui/mockups/`](art/ui/mockups) | the full-screen UI mockups and the prompts that made them — the authority for the chrome's layout, colour and shapes | **current** |
 | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the UI system the mockups implement, its palette and its shapes | current, but its style anchor is stale |
 | [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass | current |
+| [`art/ui-inventory.md`](art/ui-inventory.md) | the Bag's screens: its tabs, the tile, the popover, and using an item without opening it | current |
+| [`art/ui-relics.md`](art/ui-relics.md) | a relic's sheet, the Shrine on the map, the Chapel on the world board, and trading | current |
+| [`art/unit-icons.md`](art/unit-icons.md) | the round portrait every unit wears in the UI | current |
 | [`art/portraits/prompt-template.md`](art/portraits/prompt-template.md) | the hero-portrait prompt: the generic style block, the per-character block, and how to verify the alpha | current — generated against `style-reference.png` |
 | [`art/originals/v3-sheets/`](art/originals/v3-sheets) | the generation log and the two normalisation scripts, kept because trimming and padding survive a style change | current |
 

@@ -309,9 +309,9 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   }
 
   // --------------------------------------------------------- reachability
-  // Fog cost is a BFS distance from the Townhall, and an unreachable cell
-  // reports distance 0 — i.e. it is FREE to reveal. That is a silent trap, so
-  // any land the Townhall cannot walk to is called out.
+  // The fog's frontier only grows 4-way from what is revealed, so land no
+  // chain of cells joins to the Townhall can never be paid for. That is a
+  // silent trap, so it is called out.
   const reachable = reachableFrom(terrain, TOWNHALL_FOOTPRINT);
   let stranded = 0;
   let strandedExample: Coord | undefined;
@@ -323,7 +323,7 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
   if (stranded > 0) {
     warn(
       `${stranded} land cell${stranded === 1 ? '' : 's'} cannot be walked to from the Townhall — `
-      + 'their fog is free (distance 0)',
+      + 'the fog\'s frontier can never reach them',
       strandedExample,
     );
   }

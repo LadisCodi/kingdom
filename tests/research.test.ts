@@ -47,7 +47,7 @@ const dearest = (): TechId[] => TECH_ORDER
   .sort((a, b) => techKnowledgeCost(b) - techKnowledgeCost(a));
 
 describe('technology basics', () => {
-  // Docs/features/12-quests.md §2 (quests 9-15): Agriculture opens the plots,
+  // Docs/features/12-quests.md §2 (quests 22-25): Agriculture opens the plots,
   // and Farming — the row under it — opens the Farm that works them.
   it('the farming chain: Agriculture opens the plots, Farming the Farm', () => {
     const state = freshGame();
@@ -597,7 +597,7 @@ describe('what the player can actually act on', () => {
   });
 });
 
-// Docs/features/tech-tree.md §7 — PLANNED nodes. They are on the tree so its
+// Docs/features/07-research.md §1.3 — PLANNED nodes. They are on the tree so its
 // shape can be seen, and they do nothing yet. Four things keep that honest.
 describe('planned technologies', () => {
   const PLANNED = TECH_ORDER.filter((id) => TECHNOLOGIES[id].planned);
@@ -605,10 +605,8 @@ describe('planned technologies', () => {
   // The flag is the statement: it draws the hatched node and the panel's
   // "Not yet in the prototype" line. Pinning the SET stops one being quietly
   // un-flagged (shipping a no-op as content) or a new no-op arriving unflagged.
-  // Fourteen: Civics kept none. `Land Survey` and `Apprenticeships` were cut
-  // when the book was laid out — with every requirement one row up, a card
-  // that does nothing is a toll on the way to one that does, and the answer
-  // for a Civics page with no room for a leaf was to drop them.
+  // The shipped tree has none: with every requirement one row up, a card that
+  // does nothing is a toll on the way to one that does.
   it('are none: the one-tree rework cut every no-op until it is built', () => {
     // A chapter's spine is required, so a planned card would be a toll the
     // player pays for nothing (Docs/plans/tech-tree-rework.md §5).

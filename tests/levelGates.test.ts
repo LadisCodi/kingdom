@@ -87,7 +87,7 @@ describe('tech-gated upgrades', () => {
 });
 
 describe('per-level housing capacity', () => {
-  // One house holds TWO (Docs/features/12-quests.md §2 (quests 18-19)): the tutorial trains a
+  // One house holds TWO (Docs/features/12-quests.md §2 (quests 15-16)): the tutorial trains a
   // second villager before it asks for a second house, so the first house has
   // to have somewhere to put them. The Townhall houses nobody — a roof is
   // what permits a villager, which is onboarding steps 4-6 in order.
@@ -145,7 +145,7 @@ describe('every upgradable building has something to show for the level', () => 
     // The War Camp's: armies more out at once (Docs/features/19-world-map.md §4).
     'armySlotsPerLevel',
     // What a producer's LATE level buys, since crew and reach stop growing at
-    // five (Docs/features/buildings.md §4).
+    // five (Docs/features/buildings.md §4.11).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',
     'queueLengthPerLevel',
   ] as const;

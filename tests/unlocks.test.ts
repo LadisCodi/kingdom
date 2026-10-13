@@ -48,7 +48,7 @@ describe('a book is announced once', () => {
 });
 
 describe('the presenter', () => {
-  it('queues nothing for a new kingdom: Civics has no splash', () => {
+  it('queues nothing for a new kingdom: Kingdom has no splash', () => {
     const game = freshPresenter(firstGame());
     game.notify();
     expect(game.unlockQueue).toEqual([]);

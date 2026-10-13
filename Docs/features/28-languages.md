@@ -41,10 +41,11 @@
 - `npm run i18n:sync` adds new texts to the overlays, drops removed ones, and
   reports what is missing or stale.
 - Localized: buildings (name, promise, description), goods, items, quests,
-  store, speakers, unlock splashes, villains, world buildings, scene lines,
-  lair flavour, ruins, technologies.
+  store products (name, description), speakers, unlock splashes, villains,
+  world buildings, scene lines, lair flavour, abandoned buildings' names,
+  technologies (name, description).
 
-## 3b. The generated prose
+### 3.1 The generated prose
 
 - A technology card and a quest line are built from the data
   (`src/sim/techProse.ts`, `src/sim/questProse.ts`). Each stat's sentence
@@ -58,7 +59,7 @@
 - Written in the language's locale: *25,000* / *4.99* in English, *25.000* /
   *4,99* in Spanish.
 
-## Dials, in the order to reach for them
+## 5. Dials, in the order to reach for them
 
 | Dial | Where |
 |---|---|
@@ -67,7 +68,7 @@
 | Which data fields are localized | `DATA_GROUPS`, `src/i18n/data.ts` |
 | A new language | `Lang`, `LANG_NAMES`, `NUMBER_LOCALE` (`src/i18n/lang.ts`) and its catalogs |
 
-## Deliberately not in this design
+## 6. Deliberately not in this design
 
 - Translating without a reload.
 - Names the shared world generates (dungeons, rivals): every player on a

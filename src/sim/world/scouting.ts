@@ -2,11 +2,12 @@
 // pays, promised over it while it is misty.
 //
 // ROLLED WITH THE BOARD, so a hex's promise is a fact about the board
-// (`BoardHex.scout`). PAID WHEN THE EXPLORER SENT TO IT IS HOME — the one
-// boundary a trip already has — and only for its target: the hexes revealed
-// round it pay nothing, and a hex revealed any other way loses its promise.
-// Gold, Wood, Food and Stone are priced then, in hours of the city's own
-// production (`tap.workSeconds`'s rule), floored at the authored amount.
+// (`BoardHex.scout`). PAID AT THE PLAYER'S TAP THAT REVEALS IT
+// (`explorers.ts#revealExplored`, or a trip finished with Gems), and only for
+// the trip's target: the hexes revealed round it pay nothing, and a hex
+// revealed any other way loses its promise. Gold, Wood, Food and Stone are
+// priced then, in hours of the city's own production (`tap.workSeconds`'s
+// rule), floored at the authored amount.
 
 import { roundPrice } from '../roundPrice';
 import { RELIC_RULES, WORLD_SCOUTING, type PackTier, type ScoutRewardDef } from '../data/definitions';
@@ -55,8 +56,8 @@ export function payScout(state: GameState, bh: BoardHex): ScoutPay | null {
     else addToWallet(state.city.wallet, c, n);
   }
   for (const [g, n] of Object.entries(pay.goods)) addGood(state.city.goods, g as keyof GoodsStock, n as number);
-  // A pack a hex promised is world relic fragments now: the scout's door
-  // first, then what the pack was worth (Docs/plans/relics-and-bag.md §5).
+  // A pack a hex promises is world relic fragments: the scout's door first,
+  // then what the pack's tier is worth (Docs/features/19-world-map.md §3.2).
   if (pay.pack !== null) {
     openRelicDoor(state, 'scouting');
     dropFragments(state, 'world', RELIC_RULES.perPackTier[pay.pack] ?? 1, ['scout', bh.index]);

@@ -89,7 +89,7 @@ export type LairId =
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass'
   // The three pillars the city relics do not touch: the dungeon, the war and
-  // the world map (Docs/proposals/relic-effects.md §6).
+  // the world map (Docs/features/09-relics.md §2).
   | 'DelversLantern' | 'MusterHorn' | 'BailiffsTally';
 export type HeroId =
   'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |
@@ -591,7 +591,7 @@ export interface GameState {
     /** Knowledge poured into technologies not yet researched. It stays there
      *  for ever; a technology leaves this map when it is researched. */
     poured: Partial<Record<TechId, number>>;
-    /** Bands finished whole whose card pack has been paid, as `Tome:era` —
+    /** Bands finished whole whose relic fragments have been paid, as `Tome:era` —
      *  so a band pays once, whatever is researched after. */
     rewarded: string[];
   };
@@ -647,7 +647,7 @@ export interface GameState {
     /** Pulls since the last Legendary, per banner. A second counter rather
      *  than a second meaning for the first: the short pity guarantees A hero,
      *  this one guarantees the rarity, and a player has to be able to read
-     *  both (Docs/features/10-heroes.md §5). */
+     *  both (Docs/features/10-heroes.md §6.3). */
     legendaryPity: Record<string, number>;
   };
   /**
@@ -700,16 +700,16 @@ export interface GameState {
    */
   lairs: Partial<Record<LairId, LairState>>;
   /**
-   * The five relics, as levels. Absent = not found; a relic is owned iff it
-   * has a level, and every relic the player has is always on
+   * The eight relics, as levels. Absent = not restored; a relic is owned iff it
+   * has a level, and acts only where it is hosted
    * (Docs/features/09-relics.md §1). There is nothing else to keep: no
-   * sockets, no tiers, no Fragments and no cap.
+   * sockets, no tiers and no cap; fragments are `relics`.
    */
   artifacts: {
     levels: Partial<Record<ArtifactId, number>>;
     /**
      * WHEN EACH RELIC'S ABILITY LAST WENT OFF, for the ACTIVE → COOLDOWN →
-     * READY walk (Docs/features/09-relics.md §2.1). Absent = never cast, which
+     * READY walk (Docs/features/09-relics.md §2.2). Absent = never cast, which
      * reads as READY.
      *
      * Two timestamps and not one, because the window and the cooldown are
@@ -774,7 +774,7 @@ export interface GameState {
    *  each is a district (Docs/features/01-map-and-fog.md §6.3). */
   abandoned: { repaired: Record<string, true> };
   /**
-   * THE BAG (Docs/proposals/inventory.md): what the player holds and has not
+   * THE BAG (Docs/features/29-the-bag.md): what the player holds and has not
    * used yet. Not a wallet — an item is spent by being USED, never by a
    * price. `held` absent = none; nothing in it expires or can be raided.
    * `fresh` is every item gained since its tile was last tapped (the tile's
@@ -835,7 +835,7 @@ export interface GameState {
   lastAdvance: number; // epoch ms — where the unified advance left off
   /** Fractional units a tap has earned but not yet been paid, per currency.
    *  A tap is priced in SECONDS of work, so on most cells it owes a fraction;
-   *  carrying the remainder is what makes a +20% TapPower honest instead of
+   *  carrying the remainder is what makes a +10% `harvestYield` honest instead of
    *  destroyed by rounding. Never negative, never a whole unit. */
   tapCarry: Partial<Record<CurrencyId, number>>;
 }

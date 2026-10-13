@@ -41,8 +41,8 @@
 
 - `FarmLands` plants `Crops`: a Food cell (`04-harvest.md` §2.1), tapped by
   hand or worked by a Farm in reach.
-- Priced in Gold and Wood, dearer for each plot standing; capped by the
-  Townhall. Grows for 10 s.
+- Opened by `Agriculture` (Kingdom chapter 2). Priced in Gold and Wood,
+  dearer for each plot standing; capped by the Townhall. Grows for 5 s.
 - Anything low enough to stand in (the crop plot) never hides a villager.
 
 ## 4. Moving a tree or a crop plot
@@ -69,7 +69,8 @@
 
 - When Transplanting is researched, Priya says a tree may be held and moved,
   and points at one (`transplant`, [`23-tutorials.md`](23-tutorials.md) §4.5).
-- A crop plot is planted from the Build menu in the `furrows` lesson (§3.2).
+- A crop plot is planted from the Build menu in the `furrows` lesson
+  ([`23-tutorials.md`](23-tutorials.md) §3.2).
 
 ## 6. Dials, in the order to reach for them
 
@@ -78,6 +79,7 @@
 | How long one grows, planted or moved | tree 24 h · crop plot 5 s | `harvest` › `growSeconds` |
 | A crop plot's price and how fast it climbs | 15 Gold + 10 Wood, ×(1 + 0.5n)·1.2ⁿ | `buildings` › `costPerLevel`, `instance*Growth` |
 | How many crop plots may stand | 6 / 6 / 12 / 16 … | `buildings` › `maxCountPerTownhallLevel` |
+| What opens a crop plot | Agriculture, Kingdom chapter 2 | `?dev=data#tree` |
 | What opens moving a tree | Transplanting, 200 Gold, Kingdom chapter 2 | `?dev=data#tree` |
 
 ## 7. Deliberately not in this design

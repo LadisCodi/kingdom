@@ -4,19 +4,18 @@
 > counter, a fog-island minigame, a milestone track with a free and a paid
 > column, a shop, and a window that closes.
 >
-> **Status: the scheduling machinery is built and verified; the archetype
-> (§1–§4) is designed, not built.** **The catalogue is EMPTY**: `EVENTS`
-> holds nothing and a new kingdom has no schedule at all. The machinery keeps
-> its tests, driven by hand-built windows; one template in `EVENTS` schedules
-> an event.
+> **Status: the scheduling machinery (§5) is built; the archetype (§1–§4)
+> is designed, not built.** **The catalogue is empty**: `EVENTS` holds
+> nothing, so a new kingdom has no schedule. The one payload a window
+> carries is `banner`, which posts news when it opens and nothing else.
 
-## 1. Engine extensions (designed, not built)
+## 1. Engine extensions
 
 | Extension | Built | Designed, not built |
 |---|---|---|
-| **Modifier stats** | 34 values, including build speed, active cost, unit HP and Mana cap | **training speed**, **card yield** |
-| **Schedule payloads** | a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
-| **Where schedules live** | in code, beside the definitions | a hand-written events file (live-ops content with wall-clock dates) |
+| **Modifier stats** | 34 values, among them build speed, training speed, active cost, unit HP and Mana cap | — |
+| **Schedule payloads** | `banner`: news when a window opens | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
+| **Where schedules live** | `EVENTS`, in code beside the definitions | an events file (live-ops content with wall-clock dates) |
 
 - `grantModifier` carries a template id, not a magnitude. Magnitudes are data, in
   `?dev=data`.
@@ -24,13 +23,11 @@
   each with a **free** and a **paid** reward. It is both the grand-prize bar and
   the two-track pass (§2.4).
 - `eventShop` is stock rows plus a refresh cadence.
-- Build speed is also the stat daily help grants
-  ([`15-social.md`](15-social.md) §3.1).
 - An empty modifier stack is bit-identical to no modifiers.
 
 Where each number lives:
 
-| Events file | Workbook |
+| The events file | `?dev=data` |
 |---|---|
 | windows, periods, occurrence horizons | modifier template magnitudes |
 | which track and shop an event uses | track thresholds and reward amounts |
@@ -45,8 +42,8 @@ Six parts. Every authored event is a skin on them.
 - Event points live in the event's own state.
 - They are shown on the event screen only; they never reach the plank or the
   purse. No wallet row.
-- Same pattern as Fragments and the collection's stars: a counter shown where
-  it is spent, not a wallet row.
+- Same pattern as hero Fragments and refined goods: a counter shown where it
+  is spent, not a wallet row.
 - **OQ-18.**
 
 ### 2.2 Point sources
@@ -61,7 +58,7 @@ Six parts. Every authored event is a skin on them.
 | Claiming a **landmark**, clearing a **dungeon** depth | |
 | Clearing a **lair** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
 | **Taps** | low rate |
-| A **rewarded video** | capped; the third ad placement |
+| A **rewarded video** | capped |
 
 ### 2.3 The minigame: a fog island
 
@@ -80,19 +77,19 @@ Six parts. Every authored event is a skin on them.
 ```
 threshold   free reward         paid reward
    100      Gold                Gold ×2
-   250      a Silver card pack  a Gold pack + a shop refresh
+   250      a silver key        a gold key + a shop refresh
    500      Gems                Gems ×2
    ...
-  final     the grand prize     the grand prize + a Star pack
+  final     the grand prize     the grand prize + relic fragments
 ```
 
-- The grand prize is a collectible: a hero, or a Star pack. Not a building,
-  not a currency lump, and never a relic — a relic comes only from its album
-  ([`09-relics.md`](09-relics.md) §1). A seasonal hero is one hero row and one
-  banner row.
+- The grand prize is a collectible: a hero, or relic fragments
+  ([`09-relics.md`](09-relics.md) §6). Not a building, not a currency lump. A
+  seasonal hero is one `heroes` entry and one `banners` entry.
 - The free track reaches the grand prize. Slower, but reachable.
-- Paid claims are gated on a flag. How the flag is set is
-  [`14-monetization.md`](14-monetization.md).
+- The paid column is a `store` product, bought once per occurrence
+  ([`14-monetization.md`](14-monetization.md) §2). How it is priced:
+  **OQ-25**.
 - A track claimed during an offline replay pays exactly once.
 - **OQ-20.**
 
@@ -130,11 +127,13 @@ threshold   free reward         paid reward
 
 ## 5. The scheduling machinery (built, with nothing scheduled)
 
-**`EVENTS` is empty.** What stands is the part every event needs, and it
-keeps its tests:
+**`EVENTS` is empty.** What stands is the part every event needs:
 
 - **A template in `EVENTS` schedules an event.** Id, first start, duration,
-  period. That is the whole of adding one back.
+  period (0 = a one-off). The epoch is a fixed date, so every kingdom is in
+  the same window at the same time.
+- **Its payload is `banner`**: the window opening posts an *Event* news
+  ([`26-notices.md`](26-notices.md) §2.1). Nothing else reads it.
 - **Stable occurrence ids** (`<template>#<n>`, counted from the template's
   epoch), so the same window is the same window on every client.
 - **Phases are persisted**, so an event that paid out cannot pay twice on
@@ -169,4 +168,4 @@ keeps its tests:
 - A full second region for the island (§2.3)
 - Re-expressing upgrade levels as modifiers
 
-**Open questions:** OQ-18, OQ-19, OQ-20, OQ-21, OQ-22, OQ-23, OQ-4.
+**Open questions:** OQ-4, OQ-18, OQ-19, OQ-20, OQ-21, OQ-22, OQ-23, OQ-25.

@@ -575,7 +575,7 @@ describe('the Market, retired', () => {
   });
 });
 
-// v70: stone is taught (Docs/features/22-progression.md §4).
+// v70: stone is taught (Docs/features/23-tutorials.md §3.1).
 describe('Pickaxes, taught (v70)', () => {
   const v69 = (index: number, veteran: boolean) => {
     const state = firstGame();
@@ -604,7 +604,7 @@ describe('Pickaxes, taught (v70)', () => {
   });
 });
 
-// v72: stone is taught where it is first wanted (Docs/features/22-progression.md §4).
+// v72: stone is taught where it is first wanted (Docs/features/23-tutorials.md §3.1).
 describe('Pickaxes, moved to the second story (v72)', () => {
   const v71 = (index: number) => {
     const state = firstGame();
@@ -677,7 +677,7 @@ describe('War drums, in front of Armed men (v73)', () => {
 });
 
 // v69: the tree in five books. A researched card that was renamed or split
-// keeps what it bought (Docs/features/22-progression.md §9).
+// keeps what it bought.
 describe('the tree in five books (v69)', () => {
   it('turns a renamed card into its successor, and a split one into all its parts', () => {
     const state = freshGame();

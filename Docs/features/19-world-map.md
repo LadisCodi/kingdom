@@ -7,18 +7,12 @@
 > authoritative over what is [`02`](02-map-scopes.md); the resolver every
 > fight goes through is [`combat.md`](combat.md).
 >
-> **Status: built against a local stand-in for the world server**:
-> the world of seven boards of radius 6 and one feature a hex (§1, §2, §8, §9); the fog and
-> the explorers, their scouting rewards and the first trip (§3–§3.3); claiming a district, its store, its roads and the
-> Fortress upgrade (§5.1, §7); the chain and inactive hexes (§5.2–§5.3);
-> armies, the War Camp, attacks, conquest and denial, Fortress garrisons
-> (§4, §6); monster camps and their raids (§5.4–§5.5), their numbers in
-> `worldCamps`; Dungeons
-> and the delve screen (§8.1–§8.2), the ranking (§12) and the Dark Portal (§10), which opens on Fridays (UTC) for three
-> days, its numbers in `worldPortal`. Stand-in rivals in every free seat claim, build, beat
-> camps, man a Fortress and now and then
-> attack on their own.
-> The art is [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
+> **Status: built, every section.** The server is the `world` edge function;
+> a stand-in in the browser answers the same requests when there is no cloud
+> (`?world=local`). Stand-in rivals in every free seat claim, build, beat
+> camps, man a Fortress and now and then attack. The numbers are the `world`
+> collection in `?dev=data`; the art is
+> [`../plans/world-hex-art.md`](../plans/world-hex-art.md).
 
 ## 1. The board
 
@@ -45,8 +39,6 @@
   city: four hexes of ground lie between two neighbours.
 - An inner-ring hex is four hexes from its nearest city and at most six from
   any.
-- **The board is small on purpose.** There is nowhere to hide, every hex has a
-  job, and conflict is a property of the geometry rather than a rule.
 
 ### 1.1 The hexagon
 
@@ -150,11 +142,11 @@
   works there, **waits there for you**, and marches home. There is no button
   that buys fog.
 - **Explorers are slots, like builders.** Every kingdom starts with
-  `startingExplorers` (1). No training, and no research adds one: more are
+  `startingExplorers` (1). No training, and no technology adds one: more are
   only bought.
 - **Up to `explorersForSale` (2) more are bought**, for Gems
   (`explorerGemCostBase` 2,500, ×`explorerGemCostGrowth` 2 each) or in the
-  Explorer pack ([`14-monetization.md`](14-monetization.md) §2.4).
+  *A second explorer* offer ([`14-monetization.md`](14-monetization.md) §2.4).
 - **Sending one costs Gold**, paid when it leaves:
   `exploreGoldBase` (2,500) × `exploreGoldGrowth` (×1.5) for every hex past
   the first from the city — 2,500 next door, about 19,000 at 6 hexes, 96,000
@@ -165,7 +157,8 @@
   lives in the player's own save, like the fog it reveals.
 - **The work**: once there, the explorer works the hex for
   `exploreWorkSeconds` (30) plus `exploreWorkSecondsPerHex` (30) for every
-  hex it lies from the city, divided by `exploreSpeed` (*Cartography*: +50%).
+  hex it lies from the city, divided by `exploreSpeed` (*Cartography*, *Field
+  Notes I–III*).
 - **When the work is done, nothing happens on its own.** The explorer waits
   at the hex, hopping, under a golden *Tap!* pill, for as long as it takes:
   - a standing notice says it waits (*Explorer ready*,
@@ -175,9 +168,13 @@
     revealed, its promise is paid (§3.2), and the explorer sets out for home.
     On its card, the same is a **Reveal** button;
   - its slot frees when it is home.
-- The radius upgrades to 2 (*Pathfinding*). Nothing is revealed on the way.
+- The radius is `explorerRevealRadius` (1); `worldRevealRadius` research
+  can raise it to `revealRadiusMax` (2), and no technology does yet. Nothing
+  is revealed on the way.
 - **A march costs time, hex by hex** (§4.1).
-- An explorer's time per hex divides by `worldRevealSpeed`; its work does not.
+- An explorer's time per hex divides by its speed — the tree's
+  `explorerSpeed` (*Swift Scouts*, *Light Packs*) and a hero's
+  `worldRevealSpeed` boon; its work does not.
 - **One trip per hex.** No explorer is sent to a hex one already out will
   reveal — its target, or a hex within its reveal.
 - **While a hex in the mist is open, the header's plaque counts the free
@@ -194,9 +191,9 @@
 
 - **Every hex has a promise**, rolled with the board by its kind of ring
   (`worldScouting.rewards`, by weight): Gold, Wood, Food, Stone, Hero XP,
-  Knowledge, Stardust, Gems, a card pack or a lump of precious material
-  (§7.4). None on a city, the Portal or a
-  dungeon. Past the inner ring every wedge has the same promises.
+  Knowledge, Stardust, Gems, world relic fragments or a lump of precious
+  material (§7.4). None on a city, the Portal or a dungeon. Past the inner
+  ring every wedge has the same promises.
 - **A Sensed hex shows it**: a brass medallion with the reward's icon, and
   under it a plank with the Gold its exploring costs. The hex's sheet says
   what it pays. Once an explorer is on its way there, the plank goes.
@@ -208,8 +205,12 @@
 - **Gold, Wood, Food and Stone are priced in production** when paid:
   `hoursByRole` hours of the city's own production of it, floored at the
   reward's `amount`. Every other reward pays its `amount`.
+- **A fragment reward** (`Pack`, by tier) pays world relic fragments, as many
+  as `relics.fragments.perPackTier` says for its tier (Green 1 on the
+  corridors, Rose 2 on the inner ring). The first one opens its relic's door
+  ([`09-relics.md`](09-relics.md) §5).
 - **The Atlas adds `scoutReward`** (*Keen Eyes I–II*) to every amount — never
-  to a pack.
+  to fragments.
 
 ### 3.3 The first trip
 
@@ -332,7 +333,8 @@
 - **A neutral hex with nothing on it is claimed by building its district**:
   its Gold and a builder's time. There is no choice to make — **the hex's
   feature decides which district it is** (§7).
-- **Each claim costs more than the last**, by the hexes already held.
+- **Each claim costs more than the last**: `worldBuild.claim` — 1,000 Gold
+  ×1.35 for every hex already held, and 30 minutes of a builder.
 - **While its district is building, the hex is claimed but not held**: its
   owner's border runs round it dashed, and turns solid when the district
   stands.
@@ -419,7 +421,7 @@ accident.**
   - The Atlas adds its share when the loot lands: `campLoot` (*Bounty
     Hunters*) here, `dungeonLoot` (*Delvers*) on a dungeon room,
     `portalLoot` (*Portal Wardens*) on a Portal floor — to everything but
-    Gems and packs — and `worldHeroXp` (*Battle Lore*) to the Hero XP of
+    Gems and relic fragments — and `worldHeroXp` (*Battle Lore*) to the Hero XP of
     every one.
   - The camp's sheet shows what it pays before the army is sent.
   - On its way, the camp's sheet docks the army as a dungeon's: its board,
@@ -534,12 +536,11 @@ gates them.
 
 - **Rural districts are the board's houses**, and pay far less than the
   city's: the city's Houses stay the main source of Gold.
-- **Districts are what Gold buys out here.** They are the world's Gold sink,
-  which is why the march is free.
+- **Districts are what Gold buys out here**: the world's Gold sink.
 - **The inner ring pays +200%** to districts standing on it. Permanent,
   independent of whether the Portal is open, and **only while the hex is
   active**.
-- **A district has one level.** Levels are an upgrade still to design.
+- **A district has one level.**
 
 ### 7.1 Roads
 
@@ -560,7 +561,9 @@ gates them.
   takes none. A Shrine district's own Chapel fills its slot.
 - **The Fortress fits any district**: three levels, garrisoned by an army,
   covering its hex and the six around it (§6.1).
-- **The Chapel** hosts one world relic ([`../proposals/relic-restoration.md`](../proposals/relic-restoration.md) §5.2).
+- **The Chapel**: one level; it hosts one world relic, which acts while the
+  Chapel holds it ([`09-relics.md`](09-relics.md) §2.2). A conquered or
+  denied hex sends its relic back to its owner's Bag.
 - **Both are opened by the Atlas** ([`tech-tree.md`](tech-tree.md) §11.2):
   *Fortification* the Fortress, *Holy Ground* the Chapel. Locked, its card in
   the slot picker names the card to research. One already standing keeps its
@@ -628,9 +631,6 @@ gates them.
   - a scouting reward may be one (§3.2);
   - every dungeon room pays one (§8.1), and every fifth Portal floor
     (§10.4).
-- **Why 3/2/1:** the three are asked for alike (§7.6), so alone the weak one
-  sets the pace; trading one for one with friends (§7.5) evens them out and
-  doubles it. Trade speeds the late city up; it never walls it off.
 
 ### 7.5 Trading
 
@@ -653,8 +653,10 @@ gates them.
   | Buildings | Level 8 | Level 9 | Level 10 |
   |---|---|---|---|
   | producers and workshops | 2 each | 4 each | 6 each |
-  | the Sanctum, the Tavern, the halls, the Infirmary, the War Camp | 4 each | 8 each | 12 each |
+  | the Sanctum, the training halls, the Infirmary | 4 each | 8 each | 12 each |
   | the Townhall | 10 each | 20 each | 30 each |
+
+  The Tavern and the War Camp stop at level 5.
 
   Fortress level 3 asks 10 of each.
 - **Research, from the middle of the tree on** — the deepest cards of each
@@ -666,7 +668,7 @@ gates them.
   | 6 | 3 | 10 of any |
   | 7 | 4 | 5 of each |
   | 8 | 5 | 10 of each |
-  | 9 | 6 | 15 of each |
+  | 9 | 5 | 15 of each |
 
   A card's `goods` name materials; its `anyPrecious` asks for any
   (`tech-tree.json`, at `?dev=data#tree`).
@@ -685,7 +687,7 @@ A hex holds **none or one**. A feature decides the district built there
 | **Mountain** | its district is the Quarry. A feature, as in the province: the ground under it is a terrain like any other |
 | **Fertile land** | its district is Farm Lands |
 | **Game** | its district is the Hunting Grounds |
-| **Dungeon** | depths of rooms, cleared per player; pays a found book (§8.1). Never held. **Outer ring only** |
+| **Dungeon** | depths of rooms, delved per player, closed by the first to the bottom (§8.1). Never held. **Placed on the outer ring**; it comes back on rings 3–6 |
 | **Sanctuary** | its district is the Shrine: max Mana while held and active. **Outer ring only** |
 | **Landmark** | its district is the Observatory, which fills a store of Knowledge. **Corridors only** (rings 2–4) |
 | **Heartwood Grove**, **Starfall Crater**, **Moonglass Spires** | the deposits: their districts yield a precious material (§7.4). **Dealt, never rolled**: six a seat on its corridor, and the inner ring |
@@ -722,8 +724,11 @@ A hex holds **none or one**. A feature decides the district built there
   boss, which fields more and pays a multiple of a room.
 - **Every room pays** Gold, Knowledge, Hero XP and Stardust, by depth and
   room ([`11-expeditions.md`](11-expeditions.md) §7.1), and a lump of
-  precious material on the same scale (`precious`, §7.4). What a dungeon pays
-  beyond its rooms — the found book — is **OQ-122**.
+  precious material on the same scale (`precious`, §7.4). **Every boss also
+  pays one world relic fragment.** The first room a player beats opens the
+  Delver's Lantern's door, the first boss the Muster Horn's
+  ([`09-relics.md`](09-relics.md) §5). What a dungeon pays beyond its rooms
+  is **OQ-122**.
 - **A dungeon is named when it appears** — *The Sunken Barrow* — from
   `nameFirst` and `nameSecond`; each sixth keeps its own first word, so no
   two standing share a name. It is held by the creature its rooms' formation
@@ -817,9 +822,7 @@ Contents are rolled at board creation, under rules:
 A recurring timed event on the centre hex of every board — seven Portals a
 world, on one clock. A player dives **any Portal their army reaches**; the
 floors, the milestones and the ranking are **the world's**, one for all
-seven. The reference is Infinity Kingdom's Endless Tower, not Rise of
-Kingdoms — this is a depth ladder, and the genre's usual siege is not what
-the centre is for.
+seven. It is a depth ladder, not a siege.
 
 ### 10.1 The hex
 
@@ -834,8 +837,9 @@ the centre is for.
 
 ### 10.2 Cadence
 
-**A 7-day cycle: 3 days open, 4 days shut, always starting on the same weekday.**
-The fixed appointment is worth more than the surprise.
+**A 7-day cycle: `openDays` (3) open, 4 shut, opening every `openWeekday`
+(Friday, UTC).** An opening's close pays its ranking and sends every army
+in the Portal home.
 
 ### 10.3 How it is dived
 
@@ -859,7 +863,8 @@ The fixed appointment is worth more than the surprise.
 - A ribbon with when it closes; *Your floor 12 of 40*.
 - **The shaft**: the forty floors going down, cleared ticked, the frontier
   with its power and pay, the floors ahead with their power and what is
-  worth going down for (a pack, a milestone). It opens on the frontier.
+  worth going down for (relic fragments, a milestone). It opens on the
+  frontier.
 - **The ranking is on the floors**: every kingdom's shield on its deepest
   floor, the player's own *You*, the leader under the gold rank ribbon.
 - **The army**, docked as the delve's: Withdraw and **Descend** (the next
@@ -872,14 +877,18 @@ The fixed appointment is worth more than the surprise.
 
 ### 10.4 What it pays
 
-- **By depth** — an immediate reward for clearing each floor: **Knowledge,
-  Hero XP and Stardust**, and a **Rose or Golden pack** on the floors authored to carry one.
-  This is the main line.
+- **By depth** — an immediate reward for clearing each floor: **Gold,
+  Knowledge, Hero XP and Stardust**, the dungeon room's formula on the
+  Portal's own scale (`rewardBase`, `rewardGrowth`). This is the main line.
+- **World relic fragments**: 2 on every `roseEvery` (5th) floor, 4 on every
+  `goldenEvery` (10th) (`relics.fragments.perPackTier`). The first floor a player
+  clears opens the Wanderer's Compass's door
+  ([`09-relics.md`](09-relics.md) §5).
 - **Every `preciousEvery` (5) floors, a lump of precious material** —
   `precious` on the floors' scale, any of the three (§7.4). The
   Descend button says when the next floor pays one.
-- **By milestone** — an exclusive reward for the first player to a given depth,
-  reset every event.
+- **By milestone** — `milestoneGems` (100) Gems for the first player of the
+  world to reach every `milestoneEvery` (10th) floor, reset every opening.
 - **By final rank** — Top 1 / Top 2–3 / Top 4–6, in Gems (`worldPortal.rankGems`),
   claimed from the notices once the opening closes
   ([`26-notices.md`](26-notices.md) §2.2).
@@ -891,10 +900,11 @@ The outer scope feeds the inner one.
 | The world pays | Which lands in |
 |---|---|
 | **Gold, Wood, Food and Stone**, collected from districts' stores (§7.3) | the city's own purse |
-| **Max Mana**, from held Sanctuaries | [`08-magic.md`](08-magic.md) |
-| **Found books**, from dungeons (§8.1) | [`07-research.md`](07-research.md) |
-| **Knowledge, Hero XP, Stardust and Rose / Golden packs**, from dungeon rooms and Portal floors | research, heroes, the collection ([`09-relics.md`](09-relics.md) §6) |
-| **Knowledge**, from Observatories' stores | research ([`07-research.md`](07-research.md) §7) |
+| **Max Mana**, from held Sanctuaries (`sanctuaryManaCap`, 10 each) | [`08-magic.md`](08-magic.md) |
+| **Gold, Knowledge, Hero XP and Stardust**, from camps, dungeon rooms and Portal floors | the purse, research, heroes |
+| **World relic fragments**, from scouting, dungeon bosses and Portal floors | the relics ([`09-relics.md`](09-relics.md) §6) |
+| **Precious materials**, from deposits and every fight's lump (§7.4) | late building levels and research (§7.6) |
+| **Knowledge**, from Observatories' stores | research ([`07-research.md`](07-research.md)) |
 
 - The loop: **the world pays the province, the province arms the army, the army
   takes more world.** One economy across two scales, never two economies.
@@ -933,14 +943,14 @@ it is there to compare.
 | **March growth** (×1.5 a hex, for 6 hexes) | how much slower far ground is than near | the city's surroundings feel slow, or rivals are next door |
 | **Explorer seconds per hex** (15, leaving the city) and **work time** (30 + 30 a hex) | the tempo of exploring | the board opens too fast or too slowly |
 | **Ground factors** (forest ×1.5, desert ×1.5, mountain ×3) | which ways are taken | terrain does not matter, or walls the board in |
-| **Explorer slots** (one from the start, then the Atlas ladder) | how fast the board opens | exploring becomes the bottleneck |
+| **Explorer slots** (1 from the start, up to 2 more bought with Gems) | how fast the board opens | exploring becomes the bottleneck |
 | **Precious prices** — levels 4–5 by name, levels 8–10 each (§7.6) | how much the city needs the world and trade | the late city stalls, or ignores the world |
 | **Deposit yield** (2 a day) and **places** (`worldGen.deposits`, 3/2/1) | how much of the world's materials the board makes, and how lopsided each seat is | late prices go unpaid, or nobody needs to trade |
 | **Scouting hours by ring** and **reward lists** | what exploring pays, and how much the centre tempts | exploring feels like a toll, or out-earns the city |
 | **Gold to explore** (2,500 × 1.5 a hex) | how much of the purse the board takes | exploring is free in practice, or crowds out building |
 | **District cost and build time** | how fast territory spreads | the map is claimed out too early |
 | **District yields**, the Rural district's a tenth of a House | what holding ground is worth | the world is not worth leaving home for, or out-earns the city |
-| **Fight Mana** (1 h of regen) | how many fights a day | the board is fought too much, or not at all |
+| **Fight Mana** (`combat.fightMana`, 20) | how many fights a day | the board is fought too much, or not at all |
 | **Camp power by ring** and **share** (0.65) | how much fighting expansion takes | the board opens too freely, or every step is a wall |
 | **Camp return** (12 h) | how much there is to fight once the ground is cleared | the board empties, or a cleared border never rests |
 | **Raid warning, gap and share** (1 h, 1–3 h, 40%) | how hard the camps press | border camps are ignored, or the board feels like a chore |
@@ -969,6 +979,5 @@ it is there to compare.
   brake.
 - **Rewards for a place in the ranking**, or a ranking by anything but hexes.
 
-**Open questions:** OQ-3 (season length — the shard is six players on 127 hexes,
-the season is not set), OQ-122 in
+**Open questions:** OQ-3 (how long a world lasts), OQ-122 in
 [`../open-questions.md`](../open-questions.md).

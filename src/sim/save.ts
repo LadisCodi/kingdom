@@ -298,7 +298,7 @@ const MIGRATIONS: readonly Migration[] = [
   {
     // v24 — upgrades stopped being a separate kind of thing. Every level of
     // a levelled upgrade is now its own TECHNOLOGY in a rank ladder
-    // (Docs/features/tech-tree.md §1 rule 2, §8).
+    // (Docs/features/07-research.md §1.1).
     //
     // `Upgrades: { TapPower: 3 }` becomes three completed techs,
     // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
@@ -393,7 +393,7 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v35 — the daily chest became a SEASON (Docs/features/12-quests.md §3).
+    // v35 — the daily chest became a SEASON.
     // `LadderStep` counted days played on a seven-rung cycle that never ended;
     // `Rung` counts them inside a twenty-day window, so the two numbers do not
     // mean the same thing and the old one cannot be converted honestly — a
@@ -657,7 +657,7 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v69: THE TREE IN FIVE BOOKS (Docs/features/22-progression.md §9). A few
+    // v69: THE TREE IN FIVE BOOKS. A few
     // cards were renamed or split, and a researched one keeps what it
     // bought: `Engineering` becomes the four cards it split into, a renamed
     // rank becomes its successor. Cards with no successor (the discounts,
@@ -679,7 +679,7 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v70: STONE IS TAUGHT (Docs/features/22-progression.md §4). Tapping a
+    // v70: STONE IS TAUGHT (Docs/features/23-tutorials.md §3.1). Tapping a
     // mountain waits on `Pickaxes`, and two quests — research it, gather 20
     // Stone — sit in front of `Mustered`, the first thing that costs Stone.
     // A kingdom already past that point, or one that never had the

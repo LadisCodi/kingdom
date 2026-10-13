@@ -1,4 +1,4 @@
-// THE BAG (Docs/proposals/inventory.md, Docs/plans/relics-and-bag.md).
+// THE BAG (Docs/features/29-the-bag.md).
 //
 // Everything the player owns that is not a currency or a building, held
 // until it is USED. Three rules this file keeps:
@@ -86,7 +86,7 @@ export const runningBoosts = (state: GameState): Array<{ kind: BoostKind; value:
 
 /**
  * START A BOOST AT `now`, or extend the one running — it never stacks
- * (Docs/proposals/inventory.md §3.3). A modifier, because it happened to the
+ * (Docs/features/29-the-bag.md §2.2). A modifier, because it happened to the
  * kingdom and expires; its expiry is a boundary like any other. Rent is
  * priced house by house, so the rate change is repriced at `now`; Mana is
  * accrued to `now` first, so the new rate starts there and not at the last

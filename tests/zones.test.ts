@@ -205,7 +205,7 @@ describe('a zone is a boundary, and it survives a save', () => {
 
 /**
  * THE ONE NUMBER OF AN ABILITY THAT STEPS RATHER THAN CREEPS
- * (Docs/features/09-relics.md §2.1). A Chebyshev radius covers (2r+1)² cells,
+ * (Docs/features/09-relics.md §2.2). A Chebyshev radius covers (2r+1)² cells,
  * so each rung roughly DOUBLES the ground — which is why it is three named
  * levels and not a slope.
  */

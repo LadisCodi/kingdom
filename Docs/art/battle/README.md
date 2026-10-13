@@ -40,8 +40,7 @@ screen) attached. `field` came first; the other three also attach the
 - What makes them villains: scowls and sinister grins, a darker palette,
   glowing eyes or an eerie light — in the heroes' storybook hand, never
   horror. No gore, no mounts.
-- Each wears its dungeon (`../../features/11-expeditions.md` §4) and holds
-  what its `unitType` and skill say:
+- Each holds what its `unitType` and skill say:
 
 | Villain | Dungeon | Holds |
 |---|---|---|

@@ -22,7 +22,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite
-npm test             # vitest run — 124 suites, keep them all green
+npm test             # vitest run — 151 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run art          # rebuild the UI atlas
@@ -140,13 +140,13 @@ reloads on it; the tool keeps unsaved work and offers the reload.
 | **a whole new building, unit, hero, quest… — any new entry** of a collection; **a new field** on a collection (Schema view: its type, range, default and meaning) — the game ignores a field until code reads it, and the Schema view marks one nothing reads | the code that READS a new field; **a new collection**, which is a new game element: its file, its line in `balance.ts`, its entry in `COLLECTIONS` (`dataRules.ts`) and the code that uses it ship together |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | **a Bag item** — a chest, speed-up, boost, flask, tome or key — = an `items` entry; an item bundle = a `store` row with `items`; which source pays which item = its `rewardItems`, `freeItems`/`paidItems` or `treasure.items` | a new item `kind` (what using it does: `sim/bag.ts`, `sim/speedups.ts`) |
-| a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs, the forge and the store's fragment pack = `relics.fragments` | a new world source that drops fragments |
+| a relic's `kind` (city/world) and `door` — the lair or world source its first fragment is found at; drop sizes, level costs and the store's fragment pack = `relics.fragments` | a new world source that drops fragments |
 | the friends list's caps and its reward path — milestones, Gems, items, the Townhall a friend must reach — at `?dev=data` › Friends (`social.json`) | what a friend's progress IS (Townhall + cells, `friendsClient.ts`), a new social command (`src/socialServer/serve.ts`) |
 | a refined good's recipe and work time (`goods`); what a building level costs in goods (that level's `costPerLevel` entry); a workshop's good and queue length (`produces`, `queueLengthPerLevel`) | a new `GoodId` |
 | **a decoration** = a building with `harmonySupply` (one level, no crew), priced in goods on its level-1 `costPerLevel` entry, capped and Townhall-gated by `maxCountPerTownhallLevel`, discovered by a card in the tech tree; **what a level demands** = `harmonyCostPerLevel`, a TOTAL from level 1; the surplus tiers = `harmony.surplusTiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | **a plantable** = a building entry with `plants: <feature>` — listed, priced, capped and unlocked like a building, but it puts that feature on the ground (no district, no builder) and grows for its source's `growSeconds` (`Docs/features/27-plantables.md`); **what may be moved** with a long press and how long it then grows = `harvest` › `growSeconds` | a feature a plantable may plant (`plants`' options, a `FeatureId`) |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters`; which building it crews = that building's `crew` (checked by `tests/characters.test.ts`) | how a crew moves (`src/render/cast.ts`) |
-| a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectFraction` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
+| a building's store = its `storageCapacityPerLevel` (required on anything that makes Gold or harvests, refused elsewhere); when a store is ready to collect = `storage.collectSeconds` | what a full store stops, and where a collect is recorded (`sim/storage.ts`) |
 | a new adjacency rule = an `adjacency` entry (`district`, `neighbor`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`/`AnyDecoration`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 | an unlock splash = an `unlocks` entry: which door or book opens it, its title, its paragraph, its icon (`Docs/features/23-tutorials.md` §4.6); list order = the order two show in | a splash for something that is neither a door (`sim/doors.ts`) nor a book (`TOME_OPENS`) |
 | **a tutorial scene, a line, a speaker** — who says what, where the box sits, what it points at, what locks, what moves it on — at `?dev=data` › Scenes / Speakers / Tutorial help (`Docs/features/23-tutorials.md`, `24-dialogue.md`) | a new scene **condition kind** (`src/ui/stage/conditions.ts`), a new pointer target syntax (`targets.ts`) |
@@ -223,8 +223,8 @@ than the build is rejected rather than downgraded.
   **Chebyshev**, a square that the isometric view draws as a tile-shaped
   diamond; worker travel uses **Euclidean**.
 - **Money and identity are different things.** A cell's feature is not its
-  currency: berries, game and shoals all pay Food (1, 3, 2 a tap) and an iron
-  vein is a rich Stone node. `HarvestSpec.id` vs `HarvestSpec.currencyId`.
+  currency: berries, game and shoals all pay Food and an iron
+  mountain is a rich Stone node. `HarvestSpec.id` vs `HarvestSpec.currencyId`.
   Four coins on the plank is the genre's ceiling, not its floor — adding a
   wallet row needs an argument, and the Fragments precedent (a per-collectible
   counter, not a row) is usually the better answer. **Refined goods follow it**:

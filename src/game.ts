@@ -59,7 +59,7 @@ import {
 import { artifactLevel, nextPassiveValue, passiveValue, syncArtifactModifiers } from './sim/artifacts';
 import {
   canRestore, isMet, levelStardust, levelUpRelic, openFragmentPack, restoreRelic,
-  dropFragments, openRelicDoor, slotCount, type FragmentDrop,
+  slotCount, type FragmentDrop,
 } from './sim/relics';
 import {
   activeRadius, cast, castBlock, castState, chargesLeft,
@@ -163,13 +163,13 @@ import { PORTAL_INDICES, hexAt, hexDistance, hexIndex } from './sim/world/hex';
 import { localWorld, snapshotWorld, type WorldSource } from './sim/world/source';
 import type { WorldServerApi } from './worldServer/local';
 import type { Analytics, AnalyticsContext } from './analytics/analytics';
-import type { ArmyPurpose, Refusal, WorldSnapshot } from './worldServer/types';
+import type { ArmyPurpose, ArmyView, Refusal, WorldSnapshot } from './worldServer/types';
 import { nicknameProblem } from './worldServer/nickname';
 import { FriendsClient } from './friendsClient';
 import { armyMarchSpeed, departArmy, freeArmySlots, receiveArmy } from './sim/world/armies';
 import { movesWorldBoost, worldImprovementBoost } from './sim/world/boost';
 import type { SeatBoost } from './worldServer/types';
-import { boostLoot } from './sim/world/loot';
+import { boostLoot, lootFragments } from './sim/world/loot';
 import { boardNeighbors } from './sim/world/hex';
 import { emptyBits } from './sim/world/fogBits';
 import type { WorldUpgrade } from './sim/world/types';
@@ -237,7 +237,7 @@ export type OverlayName =
   // The Survey, reached from its own pill (Docs/features/25-the-survey.md §6).
   | 'survey'
   // Buying a level is its own surface now, opened by the card's Upgrade
-  // button (Docs/art/ui-menus-redesign.md §7.27).
+  // button (Docs/art/ui-menus-redesign.md, the upgrade popup).
   | 'upgrade'
   // Buying Knowledge, from the + on the Knowledge tab (07-research.md §3.2).
   | 'knowledge'
@@ -510,7 +510,7 @@ export interface FragmentProgress {
  *
  * It was built for the gacha and it is not the gacha's alone any more: a
  * cleared room hands it what the room paid (Docs/features/11a-ruins-ui.md
- * §2.5). Hence the optional half — a banner and a call count are what a PULL
+ * §2.8). Hence the optional half — a banner and a call count are what a PULL
  * has to say about itself, and a fight says something else.
  */
 /** What a reveal is opened FROM (ui/gachaScreen.ts): the silver-bound chest
@@ -742,7 +742,7 @@ export class Game {
   gachaReveal: GachaReveal | null = null;
   /** The fight being replayed, or null when none is. Its own mount for the
    *  same reason the reveal has one — and the reveal plays OVER it, which is
-   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
+   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.7). */
   battle: BattlePlayback | null = null;
   /** The hero whose card is open on the roster screen, or null for the grid.
    *  On the presenter rather than in the view for the reason `lairId`
@@ -1640,7 +1640,7 @@ export class Game {
     const block = castBlock(this.state, artifactId, this.now());
     if (block !== null) {
       if (block === 'NotEnoughMana') this.shake(['Mana']);
-      else if (block === 'NotOwned') this.toast(tr('Finish its album first'));
+      else if (block === 'NotOwned') this.toast(tr('Restore it first'));
       else if (block === 'Active') this.toast(tr('{spell} is still running', { spell: active.name }));
       else if (block === 'OnCooldown') this.toast(tr('{relic} needs to rest', { relic: ARTIFACTS[artifactId].name }));
       this.notify();
@@ -2179,14 +2179,6 @@ export class Game {
     this.setOverlay('bag');
   }
 
-  /**
-   * The store's BUNDLE shelf (§6.1): star packs and wildcards for money.
-   *
-   * Empty in the last hours of a season — a bundle is two things the close
-   * wipes, so the store withdraws it rather than sell an hour of it. The UI
-   * renders no shelf at all rather than a row explaining why, because a
-   * withdrawn product is not an offer.
-   */
   /** The Bag's bundles, as the store's item shelf draws them: what each
    *  holds, and — for the speed-ups — what that time would cost in Gems at
    *  the rush price, the comparison the shelf exists to offer. */
@@ -3000,8 +2992,18 @@ export class Game {
       ...this.state.city.districts.map((d): SpeedJob => ({ kind: 'workshop', districtId: d.uniqueId })),
       ...this.state.world.builds.map((b): SpeedJob => ({ kind: 'hex', index: b.index })),
       ...this.state.world.explorers.map((t): SpeedJob => ({ kind: 'explorer', tripId: t.id })),
+      // The player's own armies on the road, as the army's own timer offers them.
+      ...this.ownArmiesOnTheRoad().map((a): SpeedJob => ({ kind: 'army', armyId: a.id, at: a.at })),
     ];
     return jobs.find((j) => fits(id, j) && jobRemainingSeconds(this.state, j, now) !== null) ?? null;
+  }
+
+  /** The player's armies the last snapshot shows with an arrival ahead. */
+  private ownArmiesOnTheRoad(): Array<ArmyView & { at: number }> {
+    const snap = this.worldView;
+    if (snap === null) return [];
+    return snap.armies.filter((a): a is ArmyView & { at: number } =>
+      a.owner === snap.board.seat && a.at !== null);
   }
 
   private jobFacts(job: SpeedJob): { title: string; icon: IconName; progress: number; gems: number } | null {
@@ -4348,7 +4350,7 @@ export class Game {
   // a card fills the first free slot with as much as it legally can. Nothing
   // here is a stepper: the player picks a TYPE and the game works out the
   // count, which is the whole difference between composing a party and doing
-  // arithmetic (Docs/features/11a-lairs-ui.md §2.6).
+  // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
 
   /**
    * Put the board back in step with the roster.
@@ -6077,13 +6079,8 @@ export class Game {
         // production, priced now (19 §5.4).
         const made = campPay(this.state, l.hours ?? 0);
         for (const [c, n] of Object.entries(made) as Array<[CurrencyId, number]>) addToWallet(this.state.city.wallet, c, n);
-        // A world relic's door, then its fragments: a boss's one, a Portal
-        // floor's what its pack was worth (Docs/plans/relics-and-bag.md §5).
-        const won = l.from ?? (l.pack ? 'portal' : 'room');
-        const found = [
-          ...openRelicDoor(this.state, won),
-          ...dropFragments(this.state, 'world', l.pack ? RELIC_RULES.perPackTier[l.pack] ?? 1 : won === 'boss' ? 1 : 0, ['loot', l.seq ?? l.at]),
-        ];
+        // A world relic's door, then its fragments (sim/world/loot.ts).
+        const found = lootFragments(this.state, l);
         if (found.length > 0) this.note(fragmentWords(found));
         // A camp's lump of precious material, to the city's goods (19 §7.4).
         if (l.precious) {

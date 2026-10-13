@@ -137,16 +137,16 @@ export const effectiveRecoveryMs = (
     // AT THE CELL, because the Staff of Renewal's zone is a place. It is read once,
     // when the cell exhausts, so a zone only ever reaches the cells that empty
     // INSIDE it — which is exactly what the active's instant refill arranges,
-    // by emptying the waiting list first (Docs/proposals/relic-effects.md §3.1).
+    // by emptying the waiting list first (Docs/features/09-relics.md §2).
     / Math.max(1, resolveAt(state, 'recoverySpeed', 1, at))));
 
 /**
  * How long a CONSUMED feature waits before it reappears somewhere else — the
- * other harvest clock, and the one the Sickle of Plenty moves
- * (Docs/features/09-relics.md §2).
+ * other harvest clock, moved by the tree's `respawnSpeed`
+ * (Docs/features/04-harvest.md §2).
  *
  * Priced when the wait STARTS and stored on the respawn entry, the same rule
- * a training item and a workshop order already follow: a relic that levels
+ * a training item and a workshop order already follow: a rank researched
  * must never reprice a bush already on its way back.
  */
 export const effectiveRespawnMs = (state: GameState, spec: HarvestSpec): number =>
@@ -391,8 +391,8 @@ export function tapCell(
   const spec = HARVEST[harvestSourceAt(state, cell)!];
   // A tap owes `tap.workSeconds` of this cell's own work — a fractional number
   // of units on most ground — so the remainder rides along in `tapCarry` until
-  // it adds up. Without that, a +20% TapPower on a cell paying two units a tap
-  // is destroyed by rounding and the upgrade is decorative.
+  // it adds up. Without that, a +10% `harvestYield` on a cell paying two units
+  // a tap is destroyed by rounding and the bonus is decorative.
   const carry = state.tapCarry[spec.currencyId] ?? 0;
   const owed = tapDraw(state, spec, carry, cell);
   // Floored at one unit: ten seconds of work on slow ground is a fraction, and

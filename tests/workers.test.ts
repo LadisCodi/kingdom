@@ -42,7 +42,7 @@ const CYCLE_MS = 2 * MOVE_MS + STRIKE_MS;
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 1) => {
   fund(state, { Gold: 500, Wood: 500 });
   // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
-  // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
+  // it for you (Docs/features/12-quests.md §2 steps 2 and 27).
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
   clearAround(state, SAWMILL_CELL, 3);
@@ -64,7 +64,7 @@ const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 
 
 describe('area of influence & worker limit', () => {
   // A LEVEL BUYS SPEED, NEVER REACH OR HANDS (Docs/features/buildings.md
-  // §4.3): the ground and the crew are the level-1 building's for ever, and
+  // §4.4): the ground and the crew are the level-1 building's for ever, and
   // more of either is a second building.
   it('keeps its reach and its crew at every level, and swings faster', () => {
     const state = freshGame();

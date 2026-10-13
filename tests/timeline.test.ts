@@ -170,7 +170,7 @@ describe('the gacha', () => {
   const keys = (state: GameState, banner: 'basic' | 'advanced'): number =>
     itemCount(state, BANNERS[banner].key);
 
-  // Docs/features/12-quests.md §2 (quest 33): the first call on the standard banner is a
+  // Docs/features/12-quests.md §2 (quest 64): the first call on the standard banner is a
   // gift, and every one after it is the authored price. No new save field —
   // the pull counter already persists for pity, and "have you pulled here
   // yet" is exactly what it records.
@@ -348,7 +348,7 @@ describe('the gacha', () => {
   it('never rolls a rarity its banner weights at zero', () => {
     // The weights ARE the pool: there is no pool column, and a zero is what
     // keeps the Legendary off the common call and the Commons off the golden
-    // one (Docs/features/10-heroes.md §5).
+    // one (Docs/features/10-heroes.md §6.1).
     const state = rich();
     for (let i = 0; i < 200; i += 1) {
       const basic = pull(state, 'basic');

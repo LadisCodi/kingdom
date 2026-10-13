@@ -2,9 +2,9 @@
 
 > **Scope.** The one channel for **things the player may not have seen**:
 > round bubbles in two columns — the news at the bottom right, the standing
-> states larger at the top right — in the province and on the world board, each opening a card that says what happened and takes the
-> player to it. It replaces the banner, the right-edge tabs and the toasts
-> that carried news. Refusals stay toasts.
+> states larger at the top right — in the province and on the world board,
+> each opening a card that says what happened and takes the player to it.
+> Refusals are toasts, not notices.
 >
 > **Status: built.**
 
@@ -59,8 +59,8 @@
 | Tomorrow's part | a bought pack's next-day part is waiting — countdown, then ready | the chest | — | **Claim** when ready: the offer's splash |
 | Portal reward | a closed Portal opening placed the player where it pays Gems ([`19-world-map.md`](19-world-map.md) §10.4) — the place, the floor, the Gems | the Portal, shut; it glows | — | **Claim**: the Gems |
 | Free call | a free gacha pull is waiting | the key | the store's Heroes | — |
+| Army ready | an army of the player's waits at a camp for the word to attack ([`19-world-map.md`](19-world-map.md) §5.4); a count when several | the camp; it glows | the camp | — |
 | Explorer ready | an explorer's work is done and it waits at its hex for the player's tap ([`19-world-map.md`](19-world-map.md) §3.1); a count when several | the compass; it glows | a tap on the bubble flies to the hex, card shut — the tap on the hex reveals it | — |
-| Army ready | an army of the player's waits at a camp for the word to attack ([`19-world-map.md`](19-world-map.md) §5.4) | the camp; it glows | the camp's sheet | — |
 | Hero rested | a hero who came back exhausted is whole again | the hero's bust | the heroes sheet | — |
 
 - **Hero rested** goes when that hero next fights, or when its card is opened.
@@ -128,15 +128,11 @@
 - **The welcome sheet stays**: it summarises the absence, and the news it
   summarises stay in the column.
 
-## 8. What it replaces
+## 8. What is not a notice
 
-- **Gone:**
-  - the banner (`#notice`);
-  - the three right-edge tabs (Mana refill, relic asleep, tomorrow's part);
-  - the toasts for raids, world reports and world builds.
-- **The raid widget** of [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §7 is the
-  *Raid coming* state and the *Raided* news.
-- **Stays as it is:**
+- A lair's raid is shown only as notices: the *Raid coming* state and the
+  *Raided* news ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+- **Not notices:**
   - refusal toasts;
   - the unlock splash;
   - the quest pill;
@@ -159,4 +155,3 @@
 - Muting a kind of notice.
 - A bubble for a refusal.
 
-**Open questions:** OQ-133 in [`../open-questions.md`](../open-questions.md).

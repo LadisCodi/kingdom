@@ -1,73 +1,67 @@
-# 10 · Heroes, the collection substrate and the gacha
+# 10 · Heroes and the gacha
 
 > **Scope.** The thirty-two heroes, what one does on the battle board, how it
-> levels and ascends, the hero slots, and the two-banner gacha. Relics are
-> [`09-relics.md`](09-relics.md); where heroes fight is
+> levels and ascends, the hero slots, the Tavern, and the two-banner gacha.
+> Relics are [`09-relics.md`](09-relics.md); where heroes fight is
 > [`11-expeditions.md`](11-expeditions.md) and how the fight resolves is
 > [`combat.md`](combat.md) §9.
 >
-> **Status: built** — the gacha (§6); the nav tab, the roster grid, the hero
-> card and the reveal screen (§8); the stat block and the type passive on the
-> board (§2.3, §2.4), the skills (§2.5) and the boons (§2.6); the whole ladder
-> (§4); the Gem-bought hero slots (§3); the **Tavern**, whose standing
-> opens the Heroes tab and the banner; the hero bag and the falling hero
-> chance (§6.6), the three prize slots (§6.4) and the ten-call's grouped
-> reveal (§8.3). **Not built:** the rarity multipliers (§2.1) — every hero's
-> numbers are authored whole in `heroes` — and the banner moving into the
-> Tavern (§8.3).
+> **Status: built** — the gacha (§6); the Heroes tab, the roster, the hero
+> card and the reveal (§8); the stat block and the type passive (§2.3,
+> §2.4), the skills and their ranks (§2.5) and the boons (§2.6); wounds
+> (§2.8); the whole ladder (§4); the Gem-bought hero slots (§3); the
+> **Tavern**, whose standing opens the Heroes tab and the banner; the hero
+> bag and the falling hero chance (§6.6), the three prize slots (§6.4) and
+> the ten-call's grouped reveal (§8.3). **Not built:** the rarity multipliers
+> (§2.1) — every hero's numbers are authored whole in `heroes` — and the
+> banner moving into the Tavern (§8.3).
 
-## 1. The collection substrate
+## 1. Heroes and relics
 
-- Heroes and relics are the game's two collections, and **they are built to
-  feel different** ([`09-relics.md`](09-relics.md) §1). A hero is a **ladder**:
-  collect → the ascension caps the level → a currency buys levels inside the cap →
-  equip into limited slots. A relic is an **album**: its own nine cards a
-  season, completed once, and a permanent level with no cap and no slot.
-- A hero's ascension is **five stars of six points** — thirty ascensions —
-  and **every point** is worth **ten levels**, up to **level 310**. A
-  relic's ladder never ends.
-- The currencies differ by type. A hero levels on **Hero XP** and ascends on
-  **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
-  so the toll is Stardust's only sink (**OQ-78**). **OQ-6.**
-- The two meet twice: an album pays **keys**, and the collection prize is a
-  golden call guaranteed to be the **season hero**
-  ([`09-relics.md`](09-relics.md) §5, §10).
+- Heroes and relics are the game's two collections.
+- **A hero is a ladder**: called or recruited from its Fragments → levelled
+  on Hero XP inside a cap → the cap raised by ascension (its own Fragments
+  and Stardust) → **fielded** in a limited number of hero slots.
+- **A relic is restored, not called**: six fragments found by play, bought
+  in a pack or traded; levelled with a full set again and Stardust, with no
+  cap; **hosted** in a Shrine or a Chapel, never fielded
+  ([`09-relics.md`](09-relics.md) §1).
+- A hero's ladder ends at **level 310** — five stars of six points, every
+  point worth ten levels. A relic's never ends.
+- **Stardust is spent by both**: hero ascension, skill ranks, and relic
+  levels. Hero XP and hero Fragments are heroes' alone. **OQ-6.**
 
 ## 2. The hero
 
-Each hero carries a **rarity**, a **unit type**, a **stat block**, one
-**passive**, a **level** and an **ascension**.
+Each hero carries a **rarity**, a **unit type**, a **stat block**, a type
+**passive**, a **skill**, a **level** and an **ascension**; a Legendary also
+carries a **boon**.
 
 ### 2.1 Rarity
 
-- **Rarity multiplies the stat block and the passive, and picks the pool.**
-  Nothing reads rarity at combat time.
+- **Rarity picks the pool** (§6.1) and the recruit price (§4).
 - **A Legendary also carries a BOON** (§2.6) — one kingdom passive no other
-  rarity has. That is the one place rarity is a mechanism, and it is
-  deliberate: a Legendary that was only a bigger number was a thin prize for
-  the golden call's 25% slice.
+  rarity has.
+- Nothing reads rarity at combat time.
+- **Not built:** rarity multiplying the stat block and the passive. Every
+  hero's numbers are authored whole in `heroes`.
 
-| Rarity | Count | Stat multiplier | Passive multiplier |
+| Rarity | Count | Stat multiplier *(not built)* | Passive multiplier *(not built)* |
 |---|---|---|---|
-| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
-| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
-| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
-
-- Below Legendary, a Rare is a Common with bigger numbers, so a duplicate role
-  is a real choice about stats rather than a second vocabulary.
+| **Common** | 14 | ×1.0 | ×1.0 |
+| **Rare** | 12 | ×1.2 | ×1.25 |
+| **Legendary** | 6 | ×1.5 | ×1.75 |
 
 ### 2.2 The roster
 
-- **Common** — Warden, Quartermaster, Adventurer, Bard, Beastkin Hunter,
-  Cleric, Cook, Gardener, Joker, Merchant, Priest, Rogue, Sellsword, Three
-  Mice.
-- **Rare** — Scholar, Relic-hunter, Dark Knight, Paladin, Wizard, Witch, Druid,
-  Ice Lancer, Holy Warrior, Savage Warrior, Spymaster, Electric Archer.
-- **Legendary** — Ranger, Golden Dragon, Vampire Lord, Necromancer, Pharao,
-  Elven Princess.
-
-*Ranger* was *Scout*; the Guild's room-threat preview owns that word
-([`11-expeditions.md`](11-expeditions.md) §3).
+- **Common** — the Warden, the Quartermaster, the Adventurer, the Bard, the
+  Beastkin Hunter, the Cleric, the Cook, the Gardener, the Joker, the
+  Merchant, the Priest, the Rogue, the Sellsword, Three Mice in a Coat.
+- **Rare** — the Scholar, the Relic-hunter, the Dark Knight, the Paladin,
+  the Wizard, the Witch, the Druid, the Ice Lancer, the Holy Warrior, the
+  Savage, the Spymaster, the Storm Archer.
+- **Legendary** — the Scout, the Golden Dragon, the Vampire Lord, the
+  Necromancer, the Pharaoh, the Elven Princess.
 
 ### 2.3 It fights
 
@@ -82,8 +76,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - `atk`, `dmg`, `def` and `hp` grow per level (`atkPerLevel`, `dmgPerLevel`,
   `defPerLevel`, `hpPerLevel`), small steps over a 310-level ladder;
   `cooldown` does not move.
-- It dies at 0 HP and stops attacking. Nothing is permanent: the party is whole
-  again when the fight ends.
+- It dies at 0 HP and stops attacking. The HP a fight leaves it with carries
+  over (§2.8).
 
 ### 2.4 The passive
 
@@ -120,9 +114,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Rarity | Hero · skill (rank 1) |
 |---|---|
-| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
-| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage Warrior **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Electric Archer **Sharpshot** 100% every 2.5 s |
-| **Legendary** | Ranger **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Wave** 6% every 4.5 s |
+| **Common** | Warden **Shield** 15% every 4.5 s · Quartermaster **Bulwark** +2 DEF · Adventurer **Seasoned** +20% · Bard **War cry** +5% damage · Beastkin Hunter **Ambush** 100% every 3.5 s · Cleric **Mend** 10% every 3.5 s · Cook **Vigour** +5% HP · Gardener **Healing wave** 3% every 5.2 s · Joker **Daze** 1 s every 4.5 s · Merchant **Plunder** +15% · Priest **Field medic** +10 · Rogue **Sharpshot** 80% every 3.5 s · Three Mice in a Coat **Volley** 25% every 4.5 s · Sellsword **Cleave** 60% every 3.5 s |
+| **Rare** | Scholar **Lore** +25% · Relic-hunter **Plunder** +30% · Dark Knight **Crush** 120% every 3.5 s · Paladin **Shield** 25% every 4.5 s · Wizard **Volley** 40% every 4.5 s · Witch **Mend** 15% every 3.5 s · Druid **Healing wave** 5% every 4.5 s · Ice Lancer **Daze** 2 s every 3.5 s · Holy Warrior **War cry** +8% damage · Savage **Cleave** 80% every 2.5 s · Spymaster **Ambush** 120% every 2.5 s · Storm Archer **Sharpshot** 100% every 2.5 s |
+| **Legendary** | Scout **Sharpshot** 150% every 2.5 s · Golden Dragon **Cleave** 120% every 4.5 s · Vampire Lord **Crush** 180% every 2.5 s · Necromancer **Volley** 60% every 4.5 s · Pharaoh **War cry** +15% damage · Elven Princess **Healing wave** 6% every 4.5 s |
 
 - A fight lasts ten seconds or more ([`combat.md`](combat.md) §5), so a
   timed skill fires every 2.5–5 s.
@@ -149,46 +143,35 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   rank asks for Stardust alone ([`19-world-map.md`](19-world-map.md) §7.6).
 - Each axis has its own key: a level is Hero XP, an ascension Fragments and
   Stardust, a rank Stardust and material.
-- **Hero XP comes from the world**: a lair pays its tier once; a dungeon
-  room, a camp and a Portal floor pay it for good
+- **Hero XP comes from fights**: a lair pays its tier once; a dungeon room,
+  a camp and a Portal floor pay it every time
   ([`19-world-map.md`](19-world-map.md) §8.1).
 
 ### 2.6 The boon
 
-> **Built.** Design and rationale:
-> [`../proposals/legendary-boons.md`](../proposals/legendary-boons.md).
-
-- **Every LEGENDARY carries one kingdom passive, and no Common or Rare does.**
-  It is what a Legendary is for; the stat block and the type passive are only
-  bigger numbers.
-- It is **on while the hero is OWNED** — no slot, no equip, no party — and it
-  is a modifier at the base stage, in the same stack a relic uses.
-- **Always a multiplier, always above 1.** A speed, a yield or a capacity,
-  never a discount, a cost or a time: a flat bonus is worth less every hour the
-  kingdom grows, and a falling number has a floor, which is a ceiling on a
-  passive that never ends. Where the game owns a TIME, the boon owns the SPEED
-  and the call site divides by it.
-- **A boon never scales.** Level and ascension move the body; the boon is
-  what arrives with the hero.
-- **Boons stack; a duplicate adds nothing.** Two Legendaries are two heroes —
-  unlike a party trait, which is best-of.
+- **Every Legendary carries one kingdom passive, and no Common or Rare does**
+  (`heroes` › `boon`: a stat and a value).
+- It is **on while the hero is OWNED** — no slot, no equip, no party — as a
+  modifier at the base stage.
+- **Always a multiplier above 1**: a speed, a yield or a capacity, never a
+  discount, a cost or a time.
+- **A boon never scales** with level or ascension.
+- **Boons stack; a duplicate adds nothing.**
 - The six:
 
-| Hero | Boon |
-|---|---|
-| **The Pharaoh** | the builders work **20% faster** |
-| **The Elven Princess** | the kingdom makes **25% more Mana** |
-| **The Necromancer** | every lump of Knowledge is **25% bigger** |
-| **The Scout** | explorers march **25% faster** |
-| **The Vampire Lord** | every room teaches your heroes **25% more** |
-| **The Golden Dragon** | every unit you field has **10% more health** |
+| Hero | Boon | Stat |
+|---|---|---|
+| **The Pharaoh** | the builders work **20% faster** | `buildSpeed` |
+| **The Elven Princess** | the kingdom makes **25% more Mana** | `manaRegen` |
+| **The Necromancer** | every lump of Knowledge is **25% bigger** | `knowledgeYield` |
+| **The Scout** | explorers march **25% faster** | `worldRevealSpeed` |
+| **The Vampire Lord** | Hero XP **+25%** | `heroXp` |
+| **The Golden Dragon** | every unit you field has **10% more health** | `unitHp` |
 
-- The **sentence is generated** from the stat and the number, never authored
-  beside them — the technology card's rule, for the same reason.
-- **It breaks §2.1 on purpose**: rarity is now a mechanism, for one rarity.
-  §10's line holds — a boon acts on the kingdom, and the combat one is a
-  multiplier in the `Drill` the resolver is already handed, so nothing reads
-  rarity at combat time.
+- The **sentence is generated** from the stat and the number (`BOON_SAYS`,
+  `sim/heroes.ts`).
+- The combat boon is a multiplier in the `Drill` the resolver is handed; the
+  resolver never reads a rarity.
 
 ### 2.7 The party rule
 
@@ -230,14 +213,10 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
-- Price: `party.heroSlotGemCostBase × party.heroSlotGemCostGrowth^n`,
-  the escalating-slot curve builders use, with a higher
-  base because a hero slot carries a type buff as well as a body. They sit under `party.*` rather than `heroes.*`
-  because that key is the Heroes SHEET.
+- Price: `party.heroSlotGemCostBase × party.heroSlotGemCostGrowth^n` —
+  **2,500**, then **5,000** Gems.
 - **It is the only slot in a party that is sold.** Every troop slot on the
   board is open from the first fight ([`combat.md`](combat.md) §3).
-- A second hero is worth two things: a second buffed type, and a second body on
-  the board.
 
 ## 4. The ladder
 
@@ -252,11 +231,9 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **A call hands over either a hero or fragments of one. They are different
   prizes**, and both end at the same place: **enough fragments (15 · 25 · 40 by
   rarity) recruit the hero outright.**
-- Without that second door, fragments of a stranger pile up against a door
-  with no handle, and §4's promise that every drop has a play-based route is
-  only true for heroes the banner has already given you.
-- **A call that brings them to ten recruits on the spot**, in the reveal
-  (§8.3). Fragments from anywhere else wait for the roster's Recruit button.
+- **A call that brings them to the recruit price recruits on the spot**, in
+  the reveal (§8.3). Fragments from anywhere else wait for the roster's
+  Recruit button.
 - **Recruiting is not an ascension.** A hero recruited with fragments starts
   with every star empty, exactly as a pulled one does. Change on a bigger pile
   carries over.
@@ -288,22 +265,23 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Easy early, hard late.** The first ten levels cost ~200 Hero XP, a full
   first star (level 70) ~2,600, five stars ~192,000. A tier-1 lair carries a
   hero past its first ten levels; the late levels ask for dungeons cleared to
-  the bottom. Whether that survives a playtest is **OQ-79**.
+  the bottom. Whether the faucet is enough is **OQ-115**.
 
   | Source | Hero XP |
   |---|---|
   | A lair, once (`garrisons.heroXp`) | 500 · 1,500 · 4,000 · 10,000 · 25,000 by tier |
   | A camp (`worldCamps.heroXpPerPower`) | 0.1 a point of power — 30–240 |
-  | A dungeon room (`worldDungeon.heroXp`) | ~2,980 for all 24 rooms |
-  | **Closing a dungeon** (`worldDungeon.closeHeroXpMultiplier`) | its last boss ×20 — **12,200** |
-  | The Portal, all 40 floors | ~11,700 |
+  | A dungeon room (`worldDungeon.heroXp`) | by depth and room ([`19-world-map.md`](19-world-map.md) §8.1) |
+  | **Closing a dungeon** (`worldDungeon.closeHeroXpMultiplier`) | its last boss's ×20 |
+  | A Portal floor | by floor ([`19-world-map.md`](19-world-map.md) §10) |
   | Scouting a hex | 100 · 150 · 250 by ring |
-- **Fragments are per hero**, a counter beside the hero, as today.
-- The Stardust toll totals **744** to max one hero. The toll is **Stardust's
-  only sink**; whether the trickle is oversized is **OQ-78**.
-- **Every gacha drop has a play-based route.** Fragments fall from boss chests
-  (not built, **OQ-80**) as well as from calls; the wallet buys the same hero
-  sooner, never alone.
+- **Fragments are per hero**, a counter beside the hero.
+- The Stardust toll totals **744** to max one hero. Stardust is also spent on
+  skill ranks (§2.5.1) and relic levels
+  ([`09-relics.md`](09-relics.md) §4).
+- **Every gacha drop has a play-based route**: the free calls (§6.2). The
+  wallet buys the same hero sooner, never alone. No fight pays hero
+  Fragments (**OQ-122**).
 
 ## 5. Where the currencies come from
 
@@ -313,12 +291,14 @@ Every faucet is a fight or a banner. Room and floor amounts are
 | Currency | Source |
 |---|---|
 | **Hero XP** | every lair cleared · every camp · every world-map dungeon room and Portal floor · **a dungeon closed** (the big lump) · a call's loot |
-| **Fragments** | a call's loot · a duplicate · boss chests, from a per-boss pool (not built, OQ-80) |
+| **Fragments** | a call's loot · a duplicate (from a call or a store product that hands over a hero) · a store product's next-day part |
 | **Stardust** | every dungeon room and Portal floor · a call's loot · the quest chain and the Survey |
 
+- **Every Hero XP paid is raised** by the Tavern's level (+10% a level to
+  +50%, `buildings` › `Tavern` › `heroXpBonusPerLevel`), the Sagas'
+  technologies and the Vampire Lord's boon.
 - The chain is **army → hero → lairs and dungeon rooms → XP and Stardust →
-  levels.** A player who never fights makes no progress on the
-  weeks-long arc. **OQ-41.**
+  levels.**
 
 ## 6. The gacha
 
@@ -333,7 +313,7 @@ Every faucet is a fight or a banner. Room and floor amounts are
 |---|---|---|
 | Key | Silver | Gold |
 | A key costs | **500 Gems** | **1,500 Gems** |
-| Base hero chance | **20% → 5%**, by heroes owned (§6.6) | **20% → 5%**, by heroes owned (§6.6) |
+| Base hero chance | **30% → 2%**, by heroes owned (§6.6) | **30% → 2%**, by heroes owned (§6.6) |
 | Soft pity from | pull 40 | pull 30 |
 | A hero guaranteed at | pull **60** | pull **50** |
 | A Legendary guaranteed at | — | pull **40** |
@@ -361,13 +341,15 @@ Every faucet is a fight or a banner. Room and floor amounts are
 - **The first two calls, counted across both banners, are each a new hero**
   (`heroLadder` › `firstCallsNewHero`): the hit is forced and the hero is one
   not yet owned.
-- **The banner hangs in the Tavern.** Until a Tavern stands, the Heroes tab
-  and the Store's banner are padlocked. **The kingdom starts with no hero**:
+- **The banners need a Tavern** (one, five levels; opened by Hospitality,
+  Kingdom chapter 2). Until one stands, the Heroes tab and the store's
+  banners are padlocked; a standing Tavern also opens the Sagas
+  ([`07-research.md`](07-research.md)). **The kingdom starts with no hero**:
   its first is this free call, and no hero is ever granted by the story.
 - A rewarded video pays for a call: **five a day on the common banner, one on
   the golden one**.
 - The common banner spaces its five by a **5-minute cooldown**; the golden one
-  has none, because a cap of one a day is already the whole rule.
+  has none.
 - The allowance is stamped with the UTC day and rolls over lazily on the next
   read — the same stamp-plus-counter shape the monthly budget uses.
 - **The free call is not a boundary source.** `advance()` never touches the
@@ -458,8 +440,8 @@ quickly.
     `rand(seed, 'heroBag', heroId)`.
 - **An unowned hero holding Fragments is always open**, over the count, so
   a Fragment from any other source is never stranded.
-- **A season hero is always open**, over the count, while a banner leans
-  toward them (`banners.featuredHero`) and until they are recruited.
+- **A featured hero is always open**, over the count, while a banner names
+  them (`banners.featuredHero`) and until they are recruited.
 - **The bag is derived, never stored**: owned heroes, Fragments held and the
   order decide it. No save field and no migrator are needed.
 - **The hero chance falls as the collection grows.** It is a ladder indexed
@@ -496,17 +478,17 @@ Each of these is data, not code:
 
 | Want to ship | Costs |
 |---|---|
-| A seasonal hero | one `heroes` entry (rarity, type, stat block, passive) plus its portrait |
+| A new hero | one `heroes` entry (rarity, type, stat block, passive, skill, boon) plus its portrait |
+| A featured hero, always open in the bag | `banners` › `featuredHero` (§6.6) |
 | A third banner | one `banners` entry — its weights are its pool |
 | Rebalancing a banner | its entry: odds, both pities, weights, key price, free calls |
 | Rebalancing the hero's share of a fight | the rarity multipliers and the 70% target, in `heroes` |
-| A new relic | one `artifacts` entry + **its** album in the seasons file ([`09-relics.md`](09-relics.md) §3) |
 
 ## 8. The screens
 
-- **Heroes have a nav tab of their own**, beside the Collection. A roster of
-  thirty-two and five albums of nine cards are two screens with two jobs; the
-  one thing they share is the reveal ([`09-relics.md`](09-relics.md) §11.5).
+- **Heroes have a nav tab of their own**, padlocked until a Tavern stands.
+  The reveal (§8.3) is shared with the store's relic fragment pack
+  ([`09-relics.md`](09-relics.md) §11.5).
 
 ### 8.1 The roster
 
@@ -519,7 +501,7 @@ Each of these is data, not code:
   gold), its **unit type** on a banner top-left, its **level** and
   **ascension stars** at the foot, and its **HP**.
 - **An unfound hero is the same card on warm stone**: a dark silhouette, and
-  its **fragments** against the ten that recruit them in place of the level.
+  its **fragments** against the recruit price in place of the level.
 - **A green orb** on any card that can take a level, an ascension or a
   recruit right now.
 - One line over the grid: how many of the roster are found.
@@ -562,8 +544,9 @@ Each of these is data, not code:
     ceiling*.
 - **An unowned hero gets the same card**, stats and passive and all, without
   Ascension, on a stone stage with a silhouette. **Fragments** takes the
-  Level section's place — *Fragments n of 10* over the bar — with **Call for
-  aid** into the banner, which becomes **Recruit** once ten have piled up.
+  Level section's place — *Fragments n of {price}* over the bar — with **Call
+  for aid** into the banner, which becomes **Recruit** once the price has
+  piled up.
 
 ### 8.3 The reveal
 
@@ -640,8 +623,8 @@ covers everything but the rewarded video. Mockups `m99a`–`m99d`.
 - **The banners sit on the store**, padlocked until a Tavern stands. Moving
   them into the Tavern — **tapping it is how one is called**
   ([`14-monetization.md`](14-monetization.md) §2.1) — is designed, not built.
-- **The keys stay in the store**, one Gem-priced card each. The store is where
-  a currency is bought; the Tavern is where a key is spent.
+- **Keys are Bag items**, bought with Gems on the store's Heroes tab, one
+  card each (`banners` › `keyGemCost`); bundles and rewards pay them too.
 - Each banner card shows, always: the chance right now, the calls to a
   guaranteed hero, the calls to a guaranteed Legendary where there is one,
   **two buttons side by side**, and a line saying how many keys the player
@@ -717,7 +700,7 @@ how many slots it wants (1…n) and what to do with the answer.
 | How many heroes are open in the bag | 3 Common · 2 Rare · 1 Legendary | `heroLadder.bagOpen` |
 | The hero chance by heroes owned | §6.6 — 30% → 2% | `banners.heroChanceByOwned` |
 | Who opens first | §6.6 | `heroes.bagRank` |
-| The season hero, always open | §6.6 | `banners.featuredHero` |
+| A featured hero, always open | §6.6 | `banners.featuredHero` |
 | Both pities | §6.3 | `banners.softPityAt`, `hardPityAt`, `legendaryPityAt` |
 | What a banner's pool is | §6.1 | `banners.weights` — `Common` / `Rare` / `Legendary` |
 | What a duplicate pays | §6.1 | `banners.duplicateFragments` |
@@ -739,12 +722,13 @@ how many slots it wants (1…n) and what to do with the answer.
 - **Per-hero XP.** One kingdom counter, or the gacha hands out heroes the
   player cannot use.
 - **Guild-gated hero slots**, or a free second slot.
-- **A hero that is busy, away, or parked.** Fights are instant.
+- **A hero busy in the province.** Fights there are instant; only a world
+  army keeps a hero away (§2.7).
 - **A rarity that changes how combat resolves.** A Legendary's boon (§2.6)
   acts on the kingdom, and the combat one is a multiplier in the `Drill`; the
   resolver never reads a rarity.
-- **A gacha currency Gems cannot buy.** The keys are a price on a button and
-  a free ad path; nothing else mints them.
+- **A gacha currency Gems cannot buy.** Keys are bought with Gems, or paid
+  as rewards and in bundles; the free calls are the ad path.
 - **A discount on the ten-call.** A batch buys pity walked, not a cheaper key.
 - **A reveal the player cannot skip**, and a reveal that offers a way out
   before it has finished dealing.
@@ -752,9 +736,9 @@ how many slots it wants (1…n) and what to do with the answer.
   One call, one screen.
 - Standalone equipment with random stats or duplicate fusion.
 - **A hero no amount of play can reach** — every rarity is on a free call.
-- Rotating or time-limited banners — both are permanent. The **season hero**
-  is a rate-up on the permanent golden banner, not a banner
-  ([`09-relics.md`](09-relics.md) §10).
+- Rotating or time-limited banners — both are permanent.
+- A rate-up: a featured hero is kept open in the bag (§6.6), never weighted
+  up.
 - A server-authoritative implementation.
 
 ## 11. Known holes
@@ -762,9 +746,8 @@ how many slots it wants (1…n) and what to do with the answer.
 - **What a boon is worth is unproven.** The Scout's `worldRevealSpeed`
   divides an explorer's march time ([`19-world-map.md`](19-world-map.md)
   §3.1); whether ×1.25 is worth a Legendary is **OQ-96**.
-- **Rate-up is untested.** The timeline still carries a banner payload and the
-  activation query exists, but the two banners are permanent entries, so nothing
-  exercises a scheduled one. The season hero
-  ([`09-relics.md`](09-relics.md) §10) is its first consumer.
+- **A scheduled banner is unexercised.** The timeline carries a banner
+  payload and its activation query, but both banners are permanent entries,
+  so nothing schedules one.
 
-**Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80, OQ-96.
+**Open questions:** OQ-6, OQ-96, OQ-115, OQ-122.

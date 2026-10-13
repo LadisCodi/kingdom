@@ -1,11 +1,13 @@
 // What the city's research adds to a fight's pay on the world board
-// (Docs/features/19-world-map.md §5.4, §8.2, §10.3).
+// (Docs/features/19-world-map.md §5.4, §8.1, §10.4).
 //
 // The server prices a camp, a dungeon room or a Portal floor; the city
 // collects it (game.ts, the 'loot' effect), so the Atlas's share on top is
 // the city's own arithmetic, applied when the effect lands. Gems, packs and
 // relic fragments are never multiplied.
 
+import { RELIC_RULES } from '../data/definitions';
+import { dropFragments, openRelicDoor, type FragmentDrop } from '../relics';
 import { roundPrice } from '../roundPrice';
 import type { GameState } from '../state';
 import { techMultiplier } from '../techEffects';
@@ -48,4 +50,17 @@ export function boostLoot(state: GameState, e: Loot): Loot {
     ...(e.hours !== undefined ? { hours: e.hours * k } : {}),
     ...(e.precious ? { precious: { ...e.precious, amount: scale(e.precious.amount, k) } } : {}),
   };
+}
+
+/** The relic fragments a fight's pay hands over: the door of the world relic
+ *  first found where it was won, then a boss's one fragment, or a Portal
+ *  floor's what its pack was worth. A camp opens no door and pays none
+ *  (Docs/features/09-relics.md §5–§6). */
+export function lootFragments(state: GameState, e: Loot): FragmentDrop[] {
+  const from = lootSource(e);
+  const n = e.pack ? RELIC_RULES.perPackTier[e.pack] ?? 1 : from === 'boss' ? 1 : 0;
+  return [
+    ...openRelicDoor(state, from),
+    ...dropFragments(state, 'world', n, ['loot', e.seq ?? e.at]),
+  ];
 }

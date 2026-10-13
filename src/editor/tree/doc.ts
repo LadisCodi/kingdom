@@ -49,6 +49,9 @@ export class TreeDoc {
   constructor(initial: TechTreeDoc) {
     this.doc = {
       eras: structuredClone(initial.eras),
+      // What finishing each band pays travels with the bands: a document
+      // built without it saves every band's reward as nothing.
+      ...(initial.eraRewards !== undefined ? { eraRewards: structuredClone(initial.eraRewards) } : {}),
       technologies: structuredClone(initial.technologies),
     };
     // A technology whose data says what it does carries no prose. Dropping it
@@ -118,6 +121,11 @@ export class TreeDoc {
   /** What each band of this book asks for in revealed cells, era 1 first. */
   eras(tome: TomeId): number[] { return [...(this.doc.eras[tome] ?? [])]; }
 
+  /** The relic fragments finishing a band pays, or null for nothing. */
+  eraReward(tome: TomeId, era: number): number | null {
+    return this.doc.eraRewards?.[tome]?.[era - 1] ?? null;
+  }
+
   /** What sits in a slot, or null. */
   at(tome: TomeId, row: number, col: number): string | null {
     for (const [id, node] of Object.entries(this.doc.technologies)) {
@@ -138,7 +146,7 @@ export class TreeDoc {
    * What each band of one book costs.
    *
    * The `Technologies` sheet is gone, so the price-band pass — "is era 2
-   * really ten times era 1" (Docs/features/tech-tree.md §5) — has nowhere
+   * really ten times era 1" (Docs/features/tech-tree.md §1) — has nowhere
    * else to happen. It happens here.
    */
   totals(tome: TomeId): BandTotals[] {
@@ -530,6 +538,18 @@ export class TreeDoc {
     });
   }
 
+  /** What finishing a band pays in relic fragments; 0 or less is nothing. */
+  setEraReward(tome: TomeId, era: number, fragments: number): void {
+    this.edit(() => {
+      const ladder = this.doc.eras[tome];
+      if (ladder === undefined || era < 1 || era > ladder.length) return;
+      const rewards = ((this.doc.eraRewards ??= {})[tome] ??= ladder.map(() => null));
+      while (rewards.length < ladder.length) rewards.push(null);
+      const n = Math.round(fragments);
+      rewards[era - 1] = n > 0 ? n : null;
+    });
+  }
+
   /**
    * Add a band at the END of a book.
    *
@@ -544,6 +564,8 @@ export class TreeDoc {
     this.edit(() => {
       const cells = ladder.length === 0 ? 0 : ladder[ladder.length - 1];
       (this.doc.eras[tome] ??= []).push(cells);
+      // A new band pays nothing until it is told to.
+      this.doc.eraRewards?.[tome]?.push(null);
     });
     return this.doc.eras[tome].length;
   }
@@ -573,6 +595,8 @@ export class TreeDoc {
       for (const id of orphans) for (const other of this.detach(id)) waiting.add(other);
       this.reroot(waiting);
       ladder.splice(era - 1, 1);
+      // The reward leaves with its band, as the threshold does.
+      this.doc.eraRewards?.[tome]?.splice(era - 1, 1);
       for (const node of Object.values(this.doc.technologies)) {
         if (node.tome !== tome || node.era === undefined) continue;
         if (node.era > era) node.era -= 1;
@@ -611,7 +635,7 @@ export class TreeDoc {
     // A PLANNED card is on the tree for its shape and does nothing yet, so
     // waiting on one is waiting on nothing — preferred against, but not
     // refused: adjacency comes first, and a whole row of planned cards is a
-    // real shape (Warfare era 2's row 6). The rules warn, and the answer is
+    // real shape. The rules warn, and the answer is
     // to move the planned card, not to reach past it.
     if (straight !== null && !planned(straight)) return [straight];
     const whole: string[] = [];

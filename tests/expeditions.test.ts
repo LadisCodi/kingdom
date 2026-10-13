@@ -254,7 +254,7 @@ describe('what a lair attack costs', () => {
 });
 
 // A relic is the kingdom's or it is on the shelf: nothing carries one into a
-// fight (Docs/features/09-relics.md §5).
+// fight (Docs/features/09-relics.md §1).
 describe('a relic is no part of a fight', () => {
   const troops = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 

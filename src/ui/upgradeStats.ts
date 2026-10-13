@@ -1,6 +1,6 @@
 // What a building IS at a level, and what it COSTS to reach the next one.
 //
-// One model, two surfaces (Docs/art/ui-menus-redesign.md §7.27):
+// One model, two surfaces (Docs/art/ui-menus-redesign.md, the upgrade popup):
 //
 //   * the building card reads it at the CURRENT level and prints a band of
 //     tiles — what this building does for you right now;

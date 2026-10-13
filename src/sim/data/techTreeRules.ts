@@ -114,7 +114,7 @@ export interface TechNodeDoc {
 /** The authored shape of src/sim/data/tech-tree.json. */
 export interface TechTreeDoc {
   /**
-   * Each book's BANDS: `eras.Civics[i]` is how much of the region has to be
+   * Each book's BANDS: `eras.Kingdom[i]` is how much of the region has to be
    * revealed before era `i + 1` opens, so the array's LENGTH is how many
    * bands the book has.
    *
@@ -129,7 +129,7 @@ export interface TechTreeDoc {
    */
   eras: Record<string, number[]>;
   /**
-   * The relic fragments finishing a band pays: `eraRewards.Civics[i]` is
+   * The relic fragments finishing a band pays: `eraRewards.Kingdom[i]` is
    * what researching every placed card of era `i + 1` grants, once, or null
    * for nothing. Parallel to `eras`; absent = no band of that book pays.
    */
@@ -208,8 +208,8 @@ export function ladderRank(id: string): { stem: string; rank: number } | null {
  * The most bands one book may have — a sanity rail, not the shipped number.
  *
  * How many a book HAS is `eraCount(doc, tome)`, authored in `?dev=tree`: the
- * three books ship four each, and a designer may add or drop one without a
- * code change. This only stops a hand-edited file claiming forty.
+ * Kingdom ships nine, Sagas two and Atlas one, and a designer may add or
+ * drop one without a code change. This only stops a hand-edited file claiming forty.
  */
 export const ERA_CEILING = 10;
 
@@ -826,14 +826,14 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   // ---- warnings ---------------------------------------------------------
   //
   // Deliberately NOT warned about: a card nothing requires (the last rank of
-  // every line is one, so is every `planned` node and each era-4 keystone —
+  // every line is one, so is every `planned` node and the last finale —
   // 40-odd correct leaves would bury anything worth reading), and a
   // requirement that reaches back several rows (such a connector runs in the
   // side channel, where it crosses nothing).
   for (const id of all) {
     for (const req of nodes[id].requires ?? []) {
       // A no-op in front of real content. `planned` nodes are on the tree for
-      // its shape and do nothing yet (tech-tree.md §7), so anything waiting
+      // its shape and do nothing yet (07-research.md §1.3), so anything waiting
       // on one is waiting on nothing.
       if (nodes[req]?.planned === true) {
         warnings.push({

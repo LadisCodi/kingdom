@@ -89,7 +89,7 @@ export function conditionHolds(game: Game, c: ConditionArgs): boolean {
         && (isTechComplete(state, c.target as TechId) || isTechFilled(state, c.target as TechId));
     case 'placing':
       return game.mode.kind === 'placing' && game.mode.definitionId === c.target;
-    // Picked up to be moved: its ghost is out (06-construction.md §1).
+    // Picked up to be moved: its ghost is out (05-city-and-districts.md §4.2).
     case 'moving':
       return game.mode.kind === 'moving' && game.mode.definitionId === c.target;
     // Its ghost — moved or placed — stands, legal, where its crew would work

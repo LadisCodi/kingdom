@@ -38,14 +38,14 @@
 | **36** | **the whole province** |
 
 - **Every cell of both columns pays something.** No rung is empty.
-- **Two prizes a cell**, which is what a cell shows.
+- **One to three prizes a cell.**
 - The free purse follows the house rule: **minutes of the kingdom's own Gold
-  production**, floored, priced when it is claimed.
+  production**, floored at `goldFloorPerMinute`, priced when it is claimed.
 
 | Column | Pays |
 |---|---|
-| Free | a purse of Gold (3 → 20 minutes up the ladder) and, on about one level in three, one more: a relic fragment, a gold key, Knowledge, a silver key or a Bag item |
-| Paid | Gems, rising, and one more: a gold key every third level, silver keys, Hero XP, Stardust or a choice chest. **Never relic fragments**: those come only from the free column, and from exploring and fighting |
+| Free | a purse of Gold (3 → 20 minutes up the ladder) and, on most levels, one or two more: a silver key, a gold key, a point of Knowledge, a **relic fragment** (5 on the ladder) or a Bag item — a speed-up, a resource or choice chest, a rent boost |
+| Paid | Gems, rising from 210 to 550, and on every level one or two more: a gold key every third level, 2–3 silver keys, Hero XP, 100 Stardust, a choice chest. **Never relic fragments** |
 | **Level 36** | the grand prize: 500 Gems and a gold key free; 10,000 Gems and five gold keys paid |
 
 ## 4. Claiming
@@ -57,7 +57,9 @@
 - **A level reached is a moment on the map**: the reveal that crosses it
   sends a small seal from the cell to the Survey's pill *(not built)*; the
   pill glows while a cell waits.
-- The free column's fragments are rolled onto the relics as they land ([`09-relics.md`](09-relics.md)).
+- The free column's fragments are found fragments of relics already met,
+  rolled as they land ([`09-relics.md`](09-relics.md) §6).
+- Keys and other items land in the Bag.
 - Hero XP lands with the bonuses every Hero XP gets (the Tavern, the tree).
 
 ## 5. The door
@@ -66,8 +68,6 @@
   ([`22-progression.md`](22-progression.md) §3). Its pill appears on the map
   with the levels the kingdom has already reached waiting in it.
 - Its introduction is Isolde's ([`23-tutorials.md`](23-tutorials.md) §4.1).
-- **A kingdom saved before this design** opens it with every level its cells
-  have reached.
 
 ## 6. The screen
 
@@ -85,14 +85,14 @@ and [`m63-survey-widget.png`](../art/ui/mockups/m63-survey-widget.png).
 - **The ladder**: a rope down the middle threading one wax seal a level —
   green when nothing on it waits, gold while something does, cream ahead.
   Left of it the free tile (parchment), right the paid tile (gilded).
-- A tile holds at most two rewards, each at the header coin's size. It is a
+- A tile holds its rewards, each at the header coin's size. It is a
   button exactly when it can be taken: then it glows gold and carries the
   orb. Taken, it is dimmed and ticked; unbought, it carries a padlock.
 - **The grand prize** — the top level — is pinned under the ladder, with its
   chest.
 - **The widget on the map**: a parchment card with the compass (the count of
   levels waiting on its rim), *Survey*, the trough and the level's seal; it
-  glows while a level waits, and sits under the Knowledge tab.
+  glows while a level waits, and sits top left, under the Knowledge tab.
 
 ## 7. Dials, in the order to reach for them
 

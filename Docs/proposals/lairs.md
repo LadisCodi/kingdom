@@ -2,8 +2,9 @@
 
 > **What this is.** The province's five ruins become **lairs**: a monster camp
 > that raids the city on a clock, denies the ground around it, and is cleared
-> once by one fight — then it is gone. It is a **proposal**, not a feature doc:
-> nothing here is built.
+> once by one fight — then it is gone. **Status: built.** The live design is
+> [`18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md); this
+> file keeps the reasoning.
 >
 > **It replaces** the ruin behind the gate. The gate
 > ([`../features/18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md))

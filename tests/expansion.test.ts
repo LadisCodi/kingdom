@@ -142,7 +142,7 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     // Deliberately rich in Stone and broke in Gold: research does not touch
     // the city's materials, so a full quarry buys nothing.
     fund(state, { Gold: 0, Stone: 50, Knowledge: 99_999 });
-    // Mining is a band down in Civics, so the era bar above it is a gate too,
+    // Mining is a chapter down in Kingdom, so the era bar above it is a gate too,
     // and everything it needs is on the way to it.
     for (const req of TECHNOLOGIES.Mining.requires) completeTech(state, req);
     openEveryEra(state);

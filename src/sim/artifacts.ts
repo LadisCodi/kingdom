@@ -1,14 +1,12 @@
-// Relics (Docs/features/09-relics.md §1, §2): five permanent kingdom
-// passives, each one number that rises with its level.
+// Relics (Docs/features/09-relics.md §1, §2): eight permanent kingdom
+// effects, each one number that rises with its level.
 //
-// EVERY RELIC THE PLAYER HAS IS ALWAYS ON. Nothing is worn, socketed or
-// swapped, and nothing carries one anywhere — so there is no loadout, no swap
-// lock and no slot to buy. What used to be the decision ("which passive do I
-// wear?") is now the collection's: which album do I finish.
+// A relic acts only where it is HOSTED — a city relic in a Shrine, for a
+// window opened with Mana; a world relic in a Chapel. Nothing is worn or
+// carried into a fight. An unhosted relic waits in the Bag and does nothing.
 //
-// A relic has NO CEILING. `level` is the count of seasons its album was
-// completed, so the ladder is the player's history rather than a curve with a
-// top, and `per_level` is sized as a season's worth of growth.
+// A relic has NO CEILING. It is restored at level 1 from six fragments and
+// levelled with a full set again and Stardust (`relics.ts`, §4).
 
 import {
   ARTIFACTS, ARTIFACT_ORDER, CITY_RELIC_LEVELS, relicKind, type CityRelicAxis,
@@ -32,10 +30,9 @@ export const ownedArtifacts = (state: GameState): ArtifactId[] =>
 export type GrantResult = 'Granted' | 'Levelled';
 
 /**
- * What completing an album pays (§5): the relic at level 1 the first time,
- * +1 level every time after. It is the ONLY way a relic level moves — there
- * is no Stardust ladder and no tier gate, and nothing rushes one relic ahead
- * of the others.
+ * One level onto a relic: level 1 the first time (restored), +1 every time
+ * after. It spends nothing — the callers (`relics.ts`: restore, level up, a
+ * scene's `restores`) charge the fragments and the Stardust (09-relics.md §4).
  */
 export function grantArtifactLevel(state: GameState, id: ArtifactId): GrantResult {
   const had = ownsArtifact(state, id);
@@ -108,8 +105,8 @@ const MODIFIER_PREFIX = 'artifact:';
 /**
  * Rebuild the relic half of the modifier stack from the levels map.
  *
- * Idempotent and total, rather than incremental: an album completing, a save
- * loading and a season closing all move the same inputs, and one rebuild that
+ * Idempotent and total, rather than incremental: a level-up, a save loading
+ * and a Chapel taking or losing a relic all move the same inputs, and one rebuild that
  * cannot drift beats three paths that each have to remember to add AND
  * remove. Relic passives are PERMANENT modifiers (`expiresAt: null`) at the
  * base stage — a level is not a technology and never expires.
@@ -121,8 +118,8 @@ export function syncArtifactModifiers(state: GameState): void {
     // (sim/hosts.ts); a world relic only while a Chapel holds it.
     if (relicKind(id) === 'city' || !state.world.chapels.includes(id)) continue;
     const value = passiveValue(state, id);
-    // A relic may move more than one number with one value — the Sickle's stock
-    // and swing, the Hammer's swing and walk. The id carries the stat so two
+    // A relic may move more than one number with one value — the Staff's stock
+    // and regrowth, the Hammer's swing and walk. The id carries the stat so two
     // entries from one relic cannot collide, and the filter above still takes
     // both away.
     for (const { stat, scope, op } of ARTIFACTS[id].passive.stats) {

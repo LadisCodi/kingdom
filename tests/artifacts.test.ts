@@ -46,7 +46,7 @@ describe('a relic is a permanent passive with no ceiling', () => {
   let state: GameState;
   beforeEach(() => { state = chapels(freshGame()); });
 
-  it('starts with none, and every level is one album closing', () => {
+  it('starts with none, and every grant is one level', () => {
     expect(ownedArtifacts(state)).toEqual([]);
     expect(ownsArtifact(state, 'GildedLedger')).toBe(false);
     expect(grantArtifactLevel(state, 'GildedLedger')).toBe('Granted');

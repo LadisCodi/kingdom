@@ -9,9 +9,9 @@
 // point raises the level cap, and a FULL star raises it a little more. Every point of a star costs the same,
 // and each star costs `growth` times the one before.
 //
-// IT USED TO BE SHARED WITH THE RELICS and is not any more. A relic is
-// levelled by finishing its album and by nothing else — no ascension, no
-// Fragments, no cap, no Stardust (Docs/features/09-relics.md §13).
+// THE RELICS HAVE A LADDER OF THEIR OWN (`relics.ts`): a full set of six
+// relic fragments and Stardust a level, no ascension and no cap
+// (Docs/features/09-relics.md §4). Stardust is the one currency both spend.
 
 import { roundPrice } from './roundPrice';
 import { HERO_LADDER, type HeroDef } from './data/definitions';
