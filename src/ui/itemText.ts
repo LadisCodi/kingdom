@@ -8,11 +8,11 @@ import { currencyName, formatDuration, formatExact } from './format';
 import { tr } from '../i18n/tr';
 
 /** The size printed at the top of a tile: "10m", "1h", "8h" — or, for what
- *  has no duration, its value: "25%", "5"; a key, nothing. */
+ *  has no duration, its value: "25%", "5"; a key or a part, nothing. */
 export const sizeLabel = (def: ItemDef): string =>
   def.kind === 'flask' ? `${formatExact(def.value)}%`
     : def.kind === 'tome' ? formatExact(def.value)
-      : def.kind === 'key' ? ''
+      : def.kind === 'key' || def.kind === 'part' ? ''
         : formatDuration(def.seconds);
 
 /** The one coin a chest pays, and how much of it. */
@@ -42,7 +42,7 @@ const boostFor = (kind: BoostKind, pct: string, time: string): string => {
 /** A speed-up's popover line: how much it takes off, and off what. */
 const speedsLine = (speeds: NonNullable<ItemDef['speeds']>, time: string): string => {
   switch (speeds) {
-    case 'General': return tr('Takes {time} off any build, training or workshop', { time });
+    case 'General': return tr('Takes {time} off any build, training, workshop, trip or march', { time });
     case 'Construction': return tr('Takes {time} off a build or an upgrade', { time });
     case 'Training': return tr('Takes {time} off a training line', { time });
     case 'Workshop': return tr('Takes {time} off the item a workshop is making', { time });

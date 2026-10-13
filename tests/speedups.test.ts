@@ -21,6 +21,7 @@ import { dispatchExplorer, homeIndex, readyAt, returnsAt } from '../src/sim/worl
 import { homeboundMs } from '../src/sim/world/travel';
 import { hasBit } from '../src/sim/world/fogBits';
 import { claim, emptyWorld, hurry, join } from '../src/worldServer/core';
+import type { ArmyView, WorldSnapshot } from '../src/worldServer/types';
 
 const MIN = 60_000;
 
@@ -247,6 +248,22 @@ describe('the Speed-up picker', () => {
     game.openSpeedup(job);
     game.closeSpeedup();
     expect(game.openOverlay).toBe('bag');
+  });
+
+  it('finds a marching army for a General speed-up, and only for one', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.now = () => T0;
+    const army = (id: string, owner: number, at: number | null): ArmyView => ({
+      id, owner, purpose: 'claim', phase: 'out', path: [], departedAt: T0 - MIN,
+      stepMs: [], target: 0, at, power: 1, heroes: null,
+    });
+    game.worldView = {
+      board: { seat: 2 },
+      armies: [army('theirs', 3, T0 + 10 * MIN), army('there', 2, null), army('mine', 2, T0 + 5 * MIN)],
+    } as unknown as WorldSnapshot;
+    expect(game.firstJobFor('GeneralSpeedup5m')).toEqual({ kind: 'army', armyId: 'mine', at: T0 + 5 * MIN });
+    expect(game.firstJobFor('ConstructionSpeedup5m')).toBeNull();
   });
 
   it('goes back to a hex sheet with its hex still chosen', () => {

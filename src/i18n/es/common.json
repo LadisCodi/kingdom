@@ -112,7 +112,7 @@
   "Start over": "Empezar de nuevo",
   "Takes {time} off a build or an upgrade": "Quita {time} a una obra o una mejora",
   "Takes {time} off a training line": "Quita {time} a una cola de entrenamiento",
-  "Takes {time} off any build, training or workshop": "Quita {time} a cualquier obra, entrenamiento o taller",
+  "Takes {time} off any build, training, workshop, trip or march": "Quita {time} a cualquier obra, entrenamiento, taller, viaje o marcha",
   "Takes {time} off the item a workshop is making": "Quita {time} a lo que fabrica un taller",
   "Tap {n} times.": "Toca {n} veces.",
   "Taps, coins, construction": "Toques, monedas, obras",

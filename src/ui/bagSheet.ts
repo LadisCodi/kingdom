@@ -105,12 +105,12 @@ function quantity(game: Game, item: BagScreen['items'][number], onChange: (n: nu
 }
 
 function popover(game: Game, item: BagScreen['items'][number], column: number): HTMLElement {
-  // A key is spent on its banner's call, in the store (§3.10).
+  // A key is spent on its banner's call, on the store's Heroes tab (§3.10).
   if (item.def.kind === 'key') {
     return el('div', { class: 'bag-pop', style: `--notch-col: ${column}` },
       el('div', { class: 'bag-pop-name' }, itemName(item.def)),
       el('div', { class: 'bag-pop-line' }, itemLine(item.def, item.worth)),
-      el('div', { class: 'bag-use' }, btn({ label: tr('Use'), kind: 'primary', onClick: () => game.openStore('supplies') })));
+      el('div', { class: 'bag-use' }, btn({ label: tr('Use'), kind: 'primary', onClick: () => game.openStore('heroes') })));
   }
   // A piece a ruin needs is spent by its repair, never from the Bag.
   if (item.def.kind === 'part') {
