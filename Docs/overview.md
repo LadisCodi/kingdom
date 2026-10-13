@@ -1,4 +1,4 @@
-# Kingdom — the game in five minutes
+# Spellcrown — the game in five minutes
 
 > **What this is.** The concept, the loops and the promises, at the altitude
 > needed to understand what the game *is* before reading how any of it works.
@@ -7,7 +7,7 @@
 
 ## The pitch
 
-- Kingdom is a **4X for people who bounce off 4X** — the genre of Rise of
+- Spellcrown is a **4X for people who bounce off 4X** — the genre of Rise of
   Kingdoms and Kingshot on mobile, Civilization and Age of Wonders on PC, with
   the barrier to entry taken out.
 - The player is a **wizard-monarch** growing a city outward from a single
@@ -23,6 +23,19 @@
 - **It looks like a diorama**: a stylized-3D isometric city under a bright
   midday sun, and a hex world map in the same hand
   ([`art/style-prompt.md`](art/style-prompt.md)).
+
+## The name
+
+- The game is **Spellcrown**. *Kingdom* is its code name — the repository,
+  the package and older notes still use it.
+- **The brand is the one word**: logo, icon, trailer, marketing.
+- **In the stores the name carries keywords beside it**, never inside it:
+  - App Store: the title is *Spellcrown*; the keywords go in the separate
+    Subtitle field.
+  - Google Play has no subtitle, so the title is *Spellcrown: <keywords>*.
+  - Which keywords (*kingdom*, *strategy*, *fantasy*, *builder*…) is an ASO
+    call, made on search-volume data and store-listing tests, and changed
+    freely — the store title is metadata, not the brand.
 
 ## The fantasies
 
