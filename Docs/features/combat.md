@@ -1,6 +1,6 @@
 # Combat — the resolver
 
-> **Spec.** Callers: [`11-expeditions.md`](11-expeditions.md) (rooms and
+> **Scope.** The one fight resolver. Callers: [`11-expeditions.md`](11-expeditions.md) (rooms and
 > bosses), the province's lairs
 > ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)), and armies on
 > the world board ([`19-world-map.md`](19-world-map.md)). Hero fields, levels and ascension:
@@ -10,9 +10,9 @@
 > **Status: built.** The resolver is `src/sim/battle.ts` and the
 > screen that replays its stream is `src/ui/battleScreen.ts`. Troop
 > evolutions (§6), the generator's evolved squads and its scaled villains
-> (§9.4, §11) are built. Still ahead: villains in a dungeon's standard room
-> (§11 — the generator takes a pool, and only the Portal passes one) and
-> authored boss formations.
+> (§9.4, §11) are built. Not built: villains in a dungeon's standard room
+> (§11 — the generator takes a pool, and only boss rooms and the Portal pass
+> one) and authored boss formations.
 
 ## 1. Model
 
@@ -22,7 +22,7 @@
 - **Headless resolver + renderer**, separated by an event stream (§12).
 - **Integer arithmetic only.** The only divisions are the fixed fractions in §7
   and a step's share of a walk (§10).
-- **No RNG in resolution.** The only seeded RNG is enemy generation (§10).
+- **No RNG in resolution.** The only seeded RNG is enemy generation (§11).
 - One resolver for every caller.
 
 ## 2. One battle
@@ -32,6 +32,9 @@
 - **A lair needs soldiers** — alone or with heroes, never a hero alone;
   an army on the world map needs a hero
   ([`10-heroes.md`](10-heroes.md) §2.7).
+- **Every fight costs `combat.fightMana` (20 Mana)**, win or lose, paid on
+  entry: a lair's, a camp's, a rival's, a dungeon room's, a Portal floor's
+  ([`08-magic.md`](08-magic.md) §1).
 
 ## 3. Board
 
@@ -72,8 +75,9 @@ and the army cap; hero slots one free, the rest Gems
 - `hp_pool = count × hp_unit`; `alive = ceil(hp_pool / hp_unit)`.
 - **A squad's hit points do not carry between fights.** They are spent inside
   one and reset when it ends; a squad's HP pool is its count times `hp_unit`
-  every time. A hero's do carry, and mend over time
-  ([`10-heroes.md`](10-heroes.md) §2.8).
+  every time. A hero's do carry, and mend over time (§9.1,
+  [`10-heroes.md`](10-heroes.md) §2.8). An army camped at a dungeon carries
+  its losses from room to room.
 - **WHAT DIES IN THE FIGHT IS GONE FROM THE ROSTER.** A squad that ends with
   340 of its 2,000 hit points lost 83 of its hundred, and those 83 are what
   the city is charged. There is no separate formula: the losses are read off
@@ -86,29 +90,24 @@ and the army cap; hero slots one free, the rest Gems
   A share of the fallen are carried to its beds and the rest are
   dead. Both leave the roster at once: a wounded soldier cannot be sent
   anywhere and does not count against the army cap.
-  - **The share starts at `army.woundedShare` — a tenth — and is EARNED
-    upward.** A battlefield keeps most of what it takes; bringing more of it
-    home is something the player builds towards rather than a rate they are
-    given.
-    - **A hero with the Field medic skill**, +10 points at rank 1, more at
-      each rank ([`10-heroes.md`](10-heroes.md) §2.5).
-    - Capped at **90%**: someone always stays out there.
-  - **The ward is a building, not a rule.** With no Infirmary built there are
-    no beds, so every casualty is a death. It is opened by the `Infirmary`
-    technology (chapter 3) and holds `buildings.bedsPerLevel`, which is the
-    whole of what its levels buy ([`buildings.md`](buildings.md) §4.10).
-  - **Anything the beds have no room for dies**, which is what makes the
-    ceiling a decision.
-  - The Infirmary mends them: `army.healCostShare` of what recruiting the
-    same soldiers costs and `army.healTimeShare` of the clock, as **one
-    order and one wait** for the whole ward, on its own bench — so mending
-    never competes with recruiting. It needs no technology of its own beyond
-    the building: they are already trained.
+  - **The share is `army.woundedShare` — a tenth.** Only a hero with the
+    **Field medic** skill in the party raises it: +10 points at rank 1, more
+    at each rank ([`10-heroes.md`](10-heroes.md) §2.5). Capped at **90%**.
+  - **No Infirmary, no beds: every casualty is a death.** The Infirmary is
+    opened by the `Infirmary` technology (chapter 3) and holds
+    `buildings.bedsPerLevel`, the whole of what its levels buy
+    ([`buildings.md`](buildings.md) §4.9). The tree can raise the beds
+    (`infirmaryBeds`), never the share.
+  - **Anything the beds have no room for dies.**
+  - The Infirmary mends them: an order of any count of one troop, at
+    `army.healCostShare` of what recruiting them costs and
+    `army.healTimeShare` of the clock, one wait for the order, in the
+    Infirmary's own line — so mending never competes with recruiting. A mended
+    soldier needs room under the army cap.
   - Cancelling an order puts them back in their beds and the coin back in the
     purse.
-- **What else an ATTEMPT costs is the caller's rule.** Every attack charges
-  its Mana on the way in ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
-  the player has banked is ever taken.
+- **Nothing else the player has banked is ever taken** by a fight: its Mana
+  and its soldiers are the whole of its price.
 
 ## 5. Unit stats — rank I
 
@@ -267,8 +266,8 @@ The hall's training widget ([`../art/ui-menus-redesign.md`](../art/ui-menus-rede
 ### 6.5 Everywhere else a troop is shown
 
 - **The party picker** lists every rank owned as its own troop.
-- **A squad on the board** wears its rank (the battle screen, the room
-  sheet, an army on the world map), its own and the enemy's alike.
+- **A squad on the board** wears its rank (the battle screen, the
+  playback, an army on the world map), its own and the enemy's alike.
 - **The Infirmary** holds and mends each rank apart, at
   `army.healCostShare` of that rank's own recruit cost (§4).
 
@@ -336,8 +335,8 @@ what it strikes once within `range`. Hero slots are valid targets.
 **A villain is an enemy hero.** Same schema, same slots, same rules — every
 rule in this section applies to both sides. The only difference is where the
 stats come from: a hero's are derived from level and ascension
-([`10-heroes.md`](10-heroes.md)); a villain's are authored per room
-(`villains`). The resolver has one code path and reads a resolved
+([`10-heroes.md`](10-heroes.md)); a villain's are authored per villain
+(`villains`), and only the generator scales them (§9.4). The resolver has one code path and reads a resolved
 stat block either way.
 
 A hero or villain occupies a hero slot and does two things.
@@ -350,6 +349,12 @@ A hero or villain occupies a hero slot and does two things.
   of one, and rarity and levels close the gap toward the **70%** the design
   aims at. A hero is a body, never an army.
 - Dies when its `hp` reaches 0: it stops attacking. Its passive stands.
+- **A hero's HP carries between fights** (`src/sim/heroHealth.ts`). It walks
+  into a fight with what the last one left it, and mends on its own: a whole
+  bar over `party.heroRecoverHours` (8). A hero a fight took to 0 cannot be
+  sent anywhere until its bar is whole again. A villain is whole every fight.
+- **A hero out with an army on the world board** cannot be sent to another
+  fight until it is home.
 
 ### 9.2 It buffs one troop type — the passive
 
@@ -429,11 +434,14 @@ as ticks.
 
 ## 11. Enemy generation
 
-Rooms carry a `power_req` budget and a `threatMix`
-([`11-expeditions.md`](11-expeditions.md) §2). The generator converts
-them:
+Every enemy is generated from a **budget** in `power` and an **affinity**
+(a unit type or `Any`), optionally a `mix` — a lair's or a camp's `guard`
+([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2), a dungeon
+room's power ([`11-expeditions.md`](11-expeditions.md) §6), a Portal floor's.
+The generator converts them:
 
-1. Seed from the room's address — the dungeon, its depth and room. Same room, same enemies —
+1. Seed from the fight's address — a lair and its fight, a camp's hex, a
+   dungeon, its depth and room, a Portal floor. Same address, same enemies —
    the preview and the attempt are one query.
 2. **Villains first**, because what is left is what the squads may cost. Above
    `combat.genVillainThreshold`, up to `combat.genVillainSlots` of them
@@ -442,8 +450,10 @@ them:
    `power`.
 3. Pick a slot count of 2–6, whichever is larger: the roll, or the number of
    squads the budget actually needs.
-4. Split the budget across types, **the ruin's affinity first** and taking the
-   lion's share (60%), the rest even across the others.
+4. Split the budget across types, **the affinity first** — a lair's threat, a
+   dungeon's type — taking the lion's share (60%), the rest even across the
+   others. A `mix` (a lair's or a camp's) replaces the shares with its own
+   weights; `Any` is even across all four.
 5. Per type: `count = floor(share / power)`, clamped to `squadSize`;
    overflow spills into a second squad of the same type, and whatever the
    shares leave on the table goes to the affinity while a slot remains.
@@ -462,24 +472,24 @@ them:
 
 | Caller | Budget | Enemy |
 |---|---|---|
-| Province lairs | 60–1,000 | rank I |
+| Province lairs | 30–1,000 | rank I |
 | World camps | up to ~2,760 (inner ring) | rank II in the inner ring |
 | World dungeon, depth 2 · its boss | 900–2,160 · ~3,460 | ranks I–II |
 | World dungeon, depth 3 · its boss | 2,400–5,340 · ~8,540 | ranks II–IV, with villains |
 | Dark Portal, floors 1–40 | 400 → ~16,400 | villains from floor 1; rank II from ~18, III ~24, IV ~29, V ~34; scaled villains past it |
 
-**Overrides:** **a boss room always fields its authored villain**, never a
-rolled one. A world dungeon's boss room fields a bigger budget instead
-(`worldDungeon.bossMultiplier`, [`11-expeditions.md`](11-expeditions.md) §6).
-Authoring a whole formation — named villains in named slots, beside chosen
-squads — is designed and not built.
+**Boss rooms:** a world dungeon's boss room fields a bigger budget
+(`worldDungeon.bossMultiplier`, ×1.6, [`11-expeditions.md`](11-expeditions.md)
+§6) and draws its villains from the pool of every villain. Authoring a whole
+formation — named villains in named slots, beside chosen squads — is designed
+and not built.
 
 **Budget accounting:** a villain's `power` covers the buff it grants as well
 as its own output, because it is authored rather than derived.
 
 ## 12. Power
 
-Shown against `power_req` in the room sheet:
+Shown against the enemy's power on the battle screen:
 
 ```
 squad_power = count × power(rank)
@@ -489,7 +499,7 @@ hero_power  = dmg(hero at its level) × combat.heroPowerPerDmg
 
 **This is an estimate; the resolver decides the outcome.** A sum cannot
 express frontage, rows, cooldowns or the order things die in — so a party
-that reads stronger can lose, and the sheet says nothing more definite than
+that reads stronger can lose, and the screen says nothing more definite than
 "enough on paper". The same sum is the bar at the top of the battle screen,
 falling as squads come apart.
 
@@ -536,8 +546,9 @@ The cap limits **total troops owned**, not party size.
 - **A soldier is one place in a hall, whatever it is worth in a fight.**
   `power` decides what a troop DOES and never what it costs to keep,
   so a Cavalry and a Warrior take the same room.
-- Caps sum across buildings. Each unit type is behind its own technology, and
-  each of its ranks behind one more and a hall level (§6).
+- Caps sum across buildings, and the tree raises the sum (`armyCap`). Each
+  unit type is behind its own technology, and each of its ranks behind one
+  more and a hall level (§6).
 - **What bounds a PARTY is the board** — six slots of `squadSize` (§3, §4) —
   and what bounds the board is what the city owns. The cap is the city's
   number; the board is the fight's.
@@ -567,13 +578,15 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - A replay is `(both boards, the event list)` — no seed needed, because
   nothing inside the fight rolls anything.
 
-## 17. Dials
+## 17. Dials, in the order to reach for them
 
 | Dial | Key |
 |---|---|
 | Unit stats, `frontage`, `squadSize`, `power`, `speed`, `range` | `units` |
 | The field: front-row gap, row and column pitch | `combat.fieldGap`, `fieldRowPitch`, `fieldColPitch` |
+| What every fight costs | `combat.fightMana` |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
+| How long a hero takes to mend a whole bar | `party.heroRecoverHours` |
 | Every rank's stats, recruit cost, training time and hall level | `units` (§6) |
 | A rank's technology | `?dev=data#tree` |
 | Attack/Defence step and caps, per mille | `combat.attackStepPerMille`, `attackCapPerMille`, `defenceStepPerMille`, `defenceCapPerMille` |
@@ -585,12 +598,12 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Enemy slot band, villain threshold, share and slots | `combat.genSlotsMin/Max`, `combat.genVillainThreshold`, `genVillainShare`, `genVillainSlots` |
 | What a hero is worth in the ESTIMATE | `combat.heroPowerPerDmg` |
 | Army cap per building level | `buildings.armyCapPerLevel` |
-| How much of a casualty is saveable, and how many beds there are | `army.woundedShare` (the floor), the Field medic's `heroes.skillValue`, `buildings.bedsPerLevel` |
+| How much of a casualty is saveable, and how many beds there are | `army.woundedShare`, the Field medic's `heroes.skillValue`, `buildings.bedsPerLevel`, the tree's `infirmaryBeds` |
 | A skill: which, its X, how often | `heroes.skill`, `skillValue`, `skillEvery` (and `villains.*`) |
 | Skill ranks | `heroLadder.skillRankLevels`, `skillRankStardust`, `skillRankMaterial`, `skillRankStep` |
 | What mending costs against recruiting | `army.healCostShare`, `army.healTimeShare` |
 
-## 18. Not in this version
+## 18. Deliberately not in this design
 
 - Any input during the fight
 - Pathfinding, collision, formation-keeping or facing
@@ -603,14 +616,15 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - Mixed ranks in a squad; two ranks in one hall's line
 - Evolving a troop already trained
 - Heroes inside troop slots, or bonuses to non-matching types
-- Villains with levels or ascension — their stats are authored, and only the
-  generator scales them (§9.4)
+- Villains with levels, ascension or carried HP — their stats are authored,
+  and only the generator scales them (§9.4)
 - Villain buffs crossing sides
 - **A whole authored formation** — named villains in named slots beside chosen
   squads. A boss's villain is authored; the squads around it are still rolled
-- Casualties *inside* the resolver, healing timers
+- Casualties decided *inside* the resolver
+- A share of the wounded raised by anything but a Field medic
 - RNG in resolution
 - Draws
 
-**Pending:** `powerStart` re-authoring against the rank I–V power range
-(**OQ-86**) · whether `power` reads a rank fairly (**OQ-138**).
+**Open questions:** OQ-86, OQ-138 in
+[`../open-questions.md`](../open-questions.md).

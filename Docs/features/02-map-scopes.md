@@ -5,9 +5,11 @@
 > a map design**: the province's map is [`01`](01-map-and-fog.md), the world
 > board is [`19`](19-world-map.md).
 >
-> **Status:** the province is built; the world board is built against a local
-> stand-in for the world server ([`19-world-map.md`](19-world-map.md)).
-> Temporary provinces and the guild siege are not built.
+> **Status:** the province is built. The world board is built: the `world`
+> edge function is its server, and a stand-in in the browser answers the same
+> requests when there is no cloud (`?world=local`)
+> ([`19-world-map.md`](19-world-map.md)). Temporary provinces and the guild
+> siege are designed, not built.
 
 ## 1. Three scopes
 
@@ -15,14 +17,13 @@
 |---|---|---|---|---|
 | **Your province** | authored, **identical for every player**, square grid, buildable wherever it is revealed | client | build, tap, harvest | permanent, **inviolable** |
 | **Temporary provinces** | event maps, PvE, compressed scale, square grid | client | the same verbs, inside a window | disposable |
-| **The world board** | a shared pointy-top hex board, six players, districts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
+| **The world board** | a shared pointy-top hex world of seven boards and 42 seats, districts not cities | **server** for control, **client** for fog | explore, claim, contest | permanent, contestable |
 
 ### 1.1 Your province
 
 - One authored map, identical for every player: `region-map.json` as it is. **No
   procedural province generator.**
-- 1,470 cells; the whole fog costs **2,522,803,392 Gold** across the 1,466 that
-  are priced.
+- 1,470 cells; what the fog costs is [`01`](01-map-and-fog.md) §5.
 - **The buildable plot is the revealed province** — no bound, no ring, no
   expansion to buy ([`05-city-and-districts.md`](05-city-and-districts.md) §4).
   **Paying the fog is what buys room.**
@@ -46,7 +47,8 @@
 Designed in full in [`19-world-map.md`](19-world-map.md). What belongs here is
 only what it is structurally:
 
-- 127 hexes, six players, **real axial coordinates**. `grid.ts` is square-grid
+- Seven boards of radius 6 (127 hexes each) in a honeycomb: **889 hexes, 42
+  seats**, on **real axial coordinates**. `grid.ts` is square-grid
   maths with three metrics and is **not** reused.
 - No code shared with the province: no workers, no influence radius, no
   adjacency that pays Gold.
@@ -74,9 +76,10 @@ One tactile loop and one planning loop, across two or three visits a day.
   on it, is contested state and cannot live in a save.
 - **World fog gates actions**: a hex must be Revealed before it is claimed,
   built on or sent an army ([`19-world-map.md`](19-world-map.md) §3).
-- **So world fog is server-authoritative** — the server checks it. Until the
-  real server exists the fog lives in the player's save (a bitset over 127
-  hexes) and the client applies the rule; the local stand-in trusts it.
+- **World fog is the player's own**: a bitset over the 889 hexes in the save.
+  The client applies the rule and the server trusts it (prototype, as §3.1).
+  The one fact the server takes from it is which lurking camps the player has
+  seen ([`19-world-map.md`](19-world-map.md) §5.5).
 
 ### 3.1 Armies on the server
 
@@ -84,15 +87,15 @@ One tactile loop and one planning loop, across two or three visits a day.
   its troops off the roster and marks its heroes busy in the save; the server
   holds the army until it is home.
 - **Every army fight is resolved on the server**, with the same resolver
-  ([`combat.md`](combat.md)): attacks, garrisons, dungeon rooms and Portal
-  floors.
+  ([`combat.md`](combat.md)): attacks, garrisons, camps, dungeon rooms and
+  Portal floors.
 - **A march is resolved when the board is read.** Before answering any read
   or action on a board, the server resolves every march that has arrived, in
   order of arrival time, ties broken by hash. The outcome never depends on
   when anyone looks.
 - **What comes home is a server effect**: the survivors, the heroes' wounds,
-  and every reward, collect and battle report. Effects are drained at load,
-  before the offline advance ([`15-social.md`](15-social.md) §1.2).
+  and every reward, collect and battle report — each numbered, applied once
+  and acknowledged ([`15-social.md`](15-social.md) §1.2).
 - **The server trusts the party the client sends**: its troops, levels and
   bonuses are not validated (prototype, as [`15-social.md`](15-social.md)
   §1.1).
@@ -132,8 +135,10 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 - **The save says which scope a thing is in.**
 - World control is not in the save at all — it is server state (§3). What the
-  save carries for the world is the player's **fog bitset** and their
-  explorers' whereabouts. Armies are server state.
+  save carries for the world is its board and seat, the player's **fog
+  bitset**, their explorers' trips, and what each army out was lent (its
+  troops off the roster, its heroes busy). The armies themselves are server
+  state.
 - The guild siege lives on the world board ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
   **is not an early item**; the save shape is the one artefact that cannot
@@ -141,7 +146,7 @@ One tactile loop and one planning loop, across two or three visits a day.
 
 ## 7. Build order
 
-Each is playable without the ones after it.
+Each is playable without the ones after it. 1–5 are built; 6 is not.
 
 1. **The board proper**: axial coordinates, neighbours, distance, march time,
    both zoom registers, client-side fog, explorers, the dispatch sheet

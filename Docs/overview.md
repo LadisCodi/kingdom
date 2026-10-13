@@ -161,7 +161,8 @@ Paid fog is the mechanic the game is built around. What it keeps:
   - housing rent → the house's store → a collect → Gold → fog, buildings and
     research
   - harvest → the building's store → a collect → materials → buildings
-  - Mana → taps on the ground, a city relic's activation, every fight
+  - Mana → taps on the ground, a city relic's activation, every fight, the
+    world spells
   - time, lumps, Gold, Gems → Knowledge → research
   - fog, lairs, quests, research chapters, the world, the store → relic
     fragments → relics
@@ -329,8 +330,6 @@ supplies the world.
 > **A tap hands you 10 seconds of work on the thing you tapped**,
 > floored at one unit.
 
-- A full Mana pool buys about the same slice of progress at every stage — about
-  five and a half minutes of production, early and late.
 - **A new reward in the city's materials is a duration** of the player's own
   production, never an absolute amount. Gems, Knowledge, Stardust, Hero XP
   and items are flat.

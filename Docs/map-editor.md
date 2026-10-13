@@ -1,81 +1,62 @@
 Map editor
 ---
 
-> **Scope.** How map content — terrain, features, landmarks, lairs and abandoned buildings — is
-> authored, and why it is not a table. Covers the map editor — the Region map
-> collection of the data editor (`?dev=data#map`,
-> [`plans/data-editor.md`](plans/data-editor.md)) — the shared rule module
-> every consumer validates against, and the dev-only save path.
+> **Scope.** How map content — terrain, features, landmarks, lairs and
+> abandoned buildings — is authored: the map editor (the Region map board of
+> the data editor, `?dev=data#map`, [`plans/data-editor.md`](plans/data-editor.md)),
+> the shared rule module every consumer validates against, and the dev-only
+> save path.
 >
 > **Status: built.** This is a **tool**, not a game feature — the map
 > content it authors is designed in
-> [`features/01-map-and-fog.md`](features/01-map-and-fog.md). Open questions
-> live in [`open-questions.md`](open-questions.md) (OQ-49, OQ-50).
+> [`features/01-map-and-fog.md`](features/01-map-and-fog.md).
 
-## 1. Why the map left the workbook
+## 1. What it is
 
-The `Map` sheet encoded the world as one spreadsheet cell per map cell:
-lowercase terrain letter, uppercase feature letter, `pT` for trees on plains,
-blank for void, with conditional formatting painting the fills as you typed. It
-was a genuinely clever use of Excel and it worked. What it could not do was any
-of the things that actually make map authoring hard:
+- A paint program for the province, drawn as the game draws it.
+- Map content is authored **by coordinate**, so it is a board of its own
+  inside the data editor rather than a collection of rows (invariant 5).
+- It shows what a map edit does: the ring and fog price of every cell, the
+  problems as they appear, a census per ring.
+- It writes one file, `src/sim/data/region-map.json`, through one validator.
 
-- **It showed codes, not the map.** A coloured `wF` is not a fish shoal. The
-  only way to see what a change looked like was to run the importer and boot
-  the game.
-- **Sites lived somewhere else entirely.** A landmark's position was a row on
-  the `Landmarks` sheet, three tabs away from the cell it stood on, so "is this
-  shrine in the water" was a question you answered by cross-referencing two
-  sheets by hand — which is why the importer had to grow `checkSites()` to
-  catch it.
-- **It could not show a derived number.** Every fog price in the game is a ring
-  around the Townhall. A spreadsheet cell cannot know its own ring, so the single most important consequence of a map edit was
-  invisible in the tool that made it.
-- **Errors arrived late and in a terminal.** `npm run balance` failing with
-  `cell (3,-9): unknown terrain code "x"` is a fine error, half a minute after
-  the mistake, in a different window.
+## 2. Where map content lives
 
-None of that is Excel's fault — a map is not tabular data, and the workbook was
-being asked to be a paint program. Every balancing number lives in the data
-editor's collections (invariant 5); map content is not one, so it is a board
-of its own there.
-
-## 2. Where map content lives now
-
-`src/sim/data/region-map.json` is hand-authored (by the editor) and holds all
-five kinds of map content:
+`src/sim/data/region-map.json` is written by the editor and holds all five
+kinds of map content:
 
 ```
 terrain   { cells: [{x, y, id}] }   every cell that exists; absent = void
 features  { cells: [{x, y, id}] }   at most one per cell
 landmarks [{id, kind, x, y, claimCost}]
 lairs     { <LairId>: {x, y, size, tier, radius, sight, guard, flavour} }
-guard     { threat, power, warningMinutes }   on every lair
+guard     { threat, power, warningMinutes, mix? }   on every lair
 abandoned [{id, district, x, y, sight, name?}]   buildings the fog swallowed
 ```
 
-*(An abandoned building is a building from `buildings`, its anchor and its
-`sight` — [`features/01-map-and-fog.md`](features/01-map-and-fog.md) §6.3. The
-validator holds its ground to a site's rules, its id to the sites' one
-namespace, and its count to the Townhall cap at the level whose reach first
-covers it.)*
-
-*(`guard` is the lair's garrison and the clock discovering it starts —
-[`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
-§2. The validator asks for a unit type or `Any`, a `power` of at least 1, a
-warning of at least one minute, a `sight` that reaches past the `radius` (or
-0 for never), and a flavour line.)*
-
-`definitions.ts` reads `LANDMARKS` and `LAIRS` from here rather than from the
-balance collections; `grid.ts` reads terrain and features as before. The file is
-written one cell per line, sorted in reading order, so a map change shows up in
-`git diff` as the cells that moved rather than as a reflowed blob.
-
-The one asymmetry worth knowing: **the lair roster is fixed in code.** `LairId`
-is a union in `state.ts` and five lairs have hand-written names, descriptions
-and sprites in `definitions.ts`, so the editor can move and retune a lair but
-not add or delete one. Landmarks have no code-side identity beyond their
-`kind`, so they are fully editable.
+- **An abandoned building** is a building from `buildings`, its anchor and its
+  `sight` ([`features/01-map-and-fog.md`](features/01-map-and-fog.md) §6.3).
+  The validator holds its ground to a site's rules, its id to the sites' one
+  namespace, and its count to the Townhall cap at the level whose reach first
+  covers it.
+- **`guard`** is the lair's garrison and the clock finding it starts
+  ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
+  §2). The validator asks for a unit type or `Any`, a `power` of at least 1, a
+  warning of at least one minute, a `mix` (when present) that names units and
+  fields something, a `sight` that reaches past the `radius` (or 0 for
+  never), and a flavour line that fits the card. The editor has no field for
+  the `mix`; a save carries it through untouched.
+- **A landmark's `kind`** is `StandingStones`, `Leyspring` or `Watchtower`
+  (`LANDMARK_ART`). The map uses the first two; its Watchtower is an
+  abandoned building.
+- `definitions.ts` reads `LANDMARKS`, `LAIRS` and `ABANDONED` from here;
+  `grid.ts` reads terrain and features.
+- The file is written one cell per line, sorted in reading order, so a map
+  change shows up in `git diff` as the cells that moved.
+- **The lair roster is fixed in code.** `LairId` is a union in `state.ts` and
+  the five lairs have hand-written names, art and sprites in `definitions.ts`,
+  so the editor can move and retune a lair but not add or delete one.
+  Landmarks and abandoned buildings are fully editable.
 
 ## 3. The rules, in one module
 
@@ -85,42 +66,41 @@ statement of what a legal map is, and it has three consumers:
 
 | Consumer | What it does with it |
 |---|---|
-| the editor | re-runs it on every edit; Save is disabled while `errors` is non-empty, and each issue is a button that flies the camera to its cell |
+| the editor | re-runs it on every edit; Save is refused while `errors` is non-empty, and each issue is a button that flies the camera to its cell |
 | `scripts/vite-map-editor.mjs` | re-runs it server-side (via `ssrLoadModule`, so it is the same TypeScript) and answers `422` rather than writing |
 | `tests/regionMap.test.ts` | asserts the shipped map has **no errors and no warnings**, and pins each rule against a deliberately broken copy |
 
-That triple is the point. The old arrangement had the rules inside the importer,
-where only the CLI could reach them; an editor would have had to re-implement
-them and then drift. A rule added to `mapRules.ts` is enforced in all three, or
-in none.
+A rule added to `mapRules.ts` is enforced in all three, or in none.
 
-**Errors** are what the sim cannot cope with: a Townhall footprint that is not
-clear Grassland, a site on water or void or sharing a cell, a shoal on dry land
-or a forest at sea, an unknown id, a lair missing or invented, a lair's
-sight that does not reach past its radius.
+**Errors** are what the sim cannot cope with: an empty map; two terrains or
+two features on one cell; an unknown id; a feature on void; a shoal on dry
+land or a land feature at sea; a Townhall footprint that is not clear
+Grassland; a site on water or void, under the Townhall or sharing a cell with
+another site or a feature; a site size outside 1–3; a landmark with a blank or
+duplicate id, an unknown kind or a claim cost that is not a positive whole
+number; a lair missing or invented, or with a bad tier, guard, radius, sight
+or flavour; an abandoned building that is not a building the player can
+raise, with a bad sight or name, past every Townhall's reach, or more of its
+kind inside a Townhall level's reach than that level's count cap allows.
 
-**Warnings** are what a designer probably did not mean. Today there is one that
-matters: **land the Townhall cannot walk to**. `townhallDistance()` returns 0
-for an unreachable cell, and `revealCost(0)` is the cheapest ring — so a
-stranded island is *free* to reveal. That is invisible in play until someone
-finds it, and it was invisible in the spreadsheet by construction.
+**Warnings** are what a designer probably did not mean: **land the Townhall
+cannot walk to**, and a site standing on it.
 
 ## 4. Using it
 
 `npm run dev`, then `http://localhost:5173/?dev=data#map` — the **Region map**
-collection of the data editor ([`plans/data-editor.md`](plans/data-editor.md)).
+board of the data editor ([`plans/data-editor.md`](plans/data-editor.md)).
 `?dev=map` redirects there. It replaces the game rather than sitting inside
-it — the game frames itself to a 9:16 phone, which is the wrong shape for
-looking at a region.
+its 9:16 frame.
 
 The board is drawn **as the game draws it**:
 
 - the game's isometric camera — every cell a 2:1 diamond, picked through the
   same projection a tap uses;
 - the ground's per-cell variants and the fringes where two terrains meet;
-- features, landmarks, lairs and the Townhall (level 1) standing on their
-  plots with the game's sprites, painted back to front, multi-cell blocks
-  drawn once over the whole block;
+- features, landmarks, lairs, abandoned buildings and the Townhall (level 1)
+  standing on their plots with the game's sprites, painted back to front,
+  multi-cell blocks drawn once over the whole block;
 - **no fog**: the province is shown revealed, so every cell can be painted.
 
 Everything the tool adds — grid, distances, ring bands, problems, site
@@ -128,71 +108,53 @@ outlines and labels — is an overlay drawn over that view.
 
 | Tool | Key | |
 |---|---|---|
-| Brush | `B` | drag to paint; painting into void **creates** cells, which is how the world grows |
+| Brush | `B` | drag to paint; painting into void **creates** cells |
 | Rectangle | `R` | or hold `Shift` |
 | Fill | `F` | or hold `Ctrl`; a feature fill spreads over one *terrain*, not one feature |
 | Pick | `I` | or hold `Alt` |
-| Sites | `S` | three modes of its own, below |
+| Sites | `S` | four modes of its own, below |
 
-The Sites tool splits into four modes, shown as labelled buttons in the
-toolbar because "what does a click do right now" is the one question a modal
-tool has to answer out loud:
+The Sites tool has four modes, shown as labelled buttons in the toolbar:
 
 | Mode | A click | |
 |---|---|---|
 | **Select & move** | selects a site and opens its inspector; drag moves it | the default |
 | **Place landmark** | drops a new landmark on any cell | `N` also does this from any tool, wherever the pointer is |
-| **Place abandoned** | drops a new abandoned building — an old House seen from 3 rings — on any cell | pick the building, its name and its sight in the inspector |
+| **Place abandoned** | drops a new abandoned building — a House seen from 3 rings — on any cell | pick the building, its name and its sight in the inspector |
 | **Erase** | deletes the landmark or abandoned building under the cursor | `Delete` also does this to the selected one |
 
-The cursor changes per mode, and Place and Erase each carry a one-line note
-saying what you are about to get: a new landmark arrives as an unnamed `Shrine`
-at 25,000 Gold, to be renamed and priced in the inspector, and a lair refuses
-to be erased with a toast rather than silently doing nothing.
-
-Two guard rails worth knowing. Placing onto an occupied cell **selects what is
-there** instead of stacking two sites, since a second site on one cell is a
-hard error and never what was meant. And placement is not otherwise validated:
-you can drop a landmark in the sea, and what happens is the error appears, the
-cell hatches red and Save locks until you move it — the editor lets you put a
-thing down and then put it down properly, rather than refusing a click without
-saying why.
-
-Picking a terrain or feature swatch switches back to the Brush, because
-reaching for a colour means you want to paint with it.
-
-Brush size `1`–`5`. Space or right-drag pans, the wheel zooms about the
-pointer. `Ctrl+Z` / `Ctrl+Shift+Z` undo and redo — **one drag is one step**.
-`Ctrl+S` saves.
-
-Overlays, all toggleable: grid `G`, **distance & fog cost** `D` (the ring and
-the Gold price on every cell), ring bands `K`, problems `W`, sites `H`.
-
-The right-hand panel carries the problem list, the selected site's full
-property form, and a **census**: counts per terrain and feature, then a table of
-cells and features **per distance ring** with that ring's Gold price. "Is there
-enough Wood inside ring 4" is the question the spreadsheet could never answer
-and this one answers at a glance.
+- The cursor changes per mode, and Place and Erase each carry a one-line
+  note. A new landmark arrives as standing stones (`NewShrine<n>`) at
+  25,000 Gold, to be renamed and priced in the inspector. A lair refuses to be erased with a
+  toast.
+- Placing onto an occupied cell **selects what is there** instead of stacking
+  two sites.
+- Placement is not otherwise refused: a landmark dropped in the sea raises its
+  error, the cell hatches red and Save is refused until it is moved.
+- Picking a terrain or feature swatch switches back to the Brush.
+- Brush size `1`–`5`. Space or right-drag pans, the wheel zooms about the
+  pointer. `Ctrl+Z` / `Ctrl+Shift+Z` (or `Ctrl+Y`) undo and redo — **one drag
+  is one step**. `Ctrl+S` saves.
+- Overlays, all toggleable: grid `G`, **distance & fog cost** `D` (the ring
+  and the Gold price on every cell), ring bands `K`, problems `W`, sites `H`.
+- The right-hand panel carries the problem list, the selected site's full
+  property form, and a **census**: counts per terrain and feature, then a
+  table of cells and features **per distance ring** with that ring's Gold
+  price.
 
 ## 5. Saving
 
-Save POSTs the document to `/__map/save`, a middleware registered by
-`scripts/vite-map-editor.mjs` with `apply: 'serve'` — it **cannot exist in a
-build**. The middleware validates, then writes `region-map.json`.
+- Save POSTs the document to `/__map/save`, a middleware registered by
+  `scripts/vite-map-editor.mjs` with `apply: 'serve'` — it **cannot exist in a
+  build**. The middleware validates, then writes `region-map.json`.
+- Camera, tool, brush and overlay state are kept in `sessionStorage`, so they
+  survive the reload a data change brings.
+- If the endpoint is not there — the editor opened against a built bundle —
+  the save downloads the JSON instead.
+- The serialiser is a **fixed point**: re-saving an unchanged map produces
+  byte-identical output.
 
-Writing that file is an HMR edit, so the page reloads immediately afterwards.
-That is deliberate: camera, tool, brush and overlay state ride through it in
-`sessionStorage`, and the reload doubles as proof that what was written parses
-and loads. If the endpoint is not there — someone opened the editor against a
-built bundle — the save falls back to downloading the JSON rather than losing
-the work.
-
-The serialiser is a **fixed point**: re-saving an unchanged map produces
-byte-identical output, so a save never shows up as a diff on its own.
-
-## 6. Dials
-
-In the order to reach for them.
+## 6. Dials, in the order to reach for them
 
 | Want | Change |
 |---|---|
@@ -203,22 +165,18 @@ In the order to reach for them.
 | a sixth lair | `LairId` in `state.ts` + a `lairContent` entry in `definitions.ts`, then place it in the editor |
 | how wide a void fill may spread | `FILL_MARGIN` / `FILL_LIMIT` in `src/editor/mount.ts` |
 
-## 7. What was deliberately not built
+## 7. Deliberately not in this design
 
-- **Multi-region.** The editor edits `oakville` because that is the only
-  authored region. A second is a second JSON file and a row in `REGIONS` —
-  see [`implementation-plan.md`](implementation-plan.md) §5 before assuming it is only that.
-- **Undo as a command stack.** Whole-document snapshots, because a few hundred
-  cells makes a `structuredClone` free and a diff stack is the thing that would
-  quietly get a case wrong.
-- **Editing the Townhall.** It anchors at (0,0) by definition and every fog
-  price derives from it; it is drawn, and validated, and not movable.
+- **Multi-region.** The editor edits `oakville`, the only authored region. A
+  second is a second JSON file and a row in `REGIONS` — see
+  [`implementation-plan.md`](implementation-plan.md) §5 before assuming it is
+  only that.
+- **Undo as a command stack.** Undo keeps whole-document snapshots.
+- **Editing the Townhall.** It anchors at (0,0) and every fog price derives
+  from it; it is drawn and validated, and not movable.
+- **A field for a lair's `mix`.** It is edited in the file.
 
-## Open questions
-
-- **Should a map change force a `SAVE_VERSION` bump?** — OQ-49.
-- **Should the census have budgets?** — OQ-50.
-- **Tests pin cells near the Townhall.** The onboarding tests play the real
-  opening over the real map, so repainting the first few rings breaks them —
-  correctly, but with an error that talks about quests rather than about the
-  cell that moved.
+**Open questions:** OQ-49, OQ-50 in [`open-questions.md`](open-questions.md).
+The onboarding tests play the real opening over the real map, so repainting
+the first few rings breaks them with an error that talks about quests rather
+than about the cell that moved.

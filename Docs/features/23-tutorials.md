@@ -7,8 +7,9 @@
 > how a line is drawn is [`24-dialogue.md`](24-dialogue.md); the quests the
 > beats follow are [`12-quests.md`](12-quests.md) §2.
 >
-> **Status: built.** Every line below is data in `?dev=data` › Progression ›
-> **Scenes**.
+> **Status: built** (`src/ui/stage/`). Every line below is data in
+> `?dev=data` › Progression › **Scenes** (`scenes.json`); the tables quote
+> it, and where they differ the data is right.
 
 ## 1. The rules
 
@@ -66,8 +67,8 @@
 
 ## 3. The First Morning
 
-Played on the real kingdom, from the first frame after the payer profile. The
-camera starts on the Townhall. **Isolde**, the Royal Advisor, speaks from the
+Played on the real kingdom, from the first frame; the payer profile is asked
+once it ends. The camera starts on the Townhall. **Isolde**, the Royal Advisor, speaks from the
 left unless a line says otherwise.
 
 **Isolde tells the kingdom's story, not the interface's**: she says what the
@@ -243,8 +244,9 @@ quest's gift accepted with the hand alone (§3).
 - **A ruin's way through the fog is pointed one cell at a time**
   (`abandoned:<id>Fog`): the hand stands on the next cell the player can
   pay for, and moves on as each is cleared.
-- **A repair takes about five seconds** ([`01-map-and-fog.md`](01-map-and-fog.md)
-  §6.3), so a lesson never waits on its builders.
+- **The opening's repairs take five seconds** (`repairDurationSeconds`;
+  [`01-map-and-fog.md`](01-map-and-fog.md) §6.3), and a crop plot needs no
+  builder, so a lesson never waits on its builders.
 - **The fog's buildings are the opening's buildings.** The House, the plots,
   the Farm and the Sawmill are found and repaired, and no technology is
   researched to have them; the first building the player raises is the
@@ -300,7 +302,7 @@ last line, as a hint.
 | `speedups` | the first speed-up in the Bag | Kofi | *Anything that waits shows Speed up on its card. Spend one there and the wait shrinks.* | Bag |
 | `storeFull` | a building's store is full | Tom | *A full store stops the work dead — tap it and bring it home.* | that building |
 | `idleCrew` | a crew has more hands than ground in reach | Tom | *Move the building nearer the work, or send them elsewhere.* | that building |
-| `knowledgeFull` | the Knowledge bar at its cap | Isolde | *Ten points of Knowledge, and not one more will fit. Spend some in the book.* | the Knowledge plank |
+| `knowledgeFull` | the Knowledge bar at its cap | Isolde | *My head’s full! Ten points of Knowledge, and not one more will fit.* · *Spend some in the book before more goes to waste.* | the Knowledge tab |
 | `store` | the Store opens | **Marisol**, Isolde | *Marisol Vega, merchant of everywhere! … She once sold my aunt a bridge.* | Store |
 | `friends` | the friends' door opens | **Idris**, Isolde | *Write back, and they'll lend a hand each day. Pin a wish on the board, and a friend can fill it.* | Friends |
 | `notices` | the first notice is pinned | Idris | *When something happens while you're busy, I pin a note here. Tap one to read it.* | the notice |
@@ -325,16 +327,16 @@ plays this before the lair's own scene. Its lines are beats.
 |---|---|---|---|---|
 | `orcs` | the Orcs are discovered | **Grukk** (right), **the Warden** (right), Isolde | **Grukk:** *Grrr. Your town smells of bread and gold. We come for both.* · **Warden:** *Warden of the Guard, Your Majesty — what's left of it. We followed your smoke home. Give me soldiers.* · **Isolde:** *Soldiers… there's a chapter on Barracks, I'm sure of it. Let me read up on it first—* · **Warden:** *Read. With respect, Your Majesty — orcs don't wait for chapter two.* · **Isolde:** *Then I'll read very quickly! The Barracks is in the research tree — let's open it together.* | Research |
 | `raid` | the first raid lands | Hob, Isolde | **Hob:** *They've had my woodpile. MY woodpile.* · **Isolde:** *Never the treasury, at least. Gather often and they find less — clear the camp to win it all back.* | the lair |
-| `battle` | the first attack sheet opens | the Warden | *Pick who goes in: as many soldiers as you can spare. The numbers tell you how it'll go before we march.* | the attack button |
-| `victory` | the first lair is cleared | the Warden, Isolde, Hob | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* · **Hob:** *Woodpile included.* | the lair |
+| `battle` | the first attack sheet opens | the Warden | *Pick who goes in: as many soldiers as you can spare. The numbers tell you how it'll go before we march.* | — |
+| `victory` | the Orcs are beaten | the Warden, Isolde, Hob | **Warden:** *They're scattered! And look what they left behind.* · **Isolde:** *Oakville is safe! Take the camp — whatever they stole comes home, and the ground is ours again.* · **Hob:** *Woodpile included.* | the Orcs' camp |
 | `evolution` | Warriors II is researched | the Warden | *The Barracks trains them now — if its level is high enough.* | the Barracks |
-| `relics` | Relics opens | Isolde | *Cards! Collect a whole page and the kingdom earns a relic — a gift that grows every season. I do love collecting things.* | Relics |
+| `relics` | Relics opens — the first relic fragment held | Isolde | *A piece of an old relic! Find all six and it can be restored — the rest are out in the lairs and the fog. I keep the pieces in the Bag.* | Bag |
 
 ### 4.3 Magic, heroes, the world
 
 | Scene | Trigger | Speakers | Says | Then points at |
 |---|---|---|---|---|
-| `landmarkSeen` | the first landmark sighted, after the First Morning | Isolde | *Standing stones! Clear the fog around them and claim them. The well runs deeper for every one we wake.* (needless once one is claimed) | the landmark |
+| `landmarkSeen` | the first landmark sighted, after the First Morning | Isolde | *Standing stones! The old magic sleeps in them…* · *Clear the fog around them and claim them. The well runs deeper for every one we wake.* (needless once one is claimed) | the landmark |
 | `atlas` | the Atlas opens | Wren | *None of its cards is needed — but every one makes the road easier.* | Research |
 | `magic` | the first landmark is claimed | Isolde | *Do you feel that? The old stones hum — the well runs deeper already. I've waited years for this.* | Research |
 | `tavern` | the first Tavern is finished | **Bess** (right), Isolde | **Bess:** *Doors open, fire lit, soup on! Heroes will come from every road for a bowl of this.* · **Isolde:** *The Tavern flies the banner — your first hero is on the house! And a new book, the Sagas! Heroes, legends… my favourite shelf.* | Heroes |
@@ -370,11 +372,14 @@ its hex, in the province or on the board, until a hex has been revealed.
 
 | Scene | Trigger | Speakers | Says | Points at |
 |---|---|---|---|---|
-| `claim` — beats | the first hex revealed by an explorer; needless once a hex is held | Wren | *Build on a hex beside the city, and it's ours. Its feature says what we'll build.* | a hex to claim → **Build**, until it is claimed |
-| `warCamp` | the War Camp stands | the Warden | *From here our armies march out onto the world board — to beat the camps, to take ground, to hold it.* | the world knob |
+| `claim` — beats | the first hex revealed by an explorer; needless once a hex is held | Wren | *Build on a hex beside the city, and it's ours.* · *Its feature says what we'll build: woods make a logging camp, a field a farm. Build!* · *Each hex fills its own store — tap it to send it home.* | a hex to claim → **Build**, until it is claimed |
 | `camps` | a monster camp in sight | the Warden | *A camp guards its ground: nobody claims it till it's beaten. Leave it, and it's back in half a day.* | the camp |
 | `dungeon` | a dungeon out of the dark | Wren | *Camp an army at its door and delve, room by room. Nobody can hold a dungeon — only empty it.* | the dungeon |
 | `portal` | the Dark Portal open | Wren | *Once a week it opens, and every kingdom races down it. Each floor pays more than the last.* | the Portal |
+
+**`warCamp`** plays in the province, when the War Camp stands — **the
+Warden:** *A War Camp! From here our armies march out onto the world board.*
+— and points at the world knob.
 
 ### 4.4 What the fog gives up
 
@@ -417,8 +422,8 @@ nothing if it already is). Its lines are beats, like the first lair's.
 
 A big opening is named full-screen before anyone talks about it.
 
-- **What has one:** the doors Build, Research, Heroes, Relics and the world,
-  and the found books Sagas and Atlas. Nothing else.
+- **What has one:** the doors Build, Research, Heroes, Relics, the Bag and
+  the world, and the found books Sagas and Atlas (`unlocks`). Nothing else.
 - **What it shows:** a dark veil over the whole game, the thing's icon on a
   slowly turning golden burst, its name, and one paragraph.
 - **The way out:** *Tap to continue* appears two seconds after the entrance
@@ -450,7 +455,7 @@ A big opening is named full-screen before anyone talks about it.
   unfinished. Panning the map is not a command.
 - Past `Attuned` the pill still wiggles; Isolde stays away.
 - **A refusal explains itself.** A tap on a padlock says what opens it; a
-  refused build, research or tap says why, as it does today.
+  refused build, research or tap says why.
 
 ## 6. The input lock
 

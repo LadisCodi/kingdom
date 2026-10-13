@@ -30,7 +30,7 @@
 
 | State | Shows |
 |---|---|
-| Below the ceiling | every busy builder's job with its time left and a Gem **Finish**, and a Gem **Hire** in the next empty slot. A builder out on the world map shows its job and time left, with no Finish |
+| Below the ceiling | every busy builder's job with its time left, a Gem **Finish** and — when the Bag holds one that fits — **Speed up**; and a Gem **Hire** in the next empty slot. A builder out on the world map shows its job and time left, with no Finish |
 | **At** the ceiling | the same, and **no hire** |
 
 - Placement mode stays open behind the sheet. Dismissing it returns the player
@@ -44,12 +44,16 @@
 - `round(base × growth^purchased)`: the same escalating-slot curve as the
   hero slots.
 - `purchased` is **derived**, `builders − startBuilders`, not stored. A
-  *granted* builder (a quest, an event) makes the next *bought* one dearer.
+  *granted* builder makes the next *bought* one dearer.
+- **A builder can be granted** — by a store product (`store` › `builders`; the
+  novice's pack carries one) or by `?dev`. Granting stops at the ceiling.
 - Every Gem sink is priced on the 500-Gems-a-dollar ladder
   ([`14-monetization.md`](14-monetization.md) §2.2). Each builder is the next
   pack up (`×2`).
 - The up-front Gem faucet is 1,250 Gems: 500 to start, 750 across the quest
   chain ([`14-monetization.md`](14-monetization.md) §1.1).
+- **Finish** costs Gems for the time left (`rush.secondsPerGem`); **Speed up**
+  spends construction or general speed-ups from the Bag.
 
 | Builder | Gems | Pack |
 |---|---|---|
@@ -66,13 +70,14 @@
 | Builders at the start | 1 | `kingdom.startBuilders` |
 | Ceiling | 4 | `kingdom.maxBuilders` |
 | Price of the next builder | `round(2500 × 2^purchased)` | `kingdom.builderGemCostBase`, `…Growth` |
+| Builders a store product hands over | novice's pack 1 | `store` › `builders` |
 
 ## 5. Deliberately not in this design
 
 - A waiting line, and any promotion or reordering logic (§1).
 - A `buildQueueCapacity` dial alongside the builder count.
 - A free trial of a builder.
-- A store card for builders ([`14-monetization.md`](14-monetization.md) §2).
-- Cancelling a build, and the refund that went with it (§1).
+- A store card that sells a builder alone ([`14-monetization.md`](14-monetization.md) §2).
+- Cancelling a build (§1).
 
 **Open questions:** OQ-31, OQ-32.

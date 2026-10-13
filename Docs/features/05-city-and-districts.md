@@ -16,8 +16,10 @@
 - It also **makes Gold of its own** into its own store, with nobody living in
   it: 10 Gold a minute at level 1, rising to 5,400 at 10
   (`buildings.goldPerMinutePerLevel`, [`03-economy.md`](03-economy.md) §3).
-  This is the number its Level Up card shows — the count caps are gates, not
-  a stat a player reads.
+  This is the number its Level Up card shows. A raid never takes it
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §4).
+- **Every level is opened by a technology**: the finale of the tree's chapter
+  *n* opens Townhall *n + 1* ([`buildings.md`](buildings.md) §3).
 
 | | TH1 | TH2 | TH3 | TH4 |
 |---|---|---|---|---|
@@ -25,7 +27,8 @@
 | Housing cap | 2 | 4 | 6 | 9 |
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
-| Gate to the next level | 99 Gold + 66 Wood | `Bureaucracy` | `Magistracy` | — |
+| Technology for the next level | `Forestry` | `Bureaucracy` | `Magistracy` | `Charter` |
+| Price of the next level | 99 Gold + 66 Wood | 6,000 Gold + 330 Wood | 31,000 Gold + 1,700 Wood + 2 Starmetal | 170,000 Gold + 9,300 Wood + goods |
 | Villagers to reach it | — | 3 | 5 | 12 |
 | Explores to ring | 3 | 5 | 7 | 8 |
 
@@ -33,9 +36,8 @@
   villagers on top of its technology: `buildings.requiredPopulationPerLevel`
   on the Townhall row, **3 · 5 · 12 · 20 · 30 · 40 · 50 · 60 · 72**. Total
   population, housed or not; each level asks for fewer than the houses of the
-  level before can hold, so the answer is always roofs, Food and the training
-  line. The card says the number and where the city stands: *Needs 12
-  villagers · you have 9*.
+  level before can hold. The card says the number and where the city stands:
+  *Needs 12 villagers · you have 9*.
 - Villagers are priced `5, 10, 20, 40, 70, 110, 160, 230, 320, 440, 600, 800,
   1000` Food then **×1.1** each,
   and each one trains ×1.07 slower than the one before
@@ -53,8 +55,8 @@ Three arcs run past TH3:
   ([`combat.md`](combat.md) §14).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
   session length ([`08-magic.md`](08-magic.md)).
-- **Card albums, Fragments, Stardust and Hero XP** gate relic and hero levels,
-  on a curve measured in weeks and seasons ([`09-relics.md`](09-relics.md),
+- **Relic fragments, Stardust, hero Fragments and Hero XP** gate relic and
+  hero levels, on a curve measured in weeks ([`09-relics.md`](09-relics.md),
   [`10-heroes.md`](10-heroes.md) §4).
 
 ## 2. The districts
@@ -63,8 +65,9 @@ Three arcs run past TH3:
   every number. A new one needs no code: it is created in `?dev=data`.
 - Every building, its job, its count cap and its level ladder:
   [`buildings.md`](buildings.md).
-- Per-level tech gates (`requiredTechPerLevel`): entry 0 is the technology
-  needed to reach level 2.
+- Per-level gates: `requiredTownhallLevelPerLevel` (authored on the
+  building) and `requiredTechPerLevel` (derived from the technologies'
+  unlocks); entry 0 is what reaching level 2 needs.
 - A district card says *Research X required*; the technology's card says
   *Housing can now reach level 2*.
 
@@ -100,9 +103,7 @@ How the table is shaped:
   170,000 · 380,000 · 850,000 · 1.8M · 4M · 8.3M Gold for levels 3–10:
   about a day of what a three-visits-a-day player collects at the level
   below.
-- **Levels steepen.** A level costs about `1 + 0.1 × (L − 1)²` times the old
-  ×1.5–1.8 ladder: ×1.1 at level 2, ×2.6 at 5, ×9 at 10. From level 6 each
-  level is about ×2.2 the one before.
+- **Levels steepen.** From level 6 each level is about ×2.2 the one before.
 - **Advanced buildings cost 2.5× a basic one**, every level, the build
   included. Basic: Townhall, Housing, Farm, crop plot, Sawmill, Quarry, Docks.
   Advanced: the military halls, Infirmary, War Camp, Sanctum, Tavern, the
@@ -131,7 +132,7 @@ M(N)           = linear × (N − 1) + growth^(N − 1)
   disagree.
 - Two dials a building: `instanceLinearGrowth`, `instanceExponentialGrowth`.
 
-At 2 and 1.2:
+At 2 and 1.2 (the Townhall's, the Farm's and the workshops'):
 
 | Ordinal | #2 | #3 | #5 | #10 | #21 |
 |---|---|---|---|---|---|
@@ -158,6 +159,12 @@ At 2 and 1.2:
   build.
 - A **decoration** has one level, so its goods price is its level 1 entry
   ([`21-harmony.md`](21-harmony.md) §2).
+- **Precious materials** — Starmetal, Heartwood, Moonglass, from the world
+  board — sit in the same `goods`: one named material at levels 4 and 5 of
+  most buildings past Housing, all three at levels 8 to 10
+  ([`buildings.md`](buildings.md) §4.11). **A price asks
+  for none until the Watchtower stands**; before that the precious terms are
+  dropped ([`19-world-map.md`](19-world-map.md) §7.6).
 
 ### 3.3 The wait
 
@@ -170,10 +177,12 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ```
 
 - The pivot is `city.lateUpgradeFromLevel` (6), and the late half restarts
-  at its own base — 2 h for every district, 6 h for the Townhall — because a minute-long step cannot
-  be compounded into a multi-day ladder without deforming the opening.
-- A build's wait grows with the ordinal and with distance from the Townhall;
-  neither touches the price.
+  at its own base — 2 h for every district, 6 h for the Townhall.
+- A build's wait grows with the ordinal (N) and with distance from the
+  Townhall (d, in rings); neither touches the price.
+- The tree's build-time ranks shorten every wait.
+- An abandoned building's repair has its own flat wait
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6.3).
 
 ## 4. Placement, and moving
 
@@ -181,9 +190,12 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
   and no rule about where a building sits relative to another one.
 - One legality check serves building and moving: a cell you may not build on
   is a cell you may not move to.
-- Gates, all of them about the **ground**: it exists, it is revealed, it is
-  empty of features, sites and other buildings, and it is dry — plus the count
-  cap and the unlock technology.
+- Gates about the **ground**: it exists, it is revealed, it is empty of
+  features, sites and other buildings, no standing lair holds it
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §1), and it is
+  dry.
+- Gates about the **building**: the count cap, the unlock technology, and
+  Harmony ([`21-harmony.md`](21-harmony.md)).
 - Terrain gates only Water ([`01-map-and-fog.md`](01-map-and-fog.md) §2). A
   farm on sand is legal.
 - The **one exception** is the Docks, whose pier needs a shoreline — terrain,
@@ -229,7 +241,8 @@ What may move:
 - **Anything, finished or not.** A building still in the queue moves too — its
   wait is priced when the builder starts it and stamped on the queue item, so
   moving never reprices it.
-- **Buildable only**, which excludes exactly the Townhall.
+- **Everything but the Townhall and the Watchtower.** A repaired ruin moves
+  before its technology is researched.
 
 Placement rules that change for a move, and only these:
 
@@ -303,7 +316,7 @@ What follows the building:
 - A priced or timed move.
 - Undo.
 - Multi-select moves.
-- Moving the Townhall.
+- Moving the Townhall or the Watchtower.
 - A distance term in build **cost**.
 - A cost curve of any kind. Every level is a number a designer typed (§3).
 - An instance multiplier that varies by level: one curve prices the whole
