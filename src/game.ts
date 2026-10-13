@@ -1640,7 +1640,7 @@ export class Game {
     const block = castBlock(this.state, artifactId, this.now());
     if (block !== null) {
       if (block === 'NotEnoughMana') this.shake(['Mana']);
-      else if (block === 'NotOwned') this.toast(tr('Finish its album first'));
+      else if (block === 'NotOwned') this.toast(tr('Restore it first'));
       else if (block === 'Active') this.toast(tr('{spell} is still running', { spell: active.name }));
       else if (block === 'OnCooldown') this.toast(tr('{relic} needs to rest', { relic: ARTIFACTS[artifactId].name }));
       this.notify();
