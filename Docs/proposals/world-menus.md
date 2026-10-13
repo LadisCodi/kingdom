@@ -2,8 +2,8 @@
 
 > **Scope:** every menu of the world board (`src/ui/world/`), rebuilt from the
 > pieces and patterns the city's menus already use.
-> **Status:** proposal, 2026-10-07. Each menu is implemented once its mockup
-> is approved. Mockups m83–m89 in [`../art/ui/mockups/`](../art/ui/mockups),
+> **Status: built** (`src/ui/world/`). The live design is
+> [`../features/19-world-map.md`](../features/19-world-map.md). Mockups m83–m89 in [`../art/ui/mockups/`](../art/ui/mockups),
 > prompts in [`world-menus-prompts.md`](../art/ui/mockups/world-menus-prompts.md).
 
 ## 1. What is there today

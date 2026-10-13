@@ -8,8 +8,12 @@
 > province, a **world relic** in a **Chapel** on a world district. A hosted
 > relic has a **passive** over its host's area and an **active** cast there
 > with Mana. Fragments are traded between the six players of a board, and
-> every few weeks an **Excavation** on the board adds a new relic. It is a
-> **proposal**, not a feature doc: nothing here is built.
+> every few weeks an **Excavation** on the board adds a new relic. 
+> **Status: built, differently in places.** The live design is
+> [`../features/09-relics.md`](../features/09-relics.md): a level takes a full
+> set of six and Stardust, Shrines add no Mana or Harmony, and trading is the
+> friends' wish board. Not built: the Excavation (§8), replicas, gilding and
+> Dowser's maps.
 >
 > **It replaces** the season, the albums, the cards, the packs, the stars and
 > the vault, the wildcards, the lap, the melt-down and the collection prize
@@ -144,8 +148,7 @@ One effect, one number, rising with the level.
 - **The Lantern's store** is a district store
   ([`../features/19-world-map.md`](../features/19-world-map.md) §7.3): it is
   collected by a tap and goes with the hex.
-- The numbers follow the level curves of
-  [`relic-effects.md`](relic-effects.md).
+- The numbers are each relic's level curve in `artifacts`.
 
 ## 7. Trading
 
@@ -237,7 +240,7 @@ To add to [`../open-questions.md`](../open-questions.md):
 - **The Gem faucet's total** once the albums' Gems are gone.
 - **Do relics carry to a new board** — they should; the Chapels do not.
 - **Does a dungeon's relic family follow the dungeon or the seat?**
-- **The level curves** of the four new passives (`relic-effects.md`).
+- **The level curves** of the four new passives.
 
 ## 13. Deliberately not in this design
 
