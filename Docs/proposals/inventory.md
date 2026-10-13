@@ -5,8 +5,9 @@
 > boost; relics and their fragments; keys and maps. Shaped on the item bag of
 > Kingshot and its genre — tabs, typed speedups, resource chests, a choice
 > chest, bulk use, items saved for an event — held to this game's rules. 
-> **Status: built** — the Bag, its items (`items.json`, `sim/bag.ts`) and
-> its screens. Where this file and the code differ, the code is right.
+> **Status: built.** The live design is
+> [`../features/29-the-bag.md`](../features/29-the-bag.md); where this file
+> and it differ, that doc is right.
 >
 > **It goes with** [`relic-restoration.md`](relic-restoration.md), which puts
 > relics and fragments in it.
