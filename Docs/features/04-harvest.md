@@ -5,8 +5,8 @@
 > What a tap *costs* is [`08-magic.md`](08-magic.md); where the coins go is
 > [`03-economy.md`](03-economy.md).
 >
-> **Status: built.** Not built: the
-> map-editor production census (§2.3, OQ-50).
+> **Status: built.** Not built: the map ceiling computed by the map editor
+> (§2.3) — its census counts cells per ring, not what they yield.
 
 ## 1. The rules
 
@@ -25,10 +25,9 @@
   press that does not move is one tap on release.
 - Nothing times the thumb: the player taps as fast as they like, and Mana is
   the only limit (one per tap on the ground).
-- `tap.workSeconds` sets what a tap and a rewarded ad are worth (§3.3).
-  `TapPower` at the top of its ladder makes a tap 1.8× the work.
-- `tap.workSeconds` is the dial for late-game hand-play; doubling it doubles the
-  ad with it (§3.3).
+- `tap.workSeconds` sets what a tap and a rewarded ad are worth (§3.3);
+  doubling it doubles the ad with it.
+- The Bag's **Harvest boost** lengthens every tap by 50% for an hour.
 
 ## 2. The cell is a depot
 
@@ -46,20 +45,23 @@ Every resource cell carries:
 - Recovery is binary: the cell comes back **full** after `recoverySeconds`.
   There is no continuous regrowth and no reserve floor (§5).
 - Recovery is timestamp-based: it works offline and costs exactly one boundary.
-- **The wait is priced once, at the moment the cell runs dry.** The tech tree
-  can shorten it — `harvestRecovery`, aimed at a source, so "trees grow back
-  20% faster" leaves the crops alone. It does not wake a cell already
-  sleeping: the stamp is a fact about the cell,
-  not a live query, and a bonus that repriced a stretch already elapsed would
-  hand the player a windfall for finishing a research at the right moment. It
-  never falls below one second.
+- **The wait is priced once, at the moment the cell runs dry**, and stored on
+  the cell. What shortens it:
+  - `regrowthSpeed`, a speed the wait is divided by, aimed at a source —
+    Reforesting I (Forest) and Crop Rotation I (Crops), +25% each;
+  - the Staff of Renewal's aura, read at the cell
+    ([`09-relics.md`](09-relics.md) §2.1).
+- A bonus finished later does not wake a cell already sleeping. The wait never
+  falls below one second.
 - **A mountain never runs out.** `stock` 0 means inexhaustible: Stone and the
   two metal mountains keep no depot, never exhaust and have no recovery clock.
 - **Only a source that grows back IN PLACE has that clock**: Forest and
-  Crops. A berry bush, a herd and a shoal are consumed
-  and reappear on another tile instead (`respawnSeconds`, §3), which is a
-  different number the tree cannot move — so aiming a recovery bonus at one
-  is refused rather than sold. Nothing moves it.
+  Crops. A berry bush, a herd and a shoal are consumed and reappear on a
+  tile next to where they first stood (Grassland, or Water for a shoal) after
+  `respawnSeconds`, priced when the wait starts. `respawnSpeed` (Gamekeeping I, +25%) shortens it; a
+  recovery bonus aimed at a consumed source is refused.
+- What a cell holds grows with `cellStock` — Rich Soil I (Crops) and Old
+  Growth I (Forest), +25% each — and with the Staff of Renewal's aura.
 - The chunk and the rhythm are per cell: iron is a heavy swing, crops a light
   tick, and two cells can pay the same per minute and feel different.
 
@@ -74,7 +76,7 @@ Every resource cell carries:
 - The law authors the cell; the trip belongs to where the shed sits. The rate
   column below varies with distance; the cell's numbers do not.
 - `tap.workSeconds` = 10 makes a ten-unit tree about ten taps.
-- The worker column is a round trip, quoted at both ends of a level-4 radius.
+- The worker column is one worker's rate, quoted next door and four cells out.
 
 | Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
 |---|---|---|---|---|---|---|---|---|
@@ -95,8 +97,7 @@ Every resource cell carries:
   ring further (radius 2) to keep its crew of three fed
   ([`buildings.md`](buildings.md) §4.4).
 - On slow ground the **floor** governs: ten seconds of work on a rock, an iron
-  peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1. Richness
-  shows in the first `TapPower` levels.
+  peak or a gold peak is 0.38, 0.83 and 0.50 units, so all three pay 1.
 - A metal peak's richness is in the crew: five units a swing against one.
 - **A crop plot is the `Crops` row**: a feature planted from the Build menu
   ([`27-plantables.md`](27-plantables.md)).
@@ -123,30 +124,30 @@ Every resource cell carries:
 
 - Water is ×1 so the multiplier does not retune Fish shoals.
 - The Stone column moves nothing while no Stone source holds stock.
-- Poor ground is bad twice: the total per cycle scales with the multiplier, the
-  sustainable rate falls further because recovery is a fixed cost. A desert
-  forest drains in 50 s and sits out 180, yielding 1.3 Wood/min against a
-  grassland tree's 2.5 (53%, not 50%); its workers-per-cell drops from 0.41 to
-  0.22, so a desert needs about five cells per worker.
-- On the map as painted, Grassland holds 45 of the 57 trees; Tundra holds no
-  trees (OQ-56).
+- Poor ground is bad twice: the total per cycle scales with the multiplier,
+  and recovery is a fixed cost. A desert tree (5 Wood) yields about 1.2
+  Wood/min against a grassland tree's 2.3 (13 Wood); its workers-per-cell drops
+  from 0.48 to 0.26, so a desert needs about four cells per worker.
+- On the map as painted, Grassland holds 42 of the 50 trees (Plains 6, Snow
+  2); Tundra holds none (OQ-56).
 
 ### 2.3 The map ceiling
 
 - A cell's sustainable rate is `stock ÷ (drain + recovery)`, so the province has
   one too.
-- At **57 Trees** on the map as painted, sheds next door: **about 113
-  Wood/min** is everything the province can grow, and **about 24 workers**
-  collect all of it (against the 30 a Townhall-3 city can house).
+- At **50 trees** on the map as painted, sheds next door: **about 110
+  Wood/min** is everything the province can grow, and **about 23 workers**
+  collect all of it.
 - Both figures move with the walk: farther sheds collect less of the same
   ceiling and need more bodies.
-- The map editor should compute this census, weighting each cell by its ground
-  ([`../map-editor.md`](../map-editor.md), OQ-50) — not built.
+- The map editor's census counts cells per ring
+  ([`../map-editor.md`](../map-editor.md)); computing this ceiling there,
+  each cell weighted by its ground, is not built (OQ-50).
 
 ## 3. The tap
 
 ```
-seconds = tap.workSeconds × (1 + TapPower)
+seconds = tap.workSeconds × the Harvest boost
 owed    = seconds × unitsPerStrike ÷ secondsPerStrike
 paid    = max(1, floor(owed + carry))     — capped by what the cell still holds
 carry   = max(0, owed + carry − paid)
@@ -154,19 +155,19 @@ carry   = max(0, owed + carry − paid)
 
 - **`tap.workSeconds` = 10**, global: a property of the thumb, not the ground.
   A ten-unit tree is about ten taps.
-- **`TapPower` buys duration, not units**: +20% per rank, four ranks, ×1.8 at
-  the top (a tap worth eighteen seconds of work). Priced in Gold; a permanent
-  sink.
-- **Carry**: the fractional remainder is carried per currency, so a +20% upgrade
-  on a one-unit cell pays out on the fifth tap. Four numbers, additive to the
-  save.
+- `unitsPerStrike` here is the ground's chunk after `harvestYield` (§7) and a
+  Sickle of Plenty's aura at the cell — the same chunk a worker strikes.
+- The tree has a stat for the tap's duration (`tapWorkSeconds`); no
+  technology carries it.
+- **Carry**: the fractional remainder is carried per currency, so a +15%
+  ladder on a one-unit cell pays an extra unit about every seventh tap. Four
+  numbers, additive to the save.
 - **Floor of one unit**: a tap never pays nothing. At this duration the floor
   covers four of the eight cells (§2.1).
-- **The shortfall when the depot runs dry is not carried.** A maxed thumb wants
-  1.8 Wood; the last tap of a 10-Wood tree pays what is left, the rest is waste.
-  Raising `TapPower` past the ground's richness buys less and less.
-- An iron vein pays 1 a tap, not 5: its richness is in the depot (25 units
-  against a rock's 5) and its five-unit swing.
+- **The shortfall when the depot runs dry is not carried.** The last tap of a
+  tree pays what is left; the rest is waste.
+- An iron vein pays 1 a tap, not 5: its richness is in its five-unit swing,
+  which is the crew's.
 - A tap reads the cell's own rate, `unitsPerStrike ÷ secondsPerStrike`, with no
   travel term. It does not read `cityGatherPerSecond` (§4).
 - A tap refused by a tech gate costs no Mana.
@@ -180,35 +181,27 @@ carry   = max(0, owed + carry − paid)
 ### 3.2 Taps that do not exist
 
 - Training queues (villagers at the Townhall, soldiers at the halls) cannot be
-  tapped. A timer is hurried with Gems, not Mana.
-- The Townhall does not answer a tap. The first villager takes its 20 seconds
-  unaided.
+  tapped. A timer is hurried with Gems or the Bag's speed-ups, never Mana.
+- A tap on the Townhall collects its store or opens its card; it never hurries
+  a villager.
 - Paying fog is outside the convention: it costs Gold, not Mana, and buys
   cells, not production. A cell is five taps at every ring, so `tap.workSeconds`
   never touches it ([`01-map-and-fog.md`](01-map-and-fog.md) §5).
 
 ### 3.3 What a full pool is worth
 
-A rewarded ad pays a whole pool:
+A refill — a rewarded video or Gems — pays a whole pool
+([`08-magic.md`](08-magic.md) §6).
 
-| City | pool | tap | ad pays | = production |
-|---|---|---|---|---|
-| 1 Sawmill L1, 3 workers, `TapPower` 0 | 100 | 1 Wood | 100 Wood | **5.6 min** |
-| 30 workers, `TapPower` 0 | 332 | 1 Wood | 332 Wood | 1.8 min |
-| 30 workers, `TapPower` 10 | 332 | 3 Wood | ~1,000 Wood | **5.5 min** |
-
-- About five and a half minutes of production at both ends of the game, by
-  construction, without the tap reading the payroll
-  ([`03-economy.md`](03-economy.md) §5).
-- `TapPower` holds the ad's value up as the crew grows: pool ×3.3 against crew
-  ×10 leaves the ad worth a third by Townhall 3; the ×3 duration ladder restores
-  it (§1.1).
-- An ad buys a few minutes of things to do: a full pool is 332 taps.
-- `tap.workSeconds` is the ad's dial; halving it halves the ad. Whether ~5.5
-  minutes of production for three minutes of thumb is worth six ad placements
-  is **OQ-51**.
-- At five ads a day a watcher gathers about **2–3%** more than a non-watcher,
-  not 50%. The ad's job is the visit, not the day (OQ-43).
+- A pool is that many taps, and each tap is ten seconds of one worker's work:
+  a 100-Mana pool is about 17 worker-minutes — about 5–6 minutes of a
+  three-worker Sawmill at level 1.
+- The pool grows with the Sanctum and the landmarks; the crew grows with the
+  city's buildings and their levels, faster. Late, a pool is a smaller slice
+  of a bigger city (OQ-126).
+- `tap.workSeconds` is the ad's dial; halving it halves the ad. Whether that is
+  worth six ad placements is **OQ-51**.
+- The ad's job is the visit, not the day (OQ-43).
 
 ## 4. The strike and the haul
 
@@ -236,6 +229,9 @@ A rewarded ad pays a whole pool:
   §4.11). More ground or more hands is another building. Both are read off
   the crew's own building, and neither touches the tap: the thumb is not a
   crew.
+- The tree adds to the crew alone: `crewStrikeSpeed` — Lumberjacks I
+  (Sawmill), Farmhands I (Farm), Miners I (Quarry), Fishers I (Docks), +15%
+  each — and `crewSlots`, Bunkhouse I (+1 worker).
 - A strike is a simulation boundary. The renderer receives the strike event the
   sim emitted — the struck cell and its ground. Nothing about the feedback feeds
   back into the sim; offline replay produces the same strikes with no feedback.
@@ -307,15 +303,20 @@ Quests:
 | Actor | Dial | Raises | Symptom it answers |
 |---|---|---|---|
 | **The ground** | abundance (`stock`), recovery, richness (`unitsPerStrike`) | what the map can give | "everything is a stump" · "they never stop walking" |
-| **The thumb** | `TapPower` | seconds per tap | "I want it now" |
-| **The payroll** | `WorkerLoad`, **the building's own level** (§4), worker slots per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
+| **The thumb** | `tap.workSeconds`, the Harvest boost | seconds per tap | "I want it now" |
+| **The payroll** | **the building's own level** (§4), `crewStrikeSpeed`, `crewSlots`, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
-- The cell-scoped ladders — Sawpits, Irrigation, Stonecutting, Butchery,
-  Iron Picks, Gold Panning, Big Nets — are a **percentage** of the ground's
-  chunk (`harvestYield`), so they lift the tap and the worker alike; the
-  fraction a strike owes carries to the next one.
-- `WorkerLoad` and a producer's late level are the payroll-only dials: more
-  units per strike empties cells faster, and neither reaches the tap.
+- The cell-scoped ladders — Sawpits I–III (Forest), Irrigation I–II (Crops),
+  Stonecutting I–II (Stone), Iron Picks I (iron), +15% a rank, and Deep Mining
+  (gold), +25% — are a **percentage** of the ground's chunk (`harvestYield`),
+  so they lift the tap and the worker alike; the fraction a strike owes
+  carries to the next one.
+- A producer's late level is the payroll-only dial for units: more units per
+  strike empties cells faster, and it never reaches the tap.
+- The city relics move the ground inside a Shrine's aura while activated:
+  the Staff of Renewal (stock, recovery), the Sickle of Plenty (the chunk), the
+  Winged Hammer (the crew's swing and walk)
+  ([`09-relics.md`](09-relics.md) §2.1).
 - Doubling `stock` and halving `recoverySeconds` both pay +29% rate. More stock
   means longer stays and less walking; faster recovery means a greener map and
   more migration.
@@ -335,7 +336,7 @@ Quests:
 | Dial | Value | Key |
 |---|---|---|
 | Seconds a tap is worth | **10** | `tap.workSeconds` |
-| `TapPower` | **+20% a rank, 4 ranks** (→ ×1.8) | its ranks in `tech-tree.json`, through `?dev=data#tree` |
+| The Harvest boost | +50% a tap, 1 h | `items` › `HarvestBoost1h` |
 | Chunk and rhythm, per cell | §2.1 | `harvest.unitsPerStrike`, `.secondsPerStrike` |
 | Stock, per cell | §2.1 | `harvest.stock` |
 | Ground multiplier, per terrain × currency | §2.2 | `terrain` |
@@ -371,4 +372,4 @@ or the workers-per-cell number drifts (§2.1).
 - permanent destruction of a renewable feature
 
 **Open questions:** OQ-43, OQ-44, OQ-50, OQ-51, OQ-52, OQ-53, OQ-54, OQ-56,
-OQ-107.
+OQ-107, OQ-126.

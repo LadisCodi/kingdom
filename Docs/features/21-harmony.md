@@ -1,14 +1,13 @@
 # 21 · Harmony and the decorations
 
 > **Scope.** The city stat a decoration supplies and an advanced building
-> level demands, the six pieces, the gate between them, and what a surplus
+> level demands, the eleven pieces, the gate between them, and what a surplus
 > pays. What a level otherwise costs is [`buildings.md`](buildings.md) §4.11;
-> where a piece is discovered is [`tech-tree.md`](tech-tree.md) §2.3.
+> where a piece is discovered is [`tech-tree.md`](tech-tree.md).
 >
-> **Status: built** (`src/sim/harmony.ts`) and reachable: the first piece
-> opens at Townhall 5, the first level that demands any is 8, and the Townhall
-> ladder reaches 10 ([`buildings.md`](buildings.md) §3). The thirty-day harness
-> stands on 30 of 30 at day 30.
+> **Status: built** (`src/sim/harmony.ts`) and reachable: the first pieces
+> open at Townhall 2, the first level that demands any is 8, and the Townhall
+> ladder reaches 10 ([`buildings.md`](buildings.md) §3).
 
 ## 1. A stat, not a currency
 
@@ -30,28 +29,28 @@
 
 | Piece | Supply | Build cost (first) | Stands from | Discovered by |
 |---|---|---|---|---|
-| **Flower patch** | 1 | 20 Gold · 10 Wood | TH2, up to 3 → 10 | Village Pride |
+| **Flower patch** | 1 | 20 Gold · 10 Wood | TH2, up to 3 → 10 | Village Pride (chapter 2) |
 | **Resting nook** | 1 | 25 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
 | **Lantern corner** | 1 | 30 Gold · 15 Wood | TH2, up to 2 → 10 | Village Pride |
-| **Topiary garden** | 1 | 35 Gold · 15 Food | TH3, up to 2 → 9 | Civic Pride |
+| **Topiary garden** | 1 | 35 Gold · 15 Food | TH3, up to 2 → 9 | Civic Pride (chapter 3) |
 | **Banner green** | 1 | 40 Gold · 20 Wood | TH3, up to 1 → 8 | Civic Pride |
 | **Bird garden** | 2 | 60 Gold · 15 Stone | TH3, up to 2 → 9 | Civic Pride |
 
 - 1×1, built in seconds, no refined good. A later one of a kind costs more
   (×(1 + 0.5n)·1.1ⁿ).
-- **Personalisation first**: nothing demands Harmony before level 8 and an
-  undemanding city pays no surplus (§5), so what a piece pays early is the
-  adjacency of §6 — a house beside it collects more Gold.
+- Nothing demands Harmony before level 8 and an undemanding city pays no
+  surplus (§5), so what a piece pays early is the adjacency of §6 — a house
+  beside it collects more Gold.
 
 ### 2.2 The late pieces
 
 | Piece | Size | Supply | Build cost | Stands from | Discovered by |
 |---|---|---|---|---|---|
-| **Garden** | 1×1 | 4 | 13,000 Gold · 500 Wood · 250 Food | TH5, up to 4 → 14 | Gardening |
-| **Well** | 1×1 | 6 | 9,000 Gold · 500 Stone · 1 Cut Stone | TH6, up to 2 → 10 | Sculpture |
+| **Garden** | 1×1 | 4 | 13,000 Gold · 500 Wood · 250 Food | TH5, up to 4 → 14 | Gardening (chapter 5) |
+| **Well** | 1×1 | 6 | 9,000 Gold · 500 Stone · 1 Cut Stone | TH6, up to 2 → 10 | Sculpture (chapter 6) |
 | **Orchard** | 2×1 | 12 | 24,000 Gold · 1,300 Food · 2 Planks | TH6, up to 1 → 5 | Gardening |
 | **Statue** | 1×1 | 10 | 160,000 Gold · 2 Cut Stone | TH7, up to 1 → 4 | Sculpture |
-| **Plaza** | 2×2 | 30 | 36,000 Gold · 2,000 Stone · 4 Planks · 4 Cut Stone | TH8, up to 1 → 3 | Paving |
+| **Plaza** | 2×2 | 30 | 36,000 Gold · 2,000 Stone · 4 Planks · 4 Cut Stone | TH8, up to 1 → 3 | Paving (chapter 8) |
 
 - A decoration has **one level, no crew, no tap and no fog ring**. It is
   movable like anything else, and a piece under construction supplies nothing.
@@ -59,16 +58,20 @@
   queued and refunded in full on cancel — the rule a workshop item follows.
 - The count cap per piece is the Townhall gate and the ceiling in one, and it
   grows with the Townhall. Meeting a demand therefore takes **several kinds**
-  of piece, each priced in a different good: that is what prices Harmony now
-  the plot is unbounded, in place of the ground.
+  of piece, each priced in a different good.
 - Most supply a Townhall level allows, every piece counted: TH5 **47**, TH6
   **86**, TH7 **135**, TH8 **214**, TH9 **293**, TH10 **371**.
+- **Flowerbeds I** (chapter 9) raises every piece's supply by 25%, rounded
+  down (`decorationHarmony`).
+- The **Shrine** stands in the same Build tab but supplies no Harmony: it
+  hosts a city relic ([`09-relics.md`](09-relics.md) §2.3).
 
 ## 3. Demand — the levels from 8
 
 - Every building that reaches level 10 demands **2 at level 8, 4 at 9, 6 at
   10**, and nothing below 8. The Townhall demands **10, 20, 30** at the same
-  levels ([`buildings.md`](buildings.md) §3.1).
+  levels ([`buildings.md`](buildings.md) §3.1). The Tavern and the War Camp
+  stop at level 5 and demand nothing.
 - The number is the **total at that level, not an increment** — indexed from
   level 1 like an army cap — so one list states the gate on building a thing
   and every gate on its levels, and a level replaces the one under it rather
@@ -79,8 +82,8 @@
 - A build or an upgrade may **start** only while
   `supply ≥ demand − what this building demands today + what it will demand`.
 - An upgrade is refused in the order of the errands that answer it: the
-  Townhall first, then the refined goods, then Harmony. Each is a different
-  trip — the map, a workshop queue, a decoration.
+  Townhall and the technology, villagers, a free builder, the resources, the
+  goods, then Harmony.
 - A refused build never reaches the map: the build sheet says *Needs N more
   Harmony* on the card, and the count cap stays the harder wall of the two,
   since no decoration lifts it.
@@ -89,10 +92,9 @@
 
 - `ratio = supply / demand`, and three tiers on the tax rate: **110% → +5%**,
   **125% → +10%**, **150% → +15%** — the last tier the ratio reaches.
-- A base-stage term in the rate, never a
-  modifier.
-- **A city that demands nothing has no ratio and no bonus.** Otherwise one
-  Garden at Townhall 5 would pay the top tier for the whole midgame, for free.
+- A base-stage term in the rate, never a modifier. It reaches the houses'
+  rent, not the Townhall's own Gold.
+- **A city that demands nothing has no ratio and no bonus.**
 
 ## 6. Where a piece stands
 
@@ -135,17 +137,11 @@
 
 ## 10. Deliberately not in this design
 
-- **Harmony as a wallet row, or as anything spent.** It is read where it is
-  asked and never leaves the city.
-- **Harmony with reach**, supplied only within a radius. It would make a
-  placement refusable, which adjacency exists to keep from ever being true.
+- **Harmony as a wallet row, or as anything spent.**
+- **Harmony with reach**, supplied only within a radius.
 - **Demand that drains or decays**, and any deficit that reaches a building
   already standing.
 - **A bonus at demand zero.**
-- **A stat setting for what the surplus moves.** The stat a bonus moves is a
-  call site; a setting whose only legal value is the tax rate would be a knob
-  that cannot turn.
-- **Store decorations.** [`14-monetization.md`](14-monetization.md) decides
-  them (OQ-26).
-- **The Sanctum's Mana beside a decoration.** It waits for a Mana adjacency
-  stat.
+- **A setting for what the surplus moves**: it is the tax rate.
+- **Store decorations** (OQ-26).
+- **The Sanctum's Mana beside a decoration.**

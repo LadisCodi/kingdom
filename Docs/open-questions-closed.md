@@ -11,6 +11,30 @@ Kept short, and only while the reasoning is still worth having to hand.
 
 | Question | Closed | Answer |
 |---|---|---|
+| What does the trade screen carry beyond the send? (**OQ-89**) | 2026-10-13 | **The wish board**: a friend posts what they are missing and others send it; only found fragments and precious materials can be sent ([`features/15-social.md`](features/15-social.md) §2.4). |
+| How strong is the season hero's rate-up? (**OQ-90**) | 2026-10-13 | **Moot: there is no season.** A banner names a `featuredHero`, kept open in the hero bag; there is no rate-up weight ([`features/10-heroes.md`](features/10-heroes.md) §6). |
+| Do upgrades stay Gold-only forever? (**OQ-14**) | 2026-10-13 | **Moot: there are no Gold upgrades.** What they bought is technology ranks in the tree ([`features/07-research.md`](features/07-research.md)). |
+| Naming the books. (**OQ-15**) | 2026-10-13 | **Moot: the books are Kingdom, Sagas and Atlas** — one tree and two found books ([`features/07-research.md`](features/07-research.md) §2). |
+| Does anything but a building's level raise its store? (**OQ-108**) | 2026-10-13 | **Yes: technologies** — the `storageCapacity` stat (Granaries, Woodsheds, Smokehouses, Strongroom) ([`features/03-economy.md`](features/03-economy.md) §3.2). |
+| Collection progress sits behind the army. (**OQ-41**) | 2026-10-13 | **Moot: the collection no longer waits on fights alone.** Relic fragments come from fog treasures, quests, research chapters and the Survey as well as lairs and the world ([`features/09-relics.md`](features/09-relics.md) §6). |
+| Should the album→relic pairing rotate every season? (**OQ-101**) | 2026-10-13 | **Moot: there are no albums.** Relics are restored and levelled from fragments ([`features/09-relics.md`](features/09-relics.md)). |
+| Is the album cycle a pacing fix or a monetisation feature? (**OQ-100**) | 2026-10-13 | **Moot: there are no albums.** |
+| Three relics have to be created. (**OQ-103**) | 2026-10-13 | **Done: there are eight relics**, four city and four world (`artifacts.json`). What three of them move is still unread — **OQ-113**. |
+| The near shrine's price is three different numbers. (**OQ-47**) | 2026-10-13 | **Moot: there is no shrine landmark.** The Thorned Shrine is an abandoned building, repaired once the Orcs fall ([`features/buildings.md`](features/buildings.md) §4.13). |
+| Two docs still describe the province ruins after the build moved to lairs. (**OQ-123**) | 2026-10-13 | **Fixed**: [`18`](features/18-garrisons-and-raids.md) describes lairs, and [`11`](features/11-expeditions.md)/[`11a`](features/11a-ruins-ui.md) the world dungeons. |
+| Wonders are designed on an upgrade ladder that no longer exists. (**OQ-124**) | 2026-10-13 | **Fixed**: a Wonder is a district whose level ladder has no `maxLevel` ([`features/16-wonders.md`](features/16-wonders.md)). |
+| Cleared ruins and contested landmarks compete for rungs on the Knowledge cap. (**OQ-61**) | 2026-10-13 | **Moot: nothing raises the Knowledge cap.** The bar is 10; landmarks, lairs and the world pay lumps over it ([`features/07-research.md`](features/07-research.md) §3). |
+| How many nodes is a tier, and how many tiers is a tome? (**OQ-62**) | 2026-10-13 | **Moot: one tree in nine chapters** of three columns ([`features/tech-tree.md`](features/tech-tree.md)). |
+| How many spells should there be? (**OQ-64**) | 2026-10-13 | **Moot: the tree holds no spells.** A relic is activated in its host ([`features/09-relics.md`](features/09-relics.md) §2). |
+| All-of, or N-of-M for a keystone? (**OQ-68**) | 2026-10-13 | **Retired**: a chapter opens on revealed cells; how many is **OQ-13**. |
+| What does a player do when every open depth is cleared and the next Guild level is unaffordable? (**OQ-76**) | 2026-10-13 | **Moot: there is no Guild.** Dungeons stand on the world board and return after one closes ([`features/11-expeditions.md`](features/11-expeditions.md)). |
+| How deep does a ruin go? (**OQ-77**) | 2026-10-13 | **Moot: every dungeon is three depths of eight rooms** ([`features/11-expeditions.md`](features/11-expeditions.md) §1). |
+| Is the Stardust trickle oversized? (**OQ-78**) | 2026-10-13 | **Moot: there is no trickle.** Stardust pays ascension, skill ranks and relic levels. |
+| Does the XP faucet line up with what a hero level costs? (**OQ-79**) | 2026-10-13 | **Folded into OQ-115**: the room trickle it measured is gone. |
+| How many hero fragments does a boss chest pay? (**OQ-80**) | 2026-10-13 | **Moot: there are no boss chests.** Hero Fragments come from calls, duplicates and the store; what a dungeon pays beyond its rooms is **OQ-122**. |
+| Where does the player reach the ruins from? (**OQ-81**) | 2026-10-13 | **Moot: dungeons are reached on the world map** ([`features/11a-ruins-ui.md`](features/11a-ruins-ui.md) §2.1). |
+| The rooms' rewards leave the game with the depths. (**OQ-111**) | 2026-10-13 | **Moot: rooms are back**, on the world board ([`features/11-expeditions.md`](features/11-expeditions.md) §7). |
+| Does an unread news ever expire? (**OQ-133**) | 2026-10-13 | **Yes, on sight**: a news is read once it has been on screen 10 s; the inbox keeps the newest 30 ([`features/26-notices.md`](features/26-notices.md) §7). |
 | Does converting a unit type to a new tier cost anything? (**OQ-85**) | 2026-10-08 | **Moot: nothing converts.** Tiers became evolutions — each rank a troop of its own, trained new, never upgraded ([`features/combat.md`](features/combat.md) §6). |
 | Is one open Legendary the right number? (**OQ-135**) | 2026-10-08 | **Yes, one** ([`features/10-heroes.md`](features/10-heroes.md) §6.6). |
 | Does the season hero open in the bag? (**OQ-136**) | 2026-10-08 | **Yes, over the count, until recruited**, while a banner leans toward them (`banners.featuredHero`). |

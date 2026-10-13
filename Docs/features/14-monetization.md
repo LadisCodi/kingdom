@@ -8,11 +8,11 @@
 >
 > **Status: built** — the payer profile and its monthly budget (§3); the
 > Gem packs, the item bundles (§2.3), the **offers** and the **daily offers**
-> (§2.4, §2.5), the **first-purchase pack** and its splash (§2.6) and the Survey's paid
-> column for simulated dollars; builders, explorers, hero slots, keys and the
-> rest of §1.1 for Gems; three ad placements and the builder offer. The
-> store's layout is a stand-in until its redesign. The shop refresh, the town
-> banner set and the other three placements are designed, not built.
+> (§2.4, §2.5), the **first-purchase pack** and its splash (§2.6) and the
+> Survey's paid column for simulated dollars; builders, explorers, hero
+> slots, keys, the relic fragment pack, Shrines and the rest of §1.1 for
+> Gems; three ad placements (§6) and the builder offer; the funnel (§4).
+> **Designed, not built:** the cosmetic probe (§5) and ad placements 4–6.
 
 ## 0. Rules
 
@@ -38,13 +38,14 @@
 - The first rung of every ladder is earned by play: **a hero slot is the only
   slot in a party that is ever sold** — every troop slot on the board is open
   from the first fight ([`combat.md`](combat.md) §3) — and the Survey's paid
-  gold keys are the same keys an ad already gives away daily.
+  gold keys buy the same calls an ad already gives away daily.
 
 | Family | Examples | Effect |
 |---|---|---|
 | **Power** | silver and gold keys | stronger heroes, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, buy Knowledge, item bundles, refresh the shop | buys back the player's time |
-| **Breadth** | builders, explorers, hero slots | more things at once |
+| **Breadth** | builders, explorers, hero slots, Shrines | more things at once |
+| **Collection** | the relic fragment pack | relic fragments sooner — bound, never traded |
 | **Exploration** | the Survey's paid column ([`25-the-survey.md`](25-the-survey.md)) | more of what exploring finds — never a reveal |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
@@ -61,14 +62,15 @@
     ([`08-magic.md`](08-magic.md) §6);
   - **Knowledge** — a point at a fixed price, alone or all a technology
     still misses ([`07-research.md`](07-research.md) §3.2);
-  - **relics** — the store's fragment pack, and the third Shrine onward
-    ([`09-relics.md`](09-relics.md) §2.3).
+  - **relics** — the store's fragment pack
+    ([`09-relics.md`](09-relics.md) §7), and every Shrine after the repaired
+    one and the one built for materials (§9).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends ([`10-heroes.md`](10-heroes.md) §6.1).
 - Faucet: **500 to start**, **750 across the quest chain**
   ([`12-quests.md`](12-quests.md) §2.2), **500 at the Survey's last level**,
-  and **the Portal** every week — its final ranking and its floor milestones
-  ([`19-world-map.md`](19-world-map.md)).
+  **the Portal** every week — its final ranking and its floor milestones
+  ([`19-world-map.md`](19-world-map.md)) — and now and then a scouting find.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - **A `store` entry is real money.** Everything else is priced in Gems.
 
@@ -102,7 +104,7 @@
 |---|---|---|
 | **Offers** — only while there is an offer or a daily offer | a banner per offer on sale (§2.4): its figure, name, pitch, up to four reward tiles (+N), value seal, countdown, price — a tap opens its splash; under them **Today** (§2.5) with the time to the next draw | the monthly budget |
 | **Heroes** | the keys held, on the header's plank in place of the coins, each with a **+** that buys one (Gems); **Call for aid** over a carousel of the roster — one hero at a time drifting right to left and fading into the next, every hero once before any repeats; **Odds** on a tap; a banner per call: the common call shows its silver key, the golden call (`showsHero`) a Legendary, a different one each time the store is opened, every one before any repeats; free calls today, *Call* (free, an ad, or a key) and *Call ×10*; the pity is under **Odds**. Padlocked until a Tavern stands ([`22-progression.md`](22-progression.md) §3) | keys |
-| **Supplies** | the Bag's bundles (§2.3), the relic fragment pack, and the crew: a builder, an explorer (once the world is open), a hero slot (once a Tavern stands) — at a ceiling it says so | money · Gems |
+| **Supplies** | the Bag's bundles (§2.3), the relic fragment pack (Gems, once a relic is met), and the crew: a builder, an explorer (once the world is open), a hero slot (once a Tavern stands) — at a ceiling it says so | money · Gems |
 | **Gems** | six packs in a 3×2 grid — count over art over price. A tap opens the **confirmation** (§3.2) | the monthly budget |
 
 - It opens on **Offers**, or on **Heroes** when there is none; a door that
@@ -270,8 +272,6 @@
   (chiefly the welcome-back report) through once a profile is picked.
 - The choice is final for the save. The only way to change it is **start
   over**, named on the sheet and in Settings; the fresh game asks again.
-- A save without the field is asked on its next launch (additive field, no
-  migrator).
 - The budget period is the **calendar month, UTC**, derived from the sim's
   timestamp, never from a counter.
 - Nothing rolls over: the first of the month is a full budget, not last month's
@@ -292,21 +292,22 @@
 ## 4. The funnel and the log
 
 ```
-offer_shown → store_opened → sku_viewed → confirm_opened
-            → purchased | dismissed | refused_no_credit
+offer_opened → store_opened → confirm_opened
+             → purchased | dismissed | refused_no_credit
 ```
 
-- Every row carries: player id, session id, wall-clock ms, day index, SKU,
-  price, credit remaining, and three pieces of game context — Townhall level,
-  minutes played to date, and what the player was doing when the offer
-  appeared.
-- The pipeline is planned in [`../plans/analytics.md`](../plans/analytics.md).
-- Until it exists, the save is the log:
-  `player.payer` keeps every purchase (SKU, price, when) and the refusal
-  count. It lacks the game context above and can be reset by the player.
+- Each step is an analytics event
+  ([`../plans/analytics.md`](../plans/analytics.md) §3): the SKU, its price
+  and the credit left, on the envelope every event carries — player, session,
+  the game's clock, Townhall level, minutes played, and what was open.
+- `offer_opened` is an offer's window opening, with its trigger;
+  `ad_offer_shown` and `ad_watched` carry the placement.
+- Read by SKU and payer profile in `analytics.v_store_funnel`.
+- The save keeps its own log too: `player.payer` holds every purchase (SKU,
+  price, when) and the refusal count.
 - Server side, insert-only: a policy that permits insert on rows whose owner is
   the caller, and no read, update or delete from the client.
-- Batched, never per-tap: queue locally, flush every N events or on page hide.
+- Batched, never per-tap: queued locally, flushed in batches and on page hide.
 
 ## 5. Cosmetics — one probe
 
@@ -339,7 +340,7 @@ offer_shown → store_opened → sku_viewed → confirm_opened
   ([`10-heroes.md`](10-heroes.md) §6.2). Like placement 1 they carry a **daily
   cap** rather than a shortage condition, because a call answers no shortage —
   the cap is what keeps them from becoming the whole game.
-- Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §5): no timer
+- Wonders offer no ad placement ([`16-wonders.md`](16-wonders.md)): no timer
   to skip, no slot to reroll, and a Wonder discount would sell permanent
   progression (§1).
 - An offer answers a shortage rather than interrupting: placement 1 only
@@ -376,10 +377,9 @@ One page, refreshed weekly:
    of total progress that came from ads.
 3. **The caveat** of §0, restated every time.
 
-- Everything else the telemetry collects — session count, session length, day
-  index of last session, quests claimed, Wonder levels bought, milestones
-  reached — serves the retention read-out, not this one.
-- No event pipeline exists yet, so no D30 can be produced.
+- Everything else the telemetry collects — sessions, their length, quests,
+  doors, buildings, research — serves the retention read-out
+  (`analytics.v_retention`, `v_sessions`, `v_ftue`), not this one.
 
 ## 8. Exit gate
 
@@ -411,6 +411,8 @@ One page, refreshed weekly:
 | Daily offers | **3 a day** from the `daily` shelf | `offers.dailyCount` · `store` (shelf `daily`) |
 | First-purchase pack | $4.99 · the Elven Princess, 10 + 10 keys, 300 Gems · tomorrow 10 fragments, 200 Gems, 1,500 Hero XP | `store.FirstPurchase` |
 | Explorer | **2,500**, `×2`, **2** for sale | `world.explorerGemCost*`, `world.explorersForSale` |
+| Relic fragment pack | **5** bound fragments for **900** Gems | `relics.fragments` › `fragmentPackSize`, `fragmentPackGems` |
+| Shrines for Gems | **3,000 · 5,000 · 8,000** | `relics.shrines.premiumGems` |
 | Ad cooldown | 30–90 s | `ads.cooldown*Seconds` |
 | Ad eligibility | below half a pool | `ads.eligibleBelowFraction` |
 | Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `store` |

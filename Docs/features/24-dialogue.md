@@ -18,8 +18,9 @@
 - The characters stand on the box's top edge, so they rise and fall with it.
   Where a figure would stand above the header — always with the box at the
   `top` — it is not shown.
-- The stage sits above the nav bar and below the battle playback's results,
-  the reveal and the rewarded video.
+- The stage sits above the nav bar and the battle playback, and below the
+  offer splash, the unlock splash, the gacha reveal and the rewarded video
+  (z 95; `CLAUDE.md`, *Z-order*).
 
 ## 2. The box
 
@@ -28,7 +29,8 @@
   brass rivets — and a soft shadow that lifts it off the map behind.
 - **The name is on a cloth ribbon** with swallowtail ends, on the box's top
   edge on the speaker's side, in the speaker's own colour: Isolde blue, the
-  Warden green, Bess red, Tom and Hob brown, Grukk crimson, Wren purple.
+  Warden green, Bess red, Tom and Hob brown, Grukk crimson, Wren purple;
+  everyone else blue.
 - **Places**: `bottom`, `top`, `middle`, or `auto`. Every authored line is
   `auto`.
 - **`auto` keeps the speaker and what the line is about both in sight.** It
@@ -74,8 +76,9 @@
 | `until` · `untilTarget` · `untilAmount` | the condition that moves the line on — `tap` for a tap on the box |
 | `exit` | the speaker leaves after this line |
 | `expression` | the speaker's face on this line: empty (at rest) · `happy` · `worried` · `surprised` · `idea` — drawn from `<portrait>_<expression>`, the picture swapped in place without a new entrance |
-| `gives` | a book the speaker hands the player as the line is read — only a book that opens on a gift; none does today, so no line carries it |
+| `gives` | a book the speaker hands the player as the line is read (`gift:<book>`); no shipped line carries one |
 | `stocks` | a building whose price the speaker makes up: the line plays only while the wallet cannot pay for one more of it, and as it is read hands over the missing currencies (never goods), flown from the speaker into the header like a collect. Absent on every other line |
+| `restores` | a city relic the speaker hands over, restored at level 1, as the line is read; nothing if it is already restored. `shrineRelic`'s first line carries the Staff of Renewal |
 
 - A **scene** is an ordered list of lines, a **trigger** (a condition), and:
   - `skippable` — an introduction, which waits a breath after the last
@@ -166,7 +169,9 @@ which one a line waits on is data.
 | `bookOpen` · `doorOpen` | that book · that door is open |
 | `featureSeen` | a cell with that feature is out of the dark |
 | `treasureRevealed` · `treasurePicked` | a treasure stands on revealed ground · `amount` picked up |
-| `abandonedRevealed` · `siteOpen` · `repairing` | that abandoned building's ground is revealed · its card is open · its repair has started |
+| `abandonedRevealed` · `siteOpen` · `repairing` · `canRepair` | that abandoned building's ground is revealed · its card is open · its repair has started · everything its repair asks is in hand |
+| `worldOpen` · `worldVisited` | the world board is on screen · the kingdom has been out to the world and named itself |
+| `relicPicked` · `relicHosted` | the relic picker's slot holds that relic (or any) · a Shrine holds it (or any) |
 | `explorerSent` · `explorerReady` · `explorerRevealed` | `amount` explorers sent, ever · one waits at its hex for the tap · `amount` hexes revealed by that tap, ever |
 | `holdsItem` · `itemUsed` | the Bag holds `amount` (at least one) of that item or kind of item · holds none of it any more |
 | `upgraded` | one of that kind (or group, `AnyProducer`) is at level `amount`, or its upgrade to it is under way |
@@ -181,8 +186,8 @@ which one a line waits on is data.
 | Id | Name | Who | Art | Frame |
 |---|---|---|---|---|
 | `advisor` | **Isolde** | the Royal Advisor — the royal librarian, advising because everyone else fled the fog: cheerful, a little nervous, unsure of herself, with a book for most things. Dark hair in a scholar's bun, round thin-framed glasses, a royal-blue coat, a ledger and a brass key ring | `portrait_advisor` | full figure |
-| `warden` | **the Warden** | captain of the guard; speaks at the first lair | `hero_warden` | full figure |
-| `cook` | **Bess** | runs the Tavern; speaks when it opens | `hero_cook` | full figure |
+| `warden` | **the Warden** | captain of the guard; teaches the Barracks, recruits, the first assault and the world's armies | `hero_warden` | full figure |
+| `cook` | **Bess** | runs the Tavern; speaks when it opens and at the first call | `hero_cook` | full figure |
 | `woodcutter` | **Old Hob** | the woodcutter who never left the fog: gruff, superstitious, distrusts books, secretly proud of Isolde. Her foil | `portrait_hob` | full figure |
 | `villager` | **Tom Miller** | the Millers' son, the first villager home | `portrait_villager` | full figure |
 | `orcChief` | **Grukk** | the Orcs' warchief | `portrait_grukk` | full figure |
@@ -190,7 +195,7 @@ which one a line waits on is data.
 | `florist` | **Priya** | nine and three quarters, and certain the town is ugly: bossy, delighted, makes Oakville pretty. Teaches the decorations, moving things and transplanting | `portrait_florist` (drawn shorter: a child) | full figure |
 | `merchant` | **Marisol** | merchant of everywhere: charming, a little sly, sold Isolde's aunt a bridge. Speaks when the Store opens | `portrait_merchant` | full figure |
 | `courier` | **Idris** | the royal courier, young and breathless, a pigeon on his shoulder. Speaks when the friends' letters arrive and the first notice is pinned | `portrait_courier` | full figure |
-| `scout` | **Wren** | the Royal Scout, the kingdom's explorer on the world board: eager, quick, always first out of the gate. Speaks when she is sent out and when she has found something | `hero_scout` (until she has her own) | full figure |
+| `scout` | **Wren** | the Royal Scout, the kingdom's explorer on the world board: eager, quick, always first out of the gate. Speaks when she is sent out, when she has found something, and about the board and the Atlas | `hero_scout` | full figure |
 
 - **Isolde has five faces** — at rest, happy (eyes closed, a wide smile, the
   ledger hugged), worried (a hand at her chin), surprised (leaning back, a

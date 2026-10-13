@@ -6,7 +6,8 @@
 > numbers are read when real players are on it. It answers the prototype's
 > fourth question (§ *What the prototype is for*).
 >
-> **Status: protocol.** The log signals of §5 are built.
+> **Status: protocol.** The signals of §5 are built: kept in the save and
+> sent as analytics events.
 
 ## 1. Before: the moments
 
@@ -19,7 +20,7 @@ it felt. A playtest watches these moments and no others first.
 | | the old House: a silhouette past the trees, then found and repaired | beats 4.1–4.3 |
 | | a silhouette in the clouds the player sets off towards unprompted | session 1, after the First Morning |
 | **Accumulation** | the first rent collected; the first full store after a night away | beat 7.1; the second visit |
-| **Collection** | the first card pack, and the album page it opens | clearing the Orcs ([`features/22-progression.md`](features/22-progression.md) §7) |
+| **Collection** | the first relic fragment, and the six slots it starts to fill; the Staff of Renewal set on the Thorned Shrine's altar | clearing the Orcs, then repairing the Shrine ([`features/09-relics.md`](features/09-relics.md) §5, §10) |
 | **Power** | a hero that wins the room the party lost | the first fight lost, then won |
 | **What is sold** | the Survey opening with levels already waiting, its paid column beside them | Townhall 2 ([`features/25-the-survey.md`](features/25-the-survey.md) §5) |
 
@@ -63,7 +64,7 @@ The numbers give leads, not verdicts.
 |---|---|---|
 | A good first reaction and a low D1 | the column does not renew from one day to the next | the treasure cadence and the fog's price (**OQ-120**) |
 | Short, infrequent sessions | a layer that gives a reason to come back is missing | the stores and the Mana well filling overnight |
-| Good retention, low conversion | what is sold does not express the fantasy | the Survey's paid column (**OQ-121**), the keys, the packs |
+| Good retention, low conversion | what is sold does not express the fantasy | the Survey's paid column (**OQ-121**), the keys, the fragment pack, the offers |
 
 - **If the fantasy does not land, iterate the framing, the feedback and the
   first session before adding a feature.**
@@ -73,8 +74,13 @@ The numbers give leads, not verdicts.
 ## 5. Signals the log carries
 
 Beside the store's funnel ([`features/14-monetization.md`](features/14-monetization.md)
-§4), for §2's signs to be read without an observer. The save carries them:
-counts under `signal:*` on the tallies, times in `kingdom.signals`.
+§4), for §2's signs to be read without an observer.
+
+- **In the save**: counts under `signal:*` on the tallies, times in
+  `kingdom.signals`.
+- **On the server**: each is an analytics event
+  ([`plans/analytics.md`](plans/analytics.md) §3.3), read in
+  `analytics.v_signals`.
 
 | Signal | Read as |
 |---|---|
@@ -82,7 +88,7 @@ counts under `signal:*` on the tallies, times in `kingdom.signals`.
 | a silhouette sighted → its cell discovered, and the time between | does the mystery pull the player |
 | a paid reveal no active quest asked for | exploring for its own sake |
 | the Survey opened · a cell claimed · its paid column bought | does the column sell |
-| the session's first tap after an absence of five minutes or more: a store, a reveal or a menu | what brought the player back |
+| the session's first tap after an absence of five minutes or more: a store, the fog, a treasure, a site or a menu | what brought the player back |
 
 ## 6. Deliberately not in this protocol
 
